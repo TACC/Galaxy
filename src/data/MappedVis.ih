@@ -1,0 +1,14 @@
+#pragma once
+
+#include "Vis.ih"
+struct TransferFunction;
+
+struct MappedVis_ispc
+{
+  struct Vis_ispc vis;
+  void *uniform transferFunction;
+};  
+
+typedef uniform MappedVis_ispc *uniform pMappedVis_ispc;
+
+

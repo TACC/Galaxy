@@ -1,0 +1,11 @@
+#pragma once
+
+#include "MappedVis.ih"
+#include "ospray/math/vec.ih"
+
+struct ParticlesVis_ispc
+{
+  struct Vis_ispc vis;
+};  
+
+typedef uniform ParticlesVis_ispc *uniform pParticlesVis_ispc;

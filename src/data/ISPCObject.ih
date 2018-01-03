@@ -1,0 +1,4 @@
+struct ISPCObject_ispc
+{
+	int foo;
+};

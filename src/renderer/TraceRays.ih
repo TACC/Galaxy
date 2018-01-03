@@ -1,0 +1,8 @@
+#include "ospray/math/vec.ih"
+
+struct TraceRays_ispc
+{
+  float epsilon;
+};
+
+

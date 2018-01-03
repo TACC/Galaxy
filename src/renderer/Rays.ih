@@ -1,0 +1,27 @@
+struct RayList_ispc
+{
+	float *ox;
+	float *oy;
+	float *oz;
+	float *dx;
+	float *dy;
+	float *dz;
+	float *nx;
+	float *ny;
+	float *nz;
+	float *sample;
+	float *r; 					// accumulated color in front of surface, if any
+	float *g;
+	float *b;
+	float *o;
+	float *sr;  					// unlit surface color, unoccluded
+	float *sg;
+	float *sb;
+	float *so;
+	float *t;
+	float *tMax;
+	int   *x;
+	int   *y;
+	int   *type;
+	int   *term;
+};

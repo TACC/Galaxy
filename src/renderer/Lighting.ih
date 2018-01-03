@@ -1,0 +1,13 @@
+#include "ospray/math/vec.ih"
+
+struct Lighting_ispc
+{
+  int n_ao_rays;
+	int do_shadows;
+  float ao_radius;
+  float Ka, Kd;
+  uniform vec3f *uniform lights;
+  uint32 nLights;
+  float epsilon;
+};
+

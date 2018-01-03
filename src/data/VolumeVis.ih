@@ -1,0 +1,19 @@
+#pragma once
+
+#include "MappedVis.ih"
+#include "ospray/math/vec.ih"
+
+struct VolumeVis_ispc
+{
+  struct MappedVis_ispc vis;
+
+  int nSlices;
+  uniform vec4f *uniform slices;
+
+  int nIsovalues;
+  float *uniform isovalues;
+
+  bool volume_render;
+};  
+
+typedef uniform VolumeVis_ispc *uniform pVolumeVis_ispc;

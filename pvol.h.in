@@ -1,0 +1,3 @@
+#cmakedefine WITH_VTK_RENDERER
+#cmakedefine WITH_ICET
+#cmakedefine EVENT_TRACKING

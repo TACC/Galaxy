@@ -1,0 +1,35 @@
+#include "ospray/math/vec.ih"
+#include "ospray/math/box.ih"
+
+struct Model;
+
+#include "Vis.ih"
+#include "MappedVis.ih"
+#include "VolumeVis.ih"
+
+//struct Vis_ispc;
+//struct MappedVis_ispc;
+//struct VolumeVis_ispc;
+
+
+struct Visualization_ispc
+{
+	// The ISPC side needs to a model, containing all geometries
+	// that Embree is going to raytrace (eg. mapped and unmapped geometries),
+	// and list of mapped geometries and volumes which will be colored via
+	// a transfer function
+
+  Model *uniform model;
+      
+  uniform int32 nVolumeVis;
+  uniform pVolumeVis_ispc *uniform volumeVis;
+   
+  uniform int32 nMappedVis;
+  uniform pMappedVis_ispc *uniform mappedVis;
+  
+  box3f global_bb;
+  box3f local_bb;
+};
+
+typedef uniform Visualization_ispc *uniform pVisualization_ispc;
+

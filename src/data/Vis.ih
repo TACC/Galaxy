@@ -1,0 +1,11 @@
+#pragma once
+
+struct Vis_ispc
+{
+  void *data;
+};
+
+typedef uniform Vis_ispc *uniform pVis_ispc;
+
+
+
