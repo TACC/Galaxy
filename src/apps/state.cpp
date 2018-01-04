@@ -19,7 +19,6 @@
 #include "Camera.h"
 #include "Datasets.h"
 #include "Visualization.h"
-#include "OSPRayRenderer.h"
 
 #include "Rendering.h"
 #include "RenderingSet.h"

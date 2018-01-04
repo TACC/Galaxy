@@ -47,8 +47,6 @@ link_directories(${OSPRAY_DIR}/lib ${OSPRAY_DIR}/lib64)
 include_directories(${OSPRAY_DIR}/include)
 
 add_subdirectory(src)
-add_subdirectory(scripts)
-add_subdirectory(demo)
 
 configure_file(pvol.h.in pvol.h)
 install(FILES ${PROJECT_BINARY_DIR}/pvol.h DESTINATION include)
