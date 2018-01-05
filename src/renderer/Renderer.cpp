@@ -37,7 +37,6 @@ using namespace std;
 using namespace rapidjson;
 
 WORK_CLASS_TYPE(Renderer::RenderMsg);
-WORK_CLASS_TYPE(Renderer::CommitMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);
 WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
 WORK_CLASS_TYPE(Renderer::AckRaysMsg);
@@ -58,7 +57,6 @@ Renderer::Initialize()
   RenderingSet::Register();
  
   RenderMsg::Register();
-  CommitMsg::Register();
   SendRaysMsg::Register();
   SendPixelsMsg::Register();
   AckRaysMsg::Register();
@@ -705,7 +703,6 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   Key renderer_key = *(Key *)p;
   p += sizeof(Key);
  
- // RendererP renderer = Renderer::Cast(KeyedObject::GetByKey(renderer_key));'
   RendererP renderer = Renderer::GetByKey(renderer_key);
   p = renderer->Deserialize(p);
   
