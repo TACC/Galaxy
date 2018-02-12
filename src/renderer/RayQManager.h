@@ -38,9 +38,6 @@ public:
 	void Enqueue(RayList *r);
 	RayList *Dequeue();
 
-	void IncrementRayListCount();
-	void DecrementRayListCount();
-
 	void CheckState();
 	void UpdateChildState(bool busy, int child);
 
@@ -60,8 +57,10 @@ public:
 	int current_frame_id() { return frame_id; }
 	void bump_frame_id() { frame_id ++; }
 
+#ifdef PVOL_SYNCHRONOUS
 	void Pause();
 	void Resume();
+#endif
     
     Renderer *GetTheRenderer() { return renderer; }
 

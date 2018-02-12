@@ -106,18 +106,18 @@ LookForGeometryHit(varying bool shadeFlag,
                    uniform Visualization_ispc *uniform vis,
                    varying Hit &hit)
 {
-//print("LookForGeometryHit\n");
+// print("LookForGeometryHit\n");
 
   traceRay(model, ray);
 
   if(ray.geomID < 0)
   {
-//print("miss!\n");
+// print("miss!\n");
     return false;
   }
   else
   {
-//print("hit!\n");
+// print("hit!\n");
     if (shadeFlag)
     {
       DifferentialGeometry dg;
@@ -341,8 +341,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
-uniform int geometryCount = vis->model ? vis->model->geometryCount : 0;
-print("% volumes, % mapped geoms % unmapped geoms % rays input\n", vis->nVolumeVis, vis->nMappedVis, geometryCount, nRaysIn);
+// uniform int geometryCount = vis->model ? vis->model->geometryCount : 0;
+// print("% Xvolumes, % mapped geoms % unmapped geoms % rays input\n", vis->nVolumeVis, vis->nMappedVis, geometryCount, nRaysIn);
 
 #if 0
   print("BOX [(%f %f %f)-(%f %f %f)]\n",
@@ -362,7 +362,9 @@ print("% volumes, % mapped geoms % unmapped geoms % rays input\n", vis->nVolumeV
  
     integrate = integrate | vvis->volume_render | vvis->nIsovalues;
     uniform float s = vol->samplingStep * vol->samplingRate;
-//print("s: % samplingStep: % samplingRate: %\n", s, vol->samplingStep, vol->samplingRate);
+
+print("s: % samplingStep: % samplingRate: %\n", s, vol->samplingStep, vol->samplingRate);
+
     if (step < 0 || step > s)
     {
       step = s;
@@ -548,6 +550,7 @@ print("% volumes, % mapped geoms % unmapped geoms % rays input\n", vis->nVolumeV
         tLast = tThis;
       }
 
+// print("%\n", iterations);
 //if (tThis <= tTermination) print("exit loop T\n");
 //if (term == OPAQUE) print("exit loop OPAQUE\n");
 //if (hit_isosurface) print("exit loop ISO\n"); 

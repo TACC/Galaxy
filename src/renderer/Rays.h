@@ -11,11 +11,14 @@ class RayList
 	{
 		Key key;
 		int size;
+		int frame;
 		int aligned_size;
 	};
 
 public:
 	~RayList();
+
+	int GetFrame();
 	
 	static void CopyRay(RayList *srcRayList, int srcRayIndex, RayList *dstRayList, int dstRayIndex)
 	{

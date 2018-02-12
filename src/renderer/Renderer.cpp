@@ -39,7 +39,10 @@ using namespace rapidjson;
 WORK_CLASS_TYPE(Renderer::RenderMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);
 WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
+
+#ifdef PVOL_SYNCHRONOUS
 WORK_CLASS_TYPE(Renderer::AckRaysMsg);
+#endif // PVOL_SYNCHRONOUS
 
 KEYED_OBJECT_TYPE(Renderer)
 
@@ -59,7 +62,10 @@ Renderer::Initialize()
   RenderMsg::Register();
   SendRaysMsg::Register();
   SendPixelsMsg::Register();
+#ifdef PVOL_SYNCHRONOUS
   AckRaysMsg::Register();
+#endif // PVOL_SYNCHRONOUS
+
 }
 
 void
@@ -87,28 +93,37 @@ Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 	APP_LOG(<< "Renderer::localRendering start");
 #endif
 
+	rs->BumpFrame();
+
 	// This will prevent any rays from being dequeued until the initial state is sent up the tree
 	// That'll happen in the InitialState exchange
 
 	//Renderer::GetTheRenderer()->GetTheRayQManager()->Pause();
 
+#ifdef PVOL_SYNCHRONOUS
   GetTheRayQManager()->Pause();
+#endif
   
 	vector<future<void>> rvec;
 	for (int i = 0; i < rs->GetNumberOfRenderings(); i++)
+	{
+		rs->GetRendering(i)->SetFrame(rs->GetFrame());
 		LaunchInitialRays(rs->GetRendering(i), rvec);
+	}
 
 	for (auto& r : rvec)
 		r.get();
 
-	MPI_Barrier(c);
+	// MPI_Barrier(c); Is this necessary???
 
 #if 0
 	if (GetTheApplication()->GetRank() == 0)
 		std:cerr << "starting ray processing\n";
 #endif
   
+#ifdef PVOL_SYNCHRONOUS
 	rs->InitialState(c);   // This will resume the ray q
+#endif // PVOL_SYNCHRONOUS
 }
 
 void
@@ -514,14 +529,19 @@ Renderer::ProcessRays(RayList *in)
     if (spmsg)
     {
       spmsg->Send(rendering->GetTheOwner());
+
+#ifdef PVOL_SYNCHRONOUS
       rendering->GetTheRenderingSet()->SentPixels(fbknt);
+#endif // PVOL_SYNCHRONOUS
     }
 
 		for (int i = 0; i < 6; i++)
 			if (knts[i])
 			{
+#ifdef PVOL_SYNCHRONOUS
 				// This process gets "ownership" of the new ray list until its recipient acknowleges 
 				renderingSet->IncrementRayListCount();
+#endif // PVOL_SYNCHRONOUS
 				
 				SendRays(ray_lists[i], visualization->get_neighbor(i));
 				delete ray_lists[i];
@@ -540,8 +560,10 @@ Renderer::ProcessRays(RayList *in)
 	GetTheEventTracker()->Add(new ProcessRayListEvent(nIn, nNew, nRetired, nSent));
 #endif
 
+#ifdef PVOL_SYNCHRONOUS
 	// Finished processing this ray list.  
 	renderingSet->DecrementRayListCount();
+#endif //  PVOL_SYNCHRONOUS
 
 #if DO_TIMING
   timer.stop();
@@ -612,8 +634,10 @@ Renderer::SendRaysMsg::Action(int sender)
 
 	renderingSet->Enqueue(rayList);
 
+#ifdef PVOL_SYNCHRONOUS
 	Renderer::AckRaysMsg ack(renderingSet);
 	ack.Send(sender);
+#endif // PVOL_SYNCHRONOUS
 	
 	return false;
 }
@@ -640,6 +664,7 @@ Renderer::Deserialize(unsigned char *p)
 	return p;
 }
 
+#ifdef PVOL_SYNCHRONOUS
 Renderer::AckRaysMsg::AckRaysMsg(RenderingSetP rs) : AckRaysMsg(sizeof(Key))
 {
 	*(Key *)contents->get() = rs->getkey();
@@ -652,6 +677,7 @@ Renderer::AckRaysMsg::Action(int sender)
 	rs->DecrementRayListCount();
 	return false;
 }
+#endif // PVOL_SYNCHRONOUS
 
 void
 Renderer::Render(RenderingSetP rs)
@@ -708,7 +734,8 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
-  MPI_Barrier(c);
+  // MPI_Barrier(c);  Is this necessary????
+
   renderer->localRendering(rs, c);
 
   return false;

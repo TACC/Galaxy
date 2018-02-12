@@ -4,10 +4,13 @@
 #include "RenderingSet.h"
 #include "RayQManager.h"
 
+WORK_CLASS_TYPE(RenderingSet::SaveImagesMsg);
+
+#ifdef PVOL_SYNCHRONOUS
 WORK_CLASS_TYPE(RenderingSet::PropagateStateMsg);
 WORK_CLASS_TYPE(RenderingSet::SynchronousCheckMsg);
-WORK_CLASS_TYPE(RenderingSet::SaveImagesMsg);
 WORK_CLASS_TYPE(RenderingSet::ResetMsg);
+#endif // PVOL_SYNCHRONOUS
 
 KEYED_OBJECT_TYPE(RenderingSet)
 
@@ -16,22 +19,31 @@ RenderingSet::Register()
 {
   RegisterClass();
 
+	SaveImagesMsg::Register();
+
+#ifdef PVOL_SYNCHRONOUS
 	PropagateStateMsg::Register();
 	SynchronousCheckMsg::Register();
-	SaveImagesMsg::Register();
 	ResetMsg::Register();
+#endif // PVOL_SYNCHRONOUS
 }
 
 RenderingSet::~RenderingSet()
 {
+#ifdef PVOL_SYNCHRONOUS
 	pthread_mutex_destroy(&lck);
 	pthread_cond_destroy(&w8);
 	pthread_mutex_destroy(&local_lock);
+#endif // PVOL_SYNCHRONOUS
 }
 
 void
 RenderingSet::initialize()
 {
+	frame = 0;
+
+#ifdef PVOL_SYNCHRONOUS
+
 	pthread_mutex_init(&local_lock, NULL);
 
 	int r = GetTheApplication()->GetRank();
@@ -54,7 +66,11 @@ RenderingSet::initialize()
   local_raylist_count  = 0;
 
 	local_reset();
+
+#endif // PVOL_SYNCHRONOUS
 }
+
+#ifdef PVOL_SYNCHRONOUS
 
 void
 RenderingSet::SetInitialState(int local_ray_count, int left_state, int right_state)
@@ -100,6 +116,7 @@ RenderingSet::local_reset()
 		r->local_reset();
 }
 
+#ifdef PVOL_SYNCHRONOUS
 void
 RenderingSet::WaitForDone()
 {
@@ -129,6 +146,7 @@ RenderingSet::WaitForDone()
 	GetTheEventTracker()->Add(new FinishedRenderingEvent(getkey()));
 #endif
 }
+#endif // PVOL_SYNCHRONOUS
 
 bool RenderingSet::Busy()
 {
@@ -331,17 +349,6 @@ RenderingSet::UpdateChildState(bool busy, int child)
 }
 
 void
-RenderingSet::Enqueue(RayList *rl, bool silent)
-{
-#if LOGGING
-	APP_LOG(<< "RenderingSet   enqueing " << std::hex << rl);
-#endif
-
-	RayQManager::GetTheRayQManager()->Enqueue(rl);
-	IncrementRayListCount(silent);
-}
-
-void
 RenderingSet::IncrementRayListCount(bool silent)
 {
 	pthread_mutex_lock(&local_lock);
@@ -514,6 +521,8 @@ RenderingSet::PropagateStateMsg::Action(int sender)
   return false;
 }
 
+#endif // PVOL_SYNCHRONOUS
+
 int
 RenderingSet::serialSize()
 {
@@ -586,6 +595,8 @@ RenderingSet::SaveImagesMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 	return false;
 }
 
+#ifdef PVOL_SYNCHRONOUS
+
 RenderingSet::ResetMsg::ResetMsg(RenderingSet *r) : ResetMsg(sizeof(Key))
 {
 	unsigned char *p = (unsigned char *)contents->get();
@@ -607,6 +618,8 @@ APP_LOG(<< "RenderingSet::ResetMsg::CollectiveActionResetMsg : " << key);
 	return false;
 }
 
+#endif // PVOL_SYNCHRONOUS
+
 void
 RenderingSet::AddRendering(RenderingP r)
 {
@@ -624,3 +637,22 @@ RenderingSet::GetRendering(int i)
 {
 	return renderings[i];
 }
+void
+RenderingSet::Enqueue(RayList *rl, bool silent)
+{
+#if LOGGING
+	APP_LOG(<< "RenderingSet   enqueing " << std::hex << rl);
+#endif
+
+	if (rl->GetFrame() == GetFrame())
+	{
+		RayQManager::GetTheRayQManager()->Enqueue(rl);
+
+#ifdef PVOL_SYNCHRONOUS
+		IncrementRayListCount(silent);
+#endif // PVOL_SYNCHRONOUS
+	}
+	else
+		delete rl;
+}
+

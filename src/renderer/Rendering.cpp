@@ -28,6 +28,10 @@ Rendering::initialize()
   height = -1;
   owner = -1;
   framebuffer = NULL;
+
+#ifndef PVOL_SYNCHRONOUS
+  kbuffer = NULL;
+#endif
 }
 
 void
@@ -43,6 +47,10 @@ Rendering::~Rendering()
 	APP_LOG(<< "Rendering dtor (key " << getkey() << ")");
 #endif
   if (framebuffer) delete[] framebuffer;
+
+#ifndef PVOL_SYNCHRONOUS
+  if (kbuffer) delete[] kbuffer;
+#endif
 }
 
 bool
@@ -56,7 +64,9 @@ Rendering::IsLocal()
   return owner == GetTheApplication()->GetRank();
 }
 
-#define ACCUMULATE_PIXEL(X, Y, R, G, B, O)                               \
+#ifdef PVOL_SYNCHRONOUS
+
+#define ACCUMULATE_PIXEL(X, Y, R, G, B, O)                            	 \
 {                                                                        \
   size_t offset = 4*((((height-1)-Y)*width + ((width-1)-X)));            \
   float *ptr = framebuffer + offset;                                     \
@@ -66,9 +76,31 @@ Rendering::IsLocal()
   *ptr++ += O;                                                           \
 	accumulation_knt++;																										 \
 }
+
+#else
+    
+#define ACCUMULATE_PIXEL(f, X, Y, R, G, B, O)                            \
+{                                                                        \
+  size_t offset = ((((height-1)-Y)*width + ((width-1)-X)));            	 \
+  float *ptr = framebuffer + (offset<<2);                                \
+	if (kbuffer[offset] < f)																							 \
+	{																																			 \
+		ptr[0] = 0;																													 \
+		ptr[1] = 0;																													 \
+		ptr[2] = 0;																													 \
+		ptr[3] = 0;																													 \
+	}																																			 \
+  *ptr++ += R;                                                           \
+  *ptr++ += G;                                                           \
+  *ptr++ += B;                                                           \
+  *ptr++ += O;                                                           \
+	accumulation_knt++;																										 \
+}
+
+#endif
     
 void
-Rendering::AddLocalPixels(Pixel *p, int n)
+Rendering::AddLocalPixels(Pixel *p, int n, int f)
 {
   if (! framebuffer)
   {
@@ -78,37 +110,22 @@ Rendering::AddLocalPixels(Pixel *p, int n)
 
   while (n-- > 0)
   {
-    ACCUMULATE_PIXEL(p->x, p->y, p->r, p->g, p->b, p->o);
+    ACCUMULATE_PIXEL(f, p->x, p->y, p->r, p->g, p->b, p->o);
     p++;
-  }
-}
-
-void
-Rendering::AddLocalPixel(Pixel *r)
-{
-  if (framebuffer)
-  {
-    ACCUMULATE_PIXEL(r->x, r->y, r->r, r->g, r->b, r->o);
-  }
-  else
-  {
-    std::cerr << "Rendering::AddLocalPixel called by non-owner\n";
-    exit(0);
   }
 }
 
 void
 Rendering::AddLocalPixel(RayList *rl, int i)
 {
-  if (framebuffer)
-  {
-    ACCUMULATE_PIXEL(rl->get_x(i), rl->get_y(i), rl->get_r(i), rl->get_g(i), rl->get_b(i), rl->get_o(i));
-  }
-  else
-  {
-    std::cerr << "Rendering::AddLocalPixel called by non-owner\n";
-    exit(0);
-  }
+	int listFrame = rl->GetFrame();
+	int renderingFrame = GetFrame();
+	if (framebuffer)
+	{
+		ACCUMULATE_PIXEL(rl->GetFrame(), rl->get_x(i), rl->get_y(i), rl->get_r(i), rl->get_g(i), rl->get_b(i), rl->get_o(i));
+	}
+	else
+		std::cerr << "Rendering::AddLocalPixel called by non-owner\n";
 }
 
 bool
@@ -119,7 +136,20 @@ Rendering::local_commit(MPI_Comm c)
     if (framebuffer)
       delete[] framebuffer;
 
+#ifndef PVOL_SYNCHRONOUS
+		if (kbuffer)
+			delete[] kbuffer;
+#endif
+
     framebuffer = new float[width*height*4];
+
+#ifndef PVOL_SYNCHRONOUS
+		if (kbuffer)
+			delete[] kbuffer;
+    kbuffer = new int[width*height];
+		memset(kbuffer, 0, width*height*sizeof(int));
+#endif
+
   }
   return false;
 }
@@ -135,6 +165,10 @@ Rendering::local_reset()
       exit(0);
     }
     for (float *p = framebuffer; p < framebuffer + width*height*4; *p++ = 0.0);
+
+#ifndef PVOL_SYNCHRONOUS
+		memset(kbuffer, 0, width*height*sizeof(int));
+#endif
   }
 }
 

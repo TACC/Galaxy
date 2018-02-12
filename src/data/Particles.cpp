@@ -177,6 +177,7 @@ Particles::local_commit(MPI_Comm c)
   ospSet1i(ospg, "offset_value", 12);
   ospSet1f(ospg, "radius_scale", radius_scale);
   ospSet1f(ospg, "radius", radius);
+	std::cerr << "radius: " << radius << "\n";
 
   ospCommit(ospg);
 

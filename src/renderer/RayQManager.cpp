@@ -209,6 +209,7 @@ RayQManager::Dequeue()
 	return r;
 }
 
+#ifdef PVOL_SYNCHRONOUS
 void
 RayQManager::Pause()
 {
@@ -236,6 +237,7 @@ RayQManager::Resume()
 	Signal();
 	Unlock();
 }
+#endif
 
 void
 RayQManager::Enqueue(RayList *r)

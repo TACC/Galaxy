@@ -32,19 +32,11 @@ public:
 	virtual void initialize();
 	virtual ~RenderingSet();
 
-	bool IsDone() { return done; }
-
-	void Reset();	
-	void WaitForDone();
-	bool Busy();
-
-	void local_reset();
-
-	void InitialState(MPI_Comm);
-
 	void AddRendering(RenderingP r);
 	int  GetNumberOfRenderings();
 	RenderingP GetRendering(int i);
+
+	void SaveImages(string basename);
 
 	// Add a raylist to the queue of raylists to be processed
 	// Go through the RenderingSet so we can manage the number
@@ -54,6 +46,22 @@ public:
 	// spawning of the rays.
 
 	void Enqueue(RayList *, bool silent=false);
+
+  virtual int serialSize();
+  virtual unsigned char* serialize(unsigned char *ptr);
+  virtual unsigned char* deserialize(unsigned char *ptr);
+
+#ifdef PVOL_SYNCHRONOUS
+
+	bool IsDone() { return done; }
+
+	void Reset();	
+	void WaitForDone();
+	bool Busy();
+
+	void local_reset();
+
+	void InitialState(MPI_Comm);
 
 	// Decrement the number of ray lists for this set that are alive
 	// in this process.   If it had been 1, then state has changed.
@@ -74,11 +82,6 @@ public:
 	
 	void IncrementRayListCount(bool silent = false);
 
-	void SaveImages(string basename);
-
-  virtual int serialSize();
-  virtual unsigned char* serialize(unsigned char *ptr);
-  virtual unsigned char* deserialize(unsigned char *ptr);
 
 	void SetInitialState(int local_ray_count, int left_state, int right_state);
 
@@ -98,9 +101,16 @@ public:
 		Unlock();
 	}
 
+#endif // PVOL_SYNCHRONOUS
+
+	void BumpFrame() { frame++; }
+	int  GetFrame() { return frame; }
+
 protected:
 
 	vector<RenderingP> renderings;
+
+#ifdef PVOL_SYNCHRONOUS
 
 	void Lock()   { pthread_mutex_lock(&lck); 		}
 	void Unlock() { pthread_mutex_unlock(&lck); 	}
@@ -136,7 +146,25 @@ protected:
 	int get_number_of_pixels_received() { return n_pix_received; }
 	void get_number_of_pixels_received(int &k) { k = n_pix_received; }
 	
+#endif // PVOL_SYNCHRONOUS
+
 private:
+
+	int frame;
+
+  class SaveImagesMsg : public Work
+  {
+  public:
+		SaveImagesMsg(RenderingSet *r, string basename);
+
+    WORK_CLASS(SaveImagesMsg, true);
+
+  public:
+    bool CollectiveAction(MPI_Comm c, bool);
+  };
+
+#ifdef PVOL_SYNCHRONOUS
+
 	bool done;
 
   bool currently_busy, last_busy, left_busy, right_busy;
@@ -184,17 +212,6 @@ private:
     bool CollectiveAction(MPI_Comm c, bool);
   };
 
-  class SaveImagesMsg : public Work
-  {
-  public:
-		SaveImagesMsg(RenderingSet *r, string basename);
-
-    WORK_CLASS(SaveImagesMsg, true);
-
-  public:
-    bool CollectiveAction(MPI_Comm c, bool);
-  };
-
   class ResetMsg : public Work
   {
   public:
@@ -205,5 +222,7 @@ private:
   public:
     bool CollectiveAction(MPI_Comm c, bool);
   };
+
+#endif // PVOL_SYNCHRONOUS
 };
 

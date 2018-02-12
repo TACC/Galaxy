@@ -71,10 +71,12 @@ public:
 	{
 		if (framebuffer) delete[] framebuffer;
 		framebuffer = new float[width * height * 4];
+#ifndef PVOL_SYNCHRONOUS
+		if (kbuffer) delete[] kbuffer;
+#endif
 	}
 
-	void AddLocalPixels(Pixel *, int);	// Add to local FB from received send buffer
-	void AddLocalPixel(Pixel *);	      // Add to local FB from received send buffer
+	void AddLocalPixels(Pixel *, int, int);	// Add to local FB from received send buffer
 	void AddLocalPixel(RayList *, int); // Add to local FB from terminated ray
 
 	bool IsLocal();
@@ -85,8 +87,12 @@ public:
 	virtual unsigned char *deserialize(unsigned char *);
 
 	float *GetPixels() { return framebuffer; }
+	
+	void SetFrame(int f) { frame = f; }
+	int GetFrame() { return frame; }
 
 protected:
+	int frame;
 
 	// weak pointers!
 
@@ -99,6 +105,9 @@ protected:
 	int accumulation_knt;
 
 	float *framebuffer;
+#ifndef PVOL_SYNCHRONOUS
+  int *kbuffer;
+#endif
 
 	int width, height;
 };

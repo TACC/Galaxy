@@ -36,7 +36,7 @@ set (ISPC_SOURCES   ISPCObject.ispc
 										ParticlesVis.ispc
 										VolumeVis.ispc)
 
-ospray_create_library(Data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} Framework png COMPONENT lib)
+ospray_create_library(Data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} Framework ${PNG_LIBRARIES} COMPONENT lib)
 
 INSTALL(TARGETS Data DESTINATION lib)
 INSTALL(FILES Visualization.h KeyedDataObject.h 

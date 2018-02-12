@@ -72,6 +72,8 @@ private:
     bool Action(int sender);
   };
 
+#ifdef PVOL_SYNCHRONOUS
+
   class AckRaysMsg : public Work
   {
   public:
@@ -83,6 +85,8 @@ private:
     bool Action(int sender);
   };
 
+#endif // PVOL_SYNCHRONOUS
+
   class SendPixelsMsg : public Work
   {
   private:
@@ -93,11 +97,13 @@ private:
     };
     
   public:
-    SendPixelsMsg(RenderingP r, int n) : SendPixelsMsg(sizeof(Key) + sizeof(int) + (n * sizeof(Pixel)))
+    SendPixelsMsg(RenderingP r, int n) : SendPixelsMsg(sizeof(Key) + 2*sizeof(int) + (n * sizeof(Pixel)))
     {
       unsigned char *p = (unsigned char *)contents->get();
       *(Key *)p = r->getkey();
       p += sizeof(Key);
+			*(int *)p = r->GetFrame();
+			p += sizeof(int);
       *(int *)p = n;
 
       nxt = 0;
@@ -105,7 +111,7 @@ private:
 
     void StashPixel(RayList *rl, int i) 
     {
-      Pixel *p = (Pixel *)((((unsigned char *)contents->get()) + sizeof(int) + sizeof(Key))) + nxt++;
+      Pixel *p = (Pixel *)((((unsigned char *)contents->get()) + 2*sizeof(int) + sizeof(Key))) + nxt++;
 
       p->x = rl->get_x(i);
       p->y = rl->get_y(i);
@@ -123,6 +129,8 @@ private:
       unsigned char *p = (unsigned char *)contents->get();
       Key k = *(Key *)p;
       p += sizeof(Key);
+			int frame = *(int *)p;
+			p += sizeof(int);
       int n  = *(int *)p;
       p += sizeof(int);
       Pixel *pixels = (Pixel *)p;
@@ -134,9 +142,13 @@ private:
         return false;
       }
 
+#ifdef PVOL_SYNCHRONOUS
       ren->GetTheRenderingSet()->ReceivedPixels(n);
 
-      ren->AddLocalPixels(pixels, n);
+#endif // PVOL_SYNCHRONOUS
+
+			// std:cerr << "rendering frame: " << ren->GetFrame() << " frame from message " << frame << "\n";
+			ren->AddLocalPixels(pixels, n, frame);
 
 #if defined(EVENT_TRACKING)
 

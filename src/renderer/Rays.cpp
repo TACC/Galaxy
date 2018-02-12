@@ -14,6 +14,7 @@
 RayList::RayList(RenderingP r, int nrays) : RayList(nrays)
 {
 	hdr *h  = (hdr *)contents->get();
+	h->frame        = r->GetFrame();
 	h->key  				= r->getkey();
 };
 
@@ -47,6 +48,12 @@ RayList::RayList(SharedP c)
 RayList::~RayList()
 {
   free(ispc);
+}
+
+int
+RayList::GetFrame()
+{
+	return (((hdr *)contents->get()))->frame;
 }
 
 float RayList::get_ox(int i)     { return ((ispc::RayList_ispc *)ispc)->ox[i]; }
@@ -146,6 +153,7 @@ RayList::Truncate(int n)
 		hdr *new_h = (hdr *)contents->get();
 
 		new_h->key          = old_h->key;
+		new_h->frame        = old_h->frame;
 		new_h->size         = n;
 		new_h->aligned_size = new_aligned_size;
 

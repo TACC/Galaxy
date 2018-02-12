@@ -123,8 +123,10 @@ int main(int argc,  char *argv[])
 
 		for (auto rs : theRenderingSets)
     {
+std::cerr << "render start\n";
       theRenderer->Render(rs);
       rs->WaitForDone();
+std::cerr << "render end\n";
 			rs->SaveImages("image");
     }
 

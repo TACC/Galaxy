@@ -10,6 +10,10 @@ find_package(MPI)
 find_package(VTK REQUIRED NO_MODULE)
 include(${VTK_USE_FILE})
 
+find_package(PNG REQUIRED)
+
+option(PVOL_SYNCHRONOUS "synchronize on completion of RenderSets?" ON)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 

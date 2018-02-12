@@ -14,9 +14,24 @@ include_directories(${MPI_INCLUDE_PATH})
 
 set(BINS "")
 
-add_executable(vis vis.cpp)
-target_link_libraries(vis ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
-set(BINS vis ${BINS})
+if (PVOL_SYNCHRONOUS)
+
+	add_executable(vis vis.cpp)
+	target_link_libraries(vis ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
+	set(BINS vis ${BINS})
+
+else()
+
+	find_package(X11 REQUIRED)
+	find_package(OpenGL REQUIRED)
+	find_package(GLUT REQUIRED)
+  include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
+  link_directories(${X11_LIBRARIES})
+	add_executable(async async.cpp quat.cpp)
+	target_link_libraries(async ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+	set(BINS async ${BINS})
+
+endif (PVOL_SYNCHRONOUS)
 
 # add_executable(sample sample.cpp)
 # target_link_libraries(sample ${VTK_LIBRARIES} ${PVOL_LIBRARIES})

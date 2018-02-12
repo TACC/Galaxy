@@ -72,6 +72,8 @@ Volume::local_commit(MPI_Comm c)
 
 	ospSetObject(ospv, "transferFunction", ospNewTransferFunction("piecewise_linear"));
 
+	ospSetf(ospv, "samplingRate", 1.0);
+
   ospCommit(ospv);
 
   if (theOSPRayObject)
