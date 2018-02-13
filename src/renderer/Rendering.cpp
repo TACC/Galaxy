@@ -110,7 +110,11 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f)
 
   while (n-- > 0)
   {
+#ifdef PVOL_SYNCHRONOUS
+    ACCUMULATE_PIXEL(p->x, p->y, p->r, p->g, p->b, p->o);
+#else
     ACCUMULATE_PIXEL(f, p->x, p->y, p->r, p->g, p->b, p->o);
+#endif
     p++;
   }
 }
@@ -122,7 +126,11 @@ Rendering::AddLocalPixel(RayList *rl, int i)
 	int renderingFrame = GetFrame();
 	if (framebuffer)
 	{
+#ifdef PVOL_SYNCHRONOUS
+		ACCUMULATE_PIXEL(rl->get_x(i), rl->get_y(i), rl->get_r(i), rl->get_g(i), rl->get_b(i), rl->get_o(i));
+#else
 		ACCUMULATE_PIXEL(rl->GetFrame(), rl->get_x(i), rl->get_y(i), rl->get_r(i), rl->get_g(i), rl->get_b(i), rl->get_o(i));
+#endif
 	}
 	else
 		std::cerr << "Rendering::AddLocalPixel called by non-owner\n";

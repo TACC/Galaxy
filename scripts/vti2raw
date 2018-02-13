@@ -1,0 +1,42 @@
+#! /usr/bin/env python
+  
+import sys
+from vtk import *
+from vtk.util import numpy_support as ns
+
+rdr = vtkXMLImageDataReader()
+rdr.SetFileName(sys.argv[1])
+rdr.Update()
+o = rdr.GetOutput()
+a = o.GetPointData().GetArray(sys.argv[2])
+nd = ns.vtk_to_numpy(a)
+if nd.dtype == 'float32':
+  dtype = 'float'
+elif nd.dtype == 'float64'or nd.dtype == 'int32' or nd.dtype == 'int32':
+  nd = nd.astype('float32')
+  dtype = 'float'
+else:
+  dtype = 'uchar'
+
+tt = sys.argv[1].rsplit('.', 1)[0]
+if len(tt.rsplit('-')) > 1:
+  basename = sys.argv[2] + '-' + tt.rsplit('-')[1]
+else:
+  basename = sys.argv[2]
+
+volname = basename + '.vol'
+rawname = basename + '.raw'
+
+of = open(rawname, 'wb')
+nd.tofile(of)
+of.close()
+
+of = open(volname, 'w')
+of.write('%s\n' % dtype)
+of.write('%f %f %f\n' % tuple([o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]))
+of.write('%d %d %d\n' % o.GetDimensions())
+of.write('%f %f %f\n' % o.GetSpacing())
+of.write(rawname + '\n')
+of.close()
+
+

@@ -7,6 +7,7 @@ option(WITH_QT_VIEWER  		"Include QT-based viewer?" OFF)
 
 find_package(MPI)
 
+find_package(OpenGL REQUIRED)
 find_package(VTK REQUIRED NO_MODULE)
 include(${VTK_USE_FILE})
 
@@ -37,8 +38,8 @@ include(macros)
 include(ospray_macros)
 include(ispc)
 
-include_directories(${OSPRAY_SRCDIR} ${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_SRCDIR}/ospray)
-include_directories_ispc(${OSPRAY_SRCDIR} ${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_SRCDIR}/ospray)
+include_directories(${OSPRAY_SRCDIR} ${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_SRCDIR}/ospray ${embree_DIR}/include)
+include_directories_ispc(${OSPRAY_SRCDIR} ${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_SRCDIR}/ospray ${embree_DIR}/include)
 
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 SET(CMAKE_INSTALL_RPATH 
