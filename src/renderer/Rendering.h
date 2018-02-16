@@ -76,8 +76,7 @@ public:
 #endif
 	}
 
-	void AddLocalPixels(Pixel *, int, int);	// Add to local FB from received send buffer
-	void AddLocalPixel(RayList *, int); // Add to local FB from terminated ray
+	virtual void AddLocalPixels(Pixel *, int, int);	// Add to local FB from received send buffer
 
 	bool IsLocal();
 	void SaveImage(string, int);

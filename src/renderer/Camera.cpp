@@ -7,6 +7,10 @@
 #include <iostream>
 #include <math.h>
 #include <float.h>
+#include <algorithm>
+#include <vector>
+#include <ctime>
+#include <cstdlib>
 #include "tbb/tbb.h"
 #include "Application.h"
 #include "Renderer.h"
@@ -19,6 +23,22 @@
 KEYED_OBJECT_TYPE(Camera)
 
 static int RAYS_PER_PACKET = -1;
+
+using namespace std;
+
+bool permute = false;
+bool permutation_checked = false;
+vector<int> permutation;
+
+vector<int>
+generate_permutation(int num)
+{
+  std::srand (unsigned(std::time(0)));
+  std::vector<int> p;
+  for (int i=1; i<num; ++i) p.push_back(i);
+  std::random_shuffle (p.begin(), p.end() );
+  return p;
+}
 
 void
 Camera::Register()
@@ -289,6 +309,14 @@ Camera::generate_initial_rays(RenderingP rendering, Box* lbox, Box *gbox, vector
   int width, height;
   rendering->GetTheSize(width, height);
 
+	if (! permutation_checked)
+	{
+		permute = getenv("PERMUTE_PIXELS");
+		permutation_checked = true;
+		if (permute)
+			permutation = generate_permutation(width*height);
+	}
+
   vec3f veye(eye);
   vec3f vu(up);
   vec3f vdir(dir);
@@ -556,11 +584,32 @@ Camera::generate_initial_rays(RenderingP rendering, Box* lbox, Box *gbox, vector
     shared_ptr<args> a = shared_ptr<args>(new args(pixel_scaling, off_x, off_y, vr, vu, veye, center, lbox, gbox));
 
     RayList *rlist = NULL;    // Null first time
-    int knt = 0;
 
+		int iwidth  = (ixmax - ixmin) + 1;
+		int iheight = (iymax - ixmin) + 1;
+
+#if 1
+		for (int pindex = 0, knt_in_pkt = 0, tot_knt = 0; pindex < (iwidth * iheight); pindex++, knt_in_pkt++, tot_knt++)
+		{
+			int x, y;
+
+			if (permute)
+			{
+		    int p = permutation[pindex];
+				x = ixmin + (p % iwidth);
+				y = iymin + (p / iwidth);
+			}
+			else
+			{
+				x = ixmin + (pindex % iwidth);
+				y = iymin + (pindex / iwidth);
+			}
+
+#else
     for (int y = iymin, knt_in_pkt = 0, tot_knt = 0; y <= iymax; y++)
       for (int x = ixmin; x <= ixmax; x++, knt_in_pkt++, tot_knt++)
       {
+#endif
         if (!rlist || knt_in_pkt == rlist->GetRayCount())
         {
           if (rlist)
@@ -577,9 +626,8 @@ Camera::generate_initial_rays(RenderingP rendering, Box* lbox, Box *gbox, vector
           knt_in_pkt = 0;
         }
           
-				rlist->set_x(knt, x);
-				rlist->set_y(knt, y);
-        knt ++;
+				rlist->set_x(knt_in_pkt, x);
+				rlist->set_y(knt_in_pkt, y);
       }
 
       if (rlist)

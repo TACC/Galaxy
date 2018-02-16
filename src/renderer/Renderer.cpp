@@ -482,7 +482,9 @@ Renderer::ProcessRays(RayList *in)
 		// and the FB is local,  just do it.  Otherwise, set up a message buffer.
 
 		RenderingP rendering = in->GetTheRendering();
+
 		SendPixelsMsg *spmsg = (fbknt && !rendering->IsLocal()) ? new SendPixelsMsg(rendering, fbknt) : NULL;
+		Pixel *local_pixels = (fbknt && rendering->IsLocal()) ? new Pixel[fbknt] : NULL;
 
 		fbknt = 0;
 		int lclknt = 0;
@@ -501,7 +503,15 @@ Renderer::ProcessRays(RayList *in)
 			{
 				if (rendering->IsLocal())
 				{
-					rendering->AddLocalPixel(in, i);
+					Pixel *p = local_pixels + lclknt;
+
+					p->x = in->get_x(i);
+					p->y = in->get_y(i);
+					p->r = in->get_r(i);
+					p->g = in->get_g(i);
+					p->b = in->get_b(i);
+					p->o = in->get_o(i);
+
 					lclknt++;
 				}
         else
@@ -534,6 +544,12 @@ Renderer::ProcessRays(RayList *in)
       rendering->GetTheRenderingSet()->SentPixels(fbknt);
 #endif // PVOL_SYNCHRONOUS
     }
+
+		if (local_pixels)
+		{
+			rendering->AddLocalPixels(local_pixels, lclknt, rendering->GetFrame());
+			delete[] local_pixels;
+		}
 
 		for (int i = 0; i < 6; i++)
 			if (knts[i])
