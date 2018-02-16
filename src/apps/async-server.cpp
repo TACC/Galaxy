@@ -29,22 +29,36 @@ ServerRendering::initialize()
 
 pthread_mutex_t alp_lock = PTHREAD_MUTEX_INITIALIZER;
 
+int fknt[1000];
+int max_f = -1;
+
+
 void
 ServerRendering::AddLocalPixels(Pixel *p, int n, int f)
 {
-	char* ptrs[] = {(char *)&n, (char *)&f, (char *)p};
-	int   szs[] = {sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
+	if (f > max_f) max_f = f;
+	{
+		for (int i = max_f + 1; i <= f; i++)
+			fknt[i] = 0;
+		max_f = f;
+	}
+	fknt[f] += n;
 
-pthread_mutex_lock(&alp_lock);
-	skt->SendV(ptrs, szs);
-pthread_mutex_unlock(&alp_lock);
+	if (f == GetFrame())
+	{
+		char* ptrs[] = {(char *)&n, (char *)&f, (char *)p};
+		int   szs[] = {sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
+
+		pthread_mutex_lock(&alp_lock);
+		skt->SendV(ptrs, szs);
+		pthread_mutex_unlock(&alp_lock);
+	}
 
 	Rendering::AddLocalPixels(p, n, f);
 }
 
 float X0, Y0;
 float X1, Y1;
-volatile int frame = -1;
 float *buf = NULL;
 bool quit = false;
 
@@ -123,6 +137,7 @@ render_thread(void *buf)
 
 		if (sqrt(dx*dx + dy*dy) > 0.001)
 		{
+#if 0
 			vec4f this_rotation;
 			trackball(this_rotation, X0, Y0, x1, y1);
 
@@ -145,6 +160,7 @@ render_thread(void *buf)
 			theCamera->set_viewpoint(viewpoint);
 
 			theCamera->Commit();
+#endif
 			theRenderer->Render(theRenderingSet);
 
 			X0 = x1; Y0 = y1;
@@ -206,6 +222,11 @@ main(int argc, char *argv[])
 
 			switch(*(int *)buf)
 			{
+				case DEBUG:
+					for (int i = 0; i < max_f; i++)
+						std::cerr << i << ": " << fknt[i] << "\n";
+					break;
+
 				case QUIT:
 					quit = true;
 					free(buf);

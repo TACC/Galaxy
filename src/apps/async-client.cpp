@@ -25,6 +25,13 @@ pthread_t 	 receiver_tid;
 Socket *skt;
 
 void
+SendDebug()
+{
+  int n = DEBUG;
+	skt->Send((char *)&n, sizeof(n));
+}
+	
+void
 SendStart(int w, int h, string statefile)
 {
 	int sz = 3*sizeof(int) + statefile.length() + 1;
@@ -109,6 +116,11 @@ keyboard(unsigned char ch, int x, int y)
 {
   switch (ch)
 	{
+		case 0x44:
+			for (int i = 0; i <= max_f; i++)
+				std::cerr << i << ": " << fknt[i] << "\n";
+			SendDebug();
+			break;
     case 0x1B: 
 			SendQuit();
       exit(0);
@@ -141,6 +153,9 @@ motionfunc(int x, int y)
 	SendMouseMotion(-1.0 + 2.0*(float(x)/width), -1.0 + 2.0*(float(y)/height));
 }
 
+int max_f = -1;
+int fknt[1000];
+
 void *
 receiver_thread(void *)
 {
@@ -156,6 +171,14 @@ receiver_thread(void *)
 		int frame = *(int *)ptr;
 		ptr += sizeof(int);
 		Pixel *p = (Pixel *)ptr;
+
+		if (frame > max_f)
+		{
+ 	 		for (int i = max_f + 1; i <= frame;  i++)
+				fknt[i] = 0;
+			max_f = frame;
+			fknt[frame] += knt;
+		}
 
 		for (int i = 0; i < knt; i++, p++)
 		{
