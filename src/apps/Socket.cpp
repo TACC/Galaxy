@@ -1,0 +1,141 @@
+#include <iostream>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <string.h>
+
+#include "Socket.h"
+
+Socket::Socket(int port)
+{
+	std::cerr << "waiting on port " << port << "\n";
+
+  int tmp_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	unsigned int clilen;
+  struct sockaddr_in serv_addr, cli_addr;
+
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = INADDR_ANY;
+  serv_addr.sin_port = htons(port);
+
+  if (bind(tmp_sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+  {
+    perror("ERROR on binding");
+    exit(1);
+  }
+
+  listen(tmp_sockfd,5);
+
+  clilen = sizeof(cli_addr);
+  sockfd = accept(tmp_sockfd, (struct sockaddr *)&cli_addr, &clilen);
+
+  if (sockfd < 0)
+  {
+    perror("ERROR on accept");
+    exit(1);
+  }
+
+	int flag = 0;
+	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+}
+
+Socket::Socket(char *host, int port)
+{
+  struct sockaddr_in serv_addr;
+  struct hostent *server;
+
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  
+  if (sockfd < 0) 
+	{
+   perror("ERROR opening socket");
+   exit(1);
+  }
+	
+  server = gethostbyname(host);
+  
+  if (server == NULL) 
+	{
+   fprintf(stderr,"ERROR, no such host\n");
+   exit(0);
+  }
+  
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+  serv_addr.sin_port = htons(port);
+  
+  if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) 
+	{
+    perror("ERROR connecting");
+    exit(1);
+  }
+
+	int flag = 1;
+	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+}
+
+void
+Socket::Send(char *b, int n)
+{
+	write(sockfd, &n, sizeof(n));
+	while(n)
+	{
+
+		int t = write(sockfd, b, n);
+		n -= t;
+		b += t;
+	}
+}
+
+void
+Socket::SendV(char **b, int* n)
+{
+	int sz = 0;
+	for (int i = 0; n[i]; i++)
+		sz += n[i];
+
+	write(sockfd, &sz, sizeof(sz));
+	for (int i = 0; n[i]; i++)
+	{
+		int nn = n[i];
+		char *bb = b[i];
+		while(nn)
+		{
+			int t = write(sockfd, bb, nn);
+			nn -= t;
+			bb += t;
+		}
+	}
+}
+
+void
+Socket::Recv(char*& b, int& n)
+{
+	fd_set fds;
+
+	FD_ZERO(&fds);
+  FD_SET(sockfd, &fds);
+	if (select(sockfd+1, &fds, NULL, NULL, NULL) < 0)
+	{
+		perror("select()");
+		exit(1);
+	}
+	
+	read(sockfd, &n, sizeof(n));
+	b = (char *)malloc(n);
+	char *bb = b;
+	int nn = n;
+	while (nn)
+	{
+		int t = read(sockfd, bb, nn);
+		bb += t;
+		nn -= t;
+	}
+}
