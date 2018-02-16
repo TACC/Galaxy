@@ -43,6 +43,17 @@ Socket::Socket(int port)
 
 	int flag = 0;
 	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+
+	int n = 1234;
+	Send((char*)&n, sizeof(n));
+	char *b;
+	Recv(b, n);
+	if (*(int *)b != 4321) 
+	{
+		std::cerr << "error connecting socket\n";
+		exit(1);
+	}
+	std::cerr << " socket established\n";
 }
 
 Socket::Socket(char *host, int port)
@@ -79,6 +90,18 @@ Socket::Socket(char *host, int port)
 
 	int flag = 1;
 	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+
+	char *b; int n;
+	Recv(b, n);
+	if (*(int *)b != 1234) 
+	{
+		std::cerr << "error connecting socket\n";
+		exit(1);
+	}
+	n = 4321;
+	Send((char*)n, sizeof(n));
+
+	std::cerr << *(int *)b << " socket established\n";
 }
 
 void
