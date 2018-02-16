@@ -27,13 +27,17 @@ ServerRendering::initialize()
   Rendering::initialize();
 }
 
+pthread_mutex_t alp_lock = PTHREAD_MUTEX_INITIALIZER;
+
 void
 ServerRendering::AddLocalPixels(Pixel *p, int n, int f)
 {
 	char* ptrs[] = {(char *)&n, (char *)&f, (char *)p};
 	int   szs[] = {sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
+pthread_mutex_lock(&alp_lock);
 	skt->SendV(ptrs, szs);
+pthread_mutex_unlock(&alp_lock);
 
 	Rendering::AddLocalPixels(p, n, f);
 }
@@ -112,10 +116,15 @@ render_thread(void *buf)
 
 	while (! quit)
 	{
-		if ((X0 != X1) || (Y0 != Y1))
+		float x1 = X1, y1 = Y1;   // So stays unclanged by other thread during rendering
+
+		float dx = (x1 - X0);
+		float dy = (y1 - Y0);
+
+		if (sqrt(dx*dx + dy*dy) > 0.001)
 		{
 			vec4f this_rotation;
-			trackball(this_rotation, X0, Y0, X1, Y1);
+			trackball(this_rotation, X0, Y0, x1, y1);
 
 			vec4f next_rotation;
 			add_quats(this_rotation, current_rotation, next_rotation);
@@ -131,15 +140,14 @@ render_thread(void *buf)
 
 			vec3f dir = viewdirection;
 			scale(viewdistance, dir);
-			theCamera->set_viewdirection(dir);
-
+			theCamera->set_viewdirection(dir); 
 			sub(center, dir, viewpoint);
 			theCamera->set_viewpoint(viewpoint);
 
 			theCamera->Commit();
 			theRenderer->Render(theRenderingSet);
 
-			X0 = X1; Y0 = Y1;
+			X0 = x1; Y0 = y1;
 		}
 	}
 }
@@ -147,7 +155,7 @@ render_thread(void *buf)
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] statefile\n";
+  cerr << "syntax: " << a << " [options]\n";
   cerr << "options:\n";
   cerr << "  -D         run debugger\n";
   cerr << "  -A         wait for attachment\n";
@@ -178,13 +186,14 @@ main(int argc, char *argv[])
   }
 
   Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
-	skt = new Socket(port);
 
   Renderer::Initialize();
   GetTheApplication()->Run();
 
   if (GetTheApplication()->GetRank() == 0)
 	{
+		skt = new Socket(port);
+
 		pthread_t render_tid = 0;
 
 		while (!quit)
@@ -215,14 +224,12 @@ main(int argc, char *argv[])
 				case MOUSEDOWN:
 					X0 = X1 = ((float *)args)[0];
 					Y0 = Y1 = ((float *)args)[1];
-					std::cerr << "md " << X0 << " " << Y0 << "\n";
 					free(buf);
 					break;
 
 				case MOUSEMOTION:
 					X1 = ((float *)args)[0];
 					Y1 = ((float *)args)[1];
-					std::cerr << "mm " << X1 << " " << Y1 << "\n";
 					free(buf);
 					break;
 			}

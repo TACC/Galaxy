@@ -22,6 +22,10 @@ if (PVOL_SYNCHRONOUS)
 
 else()
 
+	add_executable(async-server async-server.cpp Socket.cpp quat.cpp)
+	target_link_libraries(async-server ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+		set(BINS async-server ${BINS})
+
 	find_package(X11)
 	if (X11_FOUND)
 		find_package(OpenGL REQUIRED)
@@ -38,8 +42,9 @@ else()
 		add_executable(async-client async-client.cpp Socket.cpp)
 		target_link_libraries(async-client ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
-		set(BINS async-server async-client ${BINS})
-
+		set(BINS async async-client ${BINS})
+  else(X11_FOUND)
+		message("No X11... async and async-client will not be built")
 	endif(X11_FOUND)
 
 endif (PVOL_SYNCHRONOUS)
