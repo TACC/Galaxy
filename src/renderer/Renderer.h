@@ -106,6 +106,8 @@ private:
       *(Key *)p = r->getkey();
       p += sizeof(Key);
 			*(int *)p = r->GetFrame();
+			if (r->GetFrame() < 0)
+				std::cerr << "SendPixelsMsg FRAME ERROR!\n";
 			p += sizeof(int);
       *(int *)p = n;
 

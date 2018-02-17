@@ -71,6 +71,7 @@ Renderer::Initialize()
 void
 Renderer::initialize()
 {
+	frame = 0;
   rayQmanager = new RayQManager(this);
 }
 
@@ -634,6 +635,15 @@ Renderer::SendRaysMsg::Action(int sender)
 {
 	RayList *rayList = new RayList(this->contents);
 
+	RenderingP rendering = rayList->GetTheRendering();
+	RenderingSetP renderingSet = rendering ? rendering->GetTheRenderingSet() : NULL;
+	if (! renderingSet)
+	{
+		std::cerr << "ray list arrived before rendering/renderingSet\n";
+		delete rayList;
+		return false;
+	}
+
 #if defined(EVENT_TRACKING)
 	class ReceiveRaysEvent : public Event
 	{
@@ -655,9 +665,6 @@ Renderer::SendRaysMsg::Action(int sender)
 
 	GetTheEventTracker()->Add(new ReceiveRaysEvent(sender, rayList->GetRayCount(), rayList->GetTheRendering()->GetTheRenderingSetKey()));
 #endif
-
-	RenderingP rendering = rayList->GetTheRendering();
-	RenderingSetP renderingSet = rendering->GetTheRenderingSet();
 
 	renderingSet->Enqueue(rayList);
 
