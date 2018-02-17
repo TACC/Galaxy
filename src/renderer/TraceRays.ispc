@@ -363,8 +363,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     integrate = integrate | vvis->volume_render | vvis->nIsovalues;
     uniform float s = vol->samplingStep * vol->samplingRate;
 
-print("s: % samplingStep: % samplingRate: %\n", s, vol->samplingStep, vol->samplingRate);
-
     if (step < 0 || step > s)
     {
       step = s;

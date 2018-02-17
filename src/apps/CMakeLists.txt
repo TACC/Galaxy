@@ -23,13 +23,17 @@ if (PVOL_SYNCHRONOUS)
 else()
 
 	add_executable(async-server async-server.cpp Socket.cpp quat.cpp)
-	target_link_libraries(async-server ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
-		set(BINS async-server ${BINS})
+	target_link_libraries(async-server ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
+	set(BINS async-server ${BINS})
+
+	add_executable(async-client-no-x async-client-no-x.cpp Socket.cpp)
+	target_link_libraries(async-client-no-x pthread ${PNG_LIBRARY_RELEASE})
+	set(BINS async-client-no-x ${BINS})
 
 	find_package(X11)
-	if (X11_FOUND)
-		find_package(OpenGL REQUIRED)
-		find_package(GLUT REQUIRED)
+	find_package(OpenGL)
+	find_package(GLUT)
+	if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
 		link_directories(${X11_LIBRARIES})
 
@@ -43,9 +47,9 @@ else()
 		target_link_libraries(async-client ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
 		set(BINS async async-client ${BINS})
-  else(X11_FOUND)
-		message("No X11... async and async-client will not be built")
-	endif(X11_FOUND)
+  else(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
+		message("No GUI stuff... async AND async-client will not be built")
+	endif(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 
 endif (PVOL_SYNCHRONOUS)
 

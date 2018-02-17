@@ -103,7 +103,12 @@ public:
 
 #endif // PVOL_SYNCHRONOUS
 
-	void BumpFrame() { frame++; }
+	void SetFrame(int f)
+	{
+		if (frame != -1)
+			std::cerr << "Careful - re-using RenderingSet?\n";
+		frame = f;
+	}
 	int  GetFrame() { return frame; }
 
 protected:

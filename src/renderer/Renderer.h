@@ -53,8 +53,11 @@ public:
   virtual unsigned char *Deserialize(unsigned char *);
 
 	virtual void Render(RenderingSetP);
+	int GetFrame() { return frame; }
 
 private:
+	int frame;
+
   TraceRays tracer;
   Lighting  lighting;
   RayQManager *rayQmanager;

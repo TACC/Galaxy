@@ -228,14 +228,20 @@ public:
 
     int dst = 0;
 
-    Box *lb = a->lbox;
-    Box *gb = a->gbox;
+		int nIn = r->GetRayCount();
 
     for (int i = 0, j = 0; i < r->GetRayCount(); i++)
     {
       vec3f xy_wcs, vray;
 
+#if 1
+			float tx  = r->get_x(i);
+			float aox = a->off_x;
+			float as  = a->scaling;
+      float fx  = (tx - aox) * as;
+#else
       float fx = (r->get_x(i) - a->off_x) * a->scaling;
+#endif
       float fy = (r->get_y(i) - a->off_y) * a->scaling;
 
       xy_wcs.x = a->center.x + fx * a->vr.x + fy * a->vu.x;
@@ -432,8 +438,6 @@ Camera::generate_initial_rays(RenderingP rendering, Box* lbox, Box *gbox, vector
   //      x = x * vr
   //      y = y * vu
   
-	// std::cerr << "X";
-
   if (getenv("RAYDEBUG"))
   {
     int Ymin, Ymax;

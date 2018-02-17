@@ -40,10 +40,9 @@ RenderingSet::~RenderingSet()
 void
 RenderingSet::initialize()
 {
-	frame = 0;
+	frame = -1;
 
 #ifdef PVOL_SYNCHRONOUS
-
 	pthread_mutex_init(&local_lock, NULL);
 
 	int r = GetTheApplication()->GetRank();

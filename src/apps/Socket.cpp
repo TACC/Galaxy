@@ -12,7 +12,9 @@
 
 Socket::Socket(int port)
 {
-	std::cerr << "waiting on port " << port << "\n";
+	char hn[256];
+	gethostname(hn, sizeof(hn));
+	std::cerr << "waiting on host " << hn << " port " << port << "\n";
 
   int tmp_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	unsigned int clilen;

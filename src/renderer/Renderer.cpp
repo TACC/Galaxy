@@ -89,11 +89,13 @@ Renderer::SetEpsilon(float e)
 void
 Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 {
+
 #if LOGGING
 	APP_LOG(<< "Renderer::localRendering start");
 #endif
 
-	rs->BumpFrame();
+	frame++;
+	rs->SetFrame(frame);
 
 	// This will prevent any rays from being dequeued until the initial state is sent up the tree
 	// That'll happen in the InitialState exchange
@@ -245,6 +247,15 @@ Renderer::ProcessRays(RayList *in)
 	RenderingP rendering = in->GetTheRendering();
 	RenderingSetP renderingSet = rendering->GetTheRenderingSet();
 	VisualizationP visualization = rendering->GetTheVisualization();
+
+
+#ifndef PVOL_SYNCHRONOUS
+	if (renderingSet->GetFrame() < in->GetFrame())
+	{
+		delete in;
+		return;
+	}
+#endif
 
 	// This is called when an list of rays is pulled off the
 	// RayQ.  When we are done with it we decrement the 
@@ -719,7 +730,6 @@ Renderer::Render(RenderingSetP rs)
     GetTheEventTracker()->Add(new StartRenderingEvent(rs->getkey()));
 #endif
 
-
   RenderMsg msg(this, rs);
   msg.Broadcast(true);
 }
@@ -749,8 +759,6 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   p = renderer->Deserialize(p);
   
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
-
-  // MPI_Barrier(c);  Is this necessary????
 
   renderer->localRendering(rs, c);
 

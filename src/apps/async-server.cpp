@@ -31,6 +31,7 @@ pthread_mutex_t alp_lock = PTHREAD_MUTEX_INITIALIZER;
 
 int fknt[1000];
 int max_f = -1;
+bool render_one = false;
 
 
 void
@@ -78,18 +79,20 @@ render_thread(void *buf)
   vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
   CameraP theCamera = theCameras[0];
 
-  vec3f viewpoint, viewdirection, viewup;
+  vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup;
   theCamera->get_viewpoint(viewpoint);
   theCamera->get_viewdirection(viewdirection);
   theCamera->get_viewup(viewup);
-
-  vec3f center;
   add(viewpoint, viewdirection, center);
-
-  float viewdistance = len(viewdirection);
+	
+  float aov, viewdistance = len(viewdirection);
+	theCamera->get_angle_of_view(aov);
 
   normalize(viewdirection);
   normalize(viewup);
+
+	scaled_viewdirection = viewdirection;
+	scale(viewdistance, scaled_viewdirection);
 
   vec3f viewright;
   cross(viewdirection, viewup, viewright);
@@ -110,8 +113,7 @@ render_thread(void *buf)
 	v->Commit(theDatasets);
 
   RenderingSetP theRenderingSet = RenderingSet::NewP();
-
-  RenderingP theRendering = ServerRendering::NewP();
+  RenderingP    theRendering = ServerRendering::NewP();
   theRendering->SetTheOwner(0);
   theRendering->SetTheSize(width, height);
   theRendering->SetTheDatasets(theDatasets);
@@ -119,13 +121,20 @@ render_thread(void *buf)
   theRendering->SetTheRenderingSet(theRenderingSet);
 	theRendering->SetTheCamera(theCamera);
   theRendering->Commit();
-
   theRenderingSet->AddRendering(theRendering);
   theRenderingSet->Commit();
 
-	buf = theRendering->GetPixels();
-
 	theCamera->Commit();
+
+	int frame = 0;
+	cerr << "---------------- " << frame++ << "\n";
+	cerr << "dir:  " << viewdirection.x << " " << viewdirection.y << " " << viewdirection.z << "\n";
+	cerr << "sdir: " << scaled_viewdirection.x << " " << scaled_viewdirection.y << " " << scaled_viewdirection.z << "\n";
+	cerr << "vp:   " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z << "\n";
+	cerr << "up:   " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
+	cerr << "aov:  " << aov << "\n";
+	cerr << "vdist:" << viewdistance << "\n";
+
 	theRenderer->Render(theRenderingSet);
 
 	while (! quit)
@@ -135,35 +144,65 @@ render_thread(void *buf)
 		float dx = (x1 - X0);
 		float dy = (y1 - Y0);
 
-		if (sqrt(dx*dx + dy*dy) > 0.001)
+		bool cam_moved = sqrt(dx*dx + dy*dy) > 0.001;
+		if (render_one || cam_moved)
 		{
-#if 0
-			vec4f this_rotation;
-			trackball(this_rotation, X0, Y0, x1, y1);
+			render_one = false;
 
-			vec4f next_rotation;
-			add_quats(this_rotation, current_rotation, next_rotation);
-			current_rotation = next_rotation;
+			if (cam_moved)
+			{
+				vec4f this_rotation;
+				trackball(this_rotation, X0, Y0, x1, y1);
 
-			vec3f y(0.0, 1.0, 0.0);
-			vec3f z(0.0, 0.0, 1.0);
+				vec4f next_rotation;
+				add_quats(this_rotation, current_rotation, next_rotation);
+				current_rotation = next_rotation;
 
-			rotate_vector_by_quat(y, current_rotation, viewup);
-			theCamera->set_viewup(viewup);
+				vec3f y(0.0, 1.0, 0.0);
+				vec3f z(0.0, 0.0, 1.0);
 
-			rotate_vector_by_quat(z, current_rotation, viewdirection);
+				rotate_vector_by_quat(y, current_rotation, viewup);
+				rotate_vector_by_quat(z, current_rotation, viewdirection);
 
-			vec3f dir = viewdirection;
-			scale(viewdistance, dir);
-			theCamera->set_viewdirection(dir); 
-			sub(center, dir, viewpoint);
-			theCamera->set_viewpoint(viewpoint);
+				// scaled_viewdirection.x = viewdirection.x * viewdistance;
+				// scaled_viewdirection.y = viewdirection.y * viewdistance;
+				// scaled_viewdirection.z = viewdirection.z * viewdistance;
 
-			theCamera->Commit();
-#endif
-			theRenderer->Render(theRenderingSet);
+				scaled_viewdirection = viewdirection;
+				scale(viewdistance, scaled_viewdirection);
 
-			X0 = x1; Y0 = y1;
+				sub(center, scaled_viewdirection, viewpoint);
+				X0 = x1; Y0 = y1;
+			}
+
+			cerr << "---------------- " << frame++ << "\n";
+			cerr << "dir:  " << viewdirection.x << " " << viewdirection.y << " " << viewdirection.z << "\n";
+			cerr << "sdir: " << scaled_viewdirection.x << " " << scaled_viewdirection.y << " " << scaled_viewdirection.z << "\n";
+			cerr << "vp:   " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z << "\n";
+			cerr << "up:   " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
+			cerr << "aov:  " << aov << "\n";
+			cerr << "vdist:" << viewdistance << "\n";
+
+			CameraP newCamera = Camera::NewP();
+			newCamera->set_viewdirection(scaled_viewdirection); 
+			newCamera->set_viewpoint(viewpoint);
+			newCamera->set_viewup(viewup);
+			newCamera->set_angle_of_view(aov);
+			newCamera->Commit();
+
+			RenderingSetP newRenderingSet = RenderingSet::NewP();
+			RenderingP    newRendering = ServerRendering::NewP();
+			newRendering->SetTheOwner(0);
+			newRendering->SetTheSize(width, height);
+			newRendering->SetTheDatasets(theDatasets);
+			newRendering->SetTheVisualization(v);
+			newRendering->SetTheRenderingSet(newRenderingSet);
+			newRendering->SetTheCamera(newCamera);
+			newRendering->Commit();
+			newRenderingSet->AddRendering(newRendering);
+			newRenderingSet->Commit();
+
+			theRenderer->Render(newRenderingSet);
 		}
 	}
 }
@@ -222,8 +261,12 @@ main(int argc, char *argv[])
 
 			switch(*(int *)buf)
 			{
+				case RENDER_ONE:
+					render_one = true;
+					break;
+
 				case DEBUG:
-					for (int i = 0; i < max_f; i++)
+					for (int i = 0; i <= max_f; i++)
 						std::cerr << i << ": " << fknt[i] << "\n";
 					break;
 

@@ -1,15 +1,19 @@
 #include <iostream>
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <glut.h>
+#include <stdio.h>
+#include <string.h>
+#include <string>
 #include <pthread.h>
 
 #include "Debug.h"
 #include "Socket.h"
 #include "async.h"
+#include <png.h>
 
 #include "Pixel.h"
+
+#include "mypng.h"
 
 using namespace std;
 
@@ -24,13 +28,14 @@ pthread_t 	 receiver_tid;
 
 Socket *skt;
 
-void
-SendDebug()
+void save_image();
+
+void SendDebug()
 {
   int n = DEBUG;
 	skt->Send((char *)&n, sizeof(n));
 }
-	
+
 void
 SendRenderOne()
 {
@@ -108,64 +113,6 @@ SendQuit()
 	pthread_join(receiver_tid, NULL);
 }
 
-void
-draw(void)
-{
-	if (pixels)
-	{
-		glDrawPixels(width, height, GL_RGBA, GL_FLOAT, pixels);
-		glutSwapBuffers();
-	}
-}
-
-void
-keyboard(unsigned char ch, int x, int y)
-{
-  switch (ch)
-	{
-		case 0x52:
-			SendRenderOne();
-			break;
-		case 0x44:
-			for (int i = 0; i <= max_f; i++)
-				std::cerr << i << ": " << fknt[i] << "\n";
-			SendDebug();
-			break;
-    case 0x1B: 
-			SendQuit();
-      exit(0);
-		case 0x40:
-			glutPostRedisplay();
-			break;
-  }
-}
-
-void
-menu(int item)
-{
-  switch (item) {
-		case 0x52:
-			SendRenderOne();
-			break;
-    case 0x1B: 
-			SendQuit();
-      exit(0);
-  }
-}
-
-void
-mousefunc(int k, int s, int x, int y)
-{
-  if (s == GLUT_DOWN)
-		SendMouseDown(-1.0 + 2.0*(float(x)/width), -1.0 + 2.0*(float(y)/height));
-}
-  
-void
-motionfunc(int x, int y)
-{
-	SendMouseMotion(-1.0 + 2.0*(float(x)/width), -1.0 + 2.0*(float(y)/height));
-}
-
 int max_f = -1;
 int fknt[1000];
 
@@ -185,6 +132,8 @@ receiver_thread(void *)
 		ptr += sizeof(int);
 		Pixel *p = (Pixel *)ptr;
 
+		std::cerr << knt << " pixels from frame number " << frame << "\n";
+
 		if (frame > max_f)
 		{
  	 		for (int i = max_f + 1; i <= frame;  i++)
@@ -193,24 +142,24 @@ receiver_thread(void *)
 			fknt[frame] += knt;
 		}
 
-		for (int i = 0; i < knt; i++, p++)
-		{
-			size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
-			float *pix = pixels + (offset<<2);
-			if (frameids[offset] < frame)
-			{
-				pix[0] = 0;
-				pix[1] = 0;
-				pix[2] = 0;
-				pix[3] = 0;
-			}
-			*pix++ += p->r;
-			*pix++ += p->g;
-			*pix++ += p->b;
-			*pix++ += p->o;
-		}
+    for (int i = 0; i < knt; i++, p++)
+    {
+      size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
+      float *pix = pixels + (offset<<2);
+      if (frameids[offset] < frame)
+      {
+        pix[0] = 0;
+        pix[1] = 0;
+        pix[2] = 0;
+        pix[3] = 0;
+      }
+      *pix++ += p->r;
+      *pix++ += p->g;
+      *pix++ += p->b;
+      *pix++ += p->o;
+    }
 
-		free(buf);
+ 
 	}
 
 	pthread_exit(NULL);
@@ -260,39 +209,121 @@ main(int argc, char *argv[])
   Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
 	skt = new Socket((char *)host.c_str(), port);
 
-	pixels   = (float *)malloc(width*height*4*sizeof(float));
-	frameids = (int *)malloc(width*height*sizeof(int));
-
-	memset(frameids, 0, width*height*sizeof(int));
-	for (int i = 0; i < 4*width*height; i++)
-			pixels[i] = 0.0;
-
 	pthread_t receiver_tid;
 	pthread_create(&receiver_tid, NULL, receiver_thread, NULL);
 
-  glutInit(&argc, argv);
-  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-  glutInitWindowSize(width, height);
-  glutCreateWindow("render");
-  glutIdleFunc(draw);
-  glutDisplayFunc(draw);
-  glutMotionFunc(motionfunc);
-  glutMouseFunc(mousefunc);
-  glutKeyboardFunc(keyboard);
-  glutCreateMenu(menu);
-  glutAddMenuEntry("Quit", QUIT);
-  glutAttachMenu(GLUT_RIGHT_BUTTON);
-  glClearDepth(1.0);
-  glClearColor(0.0, 0.0, 0.0, 0.0);
-  glMatrixMode(GL_PROJECTION);
-  glOrtho(-1, 1, -1, 1, -1, 1);
-  glMatrixMode(GL_MODELVIEW);
-  glRasterPos2i(-1, -1);
-  frame = 1;
+	pixels = new float[width*height*4];
+	frameids = new int[width*height*4];
+	float *p = pixels; int *f = frameids;
+	for (int i = 0; i < width*height; i++)
+		*f++ = 0, *p++ = 0.0, *p++ = 0.0, *p++ = 0.0, *p++ = 0.0;
 
 	SendStart(width, height, statefile);
 
-  glutMainLoop();
+  string cmd;
+  float x, y;
+
+  do
+  {
+    cin >> cmd;
+    if (cmd == "d")
+    {
+			float x, y;
+      cin >> x >> y;
+      SendMouseDown(x, y);
+		}
+    else if (cmd == "m")
+    {
+			float x, y;
+      cin >> x >> y;
+      SendMouseMotion(x, y);
+		}
+    else if (cmd == "D")
+			SendDebug();
+    else if (cmd == "r")
+			SendRenderOne();
+    else if (cmd == "S")
+			save_image();
+  }
+  while (cmd != "q");
+
+	delete[] pixels;
+	delete[] frameids;
 
   return 0;
+}
+
+void png_error(png_structp png_ptr, png_const_charp error_msg)
+{
+  cerr << "PNG error: " << error_msg << "\n";
+}
+
+void png_warning(png_structp png_ptr, png_const_charp warning_msg)
+{
+  cerr << "PNG error: " << warning_msg << "\n";
+}
+
+int write_png(const char *filename, int w, int h, unsigned int *rgba)
+{
+  png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, png_warning, png_error);
+  if (!png_ptr)
+  {
+    cerr << "Unable to create PNG write structure\n";
+    return 0;
+  }
+
+  png_infop info_ptr = png_create_info_struct(png_ptr);
+  if (!info_ptr)
+  {
+    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+    cerr << "Unable to create PNG info structure\n";
+    return 0;
+  }
+
+  FILE *fp = fopen(filename, "wb");
+  if (! fp)
+  {
+    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+    cerr << "Unable to open PNG file: " << filename << "\n";
+    return 0;
+  }
+
+  png_init_io(png_ptr, fp);
+
+  png_set_IHDR(png_ptr, info_ptr, w, h, 8, PNG_COLOR_TYPE_RGB_ALPHA,
+  	PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+  png_byte **rows = new png_byte *[h];
+
+  for (int i = 0; i < h; i++)
+    rows[i] = (png_bytep)(rgba + i*w);
+
+  png_set_rows(png_ptr, info_ptr, rows);
+  png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+
+  png_destroy_write_struct(&png_ptr, &info_ptr);
+  free(rows);
+
+  fclose(fp);
+
+  return 1;
+}
+
+void
+save_image()
+{
+  static int frame = 0;
+	char name[256];
+	sprintf(name, "frame-%04d.png", frame++);
+	unsigned char *buf = new unsigned char[4*width*height];
+	float *p = pixels; unsigned char *b = buf;
+	for (int i = 0; i < width*height; i++)
+  {
+    *b++ = (unsigned char)(255*(*p++));
+    *b++ = (unsigned char)(255*(*p++));
+    *b++ = (unsigned char)(255*(*p++));
+    *b++ = 0xff ; p ++;
+  }
+	write_png(name, width, height, (unsigned int *)buf);
+	delete[] buf;
 }
