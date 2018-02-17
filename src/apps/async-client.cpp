@@ -21,7 +21,7 @@ float*       pixels = NULL;
 int*         frameids = NULL;
 volatile int frame = -1;
 pthread_t 	 receiver_tid;
-
+int 				 max_f = -1;
 Socket *skt;
 
 void
@@ -166,7 +166,6 @@ motionfunc(int x, int y)
 	SendMouseMotion(-1.0 + 2.0*(float(x)/width), -1.0 + 2.0*(float(y)/height));
 }
 
-int max_f = -1;
 int fknt[1000];
 
 void *
