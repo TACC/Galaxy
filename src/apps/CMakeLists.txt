@@ -40,9 +40,6 @@ else()
 		add_executable(async async.cpp quat.cpp)
 		target_link_libraries(async ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
-		add_executable(async-server async-server.cpp Socket.cpp quat.cpp)
-		target_link_libraries(async-server ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
-
 		add_executable(async-client async-client.cpp Socket.cpp)
 		target_link_libraries(async-client ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 

@@ -52,7 +52,10 @@ KeyedObjectFactory::DropMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 KeyedObjectP
 KeyedObjectFactory::get(Key k)
 {
-	return kmap[k];
+	if (k >= kmap.size())
+		return NULL;
+	else
+		return kmap[k];
 }
 
 void
