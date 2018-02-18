@@ -62,7 +62,6 @@ SendStart(int w, int h, string statefile)
 void
 SendMouseDown(float x, float y)
 {
-	std::cerr << "md " << x << " " << y << "\n";
 	int sz = sizeof(int) + 2*sizeof(float);
 	char *buf = new char[sz];
 
@@ -80,7 +79,6 @@ SendMouseDown(float x, float y)
 void
 SendMouseMotion(float x, float y)
 {
-	std::cerr << "mm " << x << " " << y << "\n";
 	int sz = sizeof(int) + 2*sizeof(float);
 	char *buf = new char[sz];
 
@@ -173,6 +171,7 @@ void *
 receiver_thread(void *)
 {
 	char *buf; int n;
+	static int frame = 0;
   
 	while (true)
 	{
@@ -185,29 +184,31 @@ receiver_thread(void *)
 		ptr += sizeof(int);
 		Pixel *p = (Pixel *)ptr;
 
-		if (frame > max_f)
+		cerr << frame << "\n";
+
+		if (frame >= max_f)
 		{
  	 		for (int i = max_f + 1; i <= frame;  i++)
 				fknt[i] = 0;
 			max_f = frame;
 			fknt[frame] += knt;
-		}
 
-		for (int i = 0; i < knt; i++, p++)
-		{
-			size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
-			float *pix = pixels + (offset<<2);
-			if (frameids[offset] < frame)
+			for (int i = 0; i < knt; i++, p++)
 			{
-				pix[0] = 0;
-				pix[1] = 0;
-				pix[2] = 0;
-				pix[3] = 0;
+				size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
+				float *pix = pixels + (offset<<2);
+				if (frameids[offset] < frame)
+				{
+					pix[0] = 0;
+					pix[1] = 0;
+					pix[2] = 0;
+					pix[3] = 0;
+				}
+				*pix++ += p->r;
+				*pix++ += p->g;
+				*pix++ += p->b;
+				*pix++ += p->o;
 			}
-			*pix++ += p->r;
-			*pix++ += p->g;
-			*pix++ += p->b;
-			*pix++ += p->o;
 		}
 
 		free(buf);

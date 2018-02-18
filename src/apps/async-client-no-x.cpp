@@ -132,34 +132,30 @@ receiver_thread(void *)
 		ptr += sizeof(int);
 		Pixel *p = (Pixel *)ptr;
 
-		std::cerr << knt << " pixels from frame number " << frame << "\n";
-
 		if (frame > max_f)
 		{
  	 		for (int i = max_f + 1; i <= frame;  i++)
 				fknt[i] = 0;
 			max_f = frame;
 			fknt[frame] += knt;
+
+			for (int i = 0; i < knt; i++, p++)
+			{
+				size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
+				float *pix = pixels + (offset<<2);
+				if (frameids[offset] < frame)
+				{
+					pix[0] = 0;
+					pix[1] = 0;
+					pix[2] = 0;
+					pix[3] = 0;
+				}
+				*pix++ += p->r;
+				*pix++ += p->g;
+				*pix++ += p->b;
+				*pix++ += p->o;
+			}
 		}
-
-    for (int i = 0; i < knt; i++, p++)
-    {
-      size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
-      float *pix = pixels + (offset<<2);
-      if (frameids[offset] < frame)
-      {
-        pix[0] = 0;
-        pix[1] = 0;
-        pix[2] = 0;
-        pix[3] = 0;
-      }
-      *pix++ += p->r;
-      *pix++ += p->g;
-      *pix++ += p->b;
-      *pix++ += p->o;
-    }
-
- 
 	}
 
 	pthread_exit(NULL);
