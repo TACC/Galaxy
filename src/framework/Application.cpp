@@ -21,6 +21,7 @@
 using namespace rapidjson;
 
 WORK_CLASS_TYPE(Application::QuitMsg)
+WORK_CLASS_TYPE(Application::SyncMsg)
 WORK_CLASS_TYPE(Application::PrintMsg)
 
 static Application *theApplication;
@@ -101,6 +102,7 @@ Application::Application()
   pthread_mutex_lock(&lock);
 
 	QuitMsg::Register();
+	SyncMsg::Register();
   PrintMsg::Register();
 
 	KeyedObject::Register();
@@ -175,6 +177,12 @@ void Application::QuitApplication()
 	Application::Wait();
 }
 
+void Application::SyncApplication()
+{
+	SyncMsg *q = new SyncMsg(0);
+	q->Broadcast(true);
+}
+
 void Application::Start(bool with_mpi)
 {
   GetTheMessageManager()->Start(with_mpi);
@@ -193,6 +201,13 @@ Application::QuitMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 {
 	MPI_Barrier(coll_comm);
 	return true;
+}
+
+bool
+Application::SyncMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
+{
+	MPI_Barrier(coll_comm);
+	return false;
 }
 
 Work *

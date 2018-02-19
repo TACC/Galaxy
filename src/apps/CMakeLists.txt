@@ -22,7 +22,7 @@ if (PVOL_SYNCHRONOUS)
 
 else()
 
-	add_executable(async-server async-server.cpp Socket.cpp quat.cpp)
+	add_executable(async-server async-server.cpp Socket.cpp ServerRendering.cpp quat.cpp)
 	target_link_libraries(async-server ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
 	set(BINS async-server ${BINS})
 
@@ -37,11 +37,11 @@ else()
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
 		link_directories(${X11_LIBRARIES})
 
-		add_executable(async async.cpp quat.cpp)
+		add_executable(async async.cpp AsyncRendering.cpp quat.cpp)
 		target_link_libraries(async ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
 		add_executable(async-client async-client.cpp Socket.cpp)
-		target_link_libraries(async-client ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+		target_link_libraries(async-client ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
 		set(BINS async async-client ${BINS})
   else(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)

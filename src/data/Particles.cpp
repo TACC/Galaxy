@@ -8,7 +8,7 @@
 #include <fcntl.h>
 
 #include "Application.h"
-#include "Renderer.h"
+// #include "Renderer.h"
 #include "Particles.h"
 
 #include <vtkNew.h>

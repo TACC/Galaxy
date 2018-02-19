@@ -7,11 +7,14 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "Socket.h"
 
 Socket::Socket(int port)
 {
+	lock = PTHREAD_MUTEX_INITIALIZER;
+
 	char hn[256];
 	gethostname(hn, sizeof(hn));
 	std::cerr << "waiting on host " << hn << " port " << port << "\n";
@@ -109,6 +112,8 @@ Socket::Socket(char *host, int port)
 void
 Socket::Send(char *b, int n)
 {
+  pthread_mutex_lock(&lock);
+
 	write(sockfd, &n, sizeof(n));
 	while(n)
 	{
@@ -117,11 +122,15 @@ Socket::Send(char *b, int n)
 		n -= t;
 		b += t;
 	}
+
+  pthread_mutex_unlock(&lock);
 }
 
 void
 Socket::SendV(char **b, int* n)
 {
+  pthread_mutex_lock(&lock);
+
 	int sz = 0;
 	for (int i = 0; n[i]; i++)
 		sz += n[i];
@@ -138,6 +147,8 @@ Socket::SendV(char **b, int* n)
 			bb += t;
 		}
 	}
+
+  pthread_mutex_unlock(&lock);
 }
 
 void

@@ -1,5 +1,6 @@
 #include "Application.h"
-#include "Renderer.h"
+#include "Rendering.h"
+#include "Socket.h"
 
 KEYED_OBJECT_POINTER(ServerRendering)
 
@@ -11,6 +12,10 @@ public:
 	virtual void initialize();
   virtual void AddLocalPixels(Pixel *p, int n, int f);
 
+	void SetSocket(Socket *s) { socket = s; }
+
+private:
+	Socket *socket;
 };
  
 

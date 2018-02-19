@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <glut.h>
 #include <pthread.h>
+#include "ImageWriter.h"
 
 using namespace std;
 
@@ -11,6 +12,7 @@ using namespace std;
 
 #include "Application.h"
 #include "Renderer.h"
+#include "AsyncRendering.h"
 
 #include <ospray/ospray.h>
 
@@ -21,21 +23,23 @@ int width = WIDTH, height = HEIGHT;
 float X0, Y0;
 float X1, Y1;
 
-float *buf = NULL;
-
-static float r = 0.5;
-static float g = 0.5;
-static float b = 0.5;
-
 volatile int frame = -1;
 
 int  *pargc;
 char **pargv;
 
-CameraP theCamera;
-RenderingSetP theRenderingSet;
-
 string statefile("");
+
+ImageWriter image_writer("async");
+
+AsyncRenderingP theRendering = NULL;
+RenderingSetP 	theRenderingSet = NULL;
+CameraP 				theCamera = NULL;
+VisualizationP 	theVisualization = NULL;
+
+float *pixels = NULL;
+int   *frameids = NULL;
+bool  render_one = false;
 
 enum _state
 {
@@ -102,9 +106,9 @@ public:
 void
 draw(void)
 {
-	if (buf)
+	if (pixels)
 	{
-		glDrawPixels(width, height, GL_RGBA, GL_FLOAT, buf);
+		glDrawPixels(width, height, GL_RGBA, GL_FLOAT, pixels);
 		glutSwapBuffers();
 	}
 }
@@ -121,21 +125,23 @@ void
 keyboard(unsigned char ch, int x, int y)
 {
   switch (ch) {
+		case 0x52:
+			render_one = true;
+			break;
+
 		case 0x53:
 		case 0x73:
-				char buf[256];
-				sprintf(buf, "image-%04d", inum++);
-				theRenderingSet->SaveImages(buf);
+				image_writer.Write(width, height, pixels);
 				break;
+
     case 0x1B: 
 			set_state(QUITTING);
 			wait_state(DONE);
-
       GetTheApplication()->QuitApplication();
       GetTheApplication()->Wait();
-
       exit(0);
       break;
+
 		case 0x40:
 			glutPostRedisplay();
 			break;
@@ -148,12 +154,15 @@ void
 menu(int item)
 {
   switch (item) {
+		case 0x52:
+			render_one = true;
+			break;
+
 		case 0x53:
 		case 0x73:
-				char buf[256];
-				sprintf(buf, "image-%04d", inum++);
-				theRenderingSet->SaveImages(buf);
+				image_writer.Write(width, height, pixels);
 				break;
+
     case 0x1B: 
 			set_state(QUITTING);
 			wait_state(DONE);
@@ -216,105 +225,128 @@ render_thread(void *d)
   theRenderer->LoadStateFromDocument(*doc);
 
   vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
-  theCamera = theCameras[0];
+  CameraP origCamera = theCameras[0];
+
+  vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup;
+  origCamera->get_viewpoint(viewpoint);
+  origCamera->get_viewdirection(viewdirection);
+  origCamera->get_viewup(viewup);
+  add(viewpoint, viewdirection, center);
+ 
+  float aov, viewdistance = len(viewdirection);
+  origCamera->get_angle_of_view(aov);
+
+  normalize(viewdirection);
+  normalize(viewup);
+
+  scaled_viewdirection = viewdirection;
+  scale(viewdistance, scaled_viewdirection);
+
+  vec3f viewright;
+  cross(viewdirection, viewup, viewright);
+  cross(viewright, viewdirection, viewup);
+
+  vec3f y(0.0, 1.0, 0.0);
+  float ay = acos(dot(y, viewup));
+
+  vec4f current_rotation;
+  axis_to_quat(viewdirection, ay, current_rotation);
 
   DatasetsP theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
   theDatasets->Commit();
 
   vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
-  VisualizationP v = theVisualizations[0];
-	v->Commit(theDatasets);
+  theVisualization = theVisualizations[0];
+	theVisualization->Commit(theDatasets);
 
-  theRenderingSet = RenderingSet::NewP();
-
-  RenderingP theRendering = Rendering::NewP();
-  theRendering->SetTheOwner(0);
-  theRendering->SetTheSize(width, height);
-  theRendering->SetTheDatasets(theDatasets);
-  theRendering->SetTheVisualization(v);
-  theRendering->SetTheRenderingSet(theRenderingSet);
-	theRendering->SetTheCamera(theCamera);
-  theRendering->Commit();
-
-  theRenderingSet->AddRendering(theRendering);
-  theRenderingSet->Commit();
-
-	buf = theRendering->GetPixels();
-
-	vec3f viewpoint, viewdirection, viewup;
-	theCamera->get_viewpoint(viewpoint);
-	theCamera->get_viewdirection(viewdirection);
-	theCamera->get_viewup(viewup);
-
-	vec3f center;
-	add(viewpoint, viewdirection, center);
-	
-	float viewdistance = len(viewdirection);
-
-	normalize(viewdirection);
-	normalize(viewup);
-
-	vec3f viewright;
-	cross(viewdirection, viewup, viewright);
-	cross(viewright, viewdirection, viewup);
-
-	vec3f y(0.0, 1.0, 0.0);
-	float ay = acos(dot(y, viewup));
-	
-	vec4f current_rotation;
-	axis_to_quat(viewdirection, ay, current_rotation);
-
-	theRenderer->Render(theRenderingSet);
-
-#if 0
-	std::cerr << "dist: " << viewdistance << "\n";
-	std::cerr << "c: " << center.x << " " << center.y << " " << center.z << "\n";
-	std::cerr << "p: " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z << "\n";
-	std::cerr << "d: " << viewdirection.x << " " << viewdirection.y << " " << viewdirection.z << "\n";
-	std::cerr << "u: " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
-#endif
+	bool first = true;
 
 	while (get_state() == RUNNING)
 	{
-		if ((X0 != X1) || (Y0 != Y1))
+		if (render_one || first || (X0 != X1) || (Y0 != Y1))
 		{
-			// X1 = 1.00001 * X0; Y1 = Y0;
-
-			vec4f this_rotation;
-			trackball(this_rotation, X0, Y0, X1, Y1);
+			first = false;
+			if ((X0 != X1) || (Y0 != Y1))
+			{
+				vec4f this_rotation;
+				trackball(this_rotation, X0, Y0, X1, Y1);
 			
-			vec4f next_rotation;
-			add_quats(this_rotation, current_rotation, next_rotation);
-			current_rotation = next_rotation;
+				vec4f next_rotation;
+				add_quats(this_rotation, current_rotation, next_rotation);
+				current_rotation = next_rotation;
 
-			vec3f y(0.0, 1.0, 0.0);
-			vec3f z(0.0, 0.0, 1.0);
+				vec3f y(0.0, 1.0, 0.0);
+				vec3f z(0.0, 0.0, 1.0);
 
-			rotate_vector_by_quat(y, current_rotation, viewup);
-			theCamera->set_viewup(viewup);
+				rotate_vector_by_quat(y, current_rotation, viewup);
+				rotate_vector_by_quat(z, current_rotation, viewdirection);
 
-			rotate_vector_by_quat(z, current_rotation, viewdirection);
+				scaled_viewdirection = viewdirection;
+				scale(viewdistance, scaled_viewdirection);
+				sub(center, scaled_viewdirection, viewpoint);
+			}
 
-			vec3f dir = viewdirection;
-			scale(viewdistance, dir);
-			theCamera->set_viewdirection(dir);
+			if (theRenderingSet)
+			{
+				theRenderingSet->Drop();
+				theRenderingSet = NULL;
+			}
 
-			sub(center, dir, viewpoint);
-			theCamera->set_viewpoint(viewpoint);
+			if (theRendering)
+			{
+				theRendering->Drop();
+				theRendering = NULL;
+			}
 
-			theCamera->Commit();
+			if (theCamera)
+			{
+				theCamera->Drop();
+				theCamera = NULL;
+			}
 
 #if 0
-			std::cerr << "##############\n";
-			std::cerr << "dist: " << viewdistance << "\n";
-			std::cerr << "c: " << center.x << " " << center.y << " " << center.z << "\n";
-			std::cerr << "p: " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z << "\n";
-			std::cerr << "d: " << dir.x << " " << dir.y << " " << dir.z << "\n";
-			std::cerr << "u: " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
+#define PVEC(n, v) \
+			std::cerr << n << ": " << v.x << " " << v.y << " " << v.z << "\n";
+
+			PVEC("SVD", scaled_viewdirection)
+			PVEC("VP", viewpoint)
+			PVEC("UP", viewup)
+			std::cerr << "AOV: " << aov << "\n";
 #endif
 
+      theCamera = Camera::NewP();
+      theCamera->set_viewdirection(scaled_viewdirection);
+      theCamera->set_viewpoint(viewpoint);
+      theCamera->set_viewup(viewup);
+      theCamera->set_angle_of_view(aov);
+      theCamera->Commit();
+
+
+      theRendering    = AsyncRendering::NewP();
+			theRendering->SetBuffers(pixels, frameids);
+      theRendering->SetTheOwner(0);
+      theRendering->SetTheSize(width, height);
+      theRendering->SetTheDatasets(theDatasets);
+      theRendering->SetTheVisualization(theVisualization);
+      theRendering->SetTheCamera(theCamera);
+      theRendering->Commit();
+
+      theRenderingSet = RenderingSet::NewP();
+      theRenderingSet->AddRendering(theRendering);
+      theRenderingSet->Commit();
+
+			std::cerr << "+";
+
+			if (render_one)
+			{
+				GetTheApplication()->SyncApplication();
+				render_one = false;
+			}
+
 			theRenderer->Render(theRenderingSet);
+
+			std::cerr << "0";
 			
 			X0 = X1; Y0 = Y1;
 		}
@@ -347,6 +379,8 @@ main(int argc, char *argv[])
   Application theApplication(&argc, &argv);
   theApplication.Start();
 
+	AsyncRendering::RegisterClass();
+
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
@@ -375,7 +409,11 @@ main(int argc, char *argv[])
 
   if (mpiRank == 0)
   {
-    buf = (float *)malloc(width*height*4*sizeof(float));
+		pixels = new float[width*height*4];
+		frameids = new int[width*height];
+
+		for (int i = 0; i < width*height*4; i++) pixels[i] = 0.0;
+		memset(frameids, 0, width*height*sizeof(int));
 
     pthread_t tid;
     pthread_create(&tid, NULL, render_thread, NULL);

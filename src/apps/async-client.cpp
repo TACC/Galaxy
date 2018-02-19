@@ -8,14 +8,16 @@
 #include "Debug.h"
 #include "Socket.h"
 #include "async.h"
-
 #include "Pixel.h"
+#include "ImageWriter.h"
 
 using namespace std;
 
 #define WIDTH  500
 #define HEIGHT 500
 int width = WIDTH, height = HEIGHT;
+
+ImageWriter image_writer("async_client");
 
 float*       pixels = NULL;
 int*         frameids = NULL;
@@ -123,6 +125,9 @@ keyboard(unsigned char ch, int x, int y)
 {
   switch (ch)
 	{
+		case 0x53:
+			image_writer.Write(width, height, pixels);
+			break;
 		case 0x52:
 			SendRenderOne();
 			break;

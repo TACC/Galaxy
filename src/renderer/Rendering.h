@@ -13,9 +13,8 @@ KEYED_OBJECT_POINTER(Rendering)
 #include "Application.h"
 #include "KeyedObject.h"
 #include "Work.h"
-
-#include "Camera.h"
 #include "RenderingSet.h"
+#include "Camera.h"
 #include "Datasets.h"
 #include "Visualization.h"
 #include "Pixel.h"
@@ -93,12 +92,9 @@ public:
 protected:
 	int frame;
 
-	// weak pointers!
-
-	RenderingSetW  renderingSet;
-	VisualizationW visualization;
-	CameraW    		 camera;
-	DatasetsW  		 datasets;
+	VisualizationP visualization;
+	CameraP    		 camera;
+	DatasetsP  		 datasets;
 
 	int owner;
 	int accumulation_knt;

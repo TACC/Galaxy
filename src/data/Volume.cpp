@@ -8,7 +8,7 @@
 #include <fstream>
 #include "Application.h"
 #include "Volume.h"
-#include "Renderer.h"
+// #include "Renderer.h"
 #include "Datasets.h"
 
 #include <vtkNew.h>

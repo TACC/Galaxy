@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "Application.h"
-#include "Renderer.h"
+//#include "Renderer.h"
 #include "Visualization.h"
 #include "OSPUtil.h"
 #include "Visualization_ispc.h"

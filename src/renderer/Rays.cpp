@@ -11,27 +11,23 @@
 
 #define HDRSZ  ROUND_UP_TO_MULTIPLE_OF_64(sizeof(hdr))
 
-RayList::RayList(RenderingP r, int nrays) : RayList(nrays)
+RayList::RayList(RenderingSetP rs, RenderingP r, int nrays)
 {
-	hdr *h  = (hdr *)contents->get();
-	h->frame        = r->GetFrame();
-	h->key  				= r->getkey();
-};
+	theRenderingSet = rs;
+	theRendering    = r;
 
-RayList::RayList(int nrays) 
-{
 	// Want arrays to be aligned on 64 bytes, so round number of rays up to multiple of 16
+	// Need 64 bytes for header but leaves arrays aligned
 
 	int nn = ROUND_UP_TO_MULTIPLE_OF_16(nrays);
-
-	// Need 64 bytes for header (which is prob. just the key) but leaves arrays aligned
-
 	contents = smem::New(HDRSZ + nn * (20*sizeof(float) + 4*sizeof(int)));
+	
 	hdr *h  = (hdr *)contents->get();
-
-	h->key  				= -1;
-	h->size 				= nrays;
-	h->aligned_size = nn;
+	h->frame        		= r->GetFrame();
+	h->renderingKey			= r->getkey();
+	h->renderingSetKey	= rs->getkey();
+	h->size 						= nrays;
+	h->aligned_size 		= nn;
 
 	ispc = malloc(sizeof(ispc::RayList_ispc));
 	setup_ispc_pointers();
@@ -40,6 +36,10 @@ RayList::RayList(int nrays)
 RayList::RayList(SharedP c)
 {
 	contents = c;
+
+	hdr *h  = (hdr *)contents->get();
+	theRenderingSet = RenderingSet::GetByKey(h->renderingSetKey);
+	theRendering = Rendering::GetByKey(h->renderingKey);
 
 	ispc = malloc(sizeof(ispc::RayList_ispc));
 	setup_ispc_pointers();
@@ -152,10 +152,11 @@ RayList::Truncate(int n)
 
 		hdr *new_h = (hdr *)contents->get();
 
-		new_h->key          = old_h->key;
-		new_h->frame        = old_h->frame;
-		new_h->size         = n;
-		new_h->aligned_size = new_aligned_size;
+		new_h->renderingSetKey  = old_h->renderingSetKey;
+		new_h->renderingKey     = old_h->renderingKey;
+		new_h->frame         		= old_h->frame;
+		new_h->size         		= n;
+		new_h->aligned_size 		= new_aligned_size;
 
 		unsigned char *src = old_contents->get() + HDRSZ;
 		unsigned char *dst = contents->get() + HDRSZ;
@@ -178,12 +179,6 @@ RayList::Truncate(int n)
 	}
 	else
 		old_h->size = n;
-}
-
-RenderingP
-RayList::GetTheRendering()
-{
-	return Rendering::GetByKey(GetTheRenderingKey());
 }
 
 void

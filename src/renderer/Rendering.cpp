@@ -10,7 +10,7 @@
 #include "Rays.h"
 #include "Work.h"
 
-#include "mypng.h"
+#include "ImageWriter.h"
 
 KEYED_OBJECT_TYPE(Rendering)
 
@@ -43,10 +43,16 @@ Rendering::SetTheSize(int w, int h)
 
 Rendering::~Rendering() 
 {
+	// APP_LOG(<< "Rendering dtor (key " << getkey() << ")");
+
 #if LOGGING
 	APP_LOG(<< "Rendering dtor (key " << getkey() << ")");
 #endif
-  if (framebuffer) delete[] framebuffer;
+  if (framebuffer)
+	{
+		// APP_LOG(<< "FB " << std::hex << framebuffer << " deleted");
+		delete[] framebuffer;
+	}
 
 #ifndef PVOL_SYNCHRONOUS
   if (kbuffer) delete[] kbuffer;
@@ -108,6 +114,8 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f)
     exit(0);
   }
 
+	// APP_LOG("ALP " << std::hex << framebuffer);
+
   while (n-- > 0)
   {
 #ifdef PVOL_SYNCHRONOUS
@@ -125,7 +133,10 @@ Rendering::local_commit(MPI_Comm c)
   if (IsLocal())
   {
     if (framebuffer)
+		{
+			// APP_LOG("FB " << std::hex << framebuffer << " deleted (local_commit)");
       delete[] framebuffer;
+		}
 
 #ifndef PVOL_SYNCHRONOUS
 		if (kbuffer)
@@ -133,6 +144,7 @@ Rendering::local_commit(MPI_Comm c)
 #endif
 
     framebuffer = new float[width*height*4];
+		// APP_LOG("FB " << std::hex << framebuffer << " allocated (local_commit)");
 
 #ifndef PVOL_SYNCHRONOUS
 		if (kbuffer)
@@ -163,32 +175,34 @@ Rendering::local_reset()
   }
 }
 
-Key Rendering::GetTheRenderingSetKey() { return GetTheRenderingSet()->getkey(); }
-RenderingSetP Rendering::GetTheRenderingSet() { return renderingSet.lock(); }
-void Rendering::SetTheRenderingSet(Key rsk) { renderingSet = RenderingSet::GetByKey(rsk); }
-void Rendering::SetTheRenderingSet(RenderingSetP rs) { renderingSet = rs; }
+// Key Rendering::GetTheRenderingSetKey() { return GetTheRenderingSet()->getkey(); }
+// RenderingSetP Rendering::GetTheRenderingSet() { return renderingSet.lock(); }
+// void Rendering::SetTheRenderingSet(Key rsk) { renderingSet = RenderingSet::GetByKey(rsk); }
+// void Rendering::SetTheRenderingSet(RenderingSetP rs) { renderingSet = rs; }
 
-Key Rendering::GetTheCameraKey() { return GetTheCamera()->getkey(); }
-CameraP Rendering::GetTheCamera() { return camera.lock(); }
-void Rendering::SetTheCamera(Key k) { camera = Camera::GetByKey(k); }
+// Key Rendering::GetTheCameraKey() { return GetTheCamera()->getkey(); }
+// CameraP Rendering::GetTheCamera() { return camera.lock(); }
+// void Rendering::SetTheCamera(Key k) { camera = Camera::GetByKey(k); }
+
+CameraP Rendering::GetTheCamera() { return camera; }
 void Rendering::SetTheCamera(CameraP c) { camera = c; }
 
-Key Rendering::GetTheDatasetsKey() { return GetTheDatasets()->getkey(); }
-DatasetsP Rendering::GetTheDatasets() { return datasets.lock(); }
-void Rendering::SetTheDatasets(Key k) { datasets = Datasets::GetByKey(k); }
+// Key Rendering::GetTheDatasetsKey() { return GetTheDatasets()->getkey(); }
+// DatasetsP Rendering::GetTheDatasets() { return datasets.lock(); }
+// void Rendering::SetTheDatasets(Key k) { datasets = Datasets::GetByKey(k); }
+
+DatasetsP Rendering::GetTheDatasets() { return datasets; }
 void Rendering::SetTheDatasets(DatasetsP ds) { datasets = ds; }
 
-Key Rendering::GetTheVisualizationKey() { return GetTheVisualization()->getkey(); }
-VisualizationP Rendering::GetTheVisualization() { return visualization.lock(); }
-void Rendering::SetTheVisualization(Key k) { visualization = Visualization::GetByKey(k); }
+// Key Rendering::GetTheVisualizationKey() { return GetTheVisualization()->getkey(); }
+// VisualizationP Rendering::GetTheVisualization() { return visualization.lock(); }
+// void Rendering::SetTheVisualization(Key k) { visualization = Visualization::GetByKey(k); }
+
+VisualizationP Rendering::GetTheVisualization() { return visualization; }
 void Rendering::SetTheVisualization(VisualizationP dm) { visualization = dm; }
 
 void Rendering::SaveImage(string filename, int indx)
 {
-	// std::cerr << "Accumulated " << accumulation_knt << " pixels";
-
-  float *ptr = framebuffer;
-
   if ((strlen(GetTheVisualization()->GetAnnotation()) > 0) || (strlen(GetTheCamera()->GetAnnotation()) > 0))
     filename = filename + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation() + ".png"; 
   else
@@ -198,26 +212,15 @@ void Rendering::SaveImage(string filename, int indx)
     filename = filename + '_' + istr + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation() + ".png"; 
   }
 
-  unsigned char *buf = new unsigned char[4*width*height];
-  unsigned char *b = buf;
-
-  for (int i = 0; i < width*height; i++)
-  {
-    *b++ = (unsigned char)(255*(*ptr++));
-    *b++ = (unsigned char)(255*(*ptr++));
-    *b++ = (unsigned char)(255*(*ptr++));
-    *b++ = 0xff ; ptr ++;
-  }
-
-  write_png(filename.c_str(), width, height, (unsigned int *)buf);
-
-  delete[] buf;
+	ImageWriter writer;
+  writer.Write(width, height, framebuffer, filename.c_str());
 }
 
 int
 Rendering::serialSize()
 {
-  return KeyedObject::serialSize() + 3*sizeof(int) + 4*sizeof(Key);
+  // return KeyedObject::serialSize() + 3*sizeof(int) + 4*sizeof(Key);
+  return KeyedObject::serialSize() + 3*sizeof(int) + 3*sizeof(Key);
 }
 
 unsigned char *
@@ -229,8 +232,8 @@ Rendering::serialize(unsigned char *p)
   p += sizeof(int);
   *(int *)p = height;
   p += sizeof(int);
-  *(Key *)p = GetTheRenderingSet()->getkey();
-  p += sizeof(Key);
+  // *(Key *)p = GetTheRenderingSet()->getkey();
+  // p += sizeof(Key);
   *(Key *)p = GetTheVisualization()->getkey();
   p += sizeof(Key);
   *(Key *)p = GetTheCamera()->getkey();
@@ -249,8 +252,8 @@ Rendering::deserialize(unsigned char *p)
   p += sizeof(int);
   height = *(int *)p;
   p += sizeof(int);
-  renderingSet = RenderingSet::GetByKey(*(Key *)p);
-  p += sizeof(Key);
+  // renderingSet = RenderingSet::GetByKey(*(Key *)p);
+  // p += sizeof(Key);
   visualization = Visualization::GetByKey(*(Key *)p);
   p += sizeof(Key);
   camera = Camera::GetByKey(*(Key *)p);

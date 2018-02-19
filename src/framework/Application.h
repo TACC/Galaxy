@@ -65,6 +65,7 @@ public:
 	void Log(std::string);
 
   void QuitApplication();
+  void SyncApplication();
 
   int *GetPArgC() { return argcp; }
   char ***GetPArgV() { return argvp; }
@@ -127,6 +128,16 @@ private:
 	public:
 		QuitMsg(){};
 		WORK_CLASS(QuitMsg, true)
+
+	public:
+		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+	};
+
+	class SyncMsg : public Work
+	{
+	public:
+		SyncMsg(){};
+		WORK_CLASS(SyncMsg, true)
 
 	public:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);

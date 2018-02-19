@@ -13,12 +13,13 @@
 #include <cstdlib>
 #include "tbb/tbb.h"
 #include "Application.h"
-#include "Renderer.h"
+// #include "Renderer.h"
 #include "MessageManager.h"
+#include "RenderingSet.h"
+#include "Rendering.h"
 #include "Camera.h"
 #include "Rays.h"
 #include "RayFlags.h"
-#include "Rendering.h"
 
 KEYED_OBJECT_TYPE(Camera)
 
@@ -287,7 +288,7 @@ public:
 #if defined(EVENT_TRACKING)
       GetTheEventTracker()->Add(new InitialRaysEvent(r));
 #endif
-      r->GetTheRendering()->GetTheRenderingSet()->Enqueue(r, true);
+      r->GetTheRenderingSet()->Enqueue(r, true);
     }
     else
       delete r;
@@ -310,7 +311,7 @@ private:
 
 
 void
-Camera::generate_initial_rays(RenderingP rendering, Box* lbox, Box *gbox, vector<future<void>>& rvec)
+Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<void>>& rvec)
 {
   int width, height;
   rendering->GetTheSize(width, height);
@@ -474,7 +475,7 @@ Camera::generate_initial_rays(RenderingP rendering, Box* lbox, Box *gbox, vector
     if (nrays < 0)
       return;
 
-    RayList *rayList = new RayList(rendering, nrays);
+    RayList *rayList = new RayList(renderingSet, rendering, nrays);
 
     vec2i *test_rays = new vec2i[nrays];
 
@@ -540,7 +541,7 @@ Camera::generate_initial_rays(RenderingP rendering, Box* lbox, Box *gbox, vector
 			GetTheEventTracker()->Add(new InitialRaysEvent(rayList));
 #endif
 
-			rayList->GetTheRendering()->GetTheRenderingSet()->Enqueue(rayList, true);
+			rayList->GetTheRenderingSet()->Enqueue(rayList, true);
 		}
 		else
 			delete rayList;
@@ -623,9 +624,9 @@ Camera::generate_initial_rays(RenderingP rendering, Box* lbox, Box *gbox, vector
           }
 
           if (tot_knt + rays_per_packet > totalRays)
-            rlist = new RayList(rendering, totalRays - tot_knt);
+            rlist = new RayList(renderingSet, rendering, totalRays - tot_knt);
           else
-            rlist = new RayList(rendering, rays_per_packet);
+            rlist = new RayList(renderingSet, rendering, rays_per_packet);
 
           knt_in_pkt = 0;
         }

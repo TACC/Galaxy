@@ -9,11 +9,9 @@
 #include "Debug.h"
 #include "Socket.h"
 #include "async.h"
-#include <png.h>
 
 #include "Pixel.h"
-
-#include "mypng.h"
+#include "ImageWriter.h"
 
 using namespace std;
 
@@ -28,6 +26,7 @@ pthread_t 	 receiver_tid;
 
 Socket *skt;
 
+ImageWriter image_writer("async-client-no-x");
 void save_image();
 
 void SendDebug()
@@ -249,77 +248,8 @@ main(int argc, char *argv[])
   return 0;
 }
 
-void png_error(png_structp png_ptr, png_const_charp error_msg)
-{
-  cerr << "PNG error: " << error_msg << "\n";
-}
-
-void png_warning(png_structp png_ptr, png_const_charp warning_msg)
-{
-  cerr << "PNG error: " << warning_msg << "\n";
-}
-
-int write_png(const char *filename, int w, int h, unsigned int *rgba)
-{
-  png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, png_warning, png_error);
-  if (!png_ptr)
-  {
-    cerr << "Unable to create PNG write structure\n";
-    return 0;
-  }
-
-  png_infop info_ptr = png_create_info_struct(png_ptr);
-  if (!info_ptr)
-  {
-    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-    cerr << "Unable to create PNG info structure\n";
-    return 0;
-  }
-
-  FILE *fp = fopen(filename, "wb");
-  if (! fp)
-  {
-    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-    cerr << "Unable to open PNG file: " << filename << "\n";
-    return 0;
-  }
-
-  png_init_io(png_ptr, fp);
-
-  png_set_IHDR(png_ptr, info_ptr, w, h, 8, PNG_COLOR_TYPE_RGB_ALPHA,
-  	PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-
-  png_byte **rows = new png_byte *[h];
-
-  for (int i = 0; i < h; i++)
-    rows[i] = (png_bytep)(rgba + i*w);
-
-  png_set_rows(png_ptr, info_ptr, rows);
-  png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-
-  png_destroy_write_struct(&png_ptr, &info_ptr);
-  free(rows);
-
-  fclose(fp);
-
-  return 1;
-}
-
 void
 save_image()
 {
-  static int frame = 0;
-	char name[256];
-	sprintf(name, "frame-%04d.png", frame++);
-	unsigned char *buf = new unsigned char[4*width*height];
-	float *p = pixels; unsigned char *b = buf;
-	for (int i = 0; i < width*height; i++)
-  {
-    *b++ = (unsigned char)(255*(*p++));
-    *b++ = (unsigned char)(255*(*p++));
-    *b++ = (unsigned char)(255*(*p++));
-    *b++ = 0xff ; p ++;
-  }
-	write_png(name, width, height, (unsigned int *)buf);
-	delete[] buf;
+	image_writer.Write(width, height, pixels);
 }

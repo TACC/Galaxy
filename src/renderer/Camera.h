@@ -12,7 +12,7 @@ using namespace std;
 KEYED_OBJECT_POINTER(Camera)
 
 #include "Work.h"
-#include "Rendering.h"
+// #include "Rendering.h"
 #include "dtypes.h"
 
 #include "rapidjson/document.h"
@@ -66,7 +66,7 @@ public:
 
 	void print();
 
-	void generate_initial_rays(RenderingP, Box*, Box*, vector<future<void>>& rvec);
+	void generate_initial_rays(RenderingSetP, RenderingP, Box*, Box*, vector<future<void>>& rvec);
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *ptr);

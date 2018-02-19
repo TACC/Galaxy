@@ -1,3 +1,7 @@
+#pragma once
+
+#include <pthread.h>
+
 class Socket 
 {
 public: 
@@ -9,4 +13,5 @@ public:
 
 private:
 	int sockfd;
+	pthread_mutex_t lock;
 };

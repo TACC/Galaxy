@@ -111,7 +111,7 @@ Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 	for (int i = 0; i < rs->GetNumberOfRenderings(); i++)
 	{
 		rs->GetRendering(i)->SetFrame(rs->GetFrame());
-		LaunchInitialRays(rs->GetRendering(i), rvec);
+		LaunchInitialRays(rs, rs->GetRendering(i), rvec);
 	}
 
 	for (auto& r : rvec)
@@ -130,14 +130,14 @@ Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 }
 
 void
-Renderer::LaunchInitialRays(RenderingP rendering, vector<future<void>>& rvec)
+Renderer::LaunchInitialRays(RenderingSetP renderingSet, RenderingP rendering, vector<future<void>>& rvec)
 {
   CameraP camera = rendering->GetTheCamera();
   VisualizationP visualization = rendering->GetTheVisualization();
   Box *gBox = visualization->get_global_box();
   Box *lBox = visualization->get_local_box();
 
-	camera->generate_initial_rays(rendering, lBox, gBox, rvec);
+	camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec);
 }
 
 void
@@ -166,7 +166,7 @@ Renderer::SaveStateToDocument(Document& doc)
 class LocalPixelContributionsEvent : public Event
 {
 public:
-	LocalPixelContributionsEvent(int c, RenderingP r) : count(c), rset(r->GetTheRenderingSetKey()) { }
+	LocalPixelContributionsEvent(int c, RenderingSetP r) : count(c), rset(r->getkey()) { }
 
 protected:
 	void print(ostream& o)
@@ -183,7 +183,7 @@ private:
 class RemotePixelContributionsEvent : public Event
 {
 public:
-	RemotePixelContributionsEvent(int c, RenderingP r) : count(c), dest(r->GetTheOwner()),  rset(r->GetTheRenderingSetKey()) {}
+	RemotePixelContributionsEvent(int c, int owner, RenderingSetP rs) : count(c), dest(owner),  rset(rs->getkey()) {}
 
 protected:
 	void print(ostream& o)
@@ -245,8 +245,9 @@ Renderer::ProcessRays(RayList *in)
 	int nSent    = 0;
 
 
-	RenderingP rendering = in->GetTheRendering();
-	RenderingSetP renderingSet = rendering->GetTheRenderingSet();
+	RenderingSetP  renderingSet  = in->GetTheRenderingSet();
+	RenderingP     rendering     = in->GetTheRendering();
+
 	VisualizationP visualization = rendering->GetTheVisualization();
 
 
@@ -479,7 +480,7 @@ Renderer::ProcessRays(RayList *in)
 			if (knts[i])
 			{
 				ray_offsets[i] = new int[in->GetRayCount()];
-				ray_lists[i]   = new RayList(rendering, knts[i]);
+				ray_lists[i]   = new RayList(renderingSet, rendering, knts[i]);
 			}
 			else
 			{
@@ -537,10 +538,10 @@ Renderer::ProcessRays(RayList *in)
 #if defined(EVENT_TRACKING)
 
 		if (lclknt)
-			GetTheEventTracker()->Add(new LocalPixelContributionsEvent(lclknt, rendering));
+			GetTheEventTracker()->Add(new LocalPixelContributionsEvent(lclknt, renderingSet));
 
 		if (fbknt)
-			GetTheEventTracker()->Add(new RemotePixelContributionsEvent(fbknt, rendering));
+			GetTheEventTracker()->Add(new RemotePixelContributionsEvent(fbknt, r->GetTheOwner(), renderingSet));
 
 #endif
 
@@ -553,7 +554,7 @@ Renderer::ProcessRays(RayList *in)
       spmsg->Send(rendering->GetTheOwner());
 
 #ifdef PVOL_SYNCHRONOUS
-      rendering->GetTheRenderingSet()->SentPixels(fbknt);
+      renderingSet()->SentPixels(fbknt);
 #endif // PVOL_SYNCHRONOUS
     }
 
@@ -624,7 +625,7 @@ void
 Renderer::SendRays(RayList *rays, int destination)
 {
 #if defined(EVENT_TRACKING)
-	GetTheEventTracker()->Add(new SendRaysEvent(destination,  rays->GetRayCount(), rays->GetTheRendering()->GetTheRenderingSetKey()));
+	GetTheEventTracker()->Add(new SendRaysEvent(destination,  rays->GetRayCount(), rays->GetTheRenderingSet()->getkey()));
 #endif
 	SendRaysMsg msg(rays);
 	msg.Send(destination);
@@ -636,7 +637,7 @@ Renderer::SendRaysMsg::Action(int sender)
 	RayList *rayList = new RayList(this->contents);
 
 	RenderingP rendering = rayList->GetTheRendering();
-	RenderingSetP renderingSet = rendering ? rendering->GetTheRenderingSet() : NULL;
+	RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
 	if (! renderingSet)
 	{
 		std::cerr << "ray list arrived before rendering/renderingSet\n";
@@ -663,7 +664,7 @@ Renderer::SendRaysMsg::Action(int sender)
 		Key rset;
 	};
 
-	GetTheEventTracker()->Add(new ReceiveRaysEvent(sender, rayList->GetRayCount(), rayList->GetTheRendering()->GetTheRenderingSetKey()));
+	GetTheEventTracker()->Add(new ReceiveRaysEvent(sender, rayList->GetRayCount(), rayList->GetTheRenderingSet()->getkey()));
 #endif
 
 	renderingSet->Enqueue(rayList);

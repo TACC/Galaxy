@@ -9,7 +9,8 @@ class RayList
 {
 	struct hdr
 	{
-		Key key;
+		Key renderingKey;
+		Key renderingSetKey;
 		int size;
 		int frame;
 		int aligned_size;
@@ -48,12 +49,8 @@ public:
     dstRayList->set_term(dstRayIndex, srcRayList->get_term(srcRayIndex));
 	}
 
-	RayList(int nrays);
-	RayList(RenderingP r, int nrays);
+	RayList(RenderingSetP rs, RenderingP r, int nrays);
 	RayList(SharedP contents);
-
-	Key GetTheRenderingKey() { return ((struct hdr *)contents->get())->key; }
-	RenderingP GetTheRendering();
 
 	int GetRayCount() { return ((struct hdr *)contents->get())->size; }
 	SharedP get_ptr() { return contents; };
@@ -117,7 +114,13 @@ public:
 	void set_type(int i, int v);
 	void set_term(int i, int v);
 
+	RenderingSetP GetTheRenderingSet() { return theRenderingSet; }
+	RenderingP    GetTheRendering() { return theRendering; }
+
 private:
+	RenderingP theRendering;
+	RenderingSetP theRenderingSet;
+
 	SharedP contents;
 	void* ispc;
 };

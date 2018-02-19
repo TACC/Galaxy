@@ -46,7 +46,7 @@ public:
 
   virtual void localRendering(RenderingSetP, MPI_Comm);
 
-  void LaunchInitialRays(RenderingP, vector<future<void>>&);
+  void LaunchInitialRays(RenderingSetP, RenderingP, vector<future<void>>&);
 
   virtual int SerialSize();
   virtual unsigned char *Serialize(unsigned char *);

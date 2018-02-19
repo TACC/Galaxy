@@ -26,8 +26,7 @@ set (CPP_SOURCES     Visualization.cpp
                      ParticlesVis.cpp
                      DataObjects.cpp
                      OSPRayObject.cpp
-                     OSPUtil.cpp
-                     mypng.cpp)
+                     OSPUtil.cpp)
 
 set (ISPC_SOURCES   ISPCObject.ispc 
 										Visualization.ispc 
@@ -43,6 +42,6 @@ INSTALL(FILES Visualization.h KeyedDataObject.h
             Particles.h Volume.h Box.h ISPCObject.h
             Geometry.h OSPRayObject.h OSPUtil.h
             Datasets.h Vis.h VolumeVis.h ParticlesVis.h
-            MappedVis.h DataObjects.h mypng.h
+            MappedVis.h DataObjects.h ImageWriter.h
         DESTINATION include)
 

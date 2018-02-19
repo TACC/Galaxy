@@ -4,8 +4,10 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include "Socket.h"
 #include "Application.h"
 #include "Renderer.h"
+#include "ServerRendering.h"
 #include <ospray/ospray.h>
 
 #include "Debug.h"
@@ -14,49 +16,10 @@ using namespace std;
 
 #include "async.h"
 #include "quat.h"
-#include "async-server.h"
-#include "Socket.h"
 
 Socket *skt;
 
-KEYED_OBJECT_TYPE(ServerRendering)
-
-void
-ServerRendering::initialize()
-{
-  Rendering::initialize();
-}
-
-pthread_mutex_t alp_lock = PTHREAD_MUTEX_INITIALIZER;
-
-int fknt[1000];
-int max_f = -1;
 bool render_one = false;
-
-
-void
-ServerRendering::AddLocalPixels(Pixel *p, int n, int f)
-{
-	if (f > max_f) max_f = f;
-	{
-		for (int i = max_f + 1; i <= f; i++)
-			fknt[i] = 0;
-		max_f = f;
-	}
-	fknt[f] += n;
-
-	if (f == GetFrame())
-	{
-		char* ptrs[] = {(char *)&n, (char *)&f, (char *)p};
-		int   szs[] = {sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
-
-		pthread_mutex_lock(&alp_lock);
-		skt->SendV(ptrs, szs);
-		pthread_mutex_unlock(&alp_lock);
-	}
-
-	Rendering::AddLocalPixels(p, n, f);
-}
 
 float X0, Y0;
 float X1, Y1;
@@ -118,13 +81,10 @@ render_thread(void *buf)
   theRendering->SetTheSize(width, height);
   theRendering->SetTheDatasets(theDatasets);
   theRendering->SetTheVisualization(v);
-  theRendering->SetTheRenderingSet(theRenderingSet);
 	theRendering->SetTheCamera(theCamera);
   theRendering->Commit();
   theRenderingSet->AddRendering(theRendering);
   theRenderingSet->Commit();
-
-	theCamera->Commit();
 
 	int frame = 0;
 	cerr << "---------------- " << frame++ << "\n";
@@ -196,7 +156,6 @@ render_thread(void *buf)
 			newRendering->SetTheSize(width, height);
 			newRendering->SetTheDatasets(theDatasets);
 			newRendering->SetTheVisualization(v);
-			newRendering->SetTheRenderingSet(newRenderingSet);
 			newRendering->SetTheCamera(newCamera);
 			newRendering->Commit();
 			newRenderingSet->AddRendering(newRendering);
@@ -263,11 +222,6 @@ main(int argc, char *argv[])
 			{
 				case RENDER_ONE:
 					render_one = true;
-					break;
-
-				case DEBUG:
-					for (int i = 0; i <= max_f; i++)
-						std::cerr << i << ": " << fknt[i] << "\n";
 					break;
 
 				case QUIT:
