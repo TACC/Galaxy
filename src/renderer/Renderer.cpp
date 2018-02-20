@@ -37,6 +37,7 @@ using namespace std;
 using namespace rapidjson;
 
 WORK_CLASS_TYPE(Renderer::RenderMsg);
+WORK_CLASS_TYPE(Renderer::StatisticsMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);
 WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
 
@@ -62,6 +63,7 @@ Renderer::Initialize()
   RenderMsg::Register();
   SendRaysMsg::Register();
   SendPixelsMsg::Register();
+  StatisticsMsg::Register();
 #ifdef PVOL_SYNCHRONOUS
   AckRaysMsg::Register();
 #endif // PVOL_SYNCHRONOUS
@@ -73,6 +75,7 @@ Renderer::initialize()
 {
 	frame = 0;
   rayQmanager = new RayQManager(this);
+	pthread_mutex_init(&lock, NULL);
 }
 
 Renderer::~Renderer()
@@ -90,6 +93,11 @@ Renderer::SetEpsilon(float e)
 void
 Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 {
+	sent_pixels_count = 0;
+  ProcessRays_input_count = 0;
+  ProcessRays_continued_count = 0;
+	for (int i = 0; i < 6; i++)
+		sent_to_neighbor_count[i] = 0;
 
 #if LOGGING
 	APP_LOG(<< "Renderer::localRendering start");
@@ -250,10 +258,14 @@ Renderer::ProcessRays(RayList *in)
 
 	VisualizationP visualization = rendering->GetTheVisualization();
 
+	pthread_mutex_lock(&lock);
+	ProcessRays_input_count += nIn;
+	pthread_mutex_unlock(&lock);
 
 #ifndef PVOL_SYNCHRONOUS
 	if (renderingSet->GetFrame() < in->GetFrame())
 	{
+		std::cerr << "R";
 		delete in;
 		return;
 	}
@@ -271,6 +283,11 @@ Renderer::ProcessRays(RayList *in)
 		RayList *out = tracer.Trace(lighting, visualization, in);
     if (out)
        //std::cerr << "out list: " << out->get_header_address() << "\n";
+
+			pthread_mutex_lock(&lock);
+			ProcessRays_continued_count += out->GetRayCount();
+			pthread_mutex_unlock(&lock);
+
 
 		// the result are the generated rays which by definition begin
 		// here, so we enqueue them for local processing - again, not silent
@@ -468,6 +485,13 @@ Renderer::ProcessRays(RayList *in)
 				std::cerr << "CLASSIFICATION ERROR 1\n";
 		}
 
+		pthread_mutex_lock(&lock);
+		for (int i = 0; i < 6; i++)
+			sent_to_neighbor_count[i] += knts[i];
+		ProcessRays_continued_count += knts[6];
+		pthread_mutex_unlock(&lock);
+
+
 		// Allocate a RayList for each remote destination's rays   These'll get
 		// bound up in a SendRays message later, without a copy.   7 lists, for
 		// each of 6 faces and stay here
@@ -551,6 +575,10 @@ Renderer::ProcessRays(RayList *in)
 
     if (spmsg)
     {
+			pthread_mutex_lock(&lock);
+			sent_pixels_count += fbknt;
+			pthread_mutex_unlock(&lock);
+
       spmsg->Send(rendering->GetTheOwner());
 
 #ifdef PVOL_SYNCHRONOUS
@@ -560,6 +588,10 @@ Renderer::ProcessRays(RayList *in)
 
 		if (local_pixels)
 		{
+			pthread_mutex_lock(&lock);
+			sent_pixels_count += lclknt;
+			pthread_mutex_unlock(&lock);
+
 			rendering->AddLocalPixels(local_pixels, lclknt, rendering->GetFrame());
 			delete[] local_pixels;
 		}
@@ -597,6 +629,29 @@ Renderer::ProcessRays(RayList *in)
 #if DO_TIMING
   timer.stop();
 #endif
+}
+
+void
+Renderer::_dumpStats()
+{
+	stringstream s;
+	s << "frame: " << GetFrame() << "\n";
+	s << "ProcessRays saw " << ProcessRays_input_count << " rays\n";
+	s << "ProcessRays continued " << ProcessRays_continued_count << " rays\n";
+	s << "ProcessRays sent " << sent_pixels_count << " pixels\n";
+	s << "sent to neighbors:";
+	for (int i = 0; i < 6; i++)
+		s << sent_to_neighbor_count[i] << (i == 5 ? "\n" : " ");
+	APP_LOG(<< s.str());
+}
+
+bool
+Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
+{
+	char *ptr = (char *)contents->get();
+  Key key = *(Key *)ptr;
+  RendererP r = GetByKey(key);
+	r->_dumpStats();
 }
 
 #if defined(EVENT_TRACKING)
@@ -740,6 +795,12 @@ Renderer::Render(RenderingSetP rs)
 
   RenderMsg msg(this, rs);
   msg.Broadcast(true);
+}
+
+void Renderer::DumpStatistics()
+{
+  StatisticsMsg *s = new StatisticsMsg(this);
+  s->Broadcast(true);
 }
 
 Renderer::RenderMsg::~RenderMsg()
