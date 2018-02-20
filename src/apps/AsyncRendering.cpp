@@ -24,7 +24,9 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int f)
 	{
 		for (int i = 0; i < n; i++, p++)
 		{
-			size_t offset = (((height-1)-(p->y))*GetTheWidth() + ((GetTheWidth()-1)-(p->x)));
+			// size_t offset = (((height-1)-(p->y))*GetTheWidth() + ((GetTheWidth()-1)-(p->x)));
+			size_t offset = (p->y*GetTheWidth() + p->x);
+
 			float *pix = pixels + (offset<<2);
 			if (frameids[offset] < frame)
 			{
