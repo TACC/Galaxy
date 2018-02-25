@@ -73,6 +73,8 @@ MappedVis::LoadFromJSON(Value& v)
 		Document tf;
 		tf.Parse(s.c_str());
 
+		opacitymap.clear();
+
 		Value& oa = tf["Points"];
 		for (int i = 0; i < oa.Size(); i += 4)
 		{
@@ -81,6 +83,8 @@ MappedVis::LoadFromJSON(Value& v)
       xo.y = oa[i+1].GetDouble();
       opacitymap.push_back(xo);
 		}
+
+		colormap.clear();
 
 		Value& rgba = tf["RGBPoints"];
 		for (int i = 0; i < rgba.Size(); i += 4)
