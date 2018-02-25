@@ -58,14 +58,40 @@ public:
 	void DumpStatistics();
 	void _dumpStats();
 
+	void _sent_to(int d, int n)
+	{
+		pthread_mutex_lock(&lock);
+		sent_to[d] += n;
+		pthread_mutex_unlock(&lock);
+	}
+
+	void _received_from(int d, int n)
+	{
+		pthread_mutex_lock(&lock);
+		received_from[d] += n;
+		pthread_mutex_unlock(&lock);
+	}
+
+	void add_originated_ray_count(int n)
+	{
+		pthread_mutex_lock(&lock);
+		originated_ray_count += n;
+		pthread_mutex_unlock(&lock);
+	}
+
 
 private:
 	int frame;
 
-	int sent_to_neighbor_count[6];
+	int sent_ray_count;
+	int terminated_ray_count;
+	int originated_ray_count;
+	int secondary_ray_count;
+	int sent_pixels_count;
 	int ProcessRays_input_count;
 	int ProcessRays_continued_count;
-	int sent_pixels_count;
+	int *sent_to;
+	int *received_from;
 
   TraceRays tracer;
   Lighting  lighting;
@@ -130,8 +156,6 @@ private:
       *(Key *)p = r->getkey();
       p += sizeof(Key);
 			*(int *)p = r->GetFrame();
-			if (r->GetFrame() < 0)
-				std::cerr << "SendPixelsMsg FRAME ERROR!\n";
 			p += sizeof(int);
       *(int *)p = n;
 

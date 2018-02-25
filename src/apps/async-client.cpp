@@ -215,6 +215,7 @@ receiver_thread(void *)
 				*pix++ += p->o;
 			}
 		}
+		else std::cerr << "S";
 
 		free(buf);
 	}

@@ -47,6 +47,8 @@ WORK_CLASS_TYPE(Renderer::AckRaysMsg);
 
 KEYED_OBJECT_TYPE(Renderer)
 
+Renderer *Renderer::theRenderer;
+
 void
 Renderer::Initialize()
 {
@@ -73,9 +75,14 @@ Renderer::Initialize()
 void
 Renderer::initialize()
 {
+  theRenderer = this;
+
 	frame = 0;
   rayQmanager = new RayQManager(this);
 	pthread_mutex_init(&lock, NULL);
+
+	sent_to = new int[GetTheApplication()->GetSize()];
+	received_from = new int[GetTheApplication()->GetSize()];
 }
 
 Renderer::~Renderer()
@@ -93,11 +100,15 @@ Renderer::SetEpsilon(float e)
 void
 Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 {
+	originated_ray_count = 0;
+	sent_ray_count = 0;
 	sent_pixels_count = 0;
+	terminated_ray_count = 0;
+	secondary_ray_count = 0;
   ProcessRays_input_count = 0;
   ProcessRays_continued_count = 0;
-	for (int i = 0; i < 6; i++)
-		sent_to_neighbor_count[i] = 0;
+	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+		sent_to[i] = 0, received_from[i] = 0;
 
 #if LOGGING
 	APP_LOG(<< "Renderer::localRendering start");
@@ -209,17 +220,36 @@ private:
 class ProcessRayListEvent : public Event
 {
 public:
-	ProcessRayListEvent(int ni, int nn, int nr, int ns) : nIn(ni), nNew(nn), nRetired(nr), nSent(ns) {}
+	ProcessRayListEvent(int ni, int nn, int nr, int ns) : nIn(ni), nSecondaries(nn), nRetired(nr), nSent(ns) {}
 
 protected:
 	void print(ostream& o)
 	{
 		Event::print(o);
-		o << " ProcessRayList:  " << nIn << " in, " << nNew << " spawned, " << nRetired << " retired and " << nSent << " sent";
+		o << " ProcessRayList:  " << nIn << " in, " << nSecondaries << " spawned, " << nRetired << " retired and " << nSent << " sent";
 	}
 
 private:
-	int nIn, nNew, nSent, nRetired;
+	int nIn, nSecondaries, nSent, nRetired;
+};
+
+class TraceRaysEvent : public Event
+{
+public:
+	TraceRaysEvent(int n, int p, int s, Key r) : nin(n), phits(p), secondaries(s), rset(r) {};
+
+protected:
+	void print(ostream& o)
+	{
+		Event::print(o);
+		o << "TraceRays processed " << nin << " rays with " << phits << " hits generating " << secondaries << " secondaries for set " << rset;
+	}
+
+	private:
+		int nin;
+		int phits;
+		int secondaries;
+		Key rset;
 };
 
 // These defines categorize rays after a pass through the tracer
@@ -233,9 +263,6 @@ private:
 
 #define NO_NEIGHBOR 		-1
 
-int xyzzy = -1;
-int xyzzy1 = -1;
-
 void
 Renderer::ProcessRays(RayList *in)
 {
@@ -248,27 +275,29 @@ Renderer::ProcessRays(RayList *in)
 	bool first = true;
 
 	int nIn = in->GetRayCount();
-	int nRetired = 0;
-	int nNew		 = 0;
-	int nSent    = 0;
 
+	int nProcessed   = 0;		// total number of rays processed
+	int nSecondaries = 0;		// secondaries generated
+	int nRaysSent    = 0;		// number of rays sent to neighbors
+	int nPixelsSent  = 0;		// number of pixel contributions sent
+	int nErrors      = 0;		// number dropped on floor due to error
+	int nKept        = 0;		// number that continued into the next loop
+	int nRetired     = 0;    // Number rays that expire without producing
+													// a pixel contribtution - shadow or AO rays that hit
 
 	RenderingSetP  renderingSet  = in->GetTheRenderingSet();
 	RenderingP     rendering     = in->GetTheRendering();
-
 	VisualizationP visualization = rendering->GetTheVisualization();
 
-	pthread_mutex_lock(&lock);
-	ProcessRays_input_count += nIn;
-	pthread_mutex_unlock(&lock);
-
 #ifndef PVOL_SYNCHRONOUS
+#if 0
 	if (renderingSet->GetFrame() < in->GetFrame())
 	{
 		std::cerr << "R";
 		delete in;
 		return;
 	}
+#endif
 #endif
 
 	// This is called when an list of rays is pulled off the
@@ -280,42 +309,19 @@ Renderer::ProcessRays(RayList *in)
 
 	while (in)
 	{
+		nProcessed += in->GetRayCount();
+
 		RayList *out = tracer.Trace(lighting, visualization, in);
-    if (out)
-       //std::cerr << "out list: " << out->get_header_address() << "\n";
-
-			pthread_mutex_lock(&lock);
-			ProcessRays_continued_count += out->GetRayCount();
-			pthread_mutex_unlock(&lock);
-
 
 		// the result are the generated rays which by definition begin
 		// here, so we enqueue them for local processing - again, not silent
 
 		if (out)
 		{
-				nNew += out->GetRayCount();
+				nSecondaries += out->GetRayCount();
+				renderingSet->Enqueue(out);
 
 #if defined(EVENT_TRACKING)
-				class TraceRaysEvent : public Event
-				{
-				public:
-					TraceRaysEvent(int n, int p, int s, Key r) : nin(n), phits(p), secondaries(s), rset(r) {};
-
-				protected:
-					void print(ostream& o)
-					{
-						Event::print(o);
-						o << "TraceRays processed " << nin << " rays with " << phits << " hits generating " << secondaries << " secondaries for set " << rset;
-					}
-
-					private:
-						int nin;
-						int phits;
-						int secondaries;
-						Key rset;
-				};
-
 				int nHits = 0;
 				for (int i = 0; i < in->GetRayCount(); i++)
 				{
@@ -326,14 +332,8 @@ Renderer::ProcessRays(RayList *in)
 
 				GetTheEventTracker()->Add(new TraceRaysEvent(in->GetRayCount(), nHits, out->GetRayCount(), out->GetTheRendering()->GetTheRenderingSetKey()));
 #endif
-				renderingSet->Enqueue(out);
-			}
+		}
 
-#if LOGGING
-		if (out)
-			APP_LOG(<< out->GetRayCount() << " secondaries re-enqueued");
-#endif
-		
 		// Tracing the input rays classifies them by termination class.
 		// If a ray is terminated by a boundary, it needs to get moved
 		// to the corresponding neighbor (unless there is none, in which 
@@ -381,16 +381,17 @@ Renderer::ProcessRays(RayList *in)
         if ((term & RAY_OPAQUE) | ((term & RAY_BOUNDARY) && exit_face == NO_NEIGHBOR) | (term & RAY_TIMEOUT))
         {
           classification[i] = SEND_TO_FB;
-					nRetired ++;
+					nPixelsSent++;
         }
-        else if (term & RAY_BOUNDARY)  // then exit_face is not NO_NEIGHBOR
+        else if (term & RAY_BOUNDARY)  // then exit_face is not NO_NEIGHBOR -- see previous condition
         {
           classification[i] = exit_face;  // 0 ... 5
-					nSent ++;
+					nRaysSent ++;
         }
         else		// Translucent surface
         {
 					classification[i] = KEEP_HERE;
+					nKept++;
         }
       }
     
@@ -407,12 +408,12 @@ Renderer::ProcessRays(RayList *in)
           {
             // Then send the rays to the FB to add in the directed-light contribution
             classification[i] = SEND_TO_FB;
-						nRetired ++;
+						nPixelsSent ++;
           }
           else
 					{
             classification[i] = exit_face;  // 0 ... 5
-						nSent ++;
+						nRaysSent ++;
 					}
         }
         else if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
@@ -425,7 +426,7 @@ Renderer::ProcessRays(RayList *in)
         {
           std::cerr << "Shadow ray died for an unknown reason\n";
           classification[i] = DROP_ON_FLOOR;
-					nRetired ++;
+					nErrors ++;
         }
       }
 
@@ -439,12 +440,12 @@ Renderer::ProcessRays(RayList *in)
           {
             // Then send the rays to the FB to add in the ambient-light contribution
             classification[i] = SEND_TO_FB;
-						nRetired ++;
+						nPixelsSent ++;
           }
           else
 					{
             classification[i] = exit_face;	// 0 ... 5
-						nSent ++;
+						nRaysSent ++;
 					}
         }
         else if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
@@ -455,13 +456,13 @@ Renderer::ProcessRays(RayList *in)
         else if (term == RAY_TIMEOUT)
         {
 					classification[i] = SEND_TO_FB;
-					nRetired ++;
+					nPixelsSent ++;
 				}
 				else
 				{
 					std::cerr << "AO ray died for an unknown reason\n";
 					classification[i] = -1;
-					nRetired ++;
+					nErrors ++;
 				}
 			}
 		}
@@ -485,13 +486,6 @@ Renderer::ProcessRays(RayList *in)
 				std::cerr << "CLASSIFICATION ERROR 1\n";
 		}
 
-		pthread_mutex_lock(&lock);
-		for (int i = 0; i < 6; i++)
-			sent_to_neighbor_count[i] += knts[i];
-		ProcessRays_continued_count += knts[6];
-		pthread_mutex_unlock(&lock);
-
-
 		// Allocate a RayList for each remote destination's rays   These'll get
 		// bound up in a SendRays message later, without a copy.   7 lists, for
 		// each of 6 faces and stay here
@@ -499,6 +493,7 @@ Renderer::ProcessRays(RayList *in)
 		RayList *ray_lists[7];
 		int     *ray_offsets[7];
 		Ray     *rays[7];
+		int     totRaysSent = 0;
 		for (int i = 0; i < 7; i++)
 		{
 			if (knts[i])
@@ -512,14 +507,21 @@ Renderer::ProcessRays(RayList *in)
 				ray_offsets[i] = NULL;
 			}
 			
+			if (i < 6) totRaysSent += knts[i];
 			knts[i] = 0;
 		}
+
+		if (totRaysSent != nRaysSent)
+			std::cerr << "ERROR totRaysSent != nRaysSent\n";
+
+		if (knts[6] != nKept)
+			std::cerr << "ERROR knts[6] != nKept\n";
+		
 
 		// Now we sort the rays based on the classification.   If SEND_TO_FB
 		// and the FB is local,  just do it.  Otherwise, set up a message buffer.
 
 		RenderingP rendering = in->GetTheRendering();
-
 		SendPixelsMsg *spmsg = (fbknt && !rendering->IsLocal()) ? new SendPixelsMsg(rendering, fbknt) : NULL;
 		Pixel *local_pixels = (fbknt && rendering->IsLocal()) ? new Pixel[fbknt] : NULL;
 
@@ -569,16 +571,9 @@ Renderer::ProcessRays(RayList *in)
 
 #endif
 
-   // std::cerr << "nRet " << nRetired << " lclknt " << lclknt << " fbknt " << fbknt << "\n";
-
-  // If we AREN't the owner of the Rendering send the pixels to its owner
-
+		// If we AREN't the owner of the Rendering send the pixels to its owner
     if (spmsg)
-    {
-			pthread_mutex_lock(&lock);
-			sent_pixels_count += fbknt;
-			pthread_mutex_unlock(&lock);
-
+		{
       spmsg->Send(rendering->GetTheOwner());
 
 #ifdef PVOL_SYNCHRONOUS
@@ -588,10 +583,6 @@ Renderer::ProcessRays(RayList *in)
 
 		if (local_pixels)
 		{
-			pthread_mutex_lock(&lock);
-			sent_pixels_count += lclknt;
-			pthread_mutex_unlock(&lock);
-
 			rendering->AddLocalPixels(local_pixels, lclknt, rendering->GetFrame());
 			delete[] local_pixels;
 		}
@@ -605,20 +596,38 @@ Renderer::ProcessRays(RayList *in)
 #endif // PVOL_SYNCHRONOUS
 				
 				SendRays(ray_lists[i], visualization->get_neighbor(i));
+set_raylist_guard();
 				delete ray_lists[i];
+clear_raylist_guard();
 				delete[] ray_offsets[i];
 			}
 
 		if (classification) delete[] classification;
-
 		if (ray_offsets[6]) delete[] ray_offsets[6];
+
+set_raylist_guard();
 		delete in;
+clear_raylist_guard();
 
 		in = ray_lists[6];
+		if (in && in->GetRayCount() > 0)
+			std::cerr << "ProcessRays looping\n";
 	}
 
+	pthread_mutex_lock(&lock);
+	ProcessRays_input_count 		+= nIn;
+  sent_ray_count 							+= nRaysSent;
+  terminated_ray_count 				+= nRetired;
+  secondary_ray_count	  		  += nSecondaries;
+  sent_pixels_count           += nPixelsSent;
+  ProcessRays_continued_count += nKept;
+	pthread_mutex_unlock(&lock);
+
+	if (nProcessed != (nIn + nSecondaries)) std::cerr << "ERROR 1: nProcessed != (nIn + nSecondaries)\n";
+	if (nProcessed != (nRaysSent + nPixelsSent + nRetired)) std::cerr << "ERROR 2: nProcessed != (nRaysSent + nPixelsSent + nRetired)\n";
+
 #if defined(EVENT_TRACKING)
-	GetTheEventTracker()->Add(new ProcessRayListEvent(nIn, nNew, nRetired, nSent));
+	GetTheEventTracker()->Add(new ProcessRayListEvent(nIn, nSecondaries, nRetired, nSent));
 #endif
 
 #ifdef PVOL_SYNCHRONOUS
@@ -635,13 +644,22 @@ void
 Renderer::_dumpStats()
 {
 	stringstream s;
-	s << "frame: " << GetFrame() << "\n";
+	s << "\noriginated ray count " << originated_ray_count << " rays\n";
+	s << "sent ray count " << sent_ray_count << " rays\n";
+	s << "terminated ray count " << terminated_ray_count << " rays\n";
+	s << "secondary ray count " << secondary_ray_count << " rays\n";
 	s << "ProcessRays saw " << ProcessRays_input_count << " rays\n";
 	s << "ProcessRays continued " << ProcessRays_continued_count << " rays\n";
 	s << "ProcessRays sent " << sent_pixels_count << " pixels\n";
 	s << "sent to neighbors:";
-	for (int i = 0; i < 6; i++)
-		s << sent_to_neighbor_count[i] << (i == 5 ? "\n" : " ");
+
+	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+		s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
+
+	s << "received from neighbors:";
+	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+		s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
+	
 	APP_LOG(<< s.str());
 }
 
@@ -652,6 +670,7 @@ Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
   Key key = *(Key *)ptr;
   RendererP r = GetByKey(key);
 	r->_dumpStats();
+  return false;
 }
 
 #if defined(EVENT_TRACKING)
@@ -679,6 +698,9 @@ private:
 void 
 Renderer::SendRays(RayList *rays, int destination)
 {
+	int nReceived = rays->GetRayCount();
+	_sent_to(destination, nReceived);
+
 #if defined(EVENT_TRACKING)
 	GetTheEventTracker()->Add(new SendRaysEvent(destination,  rays->GetRayCount(), rays->GetTheRenderingSet()->getkey()));
 #endif
@@ -691,12 +713,17 @@ Renderer::SendRaysMsg::Action(int sender)
 {
 	RayList *rayList = new RayList(this->contents);
 
+	int nReceived = rayList->GetRayCount();
+	Renderer::GetTheRenderer()->_received_from(sender, nReceived);
+
 	RenderingP rendering = rayList->GetTheRendering();
 	RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
 	if (! renderingSet)
 	{
 		std::cerr << "ray list arrived before rendering/renderingSet\n";
+set_raylist_guard();
 		delete rayList;
+clear_raylist_guard();
 		return false;
 	}
 

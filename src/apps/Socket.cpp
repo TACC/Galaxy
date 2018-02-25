@@ -14,11 +14,10 @@
 Socket::Socket(int port)
 {
 	pthread_mutex_init(&lock, NULL);
-	std::cerr << "initted lock at " << std::hex << ((long)&lock) << "\n";
 
 	char hn[256];
 	gethostname(hn, sizeof(hn));
-	std::cerr << "waiting on host " << hn << " port " << port << "\n";
+	std::cerr << "Waiting at port " << port << " on host " << hn << "\n";
 
   int tmp_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	unsigned int clilen;
@@ -59,13 +58,12 @@ Socket::Socket(int port)
 		std::cerr << "error connecting socket\n";
 		exit(1);
 	}
-	std::cerr << " socket established\n";
+	std::cerr << "socket established\n";
 }
 
 Socket::Socket(char *host, int port)
 {
 	pthread_mutex_init(&lock, NULL);
-	std::cerr << "initted lock at " << std::hex << ((long)&lock) << "\n";
 
   struct sockaddr_in serv_addr;
   struct hostent *server;
@@ -110,15 +108,13 @@ Socket::Socket(char *host, int port)
 	n = 4321;
 	Send((char*)&n, sizeof(n));
 
-	std::cerr << *(int *)b << " socket established\n";
+	std::cerr << *(int *)b << "socket established\n";
 }
 
 void
 Socket::Send(char *b, int n)
 {
-	std::cerr << "locking lock at " << std::hex << ((long)&lock) << "\n";
   pthread_mutex_lock(&lock);
-	std::cerr << "got lock at " << std::hex << ((long)&lock) << "\n";
 
 	write(sockfd, &n, sizeof(n));
 	while(n)
@@ -129,17 +125,13 @@ Socket::Send(char *b, int n)
 		b += t;
 	}
 
-	std::cerr << "freeing lock at " << std::hex << ((long)&lock) << "\n";
   pthread_mutex_unlock(&lock);
-	std::cerr << "freed lock at " << std::hex << ((long)&lock) << "\n";
 }
 
 void
 Socket::SendV(char **b, int* n)
 {
-	std::cerr << "locking lock at " << std::hex << ((long)&lock) << "\n";
   pthread_mutex_lock(&lock);
-	std::cerr << "got lock at " << std::hex << ((long)&lock) << "\n";
 
 	int sz = 0;
 	for (int i = 0; n[i]; i++)
@@ -158,9 +150,7 @@ Socket::SendV(char **b, int* n)
 		}
 	}
 
-	std::cerr << "freeing lock at " << std::hex << ((long)&lock) << "\n";
   pthread_mutex_unlock(&lock);
-	std::cerr << "freed lock at " << std::hex << ((long)&lock) << "\n";
 }
 
 void

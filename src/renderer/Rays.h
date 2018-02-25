@@ -5,6 +5,9 @@
 
 #include "smem.h"
 
+void set_raylist_guard();
+void clear_raylist_guard();
+
 class RayList 
 {
 	struct hdr

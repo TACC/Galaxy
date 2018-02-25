@@ -31,6 +31,8 @@ RenderingSetP   	theRenderingSet = NULL;
 CameraP         	theCamera = NULL;
 VisualizationP  	theVisualization = NULL;
 
+RendererP theRenderer;
+
 void *
 render_thread(void *buf)
 {
@@ -38,7 +40,7 @@ render_thread(void *buf)
 	int height = ((int *)buf)[2];
 	string statefile = string(((char *)buf) + 3*sizeof(int));
 
-  RendererP theRenderer = Renderer::NewP();
+  theRenderer = Renderer::NewP();
   Document *doc = GetTheApplication()->OpenInputState(statefile);
   theRenderer->LoadStateFromDocument(*doc);
 
@@ -94,6 +96,7 @@ render_thread(void *buf)
   theRenderingSet->AddRendering(theRendering);
   theRenderingSet->Commit();
 
+#if 0
 	int frame = 0;
 	cerr << "---------------- " << frame++ << "\n";
 	cerr << "dir:  " << viewdirection.x << " " << viewdirection.y << " " << viewdirection.z << "\n";
@@ -102,6 +105,7 @@ render_thread(void *buf)
 	cerr << "up:   " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
 	cerr << "aov:  " << aov << "\n";
 	cerr << "vdist:" << viewdistance << "\n";
+#endif
 
 	theRenderer->Render(theRenderingSet);
 
@@ -132,10 +136,6 @@ render_thread(void *buf)
 				rotate_vector_by_quat(y, current_rotation, viewup);
 				rotate_vector_by_quat(z, current_rotation, viewdirection);
 
-				// scaled_viewdirection.x = viewdirection.x * viewdistance;
-				// scaled_viewdirection.y = viewdirection.y * viewdistance;
-				// scaled_viewdirection.z = viewdirection.z * viewdistance;
-
 				scaled_viewdirection = viewdirection;
 				scale(viewdistance, scaled_viewdirection);
 
@@ -143,6 +143,7 @@ render_thread(void *buf)
 				X0 = x1; Y0 = y1;
 			}
 
+#if 0
       if (theRenderingSet)
       {
         theRenderingSet->Drop();
@@ -188,7 +189,13 @@ render_thread(void *buf)
 			theRenderingSet = RenderingSet::NewP();
 			theRenderingSet->AddRendering(theRendering);
 			theRenderingSet->Commit();
-
+#else
+			theCamera->set_viewdirection(scaled_viewdirection); 
+			theCamera->set_viewpoint(viewpoint);
+			theCamera->set_viewup(viewup);
+			theCamera->set_angle_of_view(aov);
+			theCamera->Commit();
+#endif
 			theRenderer->Render(theRenderingSet);
 		}
 	}
@@ -248,6 +255,14 @@ main(int argc, char *argv[])
 
 			switch(*(int *)buf)
 			{
+				case SYNC:
+					theApplication.SyncApplication();
+					break;
+
+				case STATS: 
+					theRenderer->DumpStatistics();
+					break;
+
 				case RENDER_ONE:
 					render_one = true;
 					break;

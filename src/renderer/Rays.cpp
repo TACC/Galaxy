@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <pthread.h>
 #include "Application.h"
 #include "Rays.h"
 #include "RayFlags.h"
@@ -8,7 +9,6 @@
 
 #define ROUND_UP_TO_MULTIPLE_OF_16(a) ((a + 15) & (~15))
 #define ROUND_UP_TO_MULTIPLE_OF_64(a) ((a + 63) & (~63))
-
 #define HDRSZ  ROUND_UP_TO_MULTIPLE_OF_64(sizeof(hdr))
 
 RayList::RayList(RenderingSetP rs, RenderingP r, int nrays)
@@ -45,8 +45,16 @@ RayList::RayList(SharedP c)
 	setup_ispc_pointers();
 }
 
+static bool guard = true;
+pthread_mutex_t rl_lock = PTHREAD_MUTEX_INITIALIZER;
+void set_raylist_guard() { pthread_mutex_lock(&rl_lock); guard = false; }
+void clear_raylist_guard() { guard = true; pthread_mutex_unlock(&rl_lock); }
+
+
 RayList::~RayList()
 {
+	if (guard)
+		std::cerr << "bad raylist deletion\n";
   free(ispc);
 }
 
