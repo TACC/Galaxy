@@ -62,36 +62,73 @@ MappedVis::LoadFromJSON(Value& v)
 {
 	Vis::LoadFromJSON(v);
 
-  if (v.HasMember("colormap"))
-  {
-    colormap.clear();
+	if (v.HasMember("transfer function"))
+	{
+	  ifstream ifs(v["transfer function"].GetString());
+		stringstream ss;
+		ss << ifs.rdbuf();
 
-    Value& cm = v["colormap"];
-    for (int i = 0; i < cm.Size(); i++)
-    {
-      vec4f xrgb;
-      xrgb.x = cm[i][0].GetDouble();
-      xrgb.y = cm[i][1].GetDouble();
-      xrgb.z = cm[i][2].GetDouble();
-      xrgb.w = cm[i][3].GetDouble();
-      colormap.push_back(xrgb);
-    }
-  }
+		string s(ss.str().substr(ss.str().find('[')+1, ss.str().rfind(']') - 2));
 
-  if (v.HasMember("opacitymap"))
-  {
-    opacitymap.clear();
+		Document tf;
+		tf.Parse(s.c_str());
 
-    Value& om = v["opacitymap"];
-    for (int i = 0; i < om.Size(); i++)
-    {
-      vec2f xo;
-      xo.x = om[i][0].GetDouble();
-      xo.y = om[i][1].GetDouble();
+		opacitymap.clear();
+
+		Value& oa = tf["Points"];
+		for (int i = 0; i < oa.Size(); i += 4)
+		{
+			vec2f xo;
+      xo.x = oa[i+0].GetDouble();
+      xo.y = oa[i+1].GetDouble();
       opacitymap.push_back(xo);
-    }
-  }
+		}
 
+		colormap.clear();
+
+		Value& rgba = tf["RGBPoints"];
+		for (int i = 0; i < rgba.Size(); i += 4)
+		{
+      vec4f xrgb;
+      xrgb.x = rgba[i+0].GetDouble();
+      xrgb.y = rgba[i+1].GetDouble();
+      xrgb.z = rgba[i+2].GetDouble();
+      xrgb.w = rgba[i+3].GetDouble();
+      colormap.push_back(xrgb);
+		}
+	}
+	else
+	{
+		if (v.HasMember("colormap"))
+		{
+			colormap.clear();
+
+			Value& cm = v["colormap"];
+			for (int i = 0; i < cm.Size(); i++)
+			{
+				vec4f xrgb;
+				xrgb.x = cm[i][0].GetDouble();
+				xrgb.y = cm[i][1].GetDouble();
+				xrgb.z = cm[i][2].GetDouble();
+				xrgb.w = cm[i][3].GetDouble();
+				colormap.push_back(xrgb);
+			}
+		}
+
+		if (v.HasMember("opacitymap"))
+		{
+			opacitymap.clear();
+
+			Value& om = v["opacitymap"];
+			for (int i = 0; i < om.Size(); i++)
+			{
+				vec2f xo;
+				xo.x = om[i][0].GetDouble();
+				xo.y = om[i][1].GetDouble();
+				opacitymap.push_back(xo);
+			}
+		}
+  }
 }
 
 void 

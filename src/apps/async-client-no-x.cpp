@@ -140,7 +140,9 @@ receiver_thread(void *)
 
 			for (int i = 0; i < knt; i++, p++)
 			{
-				size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
+				// size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
+				size_t offset = (p->y*width + p->x);
+
 				float *pix = pixels + (offset<<2);
 				if (frameids[offset] < frame)
 				{

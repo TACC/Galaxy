@@ -105,10 +105,6 @@ public:
 
 	void SetFrame(int f)
 	{
-#if 0
-		if (frame != -1)
-			std::cerr << "Careful - re-using RenderingSet?\n";
-#endif
 		frame = f;
 	}
 	int  GetFrame() { return frame; }

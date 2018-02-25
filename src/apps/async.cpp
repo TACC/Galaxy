@@ -36,6 +36,7 @@ AsyncRenderingP theRendering = NULL;
 RenderingSetP 	theRenderingSet = NULL;
 CameraP 				theCamera = NULL;
 VisualizationP 	theVisualization = NULL;
+DatasetsP 			theDatasets = NULL;
 
 float *pixels = NULL;
 int   *frameids = NULL;
@@ -225,16 +226,16 @@ render_thread(void *d)
   theRenderer->LoadStateFromDocument(*doc);
 
   vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
-  CameraP origCamera = theCameras[0];
+  theCamera = theCameras[0];
 
   vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup;
-  origCamera->get_viewpoint(viewpoint);
-  origCamera->get_viewdirection(viewdirection);
-  origCamera->get_viewup(viewup);
+  theCamera->get_viewpoint(viewpoint);
+  theCamera->get_viewdirection(viewdirection);
+  theCamera->get_viewup(viewup);
   add(viewpoint, viewdirection, center);
  
   float aov, viewdistance = len(viewdirection);
-  origCamera->get_angle_of_view(aov);
+  theCamera->get_angle_of_view(aov);
 
   normalize(viewdirection);
   normalize(viewup);
@@ -252,13 +253,26 @@ render_thread(void *d)
   vec4f current_rotation;
   axis_to_quat(viewdirection, ay, current_rotation);
 
-  DatasetsP theDatasets = Datasets::NewP();
+  theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
   theDatasets->Commit();
 
   vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
   theVisualization = theVisualizations[0];
 	theVisualization->Commit(theDatasets);
+
+	theRendering = AsyncRendering::NewP();
+	theRendering->SetBuffers(pixels, frameids);
+	theRendering->SetTheOwner(0);
+	theRendering->SetTheSize(width, height);
+	theRendering->SetTheDatasets(theDatasets);
+	theRendering->SetTheVisualization(theVisualization);
+	theRendering->SetTheCamera(theCamera);
+	theRendering->Commit();
+
+	theRenderingSet = RenderingSet::NewP();
+	theRenderingSet->AddRendering(theRendering);
+	theRenderingSet->Commit();
 
 	bool first = true;
 
@@ -287,24 +301,6 @@ render_thread(void *d)
 				sub(center, scaled_viewdirection, viewpoint);
 			}
 
-			if (theRenderingSet)
-			{
-				theRenderingSet->Drop();
-				theRenderingSet = NULL;
-			}
-
-			if (theRendering)
-			{
-				theRendering->Drop();
-				theRendering = NULL;
-			}
-
-			if (theCamera)
-			{
-				theCamera->Drop();
-				theCamera = NULL;
-			}
-
 #if 0
 #define PVEC(n, v) \
 			std::cerr << n << ": " << v.x << " " << v.y << " " << v.z << "\n";
@@ -315,26 +311,18 @@ render_thread(void *d)
 			std::cerr << "AOV: " << aov << "\n";
 #endif
 
-      theCamera = Camera::NewP();
       theCamera->set_viewdirection(scaled_viewdirection);
       theCamera->set_viewpoint(viewpoint);
       theCamera->set_viewup(viewup);
       theCamera->set_angle_of_view(aov);
       theCamera->Commit();
+#if 0
 
-
-      theRendering    = AsyncRendering::NewP();
-			theRendering->SetBuffers(pixels, frameids);
-      theRendering->SetTheOwner(0);
-      theRendering->SetTheSize(width, height);
-      theRendering->SetTheDatasets(theDatasets);
-      theRendering->SetTheVisualization(theVisualization);
       theRendering->SetTheCamera(theCamera);
       theRendering->Commit();
 
-      theRenderingSet = RenderingSet::NewP();
-      theRenderingSet->AddRendering(theRendering);
       theRenderingSet->Commit();
+#endif
 
 			std::cerr << "+";
 

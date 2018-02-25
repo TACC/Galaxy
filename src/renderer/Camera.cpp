@@ -108,36 +108,84 @@ Camera::SaveToJSON(Value&v, Document& doc)
 void 
 Camera::LoadFromJSON(Value& v)
 {
-  if (v.HasMember("annotation"))
-    SetAnnotation(string(v["annotation"].GetString()));
+	if (v.IsString())
+	{
+    ifstream ifs(v.GetString());
+    stringstream ss;
+    ss << ifs.rdbuf();
 
-  eye[0] = v["viewpoint"][0].GetDouble();
-  eye[1] = v["viewpoint"][1].GetDouble();
-  eye[2] = v["viewpoint"][2].GetDouble();
+    Document tf;
+    tf.Parse(ss.str().c_str());
 
-  if (v.HasMember("viewdirection"))
-  {
-    dir[0] = v["viewdirection"][0].GetDouble();
-    dir[1] = v["viewdirection"][1].GetDouble();
-    dir[2] = v["viewdirection"][2].GetDouble();
-  }
-  else if (v.HasMember("viewcenter"))
-  {
-    dir[0] = v["viewcenter"][0].GetDouble() - eye[0];
-    dir[1] = v["viewcenter"][1].GetDouble() - eye[1];
-    dir[2] = v["viewcenter"][2].GetDouble() - eye[2];
-  }
-  else
-  {
-      std::cerr << "need either viewdirection or viewcenter\n";
-      exit(1);
-  }
+		float center[3];
 
-  up[0] = v["viewup"][0].GetDouble();
-  up[1] = v["viewup"][1].GetDouble();
-  up[2] = v["viewup"][2].GetDouble();
+		Value& properties = tf["PVCameraConfiguration"]["Proxy"]["Property"];
+		for (int i = 0; i < properties.Size(); i++)
+		{
+			Value& p = properties[i];
 
-  aov = v["aov"].GetDouble();
+			if (p.HasMember("@name"))
+			{
+				string name = p["@name"].GetString();
+				if (name == "CameraPosition")
+				{
+					eye[0] = atof(p["Element"][0]["@value"].GetString());
+					eye[1] = atof(p["Element"][1]["@value"].GetString());
+					eye[2] = atof(p["Element"][2]["@value"].GetString());
+				}
+				else if (name == "CameraFocalPoint")
+				{
+					center[0] = atof(p["Element"][0]["@value"].GetString());
+					center[1] = atof(p["Element"][1]["@value"].GetString());
+					center[2] = atof(p["Element"][2]["@value"].GetString());
+				}
+				else if (name == "CameraViewUp")
+				{
+					up[0] = atof(p["Element"][0]["@value"].GetString());
+					up[1] = atof(p["Element"][1]["@value"].GetString());
+					up[2] = atof(p["Element"][2]["@value"].GetString());
+				}
+				else if (name == "CameraViewAngle")
+					aov = atof(p["Element"]["@value"].GetString());
+			}
+		}
+		dir[0] = center[0] - eye[0];
+		dir[1] = center[1] - eye[1];
+		dir[2] = center[2] - eye[2];
+	}
+	else
+	{
+		if (v.HasMember("annotation"))
+			SetAnnotation(string(v["annotation"].GetString()));
+
+		eye[0] = v["viewpoint"][0].GetDouble();
+		eye[1] = v["viewpoint"][1].GetDouble();
+		eye[2] = v["viewpoint"][2].GetDouble();
+
+		if (v.HasMember("viewdirection"))
+		{
+			dir[0] = v["viewdirection"][0].GetDouble();
+			dir[1] = v["viewdirection"][1].GetDouble();
+			dir[2] = v["viewdirection"][2].GetDouble();
+		}
+		else if (v.HasMember("viewcenter"))
+		{
+			dir[0] = v["viewcenter"][0].GetDouble() - eye[0];
+			dir[1] = v["viewcenter"][1].GetDouble() - eye[1];
+			dir[2] = v["viewcenter"][2].GetDouble() - eye[2];
+		}
+		else
+		{
+				std::cerr << "need either viewdirection or viewcenter\n";
+				exit(1);
+		}
+
+		up[0] = v["viewup"][0].GetDouble();
+		up[1] = v["viewup"][1].GetDouble();
+		up[2] = v["viewup"][2].GetDouble();
+
+		aov = v["aov"].GetDouble();
+	}
 }
 
 void
