@@ -13,11 +13,11 @@
 
 Socket::Socket(int port)
 {
-	lock = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_init(&lock, NULL);
 
 	char hn[256];
 	gethostname(hn, sizeof(hn));
-	std::cerr << "waiting on host " << hn << " port " << port << "\n";
+	std::cerr << "Waiting at port " << port << " on host " << hn << "\n";
 
   int tmp_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	unsigned int clilen;
@@ -58,11 +58,13 @@ Socket::Socket(int port)
 		std::cerr << "error connecting socket\n";
 		exit(1);
 	}
-	std::cerr << " socket established\n";
+	std::cerr << "socket established\n";
 }
 
 Socket::Socket(char *host, int port)
 {
+	pthread_mutex_init(&lock, NULL);
+
   struct sockaddr_in serv_addr;
   struct hostent *server;
 
@@ -106,7 +108,7 @@ Socket::Socket(char *host, int port)
 	n = 4321;
 	Send((char*)&n, sizeof(n));
 
-	std::cerr << *(int *)b << " socket established\n";
+	std::cerr << *(int *)b << "socket established\n";
 }
 
 void

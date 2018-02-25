@@ -3,4 +3,7 @@
 #define MOUSEMOTION 	847387232
 #define QUIT	 				298374284
 #define DEBUG	 				843994344
+#define STATS	 				735462177
+#define SYNC	 				732016373
 #define RENDER_ONE	  873221232
+

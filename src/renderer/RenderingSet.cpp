@@ -643,7 +643,7 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 	APP_LOG(<< "RenderingSet   enqueing " << std::hex << rl);
 #endif
 
-	if (rl->GetFrame() == GetFrame())
+	if (1 || rl->GetFrame() == GetFrame())
 	{
 		RayQManager::GetTheRayQManager()->Enqueue(rl);
 
@@ -652,6 +652,9 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 #endif // PVOL_SYNCHRONOUS
 	}
 	else
+	{
+		std::cerr << "RenderingSet::Enqueue: dropping ray list from wrong frame\n";
 		delete rl;
+	}
 }
 

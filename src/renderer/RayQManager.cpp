@@ -87,7 +87,7 @@ RayQManager::theRayQWorker(void *d)
     ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
     threadpool->postWork<void>(rp_ftor(theRayQManager->GetTheRenderer(), r));
 #else
-		RaycastRenderer::GetTheRaycastRenderer()->ProcessRays(r);
+		theRayQManager->GetTheRenderer()->ProcessRays(r);
 #endif
 
 	}

@@ -26,6 +26,13 @@ float X1, Y1;
 float *buf = NULL;
 bool quit = false;
 
+ServerRenderingP 	theRendering = NULL;
+RenderingSetP   	theRenderingSet = NULL;
+CameraP         	theCamera = NULL;
+VisualizationP  	theVisualization = NULL;
+
+RendererP theRenderer;
+
 void *
 render_thread(void *buf)
 {
@@ -33,14 +40,14 @@ render_thread(void *buf)
 	int height = ((int *)buf)[2];
 	string statefile = string(((char *)buf) + 3*sizeof(int));
 
-  RendererP theRenderer = Renderer::NewP();
+  theRenderer = Renderer::NewP();
   Document *doc = GetTheApplication()->OpenInputState(statefile);
   theRenderer->LoadStateFromDocument(*doc);
 
 	free(buf);
 
   vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
-  CameraP theCamera = theCameras[0];
+  theCamera = theCameras[0];
 
   vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup;
   theCamera->get_viewpoint(viewpoint);
@@ -72,20 +79,24 @@ render_thread(void *buf)
   theDatasets->Commit();
 
   vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
-  VisualizationP v = theVisualizations[0];
-	v->Commit(theDatasets);
+  theVisualization = theVisualizations[0];
+	theVisualization->Commit(theDatasets);
 
-  RenderingSetP theRenderingSet = RenderingSet::NewP();
-  RenderingP    theRendering = ServerRendering::NewP();
+  theRendering = ServerRendering::NewP();
+
+	theRendering->SetSocket(skt);
   theRendering->SetTheOwner(0);
   theRendering->SetTheSize(width, height);
   theRendering->SetTheDatasets(theDatasets);
-  theRendering->SetTheVisualization(v);
+  theRendering->SetTheVisualization(theVisualization);
 	theRendering->SetTheCamera(theCamera);
   theRendering->Commit();
+
+  RenderingSetP theRenderingSet = RenderingSet::NewP();
   theRenderingSet->AddRendering(theRendering);
   theRenderingSet->Commit();
 
+#if 0
 	int frame = 0;
 	cerr << "---------------- " << frame++ << "\n";
 	cerr << "dir:  " << viewdirection.x << " " << viewdirection.y << " " << viewdirection.z << "\n";
@@ -94,6 +105,7 @@ render_thread(void *buf)
 	cerr << "up:   " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
 	cerr << "aov:  " << aov << "\n";
 	cerr << "vdist:" << viewdistance << "\n";
+#endif
 
 	theRenderer->Render(theRenderingSet);
 
@@ -124,16 +136,31 @@ render_thread(void *buf)
 				rotate_vector_by_quat(y, current_rotation, viewup);
 				rotate_vector_by_quat(z, current_rotation, viewdirection);
 
-				// scaled_viewdirection.x = viewdirection.x * viewdistance;
-				// scaled_viewdirection.y = viewdirection.y * viewdistance;
-				// scaled_viewdirection.z = viewdirection.z * viewdistance;
-
 				scaled_viewdirection = viewdirection;
 				scale(viewdistance, scaled_viewdirection);
 
 				sub(center, scaled_viewdirection, viewpoint);
 				X0 = x1; Y0 = y1;
 			}
+
+#if 0
+      if (theRenderingSet)
+      {
+        theRenderingSet->Drop();
+        theRenderingSet = NULL;
+      }
+
+      if (theRendering)
+      {
+        theRendering->Drop();
+        theRendering = NULL;
+      }
+
+      if (theCamera)
+      {
+        theCamera->Drop();
+        theCamera = NULL;
+      }
 
 			cerr << "---------------- " << frame++ << "\n";
 			cerr << "dir:  " << viewdirection.x << " " << viewdirection.y << " " << viewdirection.z << "\n";
@@ -143,25 +170,33 @@ render_thread(void *buf)
 			cerr << "aov:  " << aov << "\n";
 			cerr << "vdist:" << viewdistance << "\n";
 
-			CameraP newCamera = Camera::NewP();
-			newCamera->set_viewdirection(scaled_viewdirection); 
-			newCamera->set_viewpoint(viewpoint);
-			newCamera->set_viewup(viewup);
-			newCamera->set_angle_of_view(aov);
-			newCamera->Commit();
+			theCamera = Camera::NewP();
+			theCamera->set_viewdirection(scaled_viewdirection); 
+			theCamera->set_viewpoint(viewpoint);
+			theCamera->set_viewup(viewup);
+			theCamera->set_angle_of_view(aov);
+			theCamera->Commit();
 
-			RenderingSetP newRenderingSet = RenderingSet::NewP();
-			RenderingP    newRendering = ServerRendering::NewP();
-			newRendering->SetTheOwner(0);
-			newRendering->SetTheSize(width, height);
-			newRendering->SetTheDatasets(theDatasets);
-			newRendering->SetTheVisualization(v);
-			newRendering->SetTheCamera(newCamera);
-			newRendering->Commit();
-			newRenderingSet->AddRendering(newRendering);
-			newRenderingSet->Commit();
+			theRendering = ServerRendering::NewP();
+			theRendering->SetSocket(skt);
+			theRendering->SetTheOwner(0);
+			theRendering->SetTheSize(width, height);
+			theRendering->SetTheDatasets(theDatasets);
+			theRendering->SetTheVisualization(theVisualization);
+			theRendering->SetTheCamera(theCamera);
+			theRendering->Commit();
 
-			theRenderer->Render(newRenderingSet);
+			theRenderingSet = RenderingSet::NewP();
+			theRenderingSet->AddRendering(theRendering);
+			theRenderingSet->Commit();
+#else
+			theCamera->set_viewdirection(scaled_viewdirection); 
+			theCamera->set_viewpoint(viewpoint);
+			theCamera->set_viewup(viewup);
+			theCamera->set_angle_of_view(aov);
+			theCamera->Commit();
+#endif
+			theRenderer->Render(theRenderingSet);
 		}
 	}
 }
@@ -220,6 +255,14 @@ main(int argc, char *argv[])
 
 			switch(*(int *)buf)
 			{
+				case SYNC:
+					theApplication.SyncApplication();
+					break;
+
+				case STATS: 
+					theRenderer->DumpStatistics();
+					break;
+
 				case RENDER_ONE:
 					render_one = true;
 					break;

@@ -55,8 +55,43 @@ public:
 	virtual void Render(RenderingSetP);
 	int GetFrame() { return frame; }
 
+	void DumpStatistics();
+	void _dumpStats();
+
+	void _sent_to(int d, int n)
+	{
+		pthread_mutex_lock(&lock);
+		sent_to[d] += n;
+		pthread_mutex_unlock(&lock);
+	}
+
+	void _received_from(int d, int n)
+	{
+		pthread_mutex_lock(&lock);
+		received_from[d] += n;
+		pthread_mutex_unlock(&lock);
+	}
+
+	void add_originated_ray_count(int n)
+	{
+		pthread_mutex_lock(&lock);
+		originated_ray_count += n;
+		pthread_mutex_unlock(&lock);
+	}
+
+
 private:
 	int frame;
+
+	int sent_ray_count;
+	int terminated_ray_count;
+	int originated_ray_count;
+	int secondary_ray_count;
+	int sent_pixels_count;
+	int ProcessRays_input_count;
+	int ProcessRays_continued_count;
+	int *sent_to;
+	int *received_from;
 
   TraceRays tracer;
   Lighting  lighting;
@@ -65,6 +100,21 @@ private:
   pthread_mutex_t lock;
   pthread_cond_t cond; 
   
+  class StatisticsMsg : public Work
+  {
+  public:
+    StatisticsMsg(Renderer *r) : StatisticsMsg(sizeof(Key))
+		{
+			unsigned char *p = (unsigned char *)contents->get();
+			*(Key *)p = r->getkey();
+		}
+
+    WORK_CLASS(StatisticsMsg, true);
+
+  public:
+		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+  };
+
   class SendRaysMsg : public Work
   {
   public:
@@ -106,8 +156,6 @@ private:
       *(Key *)p = r->getkey();
       p += sizeof(Key);
 			*(int *)p = r->GetFrame();
-			if (r->GetFrame() < 0)
-				std::cerr << "SendPixelsMsg FRAME ERROR!\n";
 			p += sizeof(int);
       *(int *)p = n;
 
@@ -143,7 +191,7 @@ private:
       RenderingP ren = Rendering::GetByKey(k);
       if (! ren)
       {
-        APP_PRINT(<< "SendPixelsMsg (" << k << ") DROPPED");
+        // APP_PRINT(<< "SendPixelsMsg (" << frame << ") DROPPED");
         return false;
       }
 

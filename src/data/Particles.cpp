@@ -111,7 +111,10 @@ Particles::LoadFromJSON(Value& v)
     radius_scale = v["radius_scale"].GetDouble();
 
   if (v.HasMember("radius"))
+	{
     radius = v["radius"].GetDouble();
+		std::cerr << "radius set to " << radius << "\n";
+	}
 
   if (v.HasMember("filename"))
   {

@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include "tbb/tbb.h"
 #include "Application.h"
-// #include "Renderer.h"
+#include "Renderer.h"
 #include "MessageManager.h"
 #include "RenderingSet.h"
 #include "Rendering.h"
@@ -289,9 +289,15 @@ public:
       GetTheEventTracker()->Add(new InitialRaysEvent(r));
 #endif
       r->GetTheRenderingSet()->Enqueue(r, true);
+			Renderer::GetTheRenderer()->add_originated_ray_count(r->GetRayCount());
+			
     }
     else
+		{
+			set_raylist_guard();
       delete r;
+			clear_raylist_guard();
+		}
   }
 
 private:
@@ -540,8 +546,8 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 #if defined(EVENT_TRACKING)
 			GetTheEventTracker()->Add(new InitialRaysEvent(rayList));
 #endif
-
 			rayList->GetTheRenderingSet()->Enqueue(rayList, true);
+			Renderer::GetTheRenderer()->add_originated_ray_count(rayList->GetRayCount());
 		}
 		else
 			delete rayList;
