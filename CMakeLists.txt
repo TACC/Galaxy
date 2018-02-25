@@ -51,6 +51,7 @@ set(OSPRAY_DIR "" CACHE FILEPATH "install directory of OSPRAY")
 link_directories(${OSPRAY_DIR}/lib ${OSPRAY_DIR}/lib64)
 include_directories(${OSPRAY_DIR}/include)
 
+add_subdirectory(scripts)
 add_subdirectory(src)
 
 configure_file(pvol.h.in pvol.h)
