@@ -25,8 +25,33 @@ volatile int frame = -1;
 pthread_t 	 receiver_tid;
 int 				 max_f = -1;
 int					 fknt[1000];
+bool 				 no_mouse = false;
 
 Socket *skt;
+
+int rcvd = 0;
+
+void 
+clear()
+{
+	rcvd = 0;
+	for (int i = 0; i < width*height*4; i++)
+		pixels[i] = 0.0;
+}
+
+void
+SendStats()
+{
+  int n = STATS;
+	skt->Send((char *)&n, sizeof(n));
+}
+
+void
+SendSync()
+{
+  int n = SYNC;
+	skt->Send((char *)&n, sizeof(n));
+}
 
 void
 SendDebug()
@@ -125,10 +150,20 @@ keyboard(unsigned char ch, int x, int y)
 {
   switch (ch)
 	{
-		case 0x53:
+		case 0x73: // s Sync
+			SendSync();
+			break;
+		case 0x54: // T stats
+			SendStats();
+			break;
+		case 0x51: // Q - print rcvd
+			std::cerr << rcvd << "\n";
+			break;
+		case 0x53: // S - save image
 			image_writer.Write(width, height, pixels);
 			break;
-		case 0x52:
+		case 0x52: // R - render a single 
+			clear();
 			SendRenderOne();
 			break;
 		case 0x44:
@@ -149,6 +184,9 @@ void
 menu(int item)
 {
   switch (item) {
+		case 0x54: // T stats
+			SendStats();
+			break;
 		case 0x52:
 			SendRenderOne();
 			break;
@@ -161,6 +199,7 @@ menu(int item)
 void
 mousefunc(int k, int s, int x, int y)
 {
+	if (no_mouse) return;
   if (s == GLUT_DOWN)
 		SendMouseDown(-1.0 + 2.0*(float(x)/width), -1.0 + 2.0*(float(y)/height));
 }
@@ -168,9 +207,9 @@ mousefunc(int k, int s, int x, int y)
 void
 motionfunc(int x, int y)
 {
+	if (no_mouse) return;
 	SendMouseMotion(-1.0 + 2.0*(float(x)/width), -1.0 + 2.0*(float(y)/height));
 }
-
 
 void *
 receiver_thread(void *)
@@ -189,10 +228,13 @@ receiver_thread(void *)
 		ptr += sizeof(int);
 		Pixel *p = (Pixel *)ptr;
 
-		cerr << frame << "\n";
-
 		if (frame >= max_f)
 		{
+			if (frame > max_f)
+				cerr << frame << "\n";
+		
+			rcvd += knt;
+
  	 		for (int i = max_f + 1; i <= frame;  i++)
 				fknt[i] = 0;
 			max_f = frame;
@@ -200,7 +242,6 @@ receiver_thread(void *)
 
 			for (int i = 0; i < knt; i++, p++)
 			{
-				// size_t offset = (((height-1)-(p->y))*width + ((width-1)-(p->x)));
 				size_t offset = (p->y*width + p->x);
 
 				float *pix = pixels + (offset<<2);
@@ -234,6 +275,7 @@ syntax(char *a)
 	cerr << "  -P port		port (5001)\n";
   cerr << "  -A         wait for attachment\n";
   cerr << "  -s w h     image size (512 x 512)\n";
+  cerr << "  -F         ignore mouse movement\n";
   exit(1);
 }
 
@@ -251,6 +293,7 @@ main(int argc, char *argv[])
     else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
     else if (!strcmp(argv[i], "-H")) host = argv[++i];
     else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
+    else if (!strcmp(argv[i], "-F")) no_mouse = true;
     else if (!strcmp(argv[i], "-s"))
     {
       width  = atoi(argv[++i]);
