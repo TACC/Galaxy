@@ -114,7 +114,7 @@ int main(int argc,  char *argv[])
 						theRendering->SetTheCamera(c);
 						theRendering->SetTheDatasets(theDatasets);
 						theRendering->SetTheVisualization(v);
-						theRendering->SetTheRenderingSet(rs);
+						// theRendering->SetTheRenderingSet(rs);
 						theRendering->Commit();
 						rs->AddRendering(theRendering);
 				}

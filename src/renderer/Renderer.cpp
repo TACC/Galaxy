@@ -139,7 +139,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			r.get();
 
 #ifdef PVOL_SYNCHRONOUS
-		InitializeState(c);   // This will resume the ray q
+		renderingSet->InitializeState(c);   // This will resume the ray q
 #endif // PVOL_SYNCHRONOUS
 	}
 }
@@ -508,7 +508,7 @@ Renderer::ProcessRays(RayList *in)
 		// and the FB is local,  just do it.  Otherwise, set up a message buffer.
 
 		RenderingP rendering = in->GetTheRendering();
-		SendPixelsMsg *spmsg = (fbknt && !rendering->IsLocal()) ? new SendPixelsMsg(rendering, in->GetFrame(), fbknt) : NULL;
+		SendPixelsMsg *spmsg = (fbknt && !rendering->IsLocal()) ? new SendPixelsMsg(rendering, renderingSet, in->GetFrame(), fbknt) : NULL;
 		Pixel *local_pixels = (fbknt && rendering->IsLocal()) ? new Pixel[fbknt] : NULL;
 
 		fbknt = 0;
@@ -563,7 +563,7 @@ Renderer::ProcessRays(RayList *in)
       spmsg->Send(rendering->GetTheOwner());
 
 #ifdef PVOL_SYNCHRONOUS
-      renderingSet()->SentPixels(fbknt);
+      renderingSet->SentPixels(fbknt);
 #endif // PVOL_SYNCHRONOUS
     }
 
@@ -582,18 +582,14 @@ Renderer::ProcessRays(RayList *in)
 #endif // PVOL_SYNCHRONOUS
 				
 				SendRays(ray_lists[i], visualization->get_neighbor(i));
-set_raylist_guard();
 				delete ray_lists[i];
-clear_raylist_guard();
 				delete[] ray_offsets[i];
 			}
 
 		if (classification) delete[] classification;
 		if (ray_offsets[6]) delete[] ray_offsets[6];
 
-set_raylist_guard();
 		delete in;
-clear_raylist_guard();
 
 		in = ray_lists[6];
 		if (in && in->GetRayCount() > 0)
@@ -707,9 +703,7 @@ Renderer::SendRaysMsg::Action(int sender)
 	if (! renderingSet)
 	{
 		std::cerr << "ray list arrived before rendering/renderingSet\n";
-set_raylist_guard();
 		delete rayList;
-clear_raylist_guard();
 		return false;
 	}
 

@@ -44,8 +44,6 @@ Rendering::SetTheSize(int w, int h)
 
 Rendering::~Rendering() 
 {
-	// APP_LOG(<< "Rendering dtor (key " << getkey() << ")");
-
 #if LOGGING
 	APP_LOG(<< "Rendering dtor (key " << getkey() << ")");
 #endif

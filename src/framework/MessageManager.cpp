@@ -26,7 +26,7 @@ killer(){}
 
 bool show_message_arrival;
 
-int debug_target = 17;
+int debug_target = -1;
 
 struct mpi_send_buffer
 {
@@ -563,11 +563,13 @@ MessageManager::setup_mpi(Application *app, MessageManager *mm, bool use_mpi)
 		mm->setP2PComm(p2p);
 		mm->setCollComm(coll);
 
-		int rs;
+		int rs, sz;
 		MPI_Comm_rank(MPI_COMM_WORLD, &rs);
 		mm->SetRank(rs);
-		MPI_Comm_size(MPI_COMM_WORLD, &rs);
-		mm->SetSize(rs);
+		MPI_Comm_size(MPI_COMM_WORLD, &sz);
+		mm->SetSize(sz);
+
+		std::cerr << rs << " of " << sz << " here\n";
 
 #if defined(EVENT_TRACKING)
 

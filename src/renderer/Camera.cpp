@@ -232,7 +232,7 @@ public:
   InitialRaysEvent(RayList *rayList)
   {
     count = rayList->GetRayCount();
-    rset = rayList->GetTheRendering()->GetTheRenderingSetKey();
+    //rset = rayList->GetTheRendering()->GetTheRenderingSetKey();
   }
 
 protected:
@@ -346,11 +346,7 @@ public:
       r->GetTheRenderingSet()->Enqueue(r, true);
     }
     else
-		{
-			set_raylist_guard();
       delete r;
-			clear_raylist_guard();
-		}
   }
 
 private:

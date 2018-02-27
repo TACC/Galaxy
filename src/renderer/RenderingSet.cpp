@@ -653,7 +653,7 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 	}
 	else
 	{
-		std::cerr << "RenderingSet::Enqueue: dropping ray list from wrong frame\n";
+		// std::cerr << "RenderingSet::Enqueue: dropping ray list from wrong frame\n";
 		delete rl;
 	}
 }

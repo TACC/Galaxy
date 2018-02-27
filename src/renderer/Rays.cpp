@@ -47,16 +47,8 @@ RayList::RayList(SharedP c)
 	setup_ispc_pointers();
 }
 
-static bool guard = true;
-pthread_mutex_t rl_lock = PTHREAD_MUTEX_INITIALIZER;
-void set_raylist_guard() { pthread_mutex_lock(&rl_lock); guard = false; }
-void clear_raylist_guard() { guard = true; pthread_mutex_unlock(&rl_lock); }
-
-
 RayList::~RayList()
 {
-	if (guard)
-		std::cerr << "bad raylist deletion\n";
   free(ispc);
 }
 

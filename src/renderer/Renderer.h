@@ -151,19 +151,21 @@ private:
 
 		struct hdr
 		{
-			Key key;
+			Key rkey;
+			Key rskey;
 			int count;
 			int frame;
 			int source;
 		};
     
   public:
-    SendPixelsMsg(RenderingP r, int frame, int n) : SendPixelsMsg(sizeof(hdr) + (n * sizeof(Pixel)))
+    SendPixelsMsg(RenderingP r, RenderingSetP rs, int frame, int n) : SendPixelsMsg(sizeof(hdr) + (n * sizeof(Pixel)))
     {
-      hdr *h = (hdr *)contents->get();
-			h->key = r->getkey();
-			h->frame = frame;
-			h->count = n;
+      hdr *h    = (hdr *)contents->get();
+			h->rkey   = r->getkey();
+			h->rskey  = rs->getkey();
+			h->frame  = frame;
+			h->count  = n;
 			h->source = GetTheApplication()->GetRank();
 
       nxt = 0;
@@ -193,20 +195,20 @@ private:
 			if (h->source == debug_target)
 				std::cerr << "SendPix action from debug_target\n";
 
-      RenderingP ren = Rendering::GetByKey(h->key);
-      if (! ren)
-      {
-        // APP_PRINT(<< "SendPixelsMsg (" << frame << ") DROPPED");
+      RenderingP r = Rendering::GetByKey(h->rkey);
+      if (! r)
         return false;
-      }
+
+      RenderingSetP rs = RenderingSet::GetByKey(h->rskey);
+      if (! rs)
+        return false;
 
 #ifdef PVOL_SYNCHRONOUS
-      ren->GetTheRenderingSet()->ReceivedPixels(h->count);
+      rs->ReceivedPixels(h->count);
 
 #endif // PVOL_SYNCHRONOUS
 
-			// std:cerr << "rendering frame: " << ren->GetFrame() << " frame from message " << frame << "\n";
-			ren->AddLocalPixels(pixels, h->count, h->frame, h->source);
+			r->AddLocalPixels(pixels, h->count, h->frame, h->source);
 
 #if defined(EVENT_TRACKING)
 
