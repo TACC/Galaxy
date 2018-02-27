@@ -108,7 +108,7 @@ Socket::Socket(char *host, int port)
 	n = 4321;
 	Send((char*)&n, sizeof(n));
 
-	std::cerr << *(int *)b << "socket established\n";
+	std::cerr << "socket established\n";
 }
 
 void
