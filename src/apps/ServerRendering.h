@@ -10,7 +10,7 @@ class ServerRendering : public Rendering
   
 public:
 	virtual void initialize();
-  virtual void AddLocalPixels(Pixel *p, int n, int f);
+  virtual void AddLocalPixels(Pixel *p, int n, int f, int s);
 
 	void SetSocket(Socket *s) { socket = s; }
 

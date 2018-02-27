@@ -226,6 +226,8 @@ receiver_thread(void *)
 		ptr += sizeof(int);
 		int frame = *(int *)ptr;
 		ptr += sizeof(int);
+		int sender = *(int *)ptr;
+		ptr += sizeof(int);
 		Pixel *p = (Pixel *)ptr;
 
 		if (frame >= max_f)
@@ -255,7 +257,7 @@ receiver_thread(void *)
 				*pix++ += p->r;
 				*pix++ += p->g;
 				*pix++ += p->b;
-				*pix++ += p->o;
+				*pix++ += 1.0; // p->o;
 			}
 		}
 		else std::cerr << "S";
