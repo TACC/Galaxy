@@ -192,15 +192,15 @@ LookForSliceHit(varying bool shadeFlag,
         {
           float t = (d - dot(ray.org, pnorm)) / denom;
 
-          //print("denom: %\n", denom);
-          //print("ray t: %\n   t0: %\n", ray.t, ray.t0);
-          //print("t: %\n", t);
+// print("denom: %\n", denom);
+// print("ray t: %\n   t0: %\n", ray.t, ray.t0);
+// print("t: %\n", t);
 
           if (t >= ray.t0 && t <= ray.t)
           {
-//print("sh hit %\n", minor);
+// print("sh hit % %\n", major, minor);
 
-            if (denom > 0)
+            if (denom < 0)
               hit.normal   = neg(pnorm);
             else
               hit.normal   = pnorm;
@@ -234,7 +234,9 @@ LookForSliceHit(varying bool shadeFlag,
           uniform Volume *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
 
           hit.sample = vol->sample(vol, hit.point);
+// print("sample: %\n", hit.sample);
           hit.color = tf->getColorForValue(tf, hit.sample);
+// print("color:\nR: %\nG: %\nB: %\n", hit.color.x, hit.color.y, hit.color.z);
           hit.opacity = 1.0;
         }
     }
@@ -360,7 +362,12 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
     uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)vvis)->data;
  
-    integrate = integrate | vvis->volume_render | vvis->nIsovalues;
+		if (vvis->volume_render)
+			integrate = true;
+
+		if (vvis->nIsovalues > 0)
+			integrate = true;
+
     uniform float s = vol->samplingStep * vol->samplingRate;
 
     if (step < 0 || step > s)
@@ -370,7 +377,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     }
   }
 
-//print("nRaysIn: %, integrate = %\n", nRaysIn, integrate);
+// print("nRaysIn: %, integrate = %\n", nRaysIn, integrate);
 
   foreach (i = 0 ... nRaysIn)
   {
@@ -426,8 +433,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // The Hit information is used to retain info if and when we hit a surface (slice, 
     // iso or geometry)
 
-//print("X %\nY %\n", raysIn->x[i], raysIn->y[i]);
-//print("tEn %\ntEx %\n", tEntry, tExitVolume);
+// print("X %\nY %\n", raysIn->x[i], raysIn->y[i]);
+// print("tEn %\ntEx %\n", tEntry, tExitVolume);
 
     Hit hit;          
 
@@ -436,7 +443,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // cast the secondary rays
 
     bool surface_hit = LookForSliceHit(shadeFlag, ray, vis, hit);
-    // if (surface_hit) print("slice hit: t %\n", hit.t);
+// if (surface_hit) print("slice hit: t %\n", hit.t);
 
     if (model)
       surface_hit |= LookForGeometryHit(shadeFlag, model, ray, vis, hit);
@@ -876,6 +883,7 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
   uniform RayList_ispc *uniform raysIn  = (RayList_ispc *uniform)_raysIn;
 
   uniform float Kd = lights->Kd / lights->nLights;
+// print("Kd: %\n", Kd);
 
   foreach (i = 0 ... nRaysIn)
   {
@@ -893,9 +901,9 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
       {
         float d = dot(surface_normal, lights->lights[k]);
 
-        //print("normal:\n%\n%\n%\n", surface_normal.x, surface_normal.y, surface_normal.z);
-        //print("light:\n%\n%\n%\n", lights->lights[k].x, lights->lights[k].y, lights->lights[k].z);
-        //print("d: %\n", d);
+// print("normal:\n%\n%\n%\n", surface_normal.x, surface_normal.y, surface_normal.z);
+// print("light:\n%\n%\n%\n", lights->lights[k].x, lights->lights[k].y, lights->lights[k].z);
+// print("d: %\n", d);
 
         if (d > 0)
         {

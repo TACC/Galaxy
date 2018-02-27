@@ -16,6 +16,7 @@ public:
 
 private:
 	Socket *socket;
+	int max_frame;
 };
  
 

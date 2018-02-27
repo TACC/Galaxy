@@ -11,6 +11,7 @@ using namespace std;
 KEYED_OBJECT_POINTER(RenderingSet)
 
 #include "Rendering.h"
+#include "Rays.h"
 #include "Work.h"
 
 class Camera;
@@ -61,7 +62,7 @@ public:
 
 	void local_reset();
 
-	void InitialState(MPI_Comm);
+	void InitializeState(MPI_Comm);
 
 	// Decrement the number of ray lists for this set that are alive
 	// in this process.   If it had been 1, then state has changed.
@@ -82,9 +83,7 @@ public:
 	
 	void IncrementRayListCount(bool silent = false);
 
-
 	void SetInitialState(int local_ray_count, int left_state, int right_state);
-
   void get_tree_info(int& p, int& l, int& r) { p = parent; l = left_id; r = right_id; }
 
 	void SentPixels(int k)
@@ -102,12 +101,6 @@ public:
 	}
 
 #endif // PVOL_SYNCHRONOUS
-
-	void SetFrame(int f)
-	{
-		frame = f;
-	}
-	int  GetFrame() { return frame; }
 
 protected:
 
@@ -148,12 +141,24 @@ protected:
 	
 	int get_number_of_pixels_received() { return n_pix_received; }
 	void get_number_of_pixels_received(int &k) { k = n_pix_received; }
-	
+
 #endif // PVOL_SYNCHRONOUS
+
+public:
+
+	int  GetCurrentFrame() { return current_frame; }
+
+	// Called from Renderer::localRendering.  We won't generate initial rays
+	// for is call to localRendering IF we've already seen a ray list from a 
+	// subsequent frame
+
+	bool NeedInitialRays();
+	bool KeepRays(RayList *rl);
 
 private:
 
-	int frame;
+	int current_frame;
+	int next_frame;
 
   class SaveImagesMsg : public Work
   {

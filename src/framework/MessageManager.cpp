@@ -26,6 +26,8 @@ killer(){}
 
 bool show_message_arrival;
 
+int debug_target = 17;
+
 struct mpi_send_buffer
 {
 	// If p2p, use left
@@ -50,6 +52,8 @@ purge_completed_mpi_buffers()
 			int lflag, rflag; MPI_Status s;
 			mpi_send_buffer *m = (*i);
 
+			if (m->n < 0) continue;
+
 			if (m->msg->HasContent())
 				MPI_Test(&m->lbrq, &lflag, &s);		// Assume that if the body's gone the header must be gone
 			else
@@ -68,6 +72,7 @@ purge_completed_mpi_buffers()
 			if (lflag && rflag) // if left is gone or, if bcast, BOTH are gone, then 
 			{
 				done = false;
+
 				mpi_in_flight.erase(i);
 
 				int r = GetTheApplication()->GetRank();
@@ -288,6 +293,9 @@ MessageManager::BroadcastWork(Work *w, bool block)
 void
 MessageManager::ExportDirect(Message *m, MPI_Request *hrq, MPI_Request *brq, int tag)
 {
+	if (GetTheApplication()->GetRank() == debug_target && m->GetDestination() == 0)
+		std::cerr << "debug_target sent tag " << tag << " to 0\n";
+
   if (m->HasContent())
   {
     m->header.content_tag = tag;
@@ -388,6 +396,10 @@ MessageManager::check_mpi(MessageManager *mm)
 #endif
 
 	MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, mm->getP2PComm(), &read_ready, &status);
+
+	if (GetTheApplication()->GetRank() == 0 && status.MPI_SOURCE == debug_target)
+		std::cerr << "0 saw tag " << status.MPI_TAG << " from debug_target\n";
+
 	if (read_ready)
 	{
 #ifdef DBG

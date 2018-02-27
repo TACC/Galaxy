@@ -33,6 +33,14 @@ VisualizationP  	theVisualization = NULL;
 
 RendererP theRenderer;
 
+vec3f orig_scaled_viewdirection, scaled_viewdirection;
+vec3f orig_center, center;
+vec3f orig_viewpoint, viewpoint;
+vec3f orig_viewdirection, viewdirection;
+vec3f orig_viewup, viewup;
+float orig_aov, aov;
+float orig_viewdistance, viewdistance;
+
 void *
 render_thread(void *buf)
 {
@@ -49,13 +57,12 @@ render_thread(void *buf)
   vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
   theCamera = theCameras[0];
 
-  vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup;
   theCamera->get_viewpoint(viewpoint);
   theCamera->get_viewdirection(viewdirection);
   theCamera->get_viewup(viewup);
   add(viewpoint, viewdirection, center);
 	
-  float aov, viewdistance = len(viewdirection);
+  viewdistance = len(viewdirection);
 	theCamera->get_angle_of_view(aov);
 
   normalize(viewdirection);
@@ -73,6 +80,14 @@ render_thread(void *buf)
 
   vec4f current_rotation;
   axis_to_quat(viewdirection, ay, current_rotation);
+
+  orig_scaled_viewdirection = scaled_viewdirection;
+	orig_center = center;
+	orig_viewpoint = viewpoint;
+	orig_viewdirection = viewdirection;
+	orig_viewup = viewup;
+  orig_aov = aov;
+	orig_viewdistance = viewdistance;
 
   DatasetsP theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
@@ -95,17 +110,6 @@ render_thread(void *buf)
   RenderingSetP theRenderingSet = RenderingSet::NewP();
   theRenderingSet->AddRendering(theRendering);
   theRenderingSet->Commit();
-
-#if 0
-	int frame = 0;
-	cerr << "---------------- " << frame++ << "\n";
-	cerr << "dir:  " << viewdirection.x << " " << viewdirection.y << " " << viewdirection.z << "\n";
-	cerr << "sdir: " << scaled_viewdirection.x << " " << scaled_viewdirection.y << " " << scaled_viewdirection.z << "\n";
-	cerr << "vp:   " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z << "\n";
-	cerr << "up:   " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
-	cerr << "aov:  " << aov << "\n";
-	cerr << "vdist:" << viewdistance << "\n";
-#endif
 
 	theRenderer->Render(theRenderingSet);
 
@@ -255,6 +259,17 @@ main(int argc, char *argv[])
 
 			switch(*(int *)buf)
 			{
+				case RESET_CAMERA:
+  				scaled_viewdirection = orig_scaled_viewdirection;
+					center = orig_center;
+					viewpoint = orig_viewpoint;
+					viewdirection = orig_viewdirection;
+					viewup = orig_viewup;
+  				aov = orig_aov;
+					viewdistance = orig_viewdistance;
+					render_one = true;
+					break;
+
 				case SYNC:
 					theApplication.SyncApplication();
 					break;

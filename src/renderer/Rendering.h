@@ -86,9 +86,6 @@ public:
 
 	float *GetPixels() { return framebuffer; }
 	
-	void SetFrame(int f) { frame = f; }
-	int GetFrame() { return frame; }
-
 protected:
 	int frame;
 
