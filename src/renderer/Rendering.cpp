@@ -106,7 +106,7 @@ Rendering::IsLocal()
 #endif
     
 void
-Rendering::AddLocalPixels(Pixel *p, int n, int f)
+Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 {
   if (! framebuffer)
   {

@@ -75,7 +75,7 @@ public:
 #endif
 	}
 
-	virtual void AddLocalPixels(Pixel *, int, int);	// Add to local FB from received send buffer
+	virtual void AddLocalPixels(Pixel *, int, int, int sender = -1);	// Add to local FB from received send buffer
 
 	bool IsLocal();
 	void SaveImage(string, int);
