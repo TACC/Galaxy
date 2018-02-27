@@ -27,6 +27,12 @@ int 				 max_f = -1;
 int					 fknt[1000];
 bool 				 no_mouse = false;
 
+#if 0
+int pixel_count[100];
+int packet_count[100];
+int max_sender = 0;
+#endif
+
 Socket *skt;
 
 int rcvd = 0;
@@ -37,6 +43,13 @@ clear()
 	rcvd = 0;
 	for (int i = 0; i < width*height*4; i++)
 		pixels[i] = 0.0;
+}
+
+void
+SendResetCamera()
+{
+  int n = RESET_CAMERA;
+	skt->Send((char *)&n, sizeof(n));
 }
 
 void
@@ -150,6 +163,9 @@ keyboard(unsigned char ch, int x, int y)
 {
   switch (ch)
 	{
+		case 0x63: // c reset camera
+			SendResetCamera();
+			break;
 		case 0x73: // s Sync
 			SendSync();
 			break;
@@ -232,13 +248,35 @@ receiver_thread(void *)
 
 		if (frame >= max_f)
 		{
+#if 0
 			if (frame > max_f)
-				cerr << frame << "\n";
+			{
+				if (frame > 0)
+					std::cerr << "########### " << frame << " ###########\n";
+
+				for (int i = 0; i <= max_sender; i++)
+				{
+					if (frame > 0 && packet_count[i] > 0)
+						std::cerr << i << ": " << packet_count[i] << " packets, " << pixel_count[i] << " pixels\n";
+					pixel_count[i] = 0;
+					packet_count[i] = 0;
+				}
+
+				max_sender = sender;
+			}
+			
+			if (sender > max_sender)
+				max_sender = sender;
+
+			pixel_count[sender] += knt;
+			packet_count[sender] ++;
+#endif
 		
 			rcvd += knt;
 
  	 		for (int i = max_f + 1; i <= frame;  i++)
 				fknt[i] = 0;
+
 			max_f = frame;
 			fknt[frame] += knt;
 
