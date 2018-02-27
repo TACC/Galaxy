@@ -6,4 +6,5 @@
 #define STATS	 				735462177
 #define SYNC	 				732016373
 #define RENDER_ONE	  873221232
+#define RESET_CAMERA	777629294
 
