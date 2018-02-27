@@ -11,7 +11,9 @@
 #define ROUND_UP_TO_MULTIPLE_OF_64(a) ((a + 63) & (~63))
 #define HDRSZ  ROUND_UP_TO_MULTIPLE_OF_64(sizeof(hdr))
 
-RayList::RayList(RenderingSetP rs, RenderingP r, int nrays)
+RayList::RayList(RenderingSetP rs, RenderingP r, int nrays) : RayList(rs, r, nrays, rs->GetCurrentFrame()) {}
+
+RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, int frame)
 {
 	theRenderingSet = rs;
 	theRendering    = r;
@@ -23,7 +25,7 @@ RayList::RayList(RenderingSetP rs, RenderingP r, int nrays)
 	contents = smem::New(HDRSZ + nn * (20*sizeof(float) + 4*sizeof(int)));
 	
 	hdr *h  = (hdr *)contents->get();
-	h->frame        		= r->GetFrame();
+	h->frame        		= frame;
 	h->renderingKey			= r->getkey();
 	h->renderingSetKey	= rs->getkey();
 	h->size 						= nrays;
@@ -56,12 +58,6 @@ RayList::~RayList()
 	if (guard)
 		std::cerr << "bad raylist deletion\n";
   free(ispc);
-}
-
-int
-RayList::GetFrame()
-{
-	return (((hdr *)contents->get()))->frame;
 }
 
 float RayList::get_ox(int i)     { return ((ispc::RayList_ispc *)ispc)->ox[i]; }

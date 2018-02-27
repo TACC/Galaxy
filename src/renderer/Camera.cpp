@@ -23,13 +23,15 @@
 
 KEYED_OBJECT_TYPE(Camera)
 
-static int RAYS_PER_PACKET = -1;
 
 using namespace std;
 
-bool permute = false;
-bool permutation_checked = false;
 vector<int> permutation;
+int rays_per_packet;
+bool full_window;
+bool raydebug;
+static int Xmax, Xmin, Ymax, Ymin;
+bool permute;
 
 vector<int>
 generate_permutation(int num)
@@ -328,6 +330,10 @@ public:
       }
     }
 
+#if 0
+		int rank = GetTheApplication()->GetRank();
+    if (dst > 0 && (rank == 0 || rank == 4))
+#endif
     if (dst > 0)
     {
 			if (dst < r->GetRayCount())
@@ -336,9 +342,8 @@ public:
 #if defined(EVENT_TRACKING)
       GetTheEventTracker()->Add(new InitialRaysEvent(r));
 #endif
-      r->GetTheRenderingSet()->Enqueue(r, true);
 			Renderer::GetTheRenderer()->add_originated_ray_count(r->GetRayCount());
-			
+      r->GetTheRenderingSet()->Enqueue(r, true);
     }
     else
 		{
@@ -363,20 +368,51 @@ private:
   shared_ptr<gil_ftor> f;
 };
 
+void check_env(int width, int height)
+{
+	static bool first = true;
 
+	if (first)
+	{
+		first = false;
+
+		full_window =  getenv("FULLWINDOW") != NULL;
+		raydebug    =  getenv("RAYDEBUG") != NULL;
+
+		if (getenv("X"))
+			Xmin = Xmax = atoi(getenv("X"));
+		else
+		{
+			Xmin = getenv("XMIN") ? atoi(getenv("XMIN")) : (width / 2) - 2;
+			Xmax = getenv("XMAX") ? atoi(getenv("XMAX")) : (width / 2) + 2;
+			if (Xmin < 0) Xmin = 0;
+			if (Xmax >= (width-1)) Xmax = width-1;
+		}
+		
+		if (getenv("Y"))
+			Ymin = Ymax = atoi(getenv("Y"));
+		else
+		{
+			Ymin = getenv("YMIN") ? atoi(getenv("YMIN")) : (height / 2) - 2;
+			Ymax = getenv("YMAY") ? atoi(getenv("YMAY")) : (height / 2) + 2;
+			if (Ymin < 0) Ymin = 0;
+			if (Ymax >= (height-1)) Ymax = height-1;
+		}
+
+		rays_per_packet = getenv("RAYS_PER_PACKET") ? atoi(getenv("RAYS_PER_PACKET")) : 1000000;
+		permute = getenv("PERMUTE_PIXELS");
+
+		permutation = generate_permutation(width*height);
+	}
+}
+		
 void
 Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<void>>& rvec)
 {
   int width, height;
   rendering->GetTheSize(width, height);
 
-	if (! permutation_checked)
-	{
-		permute = getenv("PERMUTE_PIXELS");
-		permutation_checked = true;
-		if (permute)
-			permutation = generate_permutation(width*height);
-	}
+	check_env(width, height);
 
   vec3f veye(eye);
   vec3f vu(up);
@@ -475,7 +511,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
     if (iymax >= height) iymax = height - 1;
   }
   
-  if (getenv("FULLWINDOW"))
+  if (full_window)
   {
     ixmin = iymin = 0;
     ixmax = width - 1;
@@ -493,29 +529,8 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
   //      x = x * vr
   //      y = y * vu
   
-  if (getenv("RAYDEBUG"))
+  if (raydebug)
   {
-    int Ymin, Ymax;
-    if (getenv("Y")) Ymin = Ymax = atoi(getenv("Y"));
-    else
-    {
-      Ymin = getenv("YMIN") ? atoi(getenv("YMIN")) : (height / 2) - 2;
-      Ymax = getenv("YMAX") ? atoi(getenv("YMAX")) : (height / 2) + 2;
-      if (Ymin < 0) Ymin = 0;
-      if (Ymax >= (height-1)) Ymax = height-1;
-    }
-
-    int Xmin, Xmax;
-    if (getenv("X")) Xmin = Xmax = atoi(getenv("X"));
-    else
-    {
-      Xmin = getenv("XMIN") ? atoi(getenv("XMIN")) : (width / 2) - 2;
-      Xmax = getenv("XMAX") ? atoi(getenv("XMAX")) : (width / 2) + 2;
-      if (Xmin < 0) Xmin = 0;
-      if (Xmax >= (width-1)) Xmax = width-1;
-    }
-
-#if 1
     if ((Xmin > ixmax) || (Xmax < ixmin) || (Ymin > iymax) || (Ymax < iymin))
       return;
 
@@ -523,7 +538,6 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
     if (Xmax > ixmax) Xmax = ixmax;
     if (Ymin < iymin) Ymin = iymin;
     if (Ymax > iymax) Ymax = iymax;
-#endif
 
     int nrays = ((Ymax-Ymin) + 1) * ((Xmax-Xmin) + 1);
     if (nrays < 0)
@@ -594,6 +608,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 #if defined(EVENT_TRACKING)
 			GetTheEventTracker()->Add(new InitialRaysEvent(rayList));
 #endif
+
 			rayList->GetTheRenderingSet()->Enqueue(rayList, true);
 			Renderer::GetTheRenderer()->add_originated_ray_count(rayList->GetRayCount());
 		}
@@ -609,34 +624,26 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
     if (totalRays <= 0)
       return;
 
-    int rays_per_packet;
-    int n_packets;
+    int rpp, n_packets;
 
-    if (RAYS_PER_PACKET == -1)
-    {
-      if (getenv("RAYS_PER_PACKET"))
-        RAYS_PER_PACKET = atoi(getenv("RAYS_PER_PACKET"));
-      else
-        RAYS_PER_PACKET = 10000000;
-    }
 
     // approximate how many packets, then get the number
     // of rays in each
 
-    if (totalRays > RAYS_PER_PACKET)
+    if (totalRays > rays_per_packet)
     {
-      n_packets = (totalRays / RAYS_PER_PACKET) + 1;
+      n_packets = (totalRays / rays_per_packet) + 1;
 
       // Make sure there's no fragmentary final packet:
       // n_threads * rays_per_packet will be > totalRays
       // but totalRays - (n_threads * rays_per_packet) < n_packets
 
-      rays_per_packet = ((totalRays + (n_packets-1)) / n_packets);
+      rpp = ((totalRays + (n_packets-1)) / n_packets);
     }
     else
     {
       n_packets = 1;
-      rays_per_packet = totalRays;
+      rpp = totalRays;
     }
 
     ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
@@ -677,10 +684,10 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
             rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));
           }
 
-          if (tot_knt + rays_per_packet > totalRays)
+          if (tot_knt + rpp > totalRays)
             rlist = new RayList(renderingSet, rendering, totalRays - tot_knt);
           else
-            rlist = new RayList(renderingSet, rendering, rays_per_packet);
+            rlist = new RayList(renderingSet, rendering, rpp);
 
           knt_in_pkt = 0;
         }

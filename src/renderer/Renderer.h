@@ -148,23 +148,30 @@ private:
       int x, y;
       float r, g, b, o;
     };
+
+		struct hdr
+		{
+			Key key;
+			int count;
+			int frame;
+			int source;
+		};
     
   public:
-    SendPixelsMsg(RenderingP r, int n) : SendPixelsMsg(sizeof(Key) + 2*sizeof(int) + (n * sizeof(Pixel)))
+    SendPixelsMsg(RenderingP r, int frame, int n) : SendPixelsMsg(sizeof(hdr) + (n * sizeof(Pixel)))
     {
-      unsigned char *p = (unsigned char *)contents->get();
-      *(Key *)p = r->getkey();
-      p += sizeof(Key);
-			*(int *)p = r->GetFrame();
-			p += sizeof(int);
-      *(int *)p = n;
+      hdr *h = (hdr *)contents->get();
+			h->key = r->getkey();
+			h->frame = frame;
+			h->count = n;
+			h->source = GetTheApplication()->GetRank();
 
       nxt = 0;
     }
 
     void StashPixel(RayList *rl, int i) 
     {
-      Pixel *p = (Pixel *)((((unsigned char *)contents->get()) + 2*sizeof(int) + sizeof(Key))) + nxt++;
+      Pixel *p = (Pixel *)((((unsigned char *)contents->get()) + sizeof(hdr))) + nxt++;
 
       p->x = rl->get_x(i);
       p->y = rl->get_y(i);
@@ -179,16 +186,14 @@ private:
   public:
     bool Action(int s)
     {
-      unsigned char *p = (unsigned char *)contents->get();
-      Key k = *(Key *)p;
-      p += sizeof(Key);
-			int frame = *(int *)p;
-			p += sizeof(int);
-      int n  = *(int *)p;
-      p += sizeof(int);
-      Pixel *pixels = (Pixel *)p;
+			hdr *h = (hdr *)contents->get();
+      Pixel *pixels = (Pixel *)(((unsigned char *)contents->get()) + sizeof(hdr));
 
-      RenderingP ren = Rendering::GetByKey(k);
+			extern int debug_target;
+			if (h->source == debug_target)
+				std::cerr << "SendPix action from debug_target\n";
+
+      RenderingP ren = Rendering::GetByKey(h->key);
       if (! ren)
       {
         // APP_PRINT(<< "SendPixelsMsg (" << frame << ") DROPPED");
@@ -196,12 +201,12 @@ private:
       }
 
 #ifdef PVOL_SYNCHRONOUS
-      ren->GetTheRenderingSet()->ReceivedPixels(n);
+      ren->GetTheRenderingSet()->ReceivedPixels(h->count);
 
 #endif // PVOL_SYNCHRONOUS
 
 			// std:cerr << "rendering frame: " << ren->GetFrame() << " frame from message " << frame << "\n";
-			ren->AddLocalPixels(pixels, n, frame);
+			ren->AddLocalPixels(pixels, h->count, h->frame, h->source);
 
 #if defined(EVENT_TRACKING)
 
@@ -241,7 +246,9 @@ private:
 
     WORK_CLASS(RenderMsg, true);
 
-  public:
     bool CollectiveAction(MPI_Comm, bool isRoot);
+
+	private:
+		int frame;
   };
 };

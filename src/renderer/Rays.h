@@ -22,8 +22,6 @@ class RayList
 public:
 	~RayList();
 
-	int GetFrame();
-	
 	static void CopyRay(RayList *srcRayList, int srcRayIndex, RayList *dstRayList, int dstRayIndex)
 	{
     dstRayList->set_ox(dstRayIndex, srcRayList->get_ox(srcRayIndex));
@@ -52,14 +50,17 @@ public:
     dstRayList->set_term(dstRayIndex, srcRayList->get_term(srcRayIndex));
 	}
 
+	RayList(RenderingSetP rs, RenderingP r, int nrays, int frame);
 	RayList(RenderingSetP rs, RenderingP r, int nrays);
 	RayList(SharedP contents);
 
+	int GetFrame() { return ((struct hdr *)contents->get())->frame; }
 	int GetRayCount() { return ((struct hdr *)contents->get())->size; }
 	SharedP get_ptr() { return contents; };
-    void *get_header_address() { return ((void *)(contents->get())); }
 
-    void Truncate(int n);
+	void *get_header_address() { return ((void *)(contents->get())); }
+
+	void Truncate(int n);
 
 	void setup_ispc_pointers();
 

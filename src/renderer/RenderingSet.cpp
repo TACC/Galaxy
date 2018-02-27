@@ -40,7 +40,8 @@ RenderingSet::~RenderingSet()
 void
 RenderingSet::initialize()
 {
-	frame = -1;
+	current_frame = -1;
+	next_frame = 0;
 
 #ifdef PVOL_SYNCHRONOUS
 	pthread_mutex_init(&local_lock, NULL);
@@ -65,12 +66,10 @@ RenderingSet::initialize()
   local_raylist_count  = 0;
 
 	local_reset();
-
 #endif // PVOL_SYNCHRONOUS
 }
 
 #ifdef PVOL_SYNCHRONOUS
-
 void
 RenderingSet::SetInitialState(int local_ray_count, int left_state, int right_state)
 {
@@ -115,7 +114,6 @@ RenderingSet::local_reset()
 		r->local_reset();
 }
 
-#ifdef PVOL_SYNCHRONOUS
 void
 RenderingSet::WaitForDone()
 {
@@ -145,17 +143,17 @@ RenderingSet::WaitForDone()
 	GetTheEventTracker()->Add(new FinishedRenderingEvent(getkey()));
 #endif
 }
-#endif // PVOL_SYNCHRONOUS
 
 bool RenderingSet::Busy()
 {
 	return !done;
 }
 
+
 // NOTE this takes place under localRender ... in the MPI thread
 
 void
-RenderingSet::InitialState(MPI_Comm c)
+RenderingSet::InitializeState(MPI_Comm c)
 {
 	MPI_Status s;
 	int l_busy, r_busy;
@@ -643,8 +641,10 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 	APP_LOG(<< "RenderingSet   enqueing " << std::hex << rl);
 #endif
 
-	if (1 || rl->GetFrame() == GetFrame())
+	if (rl->GetFrame() >= current_frame)
 	{
+		current_frame = rl->GetFrame();
+	
 		RayQManager::GetTheRayQManager()->Enqueue(rl);
 
 #ifdef PVOL_SYNCHRONOUS
@@ -656,5 +656,29 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 		std::cerr << "RenderingSet::Enqueue: dropping ray list from wrong frame\n";
 		delete rl;
 	}
+}
+bool
+RenderingSet::NeedInitialRays()
+{
+	next_frame ++;
+	if (next_frame >= current_frame)
+	{
+		current_frame = next_frame;
+		return true;
+	}
+	else
+		return false;
+}
+
+bool
+RenderingSet::KeepRays(RayList *rl)
+{
+	if (rl->GetFrame() >= current_frame)
+	{
+		current_frame = rl->GetFrame();
+		return true;
+	}
+	else
+		return false;
 }
 

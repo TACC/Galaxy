@@ -98,7 +98,7 @@ Renderer::SetEpsilon(float e)
 }
 
 void
-Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
+Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 {
 	originated_ray_count = 0;
 	sent_ray_count = 0;
@@ -107,56 +107,41 @@ Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 	secondary_ray_count = 0;
   ProcessRays_input_count = 0;
   ProcessRays_continued_count = 0;
+
 	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
 		sent_to[i] = 0, received_from[i] = 0;
 
-#if LOGGING
-	APP_LOG(<< "Renderer::localRendering start");
-#endif
-
-	frame++;
-	rs->SetFrame(frame);
-
-	// This will prevent any rays from being dequeued until the initial state is sent up the tree
-	// That'll happen in the InitialState exchange
-
-	//Renderer::GetTheRenderer()->GetTheRayQManager()->Pause();
-
-#ifdef PVOL_SYNCHRONOUS
-  GetTheRayQManager()->Pause();
-#endif
-  
-	vector<future<void>> rvec;
-	for (int i = 0; i < rs->GetNumberOfRenderings(); i++)
+	// NeedInitialRays tells us whether we need to generate initial rays
+	// for the current frame.  It is possible that this RenderingSet has
+	// already seen a raylist from a later frame, in which case we won't
+	// bother generating rays for this one.
+	
+	if (renderingSet->NeedInitialRays())
 	{
-		rs->GetRendering(i)->SetFrame(rs->GetFrame());
-		LaunchInitialRays(rs, rs->GetRendering(i), rvec);
-	}
-
-	for (auto& r : rvec)
-		r.get();
-
-	// MPI_Barrier(c); Is this necessary???
-
-#if 0
-	if (GetTheApplication()->GetRank() == 0)
-		std:cerr << "starting ray processing\n";
-#endif
-  
 #ifdef PVOL_SYNCHRONOUS
-	rs->InitialState(c);   // This will resume the ray q
+		GetTheRayQManager()->Pause();
+#endif
+
+		vector<future<void>> rvec;
+		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
+		{
+			RenderingP rendering = renderingSet->GetRendering(i);
+
+			CameraP camera = rendering->GetTheCamera();
+			VisualizationP visualization = rendering->GetTheVisualization();
+			Box *gBox = visualization->get_global_box();
+			Box *lBox = visualization->get_local_box();
+
+			camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec);
+		}
+
+		for (auto& r : rvec)
+			r.get();
+
+#ifdef PVOL_SYNCHRONOUS
+		InitializeState(c);   // This will resume the ray q
 #endif // PVOL_SYNCHRONOUS
-}
-
-void
-Renderer::LaunchInitialRays(RenderingSetP renderingSet, RenderingP rendering, vector<future<void>>& rvec)
-{
-  CameraP camera = rendering->GetTheCamera();
-  VisualizationP visualization = rendering->GetTheVisualization();
-  Box *gBox = visualization->get_global_box();
-  Box *lBox = visualization->get_local_box();
-
-	camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec);
+	}
 }
 
 void
@@ -267,6 +252,7 @@ void
 Renderer::ProcessRays(RayList *in)
 {
   //std::cerr << "in list: " << in->get_header_address() << "\n";
+  //
   
 #if DO_TIMING
   timer.start();
@@ -282,7 +268,7 @@ Renderer::ProcessRays(RayList *in)
 	int nPixelsSent  = 0;		// number of pixel contributions sent
 	int nErrors      = 0;		// number dropped on floor due to error
 	int nKept        = 0;		// number that continued into the next loop
-	int nRetired     = 0;    // Number rays that expire without producing
+	int nRetired     = 0;   // Number rays that expire without producing
 													// a pixel contribtution - shadow or AO rays that hit
 
 	RenderingSetP  renderingSet  = in->GetTheRenderingSet();
@@ -499,7 +485,7 @@ Renderer::ProcessRays(RayList *in)
 			if (knts[i])
 			{
 				ray_offsets[i] = new int[in->GetRayCount()];
-				ray_lists[i]   = new RayList(renderingSet, rendering, knts[i]);
+				ray_lists[i]   = new RayList(renderingSet, rendering, knts[i], in->GetFrame());
 			}
 			else
 			{
@@ -522,7 +508,7 @@ Renderer::ProcessRays(RayList *in)
 		// and the FB is local,  just do it.  Otherwise, set up a message buffer.
 
 		RenderingP rendering = in->GetTheRendering();
-		SendPixelsMsg *spmsg = (fbknt && !rendering->IsLocal()) ? new SendPixelsMsg(rendering, fbknt) : NULL;
+		SendPixelsMsg *spmsg = (fbknt && !rendering->IsLocal()) ? new SendPixelsMsg(rendering, in->GetFrame(), fbknt) : NULL;
 		Pixel *local_pixels = (fbknt && rendering->IsLocal()) ? new Pixel[fbknt] : NULL;
 
 		fbknt = 0;
@@ -583,7 +569,7 @@ Renderer::ProcessRays(RayList *in)
 
 		if (local_pixels)
 		{
-			rendering->AddLocalPixels(local_pixels, lclknt, rendering->GetFrame());
+			rendering->AddLocalPixels(local_pixels, lclknt, in->GetFrame(), GetTheApplication()->GetRank());
 			delete[] local_pixels;
 		}
 
@@ -799,25 +785,26 @@ Renderer::AckRaysMsg::Action(int sender)
 void
 Renderer::Render(RenderingSetP rs)
 {
+	static int render_frame = 0;
 #if defined(EVENT_TRACKING)
 
-    class StartRenderingEvent : public Event
-    {
-    public:
-      StartRenderingEvent(Key r) : rset(r) {};
+	class StartRenderingEvent : public Event
+	{
+	public:
+		StartRenderingEvent(Key r) : rset(r) {};
 
-    protected:
-      void print(ostream& o)
-      {
-        Event::print(o);
-        o << "start rendering rset " << rset;
-      }
+	protected:
+		void print(ostream& o)
+		{
+			Event::print(o);
+			o << "start rendering rset " << rset;
+		}
 
-    private:
-      Key rset;
-    };
+	private:
+		Key rset;
+	};
 
-    GetTheEventTracker()->Add(new StartRenderingEvent(rs->getkey()));
+	GetTheEventTracker()->Add(new StartRenderingEvent(rs->getkey()));
 #endif
 
   RenderMsg msg(this, rs);
@@ -860,4 +847,3 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 
   return false;
 }
-

@@ -86,7 +86,7 @@ TraceRays::Trace(Lighting& lights, VisualizationP visualization, RayList *raysIn
 
   if (nOutputRays)
   {
-    raysOut = new RayList(raysIn->GetTheRenderingSet(), raysIn->GetTheRendering(), nOutputRays);
+    raysOut = new RayList(raysIn->GetTheRenderingSet(), raysIn->GetTheRendering(), raysIn->GetFrame(), nOutputRays);
   }
   
   

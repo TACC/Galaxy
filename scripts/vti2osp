@@ -3,33 +3,55 @@
 import sys
 from vtk import *
 from vtk.util import numpy_support as ns
+from os.path import isfile
 
 rdr = vtkXMLImageDataReader()
 rdr.SetFileName(sys.argv[1])
 rdr.Update()
 o = rdr.GetOutput()
-a = o.GetPointData().GetArray(sys.argv[2])
-nd = ns.vtk_to_numpy(a)
-if nd.dtype == 'float32':
-  dtype = 'float'
-elif nd.dtype == 'float64'or nd.dtype == 'int32' or nd.dtype == 'int32':
-  nd = nd.astype('float32')
-  dtype = 'float'
-else:
-  dtype = 'uchar'
-rawname = sys.argv[1].rsplit('.', 1)[0] + '-' + sys.argv[2] + '.raw'
-ospname = sys.argv[1].rsplit('.', 1)[0] + '-' + sys.argv[2] + '.osp'
 
-of = open(rawname, 'wb')
-nd.tofile(of)
-of.close()
+for var in sys.argv[2:]:
+	rawname = sys.argv[1].rsplit('.', 1)[0] + '-' + var + '.raw'
+	ospname = sys.argv[1].rsplit('.', 1)[0] + '-' + var + '.osp'
+	volname = sys.argv[1].rsplit('.', 1)[0] + '-' + var + '.vol'
 
-of = open(ospname, 'w')
-of.write('<?xml version="1.0"?>\n')
-of.write('<volume name="volume">\n')
-of.write('<dimensions> %d %d %d </dimensions>\n' % o.GetDimensions())
-of.write('<voxelType> float </voxelType>\n')
-of.write('<samplingRate> 1.0 </samplingRate>\n')
-of.write('<filename> %s </filename>\n' % rawname)
-of.write('</volume>\n')
-of.close()
+	a = o.GetPointData().GetArray(var)
+	nd = ns.vtk_to_numpy(a)
+	if nd.dtype == 'float32':
+		dtype = 'float'
+	elif nd.dtype == 'float64'or nd.dtype == 'int32' or nd.dtype == 'int32':
+		nd = nd.astype('float32')
+		dtype = 'float'
+	else:
+		dtype = 'uchar'
+
+	if isfile(rawname):
+		print "skipping raw", var, "data"
+	else:
+		of = open(rawname, 'wb')
+		nd.tofile(of)
+		of.close()
+
+	if isfile(ospname):
+		print "skipping", var, "osp file"
+	else:
+		of = open(ospname, 'w')
+		of.write('<?xml version="1.0"?>\n')
+		of.write('<volume name="volume">\n')
+		of.write('<dimensions> %d %d %d </dimensions>\n' % o.GetDimensions())
+		of.write('<voxelType> float </voxelType>\n')
+		of.write('<samplingRate> 1.0 </samplingRate>\n')
+		of.write('<filename> %s </filename>\n' % rawname)
+		of.write('</volume>\n')
+		of.close()
+
+	if isfile(volname):
+		print "skipping", var, "vol file"
+	else:
+		of = open(volname, 'w')
+		of.write('%s\n' % dtype)
+		of.write('%f %f %f\n' % tuple([o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]))
+		of.write('%d %d %d\n' % o.GetDimensions())
+		of.write('%f %f %f\n' % o.GetSpacing())
+		of.write(rawname + '\n')
+		of.close()

@@ -28,6 +28,7 @@ Rendering::initialize()
   height = -1;
   owner = -1;
   framebuffer = NULL;
+	frame = -1;
 
 #ifndef PVOL_SYNCHRONOUS
   kbuffer = NULL;
@@ -114,17 +115,21 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
     exit(0);
   }
 
-	// APP_LOG("ALP " << std::hex << framebuffer);
-
-  while (n-- > 0)
-  {
-#ifdef PVOL_SYNCHRONOUS
-    ACCUMULATE_PIXEL(p->x, p->y, p->r, p->g, p->b, p->o);
-#else
-    ACCUMULATE_PIXEL(f, p->x, p->y, p->r, p->g, p->b, p->o);
-#endif
-    p++;
-  }
+	if (f >= frame)
+	{
+		if (f > frame)
+			frame = f;
+		
+		while (n-- > 0)
+		{
+	#ifdef PVOL_SYNCHRONOUS
+			ACCUMULATE_PIXEL(p->x, p->y, p->r, p->g, p->b, p->o);
+	#else
+			ACCUMULATE_PIXEL(f, p->x, p->y, p->r, p->g, p->b, p->o);
+	#endif
+			p++;
+		}
+	}
 }
 
 bool
