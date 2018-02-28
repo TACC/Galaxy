@@ -10,7 +10,7 @@ class AsyncRendering : public Rendering
   
 public:
 	virtual void initialize();
-  virtual void AddLocalPixels(Pixel *p, int n, int f);
+  virtual void AddLocalPixels(Pixel *p, int n, int f, int s);
 
 	void SetBuffers(float *p, int *f) { pixels = p; frameids = f; }
 

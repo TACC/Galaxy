@@ -1,3 +1,5 @@
+#define REVERSE_LIGHTING 1
+
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
@@ -86,27 +88,29 @@ TraceRays::Trace(Lighting& lights, VisualizationP visualization, RayList *raysIn
 
   if (nOutputRays)
   {
-    raysOut = new RayList(raysIn->GetTheRenderingSet(), raysIn->GetTheRendering(), raysIn->GetFrame(), nOutputRays);
+    raysOut = new RayList(raysIn->GetTheRenderingSet(), raysIn->GetTheRendering(), nOutputRays, raysIn->GetFrame());
   }
   
-  
+#if REVERSE_LIGHTING
+	ispc::TraceRays_ambientLighting(GetISPC(), lights.GetISPC(), raysIn->GetRayCount(),  raysIn->GetISPC());
+	if (ao_ray_knt)
+		ispc::TraceRays_generateAORays(GetISPC(), lights.GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), ao_offsets, raysOut->GetISPC());
+	
+	ispc::TraceRays_diffuseLighting(GetISPC(), lights.GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC());
+	if (shadow_ray_knt)
+		ispc::TraceRays_generateShadowRays(GetISPC(), lights.GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), shadow_offsets, raysOut->GetISPC());
+#else
 	if (ao_ray_knt)
 		ispc::TraceRays_generateAORays(GetISPC(), lights.GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), ao_offsets, raysOut->GetISPC());
 	else
 		ispc::TraceRays_ambientLighting(GetISPC(), lights.GetISPC(), raysIn->GetRayCount(),  raysIn->GetISPC());
-
+	
 	if (shadow_ray_knt)
 		ispc::TraceRays_generateShadowRays(GetISPC(), lights.GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), shadow_offsets, raysOut->GetISPC());
 	else
 		ispc::TraceRays_diffuseLighting(GetISPC(), lights.GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC());
-
-#if 0
-  if (raysOut)
-    std::cerr << "raysOut->count = " << raysOut->GetRayCount() << "\n";
-  else
-    std::cerr << "no rays out\n";
 #endif
-  
+
 	return raysOut;
 
 }

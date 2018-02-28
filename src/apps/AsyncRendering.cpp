@@ -12,7 +12,7 @@ AsyncRendering::initialize()
 }
 
 void
-AsyncRendering::AddLocalPixels(Pixel *p, int n, int f)
+AsyncRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 {
 	if (!frameids || !pixels)
 		return;

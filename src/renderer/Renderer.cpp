@@ -1,3 +1,5 @@
+#define REVERSE_LIGHTING 1
+
 #define do_timing 0
 #define logging 0
 
@@ -393,8 +395,16 @@ Renderer::ProcessRays(RayList *in)
           if (exit_face == NO_NEIGHBOR)
           {
             // Then send the rays to the FB to add in the directed-light contribution
+						// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
+						// to ADD the (negative) shadow
+
+#if REVERSE_LIGHTING
+						classification[i] = DROP_ON_FLOOR;
+						nRetired ++;
+#else
             classification[i] = SEND_TO_FB;
 						nPixelsSent ++;
+#endif
           }
           else
 					{
@@ -405,8 +415,15 @@ Renderer::ProcessRays(RayList *in)
         else if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
         {
           // We don't need to add in the light's contribution
+					// OR, if reverse lighting, send to FB to ADD the (negative) shadow
+
+#if REVERSE_LIGHTING
+					classification[i] = SEND_TO_FB;
+					nPixelsSent ++;
+#else
           classification[i] = DROP_ON_FLOOR;
 					nRetired ++;
+#endif
         }
         else 
         {
@@ -425,8 +442,16 @@ Renderer::ProcessRays(RayList *in)
           if (exit_face == NO_NEIGHBOR)
           {
             // Then send the rays to the FB to add in the ambient-light contribution
+						// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
+						// to ADD the (negative) shadow
+
+#if REVERSE_LIGHTING
+						classification[i] = DROP_ON_FLOOR;
+						nRetired ++;
+#else
             classification[i] = SEND_TO_FB;
 						nPixelsSent ++;
+#endif
           }
           else
 					{
@@ -436,13 +461,30 @@ Renderer::ProcessRays(RayList *in)
         }
         else if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
         {
+          // We don't need to add in the light's contribution
+					// OR, if reverse lighting, send to FB to ADD the (negative)
+					// ambient contribution
+#if REVERSE_LIGHTING
+					classification[i] = SEND_TO_FB;
+					nPixelsSent ++;
+#else
 					classification[i] = DROP_ON_FLOOR;
 					nRetired ++;
+#endif
         }
         else if (term == RAY_TIMEOUT)
         {
+					// Timed-out - drop on floor in REVERSE case so
+					// we don't add the (negative) ambient contribution;
+					// otherwise, send  to FB to add in (positive) ambient
+				  // contribution
+#if REVERSE_LIGHTING
+					classification[i] = DROP_ON_FLOOR;
+					nRetired ++;
+#else
 					classification[i] = SEND_TO_FB;
 					nPixelsSent ++;
+#endif
 				}
 				else
 				{

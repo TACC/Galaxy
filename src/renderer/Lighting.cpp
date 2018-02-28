@@ -75,7 +75,7 @@ Lighting::LoadStateFromValue(Value& v)
     SetShadowFlag(v["shadows"].GetBool());
 
   int   aok = v.HasMember("ao count") ? v["ao count"].GetInt() : 0;
-  float aor = v.HasMember("ao radius") ? v["ao count"].GetDouble() : 1;
+  float aor = v.HasMember("ao radius") ? v["ao radius"].GetDouble() : 1;
     
   SetAO(aok, aor);
 

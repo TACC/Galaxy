@@ -42,6 +42,9 @@ float *pixels = NULL;
 int   *frameids = NULL;
 bool  render_one = false;
 
+vec4f current_rotation; vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup; float aov;
+vec4f orig_current_rotation; vec3f orig_scaled_viewdirection, orig_center, orig_viewpoint, orig_viewdirection, orig_viewup; float orig_aov;
+
 enum _state
 {
 	RUNNING,
@@ -127,6 +130,19 @@ keyboard(unsigned char ch, int x, int y)
 {
   switch (ch) {
 		case 0x52:
+			render_one = true;
+			break;
+
+    case 0x63: // c reset camera
+			current_rotation = orig_current_rotation;
+			scaled_viewdirection = orig_scaled_viewdirection;
+			center = orig_center;
+			viewpoint = orig_viewpoint;
+			viewdirection = orig_viewdirection;
+			viewup = orig_viewup;
+			aov = orig_aov;
+			X1 = X0;
+			Y1 = Y0;
 			render_one = true;
 			break;
 
@@ -276,6 +292,14 @@ render_thread(void *d)
 
 	bool first = true;
 
+	orig_current_rotation = current_rotation;
+	orig_scaled_viewdirection = scaled_viewdirection;
+	orig_center = center;
+	orig_viewpoint = viewpoint;
+	orig_viewdirection = viewdirection;
+	orig_viewup = viewup;
+	orig_aov = aov;
+
 	while (get_state() == RUNNING)
 	{
 		if (render_one || first || (X0 != X1) || (Y0 != Y1))
@@ -324,8 +348,6 @@ render_thread(void *d)
       theRenderingSet->Commit();
 #endif
 
-			std::cerr << "+";
-
 			if (render_one)
 			{
 				GetTheApplication()->SyncApplication();
@@ -333,8 +355,6 @@ render_thread(void *d)
 			}
 
 			theRenderer->Render(theRenderingSet);
-
-			std::cerr << "0";
 			
 			X0 = X1; Y0 = Y1;
 		}

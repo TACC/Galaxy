@@ -1,3 +1,5 @@
+#define REVERSE_LIGHTING 1
+
 // ======================================================================== //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
@@ -200,7 +202,7 @@ LookForSliceHit(varying bool shadeFlag,
           {
 // print("sh hit % %\n", major, minor);
 
-            if (denom < 0)
+            if (denom > 0)
               hit.normal   = neg(pnorm);
             else
               hit.normal   = pnorm;
@@ -650,7 +652,11 @@ export void TraceRays_generateAORays(void *uniform _self,
   uniform RayList_ispc *uniform raysOut = (RayList_ispc *uniform)_raysOut;
   uniform float epsilon = self->epsilon;
 
+#if REVERSE_LIGHTING
+  uniform float Ka = -lights->Ka / lights->n_ao_rays;
+#else
   uniform float Ka = lights->Ka / lights->n_ao_rays;
+#endif
 
   for (int i = 0; i < nRaysIn; i++)
   {
@@ -782,7 +788,12 @@ export void TraceRays_generateShadowRays(void *uniform _self,
   uniform RayList_ispc *uniform raysOut = (RayList_ispc *uniform)_raysOut;
 
   uniform float epsilon = self->epsilon;
+
+#if REVERSE_LIGHTING
+  uniform float Kd = -lights->Kd / lights->nLights;
+#else
   uniform float Kd = lights->Kd / lights->nLights;
+#endif
 
   foreach (i = 0 ... nRaysIn)
   {
@@ -808,6 +819,8 @@ export void TraceRays_generateShadowRays(void *uniform _self,
         
       vec3f surface_normal = make_vec3f(raysIn->nx[i], raysIn->ny[i], raysIn->nz[i]);
 
+// print("SNX %\nSNY %\nSNZ %\n", surface_normal.x, surface_normal.y, surface_normal.z);
+
       // If there are shadow rays to be cast, then the Kd of the lighting 
       // model is divided among the cast rays.  Otherwise the Kd * cos(normal, light) times
       // the surface color is added in to the input ray color.  Again, in either case, 
@@ -823,6 +836,9 @@ export void TraceRays_generateShadowRays(void *uniform _self,
         float dff_r = dff * raysIn->sr[i];
         float dff_g = dff * raysIn->sg[i];
         float dff_b = dff * raysIn->sb[i];
+
+// print("XXX\nO: %\nKd: %\nd: %\ndff: %\ndff_r: %\ndff_g: %\ndff_b: %\n", raysIn->o[i], Kd, d, dff, dff_r, dff_g, dff_b);
+
 
 
 #if 0
