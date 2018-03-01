@@ -12,7 +12,7 @@ using namespace std;
 
 #include "Application.h"
 #include "Renderer.h"
-#include "AsyncRendering.h"
+#include "Rendering.h"
 
 #include <ospray/ospray.h>
 
@@ -32,14 +32,14 @@ string statefile("");
 
 ImageWriter image_writer("async");
 
-AsyncRenderingP theRendering = NULL;
+RenderingP 			theRendering = NULL;
 RenderingSetP 	theRenderingSet = NULL;
 CameraP 				theCamera = NULL;
 VisualizationP 	theVisualization = NULL;
 DatasetsP 			theDatasets = NULL;
 
 float *pixels = NULL;
-int   *frameids = NULL;
+// int   *frameids = NULL;
 bool  render_one = false;
 
 vec4f current_rotation; vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup; float aov;
@@ -277,14 +277,15 @@ render_thread(void *d)
   theVisualization = theVisualizations[0];
 	theVisualization->Commit(theDatasets);
 
-	theRendering = AsyncRendering::NewP();
-	theRendering->SetBuffers(pixels, frameids);
+	theRendering = Rendering::NewP();
 	theRendering->SetTheOwner(0);
 	theRendering->SetTheSize(width, height);
 	theRendering->SetTheDatasets(theDatasets);
 	theRendering->SetTheVisualization(theVisualization);
 	theRendering->SetTheCamera(theCamera);
 	theRendering->Commit();
+
+	pixels = theRendering->GetPixels();
 
 	theRenderingSet = RenderingSet::NewP();
 	theRenderingSet->AddRendering(theRendering);
@@ -387,8 +388,6 @@ main(int argc, char *argv[])
   Application theApplication(&argc, &argv);
   theApplication.Start();
 
-	AsyncRendering::RegisterClass();
-
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
@@ -417,11 +416,11 @@ main(int argc, char *argv[])
 
   if (mpiRank == 0)
   {
-		pixels = new float[width*height*4];
-		frameids = new int[width*height];
+		// pixels = new float[width*height*4];
+		// frameids = new int[width*height];
 
-		for (int i = 0; i < width*height*4; i++) pixels[i] = 0.0;
-		memset(frameids, 0, width*height*sizeof(int));
+		// for (int i = 0; i < width*height*4; i++) pixels[i] = 0.0;
+		// memset(frameids, 0, width*height*sizeof(int));
 
     pthread_t tid;
     pthread_create(&tid, NULL, render_thread, NULL);

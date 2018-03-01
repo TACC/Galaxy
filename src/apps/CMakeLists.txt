@@ -49,7 +49,7 @@ else()
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
 		link_directories(${X11_LIBRARIES})
 
-		add_executable(async async.cpp AsyncRendering.cpp quat.cpp)
+		add_executable(async async.cpp quat.cpp)
 		target_link_libraries(async ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
 		add_executable(async-client async-client.cpp Socket.cpp)

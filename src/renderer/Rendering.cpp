@@ -73,8 +73,8 @@ Rendering::IsLocal()
 
 #define ACCUMULATE_PIXEL(X, Y, R, G, B, O)                            	 \
 {                                                                        \
-  size_t offset = 4*((((height-1)-Y)*width + ((width-1)-X)));            \
-  float *ptr = framebuffer + offset;                                     \
+	int offset = Y*width + X;																							 \
+  float *ptr = framebuffer + (offset<<2);                                \
   *ptr++ += R;                                                           \
   *ptr++ += G;                                                           \
   *ptr++ += B;                                                           \
@@ -85,8 +85,8 @@ Rendering::IsLocal()
 #else
     
 #define ACCUMULATE_PIXEL(f, X, Y, R, G, B, O)                            \
-{                                                                        \
-  size_t offset = ((((height-1)-Y)*width + ((width-1)-X)));            	 \
+{     	                                                                 \
+	int offset = Y*width + X;																							 \
   float *ptr = framebuffer + (offset<<2);                                \
 	if (kbuffer[offset] < f)																							 \
 	{																																			 \
@@ -94,6 +94,7 @@ Rendering::IsLocal()
 		ptr[1] = 0;																													 \
 		ptr[2] = 0;																													 \
 		ptr[3] = 0;																													 \
+		kbuffer[offset] = f;																								 \
 	}																																			 \
   *ptr++ += R;                                                           \
   *ptr++ += G;                                                           \
