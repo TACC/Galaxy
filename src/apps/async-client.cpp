@@ -291,6 +291,7 @@ receiver_thread(void *)
 					pix[1] = 0;
 					pix[2] = 0;
 					pix[3] = 0;
+					frameids[offset] = frame;
 				}
 				*pix++ += p->r;
 				*pix++ += p->g;
