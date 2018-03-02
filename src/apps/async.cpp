@@ -4,11 +4,13 @@
 #include <unistd.h>
 #include <glut.h>
 #include <pthread.h>
+#include <time.h>
 #include "ImageWriter.h"
 
 using namespace std;
 
 #include "quat.h"
+#include "async.h"
 
 #include "Application.h"
 #include "Renderer.h"
@@ -20,8 +22,10 @@ using namespace std;
 #define HEIGHT 500
 
 int width = WIDTH, height = HEIGHT;
+float Xd, Yd;
 float X0, Y0;
 float X1, Y1;
+int button = -1;
 
 volatile int frame = -1;
 
@@ -39,11 +43,20 @@ VisualizationP 	theVisualization = NULL;
 DatasetsP 			theDatasets = NULL;
 
 float *pixels = NULL;
-// int   *frameids = NULL;
 bool  render_one = false;
 
-vec4f current_rotation; vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup; float aov;
-vec4f orig_current_rotation; vec3f orig_scaled_viewdirection, orig_center, orig_viewpoint, orig_viewdirection, orig_viewup; float orig_aov;
+float viewdistance, aov;
+vec3f viewpoint, viewdirection, viewup;
+vec4f current_rotation;
+
+float orig_viewdistance, orig_aov;
+vec3f orig_viewpoint, orig_viewdirection, orig_viewup;
+vec4f orig_current_rotation;
+
+vec3f	down_viewdirection, down_viewpoint;
+float down_viewdistance;
+
+cam_mode mode = OBJECT_CENTER;
 
 enum _state
 {
@@ -87,7 +100,6 @@ class Debug
 public:
   Debug(const char *executable, bool attach)
   {
-    cerr << "Debug ctor\n";
     bool dbg = true;
     std::stringstream cmd;
     pid_t pid = getpid();
@@ -134,9 +146,8 @@ keyboard(unsigned char ch, int x, int y)
 			break;
 
     case 0x63: // c reset camera
+			viewdistance = orig_viewdistance;
 			current_rotation = orig_current_rotation;
-			scaled_viewdirection = orig_scaled_viewdirection;
-			center = orig_center;
 			viewpoint = orig_viewpoint;
 			viewdirection = orig_viewdirection;
 			viewup = orig_viewup;
@@ -197,9 +208,17 @@ mousefunc(int k, int s, int x, int y)
 {
   if (s == GLUT_DOWN)
   {
-    X0 = -1.0 + 2.0*(float(x)/WIDTH);
-    Y0 = -1.0 + 2.0*(float(y)/HEIGHT);
+		button = k;
+
+    Xd = X0 = -1.0 + 2.0*(float(x)/WIDTH);
+    Yd = Y0 = -1.0 + 2.0*(float(y)/HEIGHT);
+
+		down_viewdistance = viewdistance;
+		down_viewpoint = viewpoint;
+		down_viewdirection = viewdirection;
   }
+	else
+		button = -1;
 }
   
 void
@@ -244,30 +263,29 @@ render_thread(void *d)
   vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
   theCamera = theCameras[0];
 
-  vec3f scaled_viewdirection, center, viewpoint, viewdirection, viewup;
-  theCamera->get_viewpoint(viewpoint);
-  theCamera->get_viewdirection(viewdirection);
-  theCamera->get_viewup(viewup);
-  add(viewpoint, viewdirection, center);
- 
-  float aov, viewdistance = len(viewdirection);
-  theCamera->get_angle_of_view(aov);
+  theCamera->get_viewpoint(orig_viewpoint);
+  theCamera->get_viewdirection(orig_viewdirection);
+  theCamera->get_viewup(orig_viewup);
+  theCamera->get_angle_of_view(orig_aov);
+	orig_viewdistance = len(orig_viewdirection);
 
-  normalize(viewdirection);
-  normalize(viewup);
-
-  scaled_viewdirection = viewdirection;
-  scale(viewdistance, scaled_viewdirection);
+  normalize(orig_viewdirection);
+  normalize(orig_viewup);
 
   vec3f viewright;
-  cross(viewdirection, viewup, viewright);
-  cross(viewright, viewdirection, viewup);
+  cross(orig_viewdirection, orig_viewup, viewright);
+  cross(viewright, orig_viewdirection, orig_viewup);
 
   vec3f y(0.0, 1.0, 0.0);
   float ay = acos(dot(y, viewup));
+  axis_to_quat(orig_viewdirection, ay, orig_current_rotation);
 
-  vec4f current_rotation;
-  axis_to_quat(viewdirection, ay, current_rotation);
+  viewdistance = orig_viewdistance;
+  current_rotation = orig_current_rotation;
+  viewpoint = orig_viewpoint;
+  viewdirection = orig_viewdirection;
+  viewup = orig_viewup;
+  aov = orig_aov;
 
   theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
@@ -294,8 +312,6 @@ render_thread(void *d)
 	bool first = true;
 
 	orig_current_rotation = current_rotation;
-	orig_scaled_viewdirection = scaled_viewdirection;
-	orig_center = center;
 	orig_viewpoint = viewpoint;
 	orig_viewdirection = viewdirection;
 	orig_viewup = viewup;
@@ -308,46 +324,72 @@ render_thread(void *d)
 			first = false;
 			if ((X0 != X1) || (Y0 != Y1))
 			{
-				vec4f this_rotation;
-				trackball(this_rotation, X0, Y0, X1, Y1);
+				if (mode == OBJECT_CENTER)
+				{
+					if (button == 0)
+					{
+						vec4f this_rotation;
+						trackball(this_rotation, X0, Y0, X1, Y1);
 			
-				vec4f next_rotation;
-				add_quats(this_rotation, current_rotation, next_rotation);
-				current_rotation = next_rotation;
+						vec4f next_rotation;
+						add_quats(this_rotation, current_rotation, next_rotation);
+						current_rotation = next_rotation;
 
-				vec3f y(0.0, 1.0, 0.0);
-				vec3f z(0.0, 0.0, 1.0);
+						vec3f y(0.0, 1.0, 0.0);
+						vec3f z(0.0, 0.0, 1.0);
 
-				rotate_vector_by_quat(y, current_rotation, viewup);
-				rotate_vector_by_quat(z, current_rotation, viewdirection);
+						vec3f center = viewpoint + viewdirection*viewdistance;
+						rotate_vector_by_quat(y, current_rotation, viewup);
+						rotate_vector_by_quat(z, current_rotation, viewdirection);
+						viewpoint = center - viewdirection*viewdistance;
+					}
+					else
+					{
+						vec3f center = down_viewpoint + down_viewdirection*down_viewdistance;
+						float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
+						viewdistance = down_viewdistance * pow(10.0, d);
+						viewpoint = center - viewdirection*viewdistance;
+					}
+				}
+				else
+				{
+					if (button == 0)
+					{
+						vec4f this_rotation;
+						trackball(this_rotation, X0, Y0, X1, Y1);
+			
+						vec4f next_rotation;
+						add_quats(this_rotation, current_rotation, next_rotation);
+						current_rotation = next_rotation;
 
-				scaled_viewdirection = viewdirection;
-				scale(viewdistance, scaled_viewdirection);
-				sub(center, scaled_viewdirection, viewpoint);
+						vec3f y(0.0, 1.0, 0.0);
+						vec3f z(0.0, 0.0, 1.0);
+
+						rotate_vector_by_quat(y, current_rotation, viewup);
+						rotate_vector_by_quat(z, current_rotation, viewdirection);
+					}
+					else
+					{
+						float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
+						std::cerr << d<<"\n";
+						viewpoint = down_viewpoint + viewdirection*d;
+					}
+				}
 			}
 
-#if 0
-#define PVEC(n, v) \
-			std::cerr << n << ": " << v.x << " " << v.y << " " << v.z << "\n";
+			std::cerr
+				<< viewpoint.x << " " 
+				<< viewpoint.y << " " 
+				<< viewpoint.z << " : " 
+				<< viewdirection.x << " " 
+				<< viewdirection.y << " " 
+				<< viewdirection.z << "\n";
 
-			PVEC("SVD", scaled_viewdirection)
-			PVEC("VP", viewpoint)
-			PVEC("UP", viewup)
-			std::cerr << "AOV: " << aov << "\n";
-#endif
-
-      theCamera->set_viewdirection(scaled_viewdirection);
+      theCamera->set_viewdirection(viewdirection);
       theCamera->set_viewpoint(viewpoint);
       theCamera->set_viewup(viewup);
       theCamera->set_angle_of_view(aov);
       theCamera->Commit();
-#if 0
-
-      theRendering->SetTheCamera(theCamera);
-      theRendering->Commit();
-
-      theRenderingSet->Commit();
-#endif
 
 			if (render_one)
 			{
@@ -356,9 +398,15 @@ render_thread(void *d)
 			}
 
 			theRenderer->Render(theRenderingSet);
-			
 			X0 = X1; Y0 = Y1;
 		}
+
+		struct timespec t;
+		t.tv_sec  = 0;
+		t.tv_nsec = 100000000;
+		nanosleep(&t, NULL);
+		std::cerr << "X";
+
 	}
 
 	set_state(DONE);
@@ -372,6 +420,8 @@ syntax(char *a)
   cerr << "  -D         run debugger\n";
   cerr << "  -A         wait for attachment\n";
   cerr << "  -s w h     image size (512 x 512)\n";
+  cerr << "  -O         object-center model (default)\n";
+  cerr << "  -E         eye-center model\n";
   exit(1);
 }
 
@@ -392,6 +442,8 @@ main(int argc, char *argv[])
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
     else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
+    else if (!strcmp(argv[i], "-O")) mode = OBJECT_CENTER;
+    else if (!strcmp(argv[i], "-E")) mode = EYE_CENTER;
     else if (!strcmp(argv[i], "-s"))
     {
       width  = atoi(argv[++i]);
@@ -416,12 +468,6 @@ main(int argc, char *argv[])
 
   if (mpiRank == 0)
   {
-		// pixels = new float[width*height*4];
-		// frameids = new int[width*height];
-
-		// for (int i = 0; i < width*height*4; i++) pixels[i] = 0.0;
-		// memset(frameids, 0, width*height*sizeof(int));
-
     pthread_t tid;
     pthread_create(&tid, NULL, render_thread, NULL);
 

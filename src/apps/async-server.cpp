@@ -21,8 +21,12 @@ Socket *skt;
 
 bool render_one = false;
 
-float X0, Y0;
-float X1, Y1;
+float Xd, X0, Y0;
+float Yd, X1, Y1;
+int button;
+int button_state;
+cam_mode mode;
+
 float *buf = NULL;
 bool quit = false;
 
@@ -33,20 +37,26 @@ VisualizationP  	theVisualization = NULL;
 
 RendererP theRenderer;
 
-vec3f orig_scaled_viewdirection, scaled_viewdirection;
-vec3f orig_center, center;
-vec3f orig_viewpoint, viewpoint;
-vec3f orig_viewdirection, viewdirection;
-vec3f orig_viewup, viewup;
-float orig_aov, aov;
-float orig_viewdistance, viewdistance;
+float viewdistance, aov;
+vec3f viewpoint, viewdirection, viewup;
+vec4f current_rotation;
+
+float orig_viewdistance, orig_aov;
+vec3f orig_viewpoint, orig_viewdirection, orig_viewup;
+vec4f orig_current_rotation;
+
+vec3f down_viewdirection, down_viewpoint;
+float down_viewdistance;
 
 void *
 render_thread(void *buf)
 {
-	int width = ((int *)buf)[1];
-	int height = ((int *)buf)[2];
-	string statefile = string(((char *)buf) + 3*sizeof(int));
+	struct start *start = (struct start *)buf;
+
+	int mode = start->mode;
+	int width = start->width;
+	int height = start->height;
+	string statefile = string(start->name);
 
   theRenderer = Renderer::NewP();
   Document *doc = GetTheApplication()->OpenInputState(statefile);
@@ -57,37 +67,29 @@ render_thread(void *buf)
   vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
   theCamera = theCameras[0];
 
-  theCamera->get_viewpoint(viewpoint);
-  theCamera->get_viewdirection(viewdirection);
-  theCamera->get_viewup(viewup);
-  add(viewpoint, viewdirection, center);
-	
-  viewdistance = len(viewdirection);
-	theCamera->get_angle_of_view(aov);
+  theCamera->get_viewpoint(orig_viewpoint);
+  theCamera->get_viewdirection(orig_viewdirection);
+  theCamera->get_viewup(orig_viewup);
+  theCamera->get_angle_of_view(orig_aov);
+  orig_viewdistance = len(orig_viewdirection);
 
-  normalize(viewdirection);
-  normalize(viewup);
-
-	scaled_viewdirection = viewdirection;
-	scale(viewdistance, scaled_viewdirection);
+  normalize(orig_viewdirection);
+  normalize(orig_viewup);
 
   vec3f viewright;
-  cross(viewdirection, viewup, viewright);
-  cross(viewright, viewdirection, viewup);
+  cross(orig_viewdirection, orig_viewup, viewright);
+  cross(viewright, orig_viewdirection, orig_viewup);
 
   vec3f y(0.0, 1.0, 0.0);
   float ay = acos(dot(y, viewup));
+  axis_to_quat(orig_viewdirection, ay, orig_current_rotation);
 
-  vec4f current_rotation;
-  axis_to_quat(viewdirection, ay, current_rotation);
-
-  orig_scaled_viewdirection = scaled_viewdirection;
-	orig_center = center;
-	orig_viewpoint = viewpoint;
-	orig_viewdirection = viewdirection;
-	orig_viewup = viewup;
-  orig_aov = aov;
-	orig_viewdistance = viewdistance;
+  viewdistance = orig_viewdistance;
+  current_rotation = orig_current_rotation;
+  viewpoint = orig_viewpoint;
+  viewdirection = orig_viewdirection;
+  viewup = orig_viewup;
+  aov = orig_aov;
 
   DatasetsP theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
@@ -127,79 +129,67 @@ render_thread(void *buf)
 
 			if (cam_moved)
 			{
-				vec4f this_rotation;
-				trackball(this_rotation, X0, Y0, x1, y1);
+        if (mode == OBJECT_CENTER)
+        {
+          if (button == 0)
+          {
+            vec4f this_rotation;
+            trackball(this_rotation, X0, Y0, X1, Y1);
 
-				vec4f next_rotation;
-				add_quats(this_rotation, current_rotation, next_rotation);
-				current_rotation = next_rotation;
+            vec4f next_rotation;
+            add_quats(this_rotation, current_rotation, next_rotation);
+            current_rotation = next_rotation;
 
-				vec3f y(0.0, 1.0, 0.0);
-				vec3f z(0.0, 0.0, 1.0);
+            vec3f y(0.0, 1.0, 0.0);
+            vec3f z(0.0, 0.0, 1.0);
 
-				rotate_vector_by_quat(y, current_rotation, viewup);
-				rotate_vector_by_quat(z, current_rotation, viewdirection);
+            vec3f center = viewpoint + viewdirection*viewdistance;
+            rotate_vector_by_quat(y, current_rotation, viewup);
+            rotate_vector_by_quat(z, current_rotation, viewdirection);
+            viewpoint = center - viewdirection*viewdistance;
+          }
+          else
+          {
+            vec3f center = down_viewpoint + down_viewdirection*down_viewdistance;
+            float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
+            viewdistance = down_viewdistance * pow(10.0, d);
+            viewpoint = center - viewdirection*viewdistance;
+          }
+        }
+        else
+        {
+          if (button == 0)
+          {
+            vec4f this_rotation;
+            trackball(this_rotation, X0, Y0, X1, Y1);
 
-				scaled_viewdirection = viewdirection;
-				scale(viewdistance, scaled_viewdirection);
+            vec4f next_rotation;
+            add_quats(this_rotation, current_rotation, next_rotation);
+            current_rotation = next_rotation;
 
-				sub(center, scaled_viewdirection, viewpoint);
-				X0 = x1; Y0 = y1;
+            vec3f y(0.0, 1.0, 0.0);
+            vec3f z(0.0, 0.0, 1.0);
+
+            rotate_vector_by_quat(y, current_rotation, viewup);
+            rotate_vector_by_quat(z, current_rotation, viewdirection);
+          }
+          else
+          {
+            float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
+            std::cerr << d<<"\n";
+            viewpoint = down_viewpoint + viewdirection*d;
+          }
+        }
 			}
 
-#if 0
-      if (theRenderingSet)
-      {
-        theRenderingSet->Drop();
-        theRenderingSet = NULL;
-      }
+			X0 = X1; Y0 = Y1;
 
-      if (theRendering)
-      {
-        theRendering->Drop();
-        theRendering = NULL;
-      }
-
-      if (theCamera)
-      {
-        theCamera->Drop();
-        theCamera = NULL;
-      }
-
-			cerr << "---------------- " << frame++ << "\n";
-			cerr << "dir:  " << viewdirection.x << " " << viewdirection.y << " " << viewdirection.z << "\n";
-			cerr << "sdir: " << scaled_viewdirection.x << " " << scaled_viewdirection.y << " " << scaled_viewdirection.z << "\n";
-			cerr << "vp:   " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z << "\n";
-			cerr << "up:   " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
-			cerr << "aov:  " << aov << "\n";
-			cerr << "vdist:" << viewdistance << "\n";
-
-			theCamera = Camera::NewP();
-			theCamera->set_viewdirection(scaled_viewdirection); 
+			theCamera->set_viewdirection(viewdirection); 
 			theCamera->set_viewpoint(viewpoint);
 			theCamera->set_viewup(viewup);
 			theCamera->set_angle_of_view(aov);
 			theCamera->Commit();
 
-			theRendering = ServerRendering::NewP();
-			theRendering->SetSocket(skt);
-			theRendering->SetTheOwner(0);
-			theRendering->SetTheSize(width, height);
-			theRendering->SetTheDatasets(theDatasets);
-			theRendering->SetTheVisualization(theVisualization);
-			theRendering->SetTheCamera(theCamera);
-			theRendering->Commit();
-
-			theRenderingSet = RenderingSet::NewP();
-			theRenderingSet->AddRendering(theRendering);
-			theRenderingSet->Commit();
-#else
-			theCamera->set_viewdirection(scaled_viewdirection); 
-			theCamera->set_viewpoint(viewpoint);
-			theCamera->set_viewup(viewup);
-			theCamera->set_angle_of_view(aov);
-			theCamera->Commit();
-#endif
 			theRenderer->Render(theRenderingSet);
 		}
 	}
@@ -255,22 +245,20 @@ main(int argc, char *argv[])
 			skt->Recv(buf, n);
 
 			int op = *(int *)buf;
-			void *args = (void *)(buf + sizeof(int));
 
-			switch(*(int *)buf)
+			switch(op)
 			{
 				case RESET_CAMERA:
-  				scaled_viewdirection = orig_scaled_viewdirection;
-					center = orig_center;
+					viewdistance = orig_viewdistance;
+					current_rotation = orig_current_rotation;
 					viewpoint = orig_viewpoint;
 					viewdirection = orig_viewdirection;
 					viewup = orig_viewup;
-  				aov = orig_aov;
-					viewdistance = orig_viewdistance;
+					aov = orig_aov;
 					render_one = true;
 					break;
 
-				case SYNC:
+				case SYNCHRONIZE:
 					theApplication.SyncApplication();
 					break;
 
@@ -298,15 +286,29 @@ main(int argc, char *argv[])
 					break;
 				
 				case MOUSEDOWN:
-					X0 = X1 = ((float *)args)[0];
-					Y0 = Y1 = ((float *)args)[1];
-					free(buf);
+					{
+						struct mouse_down *md = (struct mouse_down *)buf;
+
+						button_state = md->s;
+						button = md->k;
+						Xd = X0 = X1 = md->x;
+						Yd = Y0 = Y1 = md->y;
+
+						down_viewdistance = viewdistance;
+						down_viewpoint = viewpoint;
+						down_viewdirection = viewdirection;
+
+						free(buf);
+					}
 					break;
 
 				case MOUSEMOTION:
-					X1 = ((float *)args)[0];
-					Y1 = ((float *)args)[1];
-					free(buf);
+					{
+						struct mouse_motion *mm = (struct mouse_motion *)buf;
+						X1 = mm->x;
+						Y1 = mm->y;
+						free(buf);
+					}
 					break;
 			}
 		}

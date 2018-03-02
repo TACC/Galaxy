@@ -48,102 +48,81 @@ clear()
 void
 SendResetCamera()
 {
-  int n = RESET_CAMERA;
-	skt->Send((char *)&n, sizeof(n));
+  int op = RESET_CAMERA;
+	skt->Send((char *)&op, sizeof(op));
 }
 
 void
 SendStats()
 {
-  int n = STATS;
-	skt->Send((char *)&n, sizeof(n));
+  int op = STATS;
+	skt->Send((char *)&op, sizeof(op));
 }
 
 void
 SendSync()
 {
-  int n = SYNC;
-	skt->Send((char *)&n, sizeof(n));
+  int op = SYNCHRONIZE;
+	skt->Send((char *)&op, sizeof(op));
 }
 
 void
 SendDebug()
 {
-  int n = DEBUG;
-	skt->Send((char *)&n, sizeof(n));
+  int op = DEBUG;
+	skt->Send((char *)&op, sizeof(op));
 }
 	
 void
 SendRenderOne()
 {
-  int n = RENDER_ONE;
-	skt->Send((char *)&n, sizeof(n));
+  int op = RENDER_ONE;
+	skt->Send((char *)&op, sizeof(op));
 }
 	
 void
-SendStart(int w, int h, string statefile)
+SendStart(cam_mode mode, int w, int h, string statefile)
 {
-	int sz = 3*sizeof(int) + statefile.length() + 1;
-	char *buf = new char[sz];
+	int sz = sizeof(struct start) + statefile.length() + 1;
+	struct start *buf = (struct start *)new char[sz];
 
-	char *p = buf;
-	*(int *)p = START;
-	p += sizeof(int);
-	*(int *)p = w;
-	p += sizeof(int);
-	*(int *)p = h;
-	p += sizeof(int);
-	memcpy(p, statefile.c_str(), statefile.length()+1);
+	buf->op = START;
+	buf->mode = mode;
+	buf->width = w;
+	buf->height = h;
+	memcpy(&buf->name[0], statefile.c_str(), statefile.length()+1);
 
-	skt->Send(buf, sz);
+	skt->Send((char *)buf, sz);
 	delete[] buf;
 }
 
 void
-SendMouseDown(float x, float y)
+SendMouseDown(int k, int s, float x, float y)
 {
-	int sz = sizeof(int) + 2*sizeof(float);
-	char *buf = new char[sz];
-
-	char *p = buf;
-	*(int *)p = MOUSEDOWN;
-	p += sizeof(int);
-	*(float *)p = x;
-	p += sizeof(float);
-	*(float *)p = y;
-
-	skt->Send(buf, sz);
-	delete[] buf;
+	struct mouse_down md;
+	md.op = MOUSEDOWN;
+	md.k = k;
+	md.s = s;
+	md.x = x;
+	md.y = y;
+	skt->Send((char *)&md, sizeof(md));
 }
 
 void
 SendMouseMotion(float x, float y)
 {
-	int sz = sizeof(int) + 2*sizeof(float);
-	char *buf = new char[sz];
-
-	char *p = buf;
-	*(int *)p = MOUSEMOTION;
-	p += sizeof(int);
-	*(float *)p = x;
-	p += sizeof(float);
-	*(float *)p = y;
-
-	skt->Send(buf, sz);
-	delete[] buf;
+	struct mouse_motion mm;
+	mm.op = MOUSEMOTION;
+	mm.x = x;
+	mm.y = y;
+	skt->Send((char *)&mm, sizeof(mm));
 }
 
 void
 SendQuit()
 {
-	int sz = sizeof(int);
-	char *buf = new char[sz];
-
-	char *p = buf;
-	*(int *)p = QUIT;
-
-	skt->Send(buf, sz);
-	delete[] buf;
+	int op = QUIT;
+	skt->Send((char *)&op, sizeof(op));
 
 	pthread_join(receiver_tid, NULL);
 }
@@ -217,7 +196,7 @@ mousefunc(int k, int s, int x, int y)
 {
 	if (no_mouse) return;
   if (s == GLUT_DOWN)
-		SendMouseDown(-1.0 + 2.0*(float(x)/width), -1.0 + 2.0*(float(y)/height));
+		SendMouseDown(k, s, -1.0 + 2.0*(float(x)/width), -1.0 + 2.0*(float(y)/height));
 }
   
 void
@@ -328,6 +307,7 @@ main(int argc, char *argv[])
 	string host = "localhost";
 	string statefile = "";
 	int port = 5001;
+	cam_mode mode = OBJECT_CENTER;
 
   for (int i = 1; i < argc; i++)
   {
@@ -336,6 +316,8 @@ main(int argc, char *argv[])
     else if (!strcmp(argv[i], "-H")) host = argv[++i];
     else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-F")) no_mouse = true;
+    else if (!strcmp(argv[i], "-O")) mode = OBJECT_CENTER;
+    else if (!strcmp(argv[i], "-E")) mode = EYE_CENTER;
     else if (!strcmp(argv[i], "-s"))
     {
       width  = atoi(argv[++i]);
@@ -383,7 +365,7 @@ main(int argc, char *argv[])
   glRasterPos2i(-1, -1);
   frame = 1;
 
-	SendStart(width, height, statefile);
+	SendStart(mode, width, height, statefile);
 
   glutMainLoop();
 
