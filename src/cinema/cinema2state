@@ -1,0 +1,403 @@
+import pdb
+import sys, os
+from pprint import pprint
+from quat import *
+import json
+
+def expand(a):
+    if 'min' not in a or 'max' not in a or 'count' not in a:
+        return []
+    else:
+        m = a['min']
+        M = a['max']
+        k = a['count']
+        if k == 1:
+          return [ (m + M) / 2.0 ]
+        else:
+          return [float('%.4g' % (m + (i / (k-1.0))*(M - m))) for i in range(k)]
+
+    
+def recur(s, vis, vis_set, anno):
+    curop = s[0]
+    if 'type' not in curop:
+        print 'operator is not typed'
+        return
+
+    if curop['type'] == 'Particles':
+      
+        newop = dict(curop)
+        if len(s) == 1:
+            vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+        else:
+            recur(s[1:], vis + [ newop ], vis_set, anno)
+
+    elif curop['type'] == 'Volume Rendering':
+
+        newop = dict(curop)
+        newop['type'] = 'Volume'
+        newop['volume rendering'] = True
+        if len(s) == 1:
+            vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+        else:
+            recur(s[1:], vis + [ newop ], vis_set, anno)
+
+    elif curop['type'] == 'Isosurface':
+
+        # first simple, non-cinema isovalue list
+
+        if 'isovalues' in curop:
+            isovalues = curop['isovalues']
+            if type(isovalues) is not list:
+              isovalues = [ isovalues ]
+            for iv in isovalues:
+                newop = dict(curop)
+                newop['type'] = 'Volume'
+                newop['isovalues'] = isovalues
+                if len(s) == 1:
+                    vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+                else:
+                    recur(s[1:], vis + [ newop ], vis_set, anno)
+
+        if 'isovalue range' in curop:
+            isovalue_range = curop['isovalue range']
+            if type(isovalue_range) is dict:
+                isovalue_range = expand(isovalue_range)
+            elif type(isovalue_range) is not list:
+                print 'invalid isovalue range spec'
+                return
+
+            for iv in isovalue_range:
+                newop = dict(curop)
+                newop['type'] = 'Volume'
+                newop['isovalues'] = [ iv ]
+                anno1 = anno + "_" + str(iv)
+                if len(s) == 1:
+                    vis_set.append({'annotation': anno1, 'operators': vis + [ newop ]})
+                else:
+                    recur(s[1:], vis + [ newop ], vis_set, anno1)
+
+    elif curop['type'] == 'Slice':
+
+        # first simple non-cinema slice
+
+        if 'plane' in curop:
+            plane = curop['plane']
+
+            if type(plane) == list:
+                if len(plane) != 4:
+                    print 'invalid plane spec'
+                    return
+            elif type(plane) is dict:
+                if 'normal' not in plane or 'w' not in plane:
+                    print 'invalid plane spec'
+                    return
+                plane = plane['normal'] + [ plane['w'] ]
+
+            newop = dict(curop)
+            newop['type'] = 'Volume'
+            newop['plane'] = plane
+
+            if len(s) == 1:
+                vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+            else:
+                recur(s[1:], vis + [ newop ], vis_set, anno)
+
+        elif 'plane range' in curop:
+
+            plane_range = curop['plane range']
+
+            if type(plane_range) is not dict:
+                print 'invalid plane_range spec'
+                return
+
+            normal = plane_range['normal']
+            
+            w_range = plane_range['w']
+            if type(w_range) is dict:
+              w_range = expand(w_range)
+
+            for w in w_range:
+              newop = dict(curop)
+              newop['type'] = 'Volume'
+              newop['plane'] = normal + [ w ]
+              anno1 = anno + "_" + str(w)
+    
+              if len(s) == 1:
+                  vis_set.append({'annotation': anno1, 'operators': vis + [ newop ]})
+              else:
+                  recur(s[1:], vis + [ newop ], vis_set, anno1)
+             
+def expand_camera(c):
+
+    vp = c['viewpoint']
+    up = c['viewup']
+    aov = c['aov']
+
+    if 'viewcenter' in c:
+      vc = c['viewcenter']
+      dir = subv(vp, vc)
+      ldir = length(dir)
+      dir = scale(1.0/ldir, dir)
+      inv = False
+    elif 'viewdir' in c:
+      dir = c['viewdir']
+      ldir = length(dir)
+      dir = scale(1.0/ldir, dir)
+      inv = True
+
+    up  = normalize(up);
+    
+    rt = normalize(cross(dir, up))
+    up = cross(rt, dir)
+
+    if 'phi angle' in c:
+        phi = c['phi angle']
+        if type(phi) == dict:
+            phi = expand(phi)
+    else:
+        phi = [ 0 ]
+
+    if 'theta angle' in c:
+        theta = c['theta angle']
+        if type(theta) == dict:
+            theta = expand(theta)
+    else:
+        theta = [ 0 ]
+
+    cameras = []
+    for p in phi:
+        for t in theta:
+
+            uq = axis_to_quat(up, t)
+            nr = rotate_vector_by_quat(rt, uq)
+            rq = axis_to_quat(nr, p)
+            ro = add_quats(uq, rq)
+            
+            up1  = rotate_vector_by_quat(up, ro)
+            dir1 = rotate_vector_by_quat(dir, ro)
+            nc = dict(c)
+
+            annotation = ""
+            if len(phi) > 1:
+              annotation = annotation + "_" + str(p)
+
+            if len(theta) > 1:
+              annotation = annotation + "_" + str(t)
+
+            if (inv):
+              nc = { 
+                'annotation': annotation,
+                'viewcenter': addv(vp, scale(ldir, dir1)),
+                'viewpoint': vp,
+                'viewup': up1,
+                'aov': aov
+              }
+            else:
+              nc = { 
+                'annotation': annotation,
+                'viewcenter': vc,
+                'viewpoint': subv(vc, scale(ldir, dir1)),
+                'viewup': up1,
+                'aov': aov
+              }
+
+            cameras.append(nc)
+
+    return cameras
+
+
+def expand_visualization(vis):
+    stack = []
+    for ds in vis:
+        stack.append(ds)
+
+    visualizations = []
+    d = []
+    annotation = ""
+    recur(stack, d, visualizations, annotation)
+    return visualizations
+
+def gather_vis_pattern(jsn):
+    vis = jsn["Visualization"]
+
+    p = ""
+    inum = 0
+    snum = 0
+
+    for curop in vis:
+
+      if curop['type'] == 'Isosurface' and 'isovalue range' in curop:
+          p = p + "_{iso" + str(inum) + "}"
+          inum = inum + 1
+
+      if curop['type'] == 'Slice' and 'plane range' in curop:
+          p = p + "_{slice" + str(snum) + "}"
+          snum = snum + 1
+
+    return p
+
+def load_maps(vis):
+    for v in vis:
+      for m in ["colormap", "opacitymap"]:
+        if m in v and type(v[m]) is str:
+          a = open(v[m])
+          v[m] = json.load(a)
+          a.close()
+
+def gather_vis_args(jsn):
+    vis = jsn["Visualization"]
+    load_maps(vis)
+
+    args = {}
+    inum = 0
+    snum = 0
+
+    for curop in vis:
+
+        if curop['type'] == 'Isosurface' and 'isovalue range' in curop:
+
+            isovalue_range = curop['isovalue range']
+            if type(isovalue_range) is dict:
+                isovalue_range = expand(isovalue_range)
+
+            isovalue_range = [str(i) for i in isovalue_range]
+
+            arg = {
+                'default': isovalue_range[len(isovalue_range)/2],
+                'values':  isovalue_range,
+                'type':    'range',
+                'label':   'iso%d' % inum
+            }
+
+            args['iso' + str(inum)] = arg;
+            inum = inum + 1
+
+            
+        if curop['type'] == 'Slice' and 'plane range' in curop:
+
+            w_range = curop['plane range']['w']
+            if type(w_range) is dict:
+              w_range = expand(w_range)
+
+            w_range = [str(i) for i in w_range]
+
+            arg = {
+                'default': w_range[len(w_range)/2],
+                'values':  w_range,
+                'type':    'range',
+                'label':   'slice%d' % snum
+            }
+
+            args['slice' + str(snum)] = arg;
+            snum = snum + 1
+
+    return args
+
+def gather_cam_args(args, jsn):
+    cam = jsn["Camera"]
+
+    if 'phi angle' in cam:
+
+        phi_range = cam['phi angle']
+        if type(phi_range) is dict:
+            phi_range = expand(phi_range)
+
+        phi_range = [str(i) for i in phi_range]
+
+        arg = {
+            'default': phi_range[len(phi_range)/2],
+            'values':  phi_range,
+            'type':    'range',
+            'label':   'phi angle'
+        }
+
+        args['phi angle'] = arg;
+
+    if 'theta angle' in cam:
+
+        theta_range = cam['theta angle']
+        if type(theta_range) is dict:
+            theta_range = expand(theta_range)
+
+        theta_range = [str(i) for i in theta_range]
+
+        arg = {
+            'default': theta_range[len(theta_range)/2],
+            'values':  theta_range,
+            'type':    'range',
+            'label':   'theta angle'
+        }
+
+        args['theta angle'] = arg;
+
+    return args
+
+
+def gather_cam_pattern(jsn):
+    cam = jsn["Camera"]
+
+    p = ""
+    if 'phi angle' in cam and type(cam['phi angle']) == dict:
+      p = p + "_{phi angle}"
+
+    if 'theta angle' in cam and type(cam['theta angle']) == dict:
+      p = p + "_{theta angle}"
+
+    return p
+
+def cinema_to_state(c):
+    return {"Datasets": c["Datasets"],
+            "Cameras": expand_camera(c["Camera"]),
+            "Renderer": c["Renderer"],
+            "Visualizations": expand_visualization(c["Visualization"])}
+
+def byteify(input):
+    if isinstance(input, dict):
+        return {byteify(key): byteify(value)
+                for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [byteify(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
+def load(fname):
+    a = open(fname)
+    p = json.load(a)
+    a.close()
+    p = byteify(p)
+    return p
+
+def gather_pattern(jsn):
+  p = "img" + gather_vis_pattern(jsn) + gather_cam_pattern(jsn) + ".png"
+  return p
+
+def gather_info(jsn):
+  pattern = gather_pattern(jsn)
+  args = gather_cam_args(gather_vis_args(jsn), jsn)
+  info = {
+     "name_pattern": pattern,
+     "arguments": args,
+     "metadata": { "type": "parametric-image-stack" }
+  }
+  return info
+   
+
+jsn = load(sys.argv[1])
+
+if not os.path.isdir('cinema.cdb'):
+  os.mkdir('cinema.cdb', 0755)
+
+if not os.path.isdir('cinema.cdb/image'):
+  os.mkdir('cinema.cdb/image', 0755)
+
+info = gather_info(jsn)
+fout = open('cinema.cdb/image/info.json', 'w')
+fout.write(json.dumps(info, indent=4, sort_keys=True) + "\n")
+fout.close()
+
+state = cinema_to_state(jsn)
+fout = open("state.json", "w")
+fout.write(json.dumps(state, indent=4, sort_keys=True) + "\n")
+fout.close()
