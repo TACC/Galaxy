@@ -28,10 +28,7 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 		char* ptrs[] = {(char *)&n, (char *)&f, (char *)&s, (char *)p};
 		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
-pthread_mutex_lock(&serverrendering_lock);
 		socket->SendV(ptrs, szs);
-pthread_mutex_unlock(&serverrendering_lock);
-
 		Rendering::AddLocalPixels(p, n, f, s);
 	}
 	else

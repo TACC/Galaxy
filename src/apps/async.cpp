@@ -14,7 +14,7 @@ using namespace std;
 
 #include "Application.h"
 #include "Renderer.h"
-#include "Rendering.h"
+#include "AsyncRendering.h"
 
 #include <ospray/ospray.h>
 
@@ -36,7 +36,7 @@ string statefile("");
 
 ImageWriter image_writer("async");
 
-RenderingP 			theRendering = NULL;
+AsyncRenderingP	theRendering = NULL;
 RenderingSetP 	theRenderingSet = NULL;
 CameraP 				theCamera = NULL;
 VisualizationP 	theVisualization = NULL;
@@ -295,7 +295,7 @@ render_thread(void *d)
   theVisualization = theVisualizations[0];
 	theVisualization->Commit(theDatasets);
 
-	theRendering = Rendering::NewP();
+	theRendering = AsyncRendering::NewP();
 	theRendering->SetTheOwner(0);
 	theRendering->SetTheSize(width, height);
 	theRendering->SetTheDatasets(theDatasets);
@@ -371,12 +371,12 @@ render_thread(void *d)
 					else
 					{
 						float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
-						std::cerr << d<<"\n";
 						viewpoint = down_viewpoint + viewdirection*d;
 					}
 				}
 			}
 
+#if 0
 			std::cerr
 				<< viewpoint.x << " " 
 				<< viewpoint.y << " " 
@@ -384,6 +384,7 @@ render_thread(void *d)
 				<< viewdirection.x << " " 
 				<< viewdirection.y << " " 
 				<< viewdirection.z << "\n";
+#endif
 
       theCamera->set_viewdirection(viewdirection);
       theCamera->set_viewpoint(viewpoint);
@@ -405,7 +406,6 @@ render_thread(void *d)
 		t.tv_sec  = 0;
 		t.tv_nsec = 100000000;
 		nanosleep(&t, NULL);
-		std::cerr << "X";
 
 	}
 
@@ -437,6 +437,8 @@ main(int argc, char *argv[])
 
   Application theApplication(&argc, &argv);
   theApplication.Start();
+
+  AsyncRendering::RegisterClass();
 
   for (int i = 1; i < argc; i++)
   {
