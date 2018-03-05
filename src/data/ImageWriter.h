@@ -24,7 +24,7 @@ public:
 			*b++ = (unsigned char)(255*(*p++));
 			*b++ = 0xff ; p ++;
 		}
-		Write(w, h, (unsigned int *)buf);
+		Write(w, h, (unsigned int *)buf, name);
 		delete[] buf;
 	}
 

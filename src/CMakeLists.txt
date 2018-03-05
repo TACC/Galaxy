@@ -4,4 +4,5 @@ add_subdirectory(renderer)
 add_subdirectory(rapidjson)
 add_subdirectory(data)
 add_subdirectory(apps)
+add_subdirectory(cinema)
 
