@@ -14,7 +14,7 @@ using namespace std;
 
 #include "Application.h"
 #include "Renderer.h"
-#include "Rendering.h"
+#include "AsyncRendering.h"
 
 #include <ospray/ospray.h>
 
@@ -36,7 +36,7 @@ string statefile("");
 
 ImageWriter image_writer("async");
 
-RenderingP 			theRendering = NULL;
+AsyncRenderingP	theRendering = NULL;
 RenderingSetP 	theRenderingSet = NULL;
 CameraP 				theCamera = NULL;
 VisualizationP 	theVisualization = NULL;
@@ -295,7 +295,7 @@ render_thread(void *d)
   theVisualization = theVisualizations[0];
 	theVisualization->Commit(theDatasets);
 
-	theRendering = Rendering::NewP();
+	theRendering = AsyncRendering::NewP();
 	theRendering->SetTheOwner(0);
 	theRendering->SetTheSize(width, height);
 	theRendering->SetTheDatasets(theDatasets);
@@ -436,6 +436,8 @@ main(int argc, char *argv[])
 
   Application theApplication(&argc, &argv);
   theApplication.Start();
+
+  AsyncRendering::RegisterClass();
 
   for (int i = 1; i < argc; i++)
   {

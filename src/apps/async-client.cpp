@@ -228,30 +228,17 @@ receiver_thread(void *)
 
 		if (frame >= max_f)
 		{
-#if 0
 			if (frame > max_f)
 			{
-				if (frame > 0)
-					std::cerr << "########### " << frame << " ###########\n";
-
-				for (int i = 0; i <= max_sender; i++)
-				{
-					if (frame > 0 && packet_count[i] > 0)
-						std::cerr << i << ": " << packet_count[i] << " packets, " << pixel_count[i] << " pixels\n";
-					pixel_count[i] = 0;
-					packet_count[i] = 0;
-				}
-
-				max_sender = sender;
+				float *pix = pixels;
+				int *ids = frameids;
+				for (int i = 0; i < width*height; i++)
+					if (*ids++ < (frame-1))
+						*pix++ = 0, *pix++ = 0, *pix++ = 0, *pix++ = 0;
+					else
+						pix += 4;
 			}
-			
-			if (sender > max_sender)
-				max_sender = sender;
 
-			pixel_count[sender] += knt;
-			packet_count[sender] ++;
-#endif
-		
 			rcvd += knt;
 
  	 		for (int i = max_f + 1; i <= frame;  i++)

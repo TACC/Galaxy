@@ -114,10 +114,11 @@ int main(int argc,  char *argv[])
 						theRendering->SetTheCamera(c);
 						theRendering->SetTheDatasets(theDatasets);
 						theRendering->SetTheVisualization(v);
-						// theRendering->SetTheRenderingSet(rs);
 						theRendering->Commit();
 						rs->AddRendering(theRendering);
 				}
+
+		std::cerr << "index = " << index << "\n";
 
 		rs->Commit();
 
