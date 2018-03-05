@@ -52,10 +52,14 @@ else()
 		add_executable(async async.cpp quat.cpp)
 		target_link_libraries(async ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
-		add_executable(async-client async-client.cpp Socket.cpp)
-		target_link_libraries(async-client ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+		add_executable(async-worker async-worker.cpp)
+		# target_link_libraries(async-worker ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${OPENGL_LIBRARIES})
+		target_link_libraries(async-worker ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
 
-		set(BINS async async-client ${BINS})
+		add_executable(async-client async-client.cpp Socket.cpp)
+		target_link_libraries(async-client ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} pthread)
+
+		set(BINS async-worker async async-client ${BINS})
   else(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 		message("No GUI stuff... async AND async-client will not be built")
 	endif(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)

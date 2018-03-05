@@ -113,7 +113,6 @@ Particles::LoadFromJSON(Value& v)
   if (v.HasMember("radius"))
 	{
     radius = v["radius"].GetDouble();
-		std::cerr << "radius set to " << radius << "\n";
 	}
 
   if (v.HasMember("filename"))
@@ -180,7 +179,6 @@ Particles::local_commit(MPI_Comm c)
   ospSet1i(ospg, "offset_value", 12);
   ospSet1f(ospg, "radius_scale", radius_scale);
   ospSet1f(ospg, "radius", radius);
-	std::cerr << "radius: " << radius << "\n";
 
   ospCommit(ospg);
 
@@ -303,8 +301,6 @@ Particles::local_import(char *p, MPI_Comm c)
 
   radius_scale = ((float *)args)[0];
   radius = ((float *)args)[1];
-
-	std::cerr << radius <<  " " << radius_scale << "\n";
 
 	if (vtkobj) vtkobj->Delete();
 	vtkobj = NULL;

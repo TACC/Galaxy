@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <glut.h>
+#include <GL/glut.h>
 #include <pthread.h>
 #include <time.h>
 #include "ImageWriter.h"
@@ -176,7 +176,7 @@ keyboard(unsigned char ch, int x, int y)
   }
 }
 
-#define QUIT    1
+// #define QUIT    1
 
 void
 menu(int item)
@@ -240,8 +240,8 @@ glut_loop()
   glutMotionFunc(motionfunc);
   glutMouseFunc(mousefunc);
   glutKeyboardFunc(keyboard);
-  glutCreateMenu(menu);
-  glutAddMenuEntry("Quit", QUIT);
+  // glutCreateMenu(menu);
+  // glutAddMenuEntry("Quit", QUIT);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   glClearDepth(1.0);
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -371,12 +371,12 @@ render_thread(void *d)
 					else
 					{
 						float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
-						std::cerr << d<<"\n";
 						viewpoint = down_viewpoint + viewdirection*d;
 					}
 				}
 			}
 
+#if 0
 			std::cerr
 				<< viewpoint.x << " " 
 				<< viewpoint.y << " " 
@@ -384,6 +384,7 @@ render_thread(void *d)
 				<< viewdirection.x << " " 
 				<< viewdirection.y << " " 
 				<< viewdirection.z << "\n";
+#endif
 
       theCamera->set_viewdirection(viewdirection);
       theCamera->set_viewpoint(viewpoint);
@@ -405,8 +406,6 @@ render_thread(void *d)
 		t.tv_sec  = 0;
 		t.tv_nsec = 100000000;
 		nanosleep(&t, NULL);
-		std::cerr << "X";
-
 	}
 
 	set_state(DONE);
