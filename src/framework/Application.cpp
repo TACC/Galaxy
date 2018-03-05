@@ -80,7 +80,6 @@ Application::Application()
 	{
 		int nthreads = atoi(getenv("APP_NUM_THREADS"));
 		tbb::task_scheduler_init init(nthreads);
-		std::cerr << "using " << nthreads << " threads\n";
 	}
 	else
 	{

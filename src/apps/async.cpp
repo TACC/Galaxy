@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <glut.h>
+#include <GL/glut.h>
 #include <pthread.h>
 #include <time.h>
 #include "ImageWriter.h"
@@ -176,7 +176,7 @@ keyboard(unsigned char ch, int x, int y)
   }
 }
 
-#define QUIT    1
+// #define QUIT    1
 
 void
 menu(int item)
@@ -240,8 +240,8 @@ glut_loop()
   glutMotionFunc(motionfunc);
   glutMouseFunc(mousefunc);
   glutKeyboardFunc(keyboard);
-  glutCreateMenu(menu);
-  glutAddMenuEntry("Quit", QUIT);
+  // glutCreateMenu(menu);
+  // glutAddMenuEntry("Quit", QUIT);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   glClearDepth(1.0);
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -406,7 +406,6 @@ render_thread(void *d)
 		t.tv_sec  = 0;
 		t.tv_nsec = 100000000;
 		nanosleep(&t, NULL);
-
 	}
 
 	set_state(DONE);

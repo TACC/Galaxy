@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 
 #include "Socket.h"
 #include "Application.h"
@@ -191,6 +192,10 @@ render_thread(void *buf)
 			theCamera->Commit();
 
 			theRenderer->Render(theRenderingSet);
+
+			timespec ts = {0, 100000000};
+			nanosleep(&ts, NULL);
+		
 		}
 	}
 }

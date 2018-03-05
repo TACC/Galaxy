@@ -569,8 +569,6 @@ MessageManager::setup_mpi(Application *app, MessageManager *mm, bool use_mpi)
 		MPI_Comm_size(MPI_COMM_WORLD, &sz);
 		mm->SetSize(sz);
 
-		std::cerr << rs << " of " << sz << " here\n";
-
 #if defined(EVENT_TRACKING)
 
     class PIDEvent : public Event
