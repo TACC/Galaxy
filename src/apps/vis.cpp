@@ -12,6 +12,7 @@ syntax(char *a)
 {
   std::cerr << "syntax: " << a << " [options] json\n";
   std::cerr << "optons:\n";
+	std::cerr << "  -C         put output in Cinema DB (no)\n";
   std::cerr << "  -D         run debugger\n";
   std::cerr << "  -A         wait for attachment\n";
   std::cerr << "  -s w h     window width, height (256 256)\n";
@@ -47,6 +48,7 @@ int main(int argc,  char *argv[])
 	string statefile("");
 	bool dbg = false;
 	bool atch = false;
+	bool cinema = false;
 	int width = 256, height = 256;
 
 	ospInit(&argc, (const char **)argv);
@@ -58,6 +60,7 @@ int main(int argc,  char *argv[])
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
+    else if (!strcmp(argv[i], "-C")) cinema = true;
     else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
     else if (!strcmp(argv[i], "-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
     else if (statefile == "")   statefile = argv[i];
@@ -124,11 +127,11 @@ int main(int argc,  char *argv[])
 
 		for (auto rs : theRenderingSets)
     {
-std::cerr << "render start\n";
+			std::cerr << "render start\n";
       theRenderer->Render(rs);
       rs->WaitForDone();
-std::cerr << "render end\n";
-			rs->SaveImages("image");
+			std::cerr << "render end\n";
+			rs->SaveImages(cinema ? "cinema.cdb/image/image" : "image");
     }
 
     theApplication.QuitApplication();

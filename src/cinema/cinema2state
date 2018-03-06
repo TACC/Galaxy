@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import pdb
 import sys, os
 from pprint import pprint
@@ -370,7 +372,7 @@ def load(fname):
     return p
 
 def gather_pattern(jsn):
-  p = "img" + gather_vis_pattern(jsn) + gather_cam_pattern(jsn) + ".png"
+  p = "image" + gather_vis_pattern(jsn) + gather_cam_pattern(jsn) + ".png"
   return p
 
 def gather_info(jsn):
