@@ -1,0 +1,11 @@
+if test `hostname` == $1 ; then
+	source ~/pvol-embree/env.hikari async-GL
+	EXECUTABLE=async
+else
+	source ~/pvol-embree/env.hikari async
+	EXECUTABLE=async-worker
+fi
+
+shift
+swr $EXECUTABLE $*
+

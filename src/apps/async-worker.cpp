@@ -8,6 +8,7 @@ using namespace std;
 
 #include "Application.h"
 #include "Renderer.h"
+#include "AsyncRendering.h"
 
 #include <ospray/ospray.h>
 
@@ -54,6 +55,8 @@ main(int argc, char *argv[])
 
   Application theApplication(&argc, &argv);
   theApplication.Start();
+
+  AsyncRendering::RegisterClass();
 
   for (int i = 1; i < argc; i++)
   {

@@ -52,7 +52,7 @@ else()
 		add_executable(async async.cpp quat.cpp AsyncRendering.cpp)
 		target_link_libraries(async ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
-		add_executable(async-worker async-worker.cpp)
+		add_executable(async-worker async-worker.cpp AsyncRendering.cpp)
 		# target_link_libraries(async-worker ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${OPENGL_LIBRARIES})
 		target_link_libraries(async-worker ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
 
