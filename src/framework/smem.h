@@ -3,14 +3,14 @@
 #include <iostream>
 #include <memory>
 
-using namespace std;
-
+namespace pvol
+{
 class smem
 {
 public:
   ~smem();
 
-	static shared_ptr<smem> New(int n) { return shared_ptr<smem>(new smem(n)); }
+	static std::shared_ptr<smem> New(int n) { return std::shared_ptr<smem>(new smem(n)); }
 
 	unsigned char *get()      { return ptr; }
 	int   get_size() { return sz;  }
@@ -22,4 +22,5 @@ private:
 	int kk;
 };
 
-typedef shared_ptr<smem> SharedP;
+typedef std::shared_ptr<smem> SharedP;
+}

@@ -1,6 +1,8 @@
 #pragma once
 #include <math.h>
 
+namespace pvol
+{
 struct vec2f { 
 	vec2f() {};
 	vec2f(float X, float Y) : x(X), y(Y) {};
@@ -106,3 +108,4 @@ DOT(vec3f, vec3f)
 DOT(vec3f, vec4f)
 DOT(vec4f, vec3f)
 DOT(vec4f, vec4f)
+}

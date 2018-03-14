@@ -37,4 +37,4 @@ install(TARGETS Framework DESTINATION lib)
 install(FILES Application.h smem.h Events.h
 				ClientServer.h  KeyedObject.h
 				MessageManager.h Message.h MessageQ.h 
-				Timer.h Work.h debug.h DESTINATION include)
+				Timer.h Work.h debug.h DESTINATION include/pvol)

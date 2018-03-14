@@ -9,13 +9,13 @@
 #include "Rays.h"
 #include "Lighting.h"
 
-using namespace std;
-
 #include "ISPCObject.h"
-
-KEYED_OBJECT_POINTER(TraceRays)
-
 #include "dtypes.h"
+
+
+namespace pvol
+{
+KEYED_OBJECT_POINTER(TraceRays)
 
 class TraceRays : public ISPCObject
 {
@@ -41,3 +41,4 @@ protected:
   virtual void initialize_ispc();
 
 };
+}

@@ -10,6 +10,8 @@
 
 #include "VolumeVis_ispc.h"
 
+namespace pvol
+{
 KEYED_OBJECT_TYPE(VolumeVis)
 
 void
@@ -188,4 +190,5 @@ VolumeVis::local_commit(MPI_Comm c)
 	ispc::VolumeVis_SetVolumeRenderFlag(GetISPC(), volume_rendering);
 
 	return false;
+}
 }

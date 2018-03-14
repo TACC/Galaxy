@@ -5,18 +5,11 @@
 #include <memory.h>
 #include <vector>
 
-using namespace std;
-
-#include "KeyedDataObject.h"
-
-KEYED_OBJECT_POINTER(Particles)
-
 #include "dtypes.h"
 #include "Application.h"
 #include "Box.h"
 #include "Geometry.h"
 #include "Datasets.h"
-using namespace std;
 
 #include <vtkSmartPointer.h>
 #include <vtkClientSocket.h>
@@ -25,6 +18,12 @@ using namespace std;
 #include "rapidjson/document.h"
 
 #include "ospray/ospray.h"
+#include "KeyedDataObject.h"
+
+namespace pvol
+{
+
+KEYED_OBJECT_POINTER(Particles)
 
 class Box;
 
@@ -121,4 +120,4 @@ protected:
     }
   };
 };
-
+}

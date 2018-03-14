@@ -3,6 +3,11 @@
 #include "Application.h"
 #include "KeyedObject.h"
 
+using namespace rapidjson;
+using namespace std;
+
+namespace pvol
+{
 static int ko_count = 0;
 static int get_ko_count() { return ko_count; }
 
@@ -195,4 +200,5 @@ KeyedObjectFactory::~KeyedObjectFactory()
 
 	if (ko_count > 0)
 		std::cerr << "shared objects remain\n";
+}
 }

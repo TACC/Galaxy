@@ -46,5 +46,5 @@ install(FILES Renderer.h
         Rays.h 
         RayQManager.h 
         dtypes.h 
-            DESTINATION include)
+            DESTINATION include/pvol)
  

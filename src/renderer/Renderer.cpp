@@ -29,13 +29,14 @@
 static Timer timer("ray_processing");
 #endif
 
-using namespace std;
-
 #include "../rapidjson/document.h"
 #include "../rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
+using namespace std;
 
+namespace pvol
+{
 WORK_CLASS_TYPE(Renderer::RenderMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);
 WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
@@ -714,3 +715,4 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   return false;
 }
 
+}

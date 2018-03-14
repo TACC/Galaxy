@@ -9,6 +9,8 @@
 
 #include "ClientServer.h"
 
+namespace pvol
+{
 ClientServer::ClientServer()
 {
 }
@@ -90,4 +92,4 @@ ClientServer::setup_client(char *host, int port)
 
 	std::cerr << " connected\n";
 }
-
+}

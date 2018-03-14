@@ -1,6 +1,8 @@
 #include <ospray/ospray.h>
 #include <SDK/api/Device.h>
 
+namespace pvol
+{
 namespace osp_util
 {
 	void *
@@ -9,4 +11,5 @@ namespace osp_util
 		ospray::ManagedObject *b = (ospray::ManagedObject *)a;
 		return (void *)b->getIE();
 	}
+}
 }

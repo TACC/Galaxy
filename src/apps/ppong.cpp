@@ -11,6 +11,8 @@
 
 #include <pthread.h>
 
+using namespace pvol;
+
 pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  w8 = PTHREAD_COND_INITIALIZER;
 

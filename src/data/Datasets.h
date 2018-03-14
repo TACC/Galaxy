@@ -7,18 +7,18 @@
 #include <memory>
 
 #include "KeyedObject.h"
-
-using namespace std;
-
-KEYED_OBJECT_POINTER(Datasets)
-
 #include "KeyedDataObject.h"
 #include "Box.h"
-
 #include "rapidjson/document.h"
 
 using namespace std;
 using namespace rapidjson;
+
+
+namespace pvol
+{
+
+KEYED_OBJECT_POINTER(Datasets)
 
 class Datasets : public KeyedDataObject
 {
@@ -86,4 +86,4 @@ protected:
 	int nkeys;
 	Key *keys;
 };
-
+} // namespace pvol

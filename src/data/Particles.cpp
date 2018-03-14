@@ -23,11 +23,13 @@
 
 #include "../rapidjson/filestream.h"
 
+using namespace std;
+
+namespace pvol
+{
 WORK_CLASS_TYPE(Particles::LoadPartitioningMsg);
 
 KEYED_OBJECT_TYPE(Particles)
-
-using namespace std;
 
 void
 Particles::Register()
@@ -451,3 +453,4 @@ Particles::GetSamples(Particle*& s, int& n)
 	n = n_samples;
 }
 
+}

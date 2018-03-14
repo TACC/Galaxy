@@ -5,6 +5,8 @@
 
 #include "smem.h"
 
+namespace pvol
+{
 class RayList 
 {
 	struct hdr
@@ -118,3 +120,4 @@ private:
 	SharedP contents;
 	void* ispc;
 };
+}

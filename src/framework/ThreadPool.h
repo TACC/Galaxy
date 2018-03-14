@@ -4,8 +4,8 @@
 #include <pthread.h>
 #include <vector>
 
-using namespace std;
-
+namespace pvol
+{
 class Thread;
 
 class ThreadPool
@@ -84,4 +84,4 @@ private:
   ThreadPool *pool;
   int id;
 };
-
+}

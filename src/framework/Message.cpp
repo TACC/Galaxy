@@ -15,6 +15,8 @@
 
 #define LOGGING 0
 
+namespace pvol
+{
 Message::Message(Work *w, bool blk)
 {
   content = w->get_pointer();
@@ -117,4 +119,5 @@ void Message::Wait()
     std::cerr << "Error... waiting on non-blocking message?\n";
   else
     pthread_cond_wait(&cond, &lock);
+}
 }

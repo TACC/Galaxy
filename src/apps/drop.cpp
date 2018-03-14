@@ -9,6 +9,8 @@
 
 #include "TestObject.h"
 
+using namespace pvol;
+
 int
 main(int argc, char * argv[])
 {

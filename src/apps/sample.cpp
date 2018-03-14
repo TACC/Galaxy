@@ -10,6 +10,8 @@
 #include <Application.h>
 #include "OSPRayRenderer.h"
 
+using namespace pvol;
+
 #define LOGGING 0
 
 class SampleMsg : public Work

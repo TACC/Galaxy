@@ -5,16 +5,16 @@
 #include <vector>
 #include <memory>
 
-using namespace std;
-
-#include "KeyedObject.h"
-#include "ISPCObject.h"
-
-KEYED_OBJECT_POINTER(Vis)
 
 #include "dtypes.h"
 #include "OSPRayObject.h"
 #include "Datasets.h"
+#include "KeyedObject.h"
+#include "ISPCObject.h"
+
+namespace pvol
+{
+KEYED_OBJECT_POINTER(Vis)
   
 class Vis : public KeyedObject, public ISPCObject
 {
@@ -44,4 +44,4 @@ protected:
     Key datakey;
     OSPRayObjectP data;
 };
-
+}

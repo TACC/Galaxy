@@ -20,8 +20,8 @@ typedef threadpool11::Pool ThreadPool;
 
 #include "rapidjson/document.h"
 
-using namespace rapidjson;
-
+namespace pvol
+{
 #define APP_PRINT(x)																				\
 {																														\
   stringstream ss;																					\
@@ -38,11 +38,11 @@ using namespace rapidjson;
 
 struct ClassTableEntry
 {
-  ClassTableEntry(string s);
+  ClassTableEntry(std::string s);
 	ClassTableEntry(const ClassTableEntry&);
   ~ClassTableEntry();
   const char *c_str();
-  string *my_string;                                   
+  std::string *my_string;                                   
   int indx;
 };
 
@@ -85,7 +85,7 @@ public:
   Work *Deserialize(Message *msg);
   const char *Identify(Message *msg);
 
-  int RegisterWork(string name, Work *(*f)(SharedP)) {
+  int RegisterWork(std::string name, Work *(*f)(SharedP)) {
     int n = (*deserializers).size();
     (*deserializers).push_back(f);
 		ClassTableEntry c(name.c_str());
@@ -96,16 +96,16 @@ public:
   bool IsDoneSet() { return application_done; }
 	pid_t get_pid() { return pid; }
 
-	Document *OpenInputState(string s);
-	Document *OpenOutputState();
-	void SaveOutputState(Document *, string s);
+	rapidjson::Document *OpenInputState(std::string s);
+	rapidjson::Document *OpenOutputState();
+	void SaveOutputState(rapidjson::Document *, std::string s);
 
 private:
 	MessageManager *theMessageManager;
 	KeyedObjectFactory *theKeyedObjectFactory;
 
-  vector<Work *(*)(SharedP)> *deserializers;
-  vector<ClassTableEntry> *class_table;
+  std::vector<Work *(*)(SharedP)> *deserializers;
+  std::vector<ClassTableEntry> *class_table;
 
   ThreadPool *threadPool;
 
@@ -145,4 +145,6 @@ extern long my_gettid();
 extern const char *threadname_by_id(long l);
 extern const char *my_threadname();
 extern void register_thread(std::string s);
+
+}
 

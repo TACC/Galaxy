@@ -10,12 +10,12 @@ using namespace std;
 
 KEYED_OBJECT_POINTER(TestObject)
 
-class TestObject : public KeyedObject
+class TestObject : public pvol::KeyedObject
 {
 	KEYED_OBJECT(TestObject)
 
 private:
-	class DoitMsg : public Work
+	class DoitMsg : public pvol::Work
   {
   public:
     DoitMsg(Key k, string foo) : DoitMsg(sizeof(Key) + foo.length() + 1)

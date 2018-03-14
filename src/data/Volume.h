@@ -5,19 +5,19 @@
 #include <vector>
 #include <memory>
 
-using namespace std;
-
-#include "OSPRayObject.h"
-
-KEYED_OBJECT_POINTER(Volume)
-
-#include "dtypes.h"
-
-#include "Box.h"
-
 #include <vtkSmartPointer.h>
 #include <vtkClientSocket.h>
 #include <vtkImageData.h>
+
+#include "KeyedObject.h"
+#include "OSPRayObject.h"
+#include "dtypes.h"
+#include "Box.h"
+
+
+namespace pvol
+{
+KEYED_OBJECT_POINTER(Volume)
 
 class Volume : public OSPRayObject
 {
@@ -92,8 +92,8 @@ public:
 	void get_global_minmax(float &min, float &max) { min = global_min; max = global_max; }
 	void get_local_minmax(float &min, float &max) { min = local_min; max = local_max; }
 
-  virtual void LoadFromJSON(Value&);
-  virtual void SaveToJSON(Value&, Document&);
+  virtual void LoadFromJSON(rapidjson::Value&);
+  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
 protected:
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep
@@ -122,4 +122,4 @@ protected:
 	void set_global_minmax(float min, float max)   { global_min = min; global_max = max; }
 	void set_local_minmax(float min, float max)   { local_min = min; local_max = max; }
 };
-
+}

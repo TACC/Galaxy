@@ -18,9 +18,11 @@
 #include <vtkClientSocket.h>
 #include <vtkXMLImageDataWriter.h>
 
-KEYED_OBJECT_TYPE(Volume)
-
 using namespace std;
+
+namespace pvol
+{
+KEYED_OBJECT_TYPE(Volume)
 
 void
 Volume::initialize()
@@ -529,4 +531,5 @@ Volume::local_load_timestep(MPI_Comm c)
   local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
 
 	return false;
+}
 }

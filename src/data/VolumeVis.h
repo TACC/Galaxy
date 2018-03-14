@@ -5,11 +5,6 @@
 #include <vector>
 #include <memory>
 
-using namespace std;
-
-#include "KeyedObject.h"
-
-KEYED_OBJECT_POINTER(VolumeVis)
 
 #include "dtypes.h"
 #include "Application.h"
@@ -18,6 +13,11 @@ KEYED_OBJECT_POINTER(VolumeVis)
 #include "MappedVis.h"
 #include "Datasets.h"
 
+#include "KeyedObject.h"
+
+namespace pvol
+{
+KEYED_OBJECT_POINTER(VolumeVis)
 
 class VolumeVis : public MappedVis
 {
@@ -87,4 +87,5 @@ protected:
   vector<vec4f> slices;
   vector<float> isovalues;
 };
+}
 

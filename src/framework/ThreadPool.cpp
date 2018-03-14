@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 static int nxt_thread = 0;
 
 // Thread - Owns a pthread.   Ctor starts the thread, waits for the
@@ -261,5 +263,6 @@ ThreadPool::~ThreadPool()
     delete t;
   pthread_mutex_destroy(&lock);
   pthread_cond_destroy(&cond);
+}
 }
 #endif

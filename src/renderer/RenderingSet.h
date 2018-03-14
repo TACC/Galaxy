@@ -4,15 +4,18 @@
 #include <vector>
 #include <memory>
 
+
 #include "KeyedObject.h"
-
-using namespace std;
-
+namespace pvol
+{
 KEYED_OBJECT_POINTER(RenderingSet)
+}
 
 #include "Rendering.h"
 #include "Work.h"
 
+namespace pvol
+{
 class Camera;
 class RayList;
 
@@ -74,7 +77,7 @@ public:
 	
 	void IncrementRayListCount(bool silent = false);
 
-	void SaveImages(string basename);
+	void SaveImages(std::string basename);
 
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
@@ -100,7 +103,7 @@ public:
 
 protected:
 
-	vector<RenderingP> renderings;
+	std::vector<RenderingP> renderings;
 
 	void Lock()   { pthread_mutex_lock(&lck); 		}
 	void Unlock() { pthread_mutex_unlock(&lck); 	}
@@ -187,7 +190,7 @@ private:
   class SaveImagesMsg : public Work
   {
   public:
-		SaveImagesMsg(RenderingSet *r, string basename);
+		SaveImagesMsg(RenderingSet *r, std::string basename);
 
     WORK_CLASS(SaveImagesMsg, true);
 
@@ -207,3 +210,4 @@ private:
   };
 };
 
+}

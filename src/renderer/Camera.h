@@ -4,22 +4,22 @@
 #include <vector>
 #include <memory>
 
-using namespace std;
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
 
 #include "KeyedObject.h"
-#include "Box.h"
-
+namespace pvol
+{
 KEYED_OBJECT_POINTER(Camera)
+}
 
 #include "Work.h"
 #include "Rendering.h"
 #include "dtypes.h"
+#include "Box.h"
 
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-
-using namespace rapidjson;
-
+namespace pvol
+{
 class Rays;
 class Rendering;
 class RayList;
@@ -30,10 +30,10 @@ class Camera : public KeyedObject
 
 public:
 
-	static vector<CameraP> LoadCamerasFromJSON(Value&);
+	static vector<CameraP> LoadCamerasFromJSON(rapidjson::Value&);
 	
-	virtual void LoadFromJSON(Value&);
-	virtual void SaveToJSON(Value&, Document&);
+	virtual void LoadFromJSON(rapidjson::Value&);
+	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
 	// virtual bool local_commit(MPI_Comm);
 
@@ -84,4 +84,4 @@ protected:
 	float up[3];
 	float aov;
 };
-
+}

@@ -4,6 +4,8 @@
 #include "RenderingSet.h"
 #include "RayQManager.h"
 
+namespace pvol
+{
 WORK_CLASS_TYPE(RenderingSet::PropagateStateMsg);
 WORK_CLASS_TYPE(RenderingSet::SynchronousCheckMsg);
 WORK_CLASS_TYPE(RenderingSet::SaveImagesMsg);
@@ -623,4 +625,5 @@ RenderingP
 RenderingSet::GetRendering(int i)
 {
 	return renderings[i];
+}
 }

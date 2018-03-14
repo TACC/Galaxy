@@ -15,6 +15,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 KEYED_OBJECT_TYPE(Vis)
 
 void
@@ -122,4 +124,5 @@ Vis::local_commit(MPI_Comm c)
   ispc::Vis_set_data(GetISPC(), dispc);
 
 	return false;
+}
 }

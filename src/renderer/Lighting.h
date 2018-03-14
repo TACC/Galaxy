@@ -7,9 +7,8 @@
 #include "rapidjson/document.h"
 #include "ISPCObject.h"
 
-using namespace std;
-using namespace rapidjson;
-
+namespace pvol
+{
 class Lighting : public ISPCObject
 {
 public:
@@ -20,8 +19,8 @@ public:
   virtual unsigned char *Serialize(unsigned char *);
   virtual unsigned char *Deserialize(unsigned char *);
 
-  void LoadStateFromValue(Value&);
-  void SaveStateToValue(Value&, Document&);
+  void LoadStateFromValue(rapidjson::Value&);
+  void SaveStateToValue(rapidjson::Value&, rapidjson::Document&);
 
   void SetLights(int n, float* l);
   void SetLights(int n, vec3f* l) { SetLights(n, (float *)l); }
@@ -43,3 +42,4 @@ protected:
   virtual void allocate_ispc();
   virtual void initialize_ispc();
 };
+}

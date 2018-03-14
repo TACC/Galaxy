@@ -5,13 +5,13 @@
 #include <memory.h>
 #include <vector>
 
-using namespace std;
-
 #include <ospray/ospray.h>
 
 #include "KeyedDataObject.h"
 #include "OSPUtil.h"
 
+namespace pvol
+{
 KEYED_OBJECT_POINTER(OSPRayObject)
 
 class Box;
@@ -30,4 +30,4 @@ public:
 protected:
 	OSPObject theOSPRayObject;
 };
-
+}

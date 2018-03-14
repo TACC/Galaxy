@@ -8,6 +8,8 @@ static int dbg = -2;
 static int smbrk = -1;
 static int k = 0;
 
+namespace pvol
+{
 void
 smem_catch(){}
 
@@ -58,4 +60,5 @@ smem::smem(int n)
 	{
 		 APP_LOG(<< "smem ctor " << kk << " " << sz << " at " << std::hex << ((long)ptr));
 	}
+}
 }

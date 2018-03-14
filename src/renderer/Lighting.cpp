@@ -5,8 +5,11 @@
 #include "Lighting.h"
 #include "Lighting_ispc.h"
 
+using namespace rapidjson;
 using namespace std;
 
+namespace pvol
+{
 Lighting::Lighting()
 {
   allocate_ispc();
@@ -273,4 +276,5 @@ void
 Lighting::GetEpsilon(float& e)
 {
   ispc::Lighting_GetEpsilon(GetISPC(), &e);
+}
 }

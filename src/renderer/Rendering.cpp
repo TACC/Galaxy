@@ -12,6 +12,8 @@
 
 #include "mypng.h"
 
+namespace pvol
+{
 KEYED_OBJECT_TYPE(Rendering)
 
 void
@@ -235,3 +237,4 @@ Rendering::deserialize(unsigned char *p)
   return p;
 }
 
+}

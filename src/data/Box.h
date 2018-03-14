@@ -6,10 +6,11 @@
 #include "float.h"
 
 
-
-class Ray;
-
 using namespace std;
+
+namespace pvol
+{
+class Ray;
 
 class Box
 {
@@ -139,3 +140,4 @@ private:
 	vec3f xyz_min;
 	vec3f xyz_max;
 };
+} // namespace pvol

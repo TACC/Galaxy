@@ -12,6 +12,10 @@
 #include "Events.h"
 #include "Application.h"
 
+using namespace std;
+
+namespace pvol
+{
 typedef std::numeric_limits< double > dbl;
 
 EventTracker *theEventTracker;
@@ -84,3 +88,4 @@ EventTracker::Add(Event *e)
 	pthread_mutex_unlock(&EventsLock);
 }
 
+}

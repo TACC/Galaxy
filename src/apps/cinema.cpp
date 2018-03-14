@@ -18,6 +18,7 @@
 #include "Cinema.h"
 
 using namespace std;
+using namespace pvol;
 
 char  *
 timestamp()

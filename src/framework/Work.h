@@ -6,8 +6,8 @@
 #include <mpi.h>
 #include "smem.h"
 
-using namespace std;
-
+namespace pvol
+{
 class Work
 {
 public:
@@ -28,7 +28,7 @@ public:
 	void Send(int i);
 	void Broadcast(bool b = false);
 
-	string getClassName() { return className; };
+	std::string getClassName() { return className; };
   int GetType() { return type; }
 
 	SharedP get_pointer() { return contents; }
@@ -38,17 +38,17 @@ public:
 	int xyzzy() { return contents.use_count(); }
 
 protected:
-	static int RegisterSubclass(string, Work *(*d)(SharedP));
+	static int RegisterSubclass(std::string, Work *(*d)(SharedP));
 
-  int 		type;
-  string 	className;
-	SharedP contents;
+  int 		      type;
+  std::string 	className;
+	SharedP       contents;
 };
 
 
 #define WORK_CLASS_TYPE(ClassName) 																											\
 		int ClassName::class_type = 0;        																							\
-		string ClassName::class_name = #ClassName; 																					\
+		std::string ClassName::class_name = #ClassName; 							  										\
 
 
 #define WORK_CLASS(ClassName, bcast)				 																						\
@@ -57,20 +57,20 @@ public: 																																								\
  																																												\
 	ClassName(size_t n) : Work(n)																													\
 	{																							 																				\
-    className = string(#ClassName); 																										\
+    className = std::string(#ClassName); 																								\
     type = ClassName::class_type; 																											\
 		initialize(); 																																			\
 	} 																																										\
  																																												\
 	ClassName(SharedP p) : Work(p) 							  																				\
 	{																							 																				\
-    className = string(#ClassName); 																										\
+    className = std::string(#ClassName); 																								\
     type = ClassName::class_type; 																											\
 		initialize(); 																																			\
   } 																																										\
  																																												\
 public: 																																								\
-	string getClassName() { return string(#ClassName); } 																	\
+	std::string getClassName() { return std::string(#ClassName); } 												\
 	unsigned char *get_contents() { return contents->get(); } 														\
  																																												\
 	static void Register()   																															\
@@ -85,5 +85,6 @@ public: 																																								\
 																																												\
 private: 																																								\
 	static int class_type;																																\
-	static string class_name;
+	static std::string class_name;
 
+}

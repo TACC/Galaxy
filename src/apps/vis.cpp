@@ -7,6 +7,8 @@
 
 #include <ospray/ospray.h>
 
+using namespace pvol;
+
 void
 syntax(char *a)
 {

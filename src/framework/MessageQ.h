@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include "Message.h"
 
+namespace pvol
+{
 class MessageQ {
 public:
   MessageQ(const char *n) : name(n)
@@ -37,8 +39,9 @@ private:
   pthread_cond_t signal;
   bool running;
 
-  deque<Message *> workq;
+  std::deque<Message *> workq;
 };
 
 MessageQ *GetIncomingMessageQueue();
 MessageQ *GetOutgoingMessageQueue();
+}

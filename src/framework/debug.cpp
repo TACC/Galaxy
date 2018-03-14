@@ -3,8 +3,9 @@
 
 using namespace std;
 
+namespace pvol
+{
 static string executable;
-
 
 void setup_debugger(char *e)
 {
@@ -50,3 +51,4 @@ void debugger(char *arg)
 	}
 }
 
+}

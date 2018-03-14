@@ -5,11 +5,7 @@
 #include <vector>
 #include <memory>
 
-using namespace std;
 
-#include "KeyedObject.h"
-
-KEYED_OBJECT_POINTER(ParticlesVis)
 
 #include "dtypes.h"
 #include "Application.h"
@@ -17,6 +13,11 @@ KEYED_OBJECT_POINTER(ParticlesVis)
 #include "Particles.h"
 #include "Datasets.h"
 
+#include "KeyedObject.h"
+
+namespace pvol
+{
+KEYED_OBJECT_POINTER(ParticlesVis)
 
 class ParticlesVis : public Vis
 {
@@ -42,3 +43,4 @@ protected:
   virtual unsigned char* deserialize(unsigned char *ptr);
 };
 
+}

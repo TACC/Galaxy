@@ -1,4 +1,4 @@
-#include "ospray/math/vec.ih"
+#include "ospray/SDK/math/vec.ih"
 
 struct Lighting_ispc
 {

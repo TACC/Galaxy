@@ -12,10 +12,12 @@
 
 #include "../rapidjson/prettywriter.h"
 #include "../rapidjson/stringbuffer.h"
-using namespace rapidjson;
 
+using namespace rapidjson;
 using namespace std;
 
+namespace pvol
+{
 KEYED_OBJECT_TYPE(Visualization)
 
 void
@@ -390,3 +392,4 @@ Visualization::destroy_ispc()
   }
 }
 
+}

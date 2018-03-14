@@ -10,6 +10,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 KEYED_OBJECT_TYPE(MappedVis)
 
 void
@@ -247,4 +249,5 @@ MappedVis::SetOpacityMap(int n, vec2f *ptr)
 	opacitymap.clear();
 	for (int i = 0; i < n; i++)
 		opacitymap.push_back(ptr[i]);
+}
 }

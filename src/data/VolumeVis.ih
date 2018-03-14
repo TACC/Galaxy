@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MappedVis.ih"
-#include "ospray/math/vec.ih"
+#include "ospray/SDK/math/vec.ih"
 
 struct VolumeVis_ispc
 {

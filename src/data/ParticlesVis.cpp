@@ -10,6 +10,8 @@
 
 #include "ParticlesVis_ispc.h"
 
+namespace pvol
+{
 KEYED_OBJECT_TYPE(ParticlesVis)
 
 void
@@ -87,4 +89,5 @@ bool
 ParticlesVis::local_commit(MPI_Comm c)
 {  
 	return super::local_commit(c);
+}
 }

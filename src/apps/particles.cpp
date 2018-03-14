@@ -15,6 +15,7 @@
 #include "../rapidjson/prettywriter.h"
 #include "../rapidjson/stringbuffer.h"
 
+using namespace pvol;
 using namespace rapidjson;
 using namespace std;
 

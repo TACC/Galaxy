@@ -1,5 +1,5 @@
-#include "ospray/math/vec.ih"
-#include "ospray/math/box.ih"
+#include "ospray/SDK/math/vec.ih"
+#include "ospray/SDK/math/box.ih"
 
 struct Model;
 

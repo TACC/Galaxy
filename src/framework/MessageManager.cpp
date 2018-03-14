@@ -19,8 +19,12 @@
 #include <sstream>
 #include <memory>
 
+using namespace std;
+
 #define LOGGING 0
 
+namespace pvol
+{
 void
 killer(){}
 
@@ -596,3 +600,4 @@ MessageManager::dump()
 	GetOutgoingMessageQueue()->printContents();
 }
 
+}

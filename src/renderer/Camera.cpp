@@ -16,6 +16,11 @@
 #include "RayFlags.h"
 #include "Rendering.h"
 
+using namespace rapidjson;
+using namespace std;
+
+namespace pvol
+{
 KEYED_OBJECT_TYPE(Camera)
 
 static int RAYS_PER_PACKET = -1;
@@ -655,4 +660,5 @@ Camera::deserialize(unsigned char *p)
   p += sizeof(float);
 
   return p;
+}
 }

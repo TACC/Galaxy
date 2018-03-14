@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 void
 MessageQ::Enqueue(Message *w)
 {
@@ -61,3 +63,4 @@ MessageQ::Kill()
 }
 	
 
+}

@@ -11,6 +11,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 void 
 ISPCObject::allocate_ispc()
 {
@@ -32,4 +34,5 @@ ISPCObject::destroy_ispc()
 		ispc::ISPCObject_destroy(ispc);
 		ispc = NULL;
 	}
+}
 }

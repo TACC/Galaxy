@@ -5,12 +5,14 @@
 
 #include <ospray/ospray.h>
 
-using namespace std;
-
 #include "OSPRayObject.h"
 #include "Geometry.h"
 #include "Volume.h"
 
+using namespace std;
+
+namespace pvol
+{
 KEYED_OBJECT_TYPE(OSPRayObject)
 
 void
@@ -34,3 +36,4 @@ OSPRayObject::Register()
 	Geometry::Register();
 }
 
+}

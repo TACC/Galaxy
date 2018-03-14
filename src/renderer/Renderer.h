@@ -12,12 +12,12 @@
 #include "Lighting.h"
 #include "TraceRays.h"
 
+namespace pvol
+{
 class Camera;
 class RayQManager;
 class Pixel;
 class RayList;
-
-using namespace std;
 
 KEYED_OBJECT_POINTER(Renderer)
 
@@ -180,3 +180,4 @@ private:
     bool CollectiveAction(MPI_Comm, bool isRoot);
   };
 };
+}

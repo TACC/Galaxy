@@ -1,6 +1,8 @@
 #include "Application.h"
 #include "TestObject.h"
 
+using namespace pvol;
+
 WORK_CLASS_TYPE(TestObject::DoitMsg);
 KEYED_OBJECT_TYPE(TestObject);
 

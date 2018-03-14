@@ -11,8 +11,8 @@
 
 #include "debug.h"
 
-using namespace std;
-
+namespace pvol
+{
 class Renderer;
 
 class RayQManager
@@ -117,3 +117,4 @@ private:
 
 	list<RayList*> rayQ;
 };
+}

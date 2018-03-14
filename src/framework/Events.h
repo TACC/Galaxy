@@ -4,25 +4,25 @@
 #include <fstream>
 #include <memory>
 #include <pthread.h>
+#include <vector>
 
 #include "KeyedObject.h"
 
 extern pthread_mutex_t EventsLock;
 
-#include <vector>
 
-using namespace std;
-
+namespace pvol
+{
 class Event
 {
 public:
 	Event();
 	~Event(){}
 
-	void Print(ostream& o) { print(o); }
+	void Print(std::ostream& o) { print(o); }
 
 protected:
-	virtual void print(ostream&);
+	virtual void print(std::ostream&);
 
 private:
 	double time;
@@ -35,14 +35,15 @@ public:
 
 	void Add(Event *e);
 
-	void DumpEvents(ostream& o);
+	void DumpEvents(std::ostream& o);
 
 	static double gettime();
 
 	bool is_empty() { return events.size() == 0; }
 	
 private:
-	vector<shared_ptr<Event>> events;
+	std::vector<std::shared_ptr<Event>> events;
 };
 
 extern EventTracker *GetTheEventTracker();
+}

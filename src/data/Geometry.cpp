@@ -5,11 +5,13 @@
 
 #include <ospray/ospray.h>
 
-using namespace std;
-
 #include "Geometry.h"
 #include "Particles.h"
 
+using namespace std;
+
+namespace pvol
+{
 KEYED_OBJECT_TYPE(Geometry)
 
 void
@@ -19,3 +21,4 @@ Geometry::Register()
 	Particles::Register();
 }
 
+}

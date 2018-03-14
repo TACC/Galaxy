@@ -7,16 +7,15 @@
 
 #include "ospray/ospray.h"
 
-using namespace std;
-
-#include "KeyedObject.h"
-
-KEYED_OBJECT_POINTER(MappedVis)
-
 #include "dtypes.h"
 #include "Vis.h"
 #include "Datasets.h"
- 
+#include "KeyedObject.h"
+
+namespace pvol
+{
+KEYED_OBJECT_POINTER(MappedVis)
+
 class MappedVis : public Vis
 {
   KEYED_OBJECT_SUBCLASS(MappedVis, Vis)
@@ -51,4 +50,5 @@ public:
   OSPTransferFunction transferFunction;
   
 };
+}
 

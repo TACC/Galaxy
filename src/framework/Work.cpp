@@ -5,6 +5,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 Work::Work()
 {
 }
@@ -53,4 +55,5 @@ Work::Broadcast(bool b)
 
 Work::~Work()
 {
+}
 }
