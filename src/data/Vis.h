@@ -25,6 +25,7 @@ public:
 
     virtual void Commit(DatasetsP);
     OSPRayObjectP GetTheData() { return data; }
+    void SetTheData( OSPRayObjectP d ) { data = d; }
 
     virtual void LoadFromJSON(Value&);
     virtual void SaveToJSON(Value&, Document&);

@@ -41,6 +41,8 @@ public:
   
   RayQManager *GetTheRayQManager() { return rayQmanager; }
   
+  Lighting *GetTheLighting() { return &lighting; }
+
   virtual void LoadStateFromDocument(Document&);
   virtual void SaveStateToDocument(Document&);
 
