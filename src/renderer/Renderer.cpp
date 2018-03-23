@@ -647,8 +647,8 @@ Renderer::ProcessRays(RayList *in)
   ProcessRays_continued_count += nKept;
 	pthread_mutex_unlock(&lock);
 
-	if (nProcessed != (nIn + ProcessRays_continued_count)) std::cerr << "ERROR 1: nProcessed != (nIn + ProcessRays_continued_count)\n";
-	if (nProcessed != (nRaysSent + nPixelsSent + nRetired)) std::cerr << "ERROR 2: nProcessed != (nRaysSent + nPixelsSent + nRetired)\n";
+	// if (nProcessed != (nIn + ProcessRays_continued_count)) std::cerr << "ERROR 1: nProcessed != (nIn + ProcessRays_continued_count)\n";
+	// if (nProcessed != (nRaysSent + nPixelsSent + nRetired)) std::cerr << "ERROR 2: nProcessed != (nRaysSent + nPixelsSent + nRetired)\n";
 
 #if defined(EVENT_TRACKING)
 	GetTheEventTracker()->Add(new ProcessRayListEvent(nIn, nSecondaries, nRetired, nSent));
