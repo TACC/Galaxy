@@ -79,10 +79,6 @@ RayQManager::theRayQWorker(void *d)
 	RayList *r;
 	while ((r = theRayQManager->Dequeue()) != NULL)
 	{
-#if defined(EVENT_TRACKING)
-		GetTheEventTracker()->Add(new ProcessRaysEvent(r->GetRayCount(), r->GetTheRendering()->GetTheRenderingSetKey()));
-#endif
-
 #if 1
     ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
     threadpool->postWork<void>(rp_ftor(theRayQManager->GetTheRenderer(), r));

@@ -22,7 +22,7 @@ EventTracker::EventTracker()
 
 EventTracker *GetTheEventTracker() { return theEventTracker; }
 
-pthread_mutex_t EventsLock;
+pthread_mutex_t EventsLock = PTHREAD_MUTEX_INITIALIZER;
 
 double
 EventTracker::gettime()
@@ -44,7 +44,11 @@ EventTracker::gettime()
 Event::Event()
 {
 	time = EventTracker::gettime();
-	// theEventTracker->Add(this); 
+}
+
+Event::~Event()
+{
+  std::cerr << "ev dtor\n";
 }
 
 void
@@ -54,13 +58,12 @@ Event::print(ostream& o)
 }
 
 void
-EventTracker::DumpEvents(ostream& o)
+EventTracker::DumpEvents(fstream& fs)
 {
-	cout.precision(dbl::max_digits10);
 	for (auto e : events)
 	{
-		e->Print(o);
-		o << "\n";
+		e->Print(fs);
+		fs << "\n";
 	}
 }
 
@@ -68,13 +71,14 @@ void
 EventTracker::Add(Event *e)
 {
 	pthread_mutex_lock(&EventsLock);
-#if 0
-	events.push_back(shared_ptr<Event>(e));
+#if 1
+	// events.push_back(shared_ptr<Event>(e));
+	events.push_back(e);
 #else 
 	int rank = GetTheApplication()->GetRank();
 	std::fstream fs;
 	std::stringstream fname;
-	fname << "events_" << rank;
+	f {}name << "events_" << rank;
 	fs.open(fname.str().c_str(), std::fstream::out | std::ofstream::app);
 	e->Print(fs);
 	fs << "\n";

@@ -14,6 +14,7 @@ class RayList
 		int size;
 		int frame;
 		int aligned_size;
+		int id;
 	};
 
 public:
@@ -53,6 +54,7 @@ public:
 
 	int GetFrame() { return ((struct hdr *)contents->get())->frame; }
 	int GetRayCount() { return ((struct hdr *)contents->get())->size; }
+	int GetId() { return ((struct hdr *)contents->get())->id; }
 	SharedP get_ptr() { return contents; };
 
 	void *get_header_address() { return ((void *)(contents->get())); }

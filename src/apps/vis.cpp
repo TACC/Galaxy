@@ -1,5 +1,4 @@
 #include <string>
-#include <iostream>
 #include <sstream>
 
 #include "Application.h"
@@ -84,6 +83,10 @@ int main(int argc,  char *argv[])
 		RendererP theRenderer = Renderer::NewP();
 
     Document *doc = GetTheApplication()->OpenInputState(statefile);
+#if 0
+		for (Value::ConstMemberIterator itr = doc->MemberBegin(); itr != doc->MemberEnd(); ++itr)
+			printf("member %s\n", itr->name.GetString());
+#endif
 
 	  theRenderer->LoadStateFromDocument(*doc);
     // theRenderer->Commit();

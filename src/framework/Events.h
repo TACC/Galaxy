@@ -17,7 +17,7 @@ class Event
 {
 public:
 	Event();
-	~Event(){}
+	~Event();
 
 	void Print(ostream& o) { print(o); }
 
@@ -33,16 +33,18 @@ class EventTracker
 public:
 	EventTracker();
 
-	void Add(Event *e);
+	void DumpEvents(fstream& fs);
 
-	void DumpEvents(ostream& o);
+
+	void Add(Event *e);
 
 	static double gettime();
 
 	bool is_empty() { return events.size() == 0; }
 	
 private:
-	vector<shared_ptr<Event>> events;
+	// vector<shared_ptr<Event>> events;
+	vector<Event*> events;
 };
 
 extern EventTracker *GetTheEventTracker();

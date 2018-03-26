@@ -583,7 +583,7 @@ MessageManager::setup_mpi(Application *app, MessageManager *mm, bool use_mpi)
       void print(ostream& o)
       {
         Event::print(o);
-        o << p;
+        o << "MPI process ID: " << p;
       }
 
     private:

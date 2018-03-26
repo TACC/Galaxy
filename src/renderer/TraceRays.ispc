@@ -480,9 +480,9 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 //print("tThis: %\ntLast: %\n", tThis, tLast);
 //print("t %\n", tThis);
         vec3f coord = ray.org + tThis * ray.dir;
-//print("x %\ny %\nz %\n", coord.x, coord.y, coord.z);
 
         SampleVolumes(coord, vis, sThis);
+
 
         // Need to adjust interval for any iso hit before integrating for volume rendering so
         // we search interval for iso hit first.
@@ -520,19 +520,24 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
               float sVolume = (sLast[major] + sThis[major]) / 2;
               float sampleOpacity = tf->getOpacityForValue(tf, sVolume);
 
-//print("v %\no % ", sVolume, sampleOpacity);
 
               if (sampleOpacity > 0)
               {
+
                 if (shadeFlag)
                 {
-                  vec3f sampleColor = tf->getColorForValue(tf, sVolume);
-                  vec4f weightedColor = clamp(sampleOpacity / vol->samplingRate) * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
+									vec3f sampleColor = tf->getColorForValue(tf, sVolume);
+									float wo = clamp(sampleOpacity / vol->samplingRate);
+                  vec4f weightedColor = wo * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
                   color = color + (1.0f - color.w) * weightedColor;
+
+// print("x %\ny %\nz %\ns %\nso %\nwo %\nac %\n", coord.x, coord.y, coord.z, sVolume * 1e11, sampleOpacity, wo, color.w);
+// color.x = 0.99, color.y = 0.99; color.z = 0.99;
+
                 }
                 else
                 {
-                   float weightedOpacity = ((tThis - tLast) / step) * clamp(sampleOpacity / vol->samplingRate);
+								  float weightedOpacity = ((tThis - tLast) / step) * clamp(sampleOpacity / vol->samplingRate);
                   color = color * (1-weightedOpacity);
                 }
               }

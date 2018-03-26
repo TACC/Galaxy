@@ -169,76 +169,6 @@ Renderer::SaveStateToDocument(Document& doc)
 	doc.AddMember("Renderer", r, doc.GetAllocator());
 }
 
-class LocalPixelContributionsEvent : public Event
-{
-public:
-	LocalPixelContributionsEvent(int c, RenderingSetP r) : count(c), rset(r->getkey()) { }
-
-protected:
-	void print(ostream& o)
-	{
-		Event::print(o);
-		o << count << " pixels handled locally for rset " << rset;
-	}
-
-private:
-	int count;
-	Key rset;
-};
-
-class RemotePixelContributionsEvent : public Event
-{
-public:
-	RemotePixelContributionsEvent(int c, int owner, RenderingSetP rs) : count(c), dest(owner),  rset(rs->getkey()) {}
-
-protected:
-	void print(ostream& o)
-	{
-		Event::print(o);
-		o << count << " pixels sent to " << dest << " for rset " << rset;
-	}
-
-private:
-	int count;
-	int dest;
-	Key rset;
-};
-
-class ProcessRayListEvent : public Event
-{
-public:
-	ProcessRayListEvent(int ni, int nn, int nr, int ns) : nIn(ni), nSecondaries(nn), nRetired(nr), nSent(ns) {}
-
-protected:
-	void print(ostream& o)
-	{
-		Event::print(o);
-		o << " ProcessRayList:  " << nIn << " in, " << nSecondaries << " spawned, " << nRetired << " retired and " << nSent << " sent";
-	}
-
-private:
-	int nIn, nSecondaries, nSent, nRetired;
-};
-
-class TraceRaysEvent : public Event
-{
-public:
-	TraceRaysEvent(int n, int p, int s, Key r) : nin(n), phits(p), secondaries(s), rset(r) {};
-
-protected:
-	void print(ostream& o)
-	{
-		Event::print(o);
-		o << "TraceRays processed " << nin << " rays with " << phits << " hits generating " << secondaries << " secondaries for set " << rset;
-	}
-
-	private:
-		int nin;
-		int phits;
-		int secondaries;
-		Key rset;
-};
-
 // These defines categorize rays after a pass through the tracer
 
 #define SEND_TO_FB			-1
@@ -253,16 +183,16 @@ protected:
 void
 Renderer::ProcessRays(RayList *in)
 {
-  //std::cerr << "in list: " << in->get_header_address() << "\n";
-  //
-  
 #if DO_TIMING
   timer.start();
 #endif
 
 	bool first = true;
-
 	int nIn = in->GetRayCount();
+
+#if defined(EVENT_TRACKING)
+	GetTheEventTracker()->Add(new ProcessRayListEvent(in));
+#endif
 
 	int nProcessed   = 0;		// total number of rays processed
 	int nSecondaries = 0;		// secondaries generated
@@ -276,17 +206,6 @@ Renderer::ProcessRays(RayList *in)
 	RenderingSetP  renderingSet  = in->GetTheRenderingSet();
 	RenderingP     rendering     = in->GetTheRendering();
 	VisualizationP visualization = rendering->GetTheVisualization();
-
-#ifndef PVOL_SYNCHRONOUS
-#if 0
-	if (renderingSet->GetFrame() < in->GetFrame())
-	{
-		std::cerr << "R";
-		delete in;
-		return;
-	}
-#endif
-#endif
 
 	// This is called when an list of rays is pulled off the
 	// RayQ.  When we are done with it we decrement the 
@@ -310,15 +229,7 @@ Renderer::ProcessRays(RayList *in)
 				renderingSet->Enqueue(out);
 
 #if defined(EVENT_TRACKING)
-				int nHits = 0;
-				for (int i = 0; i < in->GetRayCount(); i++)
-				{
-					int typ  = in->type(i);
-					int term = in->term(i);
-					if ((typ(i) == RAY_PRIMARY) && (term & RAY_SURFACE)) nHits++;
-				}
-
-				GetTheEventTracker()->Add(new TraceRaysEvent(in->GetRayCount(), nHits, out->GetRayCount(), out->GetTheRendering()->GetTheRenderingSetKey()));
+		GetTheEventTracker()->Add(new SecondariesGeneratedEvent(out));
 #endif
 		}
 
@@ -589,25 +500,9 @@ Renderer::ProcessRays(RayList *in)
 			}
 		}
 
-#if defined(EVENT_TRACKING)
-
-		if (lclknt)
-			GetTheEventTracker()->Add(new LocalPixelContributionsEvent(lclknt, renderingSet));
-
-		if (fbknt)
-			GetTheEventTracker()->Add(new RemotePixelContributionsEvent(fbknt, r->GetTheOwner(), renderingSet));
-
-#endif
-
 		// If we AREN't the owner of the Rendering send the pixels to its owner
     if (spmsg)
-		{
       spmsg->Send(rendering->GetTheOwner());
-
-#ifdef PVOL_SYNCHRONOUS
-      renderingSet->SentPixels(fbknt);
-#endif // PVOL_SYNCHRONOUS
-    }
 
 		if (local_pixels)
 		{
@@ -651,7 +546,7 @@ Renderer::ProcessRays(RayList *in)
 	if (nProcessed != (nRaysSent + nPixelsSent + nRetired)) std::cerr << "ERROR 2: nProcessed != (nRaysSent + nPixelsSent + nRetired)\n";
 
 #if defined(EVENT_TRACKING)
-	GetTheEventTracker()->Add(new ProcessRayListEvent(nIn, nSecondaries, nRetired, nSent));
+	GetTheEventTracker()->Add(new ProcessRayListCompletedEvent(nIn, nSecondaries, nRetired, nRaysSent));
 #endif
 
 #ifdef PVOL_SYNCHRONOUS
@@ -697,37 +592,12 @@ Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
   return false;
 }
 
-#if defined(EVENT_TRACKING)
-
-class SendRaysEvent : public Event
-{
-public:
-  SendRaysEvent(int d, int c, Key r) : dst(d), count(c), rset(r) {};
-
-protected:
-  void print(ostream& o)
-  {
-    Event::print(o);
-    o << "send " << count << " rays to "   << dst << " rset " << rset;
-  }
-
-private:
-  int dst;
-  int count;
-  Key rset;
-};
-
-#endif
-
 void 
 Renderer::SendRays(RayList *rays, int destination)
 {
 	int nReceived = rays->GetRayCount();
 	_sent_to(destination, nReceived);
 
-#if defined(EVENT_TRACKING)
-	GetTheEventTracker()->Add(new SendRaysEvent(destination,  rays->GetRayCount(), rays->GetTheRenderingSet()->getkey()));
-#endif
 	SendRaysMsg msg(rays);
 	msg.Send(destination);
 }

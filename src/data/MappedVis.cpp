@@ -239,8 +239,6 @@ MappedVis::local_commit(MPI_Comm c)
   ospSetData(transferFunction, "colors", oColors);
   ospRelease(oColors);
   
-  //std::cerr << "CM0 " << colormap[0].x << " " << colormap[0].y << " " << colormap[0].z << " " << colormap[0].w << "\n";
-
   int n_opacities = opacitymap.size();
   float opacity[256];
 

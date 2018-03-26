@@ -40,11 +40,9 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
-
-
 public:
-	void Send(int i);
-	void Broadcast();
+	// void Send(int i);
+	// void Broadcast();
 
   int  GetType() { return header.type; }
   void SetType(int t) { header.type = t; }

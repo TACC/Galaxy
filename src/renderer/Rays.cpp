@@ -13,6 +13,9 @@
 
 RayList::RayList(RenderingSetP rs, RenderingP r, int nrays) : RayList(rs, r, nrays, rs->GetCurrentFrame()) {}
 
+static pthread_mutex_t raylist_lock = PTHREAD_MUTEX_INITIALIZER;
+static int raylist_id = 0;
+
 RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, int frame)
 {
 	theRenderingSet = rs;
@@ -33,6 +36,10 @@ RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, int frame)
 
 	ispc = malloc(sizeof(ispc::RayList_ispc));
 	setup_ispc_pointers();
+
+	pthread_mutex_lock(&raylist_lock);
+	h->id = raylist_id++;
+	pthread_mutex_unlock(&raylist_lock);
 };
 
 RayList::RayList(SharedP c)

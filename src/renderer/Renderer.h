@@ -11,6 +11,7 @@
 #include "RenderingSet.h"
 #include "Lighting.h"
 #include "TraceRays.h"
+#include "RenderingEvents.h"
 
 class Camera;
 class RayQManager;
@@ -157,10 +158,14 @@ private:
 			int frame;
 			int source;
 		};
+
+		RenderingSetP rset;
     
   public:
     SendPixelsMsg(RenderingP r, RenderingSetP rs, int frame, int n) : SendPixelsMsg(sizeof(hdr) + (n * sizeof(Pixel)))
     {
+			rset = rs;
+
       hdr *h    = (hdr *)contents->get();
 			h->rkey   = r->getkey();
 			h->rskey  = rs->getkey();
@@ -170,6 +175,21 @@ private:
 
       nxt = 0;
     }
+
+		void Send(int i)
+		{
+      hdr *h    = (hdr *)contents->get();
+
+#if defined(EVENT_TRACKING)
+			GetTheEventTracker()->Add(new SendPixelsEvent(h->count, h->rkey, h->frame, i));
+#endif
+
+			Work::Send(i);
+
+#ifdef PVOL_SYNCHRONOUS
+      rset->SentPixels(h->count);
+#endif
+		}
 
     void StashPixel(RayList *rl, int i) 
     {
@@ -205,33 +225,13 @@ private:
 
 #ifdef PVOL_SYNCHRONOUS
       rs->ReceivedPixels(h->count);
-
-#endif // PVOL_SYNCHRONOUS
-
-			r->AddLocalPixels(pixels, h->count, h->frame, h->source);
+#endif
 
 #if defined(EVENT_TRACKING)
-
-      class ReceivedPixelContributionsEvent : public Event
-      {
-      public:
-        ReceivedPixelContributionsEvent(int c, int s, RenderingP r) : count(c), src(s), rset(r->GetTheRenderingSetKey()) {}
-
-      protected:
-        void print(ostream& o)
-        {
-          Event::print(o);
-          o << "received " << count << " pixels from " << src << " for rset " << rset;
-        }
-
-      private:
-        int count;
-        int src;
-        Key rset;
-      };
-
-      GetTheEventTracker()->Add(new ReceivedPixelContributionsEvent(n, s, ren));
+			GetTheEventTracker()->Add(new RcvPixelsEvent(h->count, h->rkey, h->frame, s));
 #endif
+
+			r->AddLocalPixels(pixels, h->count, h->frame, h->source);
 
       return false;
     }

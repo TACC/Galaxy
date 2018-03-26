@@ -9,6 +9,7 @@
 #include "Visualization.h"
 #include "Rays.h"
 #include "Work.h"
+#include "RenderingEvents.h"
 
 #include "ImageWriter.h"
 
@@ -108,6 +109,10 @@ Rendering::IsLocal()
 void
 Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 {
+#if defined(EVENT_TRACKING)
+	GetTheEventTracker()->Add(new LocalPixelsEvent(n, this->getkey(), f));
+#endif
+
   if (! framebuffer)
   {
     std::cerr << "Rendering::AddLocalPixel called by non-owner\n";

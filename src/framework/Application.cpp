@@ -38,7 +38,6 @@ ClassTableEntry::ClassTableEntry(const ClassTableEntry& o)
 {
 	
 	indx = cte_indx++;
-	// std::cerr << "CTE cpyctor " << indx << " from " << o.indx << "\n";
 	my_string = new string(o.my_string->c_str());
 }
 
@@ -110,17 +109,33 @@ Application::Application()
   pthread_mutex_unlock(&lock);
 }
 
+	
+static pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
 
 void
-Application::Log(std::string s)
+Application::Log(string s)
 {
-	char buf[256];
-	sprintf(buf, "log.%d", GetRank());
+  pthread_mutex_lock(&log_lock);
 
-	fstream f;
-	f.open(buf, fstream::out | fstream::app);
-	f << s << "\n";
-	f.close();
+  log.push_back(s);
+
+  pthread_mutex_unlock(&log_lock);
+}
+
+void
+Application::DumpLog()
+{
+  std::stringstream fname;
+	int rank = GetTheMessageManager()->GetRank();
+  fname << "log_" << rank;
+
+  std::fstream fs;
+  fs.open(fname.str().c_str(), std::fstream::out | std::fstream::app);
+
+	for (auto s: log)
+		fs << s << "\n";
+
+  fs.close();
 }
 
 void
@@ -132,6 +147,8 @@ Application::Print(std::string s)
 
 Application::~Application()
 {
+	DumpLog();
+
 	if (! eventTracker.is_empty())
 	{
 		int rank = GetTheMessageManager()->GetRank();
@@ -150,22 +167,6 @@ Application::~Application()
 	delete deserializers;
 	delete theMessageManager;
 	delete theKeyedObjectFactory;
-}
-
-static pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
-
-void
-Application::log(std::stringstream &s)
-{
-  pthread_mutex_lock(&log_lock);
-  std::fstream fs;
-  std::stringstream fname;
-	int rank = GetTheMessageManager()->GetRank();
-  fname << "log_" << rank;
-  fs.open(fname.str().c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
-  fs << rank << ": " << s.str();
-  fs.close();
-  pthread_mutex_unlock(&log_lock);
 }
 
 void Application::QuitApplication()

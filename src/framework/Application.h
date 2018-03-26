@@ -5,8 +5,7 @@
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
-#include "vector"
-#include "sstream"
+#include <sstream>
 #include "debug.h"
 
 #include "pvol.h"
@@ -63,6 +62,7 @@ public:
 
 	void Print(std::string);
 	void Log(std::string);
+	void DumpLog();
 
   void QuitApplication();
   void SyncApplication();
@@ -80,8 +80,6 @@ public:
 
 	void Pause() { GetTheMessageManager()->Pause(); }
 	void Run() { GetTheMessageManager()->Run(); }
-
-	void log(std::stringstream &s);
 
   Work *Deserialize(Message *msg);
   const char *Identify(Message *msg);
@@ -102,6 +100,7 @@ public:
 	void SaveOutputState(Document *, string s);
 
 private:
+	vector<string> log;
 	MessageManager *theMessageManager;
 	KeyedObjectFactory *theKeyedObjectFactory;
 

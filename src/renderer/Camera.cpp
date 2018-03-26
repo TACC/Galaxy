@@ -63,6 +63,7 @@ Camera::LoadCamerasFromJSON(Value& v)
       {
         CameraP cam = Camera::NewP();
         cam->LoadFromJSON(c[i]);
+
         cameras.push_back(cam);
       }
     }
@@ -232,7 +233,7 @@ public:
   InitialRaysEvent(RayList *rayList)
   {
     count = rayList->GetRayCount();
-    //rset = rayList->GetTheRendering()->GetTheRenderingSetKey();
+		rset = rayList->GetTheRenderingSet()->getkey();
   }
 
 protected:
