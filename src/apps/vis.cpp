@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream>
+#include <time.h>
 
 #include "Application.h"
 #include "Renderer.h"
@@ -16,6 +17,14 @@ syntax(char *a)
   std::cerr << "  -A         wait for attachment\n";
   std::cerr << "  -s w h     window width, height (256 256)\n";
 	exit(1);
+}
+
+long 
+my_time()
+{
+  timespec s;
+  clock_gettime(CLOCK_REALTIME, &s);
+  return 1000000000*s.tv_sec + s.tv_nsec;
 }
 
 class Debug
@@ -78,6 +87,8 @@ int main(int argc,  char *argv[])
   int mpiRank = theApplication.GetRank();
   int mpiSize = theApplication.GetSize();
 
+	std::cerr << mpiRank << "\n";
+
 	if (mpiRank == 0)
 	{
 		RendererP theRenderer = Renderer::NewP();
@@ -124,17 +135,20 @@ int main(int argc,  char *argv[])
 						rs->AddRendering(theRendering);
 				}
 
-		std::cerr << "index = " << index << "\n";
+		std::cout << "index = " << index << "\n";
 
 		rs->Commit();
 
+		theApplication.SyncApplication();
+
 		for (auto rs : theRenderingSets)
     {
-			std::cerr << "render start\n";
+			std::cout << "render start\n";
+			long t0 = my_time();
       theRenderer->Render(rs);
       rs->WaitForDone();
-			std::cerr << "render end\n";
 			rs->SaveImages(cinema ? "cinema.cdb/image/image" : "image");
+			std::cout << "render end " << (my_time() - t0) / 1000000000.0 << " seconds\n";
     }
 
     theApplication.QuitApplication();

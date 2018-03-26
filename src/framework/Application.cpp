@@ -66,7 +66,6 @@ Application::Application()
   theApplication = this;
 
   int n_threads =  getenv("PVOL_NTHREADS") ?  atoi(getenv("PVOL_NTHREADS")) : 5;
-  std::cerr << "Using " << n_threads << " threads in threadPool\n";
 
   threadPool = new threadpool11::Pool(n_threads);
 

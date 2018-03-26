@@ -221,7 +221,7 @@ void Rendering::SaveImage(string filename, int indx)
     filename = filename + '_' + istr + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation() + ".png"; 
   }
 
-	std::cerr << "Saving " << indx << ": " << filename << "\n";
+	// std::cerr << "Saving " << indx << ": " << filename << "\n";
 
 	ImageWriter writer;
   writer.Write(width, height, framebuffer, filename.c_str());
