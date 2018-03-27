@@ -102,6 +102,10 @@ Renderer::SetEpsilon(float e)
 void
 Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 {
+#if defined(EVENT_TRACKING)
+	GetTheEventTracker()->Add(new StartRenderingEvent);
+#endif
+
 	originated_ray_count = 0;
 	sent_ray_count = 0;
 	sent_pixels_count = 0;
@@ -121,7 +125,21 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 	if (renderingSet->NeedInitialRays())
 	{
 #ifdef PVOL_SYNCHRONOUS
+
 		GetTheRayQManager()->Pause();
+
+		if (renderingSet->CameraIsActive())
+		{
+			std::cerr << "RenderingSet: Cannot InitializeState when camera is already active\n";
+			exit(0);
+		}
+	
+		// Bump to keep from seeming finished until all camera rays have been spawned
+
+		renderingSet->IncrementActiveCameraCount();
+
+		GetTheRayQManager()->Resume();
+
 #endif
 
 		vector<future<void>> rvec;
@@ -137,11 +155,15 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec);
 		}
 
+#if defined(EVENT_TRACKING)
+		GetTheEventTracker()->Add(new CameraLoopEndEvent);
+#endif
+
 		for (auto& r : rvec)
 			r.get();
 
 #ifdef PVOL_SYNCHRONOUS
-		renderingSet->InitializeState(c);   // This will resume the ray q
+		renderingSet->DecrementActiveCameraCount();
 #endif // PVOL_SYNCHRONOUS
 	}
 }

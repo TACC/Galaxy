@@ -1,3 +1,29 @@
+class StartRenderingEvent : public Event
+{
+public:
+ StartRenderingEvent() {}
+
+protected:
+  void print(ostream& o)
+  {
+    Event::print(o);
+    o << "StartRendering";
+  }
+};
+
+class CameraLoopEndEvent : public Event
+{
+public:
+ CameraLoopEndEvent() {}
+
+protected:
+  void print(ostream& o)
+  {
+    Event::print(o);
+    o << "CameraLoopEnd";
+  }
+};
+
 class RayListEvent : public Event
 {
 public:

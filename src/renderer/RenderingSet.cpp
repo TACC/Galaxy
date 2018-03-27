@@ -42,8 +42,10 @@ RenderingSet::initialize()
 {
 	current_frame = -1;
 	next_frame = 0;
+	activeCameraCount = 0;
 
 #ifdef PVOL_SYNCHRONOUS
+
 	pthread_mutex_init(&local_lock, NULL);
 
 	int r = GetTheApplication()->GetRank();
@@ -66,10 +68,14 @@ RenderingSet::initialize()
   local_raylist_count  = 0;
 
 	local_reset();
+
+	InitializeState();
+
 #endif // PVOL_SYNCHRONOUS
 }
 
 #ifdef PVOL_SYNCHRONOUS
+
 void
 RenderingSet::SetInitialState(int local_ray_count, int left_state, int right_state)
 {
@@ -149,55 +155,12 @@ bool RenderingSet::Busy()
 	return !done;
 }
 
-
-// NOTE this takes place under localRender ... in the MPI thread
-
 void
-RenderingSet::InitializeState(MPI_Comm c)
+RenderingSet::InitializeState()
 {
-	MPI_Status s;
-	int l_busy, r_busy;
-
-	if (left_id == -1)
-	{
-		l_busy = 0;
-	}
-	else
-	{
-		MPI_Recv(&l_busy, 1, MPI_INT, left_id, 99, c, &s);
-	}
-
-	if (right_id == -1)
-	{
-		r_busy = 0;
-	}
-	else
-	{
-		MPI_Recv(&r_busy, 1, MPI_INT, right_id, 99, c, &s);
-	}
-
-	int i_am_busy = ((get_local_raylist_count() > 0) || l_busy || r_busy) ? 1 : 0;
-
-	SetInitialState(i_am_busy, l_busy, r_busy);
-
-	if (parent != -1)
-	{
-		MPI_Send(&i_am_busy, 1, MPI_INT, parent, 99, c);
-	}
-	else
-	{
-		if (i_am_busy == 0)
-		{
-			Lock();
-			SetDone();
-			Signal();
-			Unlock();
-		}
-  }
-
-	// State is set up... free the RayQManager to process rays
-
-  RayQManager::GetTheRayQManager()->Resume();
+	left_busy  = (left_id != -1);
+	right_busy = (right_id != -1);
+	last_busy  = true;
 }
 
 class CheckStateActionEvent : public Event
@@ -273,14 +236,12 @@ RenderingSet::CheckLocalState()
   // least once - initially, everyone is marked busy
 
   // The subtree rooted here is busy if any there is an active ray list
-  // locally or in either subtree.
+  // locally or in either subtree or if the camera is actively generating initial rays
 
-  bool currently_busy = (local_raylist_count != 0 || left_busy || right_busy);
-
-#if defined(EVENT_TRACKING)
-  GetTheEventTracker()->Add(new CheckStateEntryEvent(last_busy, currently_busy, local_raylist_count, left_busy, right_busy));
-#endif
-
+  bool currently_busy = (local_raylist_count != 0);
+	currently_busy = currently_busy || left_busy;
+	currently_busy = currently_busy || right_busy;
+	currently_busy = currently_busy || CameraIsActive();
 
   // If the busy-state has changed, then we need to do something: send a message
   // up the tree to inform the parent of the state change, or (if this is the root)
@@ -439,50 +400,45 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 
   rs->Lock();
 
-  int global_counts[3];
-	int local_counts[] = {rs->get_local_raylist_count(), rs->get_number_of_pixels_sent(), rs->get_number_of_pixels_received()};
+  int global_counts[4];
+	int local_counts[] = {rs->get_local_raylist_count(), rs->get_number_of_pixels_sent(), rs->get_number_of_pixels_received(), rs->CameraIsActive() ? 1 : 0};
 
-  MPI_Allreduce(local_counts, global_counts, 3, MPI_INT, MPI_SUM, c);
+  MPI_Allreduce(local_counts, global_counts, 4, MPI_INT, MPI_SUM, c);
 
-#if LOGGING
-  APP_LOG(<< "RenderingSet (" << rsk << ") SynchronousCheckMsg::CollectiveAction " <<
-					" local (" << local_counts[0] << ")" <<
-					" global (" << global_counts[0] << ")" <<
-					" pknts (" << global_counts[1] << ", " << global_counts[2] << ")");
-#endif
+	// If no raylists exist anywhere, and the number of received pixels matches the number of sent pixels,
+	// and there are no camera rays currently being generated, this rendering is done.
 
-  // if ((global_counts[0] == 0) && (global_counts[1] == global_counts[2]))
-  if (global_counts[0] == 0)
+  if (global_counts[0] == 0 && (global_counts[1] == global_counts[2]) && global_counts[3] == 0)
 	{
-#if defined(EVENT_TRACKING)
-    GetTheEventTracker()->Add(new CheckStateActionEvent(CheckStateActionEvent::SYNC_CHECK_IDLE));
-#endif
-
-
-#if LOGGING
-		if (global_counts[1] == global_counts[2])
-		{
-			APP_LOG(<< "RenderingSet::SynchronousCheckMsg::CollectiveAction RSK " << rsk << " SETTING DONE");
-		}
-		else
-		{
-			APP_LOG(<< "RenderingSet::SynchronousCheckMsg::CollectiveAction RSK " << rsk << " SETTING DONE ... but not all pixels have arrived");
-		}
-#endif
 		rs->SetDone();
 		rs->Signal();
+
+		// Reset state for next rendering.  Children, if they are exist, are initially busy
+
+		rs->InitializeState();
   }
   else
-  {
-#if defined(EVENT_TRACKING)
-    GetTheEventTracker()->Add(new CheckStateActionEvent(CheckStateActionEvent::SYNC_CHECK_BUSY));
-#endif
     rs->last_busy = true;
-  }
 
   rs->Unlock();
 
   return false;
+}
+
+void
+RenderingSet::DecrementActiveCameraCount()
+{
+	activeCameraCount --;
+
+	if (activeCameraCount == 0)
+	{
+		// Then we have completed spawning all initial rays for this rendering set frame.
+		// If so, we might already be done.
+
+		pthread_mutex_lock(&local_lock);
+		CheckLocalState();
+		pthread_mutex_unlock(&local_lock);
+	}
 }
 
 bool

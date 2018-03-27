@@ -248,6 +248,32 @@ private:
   Key rset;
 };
 
+class CameraTaskStartEvent : public Event
+{
+public:
+  CameraTaskStartEvent() {}
+
+protected:
+  void print(ostream& o)
+  {
+    Event::print(o);
+    o << "CameraTask start";
+  }
+};
+
+class CameraTaskEndEvent : public Event
+{
+public:
+  CameraTaskEndEvent() {}
+
+protected:
+  void print(ostream& o)
+  {
+    Event::print(o);
+    o << "CameraTask end";
+  }
+};
+
 struct args
 {
   args(float pixel_scaling, float ox, float oy, vec3f& r, vec3f& u, vec3f& e, vec3f c, Box *lb, Box *gb) :
@@ -276,6 +302,10 @@ public:
     int chip, core;
     tacc_rdtscp(&chip, &core);
     std::cerr << chip << "::" << core << "\n";
+#endif
+
+#if defined(EVENT_TRACKING)
+		GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
 
     int dst = 0;
@@ -335,19 +365,30 @@ public:
 		int rank = GetTheApplication()->GetRank();
     if (dst > 0 && (rank == 0 || rank == 4))
 #endif
+
+#if defined(EVENT_TRACKING)
+      GetTheEventTracker()->Add(new InitialRaysEvent(r));
+#endif
+
     if (dst > 0)
     {
 			if (dst < r->GetRayCount())
 				r->Truncate(dst);
 
-#if defined(EVENT_TRACKING)
-      GetTheEventTracker()->Add(new InitialRaysEvent(r));
-#endif
 			Renderer::GetTheRenderer()->add_originated_ray_count(r->GetRayCount());
       r->GetTheRenderingSet()->Enqueue(r, true);
     }
     else
       delete r;
+
+#ifdef PVOL_SYNCHRONOUS
+		r->GetTheRenderingSet()->DecrementActiveCameraCount();
+#endif
+
+#if defined(EVENT_TRACKING)
+		GetTheEventTracker()->Add(new CameraTaskEndEvent());
+#endif
+
   }
 
 private:
@@ -399,7 +440,8 @@ void check_env(int width, int height)
 		rays_per_packet = getenv("RAYS_PER_PACKET") ? atoi(getenv("RAYS_PER_PACKET")) : 1000000;
 		permute = getenv("PERMUTE_PIXELS");
 
-		permutation = generate_permutation(width*height);
+		if (permute)
+			permutation = generate_permutation(width*height);
 	}
 }
 		
@@ -696,7 +738,13 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
       if (rlist)
       {
         shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(rlist, a));
+
+#ifdef PVOL_SYNCHRONOUS
+				renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
+#endif
+
         rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));
+				
       }
   }
   return;

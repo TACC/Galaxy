@@ -54,6 +54,12 @@ public:
 
 #ifdef PVOL_SYNCHRONOUS
 
+	int activeCameraCount;
+
+	void IncrementActiveCameraCount() { activeCameraCount ++; }
+	void DecrementActiveCameraCount();
+	bool CameraIsActive() { return activeCameraCount > 0; }
+
 	bool IsDone() { return done; }
 
 	void Reset();	
@@ -62,7 +68,7 @@ public:
 
 	void local_reset();
 
-	void InitializeState(MPI_Comm);
+	void InitializeState();
 
 	// Decrement the number of ray lists for this set that are alive
 	// in this process.   If it had been 1, then state has changed.
