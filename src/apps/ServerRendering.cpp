@@ -22,19 +22,11 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 	{
 		max_frame = f;
 
-		if (s == debug_target)
-			std::cerr << "ServerRendering::AddLocalPixels from debug_target\n";
-  
 		char* ptrs[] = {(char *)&n, (char *)&f, (char *)&s, (char *)p};
 		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
 		socket->SendV(ptrs, szs);
 		Rendering::AddLocalPixels(p, n, f, s);
-	}
-	else
-	{
-		if (s == debug_target)
-			std::cerr << "ServerRendering::AddLocalPixels from debug_target NOT SENT\n";
 	}
 }
 

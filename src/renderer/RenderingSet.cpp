@@ -408,7 +408,8 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 	// If no raylists exist anywhere, and the number of received pixels matches the number of sent pixels,
 	// and there are no camera rays currently being generated, this rendering is done.
 
-  if (global_counts[0] == 0 && (global_counts[1] == global_counts[2]) && global_counts[3] == 0)
+  // if (global_counts[0] == 0 && (global_counts[1] == global_counts[2]) && global_counts[3] == 0)
+  if (global_counts[0] == 0 && global_counts[3] == 0)
 	{
 		rs->SetDone();
 		rs->Signal();

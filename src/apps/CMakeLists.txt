@@ -83,9 +83,13 @@ endif (PVOL_SYNCHRONOUS)
 	# SET(BINS ${BINS} state)
 # endif (WITH_STATE)
 
-# add_executable(ppong ppong.cpp)
-# target_link_libraries(ppong Framework)
-# set(BINS ppong ${BINS})
+add_executable(ppong ppong.cpp)
+target_link_libraries(ppong Framework)
+set(BINS ppong ${BINS})
+
+add_executable(bcast bcast.cpp)
+target_link_libraries(bcast Framework)
+set(BINS bcast ${BINS})
 
 # add_executable(drop drop.cpp TestObject.cpp)
 # target_link_libraries(drop Framework)

@@ -61,6 +61,9 @@ public:
   void SetDestination(int i) { destination = i; }
   int GetDestination() { return destination; }
 
+	unsigned char *GetHeader() { return (unsigned char *)&header; }
+	int   GetHeaderSize() { return sizeof(header); }
+
   // Wait for a blocking message to be handled.  This will return
   // when the message has been sent, and if the message is a broadcast
   // message (that is, runs in the messaging thread), for the message's
@@ -82,9 +85,6 @@ protected:
 		bool HasContent() { return content_size > 0; }
 
   } header;
-
-	unsigned char *GetHeader() { return (unsigned char *)&header; }
-	int   GetHeaderSize() { return sizeof(header); }
 
   int id;
 

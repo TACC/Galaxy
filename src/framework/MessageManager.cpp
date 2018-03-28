@@ -26,16 +26,17 @@ killer(){}
 
 bool show_message_arrival;
 
-int debug_target = -1;
-
 struct mpi_send_buffer
 {
 	// If p2p, use left
 
-	MPI_Request lhrq, rhrq;	// left and right header request
-	MPI_Request lbrq, rbrq;  // left and right body request
+	MPI_Request lrq;	
+	MPI_Request rrq; 
+
 	int n;
 	Message *msg;
+	unsigned char *send_buffer;
+	int total_size;
 };
 
 vector<mpi_send_buffer *> mpi_in_flight;
@@ -52,20 +53,10 @@ purge_completed_mpi_buffers()
 			int lflag, rflag; MPI_Status s;
 			mpi_send_buffer *m = (*i);
 
-			if (m->n < 0) continue;
-
-			if (m->msg->HasContent())
-				MPI_Test(&m->lbrq, &lflag, &s);		// Assume that if the body's gone the header must be gone
-			else
-				MPI_Test(&m->lhrq, &lflag, &s);	
+			MPI_Test(&m->lrq, &lflag, &s);
 
 			if (m->n > 1)
-			{
-				if (m->msg->HasContent())
-					MPI_Test(&m->rbrq, &rflag, &s);		// Assume that if the body's gone the header must be gone
-				else
-					MPI_Test(&m->rhrq, &rflag, &s);	
-			}
+				MPI_Test(&m->rrq, &rflag, &s);
 			else
 				rflag = true;
 
@@ -74,6 +65,9 @@ purge_completed_mpi_buffers()
 				done = false;
 
 				mpi_in_flight.erase(i);
+
+				if (m->msg->GetHeader() != m->send_buffer)
+					free(m->send_buffer);
 
 				int r = GetTheApplication()->GetRank();
 				if (m->msg->isBlocking() && (r == m->msg->GetSender() || r == m->msg->GetRoot()))
@@ -169,6 +163,8 @@ void *MessageManager::messageThread(void *p)
 		mm->Signal();
   mm->Unlock();
 
+	double lastTime = GetTheEventTracker()->gettime();
+
   while (!mm->quit)
 	{
 		int read_ready; MPI_Status status;
@@ -179,8 +175,6 @@ void *MessageManager::messageThread(void *p)
 			while (mm->pause && !mm->quit)
 				mm->Wait();
 			mm->Unlock();
-
-			MPI_Barrier(mm->getP2PComm());
 		}
 
 		if (! mm->quit)
@@ -200,6 +194,15 @@ void *MessageManager::messageThread(void *p)
         mm->quit = check_outgoing(mm);
 
 			purge_completed_mpi_buffers();
+
+			double thisTime = GetTheEventTracker()->gettime();
+			if (thisTime - lastTime > 1.0)
+			{
+				stringstream xx;
+				xx << "message loop took " << (thisTime - lastTime) << " seconds";
+				APP_PRINT(<< xx.str());
+			}
+			lastTime = thisTime;
 		}
 
 		if (mm->quit) app->Kill();
@@ -290,37 +293,23 @@ MessageManager::BroadcastWork(Work *w, bool block)
 	}
 }
 
-void
-MessageManager::ExportDirect(Message *m, MPI_Request *hrq, MPI_Request *brq, int tag)
-{
-	if (GetTheApplication()->GetRank() == debug_target && m->GetDestination() == 0)
-		std::cerr << "debug_target sent tag " << tag << " to 0\n";
-
-  if (m->HasContent())
-  {
-    m->header.content_tag = tag;
-    int err1 = MPI_Isend(m->GetHeader(), m->GetHeaderSize(), MPI_UNSIGNED_CHAR, m->GetDestination(), tag, p2p_comm, hrq);
-		int err2 = MPI_Isend(m->GetContent(), m->GetSize(), MPI_UNSIGNED_CHAR, m->GetDestination(), m->header.content_tag, p2p_comm, brq);
-#ifdef DBG
-    APP_LOG(<< "message size " << m->GetSize() << " tag: " << tag << "/" << m->header.content_tag << " sent to " << m->GetDestination());
-#endif
-  }
-  else
-  {
-    m->header.content_tag = -1;
-    int err1 = MPI_Isend(m->GetHeader(), m->GetHeaderSize(), MPI_UNSIGNED_CHAR, m->GetDestination(), tag, p2p_comm, hrq);
-#ifdef DBG
-    APP_LOG(<< "header-only message tag: " << tag << " sent to " << m->GetDestination());
-#endif
-  }
-}
-
 int
 MessageManager::Export(Message *m)
 {
 	static int t = 0;
 	int k = 0;
   int rank = GetTheApplication()->GetRank();
+	int size = GetTheApplication()->GetSize();
+	int root = m->GetRoot();
+
+	// My rank relative to the broadcast root
+	
+	int d = ((size + rank) - m->GetRoot()) % size;
+
+	// Only export if its either P2P or broadcast and this isn't a leaf
+
+	if (m->IsBroadcast() && (2*d + 1) >= size)
+		return 0;
 
 	int tag = (MPI_TAG_UB) ? t % MPI_TAG_UB : t % 65535;
 	t++;
@@ -331,53 +320,45 @@ MessageManager::Export(Message *m)
 	struct mpi_send_buffer *msb = new mpi_send_buffer;
 	msb->msg = m;
 
+	// Send_buffer is the pointer that'll actually get written.
+	// If the message has content, allocate and copy in.  Otherwise
+	// just point at the header address
+	
+  if (m->HasContent())
+	{
+		msb->total_size = m->GetHeaderSize() + m->GetSize();
+		msb->send_buffer = (unsigned char *)malloc(msb->total_size);
+		memcpy(msb->send_buffer, m->GetHeader(), m->GetHeaderSize());
+		memcpy(msb->send_buffer + m->GetHeaderSize(), m->GetContent(), m->GetSize());
+	}
+	else
+	{
+		msb->send_buffer = m->GetHeader();
+		msb->total_size = m->GetHeaderSize();
+	}
+
   if (m->IsBroadcast())
 	{
-		int size = GetTheApplication()->GetSize();
-		int root = m->GetRoot();
-
-    int d = ((size + rank) - m->GetRoot()) % size;
-
     int l = (2 * d) + 1;
-    if (l < size)
-		{
-			m->SetDestination((root + l) % size);
-			ExportDirect(m, &msb->lhrq, &msb->lbrq, tag);
-			k++;
+		int destination = (root + l) % size;
+		MPI_Isend(msb->send_buffer, msb->total_size, MPI_UNSIGNED_CHAR, destination, tag, p2p_comm, &msb->lrq);
+		k++;
 
-      if ((l + 1) < size)
-			{
-#if LOGGING
-				APP_LOG(<< "Export broadcast: left and right");
-#endif
-				m->SetDestination((root + l + 1) % size);
-				ExportDirect(m, &msb->rhrq, &msb->rbrq, tag);
-				k++;
-			}
-#if LOGGING
-			else
-				APP_LOG(<< "Export broadcast: left but no right");
-#endif
-    }
-#if LOGGING
-		else
-			APP_LOG(<< "Export broadcast: no children");
-#endif
-	
+		if ((l + 1) < size)
+		{
+			destination = (root + l + 1) % size;
+			MPI_Isend(msb->send_buffer, msb->total_size, MPI_UNSIGNED_CHAR, destination, tag, p2p_comm, &msb->rrq);
+			k++;
+		}
   }
 	else
 	{
-		ExportDirect(m, &msb->lhrq, &msb->lbrq, tag);
+		MPI_Isend(msb->send_buffer, msb->total_size, MPI_UNSIGNED_CHAR, m->GetDestination(), tag, p2p_comm, &msb->lrq);
 		k++;
 	}
 
-	if (k)
-	{
-		msb->n = k;
-		mpi_in_flight.push_back(msb);
-	}
-	else
-		delete msb;
+	msb->n = k;
+	mpi_in_flight.push_back(msb);
 
 	return k;
 }
@@ -391,70 +372,58 @@ MessageManager::check_mpi(MessageManager *mm)
 	int  read_ready;
 	MPI_Status status;
 
-#if LOGGING
-	APP_LOG(<< "check_mpi enrty");
-#endif
-
 	MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, mm->getP2PComm(), &read_ready, &status);
-
-	if (GetTheApplication()->GetRank() == 0 && status.MPI_SOURCE == debug_target)
-		std::cerr << "0 saw tag " << status.MPI_TAG << " from debug_target\n";
 
 	if (read_ready)
 	{
-#ifdef DBG
-			APP_LOG(<< "MPI read ready: tag " << status.MPI_TAG);
-#endif
+		double t0 = GetTheEventTracker()->gettime();
 
 		Message *incoming_message = new Message(status);
+
+		double t1 = GetTheEventTracker()->gettime();
+
+		char buf[1024];
+		strcpy(buf, app->Identify(incoming_message));
+
 		if (incoming_message->IsBroadcast())
 		{
-			
-#if LOGGING
-			APP_LOG(<< "Received broadcast " << GetTheApplication()->Identify(incoming_message));
-#endif
-
-			int nsent = mm->Export(incoming_message);
-
-#if LOGGING
-			APP_LOG(<< "passed on broadcast " << GetTheApplication()->Identify(incoming_message));
-#endif
+			mm->Export(incoming_message);
 
 			Work *w  = app->Deserialize(incoming_message);
-#if LOGGING
-			APP_LOG(<< "calling " << GetTheApplication()->Identify(incoming_message) << " CollectiveAction");
-#endif
+			double t2 = GetTheEventTracker()->gettime();
 			kill_app = w->CollectiveAction(mm->getCollComm(), GetTheApplication()->GetRank() == incoming_message->header.broadcast_root);
-#if LOGGING
-			APP_LOG(<< "return from " << GetTheApplication()->Identify(incoming_message) << " CollectiveAction");
-#endif
 			if (kill_app) killer(); // for debugging
 			delete w;
 
-#if LOGGING
-			APP_LOG(<< "broadcast handled");
-#endif
+			double t3 = GetTheEventTracker()->gettime();
+			if ((t3 - t0) > 1.0)
+			{
+				stringstream xx;
+				xx << "bcast took " << (t3 - t0) << " seconds to handle MPI request " << buf << ": ";
+				if ((t1 - t0) > 1.0)
+					xx << (t1 - t0) << " seconds for New ";
+				if ((t2 - t1) > 1.0)
+					xx << (t2 - t1) << " seconds for Deserialize ";
+				if ((t3 - t2) > 1.0)
+					xx << (t3 - t2) << " seconds for CollectiveAction";
+				APP_PRINT(<< xx.str());
+			}
 		}
 		else
 		{
-#if LOGGING
-			APP_LOG(<< "Received P2P " << GetTheApplication()->Identify(incoming_message) << " from " << incoming_message->GetSender());
-#endif
-			
+			double t0 = GetTheEventTracker()->gettime();
 			mm->GetIncomingMessageQueue()->Enqueue(incoming_message);
+			double t1 = GetTheEventTracker()->gettime();
+			if ((t1 - t0) > 1.0)
+			{
+				stringstream xx;
+				xx << "p2p took " << (t1 - t0) << " seconds to handle ENQUEUE MPI request (" << buf << ")";
+				APP_PRINT(<< xx.str());
+			}
 		}
 	}
-	else
-	{
-#if LOGGING
-			APP_LOG(<< "nothing from MPI";)
-#endif
-	}
 
-#if LOGGING
-			APP_LOG(<< "check_mpi returns " << kill_app);
-#endif
-			
+
 	return kill_app;
 }
 

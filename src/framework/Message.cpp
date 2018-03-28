@@ -60,26 +60,20 @@ Message::Message(MPI_Status &status)
 	int count;
 	MPI_Get_count(&status, MPI_UNSIGNED_CHAR, &count);
 
-	if (count != sizeof(header))
-	  std::cerr << "ERROR 1\n";
-
 	MPI_Status s0;
-	MPI_Recv((unsigned char *)&header, sizeof(header), MPI_UNSIGNED_CHAR, status.MPI_SOURCE, status.MPI_TAG, theMessageManager->getP2PComm(), &s0);
-
-	if (header.HasContent())
+	if (count == sizeof(header))
 	{
-		content = smem::New(header.content_size);
-		MPI_Recv(content->get(), content->get_size(), MPI_UNSIGNED_CHAR, status.MPI_SOURCE, header.content_tag, theMessageManager->getP2PComm(), &s0);
-#ifdef DBG
-    APP_LOG(<< "message size: " << content->get_size() << " tag " << status.MPI_TAG << "/" << header.content_tag << " from: " << status.MPI_SOURCE);
-#endif
-	}
-  else
-	{
+		MPI_Recv((unsigned char *)&header, count, MPI_UNSIGNED_CHAR, status.MPI_SOURCE, status.MPI_TAG, theMessageManager->getP2PComm(), &s0);
 		content = nullptr;
-#ifdef DBG
-    APP_LOG(<< "header only tag " << status.MPI_TAG << " from: " << s0.MPI_SOURCE);
-#endif
+	}
+	else
+	{
+		unsigned char *buffer = (unsigned char *)malloc(count);
+		MPI_Recv(buffer, count, MPI_UNSIGNED_CHAR, status.MPI_SOURCE, status.MPI_TAG, theMessageManager->getP2PComm(), &s0);
+		memcpy(&header, buffer, sizeof(header));
+		content = smem::New(header.content_size);
+		memcpy(content->get(), buffer+sizeof(header), header.content_size);
+		free(buffer);
 	}
 }
 

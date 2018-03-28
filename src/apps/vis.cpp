@@ -16,6 +16,7 @@ syntax(char *a)
   std::cerr << "  -D         run debugger\n";
   std::cerr << "  -A         wait for attachment\n";
   std::cerr << "  -s w h     window width, height (256 256)\n";
+  std::cerr << "  -S k       render only every k'th rendering\n";
 	exit(1);
 }
 
@@ -58,6 +59,7 @@ int main(int argc,  char *argv[])
 	bool atch = false;
 	bool cinema = false;
 	int width = 256, height = 256;
+	int skip = 0;
 
 	ospInit(&argc, (const char **)argv);
 
@@ -71,6 +73,7 @@ int main(int argc,  char *argv[])
     else if (!strcmp(argv[i], "-C")) cinema = true;
     else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
     else if (!strcmp(argv[i], "-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
+    else if (!strcmp(argv[i], "-S")) skip = atoi(argv[++i]);
     else if (statefile == "")   statefile = argv[i];
     else syntax(argv[0]);
   }
@@ -121,10 +124,13 @@ int main(int argc,  char *argv[])
 		RenderingSetP rs = RenderingSet::NewP();
 		theRenderingSets.push_back(rs);
 
-		int index = 0;
+		int index = 0, k = 0;
 		for (auto c : theCameras)
 				for (auto v : theVisualizations)
 				{
+						if (skip && (k++ % skip) != 0)
+							continue;
+
 						RenderingP theRendering = Rendering::NewP();
 						theRendering->SetTheOwner(index++ % mpiSize );
 						theRendering->SetTheSize(width, height);

@@ -211,10 +211,6 @@ private:
 			hdr *h = (hdr *)contents->get();
       Pixel *pixels = (Pixel *)(((unsigned char *)contents->get()) + sizeof(hdr));
 
-			extern int debug_target;
-			if (h->source == debug_target)
-				std::cerr << "SendPix action from debug_target\n";
-
       RenderingP r = Rendering::GetByKey(h->rkey);
       if (! r)
         return false;
