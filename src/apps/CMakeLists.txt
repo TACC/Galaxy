@@ -83,6 +83,10 @@ endif (PVOL_SYNCHRONOUS)
 	# SET(BINS ${BINS} state)
 # endif (WITH_STATE)
 
+add_executable(client client.cpp)
+target_link_libraries(client Framework)
+set(BINS client ${BINS})
+
 add_executable(ppong ppong.cpp)
 target_link_libraries(ppong Framework)
 set(BINS ppong ${BINS})

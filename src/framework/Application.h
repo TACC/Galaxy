@@ -67,6 +67,8 @@ public:
   void QuitApplication();
   void SyncApplication();
 
+	void DumpEvents();
+
   int *GetPArgC() { return argcp; }
   char ***GetPArgV() { return argvp; }
 
@@ -130,6 +132,21 @@ private:
 
 	public:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+	};
+
+	class DumpEventsMsg : public Work
+	{
+	public:
+		DumpEventsMsg(){};
+		WORK_CLASS(DumpEventsMsg, true)
+
+	public:
+		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot)
+		{
+			MPI_Barrier(coll_comm);
+			GetTheApplication()->DumpEvents();
+			MPI_Barrier(coll_comm);
+		}
 	};
 
 	class SyncMsg : public Work

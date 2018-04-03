@@ -10,6 +10,7 @@ WORK_CLASS_TYPE(RenderingSet::SaveImagesMsg);
 WORK_CLASS_TYPE(RenderingSet::PropagateStateMsg);
 WORK_CLASS_TYPE(RenderingSet::SynchronousCheckMsg);
 WORK_CLASS_TYPE(RenderingSet::ResetMsg);
+WORK_CLASS_TYPE(RenderingSet::DumpStateMsg);
 #endif // PVOL_SYNCHRONOUS
 
 KEYED_OBJECT_TYPE(RenderingSet)
@@ -25,6 +26,7 @@ RenderingSet::Register()
 	PropagateStateMsg::Register();
 	SynchronousCheckMsg::Register();
 	ResetMsg::Register();
+	DumpStateMsg::Register();
 #endif // PVOL_SYNCHRONOUS
 }
 
@@ -37,14 +39,26 @@ RenderingSet::~RenderingSet()
 #endif // PVOL_SYNCHRONOUS
 }
 
+#ifdef PVOL_SYNCHRONOUS
+void
+RenderingSet::DumpState()
+{
+	DumpStateMsg *msg = new DumpStateMsg(this->getkey());
+	msg->Broadcast(true);
+}
+#endif // PVOL_SYNCHRONOUS
+	
+
 void
 RenderingSet::initialize()
 {
+	state_counter = 0;
 	current_frame = -1;
 	next_frame = 0;
-	activeCameraCount = 0;
 
 #ifdef PVOL_SYNCHRONOUS
+
+	activeCameraCount = 0;
 
 	pthread_mutex_init(&local_lock, NULL);
 
@@ -66,6 +80,7 @@ RenderingSet::initialize()
 	pthread_cond_init(&w8, NULL);
 
   local_raylist_count  = 0;
+  local_inflight_count  = 0;
 
 	local_reset();
 
@@ -241,7 +256,7 @@ RenderingSet::CheckLocalState()
   bool currently_busy = (local_raylist_count != 0);
 	currently_busy = currently_busy || left_busy;
 	currently_busy = currently_busy || right_busy;
-	currently_busy = currently_busy || CameraIsActive();
+	// currently_busy = currently_busy || CameraIsActive();
 
   // If the busy-state has changed, then we need to do something: send a message
   // up the tree to inform the parent of the state change, or (if this is the root)
@@ -306,6 +321,22 @@ RenderingSet::UpdateChildState(bool busy, int child)
   CheckLocalState();
 }
 
+void
+RenderingSet::IncrementInFlightCount()
+{
+	pthread_mutex_lock(&local_lock);
+  local_inflight_count++;
+	pthread_mutex_unlock(&local_lock);
+}
+	
+void
+RenderingSet::DecrementInFlightCount()
+{
+	pthread_mutex_lock(&local_lock);
+  local_inflight_count--;
+	pthread_mutex_unlock(&local_lock);
+}
+	
 void
 RenderingSet::IncrementRayListCount(bool silent)
 {
@@ -388,7 +419,6 @@ void
 RenderingSet::CheckGlobalState()
 {
 	SynchronousCheckMsg * msg = new SynchronousCheckMsg(getkey());
-	// msg->Broadcast(true);
 	msg->Broadcast(false);
 }
 
@@ -419,7 +449,17 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 		rs->InitializeState();
   }
   else
+	{
+		if (GetTheApplication()->GetRank() == 0)
+		{
+			if (global_counts[0] != 0 && global_counts[3] != 0)
+				 std::cerr << "not done due to ray lists AND cameras\n";
+			else if (global_counts[0] != 0)
+				 std::cerr << "not done due to ray lists\n";
+			else std::cerr << "not done due to cameras\n";
+		}
     rs->last_busy = true;
+	}
 
   rs->Unlock();
 
@@ -429,6 +469,7 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 void
 RenderingSet::DecrementActiveCameraCount()
 {
+	pthread_mutex_lock(&local_lock);
 	activeCameraCount --;
 
 	if (activeCameraCount == 0)
@@ -436,10 +477,17 @@ RenderingSet::DecrementActiveCameraCount()
 		// Then we have completed spawning all initial rays for this rendering set frame.
 		// If so, we might already be done.
 
-		pthread_mutex_lock(&local_lock);
 		CheckLocalState();
-		pthread_mutex_unlock(&local_lock);
 	}
+	pthread_mutex_unlock(&local_lock);
+}
+
+void
+RenderingSet::IncrementActiveCameraCount()
+{
+	pthread_mutex_lock(&local_lock);
+	activeCameraCount ++;
+	pthread_mutex_unlock(&local_lock);
 }
 
 bool
@@ -638,4 +686,38 @@ RenderingSet::KeepRays(RayList *rl)
 	else
 		return false;
 }
+
+#ifdef PVOL_SYNCHRONOUS
+bool 
+RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
+{
+	MPI_Barrier(c);
+
+  if (GetTheApplication()->GetRank() == 0)
+		std::cerr << "dumping state\n";
+
+	Key rsk = *(Key *)contents->get();
+
+	RenderingSetP rs = GetByKey(rsk);
+
+	stringstream ss;
+	ss << "stats_" << rsk << "_" << rs->get_state_counter() << "_" << GetTheApplication()->GetRank();
+
+	fstream fs;
+	fs.open(ss.str().c_str(), std::fstream::out);
+
+	fs << "camsDone: " << rs->CameraIsActive() << "\n";
+	fs << "localRaylistCount: " << rs->get_local_raylist_count() << "\n";
+	fs << "localInFlightCount: " << rs->get_local_inflight_count() << "\n";
+	
+	fs.close();
+
+	MPI_Barrier(c);
+
+  if (GetTheApplication()->GetRank() == 0)
+		std::cerr << "state done\n";
+
+	return false;
+}
+#endif
 

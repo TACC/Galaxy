@@ -147,17 +147,7 @@ Application::Print(std::string s)
 Application::~Application()
 {
 	DumpLog();
-
-	if (! eventTracker.is_empty())
-	{
-		int rank = GetTheMessageManager()->GetRank();
-		std::fstream fs;
-		std::stringstream fname;
-		fname << "events_" << rank;
-		fs.open(fname.str().c_str(), std::fstream::out);
-		eventTracker.DumpEvents(fs);
-		fs.close();
-	}
+	eventTracker.DumpEvents();
 	
   pthread_mutex_unlock(&lock);
 
@@ -166,6 +156,12 @@ Application::~Application()
 	delete deserializers;
 	delete theMessageManager;
 	delete theKeyedObjectFactory;
+}
+
+void Application::DumpEvents()
+{
+	DumpEventsMsg *d = new DumpEventsMsg();
+	d->Broadcast(true);
 }
 
 void Application::QuitApplication()

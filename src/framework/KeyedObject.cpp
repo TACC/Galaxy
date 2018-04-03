@@ -196,6 +196,8 @@ KeyedObjectFactory::~KeyedObjectFactory()
 	while (kmap.size() > 0)
 		kmap.pop_back();
 
+#if 0
 	if (ko_count > 0)
-		std::cerr << "shared objects remain\n";
+		std::cerr << ko_count << " shared objects remain\n";
+#endif
 }

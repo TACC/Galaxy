@@ -56,9 +56,12 @@ public:
 
 	int activeCameraCount;
 
-	void IncrementActiveCameraCount() { activeCameraCount ++; }
+	void IncrementActiveCameraCount();
 	void DecrementActiveCameraCount();
 	bool CameraIsActive() { return activeCameraCount > 0; }
+
+	void IncrementInFlightCount();
+	void DecrementInFlightCount();
 
 	bool IsDone() { return done; }
 
@@ -106,7 +109,11 @@ public:
 		Unlock();
 	}
 
+	void DumpState();
+
 #endif // PVOL_SYNCHRONOUS
+
+	int state_counter;
 
 protected:
 
@@ -142,11 +149,16 @@ protected:
 	int get_local_raylist_count() { return local_raylist_count; }
 	void get_local_raylist_count(int &k) { k = local_raylist_count; }
 
+	int get_local_inflight_count() { return local_inflight_count; }
+	void get_local_inflight_count(int &k) { k = local_inflight_count; }
+
 	int get_number_of_pixels_sent() { return n_pix_sent; }
 	void get_number_of_pixels_sent(int &k) { k = n_pix_sent; }
 	
 	int get_number_of_pixels_received() { return n_pix_received; }
 	void get_number_of_pixels_received(int &k) { k = n_pix_received; }
+
+	int get_state_counter() { return state_counter++; }
 
 #endif // PVOL_SYNCHRONOUS
 
@@ -184,6 +196,7 @@ private:
   bool currently_busy, last_busy, left_busy, right_busy;
   int left_id, right_id, parent;
 
+	int local_inflight_count;
 	int local_raylist_count;
 	int n_pix_sent;
 
@@ -236,6 +249,21 @@ private:
   public:
     bool CollectiveAction(MPI_Comm c, bool);
   };
+
+  class DumpStateMsg : public Work
+  {
+  public:
+    DumpStateMsg(Key k) : DumpStateMsg(sizeof(Key))
+		{
+			*(Key *)contents->get() = k;
+		}
+
+    WORK_CLASS(DumpStateMsg, true);
+
+  public:
+    bool CollectiveAction(MPI_Comm c, bool);
+  };
+
 
 #endif // PVOL_SYNCHRONOUS
 };

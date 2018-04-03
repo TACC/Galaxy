@@ -33,8 +33,8 @@ class EventTracker
 public:
 	EventTracker();
 
+	void DumpEvents();
 	void DumpEvents(fstream& fs);
-
 
 	void Add(Event *e);
 
@@ -43,7 +43,7 @@ public:
 	bool is_empty() { return events.size() == 0; }
 	
 private:
-	// vector<shared_ptr<Event>> events;
+	int event_dump_count;
 	vector<Event*> events;
 };
 

@@ -617,6 +617,10 @@ Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
 void 
 Renderer::SendRays(RayList *rays, int destination)
 {
+#ifdef PVOL_SYNCHRONOUS
+	rays->GetTheRenderingSet()->IncrementInFlightCount();
+#endif
+
 	int nReceived = rays->GetRayCount();
 	_sent_to(destination, nReceived);
 
@@ -705,6 +709,7 @@ bool
 Renderer::AckRaysMsg::Action(int sender)
 {
 	RenderingSetP rs = RenderingSet::GetByKey(*(Key *)contents->get());
+	rs->DecrementInFlightCount();
 	rs->DecrementRayListCount();
 	return false;
 }

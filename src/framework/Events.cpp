@@ -18,6 +18,7 @@ EventTracker *theEventTracker;
 EventTracker::EventTracker()
 {
   theEventTracker = this; 
+	event_dump_count = 0;
 }
 
 EventTracker *GetTheEventTracker() { return theEventTracker; }
@@ -55,6 +56,20 @@ void
 Event::print(ostream& o)
 {
 	o << fixed << time << ": ";
+}
+
+void
+EventTracker::DumpEvents()
+{
+#if defined(EVENT_TRACKING)
+	int rank = GetTheApplication()->GetTheMessageManager()->GetRank();
+	std::fstream fs;
+	std::stringstream fname;
+	fname << "events_" << event_dump_count << "_" << rank;
+	fs.open(fname.str().c_str(), std::fstream::out);
+	DumpEvents(fs);
+	fs.close();
+#endif
 }
 
 void

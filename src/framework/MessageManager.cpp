@@ -163,7 +163,9 @@ void *MessageManager::messageThread(void *p)
 		mm->Signal();
   mm->Unlock();
 
+#if 0
 	double lastTime = GetTheEventTracker()->gettime();
+#endif
 
   while (!mm->quit)
 	{
@@ -195,6 +197,7 @@ void *MessageManager::messageThread(void *p)
 
 			purge_completed_mpi_buffers();
 
+#if 0
 			double thisTime = GetTheEventTracker()->gettime();
 			if (thisTime - lastTime > 1.0)
 			{
@@ -203,6 +206,7 @@ void *MessageManager::messageThread(void *p)
 				APP_PRINT(<< xx.str());
 			}
 			lastTime = thisTime;
+#endif
 		}
 
 		if (mm->quit) app->Kill();
@@ -376,11 +380,15 @@ MessageManager::check_mpi(MessageManager *mm)
 
 	if (read_ready)
 	{
+#if 0
 		double t0 = GetTheEventTracker()->gettime();
+#endif
 
 		Message *incoming_message = new Message(status);
 
+#if 0
 		double t1 = GetTheEventTracker()->gettime();
+#endif
 
 		char buf[1024];
 		strcpy(buf, app->Identify(incoming_message));
@@ -390,11 +398,14 @@ MessageManager::check_mpi(MessageManager *mm)
 			mm->Export(incoming_message);
 
 			Work *w  = app->Deserialize(incoming_message);
+#if 0
 			double t2 = GetTheEventTracker()->gettime();
+#endif
 			kill_app = w->CollectiveAction(mm->getCollComm(), GetTheApplication()->GetRank() == incoming_message->header.broadcast_root);
 			if (kill_app) killer(); // for debugging
 			delete w;
 
+#if 0
 			double t3 = GetTheEventTracker()->gettime();
 			if ((t3 - t0) > 1.0)
 			{
@@ -408,11 +419,15 @@ MessageManager::check_mpi(MessageManager *mm)
 					xx << (t3 - t2) << " seconds for CollectiveAction";
 				APP_PRINT(<< xx.str());
 			}
+#endif
 		}
 		else
 		{
+#if 0
 			double t0 = GetTheEventTracker()->gettime();
+#endif
 			mm->GetIncomingMessageQueue()->Enqueue(incoming_message);
+#if 0
 			double t1 = GetTheEventTracker()->gettime();
 			if ((t1 - t0) > 1.0)
 			{
@@ -420,6 +435,7 @@ MessageManager::check_mpi(MessageManager *mm)
 				xx << "p2p took " << (t1 - t0) << " seconds to handle ENQUEUE MPI request (" << buf << ")";
 				APP_PRINT(<< xx.str());
 			}
+#endif
 		}
 	}
 
