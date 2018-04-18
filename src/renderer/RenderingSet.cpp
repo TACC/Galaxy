@@ -1,4 +1,4 @@
-#define LOGGING 0
+
 
 #include "Application.h"
 #include "RenderingSet.h"
@@ -133,6 +133,8 @@ RenderingSet::local_reset()
 
 	for (auto r : renderings)
 		r->local_reset();
+
+	first_async_completion_test_done = false;
 }
 
 void
@@ -261,6 +263,10 @@ RenderingSet::CheckLocalState()
   // If the busy-state has changed, then we need to do something: send a message
   // up the tree to inform the parent of the state change, or (if this is the root)
   // send out a broadcast to synchronously check that everyone is done.
+  //
+  
+	if (first_async_completion_test_done)
+		std::cerr << GetTheApplication()->GetRank() << ": " << currently_busy << " " <<  last_busy << "\n";
 
   if (currently_busy != last_busy)
   {
@@ -296,7 +302,8 @@ RenderingSet::CheckLocalState()
 #endif
 		}
   }
-	last_busy = currently_busy;
+	else 
+		last_busy = currently_busy;
 }
 
 void
@@ -346,6 +353,9 @@ RenderingSet::IncrementRayListCount(bool silent)
   int old = local_raylist_count;
   local_raylist_count++;
 
+	if (local_raylist_count == 1 && first_async_completion_test_done)
+		std::cerr << GetTheApplication()->GetRank() << ": lrc bumped from 0\n";
+
   // std::cerr << "+ " << local_raylist_count << "\n";
 
 #if LOGGING
@@ -388,7 +398,8 @@ RenderingSet::DecrementRayListCount()
   int old = local_raylist_count;
   local_raylist_count--;
 
-  // std::cerr << "- " << local_raylist_count << "\n";
+	if (local_raylist_count == 0 && first_async_completion_test_done)
+		std::cerr << GetTheApplication()->GetRank() << ": lrc to zero\n";
 
 #if LOGGING
 		APP_LOG(<< "RenderingSet (" << ((long)getkey()) << ")  DecrementRayListCount  " << local_raylist_count);
@@ -428,6 +439,8 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 	Key rsk = *(Key *)contents->get();
 	RenderingSetP rs = GetByKey(rsk);
 
+	rs->first_async_completion_test_done = true;
+
   rs->Lock();
 
   int global_counts[4];
@@ -450,6 +463,9 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   }
   else
 	{
+
+		rs->_dumpState(c, "completion_test");
+
 		if (GetTheApplication()->GetRank() == 0)
 		{
 			if (global_counts[0] != 0 && global_counts[3] != 0)
@@ -458,6 +474,7 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 				 std::cerr << "not done due to ray lists\n";
 			else std::cerr << "not done due to cameras\n";
 		}
+
     rs->last_busy = true;
 	}
 
@@ -687,36 +704,57 @@ RenderingSet::KeepRays(RayList *rl)
 		return false;
 }
 
+double first_time = -1;
+
 #ifdef PVOL_SYNCHRONOUS
-bool 
-RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
+
+void
+RenderingSet::_dumpState(MPI_Comm c, const char *base)
 {
 	MPI_Barrier(c);
 
-  if (GetTheApplication()->GetRank() == 0)
-		std::cerr << "dumping state\n";
+  int snddata[5];
+  int *rcvdata = (int *)malloc(GetTheApplication()->GetSize() * 5 * sizeof(int));
 
+	snddata[0] = CameraIsActive() ;
+  snddata[1] = get_local_raylist_count();
+  snddata[2] = get_local_inflight_count();
+
+  RayQManager::GetTheRayQManager()->GetQueuedRayCount(snddata[3], snddata[4]);
+
+	MPI_Gather((const void *)snddata, 5, MPI_INT, (void *)rcvdata, 5, MPI_INT, 0, c);
+
+  if (GetTheApplication()->GetRank() == 0)
+	{
+		std::cerr << ".";
+
+		int rlk = 0, ifk = 0;
+		for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+			rlk += rcvdata[i*5+1], ifk += rcvdata[i*5+2];
+
+		if (rlk == 0 && ifk == 0)
+			std::cerr << "no raylists enqueued or alive!\n";
+
+		double t = GetTheEventTracker()->gettime();
+		if (first_time == -1)
+			first_time = t;
+
+		stringstream fname;
+		fname << base << "_" << (t - first_time);
+
+		fstream of;
+		of.open(fname.str(), ios::out | ios::binary);
+		of.write((char *)rcvdata, GetTheApplication()->GetSize() * 5 * sizeof(int));
+		of.close();
+	}
+}
+
+bool 
+RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
+{
 	Key rsk = *(Key *)contents->get();
-
 	RenderingSetP rs = GetByKey(rsk);
-
-	stringstream ss;
-	ss << "stats_" << rsk << "_" << rs->get_state_counter() << "_" << GetTheApplication()->GetRank();
-
-	fstream fs;
-	fs.open(ss.str().c_str(), std::fstream::out);
-
-	fs << "camsDone: " << rs->CameraIsActive() << "\n";
-	fs << "localRaylistCount: " << rs->get_local_raylist_count() << "\n";
-	fs << "localInFlightCount: " << rs->get_local_inflight_count() << "\n";
-	
-	fs.close();
-
-	MPI_Barrier(c);
-
-  if (GetTheApplication()->GetRank() == 0)
-		std::cerr << "state done\n";
-
+	rs->_dumpState(c, "status");
 	return false;
 }
 #endif
