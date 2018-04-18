@@ -24,10 +24,10 @@ set(THREADPOOL11_INSTALLDIR "" CACHE FILEPATH "install directory of THREADPOOL11
 link_directories(${THREADPOOL11_INSTALLDIR}/lib ${THREADPOOL11_INSTALLDIR}/lib64)
 include_directories(${THREADPOOL11_INSTALLDIR}/include)
 
-set(OSPRAY_SRCDIR "" CACHE FILEPATH "source directory of OSPRAY")
-if (OSPRAY_SRCDIR STREQUAL "")
-  message(SEND_ERROR "OSPRAY_SRCDIR is required")
-endif()
+# set(OSPRAY_SRCDIR "" CACHE FILEPATH "source directory of OSPRAY")
+# if (OSPRAY_SRCDIR STREQUAL "")
+  # message(SEND_ERROR "OSPRAY_SRCDIR is required")
+# endif()
 
 find_package(ospray)
 find_package(embree 2.17.0)
@@ -38,8 +38,11 @@ include(macros)
 include(ospray_macros)
 include(ispc)
 
-include_directories(${OSPRAY_SRCDIR} ${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_SRCDIR}/ospray ${embree_DIR}/include)
-include_directories_ispc(${OSPRAY_SRCDIR} ${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_SRCDIR}/ospray ${embree_DIR}/include)
+include_directories(${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_INCLUDE_DIR}/ospray/SDK ${embree_DIR}/include)
+include_directories_ispc(${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_INCLUDE_DIR}/ospray/SDK ${embree_DIR}/include)
+
+# include_directories(${OSPRAY_SRCDIR} ${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_SRCDIR}/ospray ${embree_DIR}/include)
+# include_directories_ispc(${OSPRAY_SRCDIR} ${OSPRAY_INCLUDE_DIR} ${OSPRAY_INCLUDE_DIR}/ospray ${OSPRAY_SRCDIR}/ospray ${embree_DIR}/include)
 
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 SET(CMAKE_INSTALL_RPATH 

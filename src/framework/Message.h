@@ -36,13 +36,14 @@ public:
 	void Signal()
 	{ 
 		pthread_mutex_lock(&lock);
+		busy = false;
 		pthread_cond_signal(&cond);
 		pthread_mutex_unlock(&lock);
 	}
 
+	bool IsBusy() { return busy; }
+
 public:
-	// void Send(int i);
-	// void Broadcast();
 
   int  GetType() { return header.type; }
   void SetType(int t) { header.type = t; }
@@ -91,6 +92,8 @@ protected:
   bool blocking;
   pthread_mutex_t lock;
   pthread_cond_t cond;
+	
+	bool busy;
 
   SharedP content;
 	int destination;

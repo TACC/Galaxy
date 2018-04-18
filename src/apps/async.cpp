@@ -124,6 +124,10 @@ draw(void)
 {
 	if (pixels)
 	{
+		float *p = pixels + 3;
+		for (int i = 0; i < (width*height); i++)
+			*p = 1.0, p += 4;
+		
 		glDrawPixels(width, height, GL_RGBA, GL_FLOAT, pixels);
 		glutSwapBuffers();
 	}

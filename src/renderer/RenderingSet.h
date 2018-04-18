@@ -70,6 +70,7 @@ public:
 	bool Busy();
 
 	void local_reset();
+	bool first_async_completion_test_done;
 
 	void InitializeState();
 
@@ -110,6 +111,7 @@ public:
 	}
 
 	void DumpState();
+	void _dumpState(MPI_Comm, const char *);
 
 #endif // PVOL_SYNCHRONOUS
 

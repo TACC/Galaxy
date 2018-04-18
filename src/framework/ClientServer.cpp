@@ -90,4 +90,3 @@ ClientServer::setup_client(char *host, int port)
 
 	std::cerr << " connected\n";
 }
-

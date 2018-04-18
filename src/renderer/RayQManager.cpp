@@ -233,6 +233,21 @@ RayQManager::Resume()
 	Signal();
 	Unlock();
 }
+
+void
+RayQManager::GetQueuedRayCount(int& n, int& k)
+{
+	Lock();
+
+	n = 0, k = 0;
+	for (auto a : rayQ)
+	{
+		n ++;
+		k = k + a->GetRayCount();
+	}
+
+	Unlock();
+}
 #endif
 
 void

@@ -151,7 +151,7 @@ Application::~Application()
 	
   pthread_mutex_unlock(&lock);
 
-  delete threadPool;
+  // delete threadPool;
 	delete class_table;
 	delete deserializers;
 	delete theMessageManager;

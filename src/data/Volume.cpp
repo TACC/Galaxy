@@ -58,7 +58,12 @@ Volume::local_commit(MPI_Comm c)
 
   ospSetObject(ospv, "voxelData", data);
 
+	MPI_Barrier(c);
+	sleep(GetTheApplication()->GetRank());
+
   ospSetVec3i(ospv, "dimensions", counts);
+
+	MPI_Barrier(c);
 
   osp::vec3f origin;
   get_ghosted_local_origin(origin.x, origin.y, origin.z);
@@ -74,7 +79,9 @@ Volume::local_commit(MPI_Comm c)
 
 	ospSetf(ospv, "samplingRate", 1.0);
 
+	MPI_Barrier(c);
   ospCommit(ospv);
+	MPI_Barrier(c);
 
   if (theOSPRayObject)
     ospRelease(theOSPRayObject);
@@ -219,6 +226,11 @@ Volume::local_import(char *fname, MPI_Comm c)
 
 	ifstream in;
 	in.open(filename.c_str());
+	if (in.fail())
+	{
+		std::cerr << "unable to open volfile\n";
+		exit(1);
+	}
 
 	in >> type_string;
 	type = type_string == "float" ? FLOAT : UCHAR;

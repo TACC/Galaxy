@@ -17,13 +17,13 @@
 // ======================================================================== //
 
 
-#include "ospray/math/vec.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/render/util.ih"
-#include "ospray/camera/Camera.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/transferFunction/LinearTransferFunction.ih"
-#include "ospray/volume/Volume.ih"
+#include "SDK/math/vec.ih"
+#include "SDK/common/Ray.ih"
+#include "SDK/render/util.ih"
+#include "SDK/camera/Camera.ih"
+#include "SDK/common/Model.ih"
+#include "SDK/transferFunction/LinearTransferFunction.ih"
+#include "SDK/volume/Volume.ih"
 
 #include "RayFlags.h"
 #include "TraceRays.ih"

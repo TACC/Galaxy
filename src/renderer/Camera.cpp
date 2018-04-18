@@ -361,19 +361,14 @@ public:
       }
     }
 
-#if 0
-		int rank = GetTheApplication()->GetRank();
-    if (dst > 0 && (rank == 0 || rank == 4))
-#endif
-
-#if defined(EVENT_TRACKING)
-      GetTheEventTracker()->Add(new InitialRaysEvent(r));
-#endif
-
     if (dst > 0)
     {
 			if (dst < r->GetRayCount())
 				r->Truncate(dst);
+
+#if defined(EVENT_TRACKING)
+      GetTheEventTracker()->Add(new InitialRaysEvent(r));
+#endif
 
 			Renderer::GetTheRenderer()->add_originated_ray_count(r->GetRayCount());
       r->GetTheRenderingSet()->Enqueue(r, true);

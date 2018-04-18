@@ -60,6 +60,7 @@ public:
 #ifdef PVOL_SYNCHRONOUS
 	void Pause();
 	void Resume();
+	void  GetQueuedRayCount(int&, int&);
 #endif
     
     Renderer *GetTheRenderer() { return renderer; }
