@@ -200,8 +200,8 @@ int main(int argc,  char *argv[])
 #if 1
       while (rs->Busy())
       {
-        sleep(1);
         rs->DumpState();
+        sleep(1);
       }
 #else
       if (clientserver)

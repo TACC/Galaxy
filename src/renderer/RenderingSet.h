@@ -112,6 +112,8 @@ public:
 
 	void DumpState();
 	void _dumpState(MPI_Comm, const char *);
+	void _initStateTimer();
+	double state_timer_start;
 
 #endif // PVOL_SYNCHRONOUS
 

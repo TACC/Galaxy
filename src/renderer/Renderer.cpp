@@ -142,6 +142,8 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 
 #endif
 
+		renderingSet->_initStateTimer();
+
 		vector<future<void>> rvec;
 		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
 		{
@@ -154,6 +156,8 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 
 			camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec);
 		}
+
+		renderingSet->_dumpState(c, "status"); // Note this will sync after cameras, I think
 
 #if defined(EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraLoopEndEvent);

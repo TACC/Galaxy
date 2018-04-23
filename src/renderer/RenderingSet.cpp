@@ -704,9 +704,13 @@ RenderingSet::KeepRays(RayList *rl)
 		return false;
 }
 
-double first_time = -1;
-
 #ifdef PVOL_SYNCHRONOUS
+
+void 
+RenderingSet::_initStateTimer()
+{
+		state_timer_start = GetTheEventTracker()->gettime();
+}
 
 void
 RenderingSet::_dumpState(MPI_Comm c, const char *base)
@@ -736,11 +740,9 @@ RenderingSet::_dumpState(MPI_Comm c, const char *base)
 			std::cerr << "no raylists enqueued or alive!\n";
 
 		double t = GetTheEventTracker()->gettime();
-		if (first_time == -1)
-			first_time = t;
 
 		stringstream fname;
-		fname << base << "_" << (t - first_time);
+		fname << base << "_" << (t - state_timer_start);
 
 		fstream of;
 		of.open(fname.str(), ios::out | ios::binary);
