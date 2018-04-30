@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
-project (Data)
+project (pvol_data)
 
 find_library(PNG_LIBRARY_RELEASE png)
 
 include_directories(${MPI_INCLUDE_PATH}
                     ${rapidjson_SOURCE_DIR}/..
-                    ${Framework_SOURCE_DIR}
-                    ${Renderer_SOURCE_DIR}
-                    ${Data_SOURCE_DIR}
+                    ${pvol_framework_SOURCE_DIR}
+                    ${pvol_renderer_SOURCE_DIR}
+                    ${pvol_data_SOURCE_DIR}
                     ${ICET_OBJDIR}/include
                     ${TBB_INCLUDE_DIRS}
                     ${CMAKE_CURRENT_BINARY_DIR}
@@ -33,20 +33,31 @@ set (CPP_SOURCES     Visualization.cpp
                      OSPUtil.cpp
                      mypng.cpp)
 
-set (ISPC_SOURCES   ISPCObject.ispc 
-										Visualization.ispc 
-										Vis.ispc 
-										MappedVis.ispc 
-										ParticlesVis.ispc
-										VolumeVis.ispc)
+set (ISPC_SOURCES   ISPCObject.ispc
+					          Visualization.ispc 
+                    Vis.ispc 
+					          MappedVis.ispc 
+					          ParticlesVis.ispc
+					          VolumeVis.ispc)
 
-ospray_create_library(Data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} Framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
+ospray_create_library(pvol_data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} pvol_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
 
-INSTALL(TARGETS Data DESTINATION lib)
-INSTALL(FILES Visualization.h KeyedDataObject.h 
-            Particles.h Volume.h Box.h ISPCObject.h
-            Geometry.h OSPRayObject.h OSPUtil.h
-            Datasets.h Vis.h VolumeVis.h ParticlesVis.h
-            MappedVis.h DataObjects.h mypng.h
+INSTALL(TARGETS pvol_data DESTINATION lib)
+INSTALL(FILES Visualization.h 
+              KeyedDataObject.h 
+              Particles.h 
+              Volume.h 
+              Box.h 
+              ISPCObject.h
+              Geometry.h 
+              OSPRayObject.h 
+              OSPUtil.h
+              Datasets.h 
+              Vis.h 
+              VolumeVis.h 
+              ParticlesVis.h
+              MappedVis.h 
+              DataObjects.h 
+              mypng.h
         DESTINATION include/pvol)
 

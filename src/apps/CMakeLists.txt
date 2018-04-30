@@ -2,12 +2,12 @@ cmake_minimum_required (VERSION 2.8.11)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
-include_directories(${Framework_SOURCE_DIR} 
-									  ${Renderer_SOURCE_DIR} 
+include_directories(${pvol_framework_SOURCE_DIR} 
+									  ${pvol_renderer_SOURCE_DIR} 
 									  ${rapidjson_SOURCE_DIR}/..
-									  ${Data_SOURCE_DIR})
+									  ${pvol_data_SOURCE_DIR})
 
-set(PVOL_LIBRARIES Framework Renderer Data ${MPI_C_LIBRARIES})
+set(PVOL_LIBRARIES pvol_framework pvol_renderer pvol_data ${MPI_C_LIBRARIES})
 
 find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})

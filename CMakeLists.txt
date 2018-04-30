@@ -95,6 +95,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPRAY_CMAKE_ROOT})
 
 include(macros)
 include(ospray_macros)
+include(pvol_options)
 include(ispc)
 
 include_directories(${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
