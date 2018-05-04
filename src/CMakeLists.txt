@@ -5,4 +5,4 @@ add_subdirectory(rapidjson)
 add_subdirectory(data)
 add_subdirectory(apps)
 
-INCLUDE(${CMAKE_SOURCE_DIR}/cmake/pvol_cmake_config.cmake)
+#INCLUDE(${CMAKE_SOURCE_DIR}/cmake/pvol_cmake_config.cmake)
