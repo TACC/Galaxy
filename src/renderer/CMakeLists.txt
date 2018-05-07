@@ -33,9 +33,10 @@ set (CPP_SOURCES
           Rays.cpp 
 					RayQManager.cpp)
 
-ospray_create_library(pvol_renderer ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} pvol_data pvol_framework COMPONENT lib)
-
-install(TARGETS pvol_renderer DESTINATION lib)
+if (ospray_DIR)
+  ospray_create_library(pvol_renderer ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} pvol_data pvol_framework COMPONENT lib)
+  install(TARGETS pvol_renderer DESTINATION lib)
+endif()
 install(FILES Renderer.h
               Rendering.h 
               RenderingSet.h 

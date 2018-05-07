@@ -91,14 +91,17 @@ find_package(ospray PATHS
 						  ${PROJECT_SOURCE_DIR}/third-party/ospray/build/cmake
    	                      )
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPRAY_CMAKE_ROOT})
+if (ospray_DIR)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPRAY_CMAKE_ROOT})
+  include(macros)
+  include(ospray_macros)
+  include(ispc)
 
-include(macros)
-include(ospray_macros)
-include(ispc)
-
-include_directories(${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
-include_directories_ispc(${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+  include_directories(${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+  include_directories_ispc(${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+else(ospray_DIR)
+  message(FATAL_ERROR "OSPRay directory not found")
+endif(ospray_DIR)
 
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 SET(CMAKE_INSTALL_RPATH 

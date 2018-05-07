@@ -34,15 +34,16 @@ set (CPP_SOURCES     Visualization.cpp
                      mypng.cpp)
 
 set (ISPC_SOURCES   ISPCObject.ispc
-					          Visualization.ispc 
+	            Visualization.ispc 
                     Vis.ispc 
-					          MappedVis.ispc 
-					          ParticlesVis.ispc
-					          VolumeVis.ispc)
+	            MappedVis.ispc 
+	            ParticlesVis.ispc
+	            VolumeVis.ispc)
 
-ospray_create_library(pvol_data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} pvol_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
-
-INSTALL(TARGETS pvol_data DESTINATION lib)
+if(ospray_DIR)
+  ospray_create_library(pvol_data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} pvol_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
+  INSTALL(TARGETS pvol_data DESTINATION lib)
+endif()
 INSTALL(FILES Visualization.h 
               KeyedDataObject.h 
               Particles.h 

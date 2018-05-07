@@ -29,11 +29,12 @@ set (CPP_SOURCES Application.cpp
 			smem.cpp
 			debug.cpp)
 
-ospray_create_library(pvol_framework ${CPP_SOURCES} LINK ${OSPRAY_LIBRARIES} ${TBB_LIBRARIES} threadpool11 ${MPI_LIBRARIES} COMPONENT lib) 
-set_target_properties(pvol_framework PROPERTIES COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
-set_target_properties(pvol_framework PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS}")
-
-install(TARGETS pvol_framework DESTINATION lib)
+if (ospray_DIR)
+  ospray_create_library(pvol_framework ${CPP_SOURCES} LINK ${OSPRAY_LIBRARIES} ${TBB_LIBRARIES} threadpool11 ${MPI_LIBRARIES} COMPONENT lib) 
+  set_target_properties(pvol_framework PROPERTIES COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+  set_target_properties(pvol_framework PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS}")
+  install(TARGETS pvol_framework DESTINATION lib)
+endif()
 install(FILES Application.h 
 							smem.h 
 							Events.h
