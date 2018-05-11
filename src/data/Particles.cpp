@@ -69,7 +69,7 @@ void
 Particles::LoadPartitioning(string p)
 {
 	LoadPartitioningMsg msg(getkey(), p);
-  msg.Broadcast(true);
+  msg.Broadcast(true, true);
 }
 
 void

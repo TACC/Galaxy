@@ -44,7 +44,7 @@ public:
 	void CheckWhetherDone()
 	{
 		SynchronousCheckMsg *msg = new SynchronousCheckMsg(0);
-		msg->Broadcast(true);
+		msg->Broadcast(true, true);
 	}
 
 	// The following is used to manage the overall rendering state... Renderer::Render,

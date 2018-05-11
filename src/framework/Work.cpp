@@ -44,11 +44,11 @@ Work::Send(int i)
 }
 
 void 
-Work::Broadcast(bool b)
+Work::Broadcast(bool c, bool b)
 {
 	Application *app = GetTheApplication();
   MessageManager *mm = app->GetTheMessageManager();
-	mm->BroadcastWork(this, b);
+	mm->BroadcastWork(this, c, b);
 }
 
 Work::~Work()

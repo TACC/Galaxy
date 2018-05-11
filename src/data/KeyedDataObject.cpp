@@ -75,7 +75,7 @@ KeyedDataObject::Attach(string layout, void *args, int argsSize)
   if (argsSize > 0)
     memcpy(p, args, argsSize);
 
-  msg.Broadcast(true);
+  msg.Broadcast(true, true);
   return skt != NULL;
 }
 
@@ -86,7 +86,7 @@ void
 KeyedDataObject::Import(string filename, void *args, int argsSize)
 {
   ImportMsg msg(getkey(), filename, args, argsSize);
-  msg.Broadcast(true);
+  msg.Broadcast(true, true);
 }
 
 bool
@@ -111,7 +111,7 @@ void
 KeyedDataObject::LoadTimestep()
 {
   LoadTimestepMsg msg(getkey());
-  msg.Broadcast(true);
+  msg.Broadcast(true, true);
 }
 
 void

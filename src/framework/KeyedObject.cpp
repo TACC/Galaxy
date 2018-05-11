@@ -37,7 +37,7 @@ KeyedObjectFactory::Drop(Key k)
 	APP_LOG(<< "DROP " << k);
 #endif
 	DropMsg msg(k);
-	msg.Broadcast(true);
+	msg.Broadcast(true, true);
 }
 
 bool 
@@ -156,7 +156,7 @@ void
 KeyedObject::Commit()
 {
 	CommitMsg msg(this);
-	msg.Broadcast(true);
+	msg.Broadcast(true, true);
 }
 
 KeyedObject::CommitMsg::CommitMsg(KeyedObject* kop) : KeyedObject::CommitMsg::CommitMsg(kop->SerialSize())

@@ -143,6 +143,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 #endif
 
 		renderingSet->_initStateTimer();
+		renderingSet->initializeSpawnedRayCount();
 
 		vector<future<void>> rvec;
 		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
@@ -167,9 +168,16 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			r.get();
 
 #ifdef PVOL_SYNCHRONOUS
-		renderingSet->DecrementActiveCameraCount();
+		renderingSet->DecrementActiveCameraCount(0);
 #endif // PVOL_SYNCHRONOUS
+
+		int global_spawned_ray_count, local_spawned_ray_count = renderingSet->getSpawnedRayCount();
+		MPI_Allreduce(&local_spawned_ray_count, &global_spawned_ray_count, 1, MPI_INT, MPI_SUM, c);
+
+		if (global_spawned_ray_count == 0)
+			renderingSet->Finalize();
 	}
+	
 }
 
 void
@@ -745,13 +753,13 @@ Renderer::Render(RenderingSetP rs)
 #endif
 
   RenderMsg msg(this, rs);
-  msg.Broadcast(true);
+  msg.Broadcast(true, true);
 }
 
 void Renderer::DumpStatistics()
 {
   StatisticsMsg *s = new StatisticsMsg(this);
-  s->Broadcast(true);
+  s->Broadcast(true, true);
 }
 
 Renderer::RenderMsg::~RenderMsg()

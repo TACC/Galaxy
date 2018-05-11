@@ -57,4 +57,18 @@ for var in sys.argv[2:]:
     of.write('%d %d %d\n' % o.GetDimensions())
     of.write('%f %f %f\n' % tuple(ssz))
     of.write(rawname + '\n')
+
+  if isfile(volname):
+    print "skipping", var, "vol file"
+  else:
+    sz = [o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]
+    nsz = [sz[j]/max(sz) for j in range(3)]
+    ssz = [2*nsz[j]/(o.GetExtent()[2*j+1] - o.GetExtent()[2*j]) for j in range(3)]
+    of = open(volname, 'w')
+    of.write('%s\n' % dtype)
+    of.write('%f %f %f\n' % tuple([-nsz[j] for j in range(3)]))
+    of.write('%d %d %d\n' % o.GetDimensions())
+    of.write('%f %f %f\n' % tuple(ssz))
+    of.write(rawname + '\n')
+    of.close()
     of.close()

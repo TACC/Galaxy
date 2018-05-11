@@ -44,6 +44,6 @@ public:
 	void doit()
 	{
 		DoitMsg m(getkey(), string("the rain in Spain"));
-		m.Broadcast(true);
+		m.Broadcast(true, true);
 	}
 };

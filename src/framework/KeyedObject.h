@@ -96,7 +96,7 @@ public:
     add(kop);
 
     NewMsg msg(c, k);
-    msg.Broadcast(true);
+    msg.Broadcast(true, true);
 
     return kop;
   }

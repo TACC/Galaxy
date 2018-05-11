@@ -37,7 +37,7 @@ public:
   MessageQ *GetOutgoingMessageQueue() { return theOutgoingQueue; }
 
 	void SendWork(Work *w, int dest);
-	void BroadcastWork(Work *w, bool blocking);
+	void BroadcastWork(Work *w, bool collective, bool blocking);
 
 
 	// This method ships the message to the destination given in the

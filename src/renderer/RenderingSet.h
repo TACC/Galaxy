@@ -57,7 +57,7 @@ public:
 	int activeCameraCount;
 
 	void IncrementActiveCameraCount();
-	void DecrementActiveCameraCount();
+	void DecrementActiveCameraCount(int);
 	bool CameraIsActive() { return activeCameraCount > 0; }
 
 	void IncrementInFlightCount();
@@ -115,9 +115,20 @@ public:
 	void _initStateTimer();
 	double state_timer_start;
 
+	void initializeSpawnedRayCount() { spawnedRayCount = 0; }
+	int getSpawnedRayCount() { return spawnedRayCount; }
+
 #endif // PVOL_SYNCHRONOUS
 
 	int state_counter;
+
+	void Finalize()
+	{
+		SetDone();
+		Signal();
+		InitializeState();
+	};
+			
 
 protected:
 
@@ -181,6 +192,7 @@ private:
 
 	int current_frame;
 	int next_frame;
+  int spawnedRayCount;
 
   class SaveImagesMsg : public Work
   {

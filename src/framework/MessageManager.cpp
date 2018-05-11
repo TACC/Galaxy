@@ -114,7 +114,15 @@ MessageManager::workThread(void *p)
 
     w->Action(m->GetSender());
     delete w;
-		delete m;
+
+		// Its possible that someone is waiting for this message to be processed.  It'll
+		// only happen on the sender or root node.
+
+		int r = GetTheApplication()->GetRank();
+		if (m->isBlocking() && (r == m->GetSender() || r == m->GetRoot()))
+			m->Signal();
+		else
+			delete m;
   }
 
   pthread_exit(NULL);
@@ -285,9 +293,9 @@ MessageManager::SendWork(Work *w, int dest)
 }
 
 void
-MessageManager::BroadcastWork(Work *w, bool block)
+MessageManager::BroadcastWork(Work *w, bool collective, bool block)
 {
-	Message* m = new Message(w, block);
+	Message* m = new Message(w, collective, block);
 	GetOutgoingMessageQueue()->Enqueue(m);
 
 	if (block)
@@ -395,47 +403,24 @@ MessageManager::check_mpi(MessageManager *mm)
 
 		if (incoming_message->IsBroadcast())
 		{
-			mm->Export(incoming_message);
-
-			Work *w  = app->Deserialize(incoming_message);
-#if 0
-			double t2 = GetTheEventTracker()->gettime();
-#endif
-			kill_app = w->CollectiveAction(mm->getCollComm(), GetTheApplication()->GetRank() == incoming_message->header.broadcast_root);
-			if (kill_app) killer(); // for debugging
-			delete w;
-
-#if 0
-			double t3 = GetTheEventTracker()->gettime();
-			if ((t3 - t0) > 1.0)
+			if (incoming_message->IsCollective())
 			{
-				stringstream xx;
-				xx << "bcast took " << (t3 - t0) << " seconds to handle MPI request " << buf << ": ";
-				if ((t1 - t0) > 1.0)
-					xx << (t1 - t0) << " seconds for New ";
-				if ((t2 - t1) > 1.0)
-					xx << (t2 - t1) << " seconds for Deserialize ";
-				if ((t3 - t2) > 1.0)
-					xx << (t3 - t2) << " seconds for CollectiveAction";
-				APP_PRINT(<< xx.str());
+				mm->Export(incoming_message);
+
+				Work *w  = app->Deserialize(incoming_message);
+				kill_app = w->CollectiveAction(mm->getCollComm(), GetTheApplication()->GetRank() == incoming_message->header.broadcast_root);
+				if (kill_app) killer(); // for debugging
+				delete w;
 			}
-#endif
+			else
+			{
+				mm->GetIncomingMessageQueue()->Enqueue(incoming_message);
+			}
+
 		}
 		else
 		{
-#if 0
-			double t0 = GetTheEventTracker()->gettime();
-#endif
 			mm->GetIncomingMessageQueue()->Enqueue(incoming_message);
-#if 0
-			double t1 = GetTheEventTracker()->gettime();
-			if ((t1 - t0) > 1.0)
-			{
-				stringstream xx;
-				xx << "p2p took " << (t1 - t0) << " seconds to handle ENQUEUE MPI request (" << buf << ")";
-				APP_PRINT(<< xx.str());
-			}
-#endif
 		}
 	}
 
@@ -451,32 +436,43 @@ MessageManager::check_outgoing(MessageManager *mm)
 
 	if (mm->GetOutgoingMessageQueue()->IsReady())
 	{
-		Message *omsg = mm->GetOutgoingMessageQueue()->Dequeue();
+		Message *outgoing_message = mm->GetOutgoingMessageQueue()->Dequeue();
 		
 		int nsent = 0;
-		if (omsg)
+		if (outgoing_message)
 		{
-			if (omsg->IsBroadcast() || (omsg->GetDestination() != app->GetRank()))
-				nsent = mm->Export(omsg);
+			if (outgoing_message->IsBroadcast() || (outgoing_message->GetDestination() != app->GetRank()))
+				nsent = mm->Export(outgoing_message);
 
-			if (omsg->IsBroadcast())
+			if (outgoing_message->IsBroadcast())
 			{
-				Work *w = app->Deserialize(omsg);
-				kill_app = w->CollectiveAction(mm->getCollComm(), omsg->header.broadcast_root == GetTheApplication()->GetRank());
-				if (kill_app) killer(); // for debugging
-				delete w;
-			}
+				if (outgoing_message->IsCollective())
+				{
+					Work *w = app->Deserialize(outgoing_message);
+					kill_app = w->CollectiveAction(mm->getCollComm(), outgoing_message->header.broadcast_root == GetTheApplication()->GetRank());
+					if (kill_app) killer(); // for debugging
+					delete w;
 
-			// If nsent > 0 we will do the signal or delete the message
-			// when we know the buffered messages have been sent.  Otherwise, 
-			// we do it here.
+					// If we sent the message further down the tree, we wait until the message is sure
+					// to have been sent (in purge_completed_mpi_buffers) to signal (if the message is 
+					// blocking) or delete it (if not).   If we DID NOT send it farther down the tree,
+					// then we do it here.
 
-			if (nsent == 0) 
-			{
-				if (omsg->isBlocking())
-					omsg->Signal();        // blocked guy will delete
-				else 
-					delete omsg;
+					if (nsent == 0)
+					{
+						if (outgoing_message->isBlocking())
+							outgoing_message->Signal();        // blocked guy will delete
+						else
+							delete outgoing_message;
+					}
+				}
+				else
+				{
+					// If we enqueue the message for async work, we will wait until its been performed
+					// (in MessageManager::workThread) to signal or delete the message
+
+					mm->GetIncomingMessageQueue()->Enqueue(outgoing_message);
+				}
 			}
 		}
 	}

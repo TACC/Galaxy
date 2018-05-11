@@ -146,6 +146,7 @@ private:
 			MPI_Barrier(coll_comm);
 			GetTheApplication()->DumpEvents();
 			MPI_Barrier(coll_comm);
+			return false;
 		}
 	};
 

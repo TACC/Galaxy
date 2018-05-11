@@ -44,7 +44,7 @@ void
 RenderingSet::DumpState()
 {
 	DumpStateMsg *msg = new DumpStateMsg(this->getkey());
-	msg->Broadcast(true);
+	msg->Broadcast(true, true);
 }
 #endif // PVOL_SYNCHRONOUS
 	
@@ -104,7 +104,7 @@ void
 RenderingSet::Reset()
 {
 	ResetMsg *msg = new ResetMsg(this);
-	msg->Broadcast(true);
+	msg->Broadcast(true, true);
 }
 
 void
@@ -279,7 +279,7 @@ RenderingSet::CheckLocalState()
 #endif
 
 			SynchronousCheckMsg *msg = new SynchronousCheckMsg(getkey());
-			msg->Broadcast(true);
+			msg->Broadcast(true, true);
     }
     else if (parent != -1)
     {
@@ -430,7 +430,7 @@ void
 RenderingSet::CheckGlobalState()
 {
 	SynchronousCheckMsg * msg = new SynchronousCheckMsg(getkey());
-	msg->Broadcast(false);
+	msg->Broadcast(true, false);
 }
 
 bool
@@ -454,12 +454,7 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   // if (global_counts[0] == 0 && (global_counts[1] == global_counts[2]) && global_counts[3] == 0)
   if (global_counts[0] == 0 && global_counts[3] == 0)
 	{
-		rs->SetDone();
-		rs->Signal();
-
-		// Reset state for next rendering.  Children, if they are exist, are initially busy
-
-		rs->InitializeState();
+		rs->Finalize();
   }
   else
 	{
@@ -484,10 +479,11 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 }
 
 void
-RenderingSet::DecrementActiveCameraCount()
+RenderingSet::DecrementActiveCameraCount(int rayknt)
 {
 	pthread_mutex_lock(&local_lock);
 	activeCameraCount --;
+	spawnedRayCount += rayknt;
 
 	if (activeCameraCount == 0)
 	{
@@ -585,7 +581,7 @@ void
 RenderingSet::SaveImages(string basename)
 {
 	SaveImagesMsg *msg = new SaveImagesMsg(this, basename);
-	msg->Broadcast(true);
+	msg->Broadcast(true, true);
 }
 
 RenderingSet::SaveImagesMsg::SaveImagesMsg(RenderingSet *r, string basename) 

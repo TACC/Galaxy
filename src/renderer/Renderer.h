@@ -45,7 +45,7 @@ public:
   virtual void LoadStateFromDocument(Document&);
   virtual void SaveStateToDocument(Document&);
 
-  virtual void localRendering(RenderingSetP, MPI_Comm);
+  virtual void localRendering(RenderingSetP, MPI_Comm c);
 
   void LaunchInitialRays(RenderingSetP, RenderingP, vector<future<void>>&);
 

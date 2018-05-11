@@ -97,10 +97,10 @@ main(int argc, char * argv[])
 		}
 
 		BcastMsg b0;
-		b0.Broadcast(true);
+		b0.Broadcast(true, true);
 
 		BcastMsg *b1 = new BcastMsg;
-		b1->Broadcast(true);
+		b1->Broadcast(true, true);
 		delete b1;
 
 		if (s > 1)

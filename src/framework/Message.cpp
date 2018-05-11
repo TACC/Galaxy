@@ -15,13 +15,15 @@
 
 #define LOGGING 0
 
-Message::Message(Work *w, bool blk)
+Message::Message(Work *w, bool collective, bool blk)
 {
   content = w->get_pointer();
   header.type = w->GetType();
 
   header.broadcast_root = GetTheApplication()->GetRank();
   header.sender = -1;
+
+	header.collective = collective;
 
   if (content != nullptr)
 		header.content_size = content->get_size();
@@ -40,6 +42,7 @@ Message::Message(Work *w, bool blk)
 Message::Message(Work *w, int i)
 {
   blocking = false;
+	header.collective = false;
 
   content = w->get_pointer();
 

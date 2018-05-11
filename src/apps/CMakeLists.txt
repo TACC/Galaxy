@@ -95,9 +95,13 @@ add_executable(bcast bcast.cpp)
 target_link_libraries(bcast Framework)
 set(BINS bcast ${BINS})
 
-# add_executable(drop drop.cpp TestObject.cpp)
-# target_link_libraries(drop Framework)
-# set(BINS drop ${BINS})
+add_executable(drop drop.cpp TestObject.cpp)
+target_link_libraries(drop Framework)
+set(BINS drop ${BINS})
+
+add_executable(gvt gvt.cpp)
+target_link_libraries(gvt ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
+set(BINS gvt ${BINS})
 
 add_executable(radial radial.cpp)
 target_link_libraries(radial ${VTK_LIBRARIES} ${MPI_LIBRARIES})

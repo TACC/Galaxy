@@ -72,7 +72,7 @@ main(int argc, char * argv[])
 	if (r == 0)
 	{
 		BcastMsg b0;
-		b0.Broadcast(true);
+		b0.Broadcast(true, true);
 		sleep(100000);
 		theApplication.QuitApplication();
 	}

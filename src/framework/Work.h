@@ -26,7 +26,7 @@ public:
   virtual bool CollectiveAction(MPI_Comm comm, bool isRoot) { std::cerr << "killed by generic collective work Action()\n"; return true; };
 
 	void Send(int i);
-	void Broadcast(bool b = false);
+	void Broadcast(bool c, bool b = false);
 
 	string getClassName() { return className; };
   int GetType() { return type; }

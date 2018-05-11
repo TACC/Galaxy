@@ -17,10 +17,10 @@ public:
  
   Message(Work *w, int i = -1);
 
-  // Collective, one-to-all, will be run in MPI thread. May be blocking
-	// for the caller
+  // Collective, one-to-all.   If collective, will be run in MPI thread.
+	// May be blocking for the caller
 
-  Message(Work *w, bool blk = false);
+  Message(Work *w, bool collective, bool blk);
 
 	// Message to be read off MPI
 	Message(MPI_Status&);
@@ -73,6 +73,7 @@ public:
 
 	SharedP ShareContent() { return content; }
 
+	bool IsCollective() { return header.collective; }
 
 protected:
   struct MessageHeader {
@@ -80,7 +81,7 @@ protected:
     int  broadcast_root; // will be -1 for point-to-point
 		int  sender; 				 // will be -1 for broadcast
     int  type;
-    int  content_tag;
+    bool collective;
     int  content_size;
 
 		bool HasContent() { return content_size > 0; }
@@ -90,6 +91,7 @@ protected:
   int id;
 
   bool blocking;
+
   pthread_mutex_t lock;
   pthread_cond_t cond;
 	

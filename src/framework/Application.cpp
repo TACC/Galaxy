@@ -161,13 +161,13 @@ Application::~Application()
 void Application::DumpEvents()
 {
 	DumpEventsMsg *d = new DumpEventsMsg();
-	d->Broadcast(true);
+	d->Broadcast(true, true);
 }
 
 void Application::QuitApplication()
 {
 	QuitMsg *q = new QuitMsg(0);
-	q->Broadcast(true);
+	q->Broadcast(true, true);
 
 	Application::Wait();
 }
@@ -175,7 +175,7 @@ void Application::QuitApplication()
 void Application::SyncApplication()
 {
 	SyncMsg *q = new SyncMsg(0);
-	q->Broadcast(true);
+	q->Broadcast(true, true);
 }
 
 void Application::Start(bool with_mpi)

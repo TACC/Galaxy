@@ -136,7 +136,7 @@ main(int argc, char * argv[])
 		ParticlesP samples = theRenderer->NewParticles();
 
 		SampleMsg *smsg = new SampleMsg(volume, samples);
-		smsg->Broadcast(true);
+		smsg->Broadcast(true, true);
 
 		theRenderer->SetALight(1.0, 2.0, 3.0);
 		theRenderer->SetLightingModel(0.4, 0.6);
