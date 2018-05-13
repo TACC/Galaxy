@@ -40,19 +40,22 @@ RenderingSet::~RenderingSet()
 }
 
 #ifdef PVOL_SYNCHRONOUS
+#ifdef PRODUCE_STATUS_MESSAGES
 void
 RenderingSet::DumpState()
 {
 	DumpStateMsg *msg = new DumpStateMsg(this->getkey());
 	msg->Broadcast(true, true);
 }
+#endif // PRODUCE_STATUS_MESSAGES
 #endif // PVOL_SYNCHRONOUS
 	
 
 void
 RenderingSet::initialize()
 {
-	state_counter = 0;
+	// state_counter = 0;
+	
 	current_frame = -1;
 	next_frame = 0;
 
@@ -84,7 +87,9 @@ RenderingSet::initialize()
 
 	local_reset();
 
+#ifdef PRODUCE_STATUS_MESSAGES
 	InitializeState();
+#endif // PRODUCE_STATUS_MESSAGES
 
 #endif // PVOL_SYNCHRONOUS
 }
@@ -178,6 +183,7 @@ RenderingSet::InitializeState()
 	left_busy  = (left_id != -1);
 	right_busy = (right_id != -1);
 	last_busy  = true;
+	activeCameraCount = 0;
 }
 
 class CheckStateActionEvent : public Event
@@ -459,7 +465,9 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   else
 	{
 
+#ifdef PRODUCE_STATUS_MESSAGES
 		rs->_dumpState(c, "completion_test");
+#endif
 
 		if (GetTheApplication()->GetRank() == 0)
 		{
@@ -702,6 +710,8 @@ RenderingSet::KeepRays(RayList *rl)
 
 #ifdef PVOL_SYNCHRONOUS
 
+#ifdef PRODUCE_STATUS_MESSAGES
+
 void 
 RenderingSet::_initStateTimer()
 {
@@ -746,13 +756,16 @@ RenderingSet::_dumpState(MPI_Comm c, const char *base)
 		of.close();
 	}
 }
+#endif
 
 bool 
 RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
 {
 	Key rsk = *(Key *)contents->get();
 	RenderingSetP rs = GetByKey(rsk);
+#ifdef PRODUCE_STATUS_MESSAGES
 	rs->_dumpState(c, "status");
+#endif
 	return false;
 }
 #endif

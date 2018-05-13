@@ -197,7 +197,7 @@ int main(int argc,  char *argv[])
       theRenderer->Render(rs);
 
 #if 1
-#if 1
+#ifdef PRODUCE_STATUS_MESSAGES
       while (rs->Busy())
       {
         rs->DumpState();
@@ -211,9 +211,11 @@ int main(int argc,  char *argv[])
         char c;
         while (read(cs.get_socket(), &c, 1) > 0)
         {
+#ifdef PRODUCE_STATUS_MESSAGES
           if (c == 's') std::cerr << "got s\n", rs->DumpState();
-          else if (c == 'd') std::cerr << "got d\n", theApplication.DumpEvents();
-          else if (c == 'q') break;
+#endif
+          if (c == 'd') std::cerr << "got d\n", theApplication.DumpEvents();
+          if (c == 'q') break;
         }
       }
 #endif

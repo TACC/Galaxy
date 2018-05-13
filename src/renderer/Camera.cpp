@@ -741,6 +741,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 
         shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(rlist, a));
 
+				renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
         rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));
 				
       }

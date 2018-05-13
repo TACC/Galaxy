@@ -124,17 +124,20 @@ Application::Log(string s)
 void
 Application::DumpLog()
 {
-  std::stringstream fname;
-	int rank = GetTheMessageManager()->GetRank();
-  fname << "log_" << rank;
+	if (log.size() > 0)
+	{
+		std::stringstream fname;
+		int rank = GetTheMessageManager()->GetRank();
+		fname << "log_" << rank;
 
-  std::fstream fs;
-  fs.open(fname.str().c_str(), std::fstream::out | std::fstream::app);
+		std::fstream fs;
+		fs.open(fname.str().c_str(), std::fstream::out | std::fstream::app);
 
-	for (auto s: log)
-		fs << s << "\n";
+		for (auto s: log)
+			fs << s << "\n";
 
-  fs.close();
+		fs.close();
+	}
 }
 
 void

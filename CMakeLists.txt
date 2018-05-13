@@ -14,6 +14,7 @@ include(${VTK_USE_FILE})
 find_package(PNG REQUIRED)
 
 option(PVOL_SYNCHRONOUS "synchronize on completion of RenderSets?" ON)
+option(PRODUCE_STATUS_MESSAGES "produce periodic status massages" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

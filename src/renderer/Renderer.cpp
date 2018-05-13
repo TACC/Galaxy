@@ -142,7 +142,10 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 
 #endif
 
+#ifdef PRODUCE_STATUS_MESSAGES
 		renderingSet->_initStateTimer();
+#endif
+
 		renderingSet->initializeSpawnedRayCount();
 
 		vector<future<void>> rvec;
@@ -158,7 +161,9 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec);
 		}
 
+#ifdef PRODUCE_STATUS_MESSAGES
 		renderingSet->_dumpState(c, "status"); // Note this will sync after cameras, I think
+#endif
 
 #if defined(EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraLoopEndEvent);
@@ -167,15 +172,16 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		for (auto& r : rvec)
 			r.get();
 
-#ifdef PVOL_SYNCHRONOUS
-		renderingSet->DecrementActiveCameraCount(0);
-#endif // PVOL_SYNCHRONOUS
-
 		int global_spawned_ray_count, local_spawned_ray_count = renderingSet->getSpawnedRayCount();
 		MPI_Allreduce(&local_spawned_ray_count, &global_spawned_ray_count, 1, MPI_INT, MPI_SUM, c);
 
 		if (global_spawned_ray_count == 0)
 			renderingSet->Finalize();
+
+#ifdef PVOL_SYNCHRONOUS
+		else
+			renderingSet->DecrementActiveCameraCount(0);
+#endif // PVOL_SYNCHRONOUS
 	}
 	
 }

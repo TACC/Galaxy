@@ -110,23 +110,25 @@ public:
 		Unlock();
 	}
 
+#if PRODUCE_STATUS_MESSAGES
 	void DumpState();
 	void _dumpState(MPI_Comm, const char *);
 	void _initStateTimer();
 	double state_timer_start;
+#endif
 
 	void initializeSpawnedRayCount() { spawnedRayCount = 0; }
 	int getSpawnedRayCount() { return spawnedRayCount; }
 
 #endif // PVOL_SYNCHRONOUS
 
-	int state_counter;
+	// int state_counter;
 
 	void Finalize()
 	{
 		SetDone();
-		Signal();
 		InitializeState();
+		Signal();
 	};
 			
 
@@ -173,7 +175,7 @@ protected:
 	int get_number_of_pixels_received() { return n_pix_received; }
 	void get_number_of_pixels_received(int &k) { k = n_pix_received; }
 
-	int get_state_counter() { return state_counter++; }
+	// int get_state_counter() { return state_counter++; }
 
 #endif // PVOL_SYNCHRONOUS
 
