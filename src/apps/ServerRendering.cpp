@@ -1,6 +1,9 @@
 #include "ServerRendering.h"
 #include <pthread.h>
 
+namespace pvol
+{
+
 static pthread_mutex_t serverrendering_lock = PTHREAD_MUTEX_INITIALIZER;
 
 KEYED_OBJECT_TYPE(ServerRendering)
@@ -30,3 +33,4 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 	}
 }
 
+}

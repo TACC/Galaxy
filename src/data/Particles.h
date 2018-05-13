@@ -9,7 +9,6 @@ using namespace std;
 
 #include "KeyedDataObject.h"
 
-KEYED_OBJECT_POINTER(Particles)
 
 #include "dtypes.h"
 #include "Application.h"
@@ -27,6 +26,11 @@ using namespace std;
 #include "ospray/ospray.h"
 
 class Box;
+
+namespace pvol
+{
+
+KEYED_OBJECT_POINTER(Particles)
 
 struct Particle
 {
@@ -122,3 +126,4 @@ protected:
   };
 };
 
+}

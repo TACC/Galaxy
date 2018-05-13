@@ -10,6 +10,8 @@ using namespace std;
 #include "Renderer.h"
 #include "AsyncRendering.h"
 
+using namespace pvol;
+
 #include <ospray/ospray.h>
 
 class Debug

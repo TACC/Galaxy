@@ -4,6 +4,8 @@
 #include "RenderingSet.h"
 #include "RayQManager.h"
 
+namespace pvol
+{
 WORK_CLASS_TYPE(RenderingSet::SaveImagesMsg);
 
 #ifdef PVOL_SYNCHRONOUS
@@ -769,4 +771,6 @@ RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
 	return false;
 }
 #endif
+
+}
 

@@ -3,18 +3,22 @@
 #include <vector>
 
 #include "Application.h"
-//#include "Renderer.h"
 #include "Visualization.h"
 #include "OSPUtil.h"
 #include "Visualization_ispc.h"
 
 #define LOGGING 0
 
-#include "../rapidjson/prettywriter.h"
-#include "../rapidjson/stringbuffer.h"
 using namespace rapidjson;
+// #include "../rapidjson/document.h"
+// #include "../rapidjson/prettywriter.h"
+// #include "../rapidjson/stringbuffer.h"
+
 
 using namespace std;
+
+namespace pvol
+{
 
 KEYED_OBJECT_TYPE(Visualization)
 
@@ -390,3 +394,4 @@ Visualization::destroy_ispc()
   }
 }
 
+}

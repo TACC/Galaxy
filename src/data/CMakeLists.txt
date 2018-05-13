@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project (Data)
 
+find_library(PNG_LIBRARY_RELEASE png)
+
 include_directories(${MPI_INCLUDE_PATH}
                     ${rapidjson_SOURCE_DIR}/..
                     ${Framework_SOURCE_DIR}
@@ -8,7 +10,9 @@ include_directories(${MPI_INCLUDE_PATH}
                     ${Data_SOURCE_DIR}
                     ${ICET_OBJDIR}/include
                     ${TBB_INCLUDE_DIRS}
-                    ${CMAKE_CURRENT_BINARY_DIR})
+										${CMAKE_CURRENT_BINARY_DIR}
+                    ${EMBREE_INCLUDE_DIRS}
+                    )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../framework ${CMAKE_CURRENT_SOURCE_DIR}/../renderer)
 
@@ -35,7 +39,7 @@ set (ISPC_SOURCES   ISPCObject.ispc
 										ParticlesVis.ispc
 										VolumeVis.ispc)
 
-ospray_create_library(Data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} Framework ${PNG_LIBRARIES} COMPONENT lib)
+ospray_create_library(Data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} Framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
 
 INSTALL(TARGETS Data DESTINATION lib)
 INSTALL(FILES Visualization.h KeyedDataObject.h 
@@ -43,5 +47,5 @@ INSTALL(FILES Visualization.h KeyedDataObject.h
             Geometry.h OSPRayObject.h OSPUtil.h
             Datasets.h Vis.h VolumeVis.h ParticlesVis.h
             MappedVis.h DataObjects.h ImageWriter.h
-        DESTINATION include)
+        DESTINATION include/pvol)
 

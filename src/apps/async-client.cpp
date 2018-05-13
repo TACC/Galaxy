@@ -18,6 +18,8 @@ using namespace std;
 #define HEIGHT 500
 int width = WIDTH, height = HEIGHT;
 
+using namespace pvol;
+
 ImageWriter image_writer("async_client");
 
 float*       pixels = NULL;

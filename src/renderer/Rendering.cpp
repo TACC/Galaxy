@@ -13,6 +13,8 @@
 
 #include "ImageWriter.h"
 
+namespace pvol
+{
 KEYED_OBJECT_TYPE(Rendering)
 
 void
@@ -272,5 +274,7 @@ Rendering::deserialize(unsigned char *p)
   datasets = Datasets::GetByKey(*(Key *)p);
   p += sizeof(Key);
   return p;
+}
+
 }
 

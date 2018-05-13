@@ -18,6 +18,8 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
+namespace pvol
+{
 
 #define LOGGING 0
 
@@ -587,5 +589,7 @@ MessageManager::dump()
 {
 	GetIncomingMessageQueue()->printContents();
 	GetOutgoingMessageQueue()->printContents();
+}
+
 }
 

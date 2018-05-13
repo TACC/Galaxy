@@ -17,6 +17,8 @@
 
 #include "Cinema.h"
 
+using namespace pvol;
+
 using namespace std;
 
 char  *

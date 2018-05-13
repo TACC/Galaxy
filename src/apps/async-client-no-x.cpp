@@ -13,6 +13,7 @@
 #include "Pixel.h"
 #include "ImageWriter.h"
 
+using namespace pvol;
 using namespace std;
 
 #define WIDTH  500

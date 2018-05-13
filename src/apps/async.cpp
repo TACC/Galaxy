@@ -2,21 +2,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <GL/glut.h>
+#include <glut.h>
 #include <pthread.h>
 #include <time.h>
 #include "ImageWriter.h"
 
 using namespace std;
 
-#include "quat.h"
-#include "async.h"
 
 #include "Application.h"
 #include "Renderer.h"
 #include "AsyncRendering.h"
 
 #include <ospray/ospray.h>
+
+using namespace pvol;
+
+#include "quat.h"
+#include "async.h"
 
 #define WIDTH  500
 #define HEIGHT 500

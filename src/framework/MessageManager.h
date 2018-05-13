@@ -8,6 +8,8 @@
 #include "Message.h"
 #include "MessageQ.h"
 
+namespace pvol
+{
 class Application;
 
 class MessageManager {
@@ -97,3 +99,5 @@ private:
 
 	MPI_Comm p2p_comm, coll_comm;
 };
+}
+

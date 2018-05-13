@@ -2,6 +2,9 @@
 #include "Rendering.h"
 #include "Socket.h"
 
+namespace pvol
+{
+
 KEYED_OBJECT_POINTER(AsyncRendering)
 
 class AsyncRendering : public Rendering
@@ -19,5 +22,4 @@ private:
 };
  
 
-
-
+}

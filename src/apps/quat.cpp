@@ -1,7 +1,11 @@
 #include "quat.h"
 #include <math.h>
 
+namespace pvol
+{
+
 #define TRACKBALLSIZE 0.8
+
 
 static float
 project_to_sphere(float r, float x, float y)
@@ -114,4 +118,6 @@ trackball(vec4f& q, float p1x, float p1y, float p2x, float p2y)
     phi = 2.0 * asin(t);
 
     axis_to_quat(a,phi,q);
+}
+
 }

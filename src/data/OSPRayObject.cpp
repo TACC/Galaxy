@@ -11,6 +11,9 @@ using namespace std;
 #include "Geometry.h"
 #include "Volume.h"
 
+namespace pvol
+{
+
 KEYED_OBJECT_TYPE(OSPRayObject)
 
 void
@@ -34,3 +37,4 @@ OSPRayObject::Register()
 	Geometry::Register();
 }
 
+}

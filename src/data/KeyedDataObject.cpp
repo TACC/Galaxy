@@ -4,6 +4,9 @@
 #include "Geometry.h"
 #include "Volume.h"
 
+namespace pvol
+{
+
 WORK_CLASS_TYPE(KeyedDataObject::ImportMsg);
 WORK_CLASS_TYPE(KeyedDataObject::AttachMsg);
 WORK_CLASS_TYPE(KeyedDataObject::LoadTimestepMsg);
@@ -159,3 +162,4 @@ KeyedDataObject::AttachMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   return false;
 }
 
+}

@@ -15,6 +15,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 TraceRays::TraceRays()
 {
   allocate_ispc();
@@ -151,3 +153,5 @@ unsigned char *TraceRays::Deserialize(unsigned char *p)
   SetEpsilon(*(float *)p);
   return p + sizeof(float);
 }
+}
+

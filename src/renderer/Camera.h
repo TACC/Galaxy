@@ -9,6 +9,10 @@ using namespace std;
 #include "KeyedObject.h"
 #include "Box.h"
 
+namespace pvol
+{
+KEYED_OBJECT_POINTER(Rendering)
+KEYED_OBJECT_POINTER(RenderingSet)
 KEYED_OBJECT_POINTER(Camera)
 
 #include "Work.h"
@@ -84,4 +88,6 @@ protected:
 	float up[3];
 	float aov;
 };
+
+}
 

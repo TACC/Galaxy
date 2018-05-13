@@ -12,6 +12,9 @@ using namespace rapidjson;
 
 using namespace std;
 
+
+namespace pvol
+{
 class KeyedObject;
 typedef shared_ptr<KeyedObject> KeyedObjectP;
 
@@ -221,3 +224,5 @@ public:                                                                         
     typ::ClassType = GetTheKeyedObjectFactory()->register_class(typ::_New, string(#typ)); \
   }                                                                                       \
   static int  ClassType;
+}
+

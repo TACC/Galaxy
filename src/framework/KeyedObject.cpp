@@ -3,6 +3,8 @@
 #include "Application.h"
 #include "KeyedObject.h"
 
+namespace pvol
+{
 static int ko_count = 0;
 static int get_ko_count() { return ko_count; }
 
@@ -201,3 +203,5 @@ KeyedObjectFactory::~KeyedObjectFactory()
 		std::cerr << ko_count << " shared objects remain\n";
 #endif
 }
+}
+

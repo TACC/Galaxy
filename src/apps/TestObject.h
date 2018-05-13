@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 using namespace std;
+using namespace pvol;
 
 #include <Application.h>
 #include <KeyedObject.h>

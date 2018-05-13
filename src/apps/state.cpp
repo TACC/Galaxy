@@ -23,6 +23,8 @@
 #include "Rendering.h"
 #include "RenderingSet.h"
 
+using namespace pvol;
+
 static int width = 1920, height = 1080;
 static int mpiRank, mpiSize;
 

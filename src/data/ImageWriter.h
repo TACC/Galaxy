@@ -7,6 +7,9 @@ using namespace std;
 
 #include <png.h>
 
+namespace pvol
+{
+
 class ImageWriter
 {
 public:
@@ -106,3 +109,5 @@ private:
   int frame;
 	string basename;
 };
+
+}

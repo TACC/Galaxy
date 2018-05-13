@@ -4,6 +4,8 @@
 #include <ratio>
 #include <chrono>
 
+namespace pvol
+{
 class Timer
 {
 public:
@@ -46,3 +48,5 @@ private:
   double tot;
   string basename;
 };
+}
+

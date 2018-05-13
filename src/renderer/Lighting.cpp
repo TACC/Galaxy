@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 Lighting::Lighting()
 {
   allocate_ispc();
@@ -274,3 +276,5 @@ Lighting::GetEpsilon(float& e)
 {
   ispc::Lighting_GetEpsilon(GetISPC(), &e);
 }
+}
+

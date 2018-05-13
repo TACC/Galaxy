@@ -13,6 +13,8 @@
 #include "TraceRays.h"
 #include "RenderingEvents.h"
 
+namespace pvol
+{
 class Camera;
 class RayQManager;
 class Pixel;
@@ -250,3 +252,5 @@ private:
 		int frame;
   };
 };
+}
+

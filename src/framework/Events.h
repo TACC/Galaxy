@@ -4,14 +4,17 @@
 #include <fstream>
 #include <memory>
 #include <pthread.h>
+#include <vector>
 
 #include "KeyedObject.h"
 
+namespace pvol
+{
 extern pthread_mutex_t EventsLock;
 
-#include <vector>
 
-using namespace std;
+
+using namespace pvol;
 
 class Event
 {
@@ -48,3 +51,5 @@ private:
 };
 
 extern EventTracker *GetTheEventTracker();
+}
+

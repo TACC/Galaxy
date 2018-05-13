@@ -7,17 +7,23 @@
 #include <memory>
 #include <string.h>
 
+
 #include "KeyedObject.h"
 #include "KeyedDataObject.h"
+#include <map>
 
 using namespace std;
 
-KEYED_OBJECT_POINTER(Visualization)
 
 #include "Box.h"
 #include "Datasets.h"
 #include "VolumeVis.h"
 #include "MappedVis.h"
+
+namespace pvol
+{
+
+KEYED_OBJECT_POINTER(Visualization)
 
 class Visualization : public KeyedObject, public ISPCObject
 {
@@ -79,3 +85,4 @@ protected:
   int neighbors[6];
 };
 
+}

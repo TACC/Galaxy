@@ -6,6 +6,9 @@
 #include <memory>
 #include "Work.h"
 
+
+namespace pvol
+{
 class MessageManager;
 
 class Message {
@@ -103,3 +106,5 @@ protected:
   MPI_Status status;
   MPI_Request request;
 };
+}
+

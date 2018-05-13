@@ -6,6 +6,9 @@
 #include "Volume.h"
 #include "Particles.h"
 
+namespace pvol
+{
+
 KEYED_OBJECT_TYPE(Datasets)
 
 void
@@ -170,4 +173,5 @@ Datasets::deserialize(unsigned char *p)
 	p += nkeys*sizeof(Key);
 
 	return p;
+}
 }

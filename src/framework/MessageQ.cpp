@@ -6,6 +6,8 @@
 #include "Message.h"
 
 using namespace std;
+namespace pvol
+{
 
 void
 MessageQ::Enqueue(Message *w)
@@ -60,4 +62,6 @@ MessageQ::Kill()
   pthread_mutex_unlock(&lock);
 }
 	
+
+}
 

@@ -11,6 +11,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 RayQManager *RayQManager::theRayQManager;
 RayQManager *RayQManager::GetTheRayQManager() { return RayQManager::theRayQManager; }
 
@@ -267,5 +269,7 @@ RayQManager::Enqueue(RayList *r)
 		Signal();
 
   Unlock();
+}
+
 }
 

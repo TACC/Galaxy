@@ -2,6 +2,8 @@
 #include "Application.h"
 
 using namespace std;
+namespace pvol
+{
 
 static string executable;
 
@@ -48,5 +50,7 @@ void debugger(char *arg)
 		while (dbg)
 			sleep(1);
 	}
+}
+
 }
 

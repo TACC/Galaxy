@@ -1,3 +1,6 @@
+
+namespace pvol
+{
 class StartRenderingEvent : public Event
 {
 public:
@@ -200,3 +203,5 @@ private:
 };
 
 #endif
+}
+

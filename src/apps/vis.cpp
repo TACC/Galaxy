@@ -7,6 +7,8 @@
 #include "Renderer.h"
 #include "ClientServer.h"
 
+using namespace pvol;
+
 #include <ospray/ospray.h>
 
 int mpiRank, mpiSize;

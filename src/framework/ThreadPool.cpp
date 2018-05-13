@@ -6,6 +6,8 @@
 #include "ThreadPool.h"
 
 using namespace std;
+namespace pvol
+{
 
 static int nxt_thread = 0;
 
@@ -263,3 +265,5 @@ ThreadPool::~ThreadPool()
   pthread_cond_destroy(&cond);
 }
 #endif
+}
+

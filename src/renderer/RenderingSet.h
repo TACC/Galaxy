@@ -5,14 +5,16 @@
 #include <memory>
 
 #include "KeyedObject.h"
+// #include "Rendering.h"
+#include "Rays.h"
+#include "Work.h"
 
 using namespace std;
 
+namespace pvol
+{
+KEYED_OBJECT_POINTER(Rendering)
 KEYED_OBJECT_POINTER(RenderingSet)
-
-#include "Rendering.h"
-#include "Rays.h"
-#include "Work.h"
 
 class Camera;
 class RayList;
@@ -120,8 +122,6 @@ public:
 	void initializeSpawnedRayCount() { spawnedRayCount = 0; }
 	int getSpawnedRayCount() { return spawnedRayCount; }
 
-#endif // PVOL_SYNCHRONOUS
-
 	// int state_counter;
 
 	void Finalize()
@@ -131,6 +131,7 @@ public:
 		Signal();
 	};
 			
+#endif // PVOL_SYNCHRONOUS
 
 protected:
 
@@ -285,4 +286,6 @@ private:
 
 #endif // PVOL_SYNCHRONOUS
 };
+
+}
 

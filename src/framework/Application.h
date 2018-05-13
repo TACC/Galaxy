@@ -21,6 +21,8 @@ typedef threadpool11::Pool ThreadPool;
 
 using namespace rapidjson;
 
+namespace pvol
+{
 #define APP_PRINT(x)																				\
 {																														\
   stringstream ss;																					\
@@ -173,4 +175,6 @@ extern long my_gettid();
 extern const char *threadname_by_id(long l);
 extern const char *my_threadname();
 extern void register_thread(std::string s);
+
+}
 

@@ -2,6 +2,9 @@
 #include "Rendering.h"
 #include "Socket.h"
 
+namespace pvol
+{
+
 KEYED_OBJECT_POINTER(ServerRendering)
 
 class ServerRendering : public Rendering
@@ -19,6 +22,4 @@ private:
 	int max_frame;
 };
  
-
-
-
+}

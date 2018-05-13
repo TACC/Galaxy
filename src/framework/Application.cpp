@@ -19,6 +19,8 @@
 #include "../rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
+namespace pvol
+{
 
 WORK_CLASS_TYPE(Application::QuitMsg)
 WORK_CLASS_TYPE(Application::SyncMsg)
@@ -313,4 +315,6 @@ register_thread(string s)
   pthread_mutex_unlock(&threadtable_lock);
 }
 
+
+}
 

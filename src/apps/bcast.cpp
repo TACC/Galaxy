@@ -5,14 +5,15 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <pthread.h>
 
-using namespace std;
 
 #include <dtypes.h>
 #include <Application.h>
 #include <Events.h>
 
-#include <pthread.h>
+using namespace std;
+using namespace pvol;
 
 class BcastEvent : public Event
 { 

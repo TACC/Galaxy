@@ -7,6 +7,8 @@
 #include "Rays.ih"
 #include "Rays_ispc.h"
 
+using namespace pvol;
+
 #define ROUND_UP_TO_MULTIPLE_OF_16(a) ((a + 15) & (~15))
 #define ROUND_UP_TO_MULTIPLE_OF_64(a) ((a + 63) & (~63))
 #define HDRSZ  ROUND_UP_TO_MULTIPLE_OF_64(sizeof(hdr))

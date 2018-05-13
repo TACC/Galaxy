@@ -22,19 +22,22 @@
 #include "Lighting.h"
 #include "DataObjects.h"
 
+using namespace std;
+
+#include "../rapidjson/document.h"
+#include "../rapidjson/stringbuffer.h"
+
 #include "Visualization_ispc.h"
 #include "Rays_ispc.h"
 #include "TraceRays_ispc.h"
 
+namespace pvol
+{
 #if DO_TIMING
 #include "Timing.h"
 static Timer timer("ray_processing");
 #endif
 
-using namespace std;
-
-#include "../rapidjson/document.h"
-#include "../rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
 
@@ -146,7 +149,9 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		renderingSet->_initStateTimer();
 #endif
 
+#ifdef PVOL_SYNCHRONOUS
 		renderingSet->initializeSpawnedRayCount();
+#endif
 
 		vector<future<void>> rvec;
 		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
@@ -169,6 +174,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		GetTheEventTracker()->Add(new CameraLoopEndEvent);
 #endif
 
+#ifdef PVOL_SYNCHRONOUS
 		for (auto& r : rvec)
 			r.get();
 
@@ -177,8 +183,6 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 
 		if (global_spawned_ray_count == 0)
 			renderingSet->Finalize();
-
-#ifdef PVOL_SYNCHRONOUS
 		else
 			renderingSet->DecrementActiveCameraCount(0);
 #endif // PVOL_SYNCHRONOUS
@@ -798,3 +802,5 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 
   return false;
 }
+}
+

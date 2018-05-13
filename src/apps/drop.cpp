@@ -7,6 +7,8 @@
 
 #include <Application.h>
 
+using namespace pvol;
+
 #include "TestObject.h"
 
 int

@@ -1,5 +1,8 @@
 #include "Box.h"
 
+namespace pvol
+{
+
 Box::Box(float *o, int *n, float *d)
 {
 	set(o, n, d);
@@ -100,4 +103,5 @@ Box::intersect(vec3f& org, vec3f& dir, float& tmin, float& tmax)
 		tmin = 0;
 
 	return true;
+}
 }

@@ -10,6 +10,8 @@
 using namespace std;
 using namespace rapidjson;
 
+namespace pvol
+{
 class Lighting : public ISPCObject
 {
 public:
@@ -43,3 +45,5 @@ protected:
   virtual void allocate_ispc();
   virtual void initialize_ispc();
 };
+}
+

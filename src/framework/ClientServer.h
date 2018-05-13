@@ -1,5 +1,8 @@
 #pragma once
 
+
+namespace pvol
+{
 class ClientServer 
 {
 public: 	
@@ -12,3 +15,5 @@ public:
 private:
 	int skt;
 };
+}
+

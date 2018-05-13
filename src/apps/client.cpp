@@ -3,6 +3,8 @@
 #include <iostream>
 #include "ClientServer.h"
 
+using namespace pvol;
+
 int
 main(int argc, char **argv)
 {

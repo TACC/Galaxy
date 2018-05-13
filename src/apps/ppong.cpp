@@ -5,9 +5,10 @@
 #include <string.h>
 #include <sys/types.h>
 
-// #include <pvol.h>
 #include <dtypes.h>
 #include <Application.h>
+
+using namespace pvol;
 
 #include <pthread.h>
 

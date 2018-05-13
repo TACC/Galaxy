@@ -5,6 +5,11 @@
 
 #include "smem.h"
 
+namespace pvol
+{
+KEYED_OBJECT_POINTER(Rendering)
+KEYED_OBJECT_POINTER(RenderingSet)
+
 class RayList 
 {
 	struct hdr
@@ -127,3 +132,5 @@ private:
 	SharedP contents;
 	void* ispc;
 };
+}
+

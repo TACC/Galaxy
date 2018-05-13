@@ -8,16 +8,16 @@
 using namespace std;
 
 #include "OSPRayObject.h"
-
-KEYED_OBJECT_POINTER(Volume)
-
 #include "dtypes.h"
-
 #include "Box.h"
 
 #include <vtkSmartPointer.h>
 #include <vtkClientSocket.h>
 #include <vtkImageData.h>
+
+namespace pvol
+{
+KEYED_OBJECT_POINTER(Volume)
 
 class Volume : public OSPRayObject
 {
@@ -123,3 +123,4 @@ protected:
 	void set_local_minmax(float min, float max)   { local_min = min; local_max = max; }
 };
 
+}

@@ -3,6 +3,8 @@
 #include "smem.h"
 
 using namespace std;
+namespace pvol
+{
 
 static int dbg = -2;
 static int smbrk = -1;
@@ -59,3 +61,5 @@ smem::smem(int n)
 		 APP_LOG(<< "smem ctor " << kk << " " << sz << " at " << std::hex << ((long)ptr));
 	}
 }
+}
+

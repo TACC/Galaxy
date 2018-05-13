@@ -4,11 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "KeyedObject.h"
-
 using namespace std;
-
-KEYED_OBJECT_POINTER(Rendering)
 
 #include "Application.h"
 #include "KeyedObject.h"
@@ -19,8 +15,11 @@ KEYED_OBJECT_POINTER(Rendering)
 #include "Visualization.h"
 #include "Pixel.h"
 
-class Ray;
+namespace pvol
+{
 
+class Ray;
+KEYED_OBJECT_POINTER(Rendering)
 
 class Rendering : public KeyedObject
 {
@@ -104,3 +103,4 @@ protected:
 	int width, height;
 };
 
+}

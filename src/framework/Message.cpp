@@ -6,13 +6,16 @@
 #include <iostream>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "Application.h"
-#include "Message.h"
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <memory>
 
+#include "Application.h"
+#include "Message.h"
+
+namespace pvol
+{
 #define LOGGING 0
 
 Message::Message(Work *w, bool collective, bool blk)
@@ -115,3 +118,5 @@ void Message::Wait()
   else
     pthread_cond_wait(&cond, &lock);
 }
+}
+

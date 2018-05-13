@@ -10,11 +10,15 @@ using namespace std;
 #include "KeyedObject.h"
 #include "ISPCObject.h"
 
-KEYED_OBJECT_POINTER(Vis)
 
 #include "dtypes.h"
 #include "OSPRayObject.h"
 #include "Datasets.h"
+
+namespace pvol
+{
+
+KEYED_OBJECT_POINTER(Vis)
   
 class Vis : public KeyedObject, public ISPCObject
 {
@@ -45,3 +49,4 @@ protected:
     OSPRayObjectP data;
 };
 
+}

@@ -4,16 +4,17 @@
 
 using namespace std;
 
-#include "KeyedObject.h"
-
-KEYED_OBJECT_POINTER(KeyedDataObject)
-
 #include <vtkSmartPointer.h>
 #include <vtkClientSocket.h>
 #include <vtkImageData.h>
 
 #include "Box.h"
 #include "KeyedObject.h"
+
+namespace pvol
+{
+
+KEYED_OBJECT_POINTER(KeyedDataObject)
 
 class KeyedDataObject : public KeyedObject
 {
@@ -135,3 +136,5 @@ protected:
 		}
   };
 };
+
+}

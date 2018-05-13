@@ -13,6 +13,8 @@ using namespace std;
 
 #include "ISPCObject.h"
 
+namespace pvol
+{
 KEYED_OBJECT_POINTER(TraceRays)
 
 #include "dtypes.h"
@@ -41,3 +43,5 @@ protected:
   virtual void initialize_ispc();
 
 };
+}
+

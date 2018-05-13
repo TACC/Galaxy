@@ -8,6 +8,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 class Work
 {
 public:
@@ -86,4 +88,7 @@ public: 																																								\
 private: 																																								\
 	static int class_type;																																\
 	static string class_name;
+
+}
+
 

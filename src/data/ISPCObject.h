@@ -7,6 +7,9 @@
 
 using namespace std;
 
+namespace pvol 
+{
+
 class ISPCObject 
 {
 public:
@@ -23,3 +26,4 @@ protected:
   void *ispc;
 };
 
+}

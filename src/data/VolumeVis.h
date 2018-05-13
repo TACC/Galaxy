@@ -9,7 +9,6 @@ using namespace std;
 
 #include "KeyedObject.h"
 
-KEYED_OBJECT_POINTER(VolumeVis)
 
 #include "dtypes.h"
 #include "Application.h"
@@ -17,6 +16,11 @@ KEYED_OBJECT_POINTER(VolumeVis)
 #include "Volume.h"
 #include "MappedVis.h"
 #include "Datasets.h"
+
+namespace pvol
+{
+
+KEYED_OBJECT_POINTER(VolumeVis)
 
 
 class VolumeVis : public MappedVis
@@ -88,3 +92,4 @@ protected:
   vector<float> isovalues;
 };
 
+}

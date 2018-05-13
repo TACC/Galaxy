@@ -5,6 +5,8 @@
 #include <vector>
 
 using namespace std;
+namespace pvol
+{
 
 class Thread;
 
@@ -84,4 +86,6 @@ private:
   ThreadPool *pool;
   int id;
 };
+
+}
 

@@ -12,6 +12,9 @@ using namespace std;
 #include "KeyedDataObject.h"
 #include "OSPUtil.h"
 
+namespace pvol
+{
+
 KEYED_OBJECT_POINTER(OSPRayObject)
 
 class Box;
@@ -31,3 +34,4 @@ protected:
 	OSPObject theOSPRayObject;
 };
 
+}

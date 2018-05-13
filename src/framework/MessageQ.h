@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include "Message.h"
 
+namespace pvol
+{
 class MessageQ {
 public:
   MessageQ(const char *n) : name(n)
@@ -42,3 +44,5 @@ private:
 
 MessageQ *GetIncomingMessageQueue();
 MessageQ *GetOutgoingMessageQueue();
+}
+

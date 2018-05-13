@@ -12,6 +12,7 @@
 #include <ctime>
 #include <cstdlib>
 #include "tbb/tbb.h"
+
 #include "Application.h"
 #include "Renderer.h"
 #include "MessageManager.h"
@@ -21,10 +22,12 @@
 #include "Rays.h"
 #include "RayFlags.h"
 
-KEYED_OBJECT_TYPE(Camera)
-
 
 using namespace std;
+
+namespace pvol
+{
+KEYED_OBJECT_TYPE(Camera)
 
 vector<int> permutation;
 int rays_per_packet;
@@ -741,7 +744,10 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 
         shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(rlist, a));
 
+#ifdef PVOL_SYNCHRONOUS
 				renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
+#endif
+
         rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));
 				
       }
@@ -814,3 +820,5 @@ Camera::deserialize(unsigned char *p)
 
   return p;
 }
+}
+

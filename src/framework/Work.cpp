@@ -4,6 +4,8 @@
 #include "MessageManager.h"
 
 using namespace std;
+namespace pvol
+{
 
 Work::Work()
 {
@@ -54,3 +56,5 @@ Work::Broadcast(bool c, bool b)
 Work::~Work()
 {
 }
+}
+

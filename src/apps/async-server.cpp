@@ -5,11 +5,12 @@
 #include <pthread.h>
 #include <time.h>
 
+#include <ospray/ospray.h>
+
 #include "Socket.h"
 #include "Application.h"
 #include "Renderer.h"
 #include "ServerRendering.h"
-#include <ospray/ospray.h>
 
 #include "Debug.h"
 
@@ -17,6 +18,8 @@ using namespace std;
 
 #include "async.h"
 #include "quat.h"
+
+using namespace pvol;
 
 Socket *skt;
 

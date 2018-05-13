@@ -1,5 +1,8 @@
 #include "AsyncRendering.h"
 
+namespace pvol
+{
+
 KEYED_OBJECT_TYPE(AsyncRendering)
 
 void
@@ -68,3 +71,4 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
   }
 }
 
+}

@@ -11,6 +11,7 @@
 // #include "Renderer.h"
 #include "Particles.h"
 
+
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
 #include <vtkDataSetReader.h>
@@ -22,6 +23,9 @@
 #include <vtkXMLPolyDataReader.h>
 
 #include "../rapidjson/filestream.h"
+
+namespace pvol
+{
 
 WORK_CLASS_TYPE(Particles::LoadPartitioningMsg);
 
@@ -451,3 +455,4 @@ Particles::GetSamples(Particle*& s, int& n)
 	n = n_samples;
 }
 
+}

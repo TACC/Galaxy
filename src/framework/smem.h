@@ -5,6 +5,8 @@
 
 using namespace std;
 
+namespace pvol
+{
 class smem
 {
 public:
@@ -23,3 +25,5 @@ private:
 };
 
 typedef shared_ptr<smem> SharedP;
+}
+
