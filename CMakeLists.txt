@@ -1,13 +1,13 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(PVol)
 
-if (COMMAND cmake_policy)
+#if (COMMAND cmake_policy)
   # use rpath on MacOS
-  cmake_policy(SET CMP0042 NEW)
+  #cmake_policy(SET CMP0042 NEW)
 
   # ignore rpath setting effects for certain vars under MacOS
-  cmake_policy(SET CMP0068 NEW)
-endif(COMMAND cmake_policy)
+  #cmake_policy(SET CMP0068 NEW)
+#endif(COMMAND cmake_policy)
 
 # use C++11 foo explicitly
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -50,11 +50,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(EVENT_TRACKING FALSE CACHE BOOL "show events")
 
-find_path(THREADPOOL11_LIB_DIR libthreadpool11.a PATHS ${PROJECT_BINARY_DIR}/threadpool11/lib
+find_path(THREADPOOL11_LIB_DIR libthreadpool11.a PATHS ${PROJECT_BINARY_DIR}/third-party/threadpool11/lib
 											 DOC "library install directory for threadpool11 (recommend ${PROJECT_BINARY_DIR}/threadpool11/lib)")
 
 find_path(THREADPOOL11_INCLUDE_DIR threadpool11/threadpool11.hpp PATHS 
-											 ${PROJECT_BINARY_DIR}/threadpool11/include
+											 ${PROJECT_BINARY_DIR}/third-party/threadpool11/include
 											 DOC "include install directory for threadpool11 (recommend ${PROJECT_BINARY_DIR}/threadpool11/include)")
 
 link_directories(${THREADPOOL11_LIB_DIR})
