@@ -60,12 +60,7 @@ Volume::local_commit(MPI_Comm c)
 
   ospSetObject(ospv, "voxelData", data);
 
-	MPI_Barrier(c);
-	sleep(GetTheApplication()->GetRank());
-
   ospSetVec3i(ospv, "dimensions", counts);
-
-	MPI_Barrier(c);
 
   osp::vec3f origin;
   get_ghosted_local_origin(origin.x, origin.y, origin.z);
@@ -81,9 +76,7 @@ Volume::local_commit(MPI_Comm c)
 
 	ospSetf(ospv, "samplingRate", 1.0);
 
-	MPI_Barrier(c);
   ospCommit(ospv);
-	MPI_Barrier(c);
 
   if (theOSPRayObject)
     ospRelease(theOSPRayObject);
@@ -337,8 +330,16 @@ Volume::local_import(char *fname, MPI_Comm c)
 	float lmin, lmax, gmin, gmax;
 	get_local_minmax(lmin, lmax);
 
-	MPI_Allreduce(&lmax, &gmax, 1, MPI_FLOAT, MPI_MAX, c);
-	MPI_Allreduce(&lmin, &gmin, 1, MPI_FLOAT, MPI_MIN, c);
+	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+	{
+		MPI_Allreduce(&lmax, &gmax, 1, MPI_FLOAT, MPI_MAX, c);
+		MPI_Allreduce(&lmin, &gmin, 1, MPI_FLOAT, MPI_MIN, c);
+	}
+	else
+	{
+		gmin = lmin;
+		gmax = lmax;
+	}
 
 	set_global_minmax(gmin, gmax);
 
@@ -450,8 +451,16 @@ Volume::local_load_timestep(MPI_Comm c)
   double lminmax[2], gmin, gmax;
   vtkobj->GetScalarRange(lminmax);
 
-  MPI_Allreduce(lminmax+0, &gmin, 1, MPI_DOUBLE, MPI_MIN, c);
-  MPI_Allreduce(lminmax+1, &gmax, 1, MPI_DOUBLE, MPI_MAX, c);
+	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+	{
+		MPI_Allreduce(lminmax+0, &gmin, 1, MPI_DOUBLE, MPI_MIN, c);
+		MPI_Allreduce(lminmax+1, &gmax, 1, MPI_DOUBLE, MPI_MAX, c);
+	}
+	else
+	{
+		gmin = lminmax[0];
+		gmax = lminmax[1];
+	}
 
   set_global_minmax((float)gmin, (float)gmax);
 
@@ -465,7 +474,10 @@ Volume::local_load_timestep(MPI_Comm c)
     double lo[3], go[3];
     vtkobj->GetOrigin(lo);
 
-		MPI_Allreduce((const void *)lo, (void *)go, 3, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+		if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+			MPI_Allreduce((const void *)lo, (void *)go, 3, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+		else
+			for (int i = 0; i < 3; i++) go[i] = lo[i];
 
     global_origin.x = go[0];
     global_origin.y = go[1];
@@ -493,41 +505,49 @@ Volume::local_load_timestep(MPI_Comm c)
 		extent[4] += offset[2];
 		extent[5] += offset[2];
 
-    int extents[6*size];
-    MPI_Allgather((const void *)extent, 6, MPI_INT, (void *)extents, 6, MPI_INT, MPI_COMM_WORLD);
+		local_offset.x = extent[0];
+		local_counts.x = (extent[1] - extent[0]) + 1;
 
-    for (int i = 0; i < 6; i++) neighbors[i] = -1;
+		local_offset.y = extent[2];
+		local_counts.y = (extent[3] - extent[2]) + 1;
+
+		local_offset.z = extent[4];
+		local_counts.z = (extent[5] - extent[4]) + 1;
+
+		if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+		{
+			int extents[6*size];
+			MPI_Allgather((const void *)extent, 6, MPI_INT, (void *)extents, 6, MPI_INT, MPI_COMM_WORLD);
+			
+			for (int i = 0; i < 6; i++) neighbors[i] = -1;
 
 #define LAST(axis) (extents[i*6 + 2*axis + 1] == extent[2*axis + 0])
 #define NEXT(axis) (extents[i*6 + 2*axis + 0] == extent[2*axis + 1])
 #define EQ(axis)   (extents[i*6 + 2*axis + 0] == extent[2*axis + 0])
 
-    local_offset.x = extent[0];
-    local_counts.x = (extent[1] - extent[0]) + 1;
+			global_counts.x = global_counts.y = global_counts.z = 0;
 
-    local_offset.y = extent[2];
-    local_counts.y = (extent[3] - extent[2]) + 1;
+			for (int i = 0; i < size; i++)
+			{
+				if ((extents[i*6 + 2*0 + 1] + 1) > global_counts.x) global_counts.x = extents[i*6 + 2*0 + 1] + 1;
+				if ((extents[i*6 + 2*1 + 1] + 1) > global_counts.y) global_counts.y = extents[i*6 + 2*1 + 1] + 1;
+				if ((extents[i*6 + 2*2 + 1] + 1) > global_counts.z) global_counts.z = extents[i*6 + 2*2 + 1] + 1;
 
-    local_offset.z = extent[4];
-    local_counts.z = (extent[5] - extent[4]) + 1;
+				if (LAST(0) && EQ(1) && EQ(2)) neighbors[0] = i;
+				if (NEXT(0) && EQ(1) && EQ(2)) neighbors[1] = i;
 
-    global_counts.x = global_counts.y = global_counts.z = 0;
+				if (EQ(0) && LAST(1) && EQ(2)) neighbors[2] = i;
+				if (EQ(0) && NEXT(1) && EQ(2)) neighbors[3] = i;
 
-    for (int i = 0; i < size; i++)
-    {
-      if ((extents[i*6 + 2*0 + 1] + 1) > global_counts.x) global_counts.x = extents[i*6 + 2*0 + 1] + 1;
-      if ((extents[i*6 + 2*1 + 1] + 1) > global_counts.y) global_counts.y = extents[i*6 + 2*1 + 1] + 1;
-      if ((extents[i*6 + 2*2 + 1] + 1) > global_counts.z) global_counts.z = extents[i*6 + 2*2 + 1] + 1;
-
-      if (LAST(0) && EQ(1) && EQ(2)) neighbors[0] = i;
-      if (NEXT(0) && EQ(1) && EQ(2)) neighbors[1] = i;
-
-      if (EQ(0) && LAST(1) && EQ(2)) neighbors[2] = i;
-      if (EQ(0) && NEXT(1) && EQ(2)) neighbors[3] = i;
-
-      if (EQ(0) && EQ(1) && LAST(2)) neighbors[4] = i;
-      if (EQ(0) && EQ(1) && NEXT(2)) neighbors[5] = i;
-    }
+				if (EQ(0) && EQ(1) && LAST(2)) neighbors[4] = i;
+				if (EQ(0) && EQ(1) && NEXT(2)) neighbors[5] = i;
+			}
+		}
+		else
+		{
+			for (int i = 0; i < 6; i++) neighbors[i] = -1;
+			global_counts = local_counts;
+		}
   }
 
 	ghosted_local_offset = local_offset;

@@ -75,7 +75,7 @@ main(int argc, char * argv[])
   ospInit(&argc, (const char **)argv);
 
 	Application theApplication(&argc, &argv);
-	theApplication.Start();
+	theApplication.Start(false);
 
 	Renderer::Initialize();
 

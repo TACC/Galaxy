@@ -179,7 +179,10 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			r.get();
 
 		int global_spawned_ray_count, local_spawned_ray_count = renderingSet->getSpawnedRayCount();
-		MPI_Allreduce(&local_spawned_ray_count, &global_spawned_ray_count, 1, MPI_INT, MPI_SUM, c);
+		if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+			MPI_Allreduce(&local_spawned_ray_count, &global_spawned_ray_count, 1, MPI_INT, MPI_SUM, c);
+		else
+			global_spawned_ray_count = local_spawned_ray_count;
 
 		if (global_spawned_ray_count == 0)
 			renderingSet->Finalize();

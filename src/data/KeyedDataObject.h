@@ -96,7 +96,6 @@ protected:
 
 			o->local_import(p, c);
 
-			MPI_Barrier(c);
 			return false;
 		}
   };
