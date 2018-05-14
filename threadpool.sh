@@ -1,4 +1,3 @@
-echo XX $1 XX $2 XX
 test ! -d $2/third-party && mkdir $2/third-party
 
 if test ! -d $2/third-party/threadpool11 ; then 
