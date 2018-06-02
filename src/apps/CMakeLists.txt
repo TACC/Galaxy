@@ -83,6 +83,10 @@ endif (PVOL_SYNCHRONOUS)
 	# SET(BINS ${BINS} state)
 # endif (WITH_STATE)
 
+add_executable(piso piso.cpp)
+target_link_libraries(piso ${VTK_LIBRARIES} ${MPI_C_LIBRARIES})
+set(BINS piso ${BINS})
+
 add_executable(client client.cpp)
 target_link_libraries(client Framework)
 set(BINS client ${BINS})

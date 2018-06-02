@@ -18,6 +18,8 @@ using namespace std;
 #include "Box.h"
 #include "Datasets.h"
 #include "VolumeVis.h"
+#include "ParticlesVis.h"
+#include "TrianglesVis.h"
 #include "MappedVis.h"
 
 namespace pvol

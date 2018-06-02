@@ -221,7 +221,6 @@ ThreadPool::Allocate(bool wait)
   {
     while (idle_threads.size() == 0)
     {
-      cerr << ".";
       Wait();
     }
   }

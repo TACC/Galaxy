@@ -738,8 +738,6 @@ RenderingSet::_dumpState(MPI_Comm c, const char *base)
 
   if (GetTheApplication()->GetRank() == 0)
 	{
-		std::cerr << ".";
-
 		int rlk = 0, ifk = 0;
 		for (int i = 0; i < GetTheApplication()->GetSize(); i++)
 			rlk += rcvdata[i*5+1], ifk += rcvdata[i*5+2];

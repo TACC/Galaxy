@@ -1,0 +1,11 @@
+#pragma once
+
+#include "MappedVis.ih"
+#include "SDK/math/vec.ih"
+
+struct TrianglesVis_ispc
+{
+  struct Vis_ispc vis;
+};  
+
+typedef uniform TrianglesVis_ispc *uniform pTrianglesVis_ispc;

@@ -49,10 +49,10 @@ KeyedDataObject::CopyPartitioning(KeyedDataObjectP o)
 void 
 KeyedDataObject::initialize()
 {
+	super::initialize();
   time_varying = false;
   attached = false;
   skt = NULL;
-  //std::cerr << "KeyedDataObject::init: " << this << " skt " << skt << "\n";
 }
 
 bool

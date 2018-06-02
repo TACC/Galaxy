@@ -19,8 +19,8 @@ KEYED_OBJECT_TYPE(OSPRayObject)
 void
 OSPRayObject::initialize()
 {
-	theOSPRayObject = NULL;
   super::initialize();
+	theOSPRayObject = NULL;
 }
 
 OSPRayObject::~OSPRayObject()

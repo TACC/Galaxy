@@ -33,6 +33,14 @@ def recur(s, vis, vis_set, anno):
         else:
             recur(s[1:], vis + [ newop ], vis_set, anno)
 
+    if curop['type'] == 'Triangles':
+      
+        newop = dict(curop)
+        if len(s) == 1:
+            vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+        else:
+            recur(s[1:], vis + [ newop ], vis_set, anno)
+
     elif curop['type'] == 'Volume Rendering':
 
         newop = dict(curop)

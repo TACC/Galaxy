@@ -13,6 +13,28 @@ Box::Box(vec3f m, vec3f M)
 	set(m, M);
 }
 
+Box::Box(float minx, float miny, float minz, float maxx, float maxy, float maxz)
+{
+	xyz_min.x = minx;
+	xyz_min.y = miny;
+	xyz_min.z = minz;
+
+	xyz_max.x = maxx;
+	xyz_max.y = maxy;
+	xyz_max.z = maxz;
+}
+
+Box::Box(float *p)
+{
+	xyz_min.x = *p++;
+	xyz_min.y = *p++;
+	xyz_min.z = *p++;
+
+	xyz_max.x = *p++;
+	xyz_max.y = *p++;
+	xyz_max.z = *p++;
+}
+
 void
 Box::set(vec3f m, vec3f M)
 {

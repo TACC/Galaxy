@@ -9,6 +9,7 @@ using namespace std;
 
 #include "Geometry.h"
 #include "Particles.h"
+#include "Triangles.h"
 
 namespace pvol
 {
@@ -20,6 +21,7 @@ Geometry::Register()
 {
 	RegisterClass();
 	Particles::Register();
+	Triangles::Register();
 }
 
 }

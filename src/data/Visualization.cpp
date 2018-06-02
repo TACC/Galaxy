@@ -275,13 +275,19 @@ Visualization::LoadFromJSON(Value& v)
 		VisP vp;
 		if (t == "Volume")
 		{
-			vp = VolumeVis::NewP();
+			VisP vp = VolumeVis::NewP();
 			vp->LoadFromJSON(vv);
 			AddVolumeVis(vp);
 		}
 		else if (t == "Particles")
 		{
-			VisP p = Vis::NewP();
+			VisP p = ParticlesVis::NewP();
+			p->LoadFromJSON(vv);
+			AddOsprayGeometryVis(p);
+		}
+		else if (t == "Triangles")
+		{
+			VisP p = TrianglesVis::NewP();
 			p->LoadFromJSON(vv);
 			AddOsprayGeometryVis(p);
 		}

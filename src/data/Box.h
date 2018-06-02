@@ -29,6 +29,8 @@ public:
 	Box() : initialized(false) {}
 	Box(float *o, int *n, float *d);
 	Box(vec3f m, vec3f M);
+	Box(float minx, float miny, float minz, float maxx, float maxy, float maxz);
+	Box(float *);
 	
 	~Box();
 
@@ -138,10 +140,11 @@ public:
            (p.z >= xyz_min.z) && (p.z <= xyz_max.z);
   }
 
-private:
-	bool initialized;
 	vec3f xyz_min;
 	vec3f xyz_max;
+
+private:
+	bool initialized;
 };
 
 }

@@ -368,7 +368,6 @@ public:
     {
 			if (dst < r->GetRayCount())
 				r->Truncate(dst);
-std::cerr << "posted " << dst << "rays\n";
 
 #if defined(EVENT_TRACKING)
       GetTheEventTracker()->Add(new InitialRaysEvent(r));
@@ -382,7 +381,6 @@ std::cerr << "posted " << dst << "rays\n";
 
 #ifdef PVOL_SYNCHRONOUS
 		r->GetTheRenderingSet()->DecrementActiveCameraCount(dst);				
-		std::cerr << "-";
 #endif
 
 #if defined(EVENT_TRACKING)
@@ -721,7 +719,6 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
           {
 #ifdef PVOL_SYNCHRONOUS
 						renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
-						std::cerr << "+";
 #endif
             shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(rlist, a));
             rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));

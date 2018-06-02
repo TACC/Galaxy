@@ -29,7 +29,7 @@ ParticlesVis::~ParticlesVis()
 void
 ParticlesVis::initialize()
 {
-  Vis::initialize();
+  super::initialize();
 }
 
 void

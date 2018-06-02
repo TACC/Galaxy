@@ -1,10 +1,10 @@
 
 #include "Application.h"
-// #include "Renderer.h"
 #include "KeyedDataObject.h"
 #include "Datasets.h"
 #include "Volume.h"
 #include "Particles.h"
+#include "Triangles.h"
 
 namespace pvol
 {
@@ -69,6 +69,8 @@ Datasets::loadTyped(Value& v)
 		kop = Particles::NewP();
 	else if (type == "Volume")
     kop = Volume::NewP();
+	else if (type == "Triangles")
+    kop = Triangles::NewP();
 	else
 	{
 		std::cerr << "invalid Dataset type: " << type << "\n";

@@ -35,6 +35,9 @@ option(WITH_STATE        	"Include simple renderer?" ON)
 option(WITH_QT_VIEWER  		"Include QT-based viewer?" OFF)
 
 find_package(MPI)
+find_package(Boost)
+
+include_directories(${Boost_INCLUDE_DIRS})
 
 find_package(OpenGL REQUIRED)
 find_package(VTK REQUIRED NO_MODULE)

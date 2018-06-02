@@ -30,7 +30,7 @@ VolumeVis::~VolumeVis()
 void
 VolumeVis::initialize()
 {
-  MappedVis::initialize();
+  super::initialize();
   volume_rendering = false;
 }
 

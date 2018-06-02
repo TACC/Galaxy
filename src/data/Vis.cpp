@@ -8,6 +8,8 @@
 #include "Vis.h"
 #include "VolumeVis.h"
 #include "MappedVis.h"
+#include "ParticlesVis.h"
+#include "TrianglesVis.h"
 
 #include "OSPUtil.h"
 
@@ -24,6 +26,8 @@ Vis::Register()
 	RegisterClass();
 	MappedVis::Register();
 	VolumeVis::Register();
+	Particles::Register();
+	TrianglesVis::Register();
 }
 
 Vis::~Vis()
