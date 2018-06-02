@@ -199,7 +199,8 @@ void Application::Kill()
 bool
 Application::QuitMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 {
-	MPI_Barrier(coll_comm);
+	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+		MPI_Barrier(coll_comm);
 	return true;
 }
 

@@ -31,19 +31,8 @@ else()
 	set(BINS async-client-no-x ${BINS})
 
 	find_package(X11)
-	if (X11_FOUND)
-		message("X11 OK")
-	endif()
-	
 	find_package(OpenGL)
-	if (OpenGL_FOUND)
-		message("OpenGL OK")
-	endif()
-
 	find_package(GLUT)
-	if (GLUT_FOUND)
-		message("GLUT OK")
-	endif()
 
 	if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})

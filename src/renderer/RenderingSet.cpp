@@ -454,7 +454,11 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   int global_counts[4];
 	int local_counts[] = {rs->get_local_raylist_count(), rs->get_number_of_pixels_sent(), rs->get_number_of_pixels_received(), rs->CameraIsActive() ? 1 : 0};
 
-  MPI_Allreduce(local_counts, global_counts, 4, MPI_INT, MPI_SUM, c);
+	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+		MPI_Allreduce(local_counts, global_counts, 4, MPI_INT, MPI_SUM, c);
+	else
+		for (int i = 0; i < 4; i++)
+			global_counts[i] = local_counts[i];
 
 	// If no raylists exist anywhere, and the number of received pixels matches the number of sent pixels,
 	// and there are no camera rays currently being generated, this rendering is done.
@@ -723,8 +727,6 @@ RenderingSet::_initStateTimer()
 void
 RenderingSet::_dumpState(MPI_Comm c, const char *base)
 {
-	MPI_Barrier(c);
-
   int snddata[5];
   int *rcvdata = (int *)malloc(GetTheApplication()->GetSize() * 5 * sizeof(int));
 
@@ -734,7 +736,11 @@ RenderingSet::_dumpState(MPI_Comm c, const char *base)
 
   RayQManager::GetTheRayQManager()->GetQueuedRayCount(snddata[3], snddata[4]);
 
-	MPI_Gather((const void *)snddata, 5, MPI_INT, (void *)rcvdata, 5, MPI_INT, 0, c);
+	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+		MPI_Gather((const void *)snddata, 5, MPI_INT, (void *)rcvdata, 5, MPI_INT, 0, c);
+	else
+		for (int i = 0; i < 5; i++)
+			rcvdata[i] = snddata[i];
 
   if (GetTheApplication()->GetRank() == 0)
 	{

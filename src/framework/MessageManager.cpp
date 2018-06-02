@@ -101,7 +101,7 @@ MessageManager::workThread(void *p)
   mm->Lock();
   mm->wait--;
 	if (mm->wait == 0)
-		mm->Wait();
+		mm->Signal();
   mm->Unlock();
 
   Message m;
@@ -164,8 +164,7 @@ void *MessageManager::messageThread(void *p)
 
 	register_thread("messageThread");
 
-	bool with_mpi = (bool)p;
-	setup_mpi(app, mm, with_mpi);
+	setup_mpi(app, mm);	// just sets rank=0 and size=1 if no MPI
 
 	mm->Lock();
   mm->wait--;
@@ -197,7 +196,7 @@ void *MessageManager::messageThread(void *p)
 
 			// Anything coming across MPI?
 	
-			if (! mm->quit)
+			if (mm->UsingMPI() && ! mm->quit)
          mm->quit = check_mpi(mm);
 
 			// Anything outgoing?
@@ -232,7 +231,8 @@ void *MessageManager::messageThread(void *p)
 	if (mm->work_tid) pthread_join(mm->work_tid, NULL);
 	mm->Unlock();
 
-	MPI_Finalize();
+	if (mm->UsingMPI())
+		MPI_Finalize();
 
   pthread_exit(NULL);
 }
@@ -270,11 +270,12 @@ MessageManager::~MessageManager()
 	Unlock();
 }
 
-void MessageManager::Start(bool with_mpi)
+void MessageManager::Start(bool m)
 {
 	wait = 2;
+	with_mpi = m;
 
-  if (pthread_create(&message_tid, NULL, messageThread, (void *)with_mpi))
+  if (pthread_create(&message_tid, NULL, messageThread, NULL))
 	{
     std::cerr << "Failed to spawn messaging thread\n";
     exit(1);
@@ -443,7 +444,7 @@ MessageManager::check_outgoing(MessageManager *mm)
 		int nsent = 0;
 		if (outgoing_message)
 		{
-			if (outgoing_message->IsBroadcast() || (outgoing_message->GetDestination() != app->GetRank()))
+			if (mm->UsingMPI() && (outgoing_message->IsBroadcast() || (outgoing_message->GetDestination() != app->GetRank())))
 				nsent = mm->Export(outgoing_message);
 
 			if (outgoing_message->IsBroadcast())
@@ -522,9 +523,9 @@ MessageManager::check_clientserver(MessageManager *mm)
 }
 
 void
-MessageManager::setup_mpi(Application *app, MessageManager *mm, bool use_mpi)
+MessageManager::setup_mpi(Application *app, MessageManager *mm)
 {
-	if (use_mpi)
+	if (mm->UsingMPI())
 	{
 		int pvd;
 #if 0

@@ -17,7 +17,7 @@ public:
   MessageManager();
   ~MessageManager();
 
-  void Start(bool with_mpi = true);	// By default, not servering an external connection
+  void Start(bool m = true);	// By default, not servering an external connection
 	void WaitForShutdown();
 	
 	void Run();
@@ -69,11 +69,13 @@ public:
 	void Signal() { pthread_cond_signal(&cond); }
 	void Wait()   { pthread_cond_wait(&cond, &lock); }
 
+	bool UsingMPI() { return with_mpi; }
+
 private:
 	int clientserver_skt;
 	int next_message_size;
 
-	static void setup_mpi(Application*, MessageManager*, bool with_mpi);
+	static void setup_mpi(Application*, MessageManager*);
 	static bool check_clientserver(MessageManager*);
 	static bool check_mpi(MessageManager*);
 	static bool check_outgoing(MessageManager*);
@@ -94,6 +96,7 @@ private:
   int mpi_rank;
   int mpi_size;
 
+	bool with_mpi;
 	bool pause;
 	bool quit;
 
