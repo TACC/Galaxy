@@ -32,8 +32,6 @@ Triangles::Register()
   RegisterClass();
 }
 
-
-
 void
 Triangles::initialize()
 {
@@ -47,6 +45,7 @@ void
 Triangles::local_import(char *f, MPI_Comm c)
 {
 	string filename(f);
+  float *dboxes = new float[6 * GetTheApplication()->GetSize()];
 
 	size_t i = filename.find_last_of('/');
 	string spath(i == string::npos ? "." : filename.substr(0, i));
@@ -54,45 +53,66 @@ Triangles::local_import(char *f, MPI_Comm c)
   i = filename.find_last_of('.');
   string ext(filename.substr(i+1));
 
-  ptree tree;
-
-  ifstream ifs(filename);
-  read_xml(ifs, tree);
-  ifs.close();
-
   string part = "";
 
 	int k = -1;
-	if (ext == "pvtu" || ext == "pvtp")
+	if (ext == "pvtu" || ext == "pvtp" || ext == "pvd")
 	{
-		const char *section = (ext == "pvtu") ? "VTKFile.PUnstructuredGrid" : "VTKFile.PPolyData";
-	
+		ptree tree;
+
+		ifstream ifs(filename);
+		read_xml(ifs, tree);
+		ifs.close();
+
+		const char *section = (ext == "pvtu") ? "VTKFile.PUnstructuredGrid" :
+																(ext == "pvtp") ? "VTKFile.PPolyData" : "VTKFile.Collection";
+		const char *tag     = (ext == "pvtu" || ext == "pvtp") ? "Piece" : "DataSet";
+		const char *attr    = (ext == "pvtu" || ext == "pvtp") ? "<xmlattr>.Source" : "<xmlattr>.file";
+
 		BOOST_FOREACH(ptree::value_type const& it, tree.get_child(section))
 		{
-			if (it.first == "Piece")
+			if (it.first == tag)
 			{
 				k++;
 				if (k == GetTheApplication()->GetRank())
 				{
-					part = it.second.get("<xmlattr>.Source", "none");
+					part = it.second.get(attr, "none");
 					break;
 				}
 			}
 		}
-	}
-	else if (ext == "pvd")
-	{
-		BOOST_FOREACH(ptree::value_type const& it, tree.get_child("VTKFile.Collection"))
+
+		if (k != GetTheApplication()->GetRank())
 		{
-			if (it.first == "DataSet")
-			{
-				k++;
-				if (k == GetTheApplication()->GetRank())
-				{
-					part = it.second.get("<xmlattr>.file", "none");
-					break;
-				}
-			}
+			cerr << "Not enough partitions\n";
+			exit(1);
+		}
+
+	}
+	else if (ext == "ptri")
+	{
+		ifstream ifs;
+		ifs.open(filename);
+
+		string s;
+		while (getline(ifs, s))
+		{
+			k++;
+			stringstream ss(s);
+			ss >> dboxes[6*k + 0] >> dboxes[6*k + 1] 
+			   >> dboxes[6*k + 2] >> dboxes[6*k + 3] 
+			   >> dboxes[6*k + 4] >> dboxes[6*k + 5] 
+				 >> s;
+			if (k == GetTheApplication()->GetRank())
+				part = s;
+		}
+
+		ifs.close();
+
+		if (k != (GetTheApplication()->GetSize() - 1))
+		{
+			cerr << "wrong number of partitions\n";
+			exit(1);
 		}
 	}
 	else 
@@ -101,18 +121,12 @@ Triangles::local_import(char *f, MPI_Comm c)
 		exit(1);
 	}
 
-	if (k != GetTheApplication()->GetRank())
-	{
-		cerr << "Not enough partitions\n";
-		exit(1);
-	}
-
 	vtkPointSet *pset = NULL;
 
   i = part.find_last_of('.');
-  ext = part.substr(i+1);
+  string pext = part.substr(i+1);
 
-	if (ext == "vtu")
+	if (pext == "vtu")
 	{
 		VTKError *ve = VTKError::New();
 		vtkXMLUnstructuredGridReader* rdr = vtkXMLUnstructuredGridReader::New();
@@ -133,7 +147,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 		pset = (vtkPointSet *)ug;
 		pset->Register(pset);
 	}
-	else if (ext == "vtp")
+	else if (pext == "vtp")
 	{
 		VTKError *ve = VTKError::New();
 
@@ -161,15 +175,9 @@ Triangles::local_import(char *f, MPI_Comm c)
 		exit(1);
 	}
 
-	if (k != GetTheApplication()->GetRank())
-	{
-		cerr << "Not enough partitions\n";
-		exit(1);
-	}
-
   vtkPoints* pts = pset->GetPoints();
-  vtkFloatArray *parray  = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
 
+  vtkFloatArray *parray = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
   vtkFloatArray *narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals"));
 
 	int n_original_vertices = pset->GetNumberOfPoints();
@@ -179,6 +187,8 @@ Triangles::local_import(char *f, MPI_Comm c)
 	for (int i = 0; i < n_original_vertices; i++)
 		vmap[i] = -1;
 
+	// NOTE: we're going to make sure here that there aren't any unreferenced vertices
+	
 	triangles = new int[3*n_triangles];
 	n_vertices = 0;
 
@@ -250,15 +260,42 @@ Triangles::local_import(char *f, MPI_Comm c)
 
 	delete[] vmap;
 
+	// Now the opartition is loaded.   If this ISN'T a ptri file containing
+	// BB's, we compute the BB based on the vertices.
+	
+	if (ext == "ptri")
+	{
+		local_box = Box(dboxes + 6*GetTheApplication()->GetRank());
+	}
+	else
+	{
+		bool first = true;
+		float *v = vertices;
+		for (int i = 0; i < n_vertices; i++)
+			if (first)
+			{
+				first = false;
+				local_box.xyz_min.x = local_box.xyz_max.x = v[0];
+				local_box.xyz_min.y = local_box.xyz_max.y = v[1];
+				local_box.xyz_min.z = local_box.xyz_max.z = v[2];
+			}
+			else
+			{
+				if (v[0] < local_box.xyz_min.x) local_box.xyz_min.x = v[0];
+				if (v[0] > local_box.xyz_max.x) local_box.xyz_max.x = v[0];
+				if (v[1] < local_box.xyz_min.y) local_box.xyz_min.y = v[1];
+				if (v[1] > local_box.xyz_max.y) local_box.xyz_max.y = v[1];
+				if (v[2] < local_box.xyz_min.z) local_box.xyz_min.z = v[2];
+				if (v[2] > local_box.xyz_max.z) local_box.xyz_max.z = v[2];
+			}
 
-	float box[] = {
-		local_box.xyz_min.x, local_box.xyz_min.y, local_box.xyz_min.z,
-		local_box.xyz_max.x, local_box.xyz_max.y, local_box.xyz_max.z
-	};
+			float box[] = {
+				local_box.xyz_min.x, local_box.xyz_min.y, local_box.xyz_min.z,
+				local_box.xyz_max.x, local_box.xyz_max.y, local_box.xyz_max.z
+			};
 
-	float *distributed_boxes = new float[GetTheApplication()->GetSize() * sizeof(box)];
-
-	MPI_Allgather((const void *)&box, sizeof(box), MPI_CHAR, (void *)distributed_boxes, sizeof(box), MPI_CHAR, c);
+		MPI_Allgather((const void *)&box, sizeof(box), MPI_CHAR, (void *)dboxes, sizeof(box), MPI_CHAR, c);
+	}
 
 	for (int i = 0; i < 6; i++) neighbors[i] = -1;
 
@@ -273,7 +310,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 	{
 		if (i != GetTheApplication()->GetRank())
 		{
-			Box b(distributed_boxes + i*6);
+			Box b(dboxes + i*6);
 
 			if (global_box.xyz_min.x > b.xyz_min.x) global_box.xyz_min.x = b.xyz_min.x;
 			if (global_box.xyz_max.x < b.xyz_max.x) global_box.xyz_max.x = b.xyz_max.x;
