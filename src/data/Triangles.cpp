@@ -64,8 +64,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 		read_xml(ifs, tree);
 		ifs.close();
 
-		const char *section = (ext == "pvtu") ? "VTKFile.PUnstructuredGrid" :
-																(ext == "pvtp") ? "VTKFile.PPolyData" : "VTKFile.Collection";
+		const char *section = (ext == "pvtu") ? "VTKFile.PUnstructuredGrid" : (ext == "pvtp") ? "VTKFile.PPolyData" : "VTKFile.Collection";
 		const char *tag     = (ext == "pvtu" || ext == "pvtp") ? "Piece" : "DataSet";
 		const char *attr    = (ext == "pvtu" || ext == "pvtp") ? "<xmlattr>.Source" : "<xmlattr>.file";
 
