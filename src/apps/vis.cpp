@@ -21,7 +21,7 @@ syntax(char *a)
   std::cerr << "  -C         put output in Cinema DB (no)\n";
   std::cerr << "  -D         run debugger\n";
   std::cerr << "  -A         wait for attachment\n";
-  std::cerr << "  -s w h     window width, height (256 256)\n";
+  std::cerr << "  -s w h     window width, height (1920 1080)\n";
   std::cerr << "  -S k       render only every k'th rendering\n";
   std::cerr << "  -c         client/server interface\n";
   exit(1);
@@ -88,7 +88,7 @@ int main(int argc,  char *argv[])
   bool dbg = false;
   bool atch = false;
   bool cinema = false;
-  int width = 256, height = 256;
+  int width = 1920, height = 1080;
   int skip = 0;
   bool clientserver = false;
   ClientServer cs;

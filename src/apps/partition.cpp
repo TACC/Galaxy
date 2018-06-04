@@ -1,4 +1,5 @@
 #include <math.h>
+#include <mpi.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -130,7 +131,7 @@ isIn(Particle& p, float *extent, float max_radius)
   bool e = ((p.xyz.z+max_radius) >= extent[4]);
   bool f = ((p.xyz.z-max_radius) < extent[5]);
 
-  return a && b && c && d && e && f;
+	return a && b && c && d && e && f;
 }
 
 void
@@ -233,6 +234,8 @@ rwnd()
 int
 main(int argc, char *argv[])
 {
+	MPI_Init(&argc, &argv);
+
   string obase = "", iname = "";
   string volname = "";
   int npartitions = 1;
@@ -268,6 +271,12 @@ main(int argc, char *argv[])
 
   if (iname == "" || obase == "")
     syntax(argv[0]);
+
+	if (mkdir(obase.c_str(), 0755) && errno != EEXIST)
+	{
+		std::cerr << "unable to create partition directory\n";
+		exit(1);
+	}
     
   itemsize = (input_has_v ? 4 : 3)*sizeof(float);
 
@@ -385,7 +394,7 @@ main(int argc, char *argv[])
   for (int i = 0; i < npartitions; i++)
   {
     char buf[256];
-    sprintf(buf, "%s-0-%04d.sph", obase.c_str(), i);
+    sprintf(buf, "%s/%s-%04d.sph", obase.c_str(), obase.c_str(), i);
     int fd = open(buf, O_TRUNC | O_WRONLY | O_CREAT, 0644);
     close(fd);
   }
@@ -422,13 +431,15 @@ main(int argc, char *argv[])
       float *ge = ghosted_extents;
       for (int j = 0; j < npartitions; j++, ge += 6)
         if (isIn(particle, ge, max_radius))
+				{
 					partitions[j].push_back(particle);
+				}
     }
 
     for (int i = 0; i < npartitions; i++)
     {
       char buf[256];
-      sprintf(buf, "%s-0-%04d.sph", obase.c_str(), i);
+      sprintf(buf, "%s/%s-%04d.sph", obase.c_str(), obase.c_str(), i);
       int fd = open(buf, O_APPEND | O_WRONLY, 0644);
       int n = partitions[i].size();
       unsigned char *p = (unsigned char *)partitions[i].data();
@@ -456,7 +467,7 @@ main(int argc, char *argv[])
     part.AddMember("extent", extent, doc.GetAllocator());
 
     char buf[256];
-    sprintf(buf, "%s-0-%04d.sph", obase.c_str(), i);
+		sprintf(buf, "%s/%s-%04d.sph", obase.c_str(), obase.c_str(), i);
     part.AddMember("filename", Value().SetString(buf, doc.GetAllocator()), doc.GetAllocator());
 
     parts.PushBack(part, doc.GetAllocator());
@@ -477,4 +488,6 @@ main(int argc, char *argv[])
 
   delete[] ghosted_extents;
   delete[] extents;
+
+  MPI_Finalize();
 }
