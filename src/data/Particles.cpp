@@ -100,12 +100,23 @@ Particles::Import(string s)
 
 	set_attached(false);
 
-	float r[2];
-	r[0] = radius_scale;
-	r[1] = radius;
-	Geometry::Import(buf, (void *)r, sizeof(r));
+	struct foo
+	{
+		float r[2];
+		char s[2];
+	};
 
-	delete[] buf;
+	int sz = strlen(s.c_str()) + 1 + 2*sizeof(float);
+	char *tmp = new char[sz];
+	struct foo *args = (struct foo *)tmp;
+	
+	args->r[0] = radius_scale;
+	args->r[1] = radius;
+	strcpy(args->s, s.c_str());
+
+	Geometry::Import(buf, (void *)tmp, sz);
+
+	delete[] tmp;
 }
 
 void
@@ -301,10 +312,21 @@ void
 Particles::local_import(char *p, MPI_Comm c)
 {
   string json(p);
-  void *args = p + strlen(p) + 1;
 
-  radius_scale = ((float *)args)[0];
-  radius = ((float *)args)[1];
+  struct foo
+  {
+    float r[2];
+    char s[2];
+  };
+
+  struct foo *args = (struct foo *)(p + strlen(p) + 1);
+
+  radius_scale = args->r[0];
+  radius = args->r[1];
+
+  string f(args->s);
+	string dir = (f.find_last_of("/") == f.npos) ? "./" : f.substr(0, f.find_last_of("/") + 1);
+	// cerr << "rs: " << radius_scale << " radius: " << radius << " dor " << dir << "\n";
 
 	if (vtkobj) vtkobj->Delete();
 	vtkobj = NULL;
@@ -323,17 +345,19 @@ Particles::local_import(char *p, MPI_Comm c)
 
 	if (! strcmp(fname + (strlen(fname)-3), "sph"))
 	{
+		string f = dir + string(fname);
+
 		struct stat info;
-		if (stat(fname, &info))
+		if (stat(f.c_str(), &info))
 		{
-			cerr << "Cannot open " << fname << "\n";
+			cerr << "Cannot open " << f << "\n";
 			exit(1);
 		}
 
 		n_samples = info.st_size / sizeof(Particle);
 		samples  = new Particle[n_samples];
 
-		int fd = open(fname, O_RDONLY);
+		int fd = open(f.c_str(), O_RDONLY);
 
 		char *p = (char *)samples;
 		int m, n = info.st_size;
@@ -343,7 +367,7 @@ Particles::local_import(char *p, MPI_Comm c)
 			m = read(fd, p, n);
 			if (m < 0)
 			{
-				cerr << "Error reading " << fname << "\n";
+				cerr << "Error reading " << f.c_str() << "\n";
 				exit(1);
 			}
 		}
@@ -352,8 +376,10 @@ Particles::local_import(char *p, MPI_Comm c)
 	}
 	else if (! strcmp(fname + (strlen(fname)-3), "vtp"))
 	{
+		string f = dir + string(fname);
+
 		vtkXMLPolyDataReader *reader = vtkXMLPolyDataReader::New();
-		reader->SetFileName(fname);
+		reader->SetFileName(f.c_str());
 		reader->Update();
 		vtkobj = vtkPolyData::New();
 		vtkobj->ShallowCopy(reader->GetOutput());

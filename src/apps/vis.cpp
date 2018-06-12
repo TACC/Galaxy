@@ -18,10 +18,10 @@ syntax(char *a)
 {
   std::cerr << "syntax: " << a << " [options] json\n";
   std::cerr << "optons:\n";
-  std::cerr << "  -C         put output in Cinema DB (no)\n";
+  std::cerr << "  -C cdb     put output in Cinema DB (no)\n";
   std::cerr << "  -D         run debugger\n";
   std::cerr << "  -A         wait for attachment\n";
-  std::cerr << "  -s w h     window width, height (256 256)\n";
+  std::cerr << "  -s w h     window width, height (1920 1080)\n";
   std::cerr << "  -S k       render only every k'th rendering\n";
   std::cerr << "  -c         client/server interface\n";
   exit(1);
@@ -84,11 +84,12 @@ public:
 int main(int argc,  char *argv[])
 {
   string statefile("");
+  string  cdb("");
 	char *dbgarg;
   bool dbg = false;
   bool atch = false;
   bool cinema = false;
-  int width = 256, height = 256;
+  int width = 1920, height = 1080;
   int skip = 0;
   bool clientserver = false;
   ClientServer cs;
@@ -101,7 +102,7 @@ int main(int argc,  char *argv[])
 	for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-C")) cinema = true;
+    else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strcmp(argv[i], "-c")) clientserver = true;
     // else if (!strcmp(argv[i], "-D")) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if ((argv[i][0] == '-') && (argv[i][1] == 'D')) dbg = true, atch = false, dbgarg = argv[i] + 2;
@@ -225,12 +226,15 @@ int main(int argc,  char *argv[])
 
       rs->WaitForDone();
 
-      rs->SaveImages(cinema ? "cinema.cdb/image/image" : "image");
-
       long t_rendering_end = my_time();
 
-      std::cout << "render prep " << (t_rendering_start - t_run_start) / 1000000000.0 << " seconds\n";
-      std::cout << "renderend " << (t_rendering_end - t_rendering_start) / 1000000000.0 << " seconds\n";
+      rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image");
+
+      long t_save_end = my_time();
+
+      std::cout << "TIMING prep " << (t_rendering_start - t_run_start) / 1000000000.0 << " seconds\n";
+      std::cout << "TIMING render " << (t_rendering_end - t_rendering_start) / 1000000000.0 << " seconds\n";
+      std::cout << "TIMING write " << (t_save_end - t_rendering_end) / 1000000000.0 << " seconds\n";
     }
 
     theApplication.QuitApplication();

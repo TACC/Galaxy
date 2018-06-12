@@ -1,5 +1,6 @@
 test ! -d $2/third-party && mkdir $2/third-party
 
+module unload boost
 if test ! -d $2/third-party/threadpool11 ; then 
 
 	echo CONFIGURING THREADPOOL11

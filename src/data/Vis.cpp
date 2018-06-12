@@ -26,7 +26,7 @@ Vis::Register()
 	RegisterClass();
 	MappedVis::Register();
 	VolumeVis::Register();
-	Particles::Register();
+	ParticlesVis::Register();
 	TrianglesVis::Register();
 }
 
