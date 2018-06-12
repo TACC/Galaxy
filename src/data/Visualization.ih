@@ -7,11 +7,6 @@ struct Model;
 #include "MappedVis.ih"
 #include "VolumeVis.ih"
 
-//struct Vis_ispc;
-//struct MappedVis_ispc;
-//struct VolumeVis_ispc;
-
-
 struct Visualization_ispc
 {
 	// The ISPC side needs to a model, containing all geometries

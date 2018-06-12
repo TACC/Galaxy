@@ -21,6 +21,7 @@ using namespace std;
 #include "ParticlesVis.h"
 #include "TrianglesVis.h"
 #include "MappedVis.h"
+#include "Lighting.h"
 
 namespace pvol
 {
@@ -65,7 +66,11 @@ public:
   int get_neighbor(int i) { return neighbors[i]; }
   bool has_neighbor(unsigned int face) { return neighbors[face] >= 0; }
 
+	Lighting *get_the_lights() { return &lighting; }
+
 protected:
+	Lighting lighting;
+
   virtual void allocate_ispc();
   virtual void initialize_ispc();
   virtual void destroy_ispc();

@@ -19,7 +19,6 @@
 #include "Datasets.h"
 #include "Camera.h"
 #include "RayQManager.h"
-#include "Lighting.h"
 #include "DataObjects.h"
 
 using namespace std;
@@ -71,6 +70,7 @@ Renderer::Initialize()
   SendRaysMsg::Register();
   SendPixelsMsg::Register();
   StatisticsMsg::Register();
+
 #ifdef PVOL_SYNCHRONOUS
   AckRaysMsg::Register();
 #endif // PVOL_SYNCHRONOUS
@@ -200,6 +200,8 @@ Renderer::LoadStateFromDocument(Document& doc)
 
 	if (v.HasMember("Lighting"))
 		lighting.LoadStateFromValue(v["Lighting"]);
+	else if (v.HasMember("lighting"))
+		lighting.LoadStateFromValue(v["lighting"]);
 
 	if (v.HasMember("Tracer"))
 		tracer.LoadStateFromValue(v["Tracer"]);
@@ -265,7 +267,7 @@ Renderer::ProcessRays(RayList *in)
 	{
 		nProcessed += in->GetRayCount();
 
-		RayList *out = tracer.Trace(lighting, visualization, in);
+		RayList *out = tracer.Trace(rendering->GetLighting(), visualization, in);
 
 		// the result are the generated rays which by definition begin
 		// here, so we enqueue them for local processing - again, not silent

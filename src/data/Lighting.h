@@ -25,9 +25,8 @@ public:
   void LoadStateFromValue(Value&);
   void SaveStateToValue(Value&, Document&);
 
-  void SetLights(int n, float* l);
-  void SetLights(int n, vec3f* l) { SetLights(n, (float *)l); }
-  void GetLights(int& n, float*& l);
+  void SetLights(int n, float* l, int* t);
+  void GetLights(int& n, float*& l, int*& t);
 
   void SetK(float ka, float kd);
   void GetK(float& ka, float& kd);
