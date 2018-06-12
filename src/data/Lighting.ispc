@@ -15,38 +15,70 @@ export void Lighting_initialize(void *uniform _self)
   self->ao_radius     = 1.0;
   self->Ka            = 0.5;
   self->Kd            = 0.5;
+
+#if 1
+  self->lights        = NULL;
+  self->types         = NULL;
+  self->nLights       = 0;
+#else
   self->lights        = uniform new vec3f[1];
+  self->types         = uniform new int[1];
   self->nLights       = 1;
   self->lights[0]     = make_vec3f(1, 1, 1);
+  self->types[0]      = 0;
+#endif
+
   self->epsilon       = 0.001;
 }
 
 export void Lighting_destroy(void *uniform _self)
 {
   Lighting_ispc *uniform self = (uniform Lighting_ispc *)_self;
-  delete[] self->lights;
+  if (self->lights) delete[] self->lights;
+  if (self->types) delete[] self->types;
   delete _self;
 }
 
-export void Lighting_SetLights(void *uniform _self, uniform int n, uniform float *uniform l)
+export void Lighting_SetLights(void *uniform _self, uniform int n, uniform float *uniform l, uniform int *uniform t)
 {
   Lighting_ispc *uniform self = (uniform Lighting_ispc *)_self;
+
 	if (n != self->nLights)
 	{
 		delete[] self->lights;
 		self->lights = uniform new vec3f[n];
+
+		if (self->types)
+		{
+			delete[] self->types;
+			self->types = NULL;
+		}
+		if (t)
+		{
+			self->types = uniform new int[n];
+			// print("Lighting_SetLights: % %\n", t, self->types);
+		}
+
 		self->nLights = n;
 	}
 
 	for (uniform int i = 0; i < n; i++)
+	{
 		self->lights[i] = make_vec3f(l[3*i + 0], l[3*i + 1], l[3*i + 2]);
+		if (t)
+			self->types[i] = t[i];
+	}
 }
 
-export void Lighting_GetLights(void *uniform _self, uniform int *uniform n, uniform float *uniform *uniform l)
+export void Lighting_GetLights(void *uniform _self, 
+		uniform int *uniform n, 
+		uniform float *uniform *uniform l, 
+		uniform int *uniform *uniform t)
 {
   Lighting_ispc *uniform self = (uniform Lighting_ispc *)_self;
 	*n = self->nLights;
 	*l = (uniform float *uniform)self->lights;
+	*t = (uniform int *uniform)self->types;
 }
 
 export void Lighting_SetK(void *uniform _self, uniform float ka, uniform float kd)

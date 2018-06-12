@@ -82,6 +82,8 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
+	Lighting *get_the_lights() { return &lighting; }
+
 
 private:
 	int frame;

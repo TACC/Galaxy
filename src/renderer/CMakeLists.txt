@@ -21,13 +21,12 @@ include_directories(${MPI_INCLUDE_PATH}
 
 link_directories(${CMAKE_BINARY_DIR}/src/data ${CMAKE_BINARY_DIR}/src/framework)
 
-set (ISPC_SOURCES Lighting.ispc TraceRays.ispc Rays.ispc)
+set (ISPC_SOURCES TraceRays.ispc Rays.ispc)
 
 set (CPP_SOURCES 
 					Camera.cpp 
 					Rendering.cpp 
 					RenderingSet.cpp 
-					Lighting.cpp 
                     Renderer.cpp
                     TraceRays.cpp
                     Rays.cpp 
@@ -41,7 +40,6 @@ install(FILES Renderer.h
         RenderingSet.h 
         Camera.h 
         Pixel.h 
-        Lighting.h 
         TraceRays.h 
         Rays.h 
         RayQManager.h 

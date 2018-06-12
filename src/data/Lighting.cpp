@@ -20,7 +20,6 @@ Lighting::~Lighting()
   destroy_ispc();
 }
 
-
 void
 Lighting::allocate_ispc()
 {
@@ -36,41 +35,45 @@ Lighting::initialize_ispc()
 void
 Lighting::LoadStateFromValue(Value& v)
 {
-  
-  //for (Value::ConstMemberIterator itr = v.MemberBegin(); itr != v.MemberEnd(); ++itr)
-    //std::cerr << "member " <<  itr->name.GetString() << "\n";
-    
   if (v.HasMember("Sources"))
   {
     Value& s = v["Sources"];
 
     float *lights = new float[s.Size() * 3];
+    int *types = new int[s.Size()];
 
     for (int i = 0; i < s.Size(); i++)
     {
       float x = s[i][0].GetDouble();
       float y = s[i][1].GetDouble();
       float z = s[i][2].GetDouble();
-      float d = sqrt(x*x + y*y + z*z);
-      if (d == 0.0)
-      {
-        std::cerr << "Directional light souce canot be (0,0,0) - (1,1,1 used)\n";
-        x = y = z = 0.577350;
-      }
-      else
-      {
-        x = x / d;
-        y = y / d;
-        z = z / d;
-      }
+			int t = s[i].Size() == 3 ? 0 : s[i][3].GetInt();
+
+			if (t == 0)
+			{
+				float d = sqrt(x*x + y*y + z*z);
+				if (d == 0.0)
+				{
+					std::cerr << "Directional light souce canot be (0,0,0) - (1,1,1 used)\n";
+					x = y = z = 0.577350;
+				}
+				else
+				{
+					x = x / d;
+					y = y / d;
+					z = z / d;
+				}
+			}
 
       lights[i*3 + 0] = x;
       lights[i*3 + 1] = y;
       lights[i*3 + 2] = z;
+			types[i] = t;
     }
 
-    SetLights(s.Size(), lights);
+    SetLights(s.Size(), lights, types);
     delete[] lights;
+    delete[] types;
   }
 
   if (v.HasMember("shadows"))
@@ -95,14 +98,15 @@ Lighting::SaveStateToValue(Value& v, Document& doc)
 
   {
     Value l(kArrayType);
-    int n; float *lptr;
-    GetLights(n, lptr);
+    int n; float *lptr; int *t;
+    GetLights(n, lptr, t);
     for (int i = 0; i < n; i++)
     {
       Value ll(kArrayType);
       ll.PushBack(Value().SetDouble(*lptr++), doc.GetAllocator());
       ll.PushBack(Value().SetDouble(*lptr++), doc.GetAllocator());
       ll.PushBack(Value().SetDouble(*lptr++), doc.GetAllocator());
+      ll.PushBack(Value().SetInt(*lptr++), doc.GetAllocator());
       l.PushBack(ll, doc.GetAllocator());
     }
     lv.AddMember("Sources", l, doc.GetAllocator());
@@ -138,11 +142,11 @@ Lighting::SaveStateToValue(Value& v, Document& doc)
 int
 Lighting::SerialSize()
 {
-  int n; float *p;
-  GetLights(n, p);
-  return 4*sizeof(int) +     // n_ao_rays, do_shadows, nLights
-         4*sizeof(float) +   // Ka, Kd, ao_radius, epsilon
-         n*sizeof(vec3f);    // the lights
+  int n; float *p; int *t;
+  GetLights(n, p, t);
+  return 4*sizeof(int) +     								// n_ao_rays, do_shadows, nLights
+         4*sizeof(float) +   								// Ka, Kd, ao_radius, epsilon
+         n*(sizeof(vec3f) + sizeof(int));   // the lights
 }
 
 unsigned char *
@@ -181,12 +185,14 @@ Lighting::Serialize(unsigned char *p)
   }
 
   {
-    int n; float *l;
-    GetLights(n, l);
+    int n; float *l; int *t;
+    GetLights(n, l, t);
     *(int *)p = n;
     p += sizeof(int);
     memcpy(p, l, n*sizeof(vec3f));
     p += n*sizeof(vec3f);
+    memcpy(p, t, n*sizeof(int));
+    p += n*sizeof(int);
   }
 
   return p;
@@ -209,22 +215,28 @@ Lighting::Deserialize(unsigned char *p)
 
   int n = *(int *)p;
   p += sizeof(int);
-  SetLights(n, (float *)p);
-  p = p + n*sizeof(vec3f);
+
+	float *l = (float *)p;
+	p += n*sizeof(vec3f);
+
+	int *t = (int *)p;
+	p += n*sizeof(int);
+
+  SetLights(n, (float *)l, t);
 
   return p;
 }
 
 void
-Lighting::SetLights(int n, float *l)
+Lighting::SetLights(int n, float *l, int *t)
 {
-  ispc::Lighting_SetLights(GetISPC(), n, l);
+  ispc::Lighting_SetLights(GetISPC(), n, l, t);
 }
 
 void 
-Lighting::GetLights(int& n, float*& l)
+Lighting::GetLights(int& n, float*& l, int*& t)
 {
-  ispc::Lighting_GetLights(GetISPC(), &n, &l);
+  ispc::Lighting_GetLights(GetISPC(), &n, &l, &t);
 }
 
 void

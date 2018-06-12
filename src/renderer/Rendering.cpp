@@ -4,6 +4,7 @@
 
 #include "Application.h"
 #include "KeyedObject.h"
+#include "Renderer.h"
 #include "RenderingSet.h"
 #include "Camera.h"
 #include "Visualization.h"
@@ -141,13 +142,70 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 bool
 Rendering::local_commit(MPI_Comm c)
 {
+	Lighting *theRendererLights = Renderer::GetTheRenderer()->get_the_lights(); 
+	Lighting *theVisualizationLights = GetTheVisualization()->get_the_lights();
+
+	CameraP  theCamera = GetTheCamera();
+
+	float viewpoint[3];
+	theCamera->get_viewpoint(viewpoint);
+
+	int rn, *rt; float *rl;
+	theRendererLights->GetLights(rn, rl, rt);
+
+	int vn, *vt; float *vl;
+	theVisualizationLights->GetLights(vn, vl, vt);
+
+	int nl = vn + rn;
+	float *l = new float[nl * 3];
+	int   *t = new int[nl];
+
+	float *il = rl;
+	int   *it = rt;
+	float *ol = l;
+	int   *ot = t;
+	for (int i = 0; i < rn; i++)
+		if (*it++)
+		{
+			*ol++ = *il++ + viewpoint[0];
+			*ol++ = *il++ + viewpoint[1];
+			*ol++ = *il++ + viewpoint[2];
+			*ot++ = 1;
+		}
+		else
+		{
+			*ol++ = *il++;
+			*ol++ = *il++;
+			*ol++ = *il++;
+			*ot++ = 0;
+		}
+
+	il = vl;
+	it = vt;
+	for (int i = 0; i < vn; i++)
+		if (*it++)
+		{
+			*ol++ = *il++ + viewpoint[0];
+			*ol++ = *il++ + viewpoint[1];
+			*ol++ = *il++ + viewpoint[2];
+			*ot++ = 1;
+		}
+		else
+		{
+			*ol++ = *il++;
+			*ol++ = *il++;
+			*ol++ = *il++;
+			*ot++ = 0;
+		}
+
+	lights.SetLights(nl, l, t);
+	delete[] l;
+	delete[] t;
+
   if (IsLocal())
   {
     if (framebuffer)
-		{
-			// APP_LOG("FB " << std::hex << framebuffer << " deleted (local_commit)");
       delete[] framebuffer;
-		}
 
 #ifndef PVOL_SYNCHRONOUS
 		if (kbuffer)
@@ -155,7 +213,6 @@ Rendering::local_commit(MPI_Comm c)
 #endif
 
     framebuffer = new float[width*height*4];
-		// APP_LOG("FB " << std::hex << framebuffer << " allocated (local_commit)");
 
 #ifndef PVOL_SYNCHRONOUS
 		if (kbuffer)
@@ -163,8 +220,8 @@ Rendering::local_commit(MPI_Comm c)
     kbuffer = new int[width*height];
 		memset(kbuffer, 0, width*height*sizeof(int));
 #endif
-
   }
+
   return false;
 }
 
@@ -186,28 +243,11 @@ Rendering::local_reset()
   }
 }
 
-// Key Rendering::GetTheRenderingSetKey() { return GetTheRenderingSet()->getkey(); }
-// RenderingSetP Rendering::GetTheRenderingSet() { return renderingSet.lock(); }
-// void Rendering::SetTheRenderingSet(Key rsk) { renderingSet = RenderingSet::GetByKey(rsk); }
-// void Rendering::SetTheRenderingSet(RenderingSetP rs) { renderingSet = rs; }
-
-// Key Rendering::GetTheCameraKey() { return GetTheCamera()->getkey(); }
-// CameraP Rendering::GetTheCamera() { return camera.lock(); }
-// void Rendering::SetTheCamera(Key k) { camera = Camera::GetByKey(k); }
-
 CameraP Rendering::GetTheCamera() { return camera; }
 void Rendering::SetTheCamera(CameraP c) { camera = c; }
 
-// Key Rendering::GetTheDatasetsKey() { return GetTheDatasets()->getkey(); }
-// DatasetsP Rendering::GetTheDatasets() { return datasets.lock(); }
-// void Rendering::SetTheDatasets(Key k) { datasets = Datasets::GetByKey(k); }
-
 DatasetsP Rendering::GetTheDatasets() { return datasets; }
 void Rendering::SetTheDatasets(DatasetsP ds) { datasets = ds; }
-
-// Key Rendering::GetTheVisualizationKey() { return GetTheVisualization()->getkey(); }
-// VisualizationP Rendering::GetTheVisualization() { return visualization.lock(); }
-// void Rendering::SetTheVisualization(Key k) { visualization = Visualization::GetByKey(k); }
 
 VisualizationP Rendering::GetTheVisualization() { return visualization; }
 void Rendering::SetTheVisualization(VisualizationP dm) { visualization = dm; }
@@ -245,8 +285,6 @@ Rendering::serialize(unsigned char *p)
   p += sizeof(int);
   *(int *)p = height;
   p += sizeof(int);
-  // *(Key *)p = GetTheRenderingSet()->getkey();
-  // p += sizeof(Key);
   *(Key *)p = GetTheVisualization()->getkey();
   p += sizeof(Key);
   *(Key *)p = GetTheCamera()->getkey();
@@ -265,8 +303,6 @@ Rendering::deserialize(unsigned char *p)
   p += sizeof(int);
   height = *(int *)p;
   p += sizeof(int);
-  // renderingSet = RenderingSet::GetByKey(*(Key *)p);
-  // p += sizeof(Key);
   visualization = Visualization::GetByKey(*(Key *)p);
   p += sizeof(Key);
   camera = Camera::GetByKey(*(Key *)p);

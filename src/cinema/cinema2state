@@ -19,7 +19,7 @@ def expand(a):
           return [float('%.4g' % (m + (i / (k-1.0))*(M - m))) for i in range(k)]
 
     
-def recur(s, vis, vis_set, anno):
+def recur(s, vis, vis_set, anno, lights):
     curop = s[0]
     if 'type' not in curop:
         print 'operator is not typed'
@@ -29,17 +29,23 @@ def recur(s, vis, vis_set, anno):
       
         newop = dict(curop)
         if len(s) == 1:
-            vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+            a = {'annotation': anno, 'operators': vis + [ newop ]}
+            if lights != None:
+              a['Lighting'] = lights
+            vis_set.append(a)
         else:
-            recur(s[1:], vis + [ newop ], vis_set, anno)
+            recur(s[1:], vis + [ newop ], vis_set, anno, lights)
 
     if curop['type'] == 'Triangles':
       
         newop = dict(curop)
         if len(s) == 1:
-            vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+            a = {'annotation': anno, 'operators': vis + [ newop ]}
+            if lights != None:
+              a['lighting'] = lights
+            vis_set.append(a)
         else:
-            recur(s[1:], vis + [ newop ], vis_set, anno)
+            recur(s[1:], vis + [ newop ], vis_set, anno, lights)
 
     elif curop['type'] == 'Volume Rendering':
 
@@ -47,9 +53,13 @@ def recur(s, vis, vis_set, anno):
         newop['type'] = 'Volume'
         newop['volume rendering'] = True
         if len(s) == 1:
-            vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+            a = {'annotation': anno, 'operators': vis + [ newop ]}
+            if lights != None:
+              a['lighting'] = lights
+            vis_set.append(a)
+
         else:
-            recur(s[1:], vis + [ newop ], vis_set, anno)
+            recur(s[1:], vis + [ newop ], vis_set, anno, lights)
 
     elif curop['type'] == 'Isosurface':
 
@@ -64,9 +74,12 @@ def recur(s, vis, vis_set, anno):
                 newop['type'] = 'Volume'
                 newop['isovalues'] = isovalues
                 if len(s) == 1:
-                    vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+                  a = {'annotation': anno, 'operators': vis + [ newop ]}
+                  if lights != None:
+                    a['lighting'] = lights
+                  vis_set.append(a)
                 else:
-                    recur(s[1:], vis + [ newop ], vis_set, anno)
+                    recur(s[1:], vis + [ newop ], vis_set, anno, lights)
 
         if 'isovalue range' in curop:
             isovalue_range = curop['isovalue range']
@@ -82,9 +95,12 @@ def recur(s, vis, vis_set, anno):
                 newop['isovalues'] = [ iv ]
                 anno1 = anno + "_" + str(iv)
                 if len(s) == 1:
-                    vis_set.append({'annotation': anno1, 'operators': vis + [ newop ]})
+                  a = {'annotation': anno, 'operators': vis + [ newop ]}
+                  if lights != None:
+                    a['lighting'] = lights
+                  vis_set.append(a)
                 else:
-                    recur(s[1:], vis + [ newop ], vis_set, anno1)
+                    recur(s[1:], vis + [ newop ], vis_set, anno1, lights)
 
     elif curop['type'] == 'Slice':
 
@@ -108,9 +124,12 @@ def recur(s, vis, vis_set, anno):
             newop['plane'] = plane
 
             if len(s) == 1:
-                vis_set.append({'annotation': anno, 'operators': vis + [ newop ]})
+              a = {'annotation': anno, 'operators': vis + [ newop ]}
+              if lights != None:
+                a['lighting'] = lights
+              vis_set.append(a)
             else:
-                recur(s[1:], vis + [ newop ], vis_set, anno)
+                recur(s[1:], vis + [ newop ], vis_set, anno, lights)
 
         elif 'plane range' in curop:
 
@@ -133,9 +152,12 @@ def recur(s, vis, vis_set, anno):
               anno1 = anno + "_" + str(w)
     
               if len(s) == 1:
-                  vis_set.append({'annotation': anno1, 'operators': vis + [ newop ]})
+                a = {'annotation': anno, 'operators': vis + [ newop ]}
+                if lights != None:
+                  a['lighting'] = lights
+                vis_set.append(a)
               else:
-                  recur(s[1:], vis + [ newop ], vis_set, anno1)
+                recur(s[1:], vis + [ newop ], vis_set, anno1, lights)
              
 def expand_camera(c):
 
@@ -217,24 +239,38 @@ def expand_camera(c):
 
 
 def expand_visualization(vis):
+
+    lights = None
+
+    if isinstance(vis, dict):
+      ops = vis['operators']
+      lights = vis['Lighting']
+    else:
+      ops = vis
+
     stack = []
-    for ds in vis:
+    for ds in ops:
         stack.append(ds)
 
     visualizations = []
     d = []
     annotation = ""
-    recur(stack, d, visualizations, annotation)
+    recur(stack, d, visualizations, annotation, lights)
     return visualizations
 
 def gather_vis_pattern(jsn):
+
     vis = jsn["Visualization"]
+    if isinstance(vis, dict):
+      ops = vis['operators']
+    else:
+      ops = vis
 
     p = ""
     inum = 0
     snum = 0
 
-    for curop in vis:
+    for curop in ops:
 
       if curop['type'] == 'Isosurface' and 'isovalue range' in curop:
           p = p + "_{iso" + str(inum) + "}"
@@ -247,7 +283,11 @@ def gather_vis_pattern(jsn):
     return p
 
 def load_maps(vis):
-    for v in vis:
+    if isinstance(vis, dict):
+      ops = vis['operators']
+    else:
+      ops = vis
+    for v in ops:
       for m in ["colormap", "opacitymap"]:
         if m in v and type(v[m]) is str:
           a = open(v[m])
@@ -262,7 +302,12 @@ def gather_vis_args(jsn):
     inum = 0
     snum = 0
 
-    for curop in vis:
+    if isinstance(vis, dict):
+      ops = vis['operators']
+    else:
+      ops = vis
+
+    for curop in ops:
 
         if curop['type'] == 'Isosurface' and 'isovalue range' in curop:
 

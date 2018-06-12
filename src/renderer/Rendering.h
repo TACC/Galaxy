@@ -14,6 +14,7 @@ using namespace std;
 #include "Datasets.h"
 #include "Visualization.h"
 #include "Pixel.h"
+#include "Lighting.h"
 
 namespace pvol
 {
@@ -84,8 +85,10 @@ public:
 	virtual unsigned char *deserialize(unsigned char *);
 
 	float *GetPixels() { return framebuffer; }
+	Lighting *GetLighting() { return &lights; }
 	
 protected:
+	Lighting lights;
 	int frame;
 
 	VisualizationP visualization;

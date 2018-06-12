@@ -28,7 +28,7 @@
 #include "RayFlags.h"
 #include "TraceRays.ih"
 #include "Rays.ih"
-#include "Lighting.ih"
+#include "../data/Lighting.ih"
 #include "../data/VolumeVis.ih"
 #include "../data/Visualization.ih"
 #include "hits.h"
@@ -920,7 +920,37 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
 
       for (int k = 0; k < lights->nLights; k++)
       {
-        float d = dot(surface_normal, lights->lights[k]);
+				float d;
+
+				if (lights->types[k])
+				{
+					float t = raysIn->t[i];
+
+					vec3f surface_point = make_vec3f(raysIn->ox[i] + t*raysIn->dx[i],
+																					 raysIn->oy[i] + t*raysIn->dy[i],
+																					 raysIn->oz[i] + t*raysIn->dz[i]);
+
+					vec3f lvec = safe_normalize(lights->lights[k] - surface_point);
+
+#if 0
+					print("SP\nX %\ny %\nZ %\n", 
+							surface_point.x, surface_point.y, surface_point.z);
+
+					print("SN\nX %\ny %\nZ %\n", 
+							surface_normal.x, surface_normal.y, surface_normal.z);
+
+					print("light\nX %\nY %\nZ %\n",
+							lights->lights[k].x, lights->lights[k].y, lights->lights[k].z);
+
+					print("LV\nX %\nY %\nZ %\n", lvec.x, lvec.y, lvec.z);
+#endif
+
+					d = dot(surface_normal, lvec);
+				}
+				else
+				{
+					d = dot(surface_normal, lights->lights[k]);
+				}
 
 // print("normal:\n%\n%\n%\n", surface_normal.x, surface_normal.y, surface_normal.z);
 // print("light:\n%\n%\n%\n", lights->lights[k].x, lights->lights[k].y, lights->lights[k].z);

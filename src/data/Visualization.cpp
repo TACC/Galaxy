@@ -10,11 +10,6 @@
 #define LOGGING 0
 
 using namespace rapidjson;
-// #include "../rapidjson/document.h"
-// #include "../rapidjson/prettywriter.h"
-// #include "../rapidjson/stringbuffer.h"
-
-
 using namespace std;
 
 namespace pvol
@@ -258,6 +253,11 @@ Visualization::LoadFromJSON(Value& v)
 
   if (v.HasMember("annotation"))
     SetAnnotation(string(v["annotation"].GetString()));
+
+  if (v.HasMember("Lighting"))
+    lighting.LoadStateFromValue(v["Lighting"]);
+  else if (v.HasMember("lighting"))
+    lighting.LoadStateFromValue(v["lighting"]);
 
   ops = v["operators"];
 	for (int i = 0; i < ops.Size(); i++)
