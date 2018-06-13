@@ -430,7 +430,7 @@ void check_env(int width, int height)
 		else
 		{
 			Ymin = getenv("YMIN") ? atoi(getenv("YMIN")) : (height / 2) - 2;
-			Ymax = getenv("YMAY") ? atoi(getenv("YMAY")) : (height / 2) + 2;
+			Ymax = getenv("YMAX") ? atoi(getenv("YMAX")) : (height / 2) + 2;
 			if (Ymin < 0) Ymin = 0;
 			if (Ymax >= (height-1)) Ymax = height-1;
 		}
