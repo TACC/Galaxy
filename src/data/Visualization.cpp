@@ -305,12 +305,15 @@ Visualization::serialSize()
 	return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) 
 		+ sizeof(int) + osprayGeometries.size()*sizeof(Key)
 		+ sizeof(int) + mappedGeometries.size()*sizeof(Key)
-		+ sizeof(int) + volumes.size()*sizeof(Key);
+		+ sizeof(int) + volumes.size()*sizeof(Key) 
+		+ lighting.SerialSize();
 }
 
 unsigned char *
 Visualization::serialize(unsigned char *p)
 {
+  p = lighting.Serialize(p);
+
   int l = annotation.length() + 1;
   *(int *)p = l;
   p += sizeof(l);
@@ -352,6 +355,8 @@ Visualization::serialize(unsigned char *p)
 unsigned char *
 Visualization::deserialize(unsigned char *p)
 {
+  p = lighting.Deserialize(p);
+
   int l = *(int *)p;
   p += sizeof(l);
   annotation = (char *)p;

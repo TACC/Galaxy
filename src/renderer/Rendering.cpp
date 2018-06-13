@@ -161,13 +161,6 @@ Rendering::resolve_lights()
 	normalize(right);
 	cross(viewdir, right, up);
 
-	cerr << "==========\n";
-	cerr << "vp: " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z << "\n";
-	cerr << "vu: " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
-	cerr << "vd: " << viewdir.x << " " << viewdir.y << " " << viewdir.z << "\n";
-	cerr << "r: " << right.x << " " << right.y << " " << right.z << "\n";
-	cerr << "u: " << up.x << " " << up.y << " " << up.z << "\n";
-
 	int rn, *rt; float *rl;
 	theRendererLights->GetLights(rn, rl, rt);
 
@@ -183,35 +176,38 @@ Rendering::resolve_lights()
 	vec3f *ol = (vec3f *)l;
 	int   *ot = t;
 	for (int i = 0; i < rn; i++)
-		if (*it++)
+  {
+    int t = *it++;
+    if (t == 1)
 		{
 			*ol++ = viewpoint + scale1(il->x, right) + scale1(il->y, up) + scale1(il->z, viewdir);
 			il++;
-			// *ol++ = *il++ + viewpoint.x;
-			// *ol++ = *il++ + viewpoint.y;
-			// *ol++ = *il++ + viewpoint.z;
-			*ot++ = 1;
+			*ot++ = 2;
 		}
 		else
 		{
 			*ol++ = *il++;
-			*ot++ = 0;
+			*ot++ = t;
 		}
+	}
 
 	il = (vec3f*)vl;
 	it = vt;
 	for (int i = 0; i < vn; i++)
-		if (*it++)
+	{
+		int t = *it++;
+		if (t == 1)
 		{
 			*ol++ = viewpoint + scale1(il->x, right) + scale1(il->y, up) + scale1(il->z, viewdir);
 			il++;
-			*ot++ = 1;
+			*ot++ = 2;
 		}
 		else
 		{
 			*ol++ = *il++;
-			*ot++ = 0;
+			*ot++ = t;
 		}
+	}
 
 	lights.SetLights(nl, l, t);
 	delete[] l;
