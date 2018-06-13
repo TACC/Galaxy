@@ -157,6 +157,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
 		{
 			RenderingP rendering = renderingSet->GetRendering(i);
+			rendering->resolve_lights();
 
 			CameraP camera = rendering->GetTheCamera();
 			VisualizationP visualization = rendering->GetTheVisualization();

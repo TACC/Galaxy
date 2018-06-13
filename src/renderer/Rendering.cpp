@@ -139,16 +139,34 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 	}
 }
 
-bool
-Rendering::local_commit(MPI_Comm c)
+vec3f scale1(float s, vec3f v) { return vec3f(s*v.x, s*v.y, s*v.z); }
+
+void
+Rendering::resolve_lights()
 {
 	Lighting *theRendererLights = Renderer::GetTheRenderer()->get_the_lights(); 
 	Lighting *theVisualizationLights = GetTheVisualization()->get_the_lights();
 
 	CameraP  theCamera = GetTheCamera();
 
-	float viewpoint[3];
+	vec3f viewpoint, viewup, viewdir;
 	theCamera->get_viewpoint(viewpoint);
+	theCamera->get_viewup(viewup);
+	theCamera->get_viewdirection(viewdir);
+	normalize(viewup);
+	normalize(viewdir);
+
+	vec3f right, up;
+	cross(viewdir, viewup, right);
+	normalize(right);
+	cross(viewdir, right, up);
+
+	cerr << "==========\n";
+	cerr << "vp: " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z << "\n";
+	cerr << "vu: " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
+	cerr << "vd: " << viewdir.x << " " << viewdir.y << " " << viewdir.z << "\n";
+	cerr << "r: " << right.x << " " << right.y << " " << right.z << "\n";
+	cerr << "u: " << up.x << " " << up.y << " " << up.z << "\n";
 
 	int rn, *rt; float *rl;
 	theRendererLights->GetLights(rn, rl, rt);
@@ -160,40 +178,37 @@ Rendering::local_commit(MPI_Comm c)
 	float *l = new float[nl * 3];
 	int   *t = new int[nl];
 
-	float *il = rl;
+	vec3f *il = (vec3f *)rl;
 	int   *it = rt;
-	float *ol = l;
+	vec3f *ol = (vec3f *)l;
 	int   *ot = t;
 	for (int i = 0; i < rn; i++)
 		if (*it++)
 		{
-			*ol++ = *il++ + viewpoint[0];
-			*ol++ = *il++ + viewpoint[1];
-			*ol++ = *il++ + viewpoint[2];
+			*ol++ = viewpoint + scale1(il->x, right) + scale1(il->y, up) + scale1(il->z, viewdir);
+			il++;
+			// *ol++ = *il++ + viewpoint.x;
+			// *ol++ = *il++ + viewpoint.y;
+			// *ol++ = *il++ + viewpoint.z;
 			*ot++ = 1;
 		}
 		else
 		{
-			*ol++ = *il++;
-			*ol++ = *il++;
 			*ol++ = *il++;
 			*ot++ = 0;
 		}
 
-	il = vl;
+	il = (vec3f*)vl;
 	it = vt;
 	for (int i = 0; i < vn; i++)
 		if (*it++)
 		{
-			*ol++ = *il++ + viewpoint[0];
-			*ol++ = *il++ + viewpoint[1];
-			*ol++ = *il++ + viewpoint[2];
+			*ol++ = viewpoint + scale1(il->x, right) + scale1(il->y, up) + scale1(il->z, viewdir);
+			il++;
 			*ot++ = 1;
 		}
 		else
 		{
-			*ol++ = *il++;
-			*ol++ = *il++;
 			*ol++ = *il++;
 			*ot++ = 0;
 		}
@@ -201,7 +216,11 @@ Rendering::local_commit(MPI_Comm c)
 	lights.SetLights(nl, l, t);
 	delete[] l;
 	delete[] t;
+}
 
+bool
+Rendering::local_commit(MPI_Comm c)
+{
   if (IsLocal())
   {
     if (framebuffer)
