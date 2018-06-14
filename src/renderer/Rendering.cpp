@@ -149,6 +149,9 @@ Rendering::resolve_lights()
 
 	CameraP  theCamera = GetTheCamera();
 
+	Lighting *srcLights = theVisualizationLights->isSet() ? GetTheVisualization()->get_the_lights() 
+																												: Renderer::GetTheRenderer()->get_the_lights();
+
 	vec3f viewpoint, viewup, viewdir;
 	theCamera->get_viewpoint(viewpoint);
 	theCamera->get_viewup(viewup);
@@ -161,21 +164,17 @@ Rendering::resolve_lights()
 	normalize(right);
 	cross(viewdir, right, up);
 
-	int rn, *rt; float *rl;
-	theRendererLights->GetLights(rn, rl, rt);
+	int n_lts, *src_t; float *src_l;
+	srcLights->GetLights(n_lts, src_l, src_t);
 
-	int vn, *vt; float *vl;
-	theVisualizationLights->GetLights(vn, vl, vt);
+	float *l = new float[n_lts * 3];
+	int   *t = new int[n_lts];
 
-	int nl = vn + rn;
-	float *l = new float[nl * 3];
-	int   *t = new int[nl];
-
-	vec3f *il = (vec3f *)rl;
-	int   *it = rt;
+	vec3f *il = (vec3f *)src_l;
+	int   *it = src_t;
 	vec3f *ol = (vec3f *)l;
 	int   *ot = t;
-	for (int i = 0; i < rn; i++)
+	for (int i = 0; i < n_lts; i++)
   {
     int t = *it++;
     if (t == 1)
@@ -191,27 +190,20 @@ Rendering::resolve_lights()
 		}
 	}
 
-	il = (vec3f*)vl;
-	it = vt;
-	for (int i = 0; i < vn; i++)
-	{
-		int t = *it++;
-		if (t == 1)
-		{
-			*ol++ = viewpoint + scale1(il->x, right) + scale1(il->y, up) + scale1(il->z, viewdir);
-			il++;
-			*ot++ = 2;
-		}
-		else
-		{
-			*ol++ = *il++;
-			*ot++ = t;
-		}
-	}
+	lights.SetLights(n_lts, l, t);
+	delete[] l; delete[] t;
 
-	lights.SetLights(nl, l, t);
-	delete[] l;
-	delete[] t;
+	int nao; float rao;
+	srcLights->GetAO(nao, rao);
+	lights.SetAO(nao, rao);
+
+	bool shdw;
+	srcLights->GetShadowFlag(shdw);
+	lights.SetShadowFlag(shdw);
+
+	float ka, kd;
+	srcLights->GetK(ka, kd);
+	lights.SetK(ka, kd);
 }
 
 bool

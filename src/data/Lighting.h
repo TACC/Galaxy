@@ -40,7 +40,10 @@ public:
   void SetEpsilon(float e);
   void GetEpsilon(float& e);
 
+	bool isSet() { return set; }
+
 protected:
+	int set;
   virtual void allocate_ispc();
   virtual void initialize_ispc();
 };

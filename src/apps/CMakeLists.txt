@@ -107,6 +107,7 @@ add_executable(particles particles.cpp)
 set(BINS particles ${BINS})
 
 add_executable(partition partition.cpp)
+target_link_libraries(partition ${MPI_LIBRARIES})
 set(BINS partition ${BINS})
 
 install(TARGETS ${BINS} DESTINATION bin)

@@ -13,6 +13,7 @@ Lighting::Lighting()
 {
   allocate_ispc();
   initialize_ispc();
+	set = false;
 }
 
 Lighting::~Lighting()
@@ -35,6 +36,7 @@ Lighting::initialize_ispc()
 void
 Lighting::LoadStateFromValue(Value& v)
 {
+	set = true;
   if (v.HasMember("Sources"))
   {
     Value& s = v["Sources"];
