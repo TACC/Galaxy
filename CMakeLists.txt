@@ -3,8 +3,8 @@ PROJECT(PVol)
 
 #if (COMMAND cmake_policy)
   # use rpath on MacOS
-  cmake_policy(SET CMP0042 NEW)
-  cmake_policy(SET CMP0054 NEW)
+  # cmake_policy(SET CMP0042 NEW)
+  # cmake_policy(SET CMP0054 NEW)
   # cmake_policy(SET CMP0068 NEW)
 #endif(COMMAND cmake_policy)
 

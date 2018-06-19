@@ -24,6 +24,7 @@ syntax(char *a)
   std::cerr << "  -s w h     window width, height (1920 1080)\n";
   std::cerr << "  -S k       render only every k'th rendering\n";
   std::cerr << "  -c         client/server interface\n";
+  std::cerr << "  -N         max number of simultaneous renderings (VERY large)\n";
   exit(1);
 }
 
@@ -44,40 +45,40 @@ public:
     std::stringstream cmd;
     pid_t pid = getpid();
 
-		bool do_me = true;
-		if (*arg)
-		{
-			int i;
-			for (i = 0; i < strlen(arg); i++)
-				if (arg[i] == '-')
-					break;
+    bool do_me = true;
+    if (*arg)
+    {
+      int i;
+      for (i = 0; i < strlen(arg); i++)
+        if (arg[i] == '-')
+          break;
 
-			if (i < strlen(arg))
-			{
-				arg[i] = 0;
-				int s = atoi(arg);
-				int e = atoi(arg + i + 1);
-				do_me = (mpiRank >= s) && (mpiRank <= e);
-			}
-			else
-				do_me = (mpiRank == atoi(arg));
-		}
+      if (i < strlen(arg))
+      {
+        arg[i] = 0;
+        int s = atoi(arg);
+        int e = atoi(arg + i + 1);
+        do_me = (mpiRank >= s) && (mpiRank <= e);
+      }
+      else
+        do_me = (mpiRank == atoi(arg));
+    }
 
-		if (do_me)
-		{
-			if (attach)
-				std::cerr << "Attach to PID " << pid << "\n";
-			else
-			{
-				cmd << "~/dbg_script " << executable << " " << pid << " &";
-				system(cmd.str().c_str());
-			}
+    if (do_me)
+    {
+      if (attach)
+        std::cerr << "Attach to PID " << pid << "\n";
+      else
+      {
+        cmd << "~/dbg_script " << executable << " " << pid << " &";
+        system(cmd.str().c_str());
+      }
 
-			while (dbg)
-				sleep(1);
+      while (dbg)
+        sleep(1);
 
-			std::cerr << "running\n";
-		}
+      std::cerr << "running\n";
+    }
   }
 };
 
@@ -85,7 +86,7 @@ int main(int argc,  char *argv[])
 {
   string statefile("");
   string  cdb("");
-	char *dbgarg;
+  char *dbgarg;
   bool dbg = false;
   bool atch = false;
   bool cinema = false;
@@ -93,21 +94,22 @@ int main(int argc,  char *argv[])
   int skip = 0;
   bool clientserver = false;
   ClientServer cs;
+  int maxConcurrentRenderings = 99999999;
 
   ospInit(&argc, (const char **)argv);
 
   Application theApplication(&argc, &argv);
   theApplication.Start();
 
-	for (int i = 1; i < argc; i++)
+  for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strcmp(argv[i], "-c")) clientserver = true;
-    // else if (!strcmp(argv[i], "-D")) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if ((argv[i][0] == '-') && (argv[i][1] == 'D')) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-S")) skip = atoi(argv[++i]);
+    else if (!strcmp(argv[i], "-N")) maxConcurrentRenderings = atoi(argv[++i]);
     else if (statefile == "")   statefile = argv[i];
     else syntax(argv[0]);
   }
@@ -136,19 +138,13 @@ int main(int argc,  char *argv[])
       std::cerr << "connection ok\n";
     }
 
-		long t_run_start = my_time();
+    long t_run_start = my_time();
 
     RendererP theRenderer = Renderer::NewP();
 
     Document *doc = GetTheApplication()->OpenInputState(statefile);
 
-#if 0
-    for (Value::ConstMemberIterator itr = doc->MemberBegin(); itr != doc->MemberEnd(); ++itr)
-      printf("member %s\n", itr->name.GetString());
-#endif
-
     theRenderer->LoadStateFromDocument(*doc);
-    // theRenderer->Commit();
 
     vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
     for (auto c : theCameras)
@@ -164,7 +160,6 @@ int main(int argc,  char *argv[])
         v->Commit(theDatasets);
     }
 
-
     vector<RenderingSetP> theRenderingSets;
 
     RenderingSetP rs = RenderingSet::NewP();
@@ -174,8 +169,14 @@ int main(int argc,  char *argv[])
     for (auto c : theCameras)
         for (auto v : theVisualizations)
         {
-            if (skip && (k++ % skip) != 0)
+            if (skip && (k % skip) != 0)
               continue;
+
+            if (rs->GetNumberOfRenderings() >= maxConcurrentRenderings)
+            {
+              rs = RenderingSet::NewP();
+              theRenderingSets.push_back(rs);
+            }
 
             RenderingP theRendering = Rendering::NewP();
             theRendering->SetTheOwner(index++ % mpiSize );
@@ -185,6 +186,8 @@ int main(int argc,  char *argv[])
             theRendering->SetTheVisualization(v);
             theRendering->Commit();
             rs->AddRendering(theRendering);
+
+            k ++;
         }
 
     std::cout << "index = " << index << "\n";
@@ -193,10 +196,13 @@ int main(int argc,  char *argv[])
 
     theApplication.SyncApplication();
 
+		long t_rendering_start = my_time();
+
     for (auto rs : theRenderingSets)
     {
+			long t0 = my_time();
       std::cout << "render start\n";
-      long t_rendering_start = my_time();
+
       theRenderer->Render(rs);
 
 #if 1
@@ -226,16 +232,13 @@ int main(int argc,  char *argv[])
 
       rs->WaitForDone();
 
-      long t_rendering_end = my_time();
-
       rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image");
 
-      long t_save_end = my_time();
-
-      std::cout << "TIMING prep " << (t_rendering_start - t_run_start) / 1000000000.0 << " seconds\n";
-      std::cout << "TIMING render " << (t_rendering_end - t_rendering_start) / 1000000000.0 << " seconds\n";
-      std::cout << "TIMING write " << (t_save_end - t_rendering_end) / 1000000000.0 << " seconds\n";
+			long t1 = my_time();
+			std::cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds\n";
     }
+
+		std::cout << "TIMING total " << (my_time() - t_rendering_start) / 1000000000.0 << " seconds\n";
 
     theApplication.QuitApplication();
   }
