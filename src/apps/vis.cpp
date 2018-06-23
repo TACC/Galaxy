@@ -238,7 +238,7 @@ int main(int argc,  char *argv[])
 			std::cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds\n";
     }
 
-		std::cout << "TIMING total " << (my_time() - t_rendering_start) / 1000000000.0 << " seconds\n";
+		std::cout << "TIMING rendering " << (my_time() - t_rendering_start) / 1000000000.0 << " seconds\n";
 
     theApplication.QuitApplication();
   }
