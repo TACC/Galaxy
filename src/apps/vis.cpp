@@ -203,6 +203,7 @@ int main(int argc,  char *argv[])
 			long t0 = my_time();
       std::cout << "render start\n";
 
+			rs->Commit();
       theRenderer->Render(rs);
 
 #if 1

@@ -83,7 +83,8 @@ FOREACH(ver ${ISPC_VERSION_WORKING})
   ENDFOREACH()
 ENDFOREACH()
 
-find_package(embree 2.17.4 PATHS
+# find_package(embree 2.17.4 PATHS
+find_package(embree 3.2.0 PATHS
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib64/cmake
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib/cmake
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/build
