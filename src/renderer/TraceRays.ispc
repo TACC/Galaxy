@@ -306,6 +306,7 @@ LookForIsoHit(varying bool shadeFlag,
           if (dot(ray.dir, hit.normal) > 0) 
             hit.normal = neg(hit.normal);
 
+// print("S %\nR %\nG %\nB %\n", hit.sample, hit.color.x, hit.color.y, hit.color.z);
           hit.color = tf->getColorForValue(tf, hit.sample);
           hit.opacity = 1.0;
         }

@@ -4,7 +4,7 @@
 namespace pvol
 {
 
-#define TRACKBALLSIZE 0.8
+#define TRACKBALLSIZE 2.0
 
 
 static float

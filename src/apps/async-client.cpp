@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <glut.h>
+#include <GL/glut.h>
 #include <pthread.h>
 
 #include "Debug.h"
@@ -23,7 +23,10 @@ using namespace pvol;
 ImageWriter image_writer("async_client");
 
 float*       pixels = NULL;
+float*       negative_pixels = NULL;
 int*         frameids = NULL;
+int*         negative_frameids = NULL;
+long*        frame_times = NULL;
 volatile int frame = -1;
 pthread_t 	 receiver_tid;
 int 				 max_f = -1;
@@ -38,6 +41,14 @@ int max_sender = 0;
 
 Socket *skt;
 
+long
+my_time()
+{
+  timespec s;
+  clock_gettime(CLOCK_REALTIME, &s);
+  return 1000000000*s.tv_sec + s.tv_nsec;
+}
+
 int rcvd = 0;
 
 void 
@@ -45,12 +56,14 @@ clear()
 {
 	rcvd = 0;
 	for (int i = 0; i < width*height*4; i++)
-		pixels[i] = 0.0;
+		pixels[i] = ((i&0x3) == 0x3) ? 1.0 : 0.0;
 }
 
 void
 SendResetCamera()
 {
+	glClear(GL_COLOR_BUFFER_BIT);
+	clear();
   int op = RESET_CAMERA;
 	skt->Send((char *)&op, sizeof(op));
 }
@@ -210,6 +223,29 @@ motionfunc(int x, int y)
 }
 
 void *
+ager_thread(void *)
+{
+	while (true)
+	{
+		long now = my_time();
+
+		float *pix = pixels;
+		int *ids = frameids;
+		long *tm = frame_times;
+		for (int i = 0; i < width*height; i++, tm++)
+			if (*ids++ < max_f)
+			{
+				float sec = (now - *tm) / 1000000000.0;
+				float d = (sec > 10) ? 0.0 : (10.0 - sec) / 10.0;
+				d = 0.999;
+				*pix++ *= d, *pix++ *= d, *pix++ *= d, *pix++ = 1.0;
+			}
+			else
+				pix += 4;
+	}
+}
+	
+void *
 receiver_thread(void *)
 {
 	char *buf; int n;
@@ -228,19 +264,9 @@ receiver_thread(void *)
 		ptr += sizeof(int);
 		Pixel *p = (Pixel *)ptr;
 
+		long now = my_time();
 		if (frame >= max_f)
 		{
-			if (frame > max_f)
-			{
-				float *pix = pixels;
-				int *ids = frameids;
-				for (int i = 0; i < width*height; i++)
-					if (*ids++ < (frame-1))
-						*pix++ = 0, *pix++ = 0, *pix++ = 0, *pix++ = 0;
-					else
-						pix += 4;
-			}
-
 			rcvd += knt;
 
  	 		for (int i = max_f + 1; i <= frame;  i++)
@@ -251,21 +277,58 @@ receiver_thread(void *)
 
 			for (int i = 0; i < knt; i++, p++)
 			{
-				size_t offset = (p->y*width + p->x);
-
+				size_t offset = ((height-1)-p->y)*width + p->x;
 				float *pix = pixels + (offset<<2);
-				if (frameids[offset] < frame)
+				float *npix = negative_pixels + (offset<<2);
+
+				// If its a sample from the current frame, add it in.
+				// 
+				// If its a sample from a LATER frame then two possibilities:
+				// its a negative sample, in which case we DON'T want to update
+				// the visible pixel, so we stash it. If its a POSITIVE sample
+				// we stuff the visible pixel with the sample and any stashed
+				// negative samples.
+
+				if (frameids[offset] == frame)
 				{
-					pix[0] = 0;
-					pix[1] = 0;
-					pix[2] = 0;
-					pix[3] = 0;
-					frameids[offset] = frame;
+					*pix++ += p->r;
+					*pix++ += p->g;
+					*pix++ += p->b;
 				}
-				*pix++ += p->r;
-				*pix++ += p->g;
-				*pix++ += p->b;
-				*pix++ += 1.0; // p->o;
+				else
+				{
+					if (p->r < 0.0 || p->g < 0.0 || p->b < 0.0)
+					{
+						// If its a NEGATIVE sample and...
+						
+						if (negative_frameids[offset] == frame)
+						{
+							// from the current frame, we add it to the stash
+							*npix++ += p->r;
+							*npix++ += p->g;
+							*npix++ += p->b;
+						}
+						else if (negative_frameids[offset] < frame)
+						{
+							// otherwise its from a LATER frame, so we init the stash so if
+							// we receive any POSITIVE samples we can add it in.
+							negative_frameids[offset] = frame;
+							*npix++ = p->r;
+							*npix++ = p->g;
+							*npix++ = p->b;
+						}
+					}
+					else
+					{
+						// its a POSITIVE sample from a NEW frame, so we stuff the visible
+						// pixel with the new sample and any negative samples that arrived 
+						// first
+						frameids[offset] = frame;
+						*pix++ = (*npix++ + p->r);
+						*pix++ = (*npix++ + p->g);
+						*pix++ = (*npix++ + p->b);
+					}
+				}
 			}
 		}
 		else std::cerr << "S";
@@ -325,15 +388,29 @@ main(int argc, char *argv[])
   Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
 	skt = new Socket((char *)host.c_str(), port);
 
-	pixels   = (float *)malloc(width*height*4*sizeof(float));
-	frameids = (int *)malloc(width*height*sizeof(int));
+	negative_pixels    = (float *)malloc(width*height*4*sizeof(float));
+	pixels      		   = (float *)malloc(width*height*4*sizeof(float));
+	negative_frameids  = (int *)malloc(width*height*sizeof(int));
+	frameids    		   = (int *)malloc(width*height*sizeof(int));
+	frame_times 		   = (long *)malloc(width*height*sizeof(long));
 
+	long now = my_time();
 	memset(frameids, 0, width*height*sizeof(int));
+	memset(negative_frameids, 0, width*height*sizeof(int));
+	for (int i = 0; i < width*height; i++)
+		frame_times[i] = now;
+
 	for (int i = 0; i < 4*width*height; i++)
-			pixels[i] = 0.0;
+	{
+		pixels[i] = (i & 0x3) == 0x3 ? 1.0 : 0.0;
+		negative_pixels[i] = (i & 0x3) == 0x3 ? 1.0 : 0.0;
+	}
 
 	pthread_t receiver_tid;
 	pthread_create(&receiver_tid, NULL, receiver_thread, NULL);
+
+	pthread_t ager_tid;
+	pthread_create(&ager_tid, NULL, ager_thread, NULL);
 
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);

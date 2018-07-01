@@ -353,9 +353,9 @@ public:
         r->set_dx(dst, vray.x);
         r->set_dy(dst, vray.y);
         r->set_dz(dst, vray.z);
-        r->set_r(dst, 0);
-        r->set_g(dst, 0);
-        r->set_b(dst, 0);
+        r->set_r(dst, 0.0);
+        r->set_g(dst, 0.0);
+        r->set_b(dst, 0.0);
         r->set_o(dst, 0);
         r->set_t(dst, 0);
         r->set_tMax(dst, FLT_MAX);

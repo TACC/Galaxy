@@ -126,6 +126,8 @@ int main(int argc,  char *argv[])
 
   Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
+	long t_run_start = my_time();
+
   if (mpiRank == 0)
   {
 
@@ -138,7 +140,9 @@ int main(int argc,  char *argv[])
       std::cerr << "connection ok\n";
     }
 
-    long t_run_start = my_time();
+int dbg = 1;
+while (dbg)
+	sleep(1);
 
     RendererP theRenderer = Renderer::NewP();
 
@@ -239,7 +243,8 @@ int main(int argc,  char *argv[])
 			std::cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds\n";
     }
 
-		std::cout << "TIMING rendering " << (my_time() - t_rendering_start) / 1000000000.0 << " seconds\n";
+		long t_done = my_time();
+		std::cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds\n";
 
     theApplication.QuitApplication();
   }

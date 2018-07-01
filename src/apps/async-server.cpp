@@ -85,8 +85,26 @@ render_thread(void *buf)
   cross(viewright, orig_viewdirection, orig_viewup);
 
   vec3f y(0.0, 1.0, 0.0);
-  float ay = acos(dot(y, viewup));
+  float ay = acos(dot(y, orig_viewup));
   axis_to_quat(orig_viewdirection, ay, orig_current_rotation);
+
+if (0)
+{
+std::cerr << "START: " << orig_current_rotation.x << " " << orig_current_rotation.y << " " << orig_current_rotation.z << " " << orig_current_rotation.w << "\n";
+std::cerr << "UP: " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
+std::cerr << "RT: " << viewright.x << " " << viewright.y << " " << viewright.z << "\n";
+vec3f x(1.0, 0.0, 0.0);
+vec3f y(0.0, 1.0, 0.0);
+vec3f z(0.0, 0.0, 1.0);
+
+vec3f t;
+rotate_vector_by_quat(x, orig_current_rotation, t);
+std::cerr << "X " << t.x << " " << t.y << " " << t.z << "\n";
+rotate_vector_by_quat(y, orig_current_rotation, t);
+std::cerr << "Y " << t.x << " " << t.y << " " << t.z << "\n";
+rotate_vector_by_quat(z, orig_current_rotation, t);
+std::cerr << "Z " << t.x << " " << t.y << " " << t.z << "\n";
+}
 
   viewdistance = orig_viewdistance;
   current_rotation = orig_current_rotation;
@@ -121,7 +139,7 @@ render_thread(void *buf)
 
 	while (! quit)
 	{
-		float x1 = X1, y1 = Y1;   // So stays unclanged by other thread during rendering
+		float x1 = X1, y1 = Y1;
 
 		float dx = (x1 - X0);
 		float dy = (y1 - Y0);
@@ -138,11 +156,13 @@ render_thread(void *buf)
           if (button == 0)
           {
             vec4f this_rotation;
-            trackball(this_rotation, X0, Y0, X1, Y1);
+            trackball(this_rotation, X0, Y1, X1, Y0);
 
             vec4f next_rotation;
             add_quats(this_rotation, current_rotation, next_rotation);
             current_rotation = next_rotation;
+
+// std::cerr << "OC " << current_rotation.x << " " << current_rotation.y << " " << current_rotation.z << " " << current_rotation.w << "\n";
 
             vec3f y(0.0, 1.0, 0.0);
             vec3f z(0.0, 0.0, 1.0);
@@ -165,7 +185,7 @@ render_thread(void *buf)
           if (button == 0)
           {
             vec4f this_rotation;
-            trackball(this_rotation, X0, Y0, X1, Y1);
+            trackball(this_rotation, X0, Y1, X1, Y0);
 
             vec4f next_rotation;
             add_quats(this_rotation, current_rotation, next_rotation);

@@ -28,9 +28,12 @@ for fname in open(inpt):
       reader.SetFileName(ifile);
       reader.Update()
       ply = dsa.WrapDataObject(reader.GetOutput())
-      pts = ply.Points.flatten().astype('f4')
-      normals = ply.PointData["Normals"].flatten().astype('f4')
       tris = ply.Polygons.reshape((-1,4))[:,1:].flatten().astype('i4')
+      print tris[:16]
+      pts = ply.Points.flatten().astype('f4')
+      print pts[:16]
+      normals = ply.PointData["Normals"].flatten().astype('f4')
+      print normals[:16]
       sizes = np.array([pts.shape[0]/3, tris.shape[0]/3]).astype('i4')
       f = open(ofile.rsplit('.')[0] + '.tri', 'wb')
       sizes.tofile(f)

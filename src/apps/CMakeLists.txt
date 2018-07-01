@@ -15,12 +15,14 @@ include_directories(${MPI_INCLUDE_PATH})
 set(BINS "")
 
 if (PVOL_SYNCHRONOUS)
+message("PVOL_SYNCHRONOUS")
 
 	add_executable(vis vis.cpp)
 	target_link_libraries(vis ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
 	set(BINS vis ${BINS})
 
 else()
+message("NOT PVOL_SYNCHRONOUS")
 
 	add_executable(async-server async-server.cpp Socket.cpp ServerRendering.cpp quat.cpp)
 	target_link_libraries(async-server ${VTK_LIBRARIES} ${PVOL_LIBRARIES})

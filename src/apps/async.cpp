@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <glut.h>
+#include <GL/glut.h>
 #include <pthread.h>
 #include <time.h>
 #include "ImageWriter.h"

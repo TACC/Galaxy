@@ -180,6 +180,16 @@ Triangles::local_import(char *f, MPI_Comm c)
 
   vtkFloatArray *parray = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
   vtkFloatArray *narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals"));
+	if (! narray)
+		narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals_"));
+
+	if (!narray)
+	{
+		cerr << "no normals?\n";
+    exit(1);
+  }
+	else
+		cerr << "OK normals\n";
 
   int n_original_vertices = pset->GetNumberOfPoints();
   n_triangles = pset->GetNumberOfCells();
