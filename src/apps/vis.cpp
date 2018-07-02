@@ -130,7 +130,6 @@ int main(int argc,  char *argv[])
 
   if (mpiRank == 0)
   {
-
     if (clientserver)
     {
       char hn[256];
@@ -139,10 +138,6 @@ int main(int argc,  char *argv[])
       cs.setup_server();
       std::cerr << "connection ok\n";
     }
-
-int dbg = 1;
-while (dbg)
-	sleep(1);
 
     RendererP theRenderer = Renderer::NewP();
 
@@ -174,7 +169,10 @@ while (dbg)
         for (auto v : theVisualizations)
         {
             if (skip && (k % skip) != 0)
+						{
+							std::cerr << "S";
               continue;
+						}
 
             if (rs->GetNumberOfRenderings() >= maxConcurrentRenderings)
             {

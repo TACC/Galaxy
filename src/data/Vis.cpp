@@ -123,8 +123,8 @@ Vis::local_commit(MPI_Comm c)
 
 	data = OSPRayObject::Cast(KeyedDataObject::GetByKey(datakey));
 
-  void *dispc = data->GetOSP_IE();
-  ispc::Vis_set_data(GetISPC(), dispc);
+	if (data->GetOSP() != nullptr)
+		ispc::Vis_set_data(GetISPC(), data->GetOSP_IE());
 
 	return false;
 }

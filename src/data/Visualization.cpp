@@ -177,7 +177,8 @@ Visualization::local_commit(MPI_Comm c)
 	ospModel = ospNewModel();
 
   for (auto ospg : osprayGeometries)
-    ospAddGeometry(ospModel, (OSPGeometry)ospg->GetTheData()->GetOSP());
+		if (ospg->GetTheData()->GetOSP() != nullptr)
+			ospAddGeometry(ospModel, (OSPGeometry)ospg->GetTheData()->GetOSP());
   
   ospCommit(ospModel);
    

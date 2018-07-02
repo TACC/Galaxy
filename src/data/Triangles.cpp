@@ -172,113 +172,121 @@ Triangles::local_import(char *f, MPI_Comm c)
   }
   else 
   {
-    cerr << "unknown partition extension: " << ext << "\n";
+    cerr << "unknown partition extension: " << pext << "\n";
     exit(1);
   }
 
-  vtkPoints* pts = pset->GetPoints();
-
-  vtkFloatArray *parray = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
-  vtkFloatArray *narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals"));
-	if (! narray)
-		narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals_"));
-
-	if (!narray)
-	{
-		cerr << "no normals?\n";
-    exit(1);
-  }
+	if (pset->GetNumberOfPoints() == 0)
+		n_vertices = 0;
 	else
-		cerr << "OK normals\n";
+	{
+		vtkPoints* pts = pset->GetPoints();
 
-  int n_original_vertices = pset->GetNumberOfPoints();
-  n_triangles = pset->GetNumberOfCells();
+		vtkFloatArray *parray = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
+		vtkFloatArray *narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals"));
+		if (! narray)
+			narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals_"));
 
-  int *vmap = new int[n_original_vertices];
-  for (int i = 0; i < n_original_vertices; i++)
-    vmap[i] = -1;
+		if (!narray)
+		{
+			cerr << "no normals?\n";
+			exit(1);
+		}
 
-  // NOTE: we're going to make sure here that there aren't any unreferenced vertices
-  
-  triangles = new int[3*n_triangles];
-  n_vertices = 0;
+		int n_original_vertices = pset->GetNumberOfPoints();
+		n_triangles = pset->GetNumberOfCells();
 
-  for (int i = 0; i < n_triangles; i++)
-  {
-    if (pset->GetCellType(i) != VTK_TRIANGLE)
-     cerr << i << "IS BAD\n";
-    else
-    {
-      vtkCell *c = pset->GetCell(i);
-      for (int j = 0; j < 3; j++)
-      {
-        int t = c->GetPointId(j);
-        if (vmap[t] == -1)
-          vmap[t] = n_vertices++;
+		int *vmap = new int[n_original_vertices];
+		for (int i = 0; i < n_original_vertices; i++)
+			vmap[i] = -1;
 
-        t = vmap[t];
-        triangles[i*3+j] = t;
-      }
-    }
-  }
+		// NOTE: we're going to make sure here that there aren't any unreferenced vertices
+		
+		triangles = new int[3*n_triangles];
+		n_vertices = 0;
 
-  float *orig_vertices = (float *)parray->GetVoidPointer(0);
-  float *orig_normals  = (float *)narray->GetVoidPointer(0);
+		for (int i = 0; i < n_triangles; i++)
+		{
+			if (pset->GetCellType(i) != VTK_TRIANGLE)
+			 cerr << i << "IS BAD\n";
+			else
+			{
+				vtkCell *c = pset->GetCell(i);
+				for (int j = 0; j < 3; j++)
+				{
+					int t = c->GetPointId(j);
+					if (vmap[t] == -1)
+						vmap[t] = n_vertices++;
 
-  vertices = new float[3*n_vertices];
-  normals = new float[3*n_vertices];
+					t = vmap[t];
+					triangles[i*3+j] = t;
+				}
+			}
+		}
 
-  bool first = true;
-  float *po = orig_vertices;
-  float *no = orig_normals;
-  for (int i = 0; i < n_original_vertices; i++)
-  {
-    if (vmap[i] != -1)
-    {
-      if (first)
-      {
-        first = false;
-        local_box.xyz_min.x = local_box.xyz_max.x = po[0];
-        local_box.xyz_min.y = local_box.xyz_max.y = po[1];
-        local_box.xyz_min.z = local_box.xyz_max.z = po[2];
-      }
-      else
-      {
-        if (po[0] < local_box.xyz_min.x) local_box.xyz_min.x = po[0];
-        if (po[0] > local_box.xyz_max.x) local_box.xyz_max.x = po[0];
-        if (po[1] < local_box.xyz_min.y) local_box.xyz_min.y = po[1];
-        if (po[1] > local_box.xyz_max.y) local_box.xyz_max.y = po[1];
-        if (po[2] < local_box.xyz_min.z) local_box.xyz_min.z = po[2];
-        if (po[2] > local_box.xyz_max.z) local_box.xyz_max.z = po[2];
-      }
+		float *orig_vertices = (float *)parray->GetVoidPointer(0);
+		float *orig_normals  = (float *)narray->GetVoidPointer(0);
 
-      float *pn = vertices + 3*vmap[i];
-      *pn++ = *po++;
-      *pn++ = *po++;
-      *pn++ = *po++;
+		vertices = new float[3*n_vertices];
+		normals = new float[3*n_vertices];
 
-      float *nn = normals + 3*vmap[i];
-      *nn++ = *no++;
-      *nn++ = *no++;
-      *nn++ = *no++;
-    }
-    else
-    {
-      po += 3;
-      no += 3;
-    }
-  }
+		bool first = true;
+		float *po = orig_vertices;
+		float *no = orig_normals;
+		for (int i = 0; i < n_original_vertices; i++)
+		{
+			if (vmap[i] != -1)
+			{
+				if (first)
+				{
+					first = false;
+					local_box.xyz_min.x = local_box.xyz_max.x = po[0];
+					local_box.xyz_min.y = local_box.xyz_max.y = po[1];
+					local_box.xyz_min.z = local_box.xyz_max.z = po[2];
+				}
+				else
+				{
+					if (po[0] < local_box.xyz_min.x) local_box.xyz_min.x = po[0];
+					if (po[0] > local_box.xyz_max.x) local_box.xyz_max.x = po[0];
+					if (po[1] < local_box.xyz_min.y) local_box.xyz_min.y = po[1];
+					if (po[1] > local_box.xyz_max.y) local_box.xyz_max.y = po[1];
+					if (po[2] < local_box.xyz_min.z) local_box.xyz_min.z = po[2];
+					if (po[2] > local_box.xyz_max.z) local_box.xyz_max.z = po[2];
+				}
 
-  delete[] vmap;
+				float *pn = vertices + 3*vmap[i];
+				*pn++ = *po++;
+				*pn++ = *po++;
+				*pn++ = *po++;
 
-  // Now the opartition is loaded.   If this ISN'T a ptri file containing
-  // BB's, we compute the BB based on the vertices.
-  
-  if (ext == "ptri")
+				float *nn = normals + 3*vmap[i];
+				*nn++ = *no++;
+				*nn++ = *no++;
+				*nn++ = *no++;
+			}
+			else
+			{
+				po += 3;
+				no += 3;
+			}
+		}
+
+		delete[] vmap;
+	}
+
+		// Now the opartition is loaded.   If this ISN'T a ptri file containing
+		// BB's, we compute the BB based on the vertices.
+		
+	if (ext == "ptri")
   {
     local_box = Box(dboxes + 6*GetTheApplication()->GetRank());
   }
-  else
+  else if (n_vertices == 0)
+	{
+		std::cerr << "Can't figure out BB\n";
+		exit(1);
+	}
+	else
   {
     bool first = true;
     float *v = vertices;
@@ -300,12 +308,12 @@ Triangles::local_import(char *f, MPI_Comm c)
         if (v[2] > local_box.xyz_max.z) local_box.xyz_max.z = v[2];
       }
 
-      float box[] = {
-        local_box.xyz_min.x, local_box.xyz_min.y, local_box.xyz_min.z,
-        local_box.xyz_max.x, local_box.xyz_max.y, local_box.xyz_max.z
-      };
+		float box[] = {
+			local_box.xyz_min.x, local_box.xyz_min.y, local_box.xyz_min.z,
+			local_box.xyz_max.x, local_box.xyz_max.y, local_box.xyz_max.z
+			};
 
-    MPI_Allgather((const void *)&box, sizeof(box), MPI_CHAR, (void *)dboxes, sizeof(box), MPI_CHAR, c);
+			MPI_Allgather((const void *)&box, sizeof(box), MPI_CHAR, (void *)dboxes, sizeof(box), MPI_CHAR, c);
   }
 
   for (int i = 0; i < 6; i++) neighbors[i] = -1;
@@ -350,39 +358,45 @@ Triangles::local_commit(MPI_Comm c)
   if (Geometry::local_commit(c))
     return true;
 
-  float *cptr, *colors = new float[n_vertices * 4];
-  cptr = colors;
-  for (int i = 0; i < n_vertices; i++)
-  {
-    *cptr++ = 1.0;
-    *cptr++ = 1.0;
-    *cptr++ = 1.0;
-    *cptr++ = 1.0;
-  } 
+	if (n_vertices > 0)
+	{
+		float *cptr, *colors = new float[n_vertices * 4];
+		cptr = colors;
+		for (int i = 0; i < n_vertices; i++)
+		{
+			*cptr++ = 1.0;
+			*cptr++ = 1.0;
+			*cptr++ = 1.0;
+			*cptr++ = 1.0;
+		} 
      
-  OSPData pdata = ospNewData(n_vertices, OSP_FLOAT3, vertices, OSP_DATA_SHARED_BUFFER);
-  ospCommit(pdata);
-      
-  OSPData ndata = ospNewData(n_vertices, OSP_FLOAT3, normals, OSP_DATA_SHARED_BUFFER); 
-  ospCommit(ndata);
+		OSPData pdata = ospNewData(n_vertices, OSP_FLOAT3, vertices, OSP_DATA_SHARED_BUFFER);
+		ospCommit(pdata);
+				
+		OSPData ndata = ospNewData(n_vertices, OSP_FLOAT3, normals, OSP_DATA_SHARED_BUFFER); 
+		ospCommit(ndata);
+		
+		OSPData tdata = ospNewData(n_triangles, OSP_INT3, triangles);
+		ospCommit(tdata);
   
-  OSPData tdata = ospNewData(n_triangles, OSP_INT3, triangles);
-  ospCommit(tdata);
-  
-  OSPData cdata = ospNewData(n_vertices, OSP_FLOAT4, colors);
-  ospCommit(cdata);
-  delete[] colors;
+		OSPData cdata = ospNewData(n_vertices, OSP_FLOAT4, colors);
+		ospCommit(cdata);
+		delete[] colors;
     
-  OSPGeometry ospg = ospNewGeometry("triangles");
+		OSPGeometry ospg = ospNewGeometry("triangles");
 
-  ospSetData(ospg, "vertex", pdata);
-  ospSetData(ospg, "vertex.normal", ndata);
-  ospSetData(ospg, "index", tdata);
-  ospSetData(ospg, "color", cdata);
+		ospSetData(ospg, "vertex", pdata);
+		ospSetData(ospg, "vertex.normal", ndata);
+		ospSetData(ospg, "index", tdata);
+		ospSetData(ospg, "color", cdata);
 
-  ospCommit(ospg);
+		ospCommit(ospg);
 
-  theOSPRayObject = (OSPObject)ospg;
+		theOSPRayObject = (OSPObject)ospg;
+	}
+	else
+		theOSPRayObject = nullptr;
+
   return false;
 } 
 

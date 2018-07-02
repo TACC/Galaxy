@@ -2,6 +2,8 @@
 #include "Rendering.h"
 #include "Socket.h"
 
+pthread_mutex_t lock;
+
 namespace pvol
 {
 
@@ -17,8 +19,17 @@ public:
   virtual void AddLocalPixels(Pixel *p, int n, int f, int s);
 
 private:
-	int   *frameids;
+	long	my_time();
+
+	float*       pixels = NULL;
+	float*       negative_pixels = NULL;
+	int*         frameids = NULL;
+	int*         negative_frameids = NULL;
+	long*        frame_times = NULL;
+
 	int   current;
+
+	pthread_mutex_t lock;
 };
  
 
