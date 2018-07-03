@@ -364,9 +364,9 @@ Triangles::local_commit(MPI_Comm c)
 		cptr = colors;
 		for (int i = 0; i < n_vertices; i++)
 		{
-			*cptr++ = 1.0;
-			*cptr++ = 1.0;
-			*cptr++ = 1.0;
+			*cptr++ = 173.0 / 255.0;
+			*cptr++ = 224.0 / 255.0;
+			*cptr++ = 255.0 / 255.0;
 			*cptr++ = 1.0;
 		} 
      

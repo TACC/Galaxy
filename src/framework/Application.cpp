@@ -208,8 +208,6 @@ bool
 Application::SyncMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 {
 	MPI_Barrier(coll_comm);
-	if (GetTheApplication()->GetRank() == 0)
-		std::cerr << "sync'd\n";
 	return false;
 }
 

@@ -149,6 +149,7 @@ LookForGeometryHit(varying bool shadeFlag,
 #endif
 
       hit.color   = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
+
       hit.opacity = dg.color.w;
       hit.point   = dg.P;
       hit.normal  = dg.Ns;
@@ -346,9 +347,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
-// uniform int geometryCount = vis->model ? vis->model->geometryCount : 0;
-// print("% Xvolumes, % mapped geoms % unmapped geoms % rays input\n", vis->nVolumeVis, vis->nMappedVis, geometryCount, nRaysIn);
-
 #if 0
   print("BOX [(%f %f %f)-(%f %f %f)]\n",
         box.lower.x,
@@ -446,7 +444,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // cast the secondary rays
 
     bool surface_hit = LookForSliceHit(shadeFlag, ray, vis, hit);
-// if (surface_hit) print("slice hit: t %\n", hit.t);
 
     if (model)
       surface_hit |= LookForGeometryHit(shadeFlag, model, ray, vis, hit);
@@ -834,7 +831,27 @@ export void TraceRays_generateShadowRays(void *uniform _self,
 
       for (int k = 0; k < lights->nLights; k++)
       {
-        float d = dot(surface_normal, lights->lights[k]);
+				vec3f surface_point = make_vec3f(raysIn->ox[i] + raysIn->t[i]*raysIn->dx[i] + epsilon*raysIn->nx[i], 
+													       		     raysIn->oy[i] + raysIn->t[i]*raysIn->dy[i] + epsilon*raysIn->ny[i],
+															           raysIn->oz[i] + raysIn->t[i]*raysIn->dz[i] + epsilon*raysIn->nz[i]);
+
+				// print("ZSP:\nX %\nY %\nZ %\n", surface_point.x, surface_point.y, surface_point.z);
+
+				float d; vec3f lvec;
+				if (lights->types[k])
+				{
+					lvec = safe_normalize(lights->lights[k] - surface_point);
+					d = dot(surface_normal, lvec);
+			  }
+				else
+				{
+					lvec = safe_normalize(lights->lights[k]);
+					d = dot(surface_normal, lights->lights[k]);
+				}
+					
+				// print("LP:\nX %\nY %\nZ %\n", lights->lights[k].x, lights->lights[k].y, lights->lights[k].z);
+				// print("LV:\nX %\nY %\nZ %\n", lvec.x, lvec.y, lvec.z);
+
         if (d < 0) d = 0;
 
         float dff = (1.0 - raysIn->o[i]) * Kd * d;
@@ -843,42 +860,14 @@ export void TraceRays_generateShadowRays(void *uniform _self,
         float dff_g = dff * raysIn->sg[i];
         float dff_b = dff * raysIn->sb[i];
 
-// print("XXX\nO: %\nKd: %\nd: %\ndff: %\ndff_r: %\ndff_g: %\ndff_b: %\n", raysIn->o[i], Kd, d, dff, dff_r, dff_g, dff_b);
+				// print("O %\nD %\nDFF %\nR %\nG %\nB %\n", raysIn->o[i], d, dff, dff_r, dff_g, dff_b);
 
-
-
-#if 0
-print("XXX\nInOX %f\nInOY %f\nInOZ %f\nInDX %\nInDY %f\nInDZ %f\nT: %\nepsilon: %\nNX %\nNY %\nNZ %\n",
-    raysIn->ox[i],
-    raysIn->oy[i],
-    raysIn->oz[i],
-    raysIn->dx[i],
-    raysIn->dy[i],
-    raysIn->dz[i],
-    raysIn->t[i],
-    epsilon,
-    raysIn->nx[i],
-    raysIn->ny[i],
-    raysIn->nz[i]);
-#endif
-
-        raysOut->ox[offset]    = raysIn->ox[i] + raysIn->t[i]*raysIn->dx[i] + epsilon*raysIn->nx[i];
-        raysOut->oy[offset]    = raysIn->oy[i] + raysIn->t[i]*raysIn->dy[i] + epsilon*raysIn->ny[i];
-        raysOut->oz[offset]    = raysIn->oz[i] + raysIn->t[i]*raysIn->dz[i] + epsilon*raysIn->nz[i];
-
-#if 0
-print("YYY\nOutOX %f\nOutOY %f\nOutOZ %f\nOutDX %\nOutDY %f\nOutDZ %f\n",
-    raysOut->ox[offset],
-    raysOut->oy[offset],
-    raysOut->oz[offset],
-    raysOut->dx[offset],
-    raysOut->dy[offset],
-    raysOut->dz[offset]);
-#endif
-
-        raysOut->dx[offset]    = lights->lights[k].x;
-        raysOut->dy[offset]    = lights->lights[k].y;
-        raysOut->dz[offset]    = lights->lights[k].z;
+        raysOut->ox[offset]    = surface_point.x;
+        raysOut->oy[offset]    = surface_point.y;
+        raysOut->oz[offset]    = surface_point.z;
+        raysOut->dx[offset]    = lvec.x;
+        raysOut->dy[offset]    = lvec.y;
+        raysOut->dz[offset]    = lvec.z;
         raysOut->r[offset]     = dff_r;
         raysOut->g[offset]     = dff_g;
         raysOut->b[offset]     = dff_b;

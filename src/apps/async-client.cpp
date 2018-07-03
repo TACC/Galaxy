@@ -22,6 +22,8 @@ using namespace pvol;
 
 ImageWriter image_writer("async_client");
 
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
 float*       pixels = NULL;
 float*       negative_pixels = NULL;
 int*         frameids = NULL;
@@ -32,12 +34,6 @@ pthread_t 	 receiver_tid;
 int 				 max_f = -1;
 int					 fknt[1000];
 bool 				 no_mouse = false;
-
-#if 0
-int pixel_count[100];
-int packet_count[100];
-int max_sender = 0;
-#endif
 
 Socket *skt;
 
@@ -227,21 +223,34 @@ ager_thread(void *)
 {
 	while (true)
 	{
+		struct timespec rm, tm = {0, 100000000};
+    nanosleep(&tm, &rm);
+
+		pthread_mutex_lock(&lock);
+
 		long now = my_time();
 
-		float *pix = pixels;
-		int *ids = frameids;
-		long *tm = frame_times;
-		for (int i = 0; i < width*height; i++, tm++)
-			if (*ids++ < max_f)
+		for (int offset = 0; offset < width*height; offset++)
+		{
+			int fid = frameids[offset];
+			if (fid > 0 && fid < max_f)
 			{
-				float sec = (now - *tm) / 1000000000.0;
-				float d = (sec > 10) ? 0.0 : (10.0 - sec) / 10.0;
-				d = 0.999;
-				*pix++ *= d, *pix++ *= d, *pix++ *= d, *pix++ = 1.0;
-			}
-			else
-				pix += 4;
+				long tm = frame_times[offset];
+        float sec = (now - tm) / 1000000000.0;
+
+        float *pix = pixels + (offset*4);
+        if (sec > max_f)
+        {
+          frame_times[offset] = now;
+          frameids[offset] = max_f;
+          *pix++ = 0.0, *pix++ = 0.0, *pix++ = 0.0, *pix++ = 1.0;
+        }
+        else
+          *pix++ *= 0.9, *pix++ *= 0.9, *pix++ *= 0.9, *pix++ = 1.0;
+      }
+		}
+
+		pthread_mutex_unlock(&lock);
 	}
 }
 	
@@ -272,12 +281,13 @@ receiver_thread(void *)
  	 		for (int i = max_f + 1; i <= frame;  i++)
 				fknt[i] = 0;
 
-			max_f = frame;
 			fknt[frame] += knt;
+
+			pthread_mutex_lock(&lock);
 
 			for (int i = 0; i < knt; i++, p++)
 			{
-				size_t offset = ((height-1)-p->y)*width + p->x;
+				size_t offset = p->y*width + p->x;
 				float *pix = pixels + (offset<<2);
 				float *npix = negative_pixels + (offset<<2);
 
@@ -288,7 +298,7 @@ receiver_thread(void *)
 				// the visible pixel, so we stash it. If its a POSITIVE sample
 				// we stuff the visible pixel with the sample and any stashed
 				// negative samples.
-
+				//
 				if (frameids[offset] == frame)
 				{
 					*pix++ += p->r;
@@ -323,15 +333,27 @@ receiver_thread(void *)
 						// its a POSITIVE sample from a NEW frame, so we stuff the visible
 						// pixel with the new sample and any negative samples that arrived 
 						// first
+						max_f = frame;
 						frameids[offset] = frame;
-						*pix++ = (*npix++ + p->r);
-						*pix++ = (*npix++ + p->g);
-						*pix++ = (*npix++ + p->b);
+						frame_times[offset] = now;
+						if (max_f == negative_frameids[offset])
+						{
+							*pix++ = (*npix + p->r), *npix = 0.0, npix++;
+							*pix++ = (*npix + p->g), *npix = 0.0, npix++;
+							*pix++ = (*npix + p->b), *npix = 0.0, npix++;
+						}
+						else
+						{
+							*pix++ = p->r;
+							*pix++ = p->g;
+							*pix++ = p->b;
+						}
 					}
 				}
 			}
+
+			pthread_mutex_unlock(&lock);
 		}
-		else std::cerr << "S";
 
 		free(buf);
 	}

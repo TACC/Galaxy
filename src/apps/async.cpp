@@ -30,6 +30,8 @@ float X0, Y0;
 float X1, Y1;
 int button = -1;
 
+float age = 1.0;
+
 volatile int frame = -1;
 
 int  *pargc;
@@ -303,6 +305,7 @@ render_thread(void *d)
 	theVisualization->Commit(theDatasets);
 
 	theRendering = AsyncRendering::NewP();
+	theRendering->SetMaxAge(age);
 	theRendering->SetTheOwner(0);
 	theRendering->SetTheSize(width, height);
 	theRendering->SetTheDatasets(theDatasets);
@@ -401,7 +404,7 @@ render_thread(void *d)
 
 			if (render_one)
 			{
-				GetTheApplication()->SyncApplication();
+				// GetTheApplication()->SyncApplication();
 				render_one = false;
 			}
 
@@ -428,6 +431,7 @@ syntax(char *a)
   cerr << "  -s w h     image size (512 x 512)\n";
   cerr << "  -O         object-center model (default)\n";
   cerr << "  -E         eye-center model\n";
+	cerr << "  -a age     limit on sample age (1.0)\n";
   exit(1);
 }
 
@@ -449,6 +453,7 @@ main(int argc, char *argv[])
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
+    else if (!strcmp(argv[i], "-a")) age = atof(argv[++i]);
     else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
     else if (!strcmp(argv[i], "-O")) mode = OBJECT_CENTER;
     else if (!strcmp(argv[i], "-E")) mode = EYE_CENTER;
