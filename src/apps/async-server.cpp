@@ -1,6 +1,3 @@
-#if 1
-int main(){}
-#else
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,7 +17,7 @@ int main(){}
 using namespace std;
 
 #include "async.h"
-#include "quat.h"
+#include "trackball.hpp"
 
 using namespace pvol;
 
@@ -46,14 +43,16 @@ RendererP theRenderer;
 
 float viewdistance, aov;
 vec3f viewpoint, viewdirection, viewup;
-vec4f current_rotation;
 
 float orig_viewdistance, orig_aov;
 vec3f orig_viewpoint, orig_viewdirection, orig_viewup;
-vec4f orig_current_rotation;
+vec3f center;
 
-vec3f down_viewdirection, down_viewpoint;
-float down_viewdistance;
+vec3f down_viewpoint;
+float down_scaling;
+
+Trackball trackball;
+float scaling;
 
 void *
 render_thread(void *buf)
@@ -78,43 +77,20 @@ render_thread(void *buf)
   theCamera->get_viewdirection(orig_viewdirection);
   theCamera->get_viewup(orig_viewup);
   theCamera->get_angle_of_view(orig_aov);
-  orig_viewdistance = len(orig_viewdirection);
 
+  center = orig_viewpoint + orig_viewdirection;
+
+  orig_viewdistance = len(orig_viewdirection);
   normalize(orig_viewdirection);
-  normalize(orig_viewup);
+
+	scaling = 1.0;
 
   vec3f viewright;
   cross(orig_viewdirection, orig_viewup, viewright);
   cross(viewright, orig_viewdirection, orig_viewup);
-
-  vec3f y(0.0, 1.0, 0.0);
-  float ay = acos(dot(y, orig_viewup));
-  axis_to_quat(orig_viewdirection, ay, orig_current_rotation);
-
-if (0)
-{
-std::cerr << "START: " << orig_current_rotation.x << " " << orig_current_rotation.y << " " << orig_current_rotation.z << " " << orig_current_rotation.w << "\n";
-std::cerr << "UP: " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
-std::cerr << "RT: " << viewright.x << " " << viewright.y << " " << viewright.z << "\n";
-vec3f x(1.0, 0.0, 0.0);
-vec3f y(0.0, 1.0, 0.0);
-vec3f z(0.0, 0.0, 1.0);
-
-vec3f t;
-rotate_vector_by_quat(x, orig_current_rotation, t);
-std::cerr << "X " << t.x << " " << t.y << " " << t.z << "\n";
-rotate_vector_by_quat(y, orig_current_rotation, t);
-std::cerr << "Y " << t.x << " " << t.y << " " << t.z << "\n";
-rotate_vector_by_quat(z, orig_current_rotation, t);
-std::cerr << "Z " << t.x << " " << t.y << " " << t.z << "\n";
-}
-
-  viewdistance = orig_viewdistance;
-  current_rotation = orig_current_rotation;
-  viewpoint = orig_viewpoint;
-  viewdirection = orig_viewdirection;
-  viewup = orig_viewup;
-  aov = orig_aov;
+  normalize(viewright);
+  orig_viewup = cross(viewright, orig_viewdirection);
+  theCamera->set_viewup(orig_viewup);
 
   DatasetsP theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
@@ -158,70 +134,50 @@ std::cerr << "Z " << t.x << " " << t.y << " " << t.z << "\n";
         {
           if (button == 0)
           {
-            vec4f this_rotation;
-            trackball(this_rotation, X0, Y1, X1, Y0);
-
-            vec4f next_rotation;
-            add_quats(this_rotation, current_rotation, next_rotation);
-            current_rotation = next_rotation;
-
-// std::cerr << "OC " << current_rotation.x << " " << current_rotation.y << " " << current_rotation.z << " " << current_rotation.w << "\n";
-
-            vec3f y(0.0, 1.0, 0.0);
-            vec3f z(0.0, 0.0, 1.0);
-
-            vec3f center = viewpoint + viewdirection*viewdistance;
-            rotate_vector_by_quat(y, current_rotation, viewup);
-            rotate_vector_by_quat(z, current_rotation, viewdirection);
-            viewpoint = center - viewdirection*viewdistance;
+            trackball.spin(X0, Y1, X1, Y0);
           }
           else
           {
-            vec3f center = down_viewpoint + down_viewdirection*down_viewdistance;
             float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
-            viewdistance = down_viewdistance * pow(10.0, d);
-            viewpoint = center - viewdirection*viewdistance;
+            scaling = down_scaling * pow(10.0, d);
           }
+
+          vec3f d = trackball.rotate_vector(orig_viewdirection);
+          vec3f u = trackball.rotate_vector(orig_viewup);
+          vec3f p = center - d * orig_viewdistance * scaling;
+  
+          theCamera->set_viewdirection(d);
+          theCamera->set_viewpoint(p);
+          theCamera->set_viewup(u);
+          theCamera->Commit(); 
+
         }
         else
         {
           if (button == 0)
           {
-            vec4f this_rotation;
-            trackball(this_rotation, X0, Y1, X1, Y0);
-
-            vec4f next_rotation;
-            add_quats(this_rotation, current_rotation, next_rotation);
-            current_rotation = next_rotation;
-
-            vec3f y(0.0, 1.0, 0.0);
-            vec3f z(0.0, 0.0, 1.0);
-
-            rotate_vector_by_quat(y, current_rotation, viewup);
-            rotate_vector_by_quat(z, current_rotation, viewdirection);
+						trackball.spin(X0, Y0, X1, Y1);
+            vec3f d = trackball.rotate_vector(orig_viewdirection);
+            theCamera->set_viewdirection(d);
+            theCamera->Commit();
           }
+#if 0
           else
           {
             float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
             std::cerr << d<<"\n";
             viewpoint = down_viewpoint + viewdirection*d;
           }
+#endif
         }
 			}
 
 			X0 = X1; Y0 = Y1;
 
-			theCamera->set_viewdirection(viewdirection); 
-			theCamera->set_viewpoint(viewpoint);
-			theCamera->set_viewup(viewup);
-			theCamera->set_angle_of_view(aov);
-			theCamera->Commit();
-
 			theRenderer->Render(theRenderingSet);
 
 			timespec ts = {0, 100000000};
 			nanosleep(&ts, NULL);
-		
 		}
 	}
 }
@@ -281,11 +237,11 @@ main(int argc, char *argv[])
 			{
 				case RESET_CAMERA:
 					viewdistance = orig_viewdistance;
-					current_rotation = orig_current_rotation;
 					viewpoint = orig_viewpoint;
 					viewdirection = orig_viewdirection;
 					viewup = orig_viewup;
 					aov = orig_aov;
+					trackball.reset();
 					render_one = true;
 					break;
 
@@ -325,10 +281,8 @@ main(int argc, char *argv[])
 						Xd = X0 = X1 = md->x;
 						Yd = Y0 = Y1 = md->y;
 
-						down_viewdistance = viewdistance;
 						down_viewpoint = viewpoint;
-						down_viewdirection = viewdirection;
-
+						down_scaling = scaling; 
 						free(buf);
 					}
 					break;
@@ -349,4 +303,3 @@ main(int argc, char *argv[])
 
   return 0;
 }
-#endif

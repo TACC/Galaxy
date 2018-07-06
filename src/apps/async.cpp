@@ -54,7 +54,7 @@ float orig_viewdistance, orig_aov;
 vec3f orig_viewpoint, orig_viewdirection, orig_viewup;
 vec3f center;
 
-vec3f	down_viewdirection, down_viewpoint, down_viewup;
+vec3f	down_viewpoint;
 float down_scaling;
 
 Trackball trackball;
