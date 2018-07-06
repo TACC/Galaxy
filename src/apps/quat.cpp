@@ -1,3 +1,6 @@
+#if 1
+void ksdflksaf() {}
+#else
 #include <iostream>
 #include "quat.h"
 #include <math.h>
@@ -26,7 +29,27 @@ project_to_sphere(float r, float x, float y)
 void axis_to_quat(vec3f a, float theta, vec4f& q)
 {
 		std::cerr << "axis " << a.x << " " << a.y << " " << a.z << " theta " << theta << "\n";
-		set(q, cos(theta/2), a.x*sin(theta/2), a.y*sin(theta/2), a.z*sin(theta/2));
+
+		// set(q, cos(theta/2), a.x*sin(theta/2), a.y*sin(theta/2), a.z*sin(theta/2));
+
+		float t = a.x*sin(theta/2);
+		float x = a.y*sin(theta/2);
+		float y = a.z*sin(theta/2);
+		float z = cos(theta/2);
+
+#if 0
+		float d = sqrt(x*x + y*y + z*z);
+		if (d > 0)
+		{
+			d = 1.0 / d;
+			x *= d;
+			y *= d;
+			z *= d;
+		}
+#endif
+			
+		set(q, t, x, y, z);
+		
 		std::cerr << "q " << q.x << " " << q.y << " " << q.z << " " << q.w << "\n";
 }
 
@@ -94,8 +117,6 @@ trackball(vec4f& q, float p1x, float p1y, float p2x, float p2y)
     vec3f p1, p2, d;
     float t;
 
-		p1x = p2x = 0.0;
-
     if (p1x == p2x && p1y == p2y)
 		{
         zero(q);
@@ -138,3 +159,4 @@ std::cerr << "A: " << a.x << " " << a.y << " " << a.z << "\n";
 }
 
 }
+#endif

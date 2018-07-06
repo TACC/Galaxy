@@ -1,3 +1,6 @@
+#if 1
+int main(){}
+#else
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -346,3 +349,4 @@ main(int argc, char *argv[])
 
   return 0;
 }
+#endif

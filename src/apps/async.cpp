@@ -18,7 +18,7 @@ using namespace std;
 
 using namespace pvol;
 
-#include "quat.h"
+#include "trackball.hpp"
 #include "async.h"
 
 #define WIDTH  500
@@ -50,18 +50,15 @@ DatasetsP 			theDatasets = NULL;
 float *pixels = NULL;
 bool  render_one = false;
 
-float viewdistance, aov;
-vec3f viewpoint, viewdirection, viewup;
-vec4f current_rotation;
-float scaling;
-
 float orig_viewdistance, orig_aov;
 vec3f orig_viewpoint, orig_viewdirection, orig_viewup;
-vec4f orig_current_rotation;
 vec3f center;
 
 vec3f	down_viewdirection, down_viewpoint, down_viewup;
-float down_viewdistance;
+float down_scaling;
+
+Trackball trackball;
+float scaling;
 
 cam_mode mode = OBJECT_CENTER;
 
@@ -156,16 +153,38 @@ keyboard(unsigned char ch, int x, int y)
 			render_one = true;
 			break;
 
+
+    case 0x62: // b reset camera
+		  {
+			 	trackball.spin(0.0, 0.0, 0.05, 0.0);
+				vec3f d = trackball.rotate_vector(orig_viewdirection);
+				vec3f u = trackball.rotate_vector(orig_viewup);
+				vec3f p = center - d * orig_viewdistance * scaling;
+				theCamera->set_viewpoint(p);
+				theCamera->set_viewup(u);
+				theCamera->set_viewdirection(d);
+				theCamera->Commit();
+				render_one = true;
+			}
+			break;
+
+
     case 0x63: // c reset camera
-			viewdistance = orig_viewdistance;
-			current_rotation = orig_current_rotation;
-			viewpoint = orig_viewpoint;
-			viewdirection = orig_viewdirection;
-			viewup = orig_viewup;
-			aov = orig_aov;
-			X1 = X0;
-			Y1 = Y0;
-			render_one = true;
+			{
+				trackball.reset();
+				scaling = 1;
+				X1 = X0;
+				Y1 = Y0;
+				trackball.reset();
+				vec3f d = trackball.rotate_vector(orig_viewdirection);
+				vec3f u = trackball.rotate_vector(orig_viewup);
+				vec3f p = center - d * orig_viewdistance * scaling;
+				theCamera->set_viewpoint(p);
+				theCamera->set_viewup(u);
+				theCamera->set_viewdirection(d);
+				theCamera->Commit();
+				render_one = true;
+			}
 			break;
 
 		case 0x53:
@@ -220,14 +239,9 @@ mousefunc(int k, int s, int x, int y)
   if (s == GLUT_DOWN)
   {
 		button = k;
-
     Xd = X1 = X0 = -1.0 + 2.0*(float(x)/WIDTH);
     Yd = Y1 = Y0 = -1.0 + 2.0*(float(y)/HEIGHT);
-
-		down_viewdistance = viewdistance;
-		down_viewpoint = viewpoint;
-		down_viewdirection = viewdirection;
-		down_viewup = viewup;
+		down_scaling = scaling;
   }
 	else
 		button = -1;
@@ -252,8 +266,6 @@ glut_loop()
   glutMotionFunc(motionfunc);
   glutMouseFunc(mousefunc);
   glutKeyboardFunc(keyboard);
-  // glutCreateMenu(menu);
-  // glutAddMenuEntry("Quit", QUIT);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   glClearDepth(1.0);
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -263,22 +275,6 @@ glut_loop()
   glRasterPos2i(-1, -1);
   frame = 1;
   glutMainLoop();
-}
-
-void rvbq(vec3f& v, vec4f& q, vec3f& r)
-{
-	float dqv = q.x*v.x + q.y*v.y + q.z*v.z;
-	float dqq = q.x*q.x + q.y*q.y + q.z*q.z;
-	vec3f cqv = {q.y*v.z-q.z*v.y, q.z*v.x-q.x*v.z, q.x+v.y-q.y*v.x};
-	float s = q.w;
-
-	float a = 2.0 * dqv;
-	float b = s*s - dqq;
-	float c = 2.0 * s;
-
-	r.x = a*q.x + b*v.x + c*cqv.x;
-	r.y = a*q.y + b*v.y + c*cqv.y;
-	r.z = a*q.z + b*v.z + c*cqv.z;
 }
 
 void *
@@ -297,27 +293,18 @@ render_thread(void *d)
   theCamera->get_angle_of_view(orig_aov);
 
 	center = orig_viewpoint + orig_viewdirection;
-	orig_viewdistance = len(orig_viewdirection);
-  scaling = 1.0;
 
+	orig_viewdistance = len(orig_viewdirection);
   normalize(orig_viewdirection);
+
+  scaling = 1.0;
 
   vec3f viewright;
   cross(orig_viewdirection, orig_viewup, viewright);
   cross(viewright, orig_viewdirection, orig_viewup);
 	normalize(viewright);
 	orig_viewup = cross(viewright, orig_viewdirection);
-
-	std::cerr << "fixed UP: " << orig_viewup.x << " " << orig_viewup.y << " " << orig_viewup.z << "\n";
-
-	orig_current_rotation = {1.0, 0.0, 0.0, 0.0};
-  current_rotation = orig_current_rotation;
-
-  viewdistance = orig_viewdistance;
-  viewpoint = orig_viewpoint;
-  viewdirection = orig_viewdirection;
-  viewup = orig_viewup;
-  aov = orig_aov;
+	theCamera->set_viewup(orig_viewup);
 
   theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
@@ -344,11 +331,6 @@ render_thread(void *d)
 
 	bool first = true;
 
-	orig_viewpoint = viewpoint;
-	orig_viewdirection = viewdirection;
-	orig_viewup = viewup;
-	orig_aov = aov;
-
 	while (get_state() == RUNNING)
 	{
 		if (render_one || first || (X0 != X1) || (Y0 != Y1))
@@ -360,79 +342,44 @@ render_thread(void *d)
 				{
 					if (button == 0)
 					{
-						vec4f this_rotation;
-						X1 = X0 = 0.0;
-						trackball(this_rotation, X0, Y0, X1, Y1);
-			
-						vec4f next_rotation;
-						multiply_quats(this_rotation, current_rotation, next_rotation);
-						current_rotation = next_rotation;
-
-						std::cerr << "BEFORE P " << orig_viewpoint.x << " " << orig_viewpoint.y << " " << orig_viewpoint.z;
-						std::cerr << " U " << orig_viewup.x << " " << orig_viewup.y << " " << orig_viewup.z << "\n";
-						rvbq(orig_viewup, current_rotation, viewup);
-						rvbq(orig_viewdirection, current_rotation, viewdirection);
-						viewpoint = center - viewdirection*orig_viewdistance;
-						std::cerr << "AFTER P " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z;
-						std::cerr << " U " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
+						trackball.spin(X0, Y0, X1, Y1);
 					}
 					else
 					{
-						vec3f center = down_viewpoint + down_viewdirection*down_viewdistance;
 						float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
-						scaling = down_viewdistance * pow(10.0, d);
-						viewpoint = center - viewdirection*scaling;
+						scaling = down_scaling * pow(10.0, d);
 					}
+					
+					vec3f d = trackball.rotate_vector(orig_viewdirection);
+					vec3f u = trackball.rotate_vector(orig_viewup);
+					vec3f p = center - d * orig_viewdistance * scaling;
+
+					theCamera->set_viewdirection(d);
+					theCamera->set_viewpoint(p);
+					theCamera->set_viewup(u);
+					theCamera->Commit();
 				}
 				else
 				{
 					if (button == 0)
 					{
-						vec4f this_rotation;
-						trackball(this_rotation, X0, Y0, X1, Y1);
-			
-						vec4f next_rotation;
-						add_quats(this_rotation, current_rotation, next_rotation);
-						current_rotation = next_rotation;
-
-						vec3f y(0.0, 1.0, 0.0);
-						vec3f z(0.0, 0.0, 1.0);
-
-						rotate_vector_by_quat(y, current_rotation, viewup);
-						rotate_vector_by_quat(z, current_rotation, viewdirection);
+						trackball.spin(X0, Y0, X1, Y1);
+						vec3f d = trackball.rotate_vector(orig_viewdirection);
+						theCamera->set_viewdirection(d);
+						theCamera->Commit();
 					}
+#if 0
 					else
 					{
 						float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
 						viewpoint = down_viewpoint + viewdirection*d;
 					}
+#endif
 				}
 			}
 
-#if 1
-			std::cerr
-				<< viewup.x << " " 
-				<< viewup.y << " " 
-				<< viewup.z << " : " 
-				<< viewpoint.x << " " 
-				<< viewpoint.y << " " 
-				<< viewpoint.z << " : " 
-				<< viewdirection.x << " " 
-				<< viewdirection.y << " " 
-				<< viewdirection.z << "\n";
-#endif
-
-      theCamera->set_viewdirection(viewdirection);
-      theCamera->set_viewpoint(viewpoint);
-      theCamera->set_viewup(viewup);
-      theCamera->set_angle_of_view(aov);
-      theCamera->Commit();
-
 			if (render_one)
-			{
-				// GetTheApplication()->SyncApplication();
 				render_one = false;
-			}
 
 			theRenderer->Render(theRenderingSet);
 			X0 = X1; Y0 = Y1;

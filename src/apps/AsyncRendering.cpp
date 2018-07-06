@@ -19,7 +19,7 @@ AsyncRendering::initialize()
   negative_frameids = NULL;
   frame_times = NULL;
   kill_ager = false;
-	ager_tid = -1;
+	ager_tid = (pthread_t)-1;
 	
 	t_start = my_time();
 
@@ -28,7 +28,7 @@ AsyncRendering::initialize()
 
 AsyncRendering::~AsyncRendering()
 {
-	if (ager_tid != -1)
+	if (ager_tid != (pthread_t)-1)
 	{
 		kill_ager = true;
 		pthread_join(ager_tid, NULL);

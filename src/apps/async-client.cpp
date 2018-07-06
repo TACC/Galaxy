@@ -22,7 +22,7 @@ using namespace pvol;
 
 ImageWriter image_writer("async_client");
 
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t buffer_lock = PTHREAD_MUTEX_INITIALIZER;
 
 float*       pixels = NULL;
 float*       negative_pixels = NULL;
@@ -226,7 +226,7 @@ ager_thread(void *)
 		struct timespec rm, tm = {0, 100000000};
     nanosleep(&tm, &rm);
 
-		pthread_mutex_lock(&lock);
+		pthread_mutex_lock(&buffer_lock);
 
 		long now = my_time();
 
@@ -250,7 +250,7 @@ ager_thread(void *)
       }
 		}
 
-		pthread_mutex_unlock(&lock);
+		pthread_mutex_unlock(&buffer_lock);
 	}
 }
 	
@@ -283,7 +283,7 @@ receiver_thread(void *)
 
 			fknt[frame] += knt;
 
-			pthread_mutex_lock(&lock);
+			pthread_mutex_lock(&buffer_lock);
 
 			for (int i = 0; i < knt; i++, p++)
 			{
@@ -352,7 +352,7 @@ receiver_thread(void *)
 				}
 			}
 
-			pthread_mutex_unlock(&lock);
+			pthread_mutex_unlock(&buffer_lock);
 		}
 
 		free(buf);
