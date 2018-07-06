@@ -53,12 +53,14 @@ bool  render_one = false;
 float viewdistance, aov;
 vec3f viewpoint, viewdirection, viewup;
 vec4f current_rotation;
+float scaling;
 
 float orig_viewdistance, orig_aov;
 vec3f orig_viewpoint, orig_viewdirection, orig_viewup;
 vec4f orig_current_rotation;
+vec3f center;
 
-vec3f	down_viewdirection, down_viewpoint;
+vec3f	down_viewdirection, down_viewpoint, down_viewup;
 float down_viewdistance;
 
 cam_mode mode = OBJECT_CENTER;
@@ -219,12 +221,13 @@ mousefunc(int k, int s, int x, int y)
   {
 		button = k;
 
-    Xd = X0 = -1.0 + 2.0*(float(x)/WIDTH);
-    Yd = Y0 = -1.0 + 2.0*(float(y)/HEIGHT);
+    Xd = X1 = X0 = -1.0 + 2.0*(float(x)/WIDTH);
+    Yd = Y1 = Y0 = -1.0 + 2.0*(float(y)/HEIGHT);
 
 		down_viewdistance = viewdistance;
 		down_viewpoint = viewpoint;
 		down_viewdirection = viewdirection;
+		down_viewup = viewup;
   }
 	else
 		button = -1;
@@ -262,6 +265,22 @@ glut_loop()
   glutMainLoop();
 }
 
+void rvbq(vec3f& v, vec4f& q, vec3f& r)
+{
+	float dqv = q.x*v.x + q.y*v.y + q.z*v.z;
+	float dqq = q.x*q.x + q.y*q.y + q.z*q.z;
+	vec3f cqv = {q.y*v.z-q.z*v.y, q.z*v.x-q.x*v.z, q.x+v.y-q.y*v.x};
+	float s = q.w;
+
+	float a = 2.0 * dqv;
+	float b = s*s - dqq;
+	float c = 2.0 * s;
+
+	r.x = a*q.x + b*v.x + c*cqv.x;
+	r.y = a*q.y + b*v.y + c*cqv.y;
+	r.z = a*q.z + b*v.z + c*cqv.z;
+}
+
 void *
 render_thread(void *d)
 {
@@ -276,21 +295,25 @@ render_thread(void *d)
   theCamera->get_viewdirection(orig_viewdirection);
   theCamera->get_viewup(orig_viewup);
   theCamera->get_angle_of_view(orig_aov);
+
+	center = orig_viewpoint + orig_viewdirection;
 	orig_viewdistance = len(orig_viewdirection);
+  scaling = 1.0;
 
   normalize(orig_viewdirection);
-  normalize(orig_viewup);
 
   vec3f viewright;
   cross(orig_viewdirection, orig_viewup, viewright);
   cross(viewright, orig_viewdirection, orig_viewup);
+	normalize(viewright);
+	orig_viewup = cross(viewright, orig_viewdirection);
 
-  vec3f y(0.0, 1.0, 0.0);
-  float ay = acos(dot(y, viewup));
-  axis_to_quat(orig_viewdirection, ay, orig_current_rotation);
+	std::cerr << "fixed UP: " << orig_viewup.x << " " << orig_viewup.y << " " << orig_viewup.z << "\n";
+
+	orig_current_rotation = {1.0, 0.0, 0.0, 0.0};
+  current_rotation = orig_current_rotation;
 
   viewdistance = orig_viewdistance;
-  current_rotation = orig_current_rotation;
   viewpoint = orig_viewpoint;
   viewdirection = orig_viewdirection;
   viewup = orig_viewup;
@@ -321,7 +344,6 @@ render_thread(void *d)
 
 	bool first = true;
 
-	orig_current_rotation = current_rotation;
 	orig_viewpoint = viewpoint;
 	orig_viewdirection = viewdirection;
 	orig_viewup = viewup;
@@ -339,26 +361,27 @@ render_thread(void *d)
 					if (button == 0)
 					{
 						vec4f this_rotation;
+						X1 = X0 = 0.0;
 						trackball(this_rotation, X0, Y0, X1, Y1);
 			
 						vec4f next_rotation;
-						add_quats(this_rotation, current_rotation, next_rotation);
+						multiply_quats(this_rotation, current_rotation, next_rotation);
 						current_rotation = next_rotation;
 
-						vec3f y(0.0, 1.0, 0.0);
-						vec3f z(0.0, 0.0, 1.0);
-
-						vec3f center = viewpoint + viewdirection*viewdistance;
-						rotate_vector_by_quat(y, current_rotation, viewup);
-						rotate_vector_by_quat(z, current_rotation, viewdirection);
-						viewpoint = center - viewdirection*viewdistance;
+						std::cerr << "BEFORE P " << orig_viewpoint.x << " " << orig_viewpoint.y << " " << orig_viewpoint.z;
+						std::cerr << " U " << orig_viewup.x << " " << orig_viewup.y << " " << orig_viewup.z << "\n";
+						rvbq(orig_viewup, current_rotation, viewup);
+						rvbq(orig_viewdirection, current_rotation, viewdirection);
+						viewpoint = center - viewdirection*orig_viewdistance;
+						std::cerr << "AFTER P " << viewpoint.x << " " << viewpoint.y << " " << viewpoint.z;
+						std::cerr << " U " << viewup.x << " " << viewup.y << " " << viewup.z << "\n";
 					}
 					else
 					{
 						vec3f center = down_viewpoint + down_viewdirection*down_viewdistance;
 						float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
-						viewdistance = down_viewdistance * pow(10.0, d);
-						viewpoint = center - viewdirection*viewdistance;
+						scaling = down_viewdistance * pow(10.0, d);
+						viewpoint = center - viewdirection*scaling;
 					}
 				}
 				else
@@ -386,8 +409,11 @@ render_thread(void *d)
 				}
 			}
 
-#if 0
+#if 1
 			std::cerr
+				<< viewup.x << " " 
+				<< viewup.y << " " 
+				<< viewup.z << " : " 
 				<< viewpoint.x << " " 
 				<< viewpoint.y << " " 
 				<< viewpoint.z << " : " 

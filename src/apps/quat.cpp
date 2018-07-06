@@ -1,11 +1,10 @@
+#include <iostream>
 #include "quat.h"
 #include <math.h>
 
 namespace pvol
 {
-
 #define TRACKBALLSIZE 2.0
-
 
 static float
 project_to_sphere(float r, float x, float y)
@@ -24,11 +23,19 @@ project_to_sphere(float r, float x, float y)
 }
 
 
-void axis_to_quat(vec3f a, float phi, vec4f& q)
+void axis_to_quat(vec3f a, float theta, vec4f& q)
 {
-    normalize(a);
-    scale(sin(phi/2.0), a);
-    set(q, a.x, a.y, a.z, cos(phi/2.0));
+		std::cerr << "axis " << a.x << " " << a.y << " " << a.z << " theta " << theta << "\n";
+		set(q, cos(theta/2), a.x*sin(theta/2), a.y*sin(theta/2), a.z*sin(theta/2));
+		std::cerr << "q " << q.x << " " << q.y << " " << q.z << " " << q.w << "\n";
+}
+
+void multiply_quats(vec4f q1, vec4f q2, vec4f& dest)
+{
+	dest.x = q1.x*q2.x - q1.y*q2.y - q1.z*q2.z - q1.w*q2.w;
+	dest.y = q1.x*q2.y + q1.y*q2.x + q1.z*q2.w - q1.w*q2.z;
+	dest.z = q1.x*q2.z - q1.y*q2.w + q1.z*q2.x + q1.w*q2.y;
+	dest.w = q1.x*q2.w + q1.y*q2.z - q1.z*q2.y + q1.w*q2.x;
 }
 
 void add_quats(vec4f q1, vec4f q2, vec4f& dest)
@@ -54,21 +61,23 @@ void add_quats(vec4f q1, vec4f q2, vec4f& dest)
 void
 rotate_vector_by_quat(vec3f v, vec4f q, vec3f& vq)
 {
-    float dot_uv = dot(q, v);
-    float dot_uu = dot(q, q);
-    float s      = q.w;
-    float ss     = s*s;
+	vec3f u = {q.y, q.z, q.w};
+	float s = q.x;
 
-    vec3f cross_uv;
-    cross(q, v, cross_uv);
+	float dot_uv = dot(u, v);
+	float dot_uu = dot(u, u);
+	float ss     = s*s;
 
-    float a = 2.0 * dot(q, v);
-    float b = ss - dot(q, q);
-    float c = 2 * s;
+	vec3f cross_uv;
+	cross(u, v, cross_uv);
 
-    vq.x = (a * q.x) + (b * v.x) + (c * cross_uv.x);
-    vq.y = (a * q.y) + (b * v.y) + (c * cross_uv.y);
-    vq.z = (a * q.z) + (b * v.z) + (c * cross_uv.z);
+	float a = 2.0 * dot(u, v);
+	float b = ss - dot(u, u);
+	float c = 2 * s;
+
+    vq.x = (a * u.x) + (b * v.x) + (c * cross_uv.x);
+    vq.y = (a * u.y) + (b * v.y) + (c * cross_uv.y);
+    vq.z = (a * u.z) + (b * v.z) + (c * cross_uv.z);
 
 		float d = 1.0 / sqrt(vq.x*vq.x + vq.y*vq.y + vq.z*vq.z);
     vq.x *= d;
@@ -85,6 +94,8 @@ trackball(vec4f& q, float p1x, float p1y, float p2x, float p2y)
     vec3f p1, p2, d;
     float t;
 
+		p1x = p2x = 0.0;
+
     if (p1x == p2x && p1y == p2y)
 		{
         zero(q);
@@ -98,11 +109,17 @@ trackball(vec4f& q, float p1x, float p1y, float p2x, float p2y)
     p1 = vec3f(p1x, p1y, project_to_sphere(TRACKBALLSIZE,p1x,p1y));
     p2 = vec3f(p2x, p2y, project_to_sphere(TRACKBALLSIZE,p2x,p2y));
 
+std::cerr << "===============================\n";
+std::cerr << "p1 " << p1.x << " " << p1.y << " " << p1.z << "\n";
+std::cerr << "p2 " << p2.x << " " << p2.y << " " << p2.z << "\n";
+
     /*
      *  Now, we want the cross product of P1 and P2
      */
     cross(p2,p1,a);
     normalize(a);
+
+std::cerr << "A: " << a.x << " " << a.y << " " << a.z << "\n";
 
     /*
      *  Figure out how much to rotate around that axis.
