@@ -84,8 +84,12 @@ public:
 
 	Lighting *get_the_lights() { return &lighting; }
 
+	void Trace(RayList *);
 
 private:
+
+	vector<future<void>> rvec;
+
 	int frame;
 
 	int sent_ray_count;
@@ -120,6 +124,7 @@ private:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
   };
 
+public:
   class SendRaysMsg : public Work
   {
   public:

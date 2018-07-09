@@ -266,7 +266,7 @@ RenderingSet::CheckLocalState()
   bool currently_busy = (local_raylist_count != 0);
 	currently_busy = currently_busy || left_busy;
 	currently_busy = currently_busy || right_busy;
-	// currently_busy = currently_busy || CameraIsActive();
+	currently_busy = currently_busy || CameraIsActive();
 
   // If the busy-state has changed, then we need to do something: send a message
   // up the tree to inform the parent of the state change, or (if this is the root)
