@@ -1,7 +1,11 @@
 # Galaxy: an asynchronous distributed parallel visualization ray tracer
 Galaxy is an asynchronous parallel visualization ray tracer for performant rendering in distributed computing environments. Galaxy builds upon [Intel OSPRay][1] and [Intel Embree][2], including ray queueing and sending logic inspired by [TACC GraviT][3]. 
 
-Galaxy has been developed by Greg Abram and Paul Navratil with funding from the ASCR program of the US Department of Energy's Office of Science, Drs. Lucy Nowell and Laura Biven, program managers; from Intel Corporation through the Intel Parallel Computing Center program; and from the Texas Advanced Computing Center at the University of Texas at Austin.
+Galaxy has been developed by Greg Abram and Paul Navratil with funding from the US Department of Energy's Office of Science ASCR program (Drs. Lucy Nowell and Laura Biven, program managers) through sub-award from Los Alamos National Laboratory; from Intel Corporation through Intel Parallel Computing Center awards; and from the Texas Advanced Computing Center at the University of Texas at Austin.
+
+Galaxy is licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License. A copy of the License is included with this software in the file `LICENSE`. If your copy does not contain the License, you may obtain a copy of the License at: [Apache License Version 2.0][15]. 
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.  
 
 ## Galaxy dependencies
 Galaxy has two types of dependencies: (1) components assumed to be already installed in an accessible spot; and (2) components that are associated with the Galaxy repository in the `third-party` subdirectory.
@@ -418,3 +422,5 @@ The following environment variables affect Galaxy behavior:
 [12]: http://embree.github.io/
 [13]: http://www.ospray.org/
 [14]: http://www.glfw.org/
+[15]: https://www.apache.org/licenses/LICENSE-2.0
+
