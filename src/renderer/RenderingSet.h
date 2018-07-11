@@ -6,7 +6,7 @@
 
 
 #include "KeyedObject.h"
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_POINTER(RenderingSet)
 }
@@ -14,7 +14,7 @@ KEYED_OBJECT_POINTER(RenderingSet)
 #include "Rendering.h"
 #include "Work.h"
 
-namespace pvol
+namespace gxy
 {
 class Camera;
 class RayList;

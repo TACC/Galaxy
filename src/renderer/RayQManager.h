@@ -11,7 +11,7 @@
 
 #include "debug.h"
 
-namespace pvol
+namespace gxy
 {
 class Renderer;
 

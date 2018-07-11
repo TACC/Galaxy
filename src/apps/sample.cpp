@@ -10,7 +10,7 @@
 #include <Application.h>
 #include "OSPRayRenderer.h"
 
-using namespace pvol;
+using namespace gxy;
 
 #define LOGGING 0
 

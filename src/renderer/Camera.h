@@ -8,7 +8,7 @@
 #include "rapidjson/filereadstream.h"
 
 #include "KeyedObject.h"
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_POINTER(Camera)
 }
@@ -18,7 +18,7 @@ KEYED_OBJECT_POINTER(Camera)
 #include "dtypes.h"
 #include "Box.h"
 
-namespace pvol
+namespace gxy
 {
 class Rays;
 class Rendering;

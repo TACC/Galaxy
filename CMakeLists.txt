@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT(PVol)
+PROJECT(Galaxy)
 
 if (COMMAND cmake_policy)
 	# use rpath on MacOS
@@ -74,7 +74,7 @@ FOREACH(ver ${ISPC_VERSION_WORKING})
   ENDFOREACH()
 ENDFOREACH()
 
-find_package(embree 2.16.0 PATHS 
+find_package(embree 3 PATHS 
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib64/cmake
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib/cmake
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/build
@@ -100,7 +100,7 @@ if (ospray_DIR)
   include_directories(${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
   include_directories_ispc(${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 else(ospray_DIR)
-  message(FATAL_ERROR "OSPRay directory not found")
+  message(FATAL_ERROR "OSPRay directory not found. Please make sure you have done a 'git submodule init' and built threadpool11, Embree and OSPRay.")
 endif(ospray_DIR)
 
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
@@ -112,9 +112,5 @@ SET(CMAKE_INSTALL_RPATH
   "${CMAKE_INSTALL_PREFIX}/threadpool11/lib")
 
 
-
-
 add_subdirectory(src)
 
-configure_file(pvol.h.in pvol.h)
-install(FILES ${PROJECT_BINARY_DIR}/pvol.h DESTINATION include/pvol)

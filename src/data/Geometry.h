@@ -9,7 +9,7 @@ using namespace std;
 
 #include "OSPRayObject.h"
 
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_POINTER(Geometry)
 
@@ -19,4 +19,4 @@ class Geometry : public OSPRayObject
 {
   KEYED_OBJECT_SUBCLASS(Geometry, OSPRayObject)
 };
-} // namespace pvol
+} // namespace gxy

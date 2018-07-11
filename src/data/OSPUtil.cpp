@@ -1,7 +1,8 @@
 #include <ospray/ospray.h>
-#include <SDK/api/Device.h>
+#include <ospray/SDK/common/Managed.h>
+#include <ospray/SDK/api/Device.h>
 
-namespace pvol
+namespace gxy
 {
 namespace osp_util
 {

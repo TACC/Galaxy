@@ -8,7 +8,7 @@
 using namespace rapidjson;
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 Lighting::Lighting()
 {

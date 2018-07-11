@@ -1,19 +1,5 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1bafda311..0e8772112 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -70,6 +70,9 @@ MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
- MARK_AS_ADVANCED(GLUT_cocoa_LIBRARY)
- 
- SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/common/cmake ${CMAKE_MODULE_PATH})
-+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-+  SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
-+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
- 
- INCLUDE(test)
- 
 diff --git a/common/cmake/ispc.cmake b/common/cmake/ispc.cmake
-index ec9e435c7..bad69c449 100644
+index 2c5757f6c..e5b6bc322 100644
 --- a/common/cmake/ispc.cmake
 +++ b/common/cmake/ispc.cmake
 @@ -26,7 +26,7 @@ ENDMACRO ()

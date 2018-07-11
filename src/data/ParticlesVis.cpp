@@ -10,7 +10,7 @@
 
 #include "ParticlesVis_ispc.h"
 
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_TYPE(ParticlesVis)
 

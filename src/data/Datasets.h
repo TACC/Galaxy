@@ -15,7 +15,7 @@ using namespace std;
 using namespace rapidjson;
 
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_POINTER(Datasets)
@@ -86,4 +86,4 @@ protected:
 	int nkeys;
 	Key *keys;
 };
-} // namespace pvol
+} // namespace gxy

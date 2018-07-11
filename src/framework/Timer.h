@@ -4,7 +4,7 @@
 #include <ratio>
 #include <chrono>
 
-namespace pvol
+namespace gxy
 {
 class Timer
 {

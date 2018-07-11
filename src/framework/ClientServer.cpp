@@ -9,7 +9,7 @@
 
 #include "ClientServer.h"
 
-namespace pvol
+namespace gxy
 {
 ClientServer::ClientServer()
 {

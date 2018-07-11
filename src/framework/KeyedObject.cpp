@@ -6,7 +6,7 @@
 using namespace rapidjson;
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 static int ko_count = 0;
 static int get_ko_count() { return ko_count; }

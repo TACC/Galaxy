@@ -11,7 +11,7 @@
 #include <math.h>
 #include <mpi.h>
 
-#include <pvol.h>
+#include <galaxy.h>
 #include <dtypes.h>
 #include <Application.h>
 
@@ -23,7 +23,7 @@
 #include "Rendering.h"
 #include "RenderingSet.h"
 
-using namespace pvol;
+using namespace gxy;
 
 static int width = 1920, height = 1080;
 static int mpiRank, mpiSize;

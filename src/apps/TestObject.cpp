@@ -1,7 +1,7 @@
 #include "Application.h"
 #include "TestObject.h"
 
-using namespace pvol;
+using namespace gxy;
 
 WORK_CLASS_TYPE(TestObject::DoitMsg);
 KEYED_OBJECT_TYPE(TestObject);

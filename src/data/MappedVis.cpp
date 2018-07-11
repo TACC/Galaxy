@@ -10,7 +10,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_TYPE(MappedVis)
 

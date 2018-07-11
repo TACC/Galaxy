@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include "Message.h"
 
-namespace pvol
+namespace gxy
 {
 class MessageQ {
 public:

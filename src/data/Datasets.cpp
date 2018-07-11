@@ -6,7 +6,7 @@
 #include "Volume.h"
 #include "Particles.h"
 
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_TYPE(Datasets)
 

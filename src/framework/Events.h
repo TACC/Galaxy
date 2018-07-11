@@ -11,7 +11,7 @@
 extern pthread_mutex_t EventsLock;
 
 
-namespace pvol
+namespace gxy
 {
 class Event
 {

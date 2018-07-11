@@ -8,7 +8,7 @@
 #include <dtypes.h>
 #include <Application.h>
 
-#include <pvol.h>
+#include <galaxy.h>
 #include <OSPRayRenderer.h>
 
 #ifdef WITH_VTK_RENDERER
@@ -18,7 +18,7 @@
 #include "Cinema.h"
 
 using namespace std;
-using namespace pvol;
+using namespace gxy;
 
 char  *
 timestamp()

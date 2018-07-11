@@ -8,7 +8,7 @@ static int dbg = -2;
 static int smbrk = -1;
 static int k = 0;
 
-namespace pvol
+namespace gxy
 {
 void
 smem_catch(){}

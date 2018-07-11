@@ -12,7 +12,7 @@
 #include "KeyedObject.h"
 #include "ISPCObject.h"
 
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_POINTER(Vis)
   

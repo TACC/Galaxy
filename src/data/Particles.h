@@ -20,7 +20,7 @@
 #include "ospray/ospray.h"
 #include "KeyedDataObject.h"
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_POINTER(Particles)

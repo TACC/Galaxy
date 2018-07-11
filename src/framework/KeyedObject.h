@@ -8,7 +8,7 @@
 #include "rapidjson/document.h"
 #include "Work.h"
 
-namespace pvol
+namespace gxy
 {
 class KeyedObject;
 typedef std::shared_ptr<KeyedObject> KeyedObjectP;

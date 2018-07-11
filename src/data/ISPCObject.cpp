@@ -11,7 +11,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 void 
 ISPCObject::allocate_ispc()

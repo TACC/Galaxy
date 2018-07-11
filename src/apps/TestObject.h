@@ -3,19 +3,17 @@
 #include <stdio.h>
 #include <unistd.h>
 
-using namespace std;
-
 #include <Application.h>
 #include <KeyedObject.h>
 
 KEYED_OBJECT_POINTER(TestObject)
 
-class TestObject : public pvol::KeyedObject
+class TestObject : public gxy::KeyedObject
 {
 	KEYED_OBJECT(TestObject)
 
 private:
-	class DoitMsg : public pvol::Work
+	class DoitMsg : public gxy::Work
   {
   public:
     DoitMsg(Key k, string foo) : DoitMsg(sizeof(Key) + foo.length() + 1)
@@ -43,7 +41,7 @@ public:
 
 	void doit()
 	{
-		DoitMsg m(getkey(), string("the rain in Spain"));
+		DoitMsg m(getkey(), string("I am a TestObject"));
 		m.Broadcast(true);
 	}
 };

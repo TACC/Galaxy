@@ -23,7 +23,7 @@ using namespace std;
 
 #define LOGGING 0
 
-namespace pvol
+namespace gxy
 {
 void
 killer(){}

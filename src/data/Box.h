@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 class Ray;
 
@@ -140,4 +140,4 @@ private:
 	vec3f xyz_min;
 	vec3f xyz_max;
 };
-} // namespace pvol
+} // namespace gxy

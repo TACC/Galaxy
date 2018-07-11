@@ -7,7 +7,7 @@
 #include "rapidjson/document.h"
 #include "ISPCObject.h"
 
-namespace pvol
+namespace gxy
 {
 class Lighting : public ISPCObject
 {

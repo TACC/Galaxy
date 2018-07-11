@@ -1,6 +1,6 @@
 #include "Box.h"
 
-namespace pvol
+namespace gxy
 {
 Box::Box(float *o, int *n, float *d)
 {

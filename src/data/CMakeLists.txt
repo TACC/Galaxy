@@ -1,20 +1,18 @@
 cmake_minimum_required(VERSION 2.8)
-project (pvol_data)
+project (gxy_data)
 
 find_library(PNG_LIBRARY_RELEASE png)
 
-include_directories(${MPI_INCLUDE_PATH}
+include_directories(${gxy_framework_SOURCE_DIR}
+                    ${gxy_renderer_SOURCE_DIR}
+                    ${gxy_data_SOURCE_DIR}
+                    ${CMAKE_CURRENT_BINARY_DIR}/..
+                    ${MPI_INCLUDE_PATH}
                     ${rapidjson_SOURCE_DIR}/..
-                    ${pvol_framework_SOURCE_DIR}
-                    ${pvol_renderer_SOURCE_DIR}
-                    ${pvol_data_SOURCE_DIR}
                     ${ICET_OBJDIR}/include
                     ${TBB_INCLUDE_DIRS}
-                    ${CMAKE_CURRENT_BINARY_DIR}
                     ${EMBREE_INCLUDE_DIRS}
                     )
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../framework ${CMAKE_CURRENT_SOURCE_DIR}/../renderer)
 
 set (CPP_SOURCES     Visualization.cpp
                      Particles.cpp 
@@ -34,15 +32,16 @@ set (CPP_SOURCES     Visualization.cpp
                      mypng.cpp)
 
 set (ISPC_SOURCES   ISPCObject.ispc
-	            Visualization.ispc 
+      	            Visualization.ispc 
                     Vis.ispc 
-	            MappedVis.ispc 
-	            ParticlesVis.ispc
-	            VolumeVis.ispc)
+      	            MappedVis.ispc 
+      	            ParticlesVis.ispc
+      	            VolumeVis.ispc
+                    )
 
 if(ospray_DIR)
-  ospray_create_library(pvol_data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} pvol_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
-  INSTALL(TARGETS pvol_data DESTINATION lib)
+  ospray_create_library(gxy_data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
+  INSTALL(TARGETS gxy_data DESTINATION lib)
 endif()
 INSTALL(FILES Visualization.h 
               KeyedDataObject.h 
@@ -60,5 +59,5 @@ INSTALL(FILES Visualization.h
               MappedVis.h 
               DataObjects.h 
               mypng.h
-        DESTINATION include/pvol)
+        DESTINATION include/gxy)
 

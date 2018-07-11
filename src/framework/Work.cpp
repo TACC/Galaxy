@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 Work::Work()
 {

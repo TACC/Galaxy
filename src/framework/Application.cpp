@@ -21,7 +21,7 @@
 using namespace rapidjson;
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 WORK_CLASS_TYPE(Application::QuitMsg)
 WORK_CLASS_TYPE(Application::PrintMsg)
@@ -68,8 +68,8 @@ Application::Application()
 {
   theApplication = this;
 
-  int n_threads =  getenv("PVOL_NTHREADS") ?  atoi(getenv("PVOL_NTHREADS")) : 1;
-  std::cerr << "Using " << n_threads << " threads in threadPool\n";
+  int n_threads =  getenv("GXY_NTHREADS") ?  atoi(getenv("GXY_NTHREADS")) : 1;
+  std::cerr << "Using " << n_threads << " threads in rendering thread pool." << std::endl;
 
   threadPool = new threadpool11::Pool(n_threads);
 
@@ -78,15 +78,16 @@ Application::Application()
 	theMessageManager = new MessageManager; 
 	theKeyedObjectFactory = new KeyedObjectFactory; 
 
-	if (getenv("APP_NUM_THREADS"))
+	if (getenv("GXY_APP_NTHREADS"))
 	{
-		int nthreads = atoi(getenv("APP_NUM_THREADS"));
+		int nthreads = atoi(getenv("GXY_APP_NTHREADS"));
 		tbb::task_scheduler_init init(nthreads);
-		std::cerr << "using " << nthreads << " threads\n";
+		std::cerr << "using " << nthreads << " TBB threads for application." << std::endl;
 	}
 	else
 	{
 		int n = tbb::task_scheduler_init::default_num_threads();
+		std::cerr << "using " << n << " TBB threads for application." << std::endl;
 	}
 
 	pid = getpid();

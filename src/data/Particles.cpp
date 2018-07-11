@@ -25,7 +25,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 WORK_CLASS_TYPE(Particles::LoadPartitioningMsg);
 

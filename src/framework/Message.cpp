@@ -15,7 +15,7 @@
 
 #define LOGGING 0
 
-namespace pvol
+namespace gxy
 {
 Message::Message(Work *w, bool blk)
 {

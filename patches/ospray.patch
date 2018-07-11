@@ -23,7 +23,7 @@ index a020b76b..0c343e89 100644
  
  macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
 -  find_package(embree ${EMBREE_VERSION_REQUIRED} QUIET)
-+  find_package(embree ${EMBREE_VERSION_REQUIRED} 
++  find_package(embree ${EMBREE_VERSION_REQUIRED}
 +    PATHS ${PROJECT_SOURCE_DIR}/../embree/install/lib64/cmake
 +          ${PROJECT_SOURCE_DIR}/../embree/install/lib/cmake
 +          ${PROJECT_SOURCE_DIR}/../embree/build

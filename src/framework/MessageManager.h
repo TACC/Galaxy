@@ -9,7 +9,7 @@
 #include "MessageQ.h"
 
 
-namespace pvol
+namespace gxy
 {
 
 class Application;

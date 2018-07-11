@@ -3,7 +3,7 @@
 #include <iostream>
 #include <memory>
 
-namespace pvol
+namespace gxy
 {
 class smem
 {

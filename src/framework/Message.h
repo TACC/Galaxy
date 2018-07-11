@@ -6,7 +6,7 @@
 #include <memory>
 #include "Work.h"
 
-namespace pvol
+namespace gxy
 {
 
 class MessageManager;

@@ -9,7 +9,7 @@
 
 #include "TestObject.h"
 
-using namespace pvol;
+using namespace gxy;
 
 int
 main(int argc, char * argv[])

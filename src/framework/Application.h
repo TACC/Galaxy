@@ -9,7 +9,7 @@
 #include "sstream"
 #include "debug.h"
 
-#include "pvol.h"
+#include "galaxy.h"
 #include "MessageManager.h"
 #include "Work.h"
 #include "KeyedObject.h"
@@ -20,7 +20,7 @@ typedef threadpool11::Pool ThreadPool;
 
 #include "rapidjson/document.h"
 
-namespace pvol
+namespace gxy
 {
 #define APP_PRINT(x)																				\
 {																														\

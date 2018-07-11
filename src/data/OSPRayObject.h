@@ -10,7 +10,7 @@
 #include "KeyedDataObject.h"
 #include "OSPUtil.h"
 
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_POINTER(OSPRayObject)
 

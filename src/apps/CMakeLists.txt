@@ -2,12 +2,14 @@ cmake_minimum_required (VERSION 2.8.11)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
-include_directories(${pvol_framework_SOURCE_DIR} 
-									  ${pvol_renderer_SOURCE_DIR} 
+include_directories(${gxy_framework_SOURCE_DIR} 
+									  ${gxy_renderer_SOURCE_DIR}
+									  ${gxy_data_SOURCE_DIR}
 									  ${rapidjson_SOURCE_DIR}/..
-									  ${pvol_data_SOURCE_DIR})
+									  ${CMAKE_CURRENT_BINARY_DIR}/..
+									  )
 
-set(PVOL_LIBRARIES pvol_framework pvol_renderer pvol_data ${MPI_C_LIBRARIES})
+set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
 
 find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})
@@ -15,23 +17,23 @@ include_directories(${MPI_INCLUDE_PATH})
 set(BINS "")
 
 add_executable(vis vis.cpp)
-target_link_libraries(vis ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
+target_link_libraries(vis ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 set(BINS vis ${BINS})
 
 # add_executable(sample sample.cpp)
-# target_link_libraries(sample ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
+# target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 # set(BINS sample ${BINS})
 
 # if (WITH_CINEMA)
-	# set(PVOL_LIBRARIES Cinema ${PVOL_LIBRARIES})
+	# set(GALAXY_LIBRARIES Cinema ${GALAXY_LIBRARIES})
   # add_executable(cinema cinema.cpp)
-  # target_link_libraries(cinema ${PVOL_LIBRARIES})
+  # target_link_libraries(cinema ${GALAXY_LIBRARIES})
 	# SET(BINS ${BINS} cinema)
 # endif (WITH_CINEMA)
 
 # if (WITH_STATE)
 	# add_executable(state state.cpp)
-	# target_link_libraries(state ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
+	# target_link_libraries(state ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 	# SET(BINS ${BINS} state)
 # endif (WITH_STATE)
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <math.h>
 
-namespace pvol
+namespace gxy
 {
 struct vec2f { 
 	vec2f() {};

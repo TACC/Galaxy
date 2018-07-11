@@ -5,4 +5,7 @@ add_subdirectory(rapidjson)
 add_subdirectory(data)
 add_subdirectory(apps)
 
-#INCLUDE(${CMAKE_SOURCE_DIR}/cmake/pvol_cmake_config.cmake)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galaxy.h.in ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h DESTINATION include/gxy)
+
+#INCLUDE(${CMAKE_SOURCE_DIR}/cmake/galaxy_cmake_config.cmake)

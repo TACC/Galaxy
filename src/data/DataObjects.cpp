@@ -5,7 +5,7 @@
 #include "Vis.h"
 #include "Visualization.h"
 
-namespace pvol
+namespace gxy
 {
 void
 RegisterDataObjects()

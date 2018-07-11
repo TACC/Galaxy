@@ -1,4 +1,4 @@
-#include "pvol.h"
+#include "galaxy.h"
 
 #include <limits>
 #include <time.h>
@@ -14,7 +14,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 typedef std::numeric_limits< double > dbl;
 

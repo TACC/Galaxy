@@ -5,13 +5,13 @@
 #include <string.h>
 #include <sys/types.h>
 
-// #include <pvol.h>
+// #include <galaxy.h>
 #include <dtypes.h>
 #include <Application.h>
 
 #include <pthread.h>
 
-using namespace pvol;
+using namespace gxy;
 
 pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  w8 = PTHREAD_COND_INITIALIZER;

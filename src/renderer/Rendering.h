@@ -9,7 +9,7 @@
 #include "Work.h"
 
 #include "KeyedObject.h"
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_POINTER(Rendering)
 }
@@ -20,7 +20,7 @@ KEYED_OBJECT_POINTER(Rendering)
 #include "Visualization.h"
 #include "Pixel.h"
 
-namespace pvol
+namespace gxy
 {
 class Ray;
 

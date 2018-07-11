@@ -4,7 +4,7 @@
 #include "RenderingSet.h"
 #include "RayQManager.h"
 
-namespace pvol
+namespace gxy
 {
 WORK_CLASS_TYPE(RenderingSet::PropagateStateMsg);
 WORK_CLASS_TYPE(RenderingSet::SynchronousCheckMsg);

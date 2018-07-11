@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 static int nxt_thread = 0;
 

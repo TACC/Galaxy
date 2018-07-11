@@ -15,7 +15,7 @@
 
 #include "KeyedObject.h"
 
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_POINTER(ParticlesVis)
 

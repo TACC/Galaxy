@@ -1,6 +1,6 @@
 #pragma once
 
-namespace pvol
+namespace gxy
 {
 class ClientServer 
 {

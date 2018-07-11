@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 void
 MessageQ::Enqueue(Message *w)

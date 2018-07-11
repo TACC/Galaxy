@@ -35,7 +35,7 @@ static Timer timer("ray_processing");
 using namespace rapidjson;
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 WORK_CLASS_TYPE(Renderer::RenderMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);

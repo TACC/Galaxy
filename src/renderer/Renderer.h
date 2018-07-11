@@ -12,7 +12,7 @@
 #include "Lighting.h"
 #include "TraceRays.h"
 
-namespace pvol
+namespace gxy
 {
 class Camera;
 class RayQManager;

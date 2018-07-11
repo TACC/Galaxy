@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 static string executable;
 

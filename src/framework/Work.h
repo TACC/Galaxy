@@ -6,7 +6,7 @@
 #include <mpi.h>
 #include "smem.h"
 
-namespace pvol
+namespace gxy
 {
 class Work
 {

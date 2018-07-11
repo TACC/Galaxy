@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <vector>
 
-namespace pvol
+namespace gxy
 {
 class Thread;
 

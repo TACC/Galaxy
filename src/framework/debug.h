@@ -1,6 +1,6 @@
 #include <vector>
 
-namespace pvol
+namespace gxy
 {
 void setup_debugger(char *);
 void debugger(char *);

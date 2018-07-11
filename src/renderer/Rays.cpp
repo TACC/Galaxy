@@ -12,7 +12,7 @@
 
 #define HDRSZ  ROUND_UP_TO_MULTIPLE_OF_64(sizeof(hdr))
 
-namespace pvol
+namespace gxy
 {
 RayList::RayList(RenderingP r, int nrays) : RayList(nrays)
 {

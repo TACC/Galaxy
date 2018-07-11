@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace pvol
+namespace gxy
 {
 struct Pixel 
 {

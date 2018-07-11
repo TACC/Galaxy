@@ -13,7 +13,7 @@
 #include "dtypes.h"
 
 
-namespace pvol
+namespace gxy
 {
 KEYED_OBJECT_POINTER(TraceRays)
 

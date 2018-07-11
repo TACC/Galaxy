@@ -11,7 +11,7 @@
 
 using namespace std;
 
-namespace pvol 
+namespace gxy 
 {
 RayQManager *RayQManager::theRayQManager;
 RayQManager *RayQManager::GetTheRayQManager() { return RayQManager::theRayQManager; }

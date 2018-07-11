@@ -4,7 +4,7 @@
 #include "Geometry.h"
 #include "Volume.h"
 
-namespace pvol
+namespace gxy
 {
 WORK_CLASS_TYPE(KeyedDataObject::ImportMsg);
 WORK_CLASS_TYPE(KeyedDataObject::AttachMsg);
