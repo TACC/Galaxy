@@ -1,5 +1,7 @@
 # Galaxy: an asynchronous distributed parallel visualization ray tracer
-Galaxy is an asynchronous parallel visualization ray tracer for performant rendering in distributed computing environments. Galaxy builds upon [Intel OSPRay][1] and [Intel Embree][2], including ray queueing and sending logic inspired by [TACC GraviT][3]. Galaxy has been developed by Greg Abram and Paul Navratil with funding from the US Department of Energy through Los Alamos National Laboratory; from Intel Corporation through the Intel Parallel Computing Center program; and from the Texas Advanced Computing Center at the University of Texas at Austin.
+Galaxy is an asynchronous parallel visualization ray tracer for performant rendering in distributed computing environments. Galaxy builds upon [Intel OSPRay][1] and [Intel Embree][2], including ray queueing and sending logic inspired by [TACC GraviT][3]. 
+
+Galaxy has been developed by Greg Abram and Paul Navratil with funding from the ASCR program of the US Department of Energy's Office of Science, Drs. Lucy Nowell and Laura Biven, program managers; from Intel Corporation through the Intel Parallel Computing Center program; and from the Texas Advanced Computing Center at the University of Texas at Austin.
 
 ## Galaxy dependencies
 Galaxy has two types of dependencies: (1) components assumed to be already installed in an accessible spot; and (2) components that are associated with the Galaxy repository in the `third-party` subdirectory.
@@ -7,7 +9,7 @@ Galaxy has two types of dependencies: (1) components assumed to be already insta
 Galaxy assumes the following are already installed on your system in an accessible spot (these should all be available via package manager for your OS):
   * a modern MPI (Message Passing Interface) implementation
   * [a recent VTK][4] (at least version 7.x)
-  * [a recent Qt][5] (for the Qt-based viewer app)
+  * [a recent Qt][5] (for the Qt-based viewer app, at least version 5.x)
   * [Intel Thread Building Blocks (TBB)][6]
   * [PNG image format library][7]
   * [zlib compression library][8]

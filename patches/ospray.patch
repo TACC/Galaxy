@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 2e9c856c..b096cd92 100644
+index 12ade5e8..d610627c 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -41,6 +41,11 @@ SET(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
@@ -15,7 +15,7 @@ index 2e9c856c..b096cd92 100644
  # CMake modules and macro files
  ##############################################################
 diff --git a/cmake/ospray_macros.cmake b/cmake/ospray_macros.cmake
-index a020b76b..0c343e89 100644
+index 7a6bb843..cb4b50e6 100644
 --- a/cmake/ospray_macros.cmake
 +++ b/cmake/ospray_macros.cmake
 @@ -40,7 +40,11 @@ function(ospray_verify_embree_features)
@@ -32,14 +32,17 @@ index a020b76b..0c343e89 100644
      message(FATAL_ERROR
              "We did not find Embree installed on your system. OSPRay requires"
 diff --git a/components/ospcommon/cmake/ispc.cmake b/components/ospcommon/cmake/ispc.cmake
-index c797af5f..9774ed0d 100644
+index 7d02f37c..9c8649c1 100644
 --- a/components/ospcommon/cmake/ispc.cmake
 +++ b/components/ospcommon/cmake/ispc.cmake
-@@ -35,6 +35,7 @@ IF (NOT ISPC_EXECUTABLE)
+@@ -34,7 +34,9 @@ IF (NOT ISPC_EXECUTABLE)
+   ENDIF()
    FOREACH(ver ${ISPC_VERSION_WORKING})
      FOREACH(suffix ${ISPC_DIR_SUFFIX})
-       LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-v${ver}-${suffix})
-+      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc/ispc-v${ver}-${suffix})
+-      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-v${ver}-${suffix})
++      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-v${ver}-${suffix} 
++                                ${PROJECT_SOURCE_DIR}/../ispc/ispc-v${ver}-${suffix}
++                                ${PROJECT_SOURCE_DIR}/third-party/ispc/ispc-v${ver}-${suffix})
      ENDFOREACH()
    ENDFOREACH()
  

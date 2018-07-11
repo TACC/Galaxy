@@ -53,43 +53,20 @@ find_path(THREADPOOL11_INCLUDE_DIR threadpool11/threadpool11.hpp PATHS ${PROJECT
 link_directories(${THREADPOOL11_LIB_DIR})
 include_directories(${THREADPOOL11_INCLUDE_DIR})
 
-
-# add third-party directory to ISPC search path
-SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
-IF (APPLE)
-  SET(ISPC_DIR_SUFFIX "osx")
-ELSEIF(WIN32)
-  SET(ISPC_DIR_SUFFIX "windows")
-  IF (MSVC_VERSION LESS 1900)
-    LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2013")
-  ELSE()
-    LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
-  ENDIF()
-ELSE()
-  SET(ISPC_DIR_SUFFIX "linux")
-ENDIF()
-FOREACH(ver ${ISPC_VERSION_WORKING})
-  FOREACH(suffix ${ISPC_DIR_SUFFIX})
-    LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/third-party/ispc/ispc-v${ver}-${suffix})
-  ENDFOREACH()
-ENDFOREACH()
-
 find_package(embree 3 PATHS 
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib64/cmake
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib/cmake
                  ${PROJECT_SOURCE_DIR}/../third-party/embree/build
                  ${PROJECT_SOURCE_DIR}/third-party/embree/install/lib64/cmake
 								 ${PROJECT_SOURCE_DIR}/third-party/embree/install/lib/cmake
-								 ${PROJECT_SOURCE_DIR}/third-party/embree/build
-								 )
+								 ${PROJECT_SOURCE_DIR}/third-party/embree/build)
 find_package(ospray PATHS 
 						  ${PROJECT_SOURCE_DIR}/../third-party/OSPRay/install/lib64/cmake
               ${PROJECT_SOURCE_DIR}/../third-party/OSPRay/install/lib/cmake
               ${PROJECT_SOURCE_DIR}/../third-party/OSPRay/build/cmake
               ${PROJECT_SOURCE_DIR}/third-party/ospray/install/lib64/cmake
               ${PROJECT_SOURCE_DIR}/third-party/ospray/install/lib/cmake
-						  ${PROJECT_SOURCE_DIR}/third-party/ospray/build/cmake
-   	                      )
+						  ${PROJECT_SOURCE_DIR}/third-party/ospray/build/cmake)
 
 if (ospray_DIR)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPRAY_CMAKE_ROOT})
