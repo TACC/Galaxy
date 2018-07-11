@@ -279,55 +279,63 @@ protected:
 
 struct args
 {
-  args(float pixel_scaling, float ox, float oy, vec3f& r, vec3f& u, vec3f& e, vec3f c, Box *lb, Box *gb) :
-   scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy), vr(r), vu(u), veye(e), center(c), lbox(lb), gbox(gb) {}
+  args(float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy, 
+			 vec3f& vr, vec3f& vu, vec3f& veye, vec3f center, 
+			 Box *lb, Box *gb, RenderingSetP rs, RenderingP r) :
+			 iwidth(iw), ixmin(ixmin), iymin(iymin),
+			 scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
+			 vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
+			 rs(rs), r(r) {}
   ~args() {}
 
   float scaling;
+	int iwidth, ixmin, iymin;
   float off_x, off_y;
   vec3f vr, vu, veye, center;
   Box *lbox, *gbox;
+	RenderingSetP rs;
+	RenderingP r;
 };
 
-#if 0
-extern unsigned long tacc_rdtscp(int *chip, int *core);
-#endif
+// Given a slew of camera parameters and a range of pixels that MIGHT
+// be first-hit, figure out which actually are, create a raylist for them,
+// and queue them for processing
 
 class gil_ftor
 {
 public:
-  gil_ftor(RayList *_r, shared_ptr<args> _a) : r(_r), a(_a) {}
+  gil_ftor(int start, int count, shared_ptr<args> _a) : start(start), count(count), a(_a) {}
   ~gil_ftor() {}
 
   virtual void operator()()
   {
-#if 0
-    int chip, core;
-    tacc_rdtscp(&chip, &core);
-    std::cerr << chip << "::" << core << "\n";
-#endif
-
 #if defined(EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
 
+		RayList *rlist = NULL;
+
     int dst = 0;
-
-		int nIn = r->GetRayCount();
-
-    for (int i = 0, j = 0; i < r->GetRayCount(); i++)
+    for (int i = 0; i < count; i++)
     {
+			int pindex = i + start;
+			int x, y;
       vec3f xy_wcs, vray;
 
-#if 1
-			float tx  = r->get_x(i);
-			float aox = a->off_x;
-			float as  = a->scaling;
-      float fx  = (tx - aox) * as;
-#else
-      float fx = (r->get_x(i) - a->off_x) * a->scaling;
-#endif
-      float fy = (r->get_y(i) - a->off_y) * a->scaling;
+			if (permute)
+			{
+		    int p = permutation[pindex];
+				x = a->ixmin + (p % a->iwidth);
+				y = a->iymin + (p / a->iwidth);
+			}
+			else
+			{
+				x = a->ixmin + (pindex % a->iwidth);
+				y = a->iymin + (pindex / a->iwidth);
+			}
+
+      float fx = (x - a->off_x) * a->scaling;
+      float fy = (y - a->off_y) * a->scaling;
 
       xy_wcs.x = a->center.x + fx * a->vr.x + fy * a->vu.x;
       xy_wcs.y = a->center.y + fx * a->vr.y + fy * a->vu.y;
@@ -345,52 +353,53 @@ public:
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
       {
-				r->set_x(dst, r->get_x(i));
-				r->set_y(dst, r->get_y(i));
-				r->set_ox(dst, a->veye.x);
-        r->set_oy(dst, a->veye.y);
-        r->set_oz(dst, a->veye.z);
-        r->set_dx(dst, vray.x);
-        r->set_dy(dst, vray.y);
-        r->set_dz(dst, vray.z);
-        r->set_r(dst, 0.0);
-        r->set_g(dst, 0.0);
-        r->set_b(dst, 0.0);
-        r->set_o(dst, 0);
-        r->set_t(dst, 0);
-        r->set_tMax(dst, FLT_MAX);
-        r->set_type(dst, RAY_PRIMARY);
+				if (!rlist) rlist = new RayList(a->rs, a->r, count);
+
+				rlist->set_x(dst, x);
+				rlist->set_y(dst, y);
+				rlist->set_ox(dst, a->veye.x);
+        rlist->set_oy(dst, a->veye.y);
+        rlist->set_oz(dst, a->veye.z);
+        rlist->set_dx(dst, vray.x);
+        rlist->set_dy(dst, vray.y);
+        rlist->set_dz(dst, vray.z);
+        rlist->set_r(dst, 0.0);
+        rlist->set_g(dst, 0.0);
+        rlist->set_b(dst, 0.0);
+        rlist->set_o(dst, 0);
+        rlist->set_t(dst, 0);
+        rlist->set_tMax(dst, FLT_MAX);
+        rlist->set_type(dst, RAY_PRIMARY);
         dst++;
       }
     }
 
-    if (dst > 0)
+    if (rlist)
     {
-			if (dst < r->GetRayCount())
-				r->Truncate(dst);
+			if (dst < rlist->GetRayCount())
+				rlist->Truncate(dst);
 
 #if defined(EVENT_TRACKING)
-      GetTheEventTracker()->Add(new InitialRaysEvent(r));
+      GetTheEventTracker()->Add(new InitialRaysEvent(rlist));
 #endif
 
-			Renderer::GetTheRenderer()->add_originated_ray_count(r->GetRayCount());
-      r->GetTheRenderingSet()->Enqueue(r, true);
+			Renderer::GetTheRenderer()->add_originated_ray_count(rlist->GetRayCount());
+      a->rs->Enqueue(rlist, true);
     }
     else
-      delete r;
+      delete rlist;
 
 #ifdef PVOL_SYNCHRONOUS
-		r->GetTheRenderingSet()->DecrementActiveCameraCount(dst);				
+		a->rs->DecrementActiveCameraCount(dst);				
 #endif
 
 #if defined(EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraTaskEndEvent());
 #endif
-
   }
 
 private:
-  RayList *r;
+	int start, count;
   shared_ptr<args> a;
 };
 
@@ -435,7 +444,7 @@ void check_env(int width, int height)
 			if (Ymax >= (height-1)) Ymax = height-1;
 		}
 
-		rays_per_packet = getenv("RAYS_PER_PACKET") ? atoi(getenv("RAYS_PER_PACKET")) : 1000000;
+		rays_per_packet = Renderer::GetTheRenderer()->GetMaxRayListSize();
 		permute = getenv("PERMUTE_PIXELS");
 
 		if (permute)
@@ -683,71 +692,33 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
       rpp = totalRays;
     }
 
-    ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
-    shared_ptr<args> a = shared_ptr<args>(new args(pixel_scaling, off_x, off_y, vr, vu, veye, center, lbox, gbox));
-
-    RayList *rlist = NULL;    // Null first time
-
 		int iwidth  = (ixmax - ixmin) + 1;
 		int iheight = (iymax - ixmin) + 1;
 
-#if 1
-		for (int pindex = 0, knt_in_pkt = 0, tot_knt = 0; pindex < (iwidth * iheight); pindex++, knt_in_pkt++, tot_knt++)
+    ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
+    shared_ptr<args> a = shared_ptr<args>(new args(pixel_scaling, iwidth, 
+																									 ixmin, iymin,
+																									 off_x, off_y, 
+																									 vr, vu, veye, center, 
+																									 lbox, gbox, renderingSet, rendering));
+
+		for (int i = 0; i < (iwidth * iheight); i += rays_per_packet)
 		{
-			int x, y;
-
-			if (permute)
-			{
-		    int p = permutation[pindex];
-				x = ixmin + (p % iwidth);
-				y = iymin + (p / iwidth);
-			}
-			else
-			{
-				x = ixmin + (pindex % iwidth);
-				y = iymin + (pindex / iwidth);
-			}
-
-#else
-    for (int y = iymin, knt_in_pkt = 0, tot_knt = 0; y <= iymax; y++)
-      for (int x = ixmin; x <= ixmax; x++, knt_in_pkt++, tot_knt++)
-      {
-#endif
-        if (!rlist || knt_in_pkt == rlist->GetRayCount())
-        {
-          if (rlist)
-          {
 #ifdef PVOL_SYNCHRONOUS
-						renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
-#endif
-            shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(rlist, a));
-            rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));
-          }
-
-          if (tot_knt + rpp > totalRays)
-            rlist = new RayList(renderingSet, rendering, totalRays - tot_knt);
-          else
-            rlist = new RayList(renderingSet, rendering, rpp);
-
-          knt_in_pkt = 0;
-        }
-          
-				rlist->set_x(knt_in_pkt, x);
-				rlist->set_y(knt_in_pkt, y);
-      }
-
-      if (rlist)
-      {
-
-        shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(rlist, a));
-
-#ifdef PVOL_SYNCHRONOUS
-				renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
+			renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
 #endif
 
-        rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));
-				
-      }
+			// Number of rays in this packet
+		
+			int kthis = (i + rays_per_packet) > (iwidth * iheight) ? (iwidth * iheight) - i : rays_per_packet;
+
+			shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(i, kthis, a));
+			rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));
+#if 0
+			// DEBUG
+			return;
+#endif
+		}
   }
   return;
 }

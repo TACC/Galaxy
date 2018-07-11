@@ -86,11 +86,15 @@ public:
 
 	void Trace(RayList *);
 
+	int GetMaxRayListSize() { return max_rays_per_packet; }
+
 private:
 
 	vector<future<void>> rvec;
 
 	int frame;
+
+	int max_rays_per_packet;
 
 	int sent_ray_count;
 	int terminated_ray_count;

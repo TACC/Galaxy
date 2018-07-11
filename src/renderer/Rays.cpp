@@ -2,6 +2,7 @@
 #include <sstream>
 #include <pthread.h>
 #include "Application.h"
+#include "Renderer.h"
 #include "Rays.h"
 #include "RayFlags.h"
 #include "Rays.ih"
@@ -86,6 +87,31 @@ int   RayList::get_y(int i)      { return ((ispc::RayList_ispc *)ispc)->y[i]; }
 int   RayList::get_type(int i)   { return ((ispc::RayList_ispc *)ispc)->type[i]; }
 int   RayList::get_term(int i)   { return ((ispc::RayList_ispc *)ispc)->term[i]; }
 
+float* RayList::get_ox_base()     { return ((ispc::RayList_ispc *)ispc)->ox; }
+float* RayList::get_oy_base()     { return ((ispc::RayList_ispc *)ispc)->oy; }
+float* RayList::get_oz_base()     { return ((ispc::RayList_ispc *)ispc)->oz; }
+float* RayList::get_dx_base()     { return ((ispc::RayList_ispc *)ispc)->dx; }
+float* RayList::get_dy_base()     { return ((ispc::RayList_ispc *)ispc)->dy; }
+float* RayList::get_dz_base()     { return ((ispc::RayList_ispc *)ispc)->dz; }
+float* RayList::get_nx_base()     { return ((ispc::RayList_ispc *)ispc)->nx; }
+float* RayList::get_ny_base()     { return ((ispc::RayList_ispc *)ispc)->ny; }
+float* RayList::get_nz_base()     { return ((ispc::RayList_ispc *)ispc)->nz; }
+float* RayList::get_sample_base() { return ((ispc::RayList_ispc *)ispc)->sample; }
+float* RayList::get_r_base()      { return ((ispc::RayList_ispc *)ispc)->r; }
+float* RayList::get_g_base()      { return ((ispc::RayList_ispc *)ispc)->g; }
+float* RayList::get_b_base()      { return ((ispc::RayList_ispc *)ispc)->b; }
+float* RayList::get_o_base()      { return ((ispc::RayList_ispc *)ispc)->o; }
+float* RayList::get_sr_base()     { return ((ispc::RayList_ispc *)ispc)->sr; }
+float* RayList::get_sg_base()     { return ((ispc::RayList_ispc *)ispc)->sg; }
+float* RayList::get_sb_base()     { return ((ispc::RayList_ispc *)ispc)->sb; }
+float* RayList::get_so_base()     { return ((ispc::RayList_ispc *)ispc)->so; }
+float* RayList::get_t_base()      { return ((ispc::RayList_ispc *)ispc)->t; }
+float* RayList::get_tMax_base()   { return ((ispc::RayList_ispc *)ispc)->tMax; }
+int*   RayList::get_x_base()      { return ((ispc::RayList_ispc *)ispc)->x; }
+int*   RayList::get_y_base()      { return ((ispc::RayList_ispc *)ispc)->y; }
+int*   RayList::get_type_base()   { return ((ispc::RayList_ispc *)ispc)->type; }
+int*   RayList::get_term_base()   { return ((ispc::RayList_ispc *)ispc)->term; }
+
 void RayList::set_ox(int i, float v)     { ((ispc::RayList_ispc *)ispc)->ox[i] = v; }
 void RayList::set_oy(int i, float v)     { ((ispc::RayList_ispc *)ispc)->oy[i] = v; }
 void RayList::set_oz(int i, float v)     { ((ispc::RayList_ispc *)ispc)->oz[i] = v; }
@@ -142,6 +168,45 @@ RayList::setup_ispc_pointers()
 	((ispc::RayList_ispc *)ispc)->type   = ((ispc::RayList_ispc *)ispc)->y + nn;
 	((ispc::RayList_ispc *)ispc)->term   = ((ispc::RayList_ispc *)ispc)->type + nn;
 }
+
+void
+RayList::Subset(vector<RayList*>& subsets)
+{
+  int rpp = Renderer::GetTheRenderer()->GetMaxRayListSize();
+  for (int i = 0; i < GetRayCount(); i += rpp)
+  {
+    int this_rpp = ((i + rpp) > GetRayCount()) ? GetRayCount() - i : rpp;
+ 
+    RayList *part = new RayList(GetTheRenderingSet(), GetTheRendering(), this_rpp, GetFrame());
+
+    memcpy(part->get_ox_base(),     get_ox_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_oy_base(),     get_oy_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_oz_base(),     get_oz_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_dx_base(),     get_dx_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_dy_base(),     get_dy_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_dz_base(),     get_dz_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_nx_base(),     get_nx_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_ny_base(),     get_ny_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_nz_base(),     get_nz_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_sample_base(), get_sample_base() + i, this_rpp*sizeof(float));
+    memcpy(part->get_r_base(),      get_r_base()      + i, this_rpp*sizeof(float));
+    memcpy(part->get_g_base(),      get_g_base()      + i, this_rpp*sizeof(float));
+    memcpy(part->get_b_base(),      get_b_base()      + i, this_rpp*sizeof(float));
+    memcpy(part->get_o_base(),      get_o_base()      + i, this_rpp*sizeof(float));
+    memcpy(part->get_sr_base(),     get_sr_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_sg_base(),     get_sg_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_sb_base(),     get_sb_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_so_base(),     get_so_base()     + i, this_rpp*sizeof(float));
+    memcpy(part->get_t_base(),      get_t_base()      + i, this_rpp*sizeof(float));
+    memcpy(part->get_tMax_base(),   get_tMax_base()   + i, this_rpp*sizeof(float));
+    memcpy(part->get_x_base(),      get_x_base()      + i, this_rpp*sizeof(int));
+    memcpy(part->get_y_base(),      get_y_base()      + i, this_rpp*sizeof(int));
+    memcpy(part->get_type_base(),   get_type_base()   + i, this_rpp*sizeof(int));
+    memcpy(part->get_term_base(),   get_term_base()   + i, this_rpp*sizeof(int));
+
+    subsets.push_back(part);
+  }
+} 
 
 void
 RayList::Truncate(int n)
@@ -243,3 +308,4 @@ RayList::print(int which)
 #endif
 #endif
 }
+

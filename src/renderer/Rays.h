@@ -1,7 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include "Rendering.h"
+
+using namespace std;
 
 #include "smem.h"
 
@@ -65,6 +68,7 @@ public:
 	void *get_header_address() { return ((void *)(contents->get())); }
 
 	void Truncate(int n);
+	void Subset(vector<RayList*>& subsets);
 
 	void setup_ispc_pointers();
 
@@ -96,6 +100,31 @@ public:
 	int   get_y(int i);
 	int   get_type(int i);
 	int   get_term(int i);
+
+	float* get_ox_base();
+	float* get_oy_base();
+	float* get_oz_base();
+	float* get_dx_base();
+	float* get_dy_base();
+	float* get_dz_base();
+	float* get_nx_base();
+	float* get_ny_base();
+	float* get_nz_base();
+	float* get_sample_base();
+	float* get_r_base();
+	float* get_g_base();
+	float* get_b_base();
+	float* get_o_base();
+	float* get_sr_base();
+	float* get_sg_base();
+	float* get_sb_base();
+	float* get_so_base();
+	float* get_t_base();
+	float* get_tMax_base();
+	int*   get_x_base();
+	int*   get_y_base();
+	int*   get_type_base();
+	int*   get_term_base();
 
 	void set_ox(int i, float v);
 	void set_oy(int i, float v);

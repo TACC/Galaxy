@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <vector>
 #include <math.h>
 
 #include <ospray/ospray.h>
@@ -89,6 +90,8 @@ Renderer::initialize()
 
 	sent_to = new int[GetTheApplication()->GetSize()];
 	received_from = new int[GetTheApplication()->GetSize()];
+
+	max_rays_per_packet = getenv("RAYS_PER_PACKET") ? atoi(getenv("RAYS_PER_PACKET")) : 1000000;
 }
 
 Renderer::~Renderer()
@@ -414,7 +417,8 @@ public:
 			int fbknt = 0;
 			for (int i = 0; i < raylist->GetRayCount(); i++)
 			{
-				int clss = classification[i];
+        int clss = classification[i];
+
 				if (clss == SEND_TO_FB)
 					fbknt++;
 				else if (clss == KEEP_HERE)
@@ -425,27 +429,25 @@ public:
 					std::cerr << "CLASSIFICATION ERROR 1\n";
 			}
 
-			// Allocate a RayList for each remote destination's rays   These'll get
-			// bound up in a SendRays message later, without a copy.   7 lists, for
+			// Allocate a RayList for each remote destination's rays and the keepers.
+			// Note that // there'll never be more rays being passed to a neighbor from 
+			// the current ray list than the number of rays *in* the current ray list, 
+			// so we don't have to worry about these being larger than the rays-per-packet
+			// limit.
+			//
+			// They'll bound up in a SendRays message later, without a copy. 7 lists, for
 			// each of 6 faces and stay here
 
 			RayList *ray_lists[7];
-			int     *ray_offsets[7];
-			Ray     *rays[7];
 			for (int i = 0; i < 7; i++)
 			{
 				if (knts[i])
-				{
-					ray_offsets[i] = new int[raylist->GetRayCount()];
 					ray_lists[i]   = new RayList(renderingSet, rendering, knts[i], raylist->GetFrame());
-				}
 				else
-				{
 					ray_lists[i]   = NULL;
-					ray_offsets[i] = NULL;
-				}
 
-				knts[i] = 0;   // We'll be re-using this
+				knts[i] = 0;   // We'll be re-using this to keep track of where the next ray goes in
+											 // the output ray list
 			}
 
 
@@ -453,8 +455,10 @@ public:
 			// and the FB is local,  just do it.  Otherwise, set up a message buffer.
 
 			RenderingP rendering = raylist->GetTheRendering();
+
 			Renderer::SendPixelsMsg *spmsg = (fbknt && !rendering->IsLocal()) ? 
 						new Renderer::SendPixelsMsg(rendering, renderingSet, raylist->GetFrame(), fbknt) : NULL;
+
 			Pixel *local_pixels = (fbknt && rendering->IsLocal()) ? new Pixel[fbknt] : NULL;
 
 			fbknt = 0;
@@ -513,17 +517,15 @@ public:
 				
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 					delete ray_lists[i];
-					delete[] ray_offsets[i];
 				}
 
 			if (classification) delete[] classification;
-			if (ray_offsets[6]) delete[] ray_offsets[6];
 
 			delete raylist;
 
+			// Just loop on the keepers.
+
 			raylist = ray_lists[6];
-			if (raylist && raylist->GetRayCount() > 0)
-				std::cerr << "ProcessRays looping\n";
 		}
 
 #ifdef PVOL_SYNCHRONOUS
@@ -576,7 +578,21 @@ Renderer::Trace(RayList *raylist)
 
 	RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
 	if (out)
+	{
+		if (out->GetRayCount() > Renderer::GetTheRenderer()->GetMaxRayListSize())
+		{
+			vector<RayList*> rayLists;
+			out->Subset(rayLists);
+			for (vector<RayList*>::iterator it = rayLists.begin(); it != rayLists.end(); it++)
+			{
+				RayList *s = *it;
+				renderingSet->Enqueue(*it);
+			}
+			delete out;
+		}
+		else
 			renderingSet->Enqueue(out);
+	}
 }
 
 void
