@@ -1,0 +1,6 @@
+[submodule "third-party/embree"]
+	path = third-party/embree
+	url = https://github.com/embree/embree.git
+[submodule "third-party/ospray"]
+	path = third-party/ospray
+	url = https://github.com/ospray/ospray.git
