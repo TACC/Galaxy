@@ -705,8 +705,14 @@ export void TraceRays_generateAORays(void *uniform _self,
       foreach (j = 0 ... lights->n_ao_rays)
       {
         int offset = offsets[i] + j;
+
+				// For those who don't immediately recognize code that generates an 8-bit
+				// pseudo-random number tied to a pixel location and particular AO ray index at that
+				// pixel location, the following line of code generates an 8-bit pseudo-random
+        // number tied to a pixel location and particular AO ray index at that
+        // pixel location
+
         int r = ((raysIn->x[i] * 9949 + raysIn->y[i] * 9613 + j*9151)>>8) & 0xff;
-        // int r = j;
 
         const float r0 = randomU[r];
         const float r1 = randomV[r];
