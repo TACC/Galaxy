@@ -145,7 +145,13 @@ If cmake complains about missing dependencies, you can specify or change their l
 
 ## Running Galaxy
 
-Using the Viewer
+There are three ways to run Galaxy: 
+
+* interactively using the Viewer
+* in batch mode to produce a set of PNG image files
+* in batch mode to produce a Cinema[17] image database
+
+### Using the Viewer
 
 So - lets give it a whirl.
 
@@ -194,7 +200,7 @@ This will generate 10000 particles in the bounding box of the oneBall-0.vol data
 
 As before, add the particles.part data to the viewer.   By default, the radius is large; in the particles dataset properties, one parameter is available - the radius - and is given by a slider with bounds at 0 and 1.   Change the upper bound to 0.1 and move the slider down to get a reasonable result.  A value of 0.02 is reasonable.
 
-Batch Mode
+### Batch Mode
 
 Batch mode relies on a state file to define the one or more visualizations.   State files define a set of visualizations and a set of cameras.   A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc.   The effect of the state file is the cross product of the sets of visualizations and cameras: a rendering of each visualization from every camera will be produced.
 
@@ -336,9 +342,13 @@ If you cut’n’paste the complete state file above into a text file named batc
 
 You will produce three output .png files.   
 
-Cinema 
+### Cinema 
 
-Cinema databases are built in batch mode, and thus from a batch file that contains arrays of visualizations and cameras.   This file may contain many visualizations; for example, if the the Cinema database has a varying isovalue and a moving slicing plane, there will be a separate visualization for each combination of isosurface value and slicing plane position.   Ten isovalues and ten slicing plane positions lead to 100 unique visualizations.   Similarly, the batch file may contain many cameras, one for each desired viewpoint.   To make the creation of such batch files simple, the cinema.json file specifies a single visualization and camera parametrically.   The following shows an example:
+Cinema[17] databases are built in batch mode, and thus from a batch file that contains arrays of visualizations and cameras. This file may contain many visualizations; for example, if the the Cinema database has a varying isovalue and a moving slicing plane, there will be a separate visualization for each combination of isosurface value and slicing plane position.   Ten isovalues and ten slicing plane positions lead to 100 unique visualizations.   Similarly, the batch file may contain many cameras, one for each desired viewpoint. To make the creation of such batch files simple, the cinema.json file specifies a single visualization and camera parametrically.   
+
+**Note: Galaxy currently creates spec C Cinema databases. You must download the Cinema viewer, the browser-based viewer requires spec D format**
+
+The following shows an example cinema.json:
 ```json
 {
     "Datasets":
@@ -416,7 +426,9 @@ which will create state.json and initialize cinema.cdb.  Following this,
 
 will render the necessary images and deposit them into cinema.cdb.
 
-Performance and a note on threading
+## Galaxy Notes
+
+## Performance and a note on threading
 
 This renderer is parallel both by using multiple processes over MPI and by threading within each process.  Both the generation of initial rays and the processing of rays is now multithreaded.   By default, only a single thread is used, but the GXY_NTHREADS environment variable can be used to increase the number of worker threads.   
 
@@ -454,4 +466,5 @@ The following environment variables affect Galaxy behavior:
 [14]: http://www.glfw.org/
 [15]: https://www.apache.org/licenses/LICENSE-2.0
 [16]: http://rapidjson.org/
+[17]: https://cinemascience.org/
 
