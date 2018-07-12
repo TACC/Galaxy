@@ -134,7 +134,7 @@ If cmake complains about missing dependencies, you can specify or change their l
 ## Building Galaxy
 Before building Galaxy, make sure all assumed and third-party subdirectory dependencies have been installed as described above, which will allow the Galaxy CMake configuration to find all dependencies automatically. We recommend building in `<Galaxy root>/build` and installing to `<Galaxy root>/install`. The recommended install directory is configured as part of the Galaxy CMake configuration.
 
-Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the threadpool11 build:
+Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the Galaxy build:
 
 ```bash
 mkdir build
