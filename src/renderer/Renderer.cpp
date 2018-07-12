@@ -1,6 +1,3 @@
-#define do_timing 0
-#define logging 0
-
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -8,6 +5,7 @@
 
 #include <ospray/ospray.h>
 
+#include "galaxy.h"
 #include "Application.h"
 #include "Work.h"
 #include "Renderer.h"
@@ -24,13 +22,13 @@
 #include "Rays_ispc.h"
 #include "TraceRays_ispc.h"
 
-#if DO_TIMING
+#ifdef GXY_TIMING
 #include "Timing.h"
 static Timer timer("ray_processing");
 #endif
 
-#include "../rapidjson/document.h"
-#include "../rapidjson/stringbuffer.h"
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
 using namespace std;
@@ -84,7 +82,7 @@ Renderer::SetEpsilon(float e)
 void
 Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 {
-#if LOGGING
+#ifdef GXY_LOGGING
 	APP_LOG(<< "Renderer::localRendering start");
 #endif
 
@@ -104,7 +102,7 @@ Renderer::localRendering(RenderingSetP rs, MPI_Comm c)
 
 	MPI_Barrier(c);
 
-#if 0
+#ifdef GXY_LOGGING
 	if (GetTheApplication()->GetRank() == 0)
 		std:cerr << "starting ray processing\n";
 #endif
@@ -216,7 +214,7 @@ Renderer::ProcessRays(RayList *in)
 {
   //std::cerr << "in list: " << in->get_header_address() << "\n";
   
-#if DO_TIMING
+#ifdef GXY_TIMING
   timer.start();
 #endif
 
@@ -285,7 +283,7 @@ Renderer::ProcessRays(RayList *in)
 				renderingSet->Enqueue(out);
 			}
 
-#if LOGGING
+#ifdef GXY_LOGGING
 		if (out)
 			APP_LOG(<< out->GetRayCount() << " secondaries re-enqueued");
 #endif
@@ -544,7 +542,7 @@ Renderer::ProcessRays(RayList *in)
 	// Finished processing this ray list.  
 	renderingSet->DecrementRayListCount();
 
-#if DO_TIMING
+#ifdef GXY_TIMING
   timer.stop();
 #endif
 }

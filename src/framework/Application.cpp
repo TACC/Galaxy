@@ -13,10 +13,10 @@
 #include "tbb/tbb.h"
 #include "tbb/task_scheduler_init.h"
 
-#include "../rapidjson/document.h"
-#include "../rapidjson/filestream.h"
-#include "../rapidjson/prettywriter.h"
-#include "../rapidjson/stringbuffer.h"
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
 using namespace std;
@@ -240,7 +240,8 @@ Application::OpenInputState(string s)
   Document *doc = new Document();
 
   FILE *pFile = fopen (s.c_str() , "r");
-  rapidjson::FileStream is(pFile);
+  char buf[64];
+  rapidjson::FileReadStream is(pFile,buf,64);
   doc->ParseStream<0>(is);
   fclose(pFile);
 

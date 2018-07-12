@@ -19,60 +19,64 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-VERSION="1.9.2"
-
 if [ "x$1" != "x" ]; then
-	echo "usage: get-ispc.sh"
-	echo "get-ispc will auto-detect the OS and download the appropriate ispc version ${VERSION}"
+	echo "usage: prep-third-party.sh"
+	echo "This script will init and update submodules, download ispc, and apply patches to the third-party libraries."
 	exit 1
 fi
 
 function fail
 {
 	echo "ERROR: $1"
-	echo "Try downloading ispc manually at https://ispc.github.io/downloads.html"
 	exit 1
 }
 
-OS_TYPE=$(uname)
-if [ "x${OS_TYPE}" == "xLinux" ]; then
-	TARGET_OS="linux"
-elif [ "x${OS_TYPE}" == "xDarwin" ]; then
-	TARGET_OS="osx"
-else
-	fail "Unrecognized OS type '${OS_TYPE}'"
+GXY_ROOT=$PWD
+if [ ! -d ${GXY_ROOT}/third-party ]; then
+	fail "Please run this script from the root directory of the Galaxy repository."
 fi
 
-TARGET_DIR="ispc-v${VERSION}-${TARGET_OS}"
-TARBALL="${TARGET_DIR}.tar.gz"
-
-if [ -x $TARGET_DIR/ispc ]; then
-	echo "ispc for ${OS_TYPE} already exists. Nothing more to do."
-	exit 0
+echo "initializing submodules..."
+git submodule --quiet init
+if [ $? != 0 ]; then
+	fail "submodule init returned error code $?"
 fi
 
-if [ -f ${TARBALL} ]; then
-	echo "found ${TARBALL}"
-else 
-	echo "downloading ispc ${VERSION} for ${OS_TYPE}"
-	wget -q -O ${TARBALL} http://sourceforge.net/projects/ispcmirror/files/v${VERSION}/${TARBALL}/download
-	if [ $? != 0 ]; then
-		fail "Download for ${TARBALL} failed."
+echo "updating submodules..."
+git submodule --quiet update
+if [ $? != 0 ]; then
+	fail "submodule update returned error code $?"
+fi
+
+echo "checking ispc..."
+cd ${GXY_ROOT}/third-party/ispc
+./get-ispc.sh
+if [ $? != 0 ]; then
+	fail
+fi
+
+echo "applying patches..."
+PATCH_DIR=${GXY_ROOT}/third-party/patches
+cd ${PATCH_DIR}
+for patch in *.patch ; do
+	PATCH_TARGET=`echo ${patch} | sed -e 's/\.patch//'`
+	if [ ! -d ${GXY_ROOT}/third-party/${PATCH_TARGET} ]; then
+		fail "could not find ${PATCH_TARGET} at ${GXY_ROOT}/third-party/${PATCH_TARGET}"
 	fi
-fi
+	echo "  patching ${PATCH_TARGET} ..."
+	cd ${GXY_ROOT}/third-party/${PATCH_TARGET}
+	git apply ${PATCH_DIR}/${patch}
+	if [ $? != 0 ]; then
+		fail "patch application for ${PATCH_TARGET} returned error code $?"
+	fi
+done
 
-if [ -f ${TARBALL} ]; then
-	echo "untarring ${TARBALL}"
-	tar xf ${TARBALL}
-else
-	fail "Could not find ${TARBALL}"
-fi
-
-if [ -x ${TARGET_DIR}/ispc ]; then
-	echo "ispc for ${OS_TYPE} successfully retrieved!"
-	rm ${TARBALL}
-else
-	fail "Executable ${TARGET_DIR}/ispc not found"
-fi
-
+echo "done!"
+cd ${GXY_ROOT}
 exit 0
+
+
+
+
+
+

@@ -1,3 +1,23 @@
+## ========================================================================== ##
+## Copyright (c) 2014-2018 The University of Texas at Austin.                 ##
+## All rights reserved.                                                       ##
+##                                                                            ##
+## Licensed under the Apache License, Version 2.0 (the "License");            ##
+## you may not use this file except in compliance with the License.           ##
+## A copy of the License is included with this software in the file LICENSE.  ##
+## If your copy does not contain the License, you may obtain a copy of the    ##
+## License at:                                                                ##
+##                                                                            ##
+##     https://www.apache.org/licenses/LICENSE-2.0                            ##
+##                                                                            ##
+## Unless required by applicable law or agreed to in writing, software        ##
+## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  ##
+## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           ##
+## See the License for the specific language governing permissions and        ##
+## limitations under the License.                                             ##
+##                                                                            ##
+## ========================================================================== ##
+
 cmake_minimum_required(VERSION 2.8)
 project (gxy_data)
 
@@ -6,58 +26,56 @@ find_library(PNG_LIBRARY_RELEASE png)
 include_directories(${gxy_framework_SOURCE_DIR}
                     ${gxy_renderer_SOURCE_DIR}
                     ${gxy_data_SOURCE_DIR}
-                    ${CMAKE_CURRENT_BINARY_DIR}/..
-                    ${MPI_INCLUDE_PATH}
-                    ${rapidjson_SOURCE_DIR}/..
-                    ${ICET_OBJDIR}/include
-                    ${TBB_INCLUDE_DIRS}
-                    ${EMBREE_INCLUDE_DIRS}
-                    )
+                    ${Galaxy_BINARY_DIR}/src)
 
-set (CPP_SOURCES     Visualization.cpp
-                     Particles.cpp 
-                     Volume.cpp 
-                     Box.cpp 
-                     Datasets.cpp
-                     VolumeVis.cpp
-                     KeyedDataObject.cpp
-                     Geometry.cpp 
-                     ISPCObject.cpp
-                     Vis.cpp
-                     MappedVis.cpp
-                     ParticlesVis.cpp
-                     DataObjects.cpp
-                     OSPRayObject.cpp
-                     OSPUtil.cpp
-                     mypng.cpp)
+set (CPP_SOURCES     
+  Box.cpp 
+  DataObjects.cpp
+  Datasets.cpp
+  Geometry.cpp 
+  ISPCObject.cpp
+  KeyedDataObject.cpp
+  MappedVis.cpp
+  mypng.cpp
+  OSPRayObject.cpp
+  OSPUtil.cpp
+  Particles.cpp 
+  ParticlesVis.cpp
+  Vis.cpp
+  Visualization.cpp
+  Volume.cpp 
+  VolumeVis.cpp)
 
-set (ISPC_SOURCES   ISPCObject.ispc
-      	            Visualization.ispc 
-                    Vis.ispc 
-      	            MappedVis.ispc 
-      	            ParticlesVis.ispc
-      	            VolumeVis.ispc
-                    )
+set (ISPC_SOURCES   
+  ISPCObject.ispc
+  MappedVis.ispc 
+  ParticlesVis.ispc
+  Vis.ispc 
+  Visualization.ispc 
+  VolumeVis.ispc)
 
 if(ospray_DIR)
-  ospray_create_library(gxy_data ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
+  ospray_create_library(gxy_data ${CPP_SOURCES} ${ISPC_SOURCES} 
+    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
   INSTALL(TARGETS gxy_data DESTINATION lib)
 endif()
-INSTALL(FILES Visualization.h 
-              KeyedDataObject.h 
-              Particles.h 
-              Volume.h 
-              Box.h 
-              ISPCObject.h
-              Geometry.h 
-              OSPRayObject.h 
-              OSPUtil.h
-              Datasets.h 
-              Vis.h 
-              VolumeVis.h 
-              ParticlesVis.h
-              MappedVis.h 
-              DataObjects.h 
-              mypng.h
-        DESTINATION include/gxy)
+
+INSTALL(FILES 
+  Box.h 
+  DataObjects.h 
+  Datasets.h 
+  Geometry.h 
+  ISPCObject.h
+  KeyedDataObject.h 
+  MappedVis.h 
+  mypng.h
+  OSPRayObject.h 
+  OSPUtil.h
+  Particles.h 
+  ParticlesVis.h
+  Vis.h 
+  Visualization.h 
+  Volume.h 
+  VolumeVis.h 
+  DESTINATION include/gxy)
 

@@ -13,10 +13,9 @@
 
 #include "dtypes.h"
 
-#include "../rapidjson/document.h"
-#include "../rapidjson/filestream.h"
-#include "../rapidjson/prettywriter.h"
-#include "../rapidjson/stringbuffer.h"
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
 using namespace gxy;
 using namespace rapidjson;

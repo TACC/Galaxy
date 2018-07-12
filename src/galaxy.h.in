@@ -1,3 +1,6 @@
-#cmakedefine WITH_VTK_RENDERER
-#cmakedefine WITH_ICET
-#cmakedefine EVENT_TRACKING
+//#cmakedefine WITH_VTK_RENDERER
+//#cmakedefine WITH_ICET
+//#cmakedefine EVENT_TRACKING
+
+#cmakedefine GXY_LOGGING
+#cmakedefine GXY_TIMING

@@ -10,8 +10,8 @@
 
 #define LOGGING 0
 
-#include "../rapidjson/prettywriter.h"
-#include "../rapidjson/stringbuffer.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
 using namespace std;

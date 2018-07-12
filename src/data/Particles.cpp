@@ -21,7 +21,7 @@
 #include <vtkClientSocket.h>
 #include <vtkXMLPolyDataReader.h>
 
-#include "../rapidjson/filestream.h"
+#include "rapidjson/filereadstream.h"
 
 using namespace std;
 
@@ -228,7 +228,8 @@ Particles::get_partitioning_from_file(char *s)
 	Document *doc = new Document();
 
   FILE *pFile = fopen (s, "r");
-  rapidjson::FileStream is(pFile);
+  char buf[64];
+  rapidjson::FileReadStream is(pFile, buf, 64);
   doc->ParseStream<0>(is);
   fclose(pFile);
 

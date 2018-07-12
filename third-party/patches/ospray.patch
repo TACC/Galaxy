@@ -1,0 +1,82 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 12ade5e8..3e5d0c79 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+ 
+@@ -41,6 +44,12 @@ SET(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
+ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
+ 
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
++IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++  SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
++ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++# GALAXY END ADDED CODE - by Galaxy patch
++
+ ##############################################################
+ # CMake modules and macro files
+ ##############################################################
+diff --git a/cmake/ospray_macros.cmake b/cmake/ospray_macros.cmake
+index 7a6bb843..92483115 100644
+--- a/cmake/ospray_macros.cmake
++++ b/cmake/ospray_macros.cmake
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ function(ospray_check_embree_feature FEATURE DESCRIPTION)
+   set(FEATURE EMBREE_${FEATURE})
+   if(NOT ${ARGN})
+@@ -40,7 +43,14 @@ function(ospray_verify_embree_features)
+ endfunction()
+ 
+ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
+-  find_package(embree ${EMBREE_VERSION_REQUIRED} QUIET)
++  # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++  # original code: find_package(embree ${EMBREE_VERSION_REQUIRED} QUIET)
++  find_package(embree ${EMBREE_VERSION_REQUIRED}
++    PATHS ${PROJECT_SOURCE_DIR}/../embree/install/lib64/cmake
++          ${PROJECT_SOURCE_DIR}/../embree/install/lib/cmake
++          ${PROJECT_SOURCE_DIR}/../embree/build
++    QUIET)
++  # GALAXY END MODIFIED CODE - by Galaxy patch
+   if(NOT DEFINED EMBREE_INCLUDE_DIRS)
+     message(FATAL_ERROR
+             "We did not find Embree installed on your system. OSPRay requires"
+diff --git a/components/ospcommon/cmake/ispc.cmake b/components/ospcommon/cmake/ispc.cmake
+index 7d02f37c..378a9cc3 100644
+--- a/components/ospcommon/cmake/ispc.cmake
++++ b/components/ospcommon/cmake/ispc.cmake
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ # ISPC versions to look for, in decending order (newest first)
+ SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
+ LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
+@@ -35,6 +38,10 @@ IF (NOT ISPC_EXECUTABLE)
+   FOREACH(ver ${ISPC_VERSION_WORKING})
+     FOREACH(suffix ${ISPC_DIR_SUFFIX})
+       LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-v${ver}-${suffix})
++      # GALAXY BEGIN ADDED CODE - by Galaxy patch
++      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc/ispc-v${ver}-${suffix}
++                                ${PROJECT_SOURCE_DIR}/third-party/ispc/ispc-v${ver}-${suffix})
++      # GALAXY END MODIFIED CODE - by Galaxy patch
+     ENDFOREACH()
+   ENDFOREACH()
+ 

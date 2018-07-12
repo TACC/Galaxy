@@ -1,0 +1,50 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a04979d..a1900b8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,3 +1,6 @@
++# NOTE: This file has been modified by a Galaxy patch.
++#      See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ cmake_minimum_required(VERSION 2.8)
+ project(threadpool11)
+ 
+@@ -10,7 +13,15 @@ if(NOT CMAKE_BUILD_TYPE)
+   # SET the possible values of build type for cmake-gui
+ endif()
+ 
+-find_package(Boost)
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
++IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++  SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
++ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++# GALAXY END ADDED CODE - by Galaxy patch
++
++# GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++# original code: find_package(Boost)
++# GALAXY END MODIFIED CODE - by Galaxy patch
+ 
+ if(Boost_FOUND)
+   include_directories(${Boost_INCLUDE_DIR})
+diff --git a/threadpool11/src/pool.cpp b/threadpool11/src/pool.cpp
+index 751e4c6..d9348ec 100644
+--- a/threadpool11/src/pool.cpp
++++ b/threadpool11/src/pool.cpp
+@@ -18,11 +18,17 @@ This file is part of threadpool11.
+     along with threadpool11.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++// NOTE: This file has been modified by a Galaxy patch.
++//      See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ #include "threadpool11/pool.hpp"
+ 
+ #include <boost/lockfree/queue.hpp>
+ 
+ #include <algorithm>
++// GALAXY BEGIN ADDED CODE - by Galaxy patch
++#include <vector>
++// GALAXY END ADDED CODE - by Galaxy patch
+ 
+ namespace threadpool11 {
+ 

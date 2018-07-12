@@ -7,6 +7,8 @@ Galaxy is licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License. A copy of the License is included with this software in the file `LICENSE`. If your copy does not contain the License, you may obtain a copy of the License at: [Apache License Version 2.0][15]. 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.  
 
+Copyright (c) 2014-2018 The University of Texas at Austin. All rights reserved.
+
 ## Galaxy dependencies
 Galaxy has two types of dependencies: (1) components assumed to be already installed in an accessible spot; and (2) components that are associated with the Galaxy repository in the `third-party` subdirectory.
 
@@ -22,20 +24,33 @@ Galaxy assumes the following are already installed on your system in an accessib
 
 Galaxy has the following components associated in the `third-party` subdirectory:
   * [Intel ISPC][10]
-  * [threadpool11][11]
   * [Intel Embree][12]
   * [Intel OSPRay][13]
+  * [threadpool11][11]
+  * [rapidjson][16]
 
 ## Installing Galaxy associated dependencies
 Prior to building Galaxy itself, you should ensure that all the general dependencies are installed (we recommend your humble OS package manager). Once those are in place, you're ready to install the dependencies in `third-party`. 
 
-From the root directory of your local Galaxy repository, issue the following git commands:
-```bash
-git submodule init
-git submodule update
+From the root directory of your local Galaxy repository, run the script `prep-third-party.sh`, which will init and update the git submodules, download ispc to where Galaxy expects to find it, and apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, `third-party/threadpool11`, and `third-pary/rapidjson` subdirectories. 
+
+All patch updates insert the prominent header: 
+```
+NOTE: This file has been modified by a Galaxy patch.
+      See the GALAXY BEGIN / GALAXY END block(s) below.
+```
+and are bookended by prominent comment blocks of the format:
+```
+GALAXY BEGIN ADDED CODE - by Galaxy patch
+< patch >
+GALAXY END ADDED CODE - by Galaxy patch
 ```
 
-These commands will populate the `third-party/threadpool11`, `third-party/embree` and `third-party/ospray` subdirectories. 
+If you prefer to use local installs of any of the dependencies, you can follow instructions below. Make sure to issue `git submodule init <path>` and `git submodule update <path>` for the third-party dependencies you do *NOT* have locally installed. For example, to use the rapidjson submodule, type:
+```bash
+git submodule init third-party/rapidjson
+git submodule update third-party/rapidjson
+```
 
 ### Installing ISPC
 The `third-party/ispc` directory contains a script to download a recent ISPC binary for MacOS or Linux. ISPC installed using this script should be detected automatically by the Galaxy CMake configuration. If you already have a recent ISPC installed (at least version 1.9.1) you are free to use it, though you might need to specify its location by hand in the CMake configurations for Embree, OSPRay, and Galaxy.
@@ -43,8 +58,7 @@ The `third-party/ispc` directory contains a script to download a recent ISPC bin
 From the root directory of your Galaxy repository, issue the following commands:
 ```bash
 cd third-party/ispc
-./get-ispc.sh <OS type>     # where <OS type> = [ linux | osx ]
-  
+./get-ispc.sh 
 ```
 
 This will download ISPC (currently version 1.9.2) into `third-party/ispc/ispc-v<version>-<OS type>` (e.g., ispc-v1.9.2-osx). If this binary does not work for you, you will need to build ISPC by hand following the directions at the [ISPC website][10]. 
@@ -55,7 +69,7 @@ After updating the git submodules as described above, the `third-party/embree` d
 First, apply the Galaxy Embree patch to the Embree repository. From the root directory of your Galaxy repository, issue the following commands:
 ```bash
 cd third-party/embree
-git apply ../../patches/embree.patch
+git apply ../patches/embree.patch
 ```
 
 Now, create a build directory and build Embree. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the Embree build:
@@ -64,7 +78,7 @@ mkdir build
 cd build
 cmake .. && make && make install
 ```
-If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..`.
+If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
 ### Installing OSPRay
 Before installing OSPRay, make sure you have updated the Galaxy git submodules and successfully built Embree, as described above. Once the git submodules have been updated, the `third-party/ospray` directory should contain the OSPRay source tree. We recommend building in `third-party/ospray/build` and installing to `third-party/ospray/install`, as doing so should enable Galaxy to find OSPRay automatically. The recommended install directory is configured as part of the Galaxy OSPRay patch.
@@ -72,7 +86,7 @@ Before installing OSPRay, make sure you have updated the Galaxy git submodules a
 First, apply the Galaxy OSPRay patch to the OSPRay repository. From the root directory of your Galaxy repository, issue the following commands:
 ```bash
 cd third-party/ospray
-git apply ../../patches/ospray.patch
+git apply ../patches/ospray.patch
 ```
 
 Now, create a build directory and build OSPRay. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the OSPRay build:
@@ -81,15 +95,15 @@ mkdir build
 cd build
 cmake .. && make && make install
 ```
-If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..`.
+If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
 ### Installing threadpool11
-Before installing threadpool11, make sure you have updated the Galaxy git submodules as described above. One the git submodules have been updated, the `third-party/threadpool11` directory should contain the threadpool11 source tree. We recommend building in `third-party/threadpool11/build` and installing to `third-party/threadpool11/install`, as doing so should enable Galaxy to find threadpool11 automatically. The recommended install directory is configured as part of the Galaxy threadpool11 patch.
+Before installing threadpool11, make sure you have updated the Galaxy git submodules as described above. Once the git submodules have been updated, the `third-party/threadpool11` directory should contain the threadpool11 source tree. We recommend building in `third-party/threadpool11/build` and installing to `third-party/threadpool11/install`, as doing so should enable Galaxy to find threadpool11 automatically. The recommended install directory is configured as part of the Galaxy threadpool11 patch.
 
 First, apply the Galaxy threadpool11 patch to the threadpool11 repository. From the root directory of your Galaxy repository, issue the following commands:
 ```bash
 cd third-party/threadpool11
-git apply ../../patches/threadpool11.patch
+git apply ../patches/threadpool11.patch
 ```
 Now, create a build directory and build threadpool11. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the threadpool11 build:
 
@@ -98,8 +112,24 @@ mkdir build
 cd build
 cmake .. && make && make install
 ```
+If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
-If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..`.
+### Installing rapidjson
+Before installing rapidjson, make sure you have updated the Galaxy git submodules as described above. Once the git submodules have been updated, the `third-party/rapidjson` directory should contain the rapidjson source tree. We recommend building in `third-party/rapidjson/build` and installing to `third-party/rapidjson/install`, as doing so should enable Galaxy to find rapidjson automatically. The recommended install directory is configured as part of the Galaxy rapidjson patch.
+
+First, apply the Galaxy rapidjson patch to the rapidjson repository. From the root directory of your Galaxy repository, issue the following commands:
+```bash
+cd third-party/rapidjson
+git apply ../patches/rapidjson.patch
+```
+Now, create a build directory and build rapidjson. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the rapidjson build:
+
+```bash
+mkdir build
+cd build
+cmake .. && make && make install
+```
+If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
 ## Building Galaxy
 Before building Galaxy, make sure all assumed and third-party subdirectory dependencies have been installed as described above, which will allow the Galaxy CMake configuration to find all dependencies automatically. We recommend building in `<Galaxy root>/build` and installing to `<Galaxy root>/install`. The recommended install directory is configured as part of the Galaxy CMake configuration.
@@ -423,4 +453,5 @@ The following environment variables affect Galaxy behavior:
 [13]: http://www.ospray.org/
 [14]: http://www.glfw.org/
 [15]: https://www.apache.org/licenses/LICENSE-2.0
+[16]: http://rapidjson.org/
 
