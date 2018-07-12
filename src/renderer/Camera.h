@@ -70,7 +70,7 @@ public:
 
 	void print();
 
-	void generate_initial_rays(RenderingSetP, RenderingP, Box*, Box*, vector<future<void>>& rvec);
+	void generate_initial_rays(RenderingSetP, RenderingP, Box*, Box*, vector<future<int>>& rvec);
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *ptr);

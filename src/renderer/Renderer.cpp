@@ -157,7 +157,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		renderingSet->initializeSpawnedRayCount();
 #endif
 
-		vector<future<void>> rvec;
+		vector<future<int>> rvec;
 		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
 		{
 			RenderingP rendering = renderingSet->GetRendering(i);
@@ -234,13 +234,13 @@ Renderer::SaveStateToDocument(Document& doc)
 
 #define NO_NEIGHBOR 		-1
 
-class processRays_ftor
+class processRays_task : public ThreadPoolTask
 {
 public:
-	processRays_ftor(RayList *raylist, Renderer *renderer) : raylist(raylist), renderer(renderer) {}
-  ~processRays_ftor() {}
+	processRays_task(RayList *raylist, Renderer *renderer) : raylist(raylist), renderer(renderer) {}
+  ~processRays_task() {}
 
-	void operator()() { 
+	int work() { 
 
 		RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
 		RenderingP     rendering     = raylist->GetTheRendering();
@@ -532,35 +532,13 @@ public:
 		// Finished processing this ray list.  
 		renderingSet->DecrementRayListCount();
 #endif //  PVOL_SYNCHRONOUS
+
+		return 0;
 	}
 
 private:
 	RayList *raylist;
 	Renderer *renderer;
-};
-
-pthread_mutex_t active_raylist_count_lock = PTHREAD_MUTEX_INITIALIZER;
-int active_raylist_count = 0;
-
-class raylist_wrapper
-{
-public:
-  raylist_wrapper(shared_ptr<processRays_ftor> _f) : f(_f)  {}
-  ~raylist_wrapper() {}
-  void operator()() 
-	{
-		pthread_mutex_lock(&active_raylist_count_lock);
-		active_raylist_count ++;
-		pthread_mutex_unlock(&active_raylist_count_lock);
-		
-	  (*f)();
-
-		pthread_mutex_lock(&active_raylist_count_lock);
-		active_raylist_count --;
-		pthread_mutex_unlock(&active_raylist_count_lock);
-	}
-private:
-  shared_ptr<processRays_ftor> f;
 };
 
 void
@@ -598,8 +576,7 @@ Renderer::Trace(RayList *raylist)
 void
 Renderer::ProcessRays(RayList *in)
 {
-	shared_ptr<processRays_ftor> f = shared_ptr<processRays_ftor>(new processRays_ftor(in, this));
-	GetTheApplication()->GetTheThreadPool()->postWork<void>(raylist_wrapper(f));
+	GetTheApplication()->GetTheThreadPool()->AddTask(new processRays_task(in, this));
 }
 
 void

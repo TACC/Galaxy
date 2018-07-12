@@ -49,28 +49,6 @@ unsigned long tacc_rdtscp(int *chip, int *core)
 }
 #endif
 
-
-class rp_ftor
-{
-public: 
-  rp_ftor(Renderer *r, RayList *rl) : raylist(rl), renderer(r) {}
-  ~rp_ftor() {}
-  
-  virtual void operator()()
-  {
-#if 0
-		int chip, core;
-		tacc_rdtscp(&chip, &core);
-		std::cerr << chip << "::" << core << "\n";
-#endif
-		renderer->ProcessRays(raylist);
-  }
-
-private:
-  RayList *raylist;
-  Renderer *renderer;
-};
-
 void *
 RayQManager::theRayQWorker(void *d)
 {
@@ -80,15 +58,7 @@ RayQManager::theRayQWorker(void *d)
 	
 	RayList *r;
 	while ((r = theRayQManager->Dequeue()) != NULL)
-	{
-#if 1
-    ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
-    threadpool->postWork<void>(rp_ftor(theRayQManager->GetTheRenderer(), r));
-#else
 		theRayQManager->GetTheRenderer()->ProcessRays(r);
-#endif
-
-	}
 
 	theRayQManager->Unlock();
 	pthread_exit(0);

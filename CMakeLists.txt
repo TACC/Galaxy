@@ -14,8 +14,6 @@ IF (APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 ENDIF (APPLE)
 
-execute_process(COMMAND ${PROJECT_SOURCE_DIR}/threadpool.sh ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
-
 # ignore override warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override")
 
@@ -29,9 +27,7 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-option(WITH_CINEMA  			"Include cinema generator?" OFF)
 option(WITH_STATE        	"Include simple renderer?" ON)
-option(WITH_QT_VIEWER  		"Include QT-based viewer?" OFF)
 
 find_package(MPI)
 find_package(Boost)
@@ -51,17 +47,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(EVENT_TRACKING FALSE CACHE BOOL "show events")
-
-find_path(THREADPOOL11_LIB_DIR libthreadpool11.a PATHS ${PROJECT_BINARY_DIR}/third-party/threadpool11/lib
-											 DOC "library install directory for threadpool11 (recommend ${PROJECT_BINARY_DIR}/threadpool11/lib)")
-
-find_path(THREADPOOL11_INCLUDE_DIR threadpool11/threadpool11.hpp PATHS 
-											 ${PROJECT_BINARY_DIR}/third-party/threadpool11/include
-											 DOC "include install directory for threadpool11 (recommend ${PROJECT_BINARY_DIR}/threadpool11/include)")
-
-link_directories(${THREADPOOL11_LIB_DIR})
-include_directories(${THREADPOOL11_INCLUDE_DIR})
-
 
 # add third-party directory to ISPC search path
 SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
@@ -118,8 +103,7 @@ SET(CMAKE_INSTALL_RPATH
   "${OSPRAY_ROOT}/lib"
   "${EMBREE_ROOT_DIR}/lib"
   "${CMAKE_INSTALL_PREFIX}/lib"
-  "${CMAKE_INSTALL_PREFIX}/ospray/lib"
-  "${CMAKE_INSTALL_PREFIX}/threadpool11/lib")
+  "${CMAKE_INSTALL_PREFIX}/ospray/lib")
 
 set(OSPRAY_DIR "" CACHE FILEPATH "install directory of OSPRAY")
 link_directories(${OSPRAY_DIR}/lib ${OSPRAY_DIR}/lib64)

@@ -301,13 +301,13 @@ struct args
 // be first-hit, figure out which actually are, create a raylist for them,
 // and queue them for processing
 
-class gil_ftor
+class spawn_rays_task : public ThreadPoolTask
 {
 public:
-  gil_ftor(int start, int count, shared_ptr<args> _a) : start(start), count(count), a(_a) {}
-  ~gil_ftor() {}
+  spawn_rays_task(int start, int count, shared_ptr<args> _a) : start(start), count(count), a(_a) {}
+  ~spawn_rays_task() {}
 
-  virtual void operator()()
+  virtual int work()
   {
 #if defined(EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraTaskStartEvent());
@@ -396,21 +396,13 @@ public:
 #if defined(EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraTaskEndEvent());
 #endif
+
+		return 0;
   }
 
 private:
 	int start, count;
   shared_ptr<args> a;
-};
-
-class wrapper
-{
-public:
-  wrapper(shared_ptr<gil_ftor> _f) : f(_f)  {}
-  ~wrapper() {}
-  void operator()() { (*f)(); }
-private:
-  shared_ptr<gil_ftor> f;
 };
 
 void check_env(int width, int height)
@@ -453,7 +445,7 @@ void check_env(int width, int height)
 }
 		
 void
-Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<void>>& rvec)
+Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<int>>& rvec)
 {
   int width, height;
   rendering->GetTheSize(width, height);
@@ -708,16 +700,9 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 			renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
 #endif
 
-			// Number of rays in this packet
-		
 			int kthis = (i + rays_per_packet) > (iwidth * iheight) ? (iwidth * iheight) - i : rays_per_packet;
 
-			shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(i, kthis, a));
-			rvec.emplace_back(threadpool->postWork<void>(wrapper(f)));
-#if 0
-			// DEBUG
-			return;
-#endif
+			rvec.emplace_back(threadpool->AddTask(new spawn_rays_task(i, kthis, a)));
 		}
   }
   return;

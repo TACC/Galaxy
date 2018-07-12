@@ -69,7 +69,7 @@ Application::Application()
 
   int n_threads =  getenv("PVOL_NTHREADS") ?  atoi(getenv("PVOL_NTHREADS")) : 5;
 
-  threadPool = new threadpool11::Pool(n_threads);
+  threadPool = new ThreadPool(n_threads);
 
   class_table = new vector<ClassTableEntry>;
   deserializers =  new vector<Work *(*)(SharedP)>;
@@ -156,7 +156,7 @@ Application::~Application()
 	
   pthread_mutex_unlock(&lock);
 
-  // delete threadPool;
+  delete threadPool;
 	delete class_table;
 	delete deserializers;
 	delete theMessageManager;

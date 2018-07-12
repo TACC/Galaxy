@@ -8,7 +8,6 @@ include_directories(${MPI_INCLUDE_PATH}
                     ${Framework_SOURCE_DIR}
                     ${Renderer_SOURCE_DIR}
                     ${Data_SOURCE_DIR}
-                    ${ICET_OBJDIR}/include
                     ${TBB_INCLUDE_DIRS}
 										${CMAKE_CURRENT_BINARY_DIR}
                     ${EMBREE_INCLUDE_DIRS}
