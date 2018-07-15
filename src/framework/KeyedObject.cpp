@@ -1,9 +1,35 @@
-#define LOGGING 0
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 
 #include "Application.h"
 #include "KeyedObject.h"
 
+<<<<<<< HEAD
 namespace pvol
+=======
+using namespace rapidjson;
+using namespace std;
+
+namespace gxy
+>>>>>>> master
 {
 static int ko_count = 0;
 static int get_ko_count() { return ko_count; }
@@ -35,7 +61,7 @@ KeyedObjectFactory::NewMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 void
 KeyedObjectFactory::Drop(Key k)
 {
-#if LOGGING
+#ifdef GXY_LOGGING
 	APP_LOG(<< "DROP " << k);
 #endif
 	DropMsg msg(k);
@@ -91,7 +117,7 @@ KeyedObject::Drop()
 KeyedObject::KeyedObject(KeyedObjectClass c, Key k) : keyedObjectClass(c), key(k)
 {  
 	ko_count++;
-	// std::cerr << "KeyedObject ctor: " << GetTheKeyedObjectFactory()->GetClassName(c) << " key " << k << "\n";
+	// cerr << "KeyedObject ctor: " << GetTheKeyedObjectFactory()->GetClassName(c) << " key " << k << endl;
 	initialize();
 }
 
@@ -118,7 +144,7 @@ KeyedObject::Deserialize(unsigned char *p)
 
 	if (*(int *)p != 12345)
 	{
-		std::cerr << "Serialization error!\n";
+		cerr << "ERROR: Could not deserialize KeyedObject " << endl;
 		exit(1);
 	}
 
@@ -189,7 +215,7 @@ KeyedObjectFactory::Dump()
 	{
 		KeyedObjectP kop = kmap[i];
 		if (kop != NULL)
-			std::cerr << "key " << i << " " << GetClassName(kop->getclass()) << " count " << kop.use_count() << "\n";
+			cerr << "key " << i << " " << GetClassName(kop->getclass()) << " count " << kop.use_count() << endl;
 	}
 }
 
@@ -200,8 +226,9 @@ KeyedObjectFactory::~KeyedObjectFactory()
 
 #if 0
 	if (ko_count > 0)
-		std::cerr << ko_count << " shared objects remain\n";
+		cerr << ko_count << " shared objects remain" << endl;
 #endif
 }
-}
+
+} // namespace gxy
 

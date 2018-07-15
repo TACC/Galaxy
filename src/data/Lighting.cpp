@@ -1,3 +1,23 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #include <math.h>
 
 #include "Application.h"
@@ -5,10 +25,12 @@
 #include "Lighting.h"
 #include "Lighting_ispc.h"
 
+using namespace rapidjson;
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
+
 Lighting::Lighting()
 {
   allocate_ispc();
@@ -56,7 +78,7 @@ Lighting::LoadStateFromValue(Value& v)
 				float d = sqrt(x*x + y*y + z*z);
 				if (d == 0.0)
 				{
-					std::cerr << "Directional light souce canot be (0,0,0) - (1,1,1 used)\n";
+					std::cerr << "WARNING: Directional light souce cannot be (0,0,0) so using (1,1,1)" << std::endl;
 					x = y = z = 0.577350;
 				}
 				else
@@ -91,7 +113,6 @@ Lighting::LoadStateFromValue(Value& v)
   
   SetK(ka, kd);
 }
-
 
 void
 Lighting::SaveStateToValue(Value& v, Document& doc)
@@ -290,5 +311,6 @@ Lighting::GetEpsilon(float& e)
 {
   ispc::Lighting_GetEpsilon(GetISPC(), &e);
 }
-}
+
+} // namespace gxy
 

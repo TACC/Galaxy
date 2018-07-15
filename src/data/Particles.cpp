@@ -1,3 +1,23 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
@@ -8,9 +28,7 @@
 #include <fcntl.h>
 
 #include "Application.h"
-// #include "Renderer.h"
 #include "Particles.h"
-
 
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
@@ -22,16 +40,17 @@
 #include <vtkClientSocket.h>
 #include <vtkXMLPolyDataReader.h>
 
-#include "../rapidjson/filestream.h"
+#include "rapidjson/filereadstream.h"
 
-namespace pvol
+using namespace std;
+using namespace rapidjson;
+
+namespace gxy
 {
 
 WORK_CLASS_TYPE(Particles::LoadPartitioningMsg);
 
 KEYED_OBJECT_TYPE(Particles)
-
-using namespace std;
 
 void
 Particles::Register()
@@ -84,7 +103,7 @@ Particles::Import(string s)
 	struct stat info;
 	if (stat(s.c_str(), &info))
 	{
-		cerr << "Cannot open " << s << "\n";
+		cerr << "ERROR: Cannot open file " << s << endl;
 		exit(1);
 	} 
 
@@ -139,8 +158,8 @@ Particles::LoadFromJSON(Value& v)
 		Value& attach = v["attach"];
 		if (!attach.HasMember("partitions") || !attach.HasMember("layout"))
 		{
-			std::cerr << "Need both partitions and layout in attach clause\n";
-			exit(0);
+			cerr << "ERROR: Need both partitions and layout in attach clause" << endl;
+			exit(1);
 		}
     set_attached(true);
     LoadPartitioning(string(attach["partitions"].GetString()));
@@ -148,7 +167,7 @@ Particles::LoadFromJSON(Value& v)
   }
   else
   {
-    std::cerr << "json Particles has neither filename or layout spec\n";
+    cerr << "ERROR: json Particles block has neither a filename nor a layout spec" << endl;
     exit(1);
   }
 }
@@ -246,7 +265,7 @@ Particles::local_load_timestep(MPI_Comm c)
   vtkobj->ShallowCopy(vtkPolyData::SafeDownCast(reader->GetOutput()));
   if (! vtkobj)
   {
-    cerr << "received something other than a vtkPolyData object\n";
+    cerr << "ERROR: load_local_timestep received something other than a vtkPolyData object" << endl;
     exit(1);
   }
 
@@ -259,7 +278,8 @@ Particles::get_partitioning_from_file(char *s)
 	Document *doc = new Document();
 
   FILE *pFile = fopen (s, "r");
-  rapidjson::FileStream is(pFile);
+  char buf[64];
+  rapidjson::FileReadStream is(pFile, buf, 64);
   doc->ParseStream<0>(is);
   fclose(pFile);
 
@@ -342,7 +362,7 @@ Particles::local_import(char *p, MPI_Comm c)
 
   string f(args->s);
 	string dir = (f.find_last_of("/") == f.npos) ? "./" : f.substr(0, f.find_last_of("/") + 1);
-	// cerr << "rs: " << radius_scale << " radius: " << radius << " dor " << dir << "\n";
+	// cerr << "rs: " << radius_scale << " radius: " << radius << " dor " << dir << endl;
 
 	if (vtkobj) vtkobj->Delete();
 	vtkobj = NULL;
@@ -366,7 +386,7 @@ Particles::local_import(char *p, MPI_Comm c)
 		struct stat info;
 		if (stat(f.c_str(), &info))
 		{
-			cerr << "Cannot open " << f << "\n";
+			cerr << "ERROR: Cannot open file " << f << endl;
 			exit(1);
 		}
 
@@ -383,7 +403,7 @@ Particles::local_import(char *p, MPI_Comm c)
 			m = read(fd, p, n);
 			if (m < 0)
 			{
-				cerr << "Error reading " << f.c_str() << "\n";
+				cerr << "Error reading file " << f.c_str() << endl;
 				exit(1);
 			}
 		}
@@ -403,8 +423,8 @@ Particles::local_import(char *p, MPI_Comm c)
 	}
 	else
 	{
-		std::cerr << "Particles have to be .sph or .vtp\n";
-		exit(0);
+		cerr << "ERROR: Particles have to be in .sph or .vtp format" << endl;
+		exit(1);
 	}
 }
 
@@ -415,8 +435,8 @@ Particles::GetPolyData(vtkPolyData*& v)
 	{
 		if (! samples)
 		{
-			std::cerr << "got to have samples or vtk\n";
-			exit(0);
+			cerr << "ERROR: GetPolyData needs samples or a vtkobj" << endl;
+			exit(1);
 		}
 
 		vtkobj = vtkPolyData::New();
@@ -467,8 +487,8 @@ Particles::GetSamples(Particle*& s, int& n)
 	{
 		if (! vtkobj)
 		{
-			std::cerr << "got to have samples or vtk\n";
-			exit(0);
+			cerr << "GetSamples needs samples or a vtkobj" << endl;
+			exit(1);
 		}
 
 		vtkPoints *pts = vtkobj->GetPoints();
@@ -497,4 +517,4 @@ Particles::GetSamples(Particle*& s, int& n)
 	n = n_samples;
 }
 
-}
+} // namespace gxy

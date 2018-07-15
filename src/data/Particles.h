@@ -1,3 +1,23 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once
 
 #include <string>
@@ -5,17 +25,12 @@
 #include <memory.h>
 #include <vector>
 
-using namespace std;
-
-#include "KeyedDataObject.h"
-
-
 #include "dtypes.h"
 #include "Application.h"
 #include "Box.h"
 #include "Geometry.h"
 #include "Datasets.h"
-using namespace std;
+#include "KeyedDataObject.h"
 
 #include <vtkSmartPointer.h>
 #include <vtkClientSocket.h>
@@ -25,12 +40,12 @@ using namespace std;
 
 #include "ospray/ospray.h"
 
-class Box;
-
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_POINTER(Particles)
+
+class Box;
 
 struct Particle
 {
@@ -56,7 +71,7 @@ public:
 		LoadPartitioningMsg::Register();
   }
 
-	virtual void Import(string);
+	virtual void Import(std::string);
 
   virtual bool local_commit(MPI_Comm);
   virtual void local_import(char *, MPI_Comm);
@@ -71,41 +86,41 @@ public:
 
   bool has_neighbor(unsigned int face) { return neighbors[face] >= 0; }
 
-	void LoadPartitioning(string partitioning);
+	void LoadPartitioning(std::string partitioning);
 
 	void GetPolyData(vtkPolyData*& v);
 	void GetSamples(Particle*& s, int& n);
 
-	void set_filename(string s)     { filename = s; }
-	void set_layoutname(string s)   { layoutname = s; }
-	void set_partfilename(string s) { partfilename = s; }
+	void set_filename(std::string s)     { filename = s; }
+	void set_layoutname(std::string s)   { layoutname = s; }
+	void set_partfilename(std::string s) { partfilename = s; }
 
-	virtual void LoadFromJSON(Value&);
-	virtual void SaveToJSON(Value&, Document&);
+	virtual void LoadFromJSON(rapidjson::Value&);
+	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
 protected:
   vtkClientSocket *skt;
-  string filename;
-  string layoutname;
-  string partfilename;
+  std::string filename;
+  std::string layoutname;
+  std::string partfilename;
 
   float radius;
   float radius_scale;
 
 	vtkPolyData *vtkobj;
 
-  void get_partitioning(Value&);
+  void get_partitioning(rapidjson::Value&);
   void get_partitioning_from_file(char *);
 
   Particle *samples;
   int n_samples;
 
-  vector<Particle> ghosts;
+  std::vector<Particle> ghosts;
 
 	class LoadPartitioningMsg : public Work
 	{
   public:
-    LoadPartitioningMsg(Key k, string pname) 
+    LoadPartitioningMsg(Key k, std::string pname) 
 				: LoadPartitioningMsg(sizeof(Key) + pname.length() + 1)
     {
       *(Key *)contents->get() = k;
@@ -126,4 +141,4 @@ protected:
   };
 };
 
-}
+} // namespace gxy

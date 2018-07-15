@@ -1,21 +1,40 @@
-#define REVERSE_LIGHTING 1
-
-#include <iostream>
-#include <math.h>
-#include <stdlib.h>
-#include <string>
-#include <sstream>
-#include <fstream>
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
 #include "TraceRays.h"
-#include "RayFlags.h"
-
 #include "TraceRays_ispc.h"
+
+#include <fstream>
+#include <iostream>
+#include <math.h>
+#include <sstream>
+#include <stdlib.h>
+#include <string>
+
+#include "RayFlags.h"
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
+
 TraceRays::TraceRays()
 {
   allocate_ispc();
@@ -88,14 +107,14 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
 	}
 
 	int shadow_ray_knt = nOutputRays - ao_ray_knt;
-	//std::cerr << nOutputRays << " output rays\n";
+	//cerr << nOutputRays << " output rays" << endl;
 
   if (nOutputRays)
   {
     raysOut = new RayList(raysIn->GetTheRenderingSet(), raysIn->GetTheRendering(), nOutputRays, raysIn->GetFrame());
   }
   
-#if REVERSE_LIGHTING
+#ifdef GXY_REVERSE_LIGHTING
 	ispc::TraceRays_ambientLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(),  raysIn->GetISPC());
 	if (ao_ray_knt)
 		ispc::TraceRays_generateAORays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), ao_offsets, raysOut->GetISPC());
@@ -155,5 +174,5 @@ unsigned char *TraceRays::Deserialize(unsigned char *p)
   SetEpsilon(*(float *)p);
   return p + sizeof(float);
 }
-}
 
+} // namespace gxy

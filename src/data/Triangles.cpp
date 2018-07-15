@@ -1,3 +1,23 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #include <iostream>
 #include "vtkerror.h"
 #include "Triangles.h"
@@ -21,7 +41,7 @@
 using namespace std;
 using namespace boost::property_tree;
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_TYPE(Triangles) 
@@ -83,7 +103,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 
     if (k != GetTheApplication()->GetRank())
     {
-      cerr << "Not enough partitions\n";
+      cerr << "ERROR: Not enough partitions for Triangles" << endl;
       exit(1);
     }
 
@@ -110,13 +130,13 @@ Triangles::local_import(char *f, MPI_Comm c)
 
     if (k != (GetTheApplication()->GetSize() - 1))
     {
-      cerr << "wrong number of partitions" << k << "\n";
+      cerr << "ERROR: wrong number of Triangle partitions" << k << endl;
       exit(1);
     }
   }
   else 
   {
-    cerr << "unknown extension: " << ext << "\n";
+    cerr << "ERROR: unknown Triangle extension: " << ext << endl;
     exit(1);
   }
 
@@ -138,7 +158,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 
     if (ve->GetError())
     {
-      cerr << "error reading partition\n";
+      cerr << "ERROR: error reading vtu Triangle partition" << endl;
       exit(1);
     }
 
@@ -160,7 +180,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 
     if (ve->GetError())
     {
-      cerr << "error reading partition\n";
+      cerr << "ERROR: error reading vtp Triangle partition" << endl;
       exit(1);
     }
 
@@ -172,7 +192,7 @@ Triangles::local_import(char *f, MPI_Comm c)
   }
   else 
   {
-    cerr << "unknown partition extension: " << pext << "\n";
+    cerr << "ERROR: unknown Triangle partition extension: " << pext << endl;
     exit(1);
   }
 
@@ -189,7 +209,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 
 		if (!narray)
 		{
-			cerr << "no normals?\n";
+			cerr << "ERROR: Triangle partition has no normals" << endl;
 			exit(1);
 		}
 
@@ -208,7 +228,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 		for (int i = 0; i < n_triangles; i++)
 		{
 			if (pset->GetCellType(i) != VTK_TRIANGLE)
-			 cerr << i << "IS BAD\n";
+			 cerr << "WARNING: cell " << i << "is not type VTK_TRIANGLE" << endl;
 			else
 			{
 				vtkCell *c = pset->GetCell(i);
@@ -283,7 +303,7 @@ Triangles::local_import(char *f, MPI_Comm c)
   }
   else if (n_vertices == 0)
 	{
-		std::cerr << "Can't figure out BB\n";
+		cerr << "ERROR: Can't figure out bounding box" << endl;
 		exit(1);
 	}
 	else
@@ -409,12 +429,13 @@ Triangles::LoadFromJSON(Value& v)
   }
   else if (v.HasMember("attach"))
   { 
-    std::cerr << "attaching triangles source is not implemented\n";
+    cerr << "ERROR: attaching triangles source is not implemented" << endl;
     exit(1);
   }
   else
   { 
-    std::cerr << "json triangles has neither filename or layout spec\n";
+    cerr << "ERROR: json triangles has neither filename or layout spec" << endl;
+    exit(1);
   }
 }
 
@@ -434,4 +455,4 @@ Triangles::~Triangles()
   if (normals) delete[] normals;
 }
 
-}
+} // namespace gxy

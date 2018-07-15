@@ -1,5 +1,0 @@
-#cmakedefine WITH_VTK_RENDERER
-#cmakedefine WITH_ICET
-#cmakedefine EVENT_TRACKING
-#cmakedefine PVOL_SYNCHRONOUS
-#cmakedefine PRODUCE_STATUS_MESSAGES

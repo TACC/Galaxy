@@ -1,26 +1,46 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once
 
-#include <string.h>
-#include <vector>
 #include <memory>
-
-using namespace std;
+#include <string>
+#include <vector>
 
 #include "Application.h"
-#include "KeyedObject.h"
-#include "Work.h"
-#include "RenderingSet.h"
 #include "Camera.h"
 #include "Datasets.h"
-#include "Visualization.h"
-#include "Pixel.h"
+#include "KeyedObject.h"
+#include "KeyedObject.h"
 #include "Lighting.h"
+#include "Pixel.h"
+#include "RenderingSet.h"
+#include "Visualization.h"
+#include "Work.h"
 
-namespace pvol
+namespace gxy
 {
 
-class Ray;
 KEYED_OBJECT_POINTER(Rendering)
+
+class Ray;
 
 class Rendering : public KeyedObject
 {
@@ -70,7 +90,7 @@ public:
 	{
 		if (framebuffer) delete[] framebuffer;
 		framebuffer = new float[width * height * 4];
-#ifndef PVOL_SYNCHRONOUS
+#ifndef GXY_SYNCHRONOUS
 		if (kbuffer) delete[] kbuffer;
 #endif
 	}
@@ -101,11 +121,11 @@ protected:
 	int accumulation_knt;
 
 	float *framebuffer;
-#ifndef PVOL_SYNCHRONOUS
+#ifndef GXY_SYNCHRONOUS
   int *kbuffer;
 #endif
 
 	int width, height;
 };
 
-}
+} // namespace gxy

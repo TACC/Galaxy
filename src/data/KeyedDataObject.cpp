@@ -1,10 +1,32 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #include "Application.h"
 #include "KeyedDataObject.h"
 #include "Datasets.h"
 #include "Geometry.h"
 #include "Volume.h"
 
-namespace pvol
+using namespace std;
+
+namespace gxy
 {
 
 WORK_CLASS_TYPE(KeyedDataObject::ImportMsg);
@@ -29,7 +51,7 @@ KEYED_OBJECT_TYPE(KeyedDataObject)
 
 KeyedDataObject::~KeyedDataObject()
 {
-  //std::cerr << "~KeyedDataObject: " << this << " skt " << skt << "\n";
+  //std::cerr << "~KeyedDataObject: " << this << " skt " << skt << std::endl;
   if (skt)          
   {
     skt->CloseSocket();
@@ -120,15 +142,15 @@ KeyedDataObject::LoadTimestep()
 void
 KeyedDataObject::local_import(char *s, MPI_Comm c)
 {
-  std::cerr << "generic KeyedDataObject::local_import called?\n";
-  exit(0);
+  std::cerr << "ERROR: generic KeyedDataObject::local_import called?" << std::endl;
+  exit(1);
 }
 
 bool
 KeyedDataObject::local_load_timestep(MPI_Comm c)
 {
-  std::cerr << "generic KeyedDataObject::local_load_timestep called?\n";
-  exit(0);
+  std::cerr << "ERROR: generic KeyedDataObject::local_load_timestep called?" << std::endl;
+  exit(1);
 }
 
 bool
@@ -148,7 +170,7 @@ KeyedDataObject::AttachMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   ifstream ifs(p);
   for (int i = 0; i <= rank; i++)
   {
-    if (ifs.eof()) {cerr << "error getting attachment point\n"; exit(1); }
+    if (ifs.eof()) {cerr << "ERROR: could not get attachment point for CollectiveAction message" << endl; exit(1); }
     ifs >> server >> port;
   }
 
@@ -162,4 +184,4 @@ KeyedDataObject::AttachMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   return false;
 }
 
-}
+} // namespace gxy

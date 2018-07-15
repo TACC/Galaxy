@@ -1,0 +1,75 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b6954fb2b..102b5ec2e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ SET(EMBREE_VERSION_MAJOR 3)
+ SET(EMBREE_VERSION_MINOR 2)
+ SET(EMBREE_VERSION_PATCH 0)
+@@ -75,7 +78,10 @@ IF(COMMAND cmake_policy)
+     cmake_policy(SET CMP0003 NEW)
+   endif()
+   if (POLICY CMP0042)
+-    cmake_policy(SET CMP0042 OLD)
++    # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++    # original code: cmake_policy(SET CMP0042 OLD)
++    cmake_policy(SET CMP0042 NEW)
++    # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
+   endif()
+ ENDIF(COMMAND cmake_policy)
+ 
+@@ -88,7 +94,12 @@ MARK_AS_ADVANCED(CMAKE_OSX_DEPLOYMENT_TARGET)
+ MARK_AS_ADVANCED(CMAKE_OSX_SYSROOT)
+ MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
+ 
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
+ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/common/cmake ${CMAKE_MODULE_PATH})
++IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++  SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
++ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++# GALAXY END ADDED CODE - by Galaxy patch
+ 
+ INCLUDE(test)
+ 
+diff --git a/common/cmake/ispc.cmake b/common/cmake/ispc.cmake
+index 2c5757f6c..d13ba646e 100644
+--- a/common/cmake/ispc.cmake
++++ b/common/cmake/ispc.cmake
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ # ##################################################################
+ # add macro INCLUDE_DIRECTORIES_ISPC() that allows to specify search
+ # paths for ISPC sources
+@@ -26,7 +29,10 @@ ENDMACRO ()
+ IF (EMBREE_ISPC_SUPPORT)
+ 
+ # ISPC versions to look for, in decending order (newest first)
+-SET(ISPC_VERSION_WORKING "1.9.1" "1.9.0" "1.8.3" "1.8.2")
++# GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++# original code: SET(ISPC_VERSION_WORKING "1.9.1" "1.9.0" "1.8.3" "1.8.2")
++SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
++# GALAXY END MODIFIED CODE - by Galaxy patch
+ LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
+ 
+ IF (NOT EMBREE_ISPC_EXECUTABLE)
+@@ -46,6 +52,9 @@ IF (NOT EMBREE_ISPC_EXECUTABLE)
+   FOREACH(ver ${ISPC_VERSION_WORKING})
+     FOREACH(suffix ${ISPC_DIR_SUFFIX})
+       LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-v${ver}-${suffix})
++      # GALAXY BEGIN ADDED CODE - by Galaxy patch
++      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc/ispc-v${ver}-${suffix})
++      # GALAXY END ADDED CODE - by Galaxy patch
+     ENDFOREACH()
+   ENDFOREACH()
+ 

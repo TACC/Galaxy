@@ -1,19 +1,36 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once
 
-#include <string.h>
-#include <vector>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "KeyedObject.h"
-// #include "Rendering.h"
 #include "Rays.h"
 #include "Work.h"
 
-using namespace std;
-
-namespace pvol
+namespace gxy
 {
-KEYED_OBJECT_POINTER(Rendering)
+
 KEYED_OBJECT_POINTER(RenderingSet)
 
 class Camera;
@@ -39,7 +56,7 @@ public:
 	int  GetNumberOfRenderings();
 	RenderingP GetRendering(int i);
 
-	void SaveImages(string basename);
+	void SaveImages(std::string basename);
 
 	// Add a raylist to the queue of raylists to be processed
 	// Go through the RenderingSet so we can manage the number
@@ -54,7 +71,7 @@ public:
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
 	int activeCameraCount;
 
@@ -94,7 +111,6 @@ public:
 	// process' RayQ so it needs to be accessible.
 	
 	void IncrementRayListCount(bool silent = false);
-
 	void SetInitialState(int local_ray_count, int left_state, int right_state);
   void get_tree_info(int& p, int& l, int& r) { p = parent; l = left_id; r = right_id; }
 
@@ -112,7 +128,7 @@ public:
 		Unlock();
 	}
 
-#if PRODUCE_STATUS_MESSAGES
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
 	void DumpState();
 	void _dumpState(MPI_Comm, const char *);
 	void _initStateTimer();
@@ -131,13 +147,13 @@ public:
 		Signal();
 	};
 			
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 protected:
 
-	vector<RenderingP> renderings;
+	std::vector<RenderingP> renderings;
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
 	void Lock()   { pthread_mutex_lock(&lck); 		}
 	void Unlock() { pthread_mutex_unlock(&lck); 	}
@@ -178,7 +194,7 @@ protected:
 
 	// int get_state_counter() { return state_counter++; }
 
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 public:
 
@@ -200,7 +216,7 @@ private:
   class SaveImagesMsg : public Work
   {
   public:
-		SaveImagesMsg(RenderingSet *r, string basename);
+		SaveImagesMsg(RenderingSet *r, std::string basename);
 
     WORK_CLASS(SaveImagesMsg, true);
 
@@ -208,7 +224,7 @@ private:
     bool CollectiveAction(MPI_Comm c, bool);
   };
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
 	bool done;
 
@@ -284,8 +300,7 @@ private:
   };
 
 
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 };
 
-}
-
+} // namespace gxy

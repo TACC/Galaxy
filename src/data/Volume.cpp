@@ -1,11 +1,25 @@
-#define LOGGING 0
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
 #include <iostream>
-#include <math.h>
-#include <stdlib.h>
-#include <string>
-#include <sstream>
-#include <fstream>
+
 #include "Application.h"
 #include "Volume.h"
 #include "Datasets.h"
@@ -19,7 +33,7 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_TYPE(Volume)
@@ -101,7 +115,7 @@ Volume::LoadFromJSON(Value& v)
 	}
  	else
  	{
- 		std::cerr << "json Volume has neither filename or layout spec\n";
+ 		cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
  		exit(1);
  	}
 }
@@ -223,7 +237,7 @@ Volume::local_import(char *fname, MPI_Comm c)
 	in.open(filename.c_str());
 	if (in.fail())
 	{
-		std::cerr << "unable to open volfile\n";
+		cerr << "ERROR: unable to open volfile: " << filename << endl;;
 		exit(1);
 	}
 
@@ -243,12 +257,12 @@ Volume::local_import(char *fname, MPI_Comm c)
   {
     if (3 != sscanf(getenv("PARTITIONING"), "%d,%d,%d", &global_partitions.x, &global_partitions.y, &global_partitions.z))
     {
-      std::cerr << "Illegal PARTITIONING environment variable\n";
+      cerr << "ERROR: Illegal PARTITIONING environment variable in json" << endl;
       exit(1);
     }
     if ((global_partitions.x*global_partitions.y*global_partitions.z) != size)
     {
-      std::cerr << "PARTITIONING does not multiply to current MPI size\n";
+      cerr << "ERROR: json PARTITIONING does not multiply to current MPI size" << endl;
       exit(1);
     }
   }
@@ -275,10 +289,10 @@ Volume::local_import(char *fname, MPI_Comm c)
 #if 0
   if ((GetTheApplication()->GetSize()-1) == GetTheApplication()->GetRank())
   {
-    std::cerr << "local_count:  " << local_counts.x << " " << local_counts.y << " " << local_counts.z << "\n";;
-    std::cerr << "ghosted_local_count:  " << ghosted_local_counts.x << " " << ghosted_local_counts.y << " " << ghosted_local_counts.z << "\n";
-    std::cerr << "local_offset:  " << local_offset.x << " " << local_offset.y << " " << local_offset.z << "\n";;
-    std::cerr << "ghosted_local_offset:  " << ghosted_local_offset.x << " " << ghosted_local_offset.y << " " << ghosted_local_offset.z << "\n";
+    cerr << "local_count:  " << local_counts.x << " " << local_counts.y << " " << local_counts.z << endl;
+    cerr << "ghosted_local_count:  " << ghosted_local_counts.x << " " << ghosted_local_counts.y << " " << ghosted_local_counts.z << endl;
+    cerr << "local_offset:  " << local_offset.x << " " << local_offset.y << " " << local_offset.z << endl;
+    cerr << "ghosted_local_offset:  " << ghosted_local_offset.x << " " << ghosted_local_offset.y << " " << ghosted_local_offset.z << endl;
   }
 #endif
 
@@ -377,7 +391,7 @@ Volume::local_import(char *fname, MPI_Comm c)
 
   local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
 
-#if LOGGING
+#ifdef GXY_LOGGING
 	APP_LOG(<< "neighbors " << neighbors[0] << " " << neighbors[1] << " " << neighbors[2] << " " << neighbors[3] << " " << neighbors[4] << " " << neighbors[5]);
 #endif
 }
@@ -407,13 +421,13 @@ Volume::local_load_timestep(MPI_Comm c)
 	vtkobj->ShallowCopy(vtkImageData::SafeDownCast(reader->GetOutput()));
   if (! vtkobj) 
   {
-    cerr << "received something other than a vtkImageData object\n";
+    cerr << "ERROR: received something other than a vtkImageData object" << endl;
     exit(1);
   }
 
 	if (! vtkobj->GetPointData())
   {
-    cerr << "vtkImageData object has no point dependent data\n";
+    cerr << "ERROR: vtkImageData object has no point dependent data" << endl;
     exit(1);
   }
 
@@ -422,14 +436,14 @@ Volume::local_load_timestep(MPI_Comm c)
 	{
 		if (vtkobj->GetPointData()->GetNumberOfArrays() == 0)
 		{
-			cerr << "vtkImageData object has no point dependent data\n";
+			cerr << "ERROR: vtkImageData object has no point dependent data" << endl;
 			exit(1);
 		}
 		array = vtkobj->GetPointData()->GetArray(0);
 
 		if (array->GetNumberOfComponents() != 1)
 		{
-			cerr << "Currently can only handle scalar data\n";
+			cerr << "ERROR: Currently can only handle scalar data" << endl;
 			exit(1);
 		}
 		
@@ -442,7 +456,7 @@ Volume::local_load_timestep(MPI_Comm c)
     type = UCHAR;
 	else
   {
-    cerr << "vtkImageData object has no point dependent data\n";
+    cerr << "ERROR: vtkImageData object has no point dependent data" << endl;
     exit(1);
   }
 
@@ -567,4 +581,4 @@ Volume::local_load_timestep(MPI_Comm c)
 	return false;
 }
 
-}
+} // namespace gxy

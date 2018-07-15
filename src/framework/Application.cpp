@@ -1,3 +1,23 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 
 #include <unistd.h>
 #include <string.h>
@@ -13,13 +33,15 @@
 #include "tbb/tbb.h"
 #include "tbb/task_scheduler_init.h"
 
-#include "../rapidjson/document.h"
-#include "../rapidjson/filestream.h"
-#include "../rapidjson/prettywriter.h"
-#include "../rapidjson/stringbuffer.h"
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
-namespace pvol
+using namespace std;
+
+namespace gxy
 {
 
 WORK_CLASS_TYPE(Application::QuitMsg)
@@ -67,7 +89,8 @@ Application::Application()
 {
   theApplication = this;
 
-  int n_threads =  getenv("PVOL_NTHREADS") ?  atoi(getenv("PVOL_NTHREADS")) : 5;
+  int n_threads =  getenv("GXY_NTHREADS") ?  atoi(getenv("GXY_NTHREADS")) : 5;
+  std::cerr << "Using " << n_threads << " threads in rendering thread pool." << std::endl;
 
   threadPool = new threadpool11::Pool(n_threads);
 
@@ -76,14 +99,16 @@ Application::Application()
 	theMessageManager = new MessageManager; 
 	theKeyedObjectFactory = new KeyedObjectFactory; 
 
-	if (getenv("APP_NUM_THREADS"))
+	if (getenv("GXY_APP_NTHREADS"))
 	{
-		int nthreads = atoi(getenv("APP_NUM_THREADS"));
+		int nthreads = atoi(getenv("GXY_APP_NTHREADS"));
 		tbb::task_scheduler_init init(nthreads);
+		std::cerr << "using " << nthreads << " TBB threads for application." << std::endl;
 	}
 	else
 	{
 		int n = tbb::task_scheduler_init::default_num_threads();
+		std::cerr << "using " << n << " TBB threads for application." << std::endl;
 	}
 
 	pid = getpid();
@@ -252,7 +277,8 @@ Application::OpenInputState(string s)
   Document *doc = new Document();
 
   FILE *pFile = fopen (s.c_str() , "r");
-  rapidjson::FileStream is(pFile);
+  char buf[64];
+  rapidjson::FileReadStream is(pFile,buf,64);
   doc->ParseStream<0>(is);
   fclose(pFile);
 
@@ -314,6 +340,4 @@ register_thread(string s)
   pthread_mutex_unlock(&threadtable_lock);
 }
 
-
-}
-
+} // namespace gxy

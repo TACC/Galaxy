@@ -1,19 +1,44 @@
-#include <iostream>
-#include <sstream>
-#include <pthread.h>
-#include "Application.h"
-#include "Rays.h"
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #include "RayFlags.h"
+#include "Rays.h"
 #include "Rays.ih"
 #include "Rays_ispc.h"
 
-using namespace pvol;
+#include <iostream>
+#include <sstream>
+#include <pthread.h>
+
+#include "Application.h"
+
 
 #define ROUND_UP_TO_MULTIPLE_OF_16(a) ((a + 15) & (~15))
 #define ROUND_UP_TO_MULTIPLE_OF_64(a) ((a + 63) & (~63))
 #define HDRSZ  ROUND_UP_TO_MULTIPLE_OF_64(sizeof(hdr))
 
-RayList::RayList(RenderingSetP rs, RenderingP r, int nrays) : RayList(rs, r, nrays, rs->GetCurrentFrame()) {}
+namespace gxy
+{
+
+RayList::RayList(RenderingSetP rs, RenderingP r, int nrays) 
+	: RayList(rs, r, nrays, rs->GetCurrentFrame()) {}
 
 static pthread_mutex_t raylist_lock = PTHREAD_MUTEX_INITIALIZER;
 static int raylist_id = 0;
@@ -199,7 +224,7 @@ RayList::print(int which)
 	std::ostream &s = std::cerr;
 #endif
 
-	s << "px,py,ox,oy,oz,dx,dy,dz,cx,cy,cz,r,g,b,t,tMax,primary,shadow,ao,empty,surface,opaque,boundary,timeout\n";
+	s << "px,py,ox,oy,oz,dx,dy,dz,cx,cy,cz,r,g,b,t,tMax,primary,shadow,ao,empty,surface,opaque,boundary,timeout" << endl;
 	if (which == -1)
 		for (int i = 0; i < GetRayCount(); i++)
 		{
@@ -216,7 +241,7 @@ RayList::print(int which)
 			s << (get_term(i) & RAY_SURFACE  ? 1 : 0) << ",";
 			s << (get_term(i) & RAY_OPAQUE   ? 1 : 0) << ",";
 			s << (get_term(i) & RAY_BOUNDARY ? 1 : 0) << ",";
-			s << (get_term(i) & RAY_TIMEOUT  ? 1 : 0) << "\n";
+			s << (get_term(i) & RAY_TIMEOUT  ? 1 : 0) << endl;
 		}
 	else
 		{
@@ -233,7 +258,7 @@ RayList::print(int which)
 			s << (get_term(which) & RAY_SURFACE  ? 1 : 0) << ",";
 			s << (get_term(which) & RAY_OPAQUE   ? 1 : 0) << ",";
 			s << (get_term(which) & RAY_BOUNDARY ? 1 : 0) << ",";
-			s << (get_term(which) & RAY_TIMEOUT  ? 1 : 0) << "\n";
+			s << (get_term(which) & RAY_TIMEOUT  ? 1 : 0) << endl;
 		}
 #if 0
 #if 1
@@ -243,3 +268,5 @@ RayList::print(int which)
 #endif
 #endif
 }
+
+} // namespace gxy

@@ -1,4 +1,24 @@
-#include "pvol.h"
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
+#include "galaxy.h"
 
 #include <limits>
 #include <time.h>
@@ -12,10 +32,12 @@
 #include "Events.h"
 #include "Application.h"
 
-namespace pvol
+using namespace std;
+
+namespace gxy
 {
 
-typedef std::numeric_limits< double > dbl;
+typedef numeric_limits< double > dbl;
 
 EventTracker *theEventTracker;
 EventTracker::EventTracker()
@@ -52,7 +74,7 @@ Event::Event()
 
 Event::~Event()
 {
-  std::cerr << "ev dtor\n";
+  cerr << "event dtor" << endl;
 }
 
 void
@@ -66,10 +88,10 @@ EventTracker::DumpEvents()
 {
 #if defined(EVENT_TRACKING)
 	int rank = GetTheApplication()->GetTheMessageManager()->GetRank();
-	std::fstream fs;
-	std::stringstream fname;
+	fstream fs;
+	stringstream fname;
 	fname << "events_" << event_dump_count << "_" << rank;
-	fs.open(fname.str().c_str(), std::fstream::out);
+	fs.open(fname.str().c_str(), fstream::out);
 	DumpEvents(fs);
 	fs.close();
 #endif
@@ -106,5 +128,4 @@ EventTracker::Add(Event *e)
 	pthread_mutex_unlock(&EventsLock);
 }
 
-}
-
+} // namespace gxy

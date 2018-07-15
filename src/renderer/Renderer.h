@@ -1,26 +1,44 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once 
 
 #include <vector>
 
 #include "dtypes.h"
-#include "pthread.h"
 #include "KeyedObject.h"
-
+#include "Lighting.h"
+#include "pthread.h"
 #include "Rays.h"
 #include "Rendering.h"
-#include "RenderingSet.h"
-#include "Lighting.h"
-#include "TraceRays.h"
 #include "RenderingEvents.h"
+#include "RenderingSet.h"
+#include "TraceRays.h"
 
-namespace pvol
+namespace gxy
 {
+
 class Camera;
 class RayQManager;
 class Pixel;
 class RayList;
-
-using namespace std;
 
 KEYED_OBJECT_POINTER(Renderer)
 
@@ -44,12 +62,14 @@ public:
   
   RayQManager *GetTheRayQManager() { return rayQmanager; }
   
+  Lighting *GetTheLighting() { return &lighting; }
+
   virtual void LoadStateFromDocument(Document&);
   virtual void SaveStateToDocument(Document&);
 
   virtual void localRendering(RenderingSetP, MPI_Comm c);
 
-  void LaunchInitialRays(RenderingSetP, RenderingP, vector<future<void>>&);
+  void LaunchInitialRays(RenderingSetP, RenderingP, std::vector<std::future<void>>&);
 
   virtual int SerialSize();
   virtual unsigned char *Serialize(unsigned char *);
@@ -88,7 +108,7 @@ public:
 
 private:
 
-	vector<future<void>> rvec;
+	std::vector<std::future<void>> rvec;
 
 	int frame;
 
@@ -135,7 +155,7 @@ public:
     bool Action(int sender);
   };
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
   class AckRaysMsg : public Work
   {
@@ -148,7 +168,7 @@ public:
     bool Action(int sender);
   };
 
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
   class SendPixelsMsg : public Work
   {
@@ -189,13 +209,13 @@ public:
 		{
       hdr *h    = (hdr *)contents->get();
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 			GetTheEventTracker()->Add(new SendPixelsEvent(h->count, h->rkey, h->frame, i));
 #endif
 
 			Work::Send(i);
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
       rset->SentPixels(h->count);
 #endif
 		}
@@ -228,11 +248,11 @@ public:
       if (! rs)
         return false;
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
       rs->ReceivedPixels(h->count);
 #endif
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 			GetTheEventTracker()->Add(new RcvPixelsEvent(h->count, h->rkey, h->frame, s));
 #endif
 
@@ -259,5 +279,5 @@ public:
 		int frame;
   };
 };
-}
 
+} // namespace gxy

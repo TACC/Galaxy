@@ -1,3 +1,23 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once 
 
 #include <string>
@@ -5,18 +25,14 @@
 #include <memory>
 #include <vector>
 
-#include "rapidjson/document.h"
-using namespace rapidjson;
-
 #include "Work.h"
 
-using namespace std;
+#include "rapidjson/document.h"
 
-
-namespace pvol
+namespace gxy
 {
 class KeyedObject;
-typedef shared_ptr<KeyedObject> KeyedObjectP;
+typedef std::shared_ptr<KeyedObject> KeyedObjectP;
 
 typedef int KeyedObjectClass;
 typedef long Key;
@@ -56,8 +72,8 @@ public:
 
 	// only concrete subclasses have static LoadToJSON at abstract layer
 
-  virtual void LoadFromJSON(Value&) { std::cerr << "abstract KeyedObject LoadFromJSON\n"; }
-  virtual void SaveToJSON(Value&, Document&) { std::cerr << "abstract KeyedObject SaveToJSON\n"; }
+  virtual void LoadFromJSON(rapidjson::Value&) { std::cerr << "abstract KeyedObject LoadFromJSON" << endl; }
+  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&) { std::cerr << "abstract KeyedObject SaveToJSON" << endl; }
 
   class CommitMsg : public Work
   {
@@ -79,7 +95,7 @@ class KeyedObjectFactory
 public:
 	KeyedObjectFactory() { next_key = 0; }
 	~KeyedObjectFactory();
-  int register_class(KeyedObject *(*n)(Key), string s)
+  int register_class(KeyedObject *(*n)(Key), std::string s)
   {
     new_procs.push_back(n);
     class_names.push_back(s);
@@ -95,7 +111,7 @@ public:
   KeyedObjectP New(KeyedObjectClass c)
   {
     Key k = keygen();
-    KeyedObjectP kop = shared_ptr<KeyedObject>(new_procs[c](k));
+    KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
     add(kop);
 
     NewMsg msg(c, k);
@@ -106,13 +122,13 @@ public:
 
   KeyedObjectP New(KeyedObjectClass c, Key k)
   {
-    KeyedObjectP kop = shared_ptr<KeyedObject>(new_procs[c](k));
+    KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
     add(kop);
 
     return kop;
   }
 
-  string GetClassName(KeyedObjectClass c) 
+  std::string GetClassName(KeyedObjectClass c) 
   { 
     return class_names[c];
   }
@@ -133,9 +149,9 @@ public:
 
 private:
 
-  vector<KeyedObject*(*)(Key)> new_procs;
-  vector<string> class_names;
-  vector<KeyedObjectP> kmap;
+  std::vector<KeyedObject*(*)(Key)> new_procs;
+  std::vector<std::string> class_names;
+  std::vector<KeyedObjectP> kmap;
 
 	int next_key;
 
@@ -178,8 +194,8 @@ public:
 
 #define KEYED_OBJECT_POINTER(typ)                                                         \
 class typ;                                                                                \
-typedef shared_ptr<typ> typ ## P;                                                         \
-typedef weak_ptr<typ> typ ## W;
+typedef std::shared_ptr<typ> typ ## P;                                                    \
+typedef std::weak_ptr<typ> typ ## W;
 
 #define KEYED_OBJECT_TYPE(typ)                                                            \
 int typ::ClassType;                                                        
@@ -204,11 +220,11 @@ public:                                                                         
   typedef parent super;                                                                   \
   KeyedObjectClass GetClass() { return keyedObjectClass; }                                \
   static bool IsA(KeyedObjectP a) { return dynamic_cast<typ *>(a.get()) != NULL; }        \
-  static typ ## P Cast(KeyedObjectP kop) { return dynamic_pointer_cast<typ>(kop); }       \
+  static typ ## P Cast(KeyedObjectP kop) { return std::dynamic_pointer_cast<typ>(kop); }  \
   static typ ## P GetByKey(Key k) { return Cast(GetTheKeyedObjectFactory()->get(k)); }    \
   static void Register();                                                                 \
                                                                                           \
-  string GetClassName()                                                                   \
+  std::string GetClassName()                                                              \
   {                                                                                       \
     return GetTheKeyedObjectFactory()->GetClassName(keyedObjectClass);                    \
   }                                                                                       \
@@ -220,9 +236,10 @@ public:                                                                         
   }                                                                                       \
                                                                                           \
   static void RegisterClass()                                                             \
-  {                                                                                                \
-    typ::ClassType = GetTheKeyedObjectFactory()->register_class(typ::_New, string(#typ)); \
+  {                                                                                       \
+    typ::ClassType = GetTheKeyedObjectFactory()->register_class(typ::_New, std::string(#typ)); \
   }                                                                                       \
   static int  ClassType;
-}
+
+} // namespace gxy
 

@@ -1,19 +1,40 @@
-
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
 #include "Application.h"
-#include "RenderingSet.h"
 #include "RayQManager.h"
+#include "RenderingSet.h"
 
-namespace pvol
+using namespace std;
+
+namespace gxy
 {
+
 WORK_CLASS_TYPE(RenderingSet::SaveImagesMsg);
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 WORK_CLASS_TYPE(RenderingSet::PropagateStateMsg);
 WORK_CLASS_TYPE(RenderingSet::SynchronousCheckMsg);
 WORK_CLASS_TYPE(RenderingSet::ResetMsg);
 WORK_CLASS_TYPE(RenderingSet::DumpStateMsg);
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 KEYED_OBJECT_TYPE(RenderingSet)
 
@@ -24,33 +45,33 @@ RenderingSet::Register()
 
 	SaveImagesMsg::Register();
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 	PropagateStateMsg::Register();
 	SynchronousCheckMsg::Register();
 	ResetMsg::Register();
 	DumpStateMsg::Register();
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 }
 
 RenderingSet::~RenderingSet()
 {
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 	pthread_mutex_destroy(&lck);
 	pthread_cond_destroy(&w8);
 	pthread_mutex_destroy(&local_lock);
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 }
 
-#ifdef PVOL_SYNCHRONOUS
-#ifdef PRODUCE_STATUS_MESSAGES
+#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
 void
 RenderingSet::DumpState()
 {
 	DumpStateMsg *msg = new DumpStateMsg(this->getkey());
 	msg->Broadcast(true, true);
 }
-#endif // PRODUCE_STATUS_MESSAGES
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_PRODUCE_STATUS_MESSAGES
+#endif // GXY_SYNCHRONOUS
 	
 
 void
@@ -61,7 +82,7 @@ RenderingSet::initialize()
 	current_frame = -1;
 	next_frame = 0;
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
 	activeCameraCount = 0;
 
@@ -89,14 +110,14 @@ RenderingSet::initialize()
 
 	local_reset();
 
-#ifdef PRODUCE_STATUS_MESSAGES
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
 	InitializeState();
-#endif // PRODUCE_STATUS_MESSAGES
+#endif // GXY_PRODUCE_STATUS_MESSAGES
 
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 }
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
 void
 RenderingSet::SetInitialState(int local_ray_count, int left_state, int right_state)
@@ -152,7 +173,7 @@ RenderingSet::WaitForDone()
 		Wait();
 	Unlock();
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 
 	class FinishedRenderingEvent : public Event
 	{
@@ -231,8 +252,6 @@ private:
 class CheckStateEntryEvent : public Event
 {
 public:
-
-public:
   CheckStateEntryEvent(bool lb, bool cb, int k, bool lft, bool rt) :
       last_busy(lb), currently_busy(cb),  count(k), left_busy(lft), right_busy(rt) {}
 
@@ -274,7 +293,7 @@ RenderingSet::CheckLocalState()
   //
   
 	if (first_async_completion_test_done)
-		std::cerr << GetTheApplication()->GetRank() << ": " << currently_busy << " " <<  last_busy << "\n";
+		cerr << GetTheApplication()->GetRank() << ": " << currently_busy << " " <<  last_busy << endl;
 
   if (currently_busy != last_busy)
   {
@@ -282,7 +301,7 @@ RenderingSet::CheckLocalState()
 
     if (!currently_busy && (GetTheApplication()->GetRank() == 0))
     {
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
       GetTheEventTracker()->Add(new CheckStateActionEvent(CheckStateActionEvent::INIT_SYNC_CHECK));
 #endif
 
@@ -291,12 +310,12 @@ RenderingSet::CheckLocalState()
     }
     else if (parent != -1)
     {
-#if LOGGING
+#ifdef GXY_LOGGING
       APP_LOG(<< "CheckLocalState " << getkey() << " sending " << 
 						(currently_busy ? "busy" : "idle") << " to " << parent);
 #endif
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
       GetTheEventTracker()->Add(new CheckStateActionEvent(currently_busy ? CheckStateActionEvent::SENT_BUSY_UP : CheckStateActionEvent::SENT_IDLE_UP));
 #endif
 
@@ -305,7 +324,7 @@ RenderingSet::CheckLocalState()
     }
 		else
 		{
-#if LOGGING
+#ifdef GXY_LOGGING
       APP_LOG(<< "CheckLocalState " << getkey() << " on root is BUSY");
 #endif
 		}
@@ -319,7 +338,7 @@ RenderingSet::UpdateChildState(bool busy, int child)
 {
   // Receive state info from a child
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
   GetTheEventTracker()->Add(new CheckStateActionEvent((busy && child == left_id) ? CheckStateActionEvent::RECEIVED_BUSY_LEFT :
                                                 (!busy && child == left_id) ? CheckStateActionEvent::RECEIVED_IDLE_LEFT :
                                                 (busy && child == right_id) ? CheckStateActionEvent::RECEIVED_BUSY_RIGHT :
@@ -329,7 +348,7 @@ RenderingSet::UpdateChildState(bool busy, int child)
   if (child == left_id) left_busy = busy;
   else right_busy = busy;
 
-#if LOGGING
+#ifdef GXY_LOGGING
   APP_LOG(<< "CheckLocalState from UpdateChildState");
 #endif
 
@@ -366,7 +385,7 @@ RenderingSet::IncrementRayListCount(bool silent)
 
   // std::cerr << "+ " << local_raylist_count << "\n";
 
-#if LOGGING
+#ifdef GXY_LOGGING
 	APP_LOG(<< "RenderingSet (" << ((long)getkey()) << ") IncrementRayListCount  " << local_raylist_count << " silent " << (silent ? "SILENT" : "NOT SILENT"));
 #endif
 
@@ -384,7 +403,7 @@ RenderingSet::IncrementRayListCount(bool silent)
 
 		if (old == 0)
 		{
-#if LOGGING
+#ifdef GXY_LOGGING
 			APP_LOG(<< "CheckLocalState from IncrementRayListCount");
 #endif
 
@@ -409,7 +428,7 @@ RenderingSet::DecrementRayListCount()
 	if (local_raylist_count == 0 && first_async_completion_test_done)
 		std::cerr << GetTheApplication()->GetRank() << ": lrc to zero\n";
 
-#if LOGGING
+#ifdef GXY_LOGGING
 		APP_LOG(<< "RenderingSet (" << ((long)getkey()) << ")  DecrementRayListCount  " << local_raylist_count);
 
 
@@ -423,7 +442,7 @@ RenderingSet::DecrementRayListCount()
 
   if (old == 1)
   {
-#if LOGGING
+#ifdef GXY_LOGGING
     APP_LOG(<< "CheckLocalState from DecrementRayListCount");
 #endif
 
@@ -471,7 +490,7 @@ RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   else
 	{
 
-#ifdef PRODUCE_STATUS_MESSAGES
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
 		rs->_dumpState(c, "completion_test");
 #endif
 
@@ -527,7 +546,7 @@ RenderingSet::PropagateStateMsg::Action(int sender)
 
 	if (! rs || rs->IsDone())
 	{
-#if LOGGING
+#ifdef GXY_LOGGING
 		APP_LOG(<< "RenderingSet (" << rsk << ") PropagateStateMsg DROPPED");
 #endif
 		return false;
@@ -536,7 +555,7 @@ RenderingSet::PropagateStateMsg::Action(int sender)
 	ptr += sizeof(Key);
   bool busy = *(bool *)ptr;
 
-#if LOGGING
+#ifdef GXY_LOGGING
   APP_LOG(<< "RenderingSet (" << rsk << ") PropagateStateMsg::Action from " << 
 					sender << " is " << (busy ? "BUSY" : "IDLE"));
 #endif
@@ -624,7 +643,7 @@ RenderingSet::SaveImagesMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 	return false;
 }
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
 RenderingSet::ResetMsg::ResetMsg(RenderingSet *r) : ResetMsg(sizeof(Key))
 {
@@ -647,7 +666,7 @@ APP_LOG(<< "RenderingSet::ResetMsg::CollectiveActionResetMsg : " << key);
 	return false;
 }
 
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 void
 RenderingSet::AddRendering(RenderingP r)
@@ -666,10 +685,11 @@ RenderingSet::GetRendering(int i)
 {
 	return renderings[i];
 }
+
 void
 RenderingSet::Enqueue(RayList *rl, bool silent)
 {
-#if LOGGING
+#ifdef GXY_LOGGING
 	APP_LOG(<< "RenderingSet   enqueing " << std::hex << rl);
 #endif
 
@@ -679,13 +699,13 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 	
 		RayQManager::GetTheRayQManager()->Enqueue(rl);
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 		IncrementRayListCount(silent);
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 	}
 	else
 	{
-		// std::cerr << "RenderingSet::Enqueue: dropping ray list from wrong frame\n";
+		// cerr << "RenderingSet::Enqueue: dropping ray list from wrong frame" << endl;
 		delete rl;
 	}
 }
@@ -714,10 +734,9 @@ RenderingSet::KeepRays(RayList *rl)
 		return false;
 }
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_PVOL_SYNCHRONOUS
 
-#ifdef PRODUCE_STATUS_MESSAGES
-
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
 void 
 RenderingSet::_initStateTimer()
 {
@@ -762,19 +781,19 @@ RenderingSet::_dumpState(MPI_Comm c, const char *base)
 		of.close();
 	}
 }
-#endif
+#endif // GXY_PRODUCE_STATUS_MESSAGES
 
 bool 
 RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
 {
 	Key rsk = *(Key *)contents->get();
 	RenderingSetP rs = GetByKey(rsk);
-#ifdef PRODUCE_STATUS_MESSAGES
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
 	rs->_dumpState(c, "status");
 #endif
 	return false;
 }
-#endif
+#endif GXY_PVOL_SYNCHRONOUS
 
-}
+} // namespace gxy
 

@@ -1,8 +1,27 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once
 
-#include "memory"
-
-using namespace std;
+#include <memory>
+#include <string>
 
 #include <vtkSmartPointer.h>
 #include <vtkClientSocket.h>
@@ -11,7 +30,7 @@ using namespace std;
 #include "Box.h"
 #include "KeyedObject.h"
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_POINTER(KeyedDataObject)
@@ -42,11 +61,11 @@ public:
 	bool is_attached() { return attached; }
 	void set_attached(bool t = true) { attached = t; }
 
-	virtual void Import(string);
-	virtual void Import(string, void *args, int argsSize);
+	virtual void Import(std::string);
+	virtual void Import(std::string, void *args, int argsSize);
 
-  virtual bool Attach(string);
-  virtual bool Attach(string, void *args, int argsSize);
+  virtual bool Attach(std::string);
+  virtual bool Attach(std::string, void *args, int argsSize);
 
 	virtual void LoadTimestep();
 	virtual bool WaitForTimestep();
@@ -55,7 +74,7 @@ public:
 
 protected:
 	vtkClientSocket *skt;
-	string filename;
+	std::string filename;
 	
 	bool time_varying, attached;
 
@@ -68,7 +87,7 @@ protected:
   class ImportMsg : public Work
   {
   public:
-    ImportMsg(Key k, string vname, void *args, int argsSize) : ImportMsg(sizeof(Key) + vname.length() + 1 + argsSize)
+    ImportMsg(Key k, std::string vname, void *args, int argsSize) : ImportMsg(sizeof(Key) + vname.length() + 1 + argsSize)
     {
       unsigned char *p = contents->get();
 
@@ -136,4 +155,4 @@ protected:
   };
 };
 
-}
+} // namespace gxy

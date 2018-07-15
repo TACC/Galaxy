@@ -1,4 +1,22 @@
-#define LOGGING 0
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
 #include <iostream>
 #include <sstream>
@@ -11,8 +29,9 @@
 
 using namespace std;
 
-namespace pvol
+namespace gxy 
 {
+
 RayQManager *RayQManager::theRayQManager;
 RayQManager *RayQManager::GetTheRayQManager() { return RayQManager::theRayQManager; }
 
@@ -200,21 +219,21 @@ RayQManager::Dequeue()
 	}
 
   if (!r && !done)
-     cerr << "R IS NULL, done is NOT DONE rayQ.empty is " << rayQ.empty() << " size is " << rayQ.size() << "\n";
+     cerr << "R IS NULL, done is NOT DONE rayQ.empty is " << rayQ.empty() << " size is " << rayQ.size() << endl;
 
 	Unlock();
 
 	return r;
 }
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 void
 RayQManager::Pause()
 {
   if (paused)
 	{
-		std::cerr << "RayQManager::Pause called while paused\n";
-		exit(0);
+		cerr << "ERROR: RayQManager::Pause called while paused" << endl;
+		exit(1);
 	}
 
 	Lock();
@@ -228,8 +247,8 @@ RayQManager::Resume()
 	Lock();
   if (! paused)
 	{
-		std::cerr << "RayQManager::Resume called while not paused\n";
-		exit(0);
+		cerr << "ERROR: RayQManager::Resume called while not paused" << endl;
+		exit(1);
 	}
 	paused = false;
 	Signal();
@@ -259,7 +278,7 @@ RayQManager::Enqueue(RayList *r)
 	// the initial local rays or from another process.
 
   if (! r)
-    std::cerr << "Enqueuing NULL raylist!\n";
+    cerr << "WARNING: Enqueuing NULL raylist!" << endl;
 
   Lock();
 
@@ -271,5 +290,4 @@ RayQManager::Enqueue(RayList *r)
   Unlock();
 }
 
-}
-
+} // namespace gxy

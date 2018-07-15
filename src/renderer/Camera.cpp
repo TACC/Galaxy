@@ -1,32 +1,53 @@
-#define FUZZ 0.000001
-#define LOGGING 0 
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
-#include <string.h>
-#include <string>
-#include <sstream>
+#define FUZZ 0.000001
+
+#include "Camera.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <ctime>
+#include <float.h>
 #include <iostream>
 #include <math.h>
-#include <float.h>
-#include <algorithm>
+#include <sstream>
+#include <string.h>
+#include <string>
+#include <tbb/tbb.h>
 #include <vector>
-#include <ctime>
-#include <cstdlib>
-#include "tbb/tbb.h"
 
 #include "Application.h"
-#include "Renderer.h"
 #include "MessageManager.h"
-#include "RenderingSet.h"
-#include "Rendering.h"
-#include "Camera.h"
-#include "Rays.h"
 #include "RayFlags.h"
+#include "Rays.h"
+#include "Renderer.h"
+#include "Rendering.h"
+#include "RenderingSet.h"
 
-
+using namespace rapidjson;
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
+
 KEYED_OBJECT_TYPE(Camera)
 
 vector<int> permutation;
@@ -369,7 +390,7 @@ public:
 			if (dst < r->GetRayCount())
 				r->Truncate(dst);
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
       GetTheEventTracker()->Add(new InitialRaysEvent(r));
 #endif
 
@@ -379,11 +400,11 @@ public:
     else
       delete r;
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 		r->GetTheRenderingSet()->DecrementActiveCameraCount(dst);				
 #endif
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 		GetTheEventTracker()->Add(new CameraTaskEndEvent());
 #endif
 
@@ -412,31 +433,31 @@ void check_env(int width, int height)
 	{
 		first = false;
 
-		full_window =  getenv("FULLWINDOW") != NULL;
-		raydebug    =  getenv("RAYDEBUG") != NULL;
+		full_window =  getenv("GXY_FULLWINDOW") != NULL;
+		raydebug    =  getenv("GXY_RAYDEBUG") != NULL;
 
-		if (getenv("X"))
-			Xmin = Xmax = atoi(getenv("X"));
+		if (getenv("GXY_X"))
+			Xmin = Xmax = atoi(getenv("GXY_X"));
 		else
 		{
-			Xmin = getenv("XMIN") ? atoi(getenv("XMIN")) : (width / 2) - 2;
-			Xmax = getenv("XMAX") ? atoi(getenv("XMAX")) : (width / 2) + 2;
+			Xmin = getenv("GXY_XMIN") ? atoi(getenv("GXY_XMIN")) : (width / 2) - 2;
+			Xmax = getenv("GXY_XMAX") ? atoi(getenv("GXY_XMAX")) : (width / 2) + 2;
 			if (Xmin < 0) Xmin = 0;
 			if (Xmax >= (width-1)) Xmax = width-1;
 		}
 		
-		if (getenv("Y"))
-			Ymin = Ymax = atoi(getenv("Y"));
+		if (getenv("GXY_Y"))
+			Ymin = Ymax = atoi(getenv("GXY_Y"));
 		else
 		{
-			Ymin = getenv("YMIN") ? atoi(getenv("YMIN")) : (height / 2) - 2;
-			Ymax = getenv("YMAX") ? atoi(getenv("YMAX")) : (height / 2) + 2;
+			Ymin = getenv("GXY_YMIN") ? atoi(getenv("GXY_YMIN")) : (height / 2) - 2;
+			Ymax = getenv("GXY_YMAX") ? atoi(getenv("GXY_YMAX")) : (height / 2) + 2;
 			if (Ymin < 0) Ymin = 0;
 			if (Ymax >= (height-1)) Ymax = height-1;
 		}
 
-		rays_per_packet = getenv("RAYS_PER_PACKET") ? atoi(getenv("RAYS_PER_PACKET")) : 1000000;
-		permute = getenv("PERMUTE_PIXELS");
+		rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
+		permute = getenv("GXY_PERMUTE_PIXELS");
 
 		if (permute)
 			permutation = generate_permutation(width*height);
@@ -586,13 +607,15 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 
     int kk = 0;
     for (int y = 0; y < (Ymax-Ymin) + 1; y++)
+    {
       for (int x = 0; x < (Xmax-Xmin) + 1; x++)
       {
 				rayList->set_x(kk, Xmin + x);
 				rayList->set_y(kk, Ymin + y);
 				kk++;
       }
-
+    }
+    
     kk = 0;
 		int k;
     for (k = 0; k < nrays; k++)
@@ -642,7 +665,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
       if (kk < k)
         rayList->Truncate(kk);
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 			GetTheEventTracker()->Add(new InitialRaysEvent(rayList));
 #endif
 
@@ -717,7 +740,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
         {
           if (rlist)
           {
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 						renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
 #endif
             shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(rlist, a));
@@ -741,7 +764,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 
         shared_ptr<gil_ftor> f = shared_ptr<gil_ftor>(new gil_ftor(rlist, a));
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 				renderingSet->IncrementActiveCameraCount();	// Matching Decrement in thread
 #endif
 
@@ -756,9 +779,9 @@ void
 Camera::print()
 {
   std::stringstream s;
-  s << "eye: " << eye[0] << " " << eye[1] << " " << eye[2] << "\n";
-  s << "dir: " << dir[0] << " " << dir[1] << " " << dir[2] << "\n";
-  s << "up: "  << up[0] << " " << up[1] << " " << up[2] << "\n";
+  s << "eye: " << eye[0] << " " << eye[1] << " " << eye[2] << endl;
+  s << "dir: " << dir[0] << " " << dir[1] << " " << dir[2] << endl;
+  s << "up: "  << up[0] << " " << up[1] << " " << up[2] << endl;
   s << "aov: " << aov;
   GetTheApplication()->Print(s.str());
 }
@@ -817,5 +840,5 @@ Camera::deserialize(unsigned char *p)
 
   return p;
 }
-}
 
+} // namespace gxy

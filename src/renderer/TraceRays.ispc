@@ -1,5 +1,24 @@
-#define REVERSE_LIGHTING 1
+// ========================================================================== //
+// Copyright (c) 2016-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
+// adapted from Intel OSPRay ospray/render/scivis/SciVisRenderer.ispc
 // ======================================================================== //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
@@ -16,22 +35,23 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/SDK/math/vec.ih"
+#include "ospray/SDK/common/Ray.ih"
+#include "ospray/SDK/render/util.ih"
+#include "ospray/SDK/camera/Camera.ih"
+#include "ospray/SDK/common/Model.ih"
+#include "ospray/SDK/transferFunction/LinearTransferFunction.ih"
+#include "ospray/SDK/volume/Volume.ih"
 
-#include "SDK/math/vec.ih"
-#include "SDK/common/Ray.ih"
-#include "SDK/render/util.ih"
-#include "SDK/camera/Camera.ih"
-#include "SDK/common/Model.ih"
-#include "SDK/transferFunction/LinearTransferFunction.ih"
-#include "SDK/volume/Volume.ih"
-
-#include "RayFlags.h"
-#include "TraceRays.ih"
-#include "Rays.ih"
-#include "../data/Lighting.ih"
-#include "../data/VolumeVis.ih"
-#include "../data/Visualization.ih"
 #include "hits.h"
+#include "Lighting.ih"
+#include "RayFlags.h"
+#include "Rays.ih"
+#include "TraceRays.ih"
+#include "Visualization.ih"
+#include "VolumeVis.ih"
+
+#include "UV.ih"
 
 export void *uniform TraceRays_allocate()
 {
@@ -54,14 +74,13 @@ export uniform float TraceRays_GetEpsilon(void *uniform _self)
 export void TraceRays_initialize(void *uniform _self)
 {
   TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
-  self->epsilon       = 0.001;
+  self->epsilon = 0.001;
 }
 
 export void TraceRays_destroy(void *uniform ispc)
 {
     delete ispc;
 }
-
 
 struct Hit
 {
@@ -73,8 +92,6 @@ struct Hit
   vec3f color;
   float opacity;
 };
-
-#include "UV.ih"
 
 inline void
 MyIntersectBox(const Ray& ray,
@@ -655,7 +672,7 @@ export void TraceRays_generateAORays(void *uniform _self,
   uniform RayList_ispc *uniform raysOut = (RayList_ispc *uniform)_raysOut;
   uniform float epsilon = self->epsilon;
 
-#if REVERSE_LIGHTING
+#ifdef GXY_REVERSE_LIGHTING
   uniform float Ka = -lights->Ka / lights->n_ao_rays;
 #else
   uniform float Ka = lights->Ka / lights->n_ao_rays;
@@ -792,7 +809,7 @@ export void TraceRays_generateShadowRays(void *uniform _self,
 
   uniform float epsilon = self->epsilon;
 
-#if REVERSE_LIGHTING
+#ifdef GXY_REVERSE_LIGHTING
   uniform float Kd = -lights->Kd / lights->nLights;
 #else
   uniform float Kd = lights->Kd / lights->nLights;

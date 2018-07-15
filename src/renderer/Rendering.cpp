@@ -1,21 +1,41 @@
-#define LOGGING 0
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
 #include "Rendering.h"
 
 #include "Application.h"
-#include "KeyedObject.h"
-#include "Renderer.h"
-#include "RenderingSet.h"
 #include "Camera.h"
-#include "Visualization.h"
-#include "Rays.h"
-#include "Work.h"
-#include "RenderingEvents.h"
-
 #include "ImageWriter.h"
+#include "KeyedObject.h"
+#include "Rays.h"
+#include "Renderer.h"
+#include "RenderingEvents.h"
+#include "RenderingSet.h"
+#include "Visualization.h"
+#include "Work.h"
 
-namespace pvol
+using namespace std;
+
+namespace gxy
 {
+
 KEYED_OBJECT_TYPE(Rendering)
 
 void
@@ -34,7 +54,7 @@ Rendering::initialize()
   framebuffer = NULL;
 	frame = -1;
 
-#ifndef PVOL_SYNCHRONOUS
+#ifndef GXY_SYNCHRONOUS
   kbuffer = NULL;
 #endif
 }
@@ -48,7 +68,7 @@ Rendering::SetTheSize(int w, int h)
 
 Rendering::~Rendering() 
 {
-#if LOGGING
+#ifdef GXY_LOGGING
 	APP_LOG(<< "Rendering dtor (key " << getkey() << ")");
 #endif
   if (framebuffer)
@@ -57,7 +77,7 @@ Rendering::~Rendering()
 		delete[] framebuffer;
 	}
 
-#ifndef PVOL_SYNCHRONOUS
+#ifndef GXY_SYNCHRONOUS
   if (kbuffer) delete[] kbuffer;
 #endif
 }
@@ -67,13 +87,13 @@ Rendering::IsLocal()
 {
   if (owner == -1)
   {
-    std::cerr << "IsLocal called before owner set\n";
-    exit(0);
+    cerr << "ERROR: IsLocal called before Rendering owner set" << endl;
+    exit(1);
   }
   return owner == GetTheApplication()->GetRank();
 }
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
 #define ACCUMULATE_PIXEL(X, Y, R, G, B, O)                            	 \
 {                                                                        \
@@ -118,8 +138,8 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 
   if (! framebuffer)
   {
-    std::cerr << "Rendering::AddLocalPixel called by non-owner\n";
-    exit(0);
+    cerr << "ERROR: Rendering::AddLocalPixel called by non-owner" << endl;
+    exit(1);
   }
 
 	if (f >= frame)
@@ -129,7 +149,7 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 		
 		while (n-- > 0)
 		{
-	#ifdef PVOL_SYNCHRONOUS
+	#ifdef GXY_SYNCHRONOUS
 			ACCUMULATE_PIXEL(p->x, p->y, p->r, p->g, p->b, p->o);
 	#else
 			ACCUMULATE_PIXEL(f, p->x, p->y, p->r, p->g, p->b, p->o);
@@ -214,14 +234,14 @@ Rendering::local_commit(MPI_Comm c)
     if (framebuffer)
       delete[] framebuffer;
 
-#ifndef PVOL_SYNCHRONOUS
+#ifndef GXY_SYNCHRONOUS
 		if (kbuffer)
 			delete[] kbuffer;
 #endif
 
     framebuffer = new float[width*height*4];
 
-#ifndef PVOL_SYNCHRONOUS
+#ifndef GXY_SYNCHRONOUS
 		if (kbuffer)
 			delete[] kbuffer;
     kbuffer = new int[width*height];
@@ -239,12 +259,12 @@ Rendering::local_reset()
   {
     if (! framebuffer)
     {
-      std::cerr << "Rendering::local_reset IsLocal but no framebuffer?\n";
-      exit(0);
+      cerr << "ERROR: Rendering::local_reset IsLocal but no framebuffer present" << endl;
+      exit(1);
     }
     for (float *p = framebuffer; p < framebuffer + width*height*4; *p++ = 0.0);
 
-#ifndef PVOL_SYNCHRONOUS
+#ifndef GXY_SYNCHRONOUS
 		memset(kbuffer, 0, width*height*sizeof(int));
 #endif
   }
@@ -270,7 +290,7 @@ void Rendering::SaveImage(string filename, int indx)
     filename = filename + '_' + istr + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation() + ".png"; 
   }
 
-	// std::cerr << "Saving " << indx << ": " << filename << "\n";
+	// std::cerr << "Saving " << indx << ": " << filename << endl;
 
 	ImageWriter writer;
   writer.Write(width, height, framebuffer, filename.c_str());
@@ -319,5 +339,4 @@ Rendering::deserialize(unsigned char *p)
   return p;
 }
 
-}
-
+} // namespace gxy

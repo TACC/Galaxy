@@ -1,10 +1,25 @@
-#define REVERSE_LIGHTING 1
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
-#define _GNU_SOURCE
+#define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 #include <sched.h>
-
-#define do_timing 0
-#define logging 0
 
 #include <iostream>
 #include <sstream>
@@ -13,44 +28,44 @@
 
 #include <ospray/ospray.h>
 
+#include "galaxy.h"
+
 #include "Application.h"
-#include "Work.h"
-#include "Renderer.h"
-#include "RayFlags.h"
-#include "Pixel.h"
-#include "TraceRays.h"
-#include "Datasets.h"
 #include "Camera.h"
-#include "RayQManager.h"
 #include "DataObjects.h"
+#include "Datasets.h"
+#include "Pixel.h"
+#include "RayFlags.h"
+#include "RayQManager.h"
+#include "Renderer.h"
+#include "TraceRays.h"
+#include "Work.h"
 
-using namespace std;
-
-#include "../rapidjson/document.h"
-#include "../rapidjson/stringbuffer.h"
-
-#include "Visualization_ispc.h"
 #include "Rays_ispc.h"
 #include "TraceRays_ispc.h"
+#include "Visualization_ispc.h"
 
-namespace pvol
-{
-#if DO_TIMING
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+
+#ifdef GXY_TIMING
 #include "Timing.h"
 static Timer timer("ray_processing");
 #endif
 
-
 using namespace rapidjson;
+using namespace std;
 
+namespace gxy
+{
 WORK_CLASS_TYPE(Renderer::RenderMsg);
 WORK_CLASS_TYPE(Renderer::StatisticsMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);
 WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 WORK_CLASS_TYPE(Renderer::AckRaysMsg);
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 KEYED_OBJECT_TYPE(Renderer)
 
@@ -72,9 +87,9 @@ Renderer::Initialize()
   SendPixelsMsg::Register();
   StatisticsMsg::Register();
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
   AckRaysMsg::Register();
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 }
 
@@ -106,8 +121,11 @@ Renderer::SetEpsilon(float e)
 void
 Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 {
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 	GetTheEventTracker()->Add(new StartRenderingEvent);
+#endif
+#ifdef GXY_LOGGING
+	APP_LOG(<< "Renderer::localRendering start");
 #endif
 
 	originated_ray_count = 0;
@@ -128,8 +146,12 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 	
 	if (renderingSet->NeedInitialRays())
 	{
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_LOGGING
+	if (GetTheApplication()->GetRank() == 0)
+		std:cerr << "starting ray processing\n";
+#endif
 
+#ifdef GXY_SYNCHRONOUS
 		GetTheRayQManager()->Pause();
 
 		if (renderingSet->CameraIsActive())
@@ -143,14 +165,13 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		renderingSet->IncrementActiveCameraCount();
 
 		GetTheRayQManager()->Resume();
-
 #endif
 
-#ifdef PRODUCE_STATUS_MESSAGES
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
 		renderingSet->_initStateTimer();
 #endif
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 		renderingSet->initializeSpawnedRayCount();
 #endif
 
@@ -168,15 +189,15 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec);
 		}
 
-#ifdef PRODUCE_STATUS_MESSAGES
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
 		renderingSet->_dumpState(c, "status"); // Note this will sync after cameras, I think
 #endif
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 		GetTheEventTracker()->Add(new CameraLoopEndEvent);
 #endif
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 		for (auto& r : rvec)
 			r.get();
 
@@ -190,7 +211,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			renderingSet->Finalize();
 		else
 			renderingSet->DecrementActiveCameraCount(0);
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 	}
 	
 }
@@ -328,7 +349,7 @@ public:
 							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
 							// to ADD the (negative) shadow
 
-#if REVERSE_LIGHTING
+#if GXY_REVERSE_LIGHTING
 							classification[i] = DROP_ON_FLOOR;
 #else
 							classification[i] = SEND_TO_FB;
@@ -341,7 +362,7 @@ public:
 					{
 						// We don't need to add in the light's contribution
 						// OR, if reverse lighting, send to FB to ADD the (negative) shadow
-#if REVERSE_LIGHTING
+#if GXY_REVERSE_LIGHTING
 					classification[i] = SEND_TO_FB;
 #else
           classification[i] = DROP_ON_FLOOR;
@@ -366,7 +387,7 @@ public:
 							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
 							// to ADD the (negative) shadow
 
-#if REVERSE_LIGHTING
+#if GXY_REVERSE_LIGHTING
 							classification[i] = DROP_ON_FLOOR;
 #else
 							classification[i] = SEND_TO_FB;
@@ -380,7 +401,7 @@ public:
 						// We don't need to add in the light's contribution
 						// OR, if reverse lighting, send to FB to ADD the (negative)
 						// ambient contribution
-#if REVERSE_LIGHTING
+#if GXY_REVERSE_LIGHTING
 						classification[i] = SEND_TO_FB;
 #else
 						classification[i] = DROP_ON_FLOOR;
@@ -392,7 +413,7 @@ public:
 						// we don't add the (negative) ambient contribution;
 						// otherwise, send  to FB to add in (positive) ambient
 						// contribution
-#if REVERSE_LIGHTING
+#if GXY_REVERSE_LIGHTING
 						classification[i] = DROP_ON_FLOOR;
 #else
 						classification[i] = SEND_TO_FB;
@@ -506,10 +527,10 @@ public:
 			for (int i = 0; i < 6; i++)
 				if (knts[i])
 				{
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 					// This process gets "ownership" of the new ray list until its recipient acknowleges 
 					renderingSet->IncrementRayListCount();
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 				
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 					delete ray_lists[i];
@@ -526,10 +547,10 @@ public:
 				std::cerr << "ProcessRays looping\n";
 		}
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 		// Finished processing this ray list.  
 		renderingSet->DecrementRayListCount();
-#endif //  PVOL_SYNCHRONOUS
+#endif //  GXY_SYNCHRONOUS
 	}
 
 private:
@@ -590,21 +611,21 @@ void
 Renderer::_dumpStats()
 {
 	stringstream s;
-	s << "\noriginated ray count " << originated_ray_count << " rays\n";
-	s << "sent ray count " << sent_ray_count << " rays\n";
-	s << "terminated ray count " << terminated_ray_count << " rays\n";
-	s << "secondary ray count " << secondary_ray_count << " rays\n";
-	s << "ProcessRays saw " << ProcessRays_input_count << " rays\n";
-	s << "ProcessRays continued " << ProcessRays_continued_count << " rays\n";
-	s << "ProcessRays sent " << sent_pixels_count << " pixels\n";
+	s << endl << "originated ray count " << originated_ray_count << " rays" << endl;
+	s << "sent ray count " << sent_ray_count << " rays" << endl;
+	s << "terminated ray count " << terminated_ray_count << " rays" << endl;
+	s << "secondary ray count " << secondary_ray_count << " rays" << endl;
+	s << "ProcessRays saw " << ProcessRays_input_count << " rays" << endl;
+	s << "ProcessRays continued " << ProcessRays_continued_count << " rays" << endl;
+	s << "ProcessRays sent " << sent_pixels_count << " pixels" << endl;
 	s << "sent to neighbors:";
 
 	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
+		s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? endl : " ");
 
 	s << "received from neighbors:";
 	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
+		s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? endl : " ");
 	
 	APP_LOG(<< s.str());
 }
@@ -622,7 +643,7 @@ Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
 void 
 Renderer::SendRays(RayList *rays, int destination)
 {
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 	rays->GetTheRenderingSet()->IncrementInFlightCount();
 #endif
 
@@ -645,12 +666,12 @@ Renderer::SendRaysMsg::Action(int sender)
 	RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
 	if (! renderingSet)
 	{
-		std::cerr << "ray list arrived before rendering/renderingSet\n";
+		cerr << "WARNING: ray list arrived before rendering/renderingSet" << endl;
 		delete rayList;
 		return false;
 	}
 
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 	class ReceiveRaysEvent : public Event
 	{
 	public:
@@ -674,10 +695,10 @@ Renderer::SendRaysMsg::Action(int sender)
 
 	renderingSet->Enqueue(rayList);
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 	Renderer::AckRaysMsg ack(renderingSet);
 	ack.Send(sender);
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 	
 	return false;
 }
@@ -704,7 +725,7 @@ Renderer::Deserialize(unsigned char *p)
 	return p;
 }
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 Renderer::AckRaysMsg::AckRaysMsg(RenderingSetP rs) : AckRaysMsg(sizeof(Key))
 {
 	*(Key *)contents->get() = rs->getkey();
@@ -718,7 +739,7 @@ Renderer::AckRaysMsg::Action(int sender)
 	rs->DecrementRayListCount();
 	return false;
 }
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 void
 Renderer::Render(RenderingSetP rs)
@@ -785,5 +806,5 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 
   return false;
 }
-}
 
+} // namespace gxy

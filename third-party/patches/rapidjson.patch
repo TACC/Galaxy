@@ -1,0 +1,43 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7c604076..6deda995 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,3 +1,6 @@
++# NOTE: This file has been modified by a Galaxy patch.
++#      See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+ if(POLICY CMP0025)
+   # detect Apple's Clang
+@@ -24,9 +27,15 @@ endif()
+ # Build all binaries in a separate directory
+ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+ 
+-option(RAPIDJSON_BUILD_DOC "Build rapidjson documentation." ON)
+-option(RAPIDJSON_BUILD_EXAMPLES "Build rapidjson examples." ON)
+-option(RAPIDJSON_BUILD_TESTS "Build rapidjson perftests and unittests." ON)
++# GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++# original code:
++# option(RAPIDJSON_BUILD_DOC "Build rapidjson documentation." ON)
++# option(RAPIDJSON_BUILD_EXAMPLES "Build rapidjson examples." ON)
++# option(RAPIDJSON_BUILD_TESTS "Build rapidjson perftests and unittests." ON)
++option(RAPIDJSON_BUILD_DOC "Build rapidjson documentation." OFF)
++option(RAPIDJSON_BUILD_EXAMPLES "Build rapidjson examples." OFF)
++option(RAPIDJSON_BUILD_TESTS "Build rapidjson perftests and unittests." OFF)
++# GALAXY END MODIFIED CODE - by Galaxy patch
+ option(RAPIDJSON_BUILD_THIRDPARTY_GTEST
+     "Use gtest installation in `thirdparty/gtest` by default if available" OFF)
+ 
+@@ -118,6 +127,12 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "XL")
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qarch=auto")
+ endif()
+ 
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
++IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++  SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
++ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++# GALAXY END ADDED CODE - by Galaxy patch
++
+ #add extra search paths for libraries and includes
+ SET(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "The directory the headers are installed in")
+ SET(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE STRING "Directory where lib will install")

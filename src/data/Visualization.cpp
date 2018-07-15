@@ -1,18 +1,36 @@
-#include <iostream>
-#include <sstream>
-#include <vector>
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
 
-#include "Application.h"
 #include "Visualization.h"
-#include "OSPUtil.h"
 #include "Visualization_ispc.h"
 
-#define LOGGING 0
+#include "Application.h"
+#include "OSPUtil.h"
+
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
 using namespace std;
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_TYPE(Visualization)
@@ -122,7 +140,7 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
 		VisP v = *it;																															  \
 	 																																						  \
 		KeyedDataObjectP kdop = v->GetTheData();																	  \
-		if (! kdop) std::cerr << "NULL KDOP\n";	\
+		if (! kdop) std::cerr << "WARNING: NULL KeyedDataObjectP" << endl;					\
 																																							  \
 		Box *l = kdop->get_local_box();																						  \
 		Box *g = kdop->get_global_box();																					  \
@@ -141,15 +159,15 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
     {																																					  \
       if (local_box != *l || global_box != *g)																  \
       {																																				  \
-        APP_PRINT(<< "Datasets: partitioning mismatch between participants");	  \
-        exit(0);																															  \
+        APP_PRINT(<< "ERROR: Datasets partitioning mismatch between participants");	  \
+        exit(1);																															  \
       }																																				  \
       for (int i = 0; i < 6; i++)																							  \
       {																																				  \
         if (neighbors[i] != kdop->get_neighbor(i))														  \
         {																																			  \
-          APP_PRINT(<< "Datasets: partitioning mismatch between participants");	\
-          exit(0);																															\
+          APP_PRINT(<< "ERROR: Datasets partitioning mismatch between participants");	\
+          exit(1);																															\
         }																																				\
       }																																					\
     }																																						\
@@ -182,8 +200,8 @@ Visualization::local_commit(MPI_Comm c)
   
   ospCommit(ospModel);
    
-  //std::cerr << "volumes: " << volumes.size() <<  " " <<  volumes.data() << "\n";
-  //std::cerr << "mappedGeometries: " << mappedGeometries.size() <<  " " <<  mappedGeometries.data() << "\n";
+  //cerr << "volumes: " << volumes.size() <<  " " <<  volumes.data() << endl;
+  //cerr << "mappedGeometries: " << mappedGeometries.size() <<  " " <<  mappedGeometries.data() << endl;
   
   void *mispc[mappedGeometries.size()+1];   
   for (int i = 0; i < mappedGeometries.size(); i++)
@@ -267,7 +285,7 @@ Visualization::LoadFromJSON(Value& v)
 
 		if (! vv.HasMember("type"))
 		{
-			std::cerr << "Visualization element with no type\n";
+			cerr << "ERROR: json has Visualization element with no type" << endl;
 			exit(1);
 		}
 
@@ -294,7 +312,7 @@ Visualization::LoadFromJSON(Value& v)
 		}
 		else
 		{
-			std::cerr << "unknown vis type: " << t << "\n";
+			cerr << "ERROR: unknown type: " << t << " in json Visualization element" << endl;
 			exit(1);
 		}
 	}
@@ -401,9 +419,9 @@ Visualization::destroy_ispc()
 {
   if (ispc)
   {
-    //std::cerr << "Visualization destroying " << this << " ispc: " << ispc << "\n";
+    //cerr << "Visualization destroying " << this << " ispc: " << ispc << endl;
     ispc::Visualization_destroy(ispc);
   }
 }
 
-}
+} // namespace gxy
