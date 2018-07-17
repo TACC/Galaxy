@@ -37,7 +37,7 @@ int mpiRank, mpiSize;
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] json" endl;
+  cerr << "syntax: " << a << " [options] json" << endl;
   cerr << "optons:" << endl;
   cerr << "  -C cdb     put output in Cinema DB (no)" << endl;
   cerr << "  -D         run debugger" << endl;
@@ -162,7 +162,7 @@ int main(int argc,  char *argv[])
 
     RendererP theRenderer = Renderer::NewP();
 
-    Document *doc = GetTheApplication()->OpenInputState(statefile);
+    rapidjson::Document *doc = GetTheApplication()->OpenInputState(statefile);
 
     theRenderer->LoadStateFromDocument(*doc);
 
