@@ -7,6 +7,3 @@
 [submodule "third-party/rapidjson"]
 	path = third-party/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
-[submodule "third-party/threadpool11"]
-	path = third-party/threadpool11
-	url = https://github.com/tghosgor/threadpool11.git

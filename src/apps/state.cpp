@@ -44,6 +44,8 @@
 #include "RenderingSet.h"
 
 using namespace gxy;
+using namespace std;
+using namespace rapidjson;
 
 static int width = 1920, height = 1080;
 static int mpiRank, mpiSize;

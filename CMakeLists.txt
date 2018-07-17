@@ -51,7 +51,6 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-
 set(GXY_EVENT_TRACKING OFF CACHE BOOL "Generate event log during render?")
 set(GXY_LOGGING OFF CACHE BOOL "Generate log messages in the Galaxy Renderer")
 set(GXY_PRODUCE_STATUS_MESSAGES OFF CACHE BOOL "produce periodic status massages?")
@@ -64,8 +63,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 IF (APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 ENDIF (APPLE)
-
-# execute_process(COMMAND ${PROJECT_SOURCE_DIR}/threadpool.sh ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
 
 # ignore override warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override")
@@ -80,9 +77,6 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-# option(WITH_CINEMA  			"Include cinema generator?" OFF)
-# option(WITH_STATE        	"Include simple renderer?" ON)
-# option(WITH_QT_VIEWER  		"Include QT-based viewer?" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -110,16 +104,6 @@ find_package(RapidJSON PATHS
   ${PROJECT_SOURCE_DIR}/third-party/rapidjson/install/lib/cmake
   ${PROJECT_SOURCE_DIR}/third-party/rapidjson/build)
 include_directories(${RapidJSON_INCLUDE_DIRS})
-
-find_path(THREADPOOL11_LIB_DIR libthreadpool11.a PATHS 
-  ${PROJECT_SOURCE_DIR}/third-party/threadpool11/install/lib64
-	${PROJECT_SOURCE_DIR}/third-party/threadpool11/install/lib
-	DOC "library install directory for threadpool11")
-link_directories(${THREADPOOL11_LIB_DIR})
-find_path(THREADPOOL11_INCLUDE_DIR threadpool11/threadpool11.hpp PATHS 
-  ${PROJECT_SOURCE_DIR}/third-party/threadpool11/install/include
-	DOC "include install directory for threadpool11")
-include_directories(${THREADPOOL11_INCLUDE_DIR})
 
 find_package(embree 3 PATHS 
   ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib64/cmake
@@ -153,10 +137,7 @@ SET(CMAKE_INSTALL_RPATH
   "${OSPRAY_ROOT}/lib"
   "${EMBREE_ROOT_DIR}/lib"
   "${CMAKE_INSTALL_PREFIX}/lib"
-  "${OSPRAY_ROOT}/lib"
-  "${EMBREE_ROOT_DIR}/lib"
-  "${CMAKE_INSTALL_PREFIX}/ospray/lib"
-  "${CMAKE_INSTALL_PREFIX}/threadpool11/lib")
+  "${CMAKE_INSTALL_PREFIX}/ospray/lib")
 
 
 add_subdirectory(scripts)

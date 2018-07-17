@@ -49,13 +49,13 @@ set (CPP_SOURCES
   VolumeVis.cpp)
 
 set (ISPC_SOURCES   
-  ISPCObject.ispc 
+  ISPCObject.ispc
   Lighting.ispc
-  MappedVis.ispc 
+  MappedVis.ispc
   ParticlesVis.ispc
   TrianglesVis.ispc
-  Vis.ispc 
-  Visualization.ispc 
+  Vis.ispc
+  Visualization.ispc
   VolumeVis.ispc)
 
 if(ospray_DIR)
@@ -86,4 +86,5 @@ INSTALL(FILES
   Volume.h
   VolumeVis.h
   DESTINATION include/gxy)
+
 

@@ -26,13 +26,12 @@ Galaxy has the following components associated in the `third-party` subdirectory
   * [Intel ISPC][10]
   * [Intel Embree][12]
   * [Intel OSPRay][13]
-  * [threadpool11][11]
   * [rapidjson][16]
 
 ## Installing Galaxy associated dependencies
 Prior to building Galaxy itself, you should ensure that all the general dependencies are installed (we recommend your humble OS package manager). Once those are in place, you're ready to install the dependencies in `third-party`. 
 
-From the root directory of your local Galaxy repository, run the script `prep-third-party.sh`, which will init and update the git submodules, download ispc to where Galaxy expects to find it, and apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, `third-party/threadpool11`, and `third-pary/rapidjson` subdirectories. 
+From the root directory of your local Galaxy repository, run the script `prep-third-party.sh`, which will init and update the git submodules, download ispc to where Galaxy expects to find it, and apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. 
 
 All patch updates insert the prominent header: 
 ```
@@ -90,23 +89,6 @@ git apply ../patches/ospray.patch
 ```
 
 Now, create a build directory and build OSPRay. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the OSPRay build:
-```bash
-mkdir build
-cd build
-cmake .. && make && make install
-```
-If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
-
-### Installing threadpool11
-Before installing threadpool11, make sure you have updated the Galaxy git submodules as described above. Once the git submodules have been updated, the `third-party/threadpool11` directory should contain the threadpool11 source tree. We recommend building in `third-party/threadpool11/build` and installing to `third-party/threadpool11/install`, as doing so should enable Galaxy to find threadpool11 automatically. The recommended install directory is configured as part of the Galaxy threadpool11 patch.
-
-First, apply the Galaxy threadpool11 patch to the threadpool11 repository. From the root directory of your Galaxy repository, issue the following commands:
-```bash
-cd third-party/threadpool11
-git apply ../patches/threadpool11.patch
-```
-Now, create a build directory and build threadpool11. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the threadpool11 build:
-
 ```bash
 mkdir build
 cd build
@@ -439,15 +421,15 @@ The following environment variables affect Galaxy behavior:
 
   * **GXY_NTHREADS** : use the requested number of threads in the rendering thread pool (default 1)
   * **GXY_APP_NTHREADS** : use the requested number of threads for the application (default *TBB default*)
-  * **FULLWINDOW** : render using the full window
-  * **RAYS_PER_PACKET** : The number of rays to include in a transmission packet (default 10000000)
-  * **RAYDEBUG** : turn on ray debug pathway, taking **X**, **Y**, **XMIN**, **XMAX**, **YMIN**, **YMAX** from environment variables
-  * **X** : x coordinate for single-ray debug (requires **RAYDEBUG**)
-  * **Y** : y coordinate for single-ray debug (requires **RAYDEBUG**)
-  * **XMIN** : lower x extent for debug window (requires **RAYDEBUG**)
-  * **XMAX** : upper x extent for debug window (requires **RAYDEBUG**)
-  * **YMIN** : lower y extent for debug window (requires **RAYDEBUG**)
-  * **YMAX** : upper y extent for debug window (requires **RAYDEBUG**)
+  * **GXY_FULLWINDOW** : render using the full window
+  * **GXY_RAYS_PER_PACKET** : The number of rays to include in a transmission packet (default 10000000)
+  * **GXY_RAYDEBUG** : turn on ray debug pathway, taking **GXY_X**, **GXY_Y**, **GXY_XMIN**, **GXY_XMAX**, **GXY_YMIN**, **GXY_YMAX** from environment variables
+  * **GXY_X** : x coordinate for single-ray debug (requires **GXY_RAYDEBUG**)
+  * **GXY_Y** : y coordinate for single-ray debug (requires **GXY_RAYDEBUG**)
+  * **GXY_XMIN** : lower x extent for debug window (requires **GXY_RAYDEBUG**)
+  * **GXY_XMAX** : upper x extent for debug window (requires **GXY_RAYDEBUG**)
+  * **GXY_YMIN** : lower y extent for debug window (requires **GXY_RAYDEBUG**)
+  * **GXY_YMAX** : upper y extent for debug window (requires **GXY_RAYDEBUG**)
 
 
 [1]: http://www.ospray.org/
@@ -460,7 +442,6 @@ The following environment variables affect Galaxy behavior:
 [8]: http://zlib.net/
 [9]: http://www.cmake.org/
 [10]: https://ispc.github.io/
-[11]: https://github.com/tghosgor/threadpool11
 [12]: http://embree.github.io/
 [13]: http://www.ospray.org/
 [14]: http://www.glfw.org/

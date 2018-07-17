@@ -86,7 +86,7 @@ public:
 
 	void print();
 
-	void generate_initial_rays(RenderingSetP, RenderingP, Box*, Box*, std::vector<std::future<void>>& rvec);
+	void generate_initial_rays(RenderingSetP, RenderingP, Box*, Box*, std::vector<std::future<int>>& rvec);
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *ptr);

@@ -34,8 +34,7 @@
 #include "MessageManager.h"
 #include "Work.h"
 
-#include "threadpool11/threadpool11.hpp"
-typedef threadpool11::Pool ThreadPool;
+#include "ThreadPool.hpp"
 
 #include "rapidjson/document.h"
 
