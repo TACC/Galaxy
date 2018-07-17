@@ -18,13 +18,16 @@
 //                                                                            //
 // ========================================================================== //
 
+#include "Datasets.h"
 
 #include "Application.h"
 #include "KeyedDataObject.h"
-#include "Datasets.h"
 #include "Volume.h"
 #include "Particles.h"
 #include "Triangles.h"
+
+using namespace rapidjson;
+using namespace std;
 
 namespace gxy
 {

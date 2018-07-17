@@ -148,7 +148,7 @@ protected:
 
   vtkImageData *vtkobj;
 
-	string filename;
+	std::string filename;
 
 	DataType type;
 

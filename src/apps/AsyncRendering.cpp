@@ -22,7 +22,7 @@
 #include <pthread.h>
 #include <time.h>
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_TYPE(AsyncRendering)
@@ -234,4 +234,4 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 	pthread_mutex_unlock(&lock);
 }
 
-}
+} // namespace gxy

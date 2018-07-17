@@ -88,8 +88,8 @@ protected:
 	virtual void allocate_ispc();
 	virtual void destroy_ispc();
 
-  virtual void LoadFromJSON(Value&);
-  virtual void SaveToJSON(Value&, Document&);
+  virtual void LoadFromJSON(rapidjson::Value&);
+  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
@@ -97,8 +97,8 @@ protected:
 
   bool volume_rendering;
 
-  vector<vec4f> slices;
-  vector<float> isovalues;
+  std::vector<vec4f> slices;
+  std::vector<float> isovalues;
 };
 
 } // namespace gxy

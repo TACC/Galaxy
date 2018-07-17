@@ -57,7 +57,7 @@ ClientServer::setup_server(int port)
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons(port);
 
-	if (bind(sd, (struct sockaddr *) &sin, sizeof(sin)) == -1)
+	if (::bind(sd, (struct sockaddr *) &sin, sizeof(sin)) == -1)
 	{
 			perror("bind");
 			exit(1);

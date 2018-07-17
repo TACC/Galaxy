@@ -27,6 +27,8 @@
 #include "Application.h"
 #include "Datasets.h"
 
+using namespace rapidjson;
+
 namespace gxy
 {
 

@@ -1,6 +1,30 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once
 
-namespace pvol
+#include "Events.h"
+
+#include <iostream>
+
+namespace gxy
 {
 class StartRenderingEvent : public Event
 {
@@ -8,7 +32,7 @@ public:
  StartRenderingEvent() {}
 
 protected:
-  void print(ostream& o)
+  void print(std::ostream& o)
   {
     Event::print(o);
     o << "StartRendering";
@@ -21,7 +45,7 @@ public:
  CameraLoopEndEvent() {}
 
 protected:
-  void print(ostream& o)
+  void print(std::ostream& o)
   {
     Event::print(o);
     o << "CameraLoopEnd";
@@ -54,7 +78,7 @@ public:
   ProcessRayListEvent(RayList *rl) : RayListEvent(rl) {}
 
 protected:
-  void print(ostream& o)
+  void print(std::ostream& o)
   {
     Event::print(o);
     o << "ProcessRayList:  id " << id << " n " << n << " r " << r << " rs " << rs << " f " << f;
@@ -67,7 +91,7 @@ public:
   SecondariesGeneratedEvent(RayList *rl) : RayListEvent(rl) {}
 
 protected:
-  void print(ostream& o)
+  void print(std::ostream& o)
   {
     Event::print(o);
     o << "SecondariesGenerated:  id " << id << " n " << n << " r " << r << " rs " << rs << " f " << f;
@@ -91,7 +115,7 @@ public:
 	LocalPixelsEvent(int n, Key rk, int f) : PixelsEvent(n, rk, f) {}
 
 protected:
-  void print(ostream& o)
+  void print(std::ostream& o)
   {
     Event::print(o);
     o << "LocalPixelsEvent: n " << n << " r " << rk << " f " << f;
@@ -106,7 +130,7 @@ public:
 protected:
 	int dst;
 
-  void print(ostream& o)
+  void print(std::ostream& o)
   {
     Event::print(o);
     o << "SendPixelsEvent: n " << n << " r " << rk << " f " << f << " dst " << dst;
@@ -121,7 +145,7 @@ public:
 protected:
 	int src;
 
-  void print(ostream& o)
+  void print(std::ostream& o)
   {
     Event::print(o);
     o << "RcvPixelsEvent: n " << n << " r " << rk << " f " << f << " src " << src;
@@ -156,7 +180,7 @@ public:
   ProcessRayListCompletedEvent(int ni, int nn, int nr, int ns) : nIn(ni), nSecondaries(nn), nRetired(nr), nSent(ns) {}
 
 protected:
-  void print(ostream& o)
+  void print(std::ostream& o)
   {
     Event::print(o);
     o << "ProcessRayListCompleted:  " << nIn << " in, " << nSecondaries << " spawned, " << nRetired << " retired and " << nSent << " sent";

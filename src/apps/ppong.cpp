@@ -25,11 +25,8 @@
 #include <string.h>
 #include <sys/types.h>
 
-
 #include <dtypes.h>
 #include <Application.h>
-
-using namespace pvol;
 
 #include <pthread.h>
 
@@ -37,8 +34,6 @@ using namespace gxy;
 
 pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  w8 = PTHREAD_COND_INITIALIZER;
-
-#define LOGGING 0
 
 class PPongMsg : public Work
 {
@@ -66,7 +61,7 @@ public:
 			pthread_mutex_unlock(&lck);
 		}
 
-#if LOGGING
+#if GXY_LOGGING
 		APP_LOG(<< rank << ": ppong");
 #endif
 
@@ -82,7 +77,7 @@ public:
 	WORK_CLASS(BcastMsg, true)
 
 public:
-	bool CollectiveAction(MPI_Comm s, bool isRoot) { std:cerr << "bcast action\n"; return false;}
+	bool CollectiveAction(MPI_Comm s, bool isRoot) { std::cerr << "bcast action" << std::endl; return false;}
 };
 
 WORK_CLASS_TYPE(PPongMsg)
@@ -116,7 +111,7 @@ main(int argc, char * argv[])
 			m.Send(1);
 
 			pthread_cond_wait(&w8, &lck);
-			std::cerr << "lock signalled\n";
+			std::cerr << "lock signalled" << std::endl;
 			pthread_mutex_unlock(&lck);
 		}
 
@@ -133,7 +128,7 @@ main(int argc, char * argv[])
 			m.Send(1);
 
 			pthread_cond_wait(&w8, &lck);
-			std::cerr << "lock signalled\n";
+			std::cerr << "lock signalled" << std::endl;
 			pthread_mutex_unlock(&lck);
 		}
 

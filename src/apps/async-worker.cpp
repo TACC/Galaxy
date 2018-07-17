@@ -24,15 +24,14 @@
 #include <unistd.h>
 #include <pthread.h>
 
-using namespace std;
-
 #include "Application.h"
 #include "Renderer.h"
 #include "AsyncRendering.h"
 
-using namespace pvol;
-
 #include <ospray/ospray.h>
+
+using namespace gxy;
+using namespace std;
 
 class Debug
 {
@@ -44,7 +43,7 @@ public:
     pid_t pid = getpid();
 
     if (attach)
-      std::cerr << "Attach to PID " << pid << "\n";
+      std::cerr << "Attach to PID " << pid << endl;
     else
     {
       cmd << "~/dbg_script " << executable << " " << pid << " &";
@@ -54,17 +53,17 @@ public:
     while (dbg)
       sleep(1);
 
-    std::cerr << "running\n";
+    std::cerr << "running" << endl;
   }
 };
 
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options]\n";
-  cerr << "options:\n";
-  cerr << "  -D         run debugger\n";
-  cerr << "  -A         wait for attachment\n";
+  cerr << "syntax: " << a << " [options]" << endl;
+  cerr << "options:" << endl;
+  cerr << "  -D         run debugger" << endl;
+  cerr << "  -A         wait for attachment" << endl;
   exit(1);
 }
 

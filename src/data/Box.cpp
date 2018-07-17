@@ -20,6 +20,8 @@
 
 #include "Box.h"
 
+using namespace std;
+
 namespace gxy
 {
 Box::Box(float *o, int *n, float *d)
@@ -145,4 +147,5 @@ Box::intersect(vec3f& org, vec3f& dir, float& tmin, float& tmax)
 
 	return true;
 }
+
 } // namespace gxy

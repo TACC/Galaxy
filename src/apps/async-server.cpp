@@ -34,12 +34,12 @@
 
 #include "Debug.h"
 
-using namespace std;
-
 #include "async.h"
 #include "trackball.hpp"
 
-using namespace pvol;
+using namespace gxy;
+using namespace std;
+using namespace rapidjson;
 
 Socket *skt;
 
@@ -200,16 +200,17 @@ render_thread(void *buf)
 			nanosleep(&ts, NULL);
 		}
 	}
+	return 0;
 }
 
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options]\n";
-  cerr << "options:\n";
-  cerr << "  -D         run debugger\n";
-  cerr << "  -A         wait for attachment\n";
-  cerr << "  -P port    port to use (5001)\n";
+  cerr << "syntax: " << a << " [options]" << endl;
+  cerr << "options:" << endl;
+  cerr << "  -D         run debugger" << endl;
+  cerr << "  -A         wait for attachment" << endl;
+  cerr << "  -P port    port to use (5001)" << endl;
   exit(1);
 }
 
@@ -286,8 +287,8 @@ main(int argc, char *argv[])
 				case START:
 					if (render_tid != 0)
 					{
-						std::cerr << "rendering thread already running!\n";
-						exit(0);
+						std::cerr << "START op received, but rendering thread already running!" << endl;
+						exit(1);
 					}
 					pthread_create(&render_tid, NULL, render_thread, buf); // buf, so lower level can delete
 					break;

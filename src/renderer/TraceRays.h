@@ -41,8 +41,8 @@ public:
   TraceRays();
   ~TraceRays();
 
-  virtual void LoadStateFromValue(Value&);
-  virtual void SaveStateToValue(Value&, Document&);
+  virtual void LoadStateFromValue(rapidjson::Value&);
+  virtual void SaveStateToValue(rapidjson::Value&, rapidjson::Document&);
 
   void SetEpsilon(float e);
   float GetEpsilon();

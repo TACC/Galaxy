@@ -72,8 +72,8 @@ public:
 
 	// only concrete subclasses have static LoadToJSON at abstract layer
 
-  virtual void LoadFromJSON(rapidjson::Value&) { std::cerr << "abstract KeyedObject LoadFromJSON" << endl; }
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&) { std::cerr << "abstract KeyedObject SaveToJSON" << endl; }
+  virtual void LoadFromJSON(rapidjson::Value&) { std::cerr << "abstract KeyedObject LoadFromJSON" << std::endl; }
+  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&) { std::cerr << "abstract KeyedObject SaveToJSON" << std::endl; }
 
   class CommitMsg : public Work
   {

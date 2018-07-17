@@ -37,7 +37,7 @@ if (GXY_SYNCHRONOUS)
 	target_link_libraries(vis ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 	set(BINS vis ${BINS})
 
-else()
+else(GXY_SYNCHRONOUS)
 
 	add_executable(async-server async-server.cpp Socket.cpp ServerRendering.cpp quat.cpp)
 	target_link_libraries(async-server ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
@@ -53,14 +53,14 @@ else()
 
 	if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
-		link_directories(${X11_LIBRARIES})
+		link_libraries(${X11_LIBRARIES})
 
 		add_executable(async async.cpp quat.cpp AsyncRendering.cpp)
-		target_link_libraries(async ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+		target_link_libraries(async ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
 		add_executable(async-worker async-worker.cpp AsyncRendering.cpp)
-		# target_link_libraries(async-worker ${VTK_LIBRARIES} ${PVOL_LIBRARIES} ${OPENGL_LIBRARIES})
-		target_link_libraries(async-worker ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
+		# target_link_libraries(async-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${OPENGL_LIBRARIES})
+		target_link_libraries(async-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 
 		add_executable(async-client async-client.cpp Socket.cpp)
 		target_link_libraries(async-client ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} pthread)
@@ -70,7 +70,7 @@ else()
 		message(WARNING "Could not find all GUI components for async client: X11 ${X11_FOUND}, OpenGL ${OpenGL_FOUND}, GLUT ${GLUT_FOUND}")
 	endif(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 
-endif (PVOL_SYNCHRONOUS)
+endif (GXY_SYNCHRONOUS)
 
 # add_executable(sample sample.cpp)
 # target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
@@ -97,23 +97,23 @@ if(GXY_APP_PISO)
 endif()
 
 add_executable(client client.cpp)
-target_link_libraries(client Framework)
+target_link_libraries(client gxy_framework)
 set(BINS client ${BINS})
 
 add_executable(ppong ppong.cpp)
-target_link_libraries(ppong Framework)
+target_link_libraries(ppong gxy_framework)
 set(BINS ppong ${BINS})
 
 add_executable(bcast bcast.cpp)
-target_link_libraries(bcast Framework)
+target_link_libraries(bcast gxy_framework)
 set(BINS bcast ${BINS})
 
 add_executable(drop drop.cpp TestObject.cpp)
-target_link_libraries(drop Framework)
+target_link_libraries(drop gxy_framework)
 set(BINS drop ${BINS})
 
 add_executable(gvt gvt.cpp)
-target_link_libraries(gvt ${VTK_LIBRARIES} ${PVOL_LIBRARIES})
+target_link_libraries(gvt ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 set(BINS gvt ${BINS})
 
 add_executable(radial radial.cpp)

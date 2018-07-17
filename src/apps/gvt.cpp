@@ -29,7 +29,7 @@
 
 #include <ospray/ospray.h>
 
-#include "pvol.h"
+#include "galaxy.h"
 
 #include <Application.h>
 #include <Renderer.h>
@@ -39,7 +39,7 @@
 #include <VolumeVis.h>
 #include <Visualization.h>
 
-using namespace pvol;
+using namespace gxy;
 
 int mpiRank;
 
@@ -74,7 +74,7 @@ public:
     if (do_me)
     { 
       if (attach) 
-        std::cerr << "Attach to PID " << pid << "\n";
+        std::cerr << "Attach to PID " << pid << std::endl;
       else
       { 
         cmd << "~/dbg_script " << executable << " " << pid << " &";
@@ -84,7 +84,7 @@ public:
       while (dbg)
         sleep(1);
       
-      std::cerr << "running\n";
+      std::cerr << "running" << std::endl;
     }
   }
 };
@@ -100,7 +100,7 @@ main(int argc, char * argv[])
 	Renderer::Initialize();
 
 	mpiRank = theApplication.GetRank();
-	std::cerr << "rank: " << mpiRank << "\n";
+	std::cerr << "rank: " << mpiRank << std::endl;
 
 	Debug *d = (argc > 1 && !strcmp(argv[1], "-D")) ?  new Debug(argv[0], false, argv[1]) : NULL;
 
@@ -110,7 +110,7 @@ main(int argc, char * argv[])
 	{
 		RendererP theRenderer = Renderer::NewP();
 		theRenderer->Commit();
-		std::cerr << "renderer initted\n";
+		std::cerr << "renderer initted" << std::endl;
 
 		CameraP c = Camera::NewP();
 		c->set_viewpoint(0.0, 0.0, -5.0);
@@ -152,7 +152,7 @@ main(int argc, char * argv[])
 
 		theRenderer->Render(rs);
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 		rs->WaitForDone();
 #else
 		std::cerr << "hit a char when you are ready to write the image: ";

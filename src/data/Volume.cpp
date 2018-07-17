@@ -31,6 +31,7 @@
 #include <vtkClientSocket.h>
 #include <vtkXMLImageDataWriter.h>
 
+using namespace rapidjson;
 using namespace std;
 
 namespace gxy

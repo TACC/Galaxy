@@ -28,12 +28,12 @@
 #include <pthread.h>
 
 
-#include <dtypes.h>
-#include <Application.h>
-#include <Events.h>
+#include "dtypes.h"
+#include "Application.h"
+#include "Events.h"
 
+using namespace gxy;
 using namespace std;
-using namespace pvol;
 
 class BcastEvent : public Event
 { 

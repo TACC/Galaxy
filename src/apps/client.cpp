@@ -21,9 +21,11 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
+#include <string>
+
 #include "ClientServer.h"
 
-using namespace pvol;
+using namespace gxy;
 
 int
 main(int argc, char **argv)
@@ -35,13 +37,13 @@ main(int argc, char **argv)
 	else
 		cs.setup_client(argv[1]);
 		
-	std::cerr << "setup OK\n";
+	std::cerr << "setup OK" << std::endl;
 
 	char c;
 	do
 	{
 		c = getchar();
-		std::cerr << "got " << c << "\n";
+		std::cerr << "got " << c << std::endl;
 		if (c == 's')
 			write(cs.get_socket(), &c, 1);
 	}  while (c != 'q');

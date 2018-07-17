@@ -54,7 +54,7 @@ public:
 	EventTracker();
 
 	void DumpEvents();
-	void DumpEvents(fstream& fs);
+	void DumpEvents(std::fstream& fs);
 
 	void Add(Event *e);
 
@@ -64,7 +64,9 @@ public:
 	
 private:
 	int event_dump_count;
-	vector<Event*> events;
+	std::vector<Event*> events;
 };
+
+extern EventTracker *GetTheEventTracker();
 
 } // namespace gxy

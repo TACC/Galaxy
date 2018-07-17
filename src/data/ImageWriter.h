@@ -1,19 +1,36 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once
 
 #include <iostream>
 #include <string>
-
-using namespace std;
-
 #include <png.h>
 
-namespace pvol
+namespace gxy
 {
 
 class ImageWriter
 {
 public:
-	ImageWriter(string b) : basename(b), frame(0) {}
+	ImageWriter(std::string b) : basename(b), frame(0) {}
 	ImageWriter() : basename("frame"), frame(0) {}
 
 	void Write(int w, int h, float *rgba, const char *name=NULL)
@@ -52,12 +69,12 @@ private:
 
 	static void png_error(png_structp png_ptr, png_const_charp error_msg)
 	{
-		cerr << "PNG error: " << error_msg << "\n";
+		std::cerr << "PNG error: " << error_msg << std::endl;
 	}
 
 	static void png_warning(png_structp png_ptr, png_const_charp warning_msg)
 	{
-		cerr << "PNG error: " << warning_msg << "\n";
+		std::cerr << "PNG error: " << warning_msg << std::endl;
 	}
 
 	int write_png(const char *filename, int w, int h, unsigned int *rgba)
@@ -65,7 +82,7 @@ private:
 		png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, png_warning, png_error);
 		if (!png_ptr)
 		{
-			cerr << "Unable to create PNG write structure\n";
+			std::cerr << "ERROR: Unable to create PNG write structure" << std::endl;
 			return 0;
 		}
 
@@ -73,7 +90,7 @@ private:
 		if (!info_ptr)
 		{
 			png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-			cerr << "Unable to create PNG info structure\n";
+			std::cerr << "ERROR: Unable to create PNG info structure" << std::endl;
 			return 0;
 		}
 
@@ -81,7 +98,7 @@ private:
 		if (! fp)
 		{
 			png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-			cerr << "Unable to open PNG file: " << filename << "\n";
+			std::cerr << "ERROR: Unable to open PNG file: " << filename << std::endl;
 			return 0;
 		}
 
@@ -107,7 +124,7 @@ private:
 	}
 
   int frame;
-	string basename;
+	std::string basename;
 };
 
 }

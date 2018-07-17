@@ -22,15 +22,12 @@
 #include "Application.h"
 #include "KeyedObject.h"
 
-<<<<<<< HEAD
-namespace pvol
-=======
 using namespace rapidjson;
 using namespace std;
 
 namespace gxy
->>>>>>> master
 {
+
 static int ko_count = 0;
 static int get_ko_count() { return ko_count; }
 

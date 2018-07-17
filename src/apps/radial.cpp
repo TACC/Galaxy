@@ -62,11 +62,11 @@ factor(int n, int *factors)
 void
 syntax(char *a)
 {
-    cerr << "syntax: " << a << " [options] (to stdout)\n";
-    cerr << "options:\n";
-    cerr << "  -r xres yres zres  overall grid resolution (256x256x256)\n";
-    cerr << "  -t dt nt           time series delta, number of timesteps (0, 1)\n";
-    cerr << "  -m r s             set rank, size (for testing)\n";
+    cerr << "syntax: " << a << " [options] (to stdout)" << endl;
+    cerr << "options:" << endl;
+    cerr << "  -r xres yres zres  overall grid resolution (256x256x256)" << endl;
+    cerr << "  -t dt nt           time series delta, number of timesteps (0, 1)" << endl;
+    cerr << "  -m r s             set rank, size (for testing)" << endl;
     exit(1);
 }
 
@@ -130,21 +130,21 @@ int main(int argc, char *argv[])
 			sprintf(pvti_filename, "radial-%d.pvti", t);
 			pvti.open(pvti_filename);
 
-			pvti << "<?xml version=\"1.0\"?>\n";
+			pvti << "<?xml version=\"1.0\"?>" << endl;
 			pvti << "<VTKFile type=\"PImageData\" version=\"0.1\" "
-														<< "byte_order=\"LittleEndian\" compressor=\"vtkZLibDataCompressor\">\n";
+														<< "byte_order=\"LittleEndian\" compressor=\"vtkZLibDataCompressor\">" << endl;
 			pvti << "  <PImageData WholeExtent=\" 0 " 
 														<< (zsz-1) << " 0 " << (ysz-1) << " 0 " << (xsz-1) 
 														<< "\" GhostLevel=\"1\" Origin=\"-1 -1 -1\" "
-														<< " Spacing=\"" << d << " " << d << " " << d << "\">\n";
-			pvti << "    <PPointData Scalars=\"oneBall\" Vectors=\"vector\">\n";
-			pvti << "      <PDataArray type=\"Float32\" Name=\"xramp\"/>\n";
-			pvti << "      <PDataArray type=\"Float32\" Name=\"yramp\"/>\n";
-			pvti << "      <PDataArray type=\"Float32\" Name=\"zramp\"/>\n";
-			pvti << "      <PDataArray type=\"Float32\" Name=\"oneBall\"/>\n";
-			pvti << "      <PDataArray type=\"Float32\" Name=\"eightBalls\"/>\n";
-			pvti << "      <PDataArray type=\"Float32\" Name=\"vector\" NumberOfComponents=\"3\"/>\n";
-		  pvti << "    </PPointData>\n";
+														<< " Spacing=\"" << d << " " << d << " " << d << "\">" << endl;
+			pvti << "    <PPointData Scalars=\"oneBall\" Vectors=\"vector\">" << endl;
+			pvti << "      <PDataArray type=\"Float32\" Name=\"xramp\"/>" << endl;
+			pvti << "      <PDataArray type=\"Float32\" Name=\"yramp\"/>" << endl;
+			pvti << "      <PDataArray type=\"Float32\" Name=\"zramp\"/>" << endl;
+			pvti << "      <PDataArray type=\"Float32\" Name=\"oneBall\"/>" << endl;
+			pvti << "      <PDataArray type=\"Float32\" Name=\"eightBalls\"/>" << endl;
+			pvti << "      <PDataArray type=\"Float32\" Name=\"vector\" NumberOfComponents=\"3\"/>" << endl;
+		  pvti << "    </PPointData>" << endl;
     }
 
 		float T = 0.1 + 0.9 * cos(t*delta_t);
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 				sprintf(vti_partname, "radial-%d.vti", t);
 
 			if (mpis > 1 && mpir == 0)
-				pvti << "<Piece Extent=\"" << sz << " " << ez << " " << sy << " " << ey << " " << sx << " " << ex << "\" Source=\"" << vti_partname << "\"/>\n";
+				pvti << "<Piece Extent=\"" << sz << " " << ez << " " << sy << " " << ey << " " << sx << " " << ex << "\" Source=\"" << vti_partname << "\"/>" << endl;
 
 			if ((part % mpis) == mpir)
 			{
@@ -299,9 +299,9 @@ int main(int argc, char *argv[])
 
     if (mpis > 1 && mpir == 0)
 		{
-			std::cerr << "writing timestep " << t << "\n";
-			pvti << "    </PImageData>\n";
-			pvti << "</VTKFile>\n";
+			cerr << "writing timestep " << t << endl;
+			pvti << "    </PImageData>" << endl;
+			pvti << "</VTKFile>" << endl;
 			pvti.close();
 		}
   }

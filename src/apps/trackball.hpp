@@ -22,14 +22,13 @@
 
 #include <iostream>
 #include "dtypes.h" 
-using namespace pvol;
 
 #include <boost/math/quaternion.hpp>
 #include <cmath>
 
 typedef boost::math::quaternion<double> quaternion;
 
-namespace pvol
+namespace gxy
 {
 
 class Q

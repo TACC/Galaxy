@@ -31,13 +31,15 @@
 
 #include "Socket.h"
 
+using namespace std;
+
 Socket::Socket(int port)
 {
 	pthread_mutex_init(&lock, NULL);
 
 	char hn[256];
 	gethostname(hn, sizeof(hn));
-	std::cerr << "Waiting at port " << port << " on host " << hn << "\n";
+	cerr << "Waiting at port " << port << " on host " << hn << endl;
 
   int tmp_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	unsigned int clilen;
@@ -49,7 +51,7 @@ Socket::Socket(int port)
   serv_addr.sin_addr.s_addr = INADDR_ANY;
   serv_addr.sin_port = htons(port);
 
-  if (bind(tmp_sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+  if (::bind(tmp_sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
   {
     perror("ERROR on binding");
     exit(1);
@@ -75,10 +77,10 @@ Socket::Socket(int port)
 	Recv(b, n);
 	if (*(int *)b != 4321) 
 	{
-		std::cerr << "error connecting socket\n";
+		cerr << "error connecting socket" << endl;
 		exit(1);
 	}
-	std::cerr << "socket established\n";
+	cerr << "socket established" << endl;
 }
 
 Socket::Socket(char *host, int port)
@@ -100,8 +102,8 @@ Socket::Socket(char *host, int port)
   
   if (server == NULL) 
 	{
-   fprintf(stderr,"ERROR, no such host\n");
-   exit(0);
+   cerr << "ERROR no such host: " << host << endl;
+   exit(1);
   }
   
   bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -122,13 +124,13 @@ Socket::Socket(char *host, int port)
 	Recv(b, n);
 	if (*(int *)b != 1234) 
 	{
-		std::cerr << "error connecting socket\n";
+		cerr << "error connecting socket" << endl;
 		exit(1);
 	}
 	n = 4321;
 	Send((char*)&n, sizeof(n));
 
-	std::cerr << "socket established\n";
+	cerr << "socket established" << endl;
 }
 
 void

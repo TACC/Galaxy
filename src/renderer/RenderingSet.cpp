@@ -569,7 +569,7 @@ RenderingSet::PropagateStateMsg::Action(int sender)
   return false;
 }
 
-#endif // PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 int
 RenderingSet::serialSize()
@@ -734,7 +734,7 @@ RenderingSet::KeepRays(RayList *rl)
 		return false;
 }
 
-#ifdef GXY_PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
 void 
@@ -793,7 +793,7 @@ RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
 #endif
 	return false;
 }
-#endif GXY_PVOL_SYNCHRONOUS
+#endif // GXY_SYNCHRONOUS
 
 } // namespace gxy
 

@@ -60,13 +60,13 @@ smem::smem(int n)
 
 	if (dbg == -2)
 	{
-		if (getenv("SMEMDBG"))
+		if (getenv("GXY_SMEMDBG"))
 		{
-			int d = atoi(getenv("SMEMDBG"));
+			int d = atoi(getenv("GXY_SMEMDBG"));
 			dbg = (d == -1 || d == GetTheApplication()->GetRank()) ? 1 : 0;
 		}
-		if (getenv("SMEMBRK"))
-			smbrk = atoi(getenv("SMEMBRK"));
+		if (getenv("GXY_SMEMBRK"))
+			smbrk = atoi(getenv("GXY_SMEMBRK"));
 	}
 
 	if (kk == smbrk)

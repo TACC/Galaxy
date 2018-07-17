@@ -22,7 +22,7 @@
 #include "Rendering.h"
 #include "Socket.h"
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_POINTER(ServerRendering)
@@ -42,4 +42,4 @@ private:
 	int max_frame;
 };
  
-}
+} // namesapace gxy

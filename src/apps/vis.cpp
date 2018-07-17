@@ -30,21 +30,22 @@
 #include <ospray/ospray.h>
 
 using namespace gxy;
+using namespace std;
 
 int mpiRank, mpiSize;
 
 void
 syntax(char *a)
 {
-  std::cerr << "syntax: " << a << " [options] json\n";
-  std::cerr << "optons:\n";
-  std::cerr << "  -C cdb     put output in Cinema DB (no)\n";
-  std::cerr << "  -D         run debugger\n";
-  std::cerr << "  -A         wait for attachment\n";
-  std::cerr << "  -s w h     window width, height (1920 1080)\n";
-  std::cerr << "  -S k       render only every k'th rendering\n";
-  std::cerr << "  -c         client/server interface\n";
-  std::cerr << "  -N         max number of simultaneous renderings (VERY large)\n";
+  cerr << "syntax: " << a << " [options] json" endl;
+  cerr << "optons:" << endl;
+  cerr << "  -C cdb     put output in Cinema DB (no)" << endl;
+  cerr << "  -D         run debugger" << endl;
+  cerr << "  -A         wait for attachment" << endl;
+  cerr << "  -s w h     window width, height (1920 1080)" << endl;
+  cerr << "  -S k       render only every k'th rendering" << endl;
+  cerr << "  -c         client/server interface" << endl;
+  cerr << "  -N         max number of simultaneous renderings (VERY large)" << endl;
   exit(1);
 }
 
@@ -87,7 +88,7 @@ public:
     if (do_me)
     {
       if (attach)
-        std::cerr << "Attach to PID " << pid << "\n";
+        cerr << "Attach to PID " << pid << endl;
       else
       {
         cmd << "~/dbg_script " << executable << " " << pid << " &";
@@ -97,7 +98,7 @@ public:
       while (dbg)
         sleep(1);
 
-      std::cerr << "running\n";
+      cerr << "running" << endl;
     }
   }
 };
@@ -154,9 +155,9 @@ int main(int argc,  char *argv[])
     {
       char hn[256];
       gethostname(hn, 256);
-      std::cerr << "root is on host: " << hn << "\n";
+      cerr << "root is on host: " << hn << endl;
       cs.setup_server();
-      std::cerr << "connection ok\n";
+      cerr << "connection ok" << endl;
     }
 
     RendererP theRenderer = Renderer::NewP();
@@ -212,7 +213,7 @@ int main(int argc,  char *argv[])
             k ++;
         }
 
-    std::cout << "index = " << index << "\n";
+    cout << "index = " << index << endl;
 
     rs->Commit();
 
@@ -223,13 +224,13 @@ int main(int argc,  char *argv[])
     for (auto rs : theRenderingSets)
     {
 			long t0 = my_time();
-      std::cout << "render start\n";
+      cout << "render start" << endl;
 
 			rs->Commit();
       theRenderer->Render(rs);
 
 #if 1
-#ifdef PRODUCE_STATUS_MESSAGES
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
       while (rs->Busy())
       {
         rs->DumpState();
@@ -238,15 +239,15 @@ int main(int argc,  char *argv[])
 #else
       if (clientserver)
       {
-        std::cerr << "Renderer running\n";
+        std::cerr << "Renderer running" << endl;
 
         char c;
         while (read(cs.get_socket(), &c, 1) > 0)
         {
-#ifdef PRODUCE_STATUS_MESSAGES
-          if (c == 's') std::cerr << "got s\n", rs->DumpState();
+#ifdef GXY_PRODUCE_STATUS_MESSAGES
+          if (c == 's') { cerr << "got s" << endl; rs->DumpState(); }
 #endif
-          if (c == 'd') std::cerr << "got d\n", theApplication.DumpEvents();
+          if (c == 'd') { cerr << "got d" << endl; theApplication.DumpEvents(); }
           if (c == 'q') break;
         }
       }
@@ -258,11 +259,11 @@ int main(int argc,  char *argv[])
       rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image");
 
 			long t1 = my_time();
-			std::cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds\n";
+			cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds" << endl;
     }
 
 		long t_done = my_time();
-		std::cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds\n";
+		cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
 
     theApplication.QuitApplication();
   }

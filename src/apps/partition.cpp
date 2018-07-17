@@ -41,7 +41,6 @@
 using namespace gxy;
 using namespace rapidjson;
 using namespace std;
-using namespace pvol;
 
 float frand()
 {
@@ -157,14 +156,14 @@ isIn(Particle& p, float *extent, float max_radius)
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] ifile obase\n";
-  cerr << "options:\n";
-  cerr << "    -m x X y Y z Z         bounding box (scan the points)\n";
-  cerr << "    -s npartitions         number of partitions (1)\n";
-  cerr << "    -r radius              max particle radius (0)\n";
-  cerr << "    -v vfile               .vol file for BB info\n";
-  cerr << "    -V                     input has v per point (no)\n";
-	cerr << "    -P                     set v value to owning partition (no)\n";
+  cerr << "syntax: " << a << " [options] ifile obase" << endl;
+  cerr << "options:" << endl;
+  cerr << "    -m x X y Y z Z         bounding box (scan the points)" << endl;
+  cerr << "    -s npartitions         number of partitions (1)" << endl;
+  cerr << "    -r radius              max particle radius (0)" << endl;
+  cerr << "    -v vfile               .vol file for BB info" << endl;
+  cerr << "    -V                     input has v per point (no)" << endl;
+	cerr << "    -P                     set v value to owning partition (no)" << endl;
   exit(1);
 }
 
@@ -183,7 +182,7 @@ opn(string iname)
   struct stat info;
   if (stat(iname.c_str(), &info))
   {
-    cerr << "cannot stat " << iname << "\n";
+    cerr << "cannot stat " << iname << endl;
     exit(1);
   }
 
@@ -194,14 +193,14 @@ opn(string iname)
   buffer = (unsigned char *)malloc(buffersz);
   if (! buffer)
   {
-    cerr << "error allocating buffer\n";
+    cerr << "error allocating buffer" << endl;
     exit(1);
   }
 
   fd = open(iname.c_str(), O_RDONLY);
   if (fd < 0)
   {
-    cerr << "cannot open " << iname << "\n";
+    cerr << "cannot open " << iname << endl;
     exit(1);
   }
 }
@@ -226,7 +225,7 @@ nxt(int& n)
     size_t k = read(fd, p, m);
     if (k == 0)
     {
-      cerr << "read error\n";
+      cerr << "read error" << endl;
       exit(1);
     }
 
@@ -294,7 +293,7 @@ main(int argc, char *argv[])
 
 	if (mkdir(obase.c_str(), 0755) && errno != EEXIST)
 	{
-		std::cerr << "unable to create partition directory\n";
+		cerr << "unable to create partition directory" << endl;
 		exit(1);
 	}
     
@@ -305,7 +304,7 @@ main(int argc, char *argv[])
   {
     if (3 != sscanf(getenv("PARTITIONING"), "%d,%d,%d", &gp.x, &gp.y, &gp.z))
     {
-      std::cerr << "Illegal PARTITIONING environment variable\n";
+      cerr << "Illegal PARTITIONING environment variable" << endl;
       exit(1);
     }
     npartitions = gp.x * gp.y * gp.z;

@@ -54,7 +54,7 @@ public:
   	datasets.insert(std::pair<std::string, KeyedDataObjectP>(name, val));
   }
 
-	Key FindKey(string name)
+	Key FindKey(std::string name)
 	{
 		KeyedDataObjectP kdop = Find(name);
 		if (kdop != NULL)
@@ -63,17 +63,17 @@ public:
 			return (Key)-1;
 	}
 
-	vector<string> GetDatasetNames()
+	std::vector<std::string> GetDatasetNames()
 	{
-		std::vector<string> v;
+		std::vector<std::string> v;
 		for (auto a : datasets)
 			v.push_back(a.first);
 		return v;
 	}
 			
-  KeyedDataObjectP Find(string name)
+  KeyedDataObjectP Find(std::string name)
   {
-  	map<string, KeyedDataObjectP>::iterator it = datasets.find(name);
+  	std::map<std::string, KeyedDataObjectP>::iterator it = datasets.find(name);
   	if (it == datasets.end()) return NULL;
   	else return (*it).second;
   }

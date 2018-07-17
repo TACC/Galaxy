@@ -64,8 +64,8 @@ public:
   
   Lighting *GetTheLighting() { return &lighting; }
 
-  virtual void LoadStateFromDocument(Document&);
-  virtual void SaveStateToDocument(Document&);
+  virtual void LoadStateFromDocument(rapidjson::Document&);
+  virtual void SaveStateToDocument(rapidjson::Document&);
 
   virtual void localRendering(RenderingSetP, MPI_Comm c);
 

@@ -37,7 +37,6 @@
 using namespace gxy;
 using namespace rapidjson;
 using namespace std;
-using namespace pvol;
 
 float frand()
 {
@@ -47,12 +46,12 @@ float frand()
 void
 syntax(char *a)
 {
-	cerr << "syntax: " << a << " [options] outfile\n";
-	cerr << "options:\n";
-	cerr << "    -v vfile               .vol file to get BB info (-1 -> 1)\n";
-  cerr << "    -m x X y Y z Z         bounding box\n";
-	cerr << "    -n nparticles          number of particles (1000)\n";
-	cerr << "    -R                     add random value\n";
+	cerr << "syntax: " << a << " [options] outfile" << endl;
+	cerr << "options:" << endl;
+	cerr << "    -v vfile               .vol file to get BB info (-1 -> 1)" << endl;
+  cerr << "    -m x X y Y z Z         bounding box" << endl;
+	cerr << "    -n nparticles          number of particles (1000)" << endl;
+	cerr << "    -R                     add random value" << endl;
 	exit(1);
 }
 

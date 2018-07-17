@@ -33,7 +33,7 @@
 #include "Pixel.h"
 #include "ImageWriter.h"
 
-using namespace pvol;
+using namespace gxy;
 using namespace std;
 
 #define WIDTH  500
@@ -85,7 +85,7 @@ SendStart(int w, int h, string statefile)
 void
 SendMouseDown(float x, float y)
 {
-	std::cerr << "md " << x << " " << y << "\n";
+	cerr << "md " << x << " " << y << endl;
 	int sz = sizeof(int) + 2*sizeof(float);
 	char *buf = new char[sz];
 
@@ -103,7 +103,7 @@ SendMouseDown(float x, float y)
 void
 SendMouseMotion(float x, float y)
 {
-	std::cerr << "mm " << x << " " << y << "\n";
+	cerr << "mm " << x << " " << y << endl;
 	int sz = sizeof(int) + 2*sizeof(float);
 	char *buf = new char[sz];
 
@@ -186,13 +186,13 @@ receiver_thread(void *)
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] statefile\n";
-  cerr << "options:\n";
-  cerr << "  -D         run debugger\n";
-	cerr << "  -H host    host (localhost)\n";
-	cerr << "  -P port		port (5001)\n";
-  cerr << "  -A         wait for attachment\n";
-  cerr << "  -s w h     image size (512 x 512)\n";
+  cerr << "syntax: " << a << " [options] statefile" << endl;
+  cerr << "options:" << endl;
+  cerr << "  -D         run debugger" << endl;
+	cerr << "  -H host    host (localhost)" << endl;
+	cerr << "  -P port		port (5001)" << endl;
+  cerr << "  -A         wait for attachment" << endl;
+  cerr << "  -s w h     image size (512 x 512)" << endl;
   exit(1);
 }
 

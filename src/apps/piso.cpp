@@ -28,20 +28,18 @@
 
 #include "dtypes.h"
 
-using namespace std;
-using namespace pvol;
-
-#include <vtkImageData.h>
-#include <vtkUnsignedCharArray.h>
-#include <vtkFloatArray.h>
-#include <vtkPointData.h>
 #include <vtkCellData.h>
 #include <vtkContourFilter.h>
-
+#include <vtkFloatArray.h>
+#include <vtkImageData.h>
+#include <vtkPointData.h>
+#include <vtkRemoveGhosts.h>
+#include <vtkUnsignedCharArray.h>
 #include <vtkXMLImageDataWriter.h>
 #include <vtkXMLPolyDataWriter.h>
 
-#include <vtkRemoveGhosts.h>
+using namespace std;
+using namespace gxy;
 
 int mpi_rank, mpi_size;
 
@@ -204,9 +202,9 @@ syntax(char *a)
 {
   if (mpi_rank == 0)
   {
-    std::cerr << "syntax: [-n np | -p nx ny nz] [options] volname\n";
-    std::cerr << "options:\n";
-    std::cerr << "  -c contourvalue            at least 1\n";
+    std::cerr << "syntax: [-n np | -p nx ny nz] [options] volname" << endl;
+    std::cerr << "options:" << endl;
+    std::cerr << "  -c contourvalue            at least 1" << endl;
   }
   MPI_Finalize();
   exit(1);
@@ -312,7 +310,7 @@ main(int argc, char **argv)
     if (mkdir(base.c_str(), 0755))
       if (errno != EEXIST)
       {
-        std::cerr << "unable to create partition directory\n";
+        cerr << "unable to create partition directory" << endl;
         err = 1;
       }
   }
@@ -342,7 +340,7 @@ main(int argc, char **argv)
 					<< p->origin.x + ((((p->offset.x + p->count.x) - 1) * p->stepsize.x)) << " " 
 					<< p->origin.y + ((((p->offset.y + p->count.y) - 1) * p->stepsize.y)) << " "
 					<< p->origin.z + ((((p->offset.z + p->count.z) - 1) * p->stepsize.z)) << " " 
-          << base << "/" << "part-" << pnum << ".vtp\n";
+          << base << "/" << "part-" << pnum << ".vtp" << endl;
     };
 
     ofs.close();
@@ -350,7 +348,7 @@ main(int argc, char **argv)
 
   for (int pnum = mpi_rank; pnum < np; pnum += mpi_size)
   {
-		std::cerr << pnum << "\n";
+		cerr << pnum << endl;
     grid* p = partitions + pnum;
     
 #if 0
@@ -414,7 +412,7 @@ main(int argc, char **argv)
 
     stringstream ss;
     ss << dir + "/" + base + "/part-" << pnum << ".vtp";
-		cerr << mpi_rank << " working on  " << ss.str().c_str() << "\n";
+		cerr << mpi_rank << " working on  " << ss.str().c_str() << endl;
 
     vtkXMLPolyDataWriter *pdw = vtkXMLPolyDataWriter::New();
     pdw->SetFileName(ss.str().c_str());

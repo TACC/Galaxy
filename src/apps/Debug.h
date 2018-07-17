@@ -32,13 +32,13 @@ class Debug
 public:
   Debug(const char *executable, bool attach)
   {
-    cerr << "Debug ctor\n";
+    cerr << "Debug ctor" << endl;
     bool dbg = true;
     std::stringstream cmd;
     pid_t pid = getpid();
 
     if (attach)
-      std::cerr << "Attach to PID " << pid << "\n";
+      std::cerr << "Attach to PID " << pid << endl;
     else
     {
       cmd << "~/dbg_script " << executable << " " << pid << " &";

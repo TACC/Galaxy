@@ -63,8 +63,8 @@ public:
   virtual void allocate_ispc();
   virtual void initialize_ispc();
  
-  vector<vec4f> colormap;
-  vector<vec2f> opacitymap;
+  std::vector<vec4f> colormap;
+  std::vector<vec2f> opacitymap;
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *);

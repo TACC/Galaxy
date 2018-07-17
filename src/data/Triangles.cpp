@@ -38,8 +38,9 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridReader.h>
 
-using namespace std;
 using namespace boost::property_tree;
+using namespace rapidjson;
+using namespace std;
 
 namespace gxy
 {

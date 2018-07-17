@@ -32,7 +32,6 @@
 
 using namespace gxy;
 
-#define LOGGING 0
 
 class SampleMsg : public Work
 {
@@ -121,7 +120,7 @@ public:
 			particle ++;
 		}
 
-		std::cerr << "XXXX\n";
+		std::cerr << "XXXX" << std::endl;
 		return false;
 	}
 };

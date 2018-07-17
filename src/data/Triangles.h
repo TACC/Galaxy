@@ -24,21 +24,17 @@
 #include <string.h>
 #include <memory.h>
 
-using namespace std;
-
-#include "KeyedDataObject.h"
-#include "dtypes.h"
 #include "Application.h"
 #include "Box.h"
-#include "Geometry.h"
 #include "Datasets.h"
-using namespace std;
+#include "dtypes.h"
+#include "Geometry.h"
+#include "KeyedDataObject.h"
 
 #include "rapidjson/document.h"
-
 #include "ospray/ospray.h"
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_POINTER(Triangles)
@@ -54,8 +50,8 @@ public:
   virtual bool local_commit(MPI_Comm);
   virtual void local_import(char *, MPI_Comm);
 
-  virtual void LoadFromJSON(Value&);
-  virtual void SaveToJSON(Value&, Document&);
+  virtual void LoadFromJSON(rapidjson::Value&);
+  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
 private:
 	int n_triangles;
@@ -65,4 +61,4 @@ private:
 	int *triangles;
 };
 
-}
+} // namespace gxy

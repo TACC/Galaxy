@@ -44,14 +44,14 @@ namespace gxy
 
 #define APP_PRINT(x)																				\
 {																														\
-  stringstream ss;																					\
+  std::stringstream ss;																			\
 	ss x;																											\
 	GetTheApplication()->Print(ss.str());											\
 }
 
 #define APP_LOG(x)																					\
 {																														\
-  stringstream ss;																					\
+  std::stringstream ss;																			\
 	ss << my_gettid() << " " << my_threadname() << " " <<  __FUNCTION__ << ": " x;			\
 	GetTheApplication()->Log(ss.str());												\
 }
@@ -123,7 +123,7 @@ public:
 	void SaveOutputState(rapidjson::Document *, std::string s);
 
 private:
-	vector<string> log;
+	std::vector<std::string> log;
 	MessageManager *theMessageManager;
 	KeyedObjectFactory *theKeyedObjectFactory;
 

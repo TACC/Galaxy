@@ -31,6 +31,7 @@
 #include "RayFlags.h"
 
 using namespace std;
+using namespace rapidjson;
 
 namespace gxy
 {

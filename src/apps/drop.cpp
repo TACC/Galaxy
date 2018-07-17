@@ -27,8 +27,6 @@
 
 #include <Application.h>
 
-using namespace pvol;
-
 #include "TestObject.h"
 
 using namespace gxy;
@@ -46,7 +44,7 @@ main(int argc, char * argv[])
 
 	TestObject::Register();
 
-	std::cerr << "XX " << theApplication.GetRank() << "\n";
+	std::cerr << "XX " << theApplication.GetRank() << std::endl;
 
 	if (theApplication.GetRank() == 0)
 	{

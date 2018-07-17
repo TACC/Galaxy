@@ -25,21 +25,19 @@
 #include <GL/glut.h>
 #include <pthread.h>
 #include <time.h>
+
 #include "ImageWriter.h"
-
-using namespace std;
-
-
 #include "Application.h"
 #include "Renderer.h"
 #include "AsyncRendering.h"
+#include "trackball.hpp"
+#include "async.h"
 
 #include <ospray/ospray.h>
 
-using namespace pvol;
-
-#include "trackball.hpp"
-#include "async.h"
+using namespace gxy;
+using namespace std;
+using namespace rapidjson;
 
 #define WIDTH  500
 #define HEIGHT 500
@@ -129,7 +127,7 @@ public:
     pid_t pid = getpid();
 
     if (attach)
-      std::cerr << "Attach to PID " << pid << "\n";
+      std::cerr << "Attach to PID " << pid << endl;
     else
     {
       cmd << "~/dbg_script " << executable << " " << pid << " &";
@@ -139,7 +137,7 @@ public:
     while (dbg)
       sleep(1);
 
-    std::cerr << "running\n";
+    std::cerr << "running" << endl;
   }
 };
 
@@ -412,19 +410,20 @@ render_thread(void *d)
 	}
 
 	set_state(DONE);
+	return 0;
 }
 
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] statefile\n";
-  cerr << "options:\n";
-  cerr << "  -D         run debugger\n";
-  cerr << "  -A         wait for attachment\n";
-  cerr << "  -s w h     image size (512 x 512)\n";
-  cerr << "  -O         object-center model (default)\n";
-  cerr << "  -E         eye-center model\n";
-	cerr << "  -a age     limit on sample age (1.0)\n";
+  cerr << "syntax: " << a << " [options] statefile" << endl;
+  cerr << "options:" << endl;
+  cerr << "  -D         run debugger" << endl;
+  cerr << "  -A         wait for attachment" << endl;
+  cerr << "  -s w h     image size (512 x 512)" << endl;
+  cerr << "  -O         object-center model (default)" << endl;
+  cerr << "  -E         eye-center model" << endl;
+	cerr << "  -a age     limit on sample age (1.0)" << endl;
   exit(1);
 }
 

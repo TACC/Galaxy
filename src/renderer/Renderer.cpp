@@ -349,7 +349,7 @@ public:
 							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
 							// to ADD the (negative) shadow
 
-#if GXY_REVERSE_LIGHTING
+#ifdef GXY_REVERSE_LIGHTING
 							classification[i] = DROP_ON_FLOOR;
 #else
 							classification[i] = SEND_TO_FB;
@@ -362,7 +362,7 @@ public:
 					{
 						// We don't need to add in the light's contribution
 						// OR, if reverse lighting, send to FB to ADD the (negative) shadow
-#if GXY_REVERSE_LIGHTING
+#ifdef GXY_REVERSE_LIGHTING
 					classification[i] = SEND_TO_FB;
 #else
           classification[i] = DROP_ON_FLOOR;
@@ -387,7 +387,7 @@ public:
 							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
 							// to ADD the (negative) shadow
 
-#if GXY_REVERSE_LIGHTING
+#ifdef GXY_REVERSE_LIGHTING
 							classification[i] = DROP_ON_FLOOR;
 #else
 							classification[i] = SEND_TO_FB;
@@ -401,7 +401,7 @@ public:
 						// We don't need to add in the light's contribution
 						// OR, if reverse lighting, send to FB to ADD the (negative)
 						// ambient contribution
-#if GXY_REVERSE_LIGHTING
+#ifdef GXY_REVERSE_LIGHTING
 						classification[i] = SEND_TO_FB;
 #else
 						classification[i] = DROP_ON_FLOOR;
@@ -413,7 +413,7 @@ public:
 						// we don't add the (negative) ambient contribution;
 						// otherwise, send  to FB to add in (positive) ambient
 						// contribution
-#if GXY_REVERSE_LIGHTING
+#ifdef GXY_REVERSE_LIGHTING
 						classification[i] = DROP_ON_FLOOR;
 #else
 						classification[i] = SEND_TO_FB;
@@ -621,11 +621,11 @@ Renderer::_dumpStats()
 	s << "sent to neighbors:";
 
 	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? endl : " ");
+		s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
 
 	s << "received from neighbors:";
 	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? endl : " ");
+		s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
 	
 	APP_LOG(<< s.str());
 }
@@ -745,7 +745,7 @@ void
 Renderer::Render(RenderingSetP rs)
 {
 	static int render_frame = 0;
-#if defined(EVENT_TRACKING)
+#ifdef GXY_EVENT_TRACKING
 
 	class StartRenderingEvent : public Event
 	{

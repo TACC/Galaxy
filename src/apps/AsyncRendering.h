@@ -24,7 +24,7 @@
 
 #include <pthread.h>
 
-namespace pvol
+namespace gxy
 {
 
 KEYED_OBJECT_POINTER(AsyncRendering)
@@ -66,4 +66,4 @@ private:
 };
  
 
-}
+} // namespace gxy

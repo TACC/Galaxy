@@ -25,7 +25,7 @@ void ksdflksaf() {}
 #include "quat.h"
 #include <math.h>
 
-namespace pvol
+namespace gxy
 {
 #define TRACKBALLSIZE 2.0
 

@@ -32,6 +32,7 @@
 #include "rapidjson/document.h"
 
 using namespace rapidjson;
+using namespace std;
 
 namespace gxy
 {

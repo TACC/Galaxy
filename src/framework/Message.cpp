@@ -18,8 +18,6 @@
 //                                                                            //
 // ========================================================================== //
 
-#undef DBG
-
 #include "Message.h"
 
 #include <fstream>
@@ -34,6 +32,8 @@
 #include <unistd.h>
 
 #include "Application.h"
+
+using namespace std;
 
 namespace gxy
 {

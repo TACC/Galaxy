@@ -122,7 +122,7 @@ protected:
   class AttachMsg : public Work
   {
   public:
-    AttachMsg(Key k, string vname) : AttachMsg(sizeof(Key) + vname.length() + 1)
+    AttachMsg(Key k, std::string vname) : AttachMsg(sizeof(Key) + vname.length() + 1)
     {
       *(Key *)contents->get() = k;
       memcpy(((char *)contents->get()) + sizeof(Key), vname.c_str(), vname.length()+1);

@@ -32,13 +32,12 @@
 #include "Pixel.h"
 #include "ImageWriter.h"
 
+using namespace gxy;
 using namespace std;
 
 #define WIDTH  500
 #define HEIGHT 500
 int width = WIDTH, height = HEIGHT;
-
-using namespace pvol;
 
 ImageWriter image_writer("async_client");
 
@@ -184,7 +183,7 @@ keyboard(unsigned char ch, int x, int y)
 			SendStats();
 			break;
 		case 0x51: // Q - print rcvd
-			std::cerr << rcvd << "\n";
+			std::cerr << rcvd << std::endl;
 			break;
 		case 0x53: // S - save image
 			image_writer.Write(width, height, pixels);
@@ -195,7 +194,7 @@ keyboard(unsigned char ch, int x, int y)
 			break;
 		case 0x44:
 			for (int i = 0; i <= max_f; i++)
-				std::cerr << i << ": " << fknt[i] << "\n";
+				std::cerr << i << ": " << fknt[i] << std::endl;
 			SendDebug();
 			break;
     case 0x1B: 
@@ -384,14 +383,14 @@ receiver_thread(void *)
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] statefile\n";
-  cerr << "options:\n";
-  cerr << "  -D         run debugger\n";
-	cerr << "  -H host    host (localhost)\n";
-	cerr << "  -P port		port (5001)\n";
-  cerr << "  -A         wait for attachment\n";
-  cerr << "  -s w h     image size (512 x 512)\n";
-  cerr << "  -F         ignore mouse movement\n";
+  cerr << "syntax: " << a << " [options] statefile" << endl;
+  cerr << "options:" << endl;
+  cerr << "  -D         run debugger" << endl;
+	cerr << "  -H host    host (localhost)" << endl;
+	cerr << "  -P port		port (5001)" << endl;
+  cerr << "  -A         wait for attachment" << endl;
+  cerr << "  -s w h     image size (512 x 512)" << endl;
+  cerr << "  -F         ignore mouse movement" << endl;
   exit(1);
 }
 

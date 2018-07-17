@@ -25,10 +25,12 @@
 
 namespace gxy
 {
+
 void RegisterDataObjects()
 {
 	KeyedDataObject::Register();
 	Vis::Register();
 	Visualization::Register();
 }
+
 } // namespace gxy

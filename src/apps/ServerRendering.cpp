@@ -21,7 +21,7 @@
 #include "ServerRendering.h"
 #include <pthread.h>
 
-namespace pvol
+namespace gxy
 {
 
 static pthread_mutex_t serverrendering_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -53,4 +53,4 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 	}
 }
 
-}
+} // namespace gxy

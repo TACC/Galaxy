@@ -44,7 +44,7 @@ class Visualization : public KeyedObject, public ISPCObject
 {
   KEYED_OBJECT(Visualization);
 
-  using vis_t = vector<VisP>;
+  using vis_t = std::vector<VisP>;
 
 public:
   void test();
@@ -52,7 +52,7 @@ public:
   virtual ~Visualization();
   virtual void initialize();
 
-  static vector<VisualizationP> LoadVisualizationsFromJSON(Value&);
+  static std::vector<VisualizationP> LoadVisualizationsFromJSON(rapidjson::Value&);
 
   virtual void Commit(DatasetsP);
 
@@ -64,10 +64,10 @@ public:
   void AddMappedGeometryVis(VisP m);
   void AddVolumeVis(VisP v);
 
-  virtual void SaveToJSON(Value&, Document&);
-  void LoadFromJSON(Value&);
+  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+  void LoadFromJSON(rapidjson::Value&);
 
-  void  SetAnnotation(string a) { annotation = a; }
+  void  SetAnnotation(std::string a) { annotation = a; }
   const char *GetAnnotation() { return annotation.c_str(); }
 
   OSPModel GetTheModel() { return ospModel; }
@@ -93,7 +93,7 @@ protected:
   virtual unsigned char *serialize(unsigned char *);
   virtual unsigned char *deserialize(unsigned char *);
 
-  string annotation;
+  std::string annotation;
 
   vis_t osprayGeometries;
   vis_t mappedGeometries;

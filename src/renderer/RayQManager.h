@@ -79,7 +79,7 @@ public:
 	int current_frame_id() { return frame_id; }
 	void bump_frame_id() { frame_id ++; }
 
-#ifdef PVOL_SYNCHRONOUS
+#ifdef GXY_SYNCHRONOUS
 	void Pause();
 	void Resume();
 	void  GetQueuedRayCount(int&, int&);
@@ -137,7 +137,7 @@ private:
     bool CollectiveAction(MPI_Comm c, bool isRoot);
   };
 
-	list<RayList*> rayQ;
+	std::list<RayList*> rayQ;
 };
 
 } // namespace gxy

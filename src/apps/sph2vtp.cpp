@@ -50,7 +50,7 @@ main(int argc, char **argv)
   struct stat info;
   if (stat(argv[1], &info))
   {
-    cerr << "Cannot open " << argv[1] << "\n";
+    cerr << "Cannot open " << argv[1] << endl;
     exit(1);
   }
 
@@ -75,7 +75,7 @@ main(int argc, char **argv)
 		size_t n = read(fd, p, sz);
 		if (n <= 0)
 		{
-			std::cerr << "read error\n";
+			cerr << "read error" << endl;
 			exit(0);
 		}
 
@@ -83,7 +83,7 @@ main(int argc, char **argv)
 		sz -= n;
 	}
 
-	std::cerr << "read done\n";
+	cerr << "read done" << endl;
 
 	vtkPolyData *pd = vtkPolyData::New();
 	pd->Allocate(nParticles);

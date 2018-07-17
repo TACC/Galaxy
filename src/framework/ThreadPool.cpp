@@ -26,8 +26,6 @@
 #include "ThreadPool.h"
 
 using namespace std;
-namespace pvol
-{
 
 namespace gxy
 {
@@ -285,7 +283,9 @@ ThreadPool::~ThreadPool()
   pthread_mutex_destroy(&lock);
   pthread_cond_destroy(&cond);
 }
-}
+
+} // namespace gxy
+
 #endif
-}
+
 

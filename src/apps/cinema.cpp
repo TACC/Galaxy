@@ -31,13 +31,11 @@
 #include <galaxy.h>
 #include <OSPRayRenderer.h>
 
-#ifdef WITH_VTK_RENDERER
+#ifdef GXY_WITH_VTK_RENDERER
 #include <GeomRenderer.h>
 #endif
 
 #include "Cinema.h"
-
-using namespace pvol;
 
 using namespace std;
 using namespace gxy;
@@ -100,11 +98,11 @@ main(int argc, char *argv[])
 	if (filename == "")
 		syntax(argv[0]);
 
-#ifdef WITH_VTK_RENDERER
+#ifdef GXY_WITH_VTK_RENDERER
 	Renderer  *theRenderer = raycaster ? (Renderer *) new OSPRayRenderer(&argc, &argv) : new GeomRenderer(&argc, &argv);
 #else
 	if (! raycaster)
-		std::cerr << "this version does not support VTK rendering\n";
+		std::cerr << "ERROR: this version does not support VTK rendering" << std::endl;
 
 	Renderer  *theRenderer = (Renderer *) new OSPRayRenderer(&argc, &argv);
 #endif
@@ -127,7 +125,7 @@ main(int argc, char *argv[])
 
 		Cinema cinema(filename);
 
-		std::cerr << "Requires " << cinema.Count() << " images per time step\n";
+		std::cerr << "Requires " << cinema.Count() << " images per time step" << std::endl;
 		cinema.setSaveState(saveState);
 
 		if (DataModel::GetCurrent()->has_an_attachment)
@@ -145,7 +143,7 @@ main(int argc, char *argv[])
 				cinema.Render(frame++);
 				auto t2 = std::chrono::high_resolution_clock::now();
 				std::cerr << "rendering time "
-						<< std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << " milliseconds\n";
+						<< std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << " milliseconds" << std::endl;
 			}
 		}
 		else
@@ -157,7 +155,7 @@ main(int argc, char *argv[])
 			cinema.Render(0);
 			auto t2 = std::chrono::high_resolution_clock::now();
 			std::cerr << "rendering time "
-						<< std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << " milliseconds\n";
+						<< std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << " milliseconds" << std::endl;
 		}
 
 		cinema.WriteInfo();

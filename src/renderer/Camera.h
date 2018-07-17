@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <future>
 #include <memory>
 #include <string>
 #include <vector>
@@ -49,7 +50,7 @@ class Camera : public KeyedObject
 
 public:
 
-	static vector<CameraP> LoadCamerasFromJSON(rapidjson::Value&);
+	static std::vector<CameraP> LoadCamerasFromJSON(rapidjson::Value&);
 	
 	virtual void LoadFromJSON(rapidjson::Value&);
 	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
@@ -85,18 +86,18 @@ public:
 
 	void print();
 
-	void generate_initial_rays(RenderingSetP, RenderingP, Box*, Box*, vector<future<void>>& rvec);
+	void generate_initial_rays(RenderingSetP, RenderingP, Box*, Box*, std::vector<std::future<void>>& rvec);
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *ptr);
   virtual unsigned char *deserialize(unsigned char *ptr);
 
-  void  SetAnnotation(string a) { annotation = a; }
+  void  SetAnnotation(std::string a) { annotation = a; }
   const char *GetAnnotation() { return annotation.c_str(); }
 
 protected:
 
-  string annotation;
+  std::string annotation;
 	
 	float eye[3];
 	float dir[3];

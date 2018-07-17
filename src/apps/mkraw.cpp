@@ -31,13 +31,13 @@ using namespace std;
 void 
 syntax(char *a)
 {
-	cerr << "syntax: " << a << " [options]\n";
-	cerr << "options:\n";
-	cerr << "  -x n         counts along x (100)\n";
-	cerr << "  -y n         counts along y (100)\n";
-	cerr << "  -z n         counts along z (100)\n";
-	cerr << "  -xyz n       counts along all three axes (100)\n";
-	cerr << "  -f fname     output file name root (foo)\n";
+	cerr << "syntax: " << a << " [options]" << endl;
+	cerr << "options:" << endl;
+	cerr << "  -x n         counts along x (100)" << endl;
+	cerr << "  -y n         counts along y (100)" << endl;
+	cerr << "  -z n         counts along z (100)" << endl;
+	cerr << "  -xyz n       counts along all three axes (100)" << endl;
+	cerr << "  -f fname     output file name root (foo)" << endl;
 	exit(1);
 }
 
@@ -79,11 +79,11 @@ main(int argc, char **argv)
 
 	ofstream out;
 	out.open((froot + ".vol").c_str());
-	out << "float\n";
-	out << "-1 -1 -1\n";
-	out << nx << " " << ny << " " << nz << "\n";
-	out << (2.0 / (nx-1)) << " " << (2.0 / (ny-1)) << " " << (2.0 / (nz-1)) << "\n";
-	out << "foo.raw\n";
+	out << "float" << endl;
+	out << "-1 -1 -1" << endl;
+	out << nx << " " << ny << " " << nz << endl;
+	out << (2.0 / (nx-1)) << " " << (2.0 / (ny-1)) << " " << (2.0 / (nz-1)) << endl;
+	out << "foo.raw" << endl;
 	out.close();
 
 	out.open((froot + ".raw").c_str());
