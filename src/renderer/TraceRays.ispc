@@ -35,6 +35,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "src/galaxy.h"
+
 #include "ospray/SDK/math/vec.ih"
 #include "ospray/SDK/common/Ray.ih"
 #include "ospray/SDK/render/util.ih"
@@ -820,6 +822,8 @@ export void TraceRays_generateShadowRays(void *uniform _self,
 #else
   uniform float Kd = lights->Kd / lights->nLights;
 #endif
+
+	// print("KD %\n", Kd);
 
   foreach (i = 0 ... nRaysIn)
   {
