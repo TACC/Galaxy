@@ -106,7 +106,7 @@ Renderer::initialize()
 	sent_to = new int[GetTheApplication()->GetSize()];
 	received_from = new int[GetTheApplication()->GetSize()];
 
-	max_rays_per_packet = getenv("RAYS_PER_PACKET") ? atoi(getenv("RAYS_PER_PACKET")) : 1000000;
+	max_rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
 }
 
 Renderer::~Renderer()
@@ -147,7 +147,8 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 	// already seen a raylist from a later frame, in which case we won't
 	// bother generating rays for this one.
 	
-	if (renderingSet->NeedInitialRays())
+	int fnum = renderingSet->NeedInitialRays();
+  if (fnum != -1)
 	{
 #ifdef GXY_LOGGING
 	if (GetTheApplication()->GetRank() == 0)
@@ -189,7 +190,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			Box *gBox = visualization->get_global_box();
 			Box *lBox = visualization->get_local_box();
 
-			camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec);
+			camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec, fnum);
 		}
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
@@ -275,6 +276,12 @@ public:
 
 		while (raylist)
 		{
+		  if (raylist->GetFrame() != renderingSet->GetCurrentFrame())
+		  {
+				delete raylist;
+				return 0;
+		  }
+
 			// This may put secondary lists on the ray queue
 			renderer->Trace(raylist);
 
@@ -520,7 +527,12 @@ public:
 
 			// If we AREN't the owner of the Rendering send the pixels to its owner
 			if (spmsg)
-				spmsg->Send(rendering->GetTheOwner());
+			{
+			  if (raylist->GetFrame() != renderingSet->GetCurrentFrame())
+				  spmsg->Send(rendering->GetTheOwner());
+				else
+				  delete spmsg;
+			}
 
 			if (local_pixels)
 			{
@@ -534,9 +546,12 @@ public:
 #ifdef GXY_SYNCHRONOUS
 					// This process gets "ownership" of the new ray list until its recipient acknowleges 
 					renderingSet->IncrementRayListCount();
-#endif // GXY_SYNCHRONOUS
-				
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
+#else
+					if (ray_lists[i]->GetFrame() == renderingSet->GetCurrentFrame())
+						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
+#endif // GXY_SYNCHRONOUS
+
 					delete ray_lists[i];
 				}
 
@@ -581,7 +596,7 @@ Renderer::Trace(RayList *raylist)
 		if (out->GetRayCount() > Renderer::GetTheRenderer()->GetMaxRayListSize())
 		{
 			vector<RayList*> rayLists;
-			out->Subset(rayLists);
+			out->Split(rayLists);
 			for (vector<RayList*>::iterator it = rayLists.begin(); it != rayLists.end(); it++)
 			{
 				RayList *s = *it;

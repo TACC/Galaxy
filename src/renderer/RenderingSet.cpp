@@ -709,17 +709,18 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 		delete rl;
 	}
 }
-bool
+
+int
 RenderingSet::NeedInitialRays()
 {
 	next_frame ++;
 	if (next_frame >= current_frame)
 	{
 		current_frame = next_frame;
-		return true;
+		return current_frame;
 	}
 	else
-		return false;
+		return -1;
 }
 
 bool

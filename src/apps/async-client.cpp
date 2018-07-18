@@ -292,6 +292,8 @@ receiver_thread(void *)
 		ptr += sizeof(int);
 		Pixel *p = (Pixel *)ptr;
 
+// std::cerr << frame << " " << knt << "\n";
+
 		long now = my_time();
 		if (frame >= max_f)
 		{

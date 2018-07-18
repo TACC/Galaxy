@@ -196,7 +196,7 @@ RayList::setup_ispc_pointers()
 }
 
 void
-RayList::Subset(vector<RayList*>& subsets)
+RayList::Split(vector<RayList*>& subsets)
 {
   int rpp = Renderer::GetTheRenderer()->GetMaxRayListSize();
   for (int i = 0; i < GetRayCount(); i += rpp)

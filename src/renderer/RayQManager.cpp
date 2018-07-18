@@ -247,17 +247,22 @@ RayQManager::Enqueue(RayList *r)
 	// This is called when a ray list is introduced - either
 	// the initial local rays or from another process.
 
-  if (! r)
-    cerr << "WARNING: Enqueuing NULL raylist!" << endl;
+  if (r->GetFrame() < r->GetTheRenderingSet()->GetCurrentFrame())
+    delete r;
+  else
+  {
+    if (! r)
+			cerr << "WARNING: Enqueuing NULL raylist!" << endl;
 
-  Lock();
+		Lock();
 
-	rayQ.push_back(r);
+		rayQ.push_back(r);
 
-	if (! paused)
-		Signal();
+		if (! paused)
+			Signal();
 
-  Unlock();
+		Unlock();
+	}
 }
 
 } // namespace gxy

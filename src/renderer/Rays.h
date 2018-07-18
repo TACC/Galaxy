@@ -86,7 +86,7 @@ public:
 	void *get_header_address() { return ((void *)(contents->get())); }
 
 	void Truncate(int n);
-	void Subset(std::vector<RayList*>& subsets);
+	void Split(std::vector<RayList*>& subsets);
 
 	void setup_ispc_pointers();
 

@@ -202,9 +202,10 @@ public:
 
 	// Called from Renderer::localRendering.  We won't generate initial rays
 	// for is call to localRendering IF we've already seen a ray list from a 
-	// subsequent frame
+	// subsequent frame and NeedInitialRays will return -1.   Otherwise, 
+	// NeedInitialRays returns the new frame number;
 
-	bool NeedInitialRays();
+	int  NeedInitialRays();
 	bool KeepRays(RayList *rl);
 
 private:

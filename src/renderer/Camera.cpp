@@ -300,15 +300,16 @@ protected:
 
 struct args
 {
-  args(float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy, 
+  args(int fnum, float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy, 
 			 vec3f& vr, vec3f& vu, vec3f& veye, vec3f center, 
 			 Box *lb, Box *gb, RenderingSetP rs, RenderingP r) :
-			 iwidth(iw), ixmin(ixmin), iymin(iymin),
+			 fnum(fnum), iwidth(iw), ixmin(ixmin), iymin(iymin),
 			 scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
 			 vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
 			 rs(rs), r(r) {}
   ~args() {}
 
+	int fnum;
   float scaling;
 	int iwidth, ixmin, iymin;
   float off_x, off_y;
@@ -374,7 +375,7 @@ public:
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
       {
-				if (!rlist) rlist = new RayList(a->rs, a->r, count);
+				if (!rlist) rlist = new RayList(a->rs, a->r, count, a->fnum);
 
 				rlist->set_x(dst, x);
 				rlist->set_y(dst, y);
@@ -397,18 +398,21 @@ public:
 
     if (rlist)
     {
-			if (dst < rlist->GetRayCount())
-				rlist->Truncate(dst);
+			if (a->fnum == a->rs->GetCurrentFrame())
+		  {
+				if (dst < rlist->GetRayCount())
+					rlist->Truncate(dst);
 
 #ifdef GXY_EVENT_TRACKING
-      GetTheEventTracker()->Add(new InitialRaysEvent(rlist));
+				GetTheEventTracker()->Add(new InitialRaysEvent(rlist));
 #endif
 
-			Renderer::GetTheRenderer()->add_originated_ray_count(rlist->GetRayCount());
-      a->rs->Enqueue(rlist, true);
-    }
-    else
-      delete rlist;
+				Renderer::GetTheRenderer()->add_originated_ray_count(rlist->GetRayCount());
+				a->rs->Enqueue(rlist, true);
+			}
+			else
+				delete rlist;
+		}
 
 #ifdef GXY_SYNCHRONOUS
 		a->rs->DecrementActiveCameraCount(dst);				
@@ -461,12 +465,20 @@ void check_env(int width, int height)
 		permute = getenv("GXY_PERMUTE_PIXELS");
 
 		if (permute)
+		{
+			std::cerr << "permute pixels\n";
 			permutation = generate_permutation(width*height);
+		}
+		else
+			std::cerr << "NO permute pixels\n";
+
+    if (getenv("GXY_CAMERA_RAYS_PER_PIXEL"))
+       rays_per_packet = atoi(getenv("CAMERA_RAYS_PER_PIXEL"));
 	}
 }
 		
 void
-Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<int>>& rvec)
+Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<int>>& rvec, int fnum)
 {
   int width, height;
   rendering->GetTheSize(width, height);
@@ -602,7 +614,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
     if (nrays < 0)
       return;
 
-    RayList *rayList = new RayList(renderingSet, rendering, nrays);
+    RayList *rayList = new RayList(renderingSet, rendering, nrays, fnum);
 
     vec2i *test_rays = new vec2i[nrays];
 
@@ -711,7 +723,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 		int iheight = (iymax - ixmin) + 1;
 
     ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
-    shared_ptr<args> a = shared_ptr<args>(new args(pixel_scaling, iwidth, 
+    shared_ptr<args> a = shared_ptr<args>(new args(fnum, pixel_scaling, iwidth, 
 																									 ixmin, iymin,
 																									 off_x, off_y, 
 																									 vr, vu, veye, center, 
