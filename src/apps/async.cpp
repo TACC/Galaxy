@@ -21,6 +21,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <GL/glut.h>
 #include <pthread.h>
@@ -323,6 +324,7 @@ render_thread(void *d)
 	normalize(viewright);
 	orig_viewup = cross(viewright, orig_viewdirection);
 	theCamera->set_viewup(orig_viewup);
+	theCamera->Commit();
 
   theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
@@ -446,7 +448,32 @@ main(int argc, char *argv[])
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
     else if (!strcmp(argv[i], "-a")) age = atof(argv[++i]);
-    else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
+    else if (!strncmp(argv[i], "-D", 2)) 
+		{
+		  atch = false;
+			dbg = false;
+			if (!strcmp(argv[i], "-D")) dbg = true;
+			else
+			{
+				char *a = argv[i] + 2;
+				while (a && !dbg)
+				{
+					char *b = a + 1;
+					while (b && (*b != ',' && *b != '\0')) b++;
+					if (*b == ',')
+					{
+						*b = '\0';
+						if (atoi(a) == theApplication.GetRank()) dbg = true;
+						a = b + 1; 
+					}
+					else
+					{
+						if (atoi(a) == theApplication.GetRank()) dbg = true;
+						a = NULL;
+					}
+				}
+			}
+		}
     else if (!strcmp(argv[i], "-O")) mode = OBJECT_CENTER;
     else if (!strcmp(argv[i], "-E")) mode = EYE_CENTER;
     else if (!strcmp(argv[i], "-s"))
