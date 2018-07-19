@@ -40,8 +40,10 @@ set (CPP_SOURCES
 			smem.cpp
 			Work.cpp)
 
+
 if (ospray_DIR)
   ospray_create_library(gxy_framework ${CPP_SOURCES} LINK ${OSPRAY_LIBRARIES} ${TBB_LIBRARIES} ${MPI_LIBRARIES} COMPONENT lib) 
+	set_target_properties(gxy_framework PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   set_target_properties(gxy_framework PROPERTIES COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
   set_target_properties(gxy_framework PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS}")
   install(TARGETS gxy_framework DESTINATION lib)

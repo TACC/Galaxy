@@ -27,16 +27,12 @@ include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_data_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src)
 
-include_directories_ispc(${gxy_framework_SOURCE_DIR}
-                         ${gxy_data_SOURCE_DIR})
-
 link_directories(${Galaxy_BINARY_DIR}/src/data 
                  ${Galaxy_BINARY_DIR}/src/framework)
 
 set (ISPC_SOURCES 
   Rays.ispc
   TraceRays.ispc)
-
 
 set (CPP_SOURCES 
   Camera.cpp 
@@ -50,6 +46,7 @@ set (CPP_SOURCES
 if (ospray_DIR)
   ospray_create_library(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES} 
     LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework COMPONENT lib)
+  set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   install(TARGETS gxy_renderer DESTINATION lib)
 endif()
 

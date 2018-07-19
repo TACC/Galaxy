@@ -21,6 +21,12 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(Galaxy)
 
+set(GALAXY_MAJOR_VER 0)
+set(GALAXY_MINOR_VER 9)
+set(GALAXY_PATCH_VER 0)
+set(GALAXY_VERSION ${GALAXY_MAJOR_VER}.${GALAXY_MINOR_VER}.${GALAXY_PATCH_VER})
+set(GALAXY_SOVERSION ${GALAXY_MAJOR_VER})
+
 if (COMMAND cmake_policy)
 	# use rpath on MacOS
   cmake_policy(SET CMP0042 NEW)
@@ -33,10 +39,8 @@ if (COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 # use C++11 foo explicitly
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-IF (APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-ENDIF (APPLE)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 # ignore override warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override")
@@ -58,30 +62,10 @@ set(GXY_REVERSE_LIGHTING ON CACHE BOOL "Use subtractive lighting model?")
 set(GXY_SYNCHRONOUS OFF CACHE BOOL "synchronize on completion of RenderSets?")
 set(GXY_TIMING OFF CACHE BOOL "Generate timing statistics for the Galaxy Renderer")
 
-# use C++11 foo explicitly
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-IF (APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-ENDIF (APPLE)
-
-# ignore override warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override")
-
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-
-SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Specifies the build type." FORCE)
-  SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
-ENDIF(NOT CMAKE_BUILD_TYPE)
-
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-set(EVENT_TRACKING FALSE CACHE BOOL "show events")
+set(GALAXY_INCLUDES ${PROJECT_SOURCE_DIR}/src/data ${PROJECT_SOURCE_DIR}/src/framework ${PROJECT_SOURCE_DIR}/src/renderer)
 
 # find system-installed dependencies
 find_package(Boost)
@@ -126,10 +110,10 @@ if (ospray_DIR)
   include(ospray_macros)
   include(ispc)
 
-  include_directories(${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
-  include_directories_ispc(${PROJECT_BINARY_DIR} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+  include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+  include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 else(ospray_DIR)
-  message(FATAL_ERROR "OSPRay directory not found. Please run ${PROJECT_SOURCE_DIR}/prep-third-party.sh and build the third-party dependencies before building Galaxy.")
+  message(FATAL_ERROR "OSPRay not found. Please run ${PROJECT_SOURCE_DIR}/prep-third-party.sh and build the third-party dependencies before building Galaxy.")
 endif(ospray_DIR)
 
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
@@ -139,7 +123,7 @@ SET(CMAKE_INSTALL_RPATH
   "${CMAKE_INSTALL_PREFIX}/lib"
   "${CMAKE_INSTALL_PREFIX}/ospray/lib")
 
-
 add_subdirectory(scripts)
 add_subdirectory(src)
+
 

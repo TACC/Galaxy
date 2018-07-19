@@ -18,6 +18,13 @@
 //                                                                            //
 // ========================================================================== //
 
+
+#cmakedefine GALAXY_VERSION
+#cmakedefine GALAXY_SOVERSION
+#cmakedefine GALAXY_MAJOR_VER
+#cmakedefine GALAXY_MINOR_VER
+#cmakedefine GALAXY_PATCH_VER
+
 #cmakedefine GXY_WITH_VTK_RENDERER
 //#cmakedefine WITH_ICET
 //#cmakedefine EVENT_TRACKING

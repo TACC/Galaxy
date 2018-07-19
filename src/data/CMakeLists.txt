@@ -58,14 +58,15 @@ set (ISPC_SOURCES
   Visualization.ispc
   VolumeVis.ispc)
 
-if(ospray_DIR)
+if (ospray_DIR)
   ospray_create_library(gxy_data ${CPP_SOURCES} ${ISPC_SOURCES} 
     LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_framework ${PNG_LIBRARY_RELEASE} 
     COMPONENT lib)
-  INSTALL(TARGETS gxy_data DESTINATION lib)
+  set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+  install(TARGETS gxy_data DESTINATION lib)
 endif()
 
-INSTALL(FILES 
+install(FILES 
   Box.h
   DataObjects.h
   Datasets.h
