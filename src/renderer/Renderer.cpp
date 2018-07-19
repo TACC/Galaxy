@@ -150,6 +150,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 	int fnum = renderingSet->NeedInitialRays();
   if (fnum != -1)
 	{
+	  // std::cerr << GetTheApplication()->GetRank() << " starting " << frame << "\n";
 #ifdef GXY_LOGGING
 	if (GetTheApplication()->GetRank() == 0)
 		std:cerr << "starting ray processing\n";
@@ -278,9 +279,12 @@ public:
 		{
 		  if (raylist->GetFrame() != renderingSet->GetCurrentFrame())
 		  {
+				// std::cerr << GetTheApplication()->GetRank() << " dropping raylist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
 				delete raylist;
 				return 0;
 		  }
+			// else
+				// std::cerr << GetTheApplication()->GetRank() << " processing raylist " << raylist->GetRayCount() << "\n";
 
 			// This may put secondary lists on the ray queue
 			renderer->Trace(raylist);
@@ -528,10 +532,16 @@ public:
 			// If we AREN't the owner of the Rendering send the pixels to its owner
 			if (spmsg)
 			{
-			  if (raylist->GetFrame() != renderingSet->GetCurrentFrame())
+			  if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
+				{
+					// std::cerr << GetTheApplication()->GetRank() << " sending pixellist to owner " << rendering->GetTheOwner() << "\n";
 				  spmsg->Send(rendering->GetTheOwner());
+				}
 				else
+				{
+					// std::cerr << GetTheApplication()->GetRank() << " not sending pixellist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
 				  delete spmsg;
+				}
 			}
 
 			if (local_pixels)
@@ -549,7 +559,11 @@ public:
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 #else
 					if (ray_lists[i]->GetFrame() == renderingSet->GetCurrentFrame())
+					{
 						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
+					}
+					// else
+						// std::cerr << GetTheApplication()->GetRank() << " not sending raylist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
 #endif // GXY_SYNCHRONOUS
 
 					delete ray_lists[i];
