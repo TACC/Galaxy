@@ -335,6 +335,8 @@ public:
 		GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
 
+		// std::cerr << GetTheApplication()->GetRank() << " SRT count = " << count << "\n";
+
 		RayList *rlist = NULL;
 
     int dst = 0;
@@ -408,11 +410,18 @@ public:
 #endif
 
 				Renderer::GetTheRenderer()->add_originated_ray_count(rlist->GetRayCount());
+				// std::cerr << GetTheApplication()->GetRank() << " starting " << rlist->GetRayCount() << " camera rays\n";
 				a->rs->Enqueue(rlist, true);
 			}
 			else
+			{
+				// std::cerr << GetTheApplication()->GetRank() << " dropping " << rlist->GetRayCount() << " camera rays\n";
 				delete rlist;
+			}
 		}
+		// else
+			// std::cerr << GetTheApplication()->GetRank() << " no hits\n";
+
 
 #ifdef GXY_SYNCHRONOUS
 		a->rs->DecrementActiveCameraCount(dst);				
@@ -465,12 +474,7 @@ void check_env(int width, int height)
 		permute = getenv("GXY_PERMUTE_PIXELS");
 
 		if (permute)
-		{
-			std::cerr << "permute pixels\n";
 			permutation = generate_permutation(width*height);
-		}
-		else
-			std::cerr << "NO permute pixels\n";
 
     if (getenv("GXY_CAMERA_RAYS_PER_PIXEL"))
        rays_per_packet = atoi(getenv("CAMERA_RAYS_PER_PIXEL"));
@@ -649,7 +653,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
       bool hit = gbox->intersect(veye, vray, gmin, gmax);
 
       float lmin, lmax;
-      if (hit) hit = lbox->intersect(veye, vray, lmin, lmax);
+			if (hit) hit = lbox->intersect(veye, vray, lmin, lmax);
 
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
