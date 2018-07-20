@@ -32,7 +32,8 @@ AsyncRendering::initialize()
 {
   Rendering::initialize();
   current = -1;
-	max_age = 1.0;
+	max_age = 3.0;
+	fadeout = 1.0;
 
   negative_pixels = NULL;
   frameids = NULL;
@@ -101,6 +102,7 @@ AsyncRendering::FrameBufferAger()
 				float sec = (now - tm) / 1000000000.0;
 
 				float *pix = framebuffer + (offset*4);
+#if 0
 				if (sec > max_age)
 				{
 					frame_times[offset] = now;
@@ -109,6 +111,19 @@ AsyncRendering::FrameBufferAger()
 				}
 				else
 					*pix++ *= 0.9, *pix++ *= 0.9, *pix++ *= 0.9, *pix++ = 1.0;
+#else
+				if (sec > max_age)
+				{
+					if (sec > (max_age + fadeout))
+					{
+						frame_times[offset] = now;
+						frameids[offset] = current;
+						*pix++ = 0.0, *pix++ = 0.0, *pix++ = 0.0, *pix++ = 1.0;
+					}
+					else
+						*pix++ *= 0.9, *pix++ *= 0.9, *pix++ *= 0.9, *pix++ = 1.0;
+				}
+#endif
 			}
 		}
 		pthread_mutex_unlock(&lock);

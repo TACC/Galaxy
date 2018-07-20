@@ -49,7 +49,8 @@ float X0, Y0;
 float X1, Y1;
 int button = -1;
 
-float age = 1.0;
+float age = 3.0;
+float fadeout = 1.0;
 
 volatile int frame = -1;
 
@@ -335,7 +336,7 @@ render_thread(void *d)
 	theVisualization->Commit(theDatasets);
 
 	theRendering = AsyncRendering::NewP();
-	theRendering->SetMaxAge(age);
+	theRendering->SetMaxAge(age, fadeout);
 	theRendering->SetTheOwner(0);
 	theRendering->SetTheSize(width, height);
 	theRendering->SetTheDatasets(theDatasets);
@@ -420,12 +421,12 @@ syntax(char *a)
 {
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "options:" << endl;
-  cerr << "  -D         run debugger" << endl;
-  cerr << "  -A         wait for attachment" << endl;
-  cerr << "  -s w h     image size (512 x 512)" << endl;
-  cerr << "  -O         object-center model (default)" << endl;
-  cerr << "  -E         eye-center model" << endl;
-	cerr << "  -a age     limit on sample age (1.0)" << endl;
+  cerr << "  -D               run debugger" << endl;
+  cerr << "  -A               wait for attachment" << endl;
+  cerr << "  -s w h           image size (512 x 512)" << endl;
+  cerr << "  -O               object-center model (default)" << endl;
+  cerr << "  -E               eye-center model" << endl;
+	cerr << "  -a age fadeout   sample age to begin fadeout (3.0), fadeout (1.0)" << endl;
   exit(1);
 }
 
@@ -447,7 +448,7 @@ main(int argc, char *argv[])
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strcmp(argv[i], "-a")) age = atof(argv[++i]);
+    else if (!strcmp(argv[i], "-a")) age = atof(argv[++i]), fadeout = atof(argv[++i]);
     else if (!strncmp(argv[i], "-D", 2)) 
 		{
 		  atch = false;
