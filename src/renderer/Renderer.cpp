@@ -329,14 +329,26 @@ public:
 					// A primary ray expires and is added to the FB if it terminated opaque OR if 
 					// it has timed out OR if it exitted the global box. 
 					//
+					// If its opaque it has a non-zero color component.  If it times out, it has a 
+					// non-zero lighting component.  In either case, we send it to the FB
+					//
+					// If it exits the global box, we only send it if it has a non-zero color component
+					//
 					// Otherwise, if it hit a *partition* boundary then it'll go to the neighbor.
 					//
 					// Otherwise, it better have hit a TRANSLUCENT  surface and will remain in the
 					// current partition.
 
-					if ((term & RAY_OPAQUE) | ((term & RAY_BOUNDARY) && exit_face == NO_NEIGHBOR) | (term & RAY_TIMEOUT))
+					if ((term & RAY_OPAQUE) | (term & RAY_TIMEOUT))
 					{
 						classification[i] = SEND_TO_FB;
+					}
+					else if ((term & RAY_BOUNDARY) && (exit_face == NO_NEIGHBOR))
+					{
+						if ((raylist->get_r(i) != 0) || (raylist->get_g(i) != 0) || (raylist->get_b(i) != 0))
+							classification[i] = SEND_TO_FB;
+						else
+							classification[i] = DROP_ON_FLOOR;
 					}
 					else if (term & RAY_BOUNDARY)  // then exit_face is not NO_NEIGHBOR -- see previous condition
 					{

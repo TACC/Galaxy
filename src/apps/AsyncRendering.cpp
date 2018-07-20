@@ -102,16 +102,6 @@ AsyncRendering::FrameBufferAger()
 				float sec = (now - tm) / 1000000000.0;
 
 				float *pix = framebuffer + (offset*4);
-#if 0
-				if (sec > max_age)
-				{
-					frame_times[offset] = now;
-					frameids[offset] = current;
-					*pix++ = 0.0, *pix++ = 0.0, *pix++ = 0.0, *pix++ = 1.0;
-				}
-				else
-					*pix++ *= 0.9, *pix++ *= 0.9, *pix++ *= 0.9, *pix++ = 1.0;
-#else
 				if (sec > max_age)
 				{
 					if (sec > (max_age + fadeout))
@@ -123,7 +113,6 @@ AsyncRendering::FrameBufferAger()
 					else
 						*pix++ *= 0.9, *pix++ *= 0.9, *pix++ *= 0.9, *pix++ = 1.0;
 				}
-#endif
 			}
 		}
 		pthread_mutex_unlock(&lock);
@@ -172,9 +161,23 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 {
 	pthread_mutex_lock(&lock);
 
+	long now = my_time();
+
 	if (frame >= current)
 	{
-		long now = my_time();
+		//  If current is strictly greater than frame then
+		//  updating it will kick the ager to begin aging
+		//  any pixels from prior frames.   We want to start the 
+		//  aging process from the arrival of the first contribution
+		//  to the new frame rather than its updated time.
+		
+		if (frame > current)
+		{
+			current = frame;
+
+			for (int offset = 0; offset < width*height; offset++)
+				frame_times[offset] = now;
+		}
 
 		// Only bump current frame IF this is a positive pixel
 
@@ -194,9 +197,25 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 
       if (frameids[offset] == frame)
 			{
+#if 1
 				*pix++ += p->r;
 				*pix++ += p->g;
 				*pix++ += p->b;
+#else
+				float r = pix[0] + p->r;
+				float g = pix[1] + p->g;
+				float b = pix[2] + p->b;
+
+				if (r < 0.01 && g < 0.01 && b < 0.01)
+					std::cerr << "A last " << pix[0] << " " << pix[1] << " " << pix[2] << "\n"
+										<< "  cont " << p->r << " " << p->g << " " << p->b << "\n"
+										<< "  next " << r << " " << g << " " << b << "\n";
+
+				*pix++ = r;
+				*pix++ = g;
+				*pix++ = b;
+#endif
+
 			}
 			else
 			{
@@ -226,17 +245,30 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 					// its a POSITIVE sample from a NEW frame, so we stuff the visible
 					// pixel with the new sample and any negative samples that arrived 
 					// first
-					current = frame;
 					frameids[offset] = frame;
-					frame_times[offset] = now;
+					// frame_times[offset] = now;
 					if (current == negative_frameids[offset])
 					{
-						*pix++ = (*npix + p->r), *npix = 0.0, npix++;
-						*pix++ = (*npix + p->g), *npix = 0.0, npix++;
-						*pix++ = (*npix + p->b), *npix = 0.0, npix++;
+						*pix++ = (*npix + p->r);
+					  *npix = 0.0;
+					  npix++;
+						*pix++ = (*npix + p->g);
+					  *npix = 0.0;
+					  npix++;
+						*pix++ = (*npix + p->b);
+					  *npix = 0.0;
+					  npix++;
+#if 1
+						if (pix[-3] < 0.01 && pix[-2] < 0.01 && pix[-1] < 0.01) 
+							std::cerr << "B " << p->r << " " << p->g << " " << p->b << "\n";
+#endif
 					}
 					else
 					{
+#if 1
+						if (p->r < 0.01 && p->g < 0.01 && p->b < 0.01)
+							std::cerr << "C last is overridden by " << p->r << " " << p->g << " " << p->b << "\n";
+#endif
 						*pix++ = p->r;
 						*pix++ = p->g;
 						*pix++ = p->b;
