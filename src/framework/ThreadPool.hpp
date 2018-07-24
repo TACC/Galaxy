@@ -67,15 +67,17 @@ class ThreadPool;
 class ThreadPoolTask
 {
 public:
-	ThreadPoolTask() {};
+	ThreadPoolTask(int p = 0) : priority(p) {};
 	virtual ~ThreadPoolTask() {};
 	virtual int work() = 0;
+	virtual int get_priority() { return priority; }
 
 	std::future<int> get_future() { return p.get_future(); }
 
 private:
 	std::promise<int> p;
 	friend class ThreadPool;
+	int priority;
 };
 	
 class ThreadPool
@@ -89,13 +91,12 @@ private:
 
 		while (! pool->stop)
 		{
-			while ((! pool->stop) && (pool->task_list.size() == 0))
+			while ((! pool->stop) && pool->task_list.empty())
 				pthread_cond_wait(&pool->wait, &pool->lock);
 
 			if (! pool->stop)
 			{
-				ThreadPoolTask *task = pool->task_list.front();
-				pool->task_list.pop_front();
+				ThreadPoolTask *task = pool->ChooseTask();
 				pthread_mutex_unlock(&pool->lock);
 
 				task->p.set_value(task->work());
@@ -144,6 +145,31 @@ public:
 
 		pthread_cond_destroy(&wait);
 		pthread_mutex_destroy(&lock);
+	}
+
+	virtual ThreadPoolTask *ChooseTask()
+	{
+		std::list<ThreadPoolTask *>::iterator besti = task_list.begin();
+		int bestp = (*besti)->get_priority();
+
+		// int pknts[] = {0, 0, 0};
+		for (std::list<ThreadPoolTask *>::iterator it = task_list.begin(); it != task_list.end(); ++it)
+		{
+			int p = (*it)->get_priority();
+			// pknts[p] ++;
+			if (p > bestp)
+			{
+				besti = it;
+				bestp = (*it)->get_priority();
+			}
+		}
+
+		// std::cerr << pknts[0] << " " << pknts[1] << " " << pknts[2] << ": " << bestp << "\n";
+
+		ThreadPoolTask *task = (*besti);
+		task_list.erase(besti);
+
+		return task;
 	}
 
 	std::future<int> AddTask(ThreadPoolTask *task)

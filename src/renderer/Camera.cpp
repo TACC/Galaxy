@@ -323,10 +323,12 @@ struct args
 // be first-hit, figure out which actually are, create a raylist for them,
 // and queue them for processing
 
+// NOTE: spawning rays is the highest priority task
+
 class spawn_rays_task : public ThreadPoolTask
 {
 public:
-  spawn_rays_task(int start, int count, shared_ptr<args> _a) : start(start), count(count), a(_a) {}
+  spawn_rays_task(int start, int count, shared_ptr<args> _a) : ThreadPoolTask(2), start(start), count(count), a(_a) {}
   ~spawn_rays_task() {}
 
   virtual int work()
@@ -377,7 +379,7 @@ public:
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
       {
-				if (!rlist) rlist = new RayList(a->rs, a->r, count, a->fnum);
+				if (!rlist) rlist = new RayList(a->rs, a->r, count, a->fnum, RayList::PRIMARY);
 
 				rlist->set_x(dst, x);
 				rlist->set_y(dst, y);
@@ -410,17 +412,13 @@ public:
 #endif
 
 				Renderer::GetTheRenderer()->add_originated_ray_count(rlist->GetRayCount());
-				// std::cerr << GetTheApplication()->GetRank() << " starting " << rlist->GetRayCount() << " camera rays\n";
 				a->rs->Enqueue(rlist, true);
 			}
 			else
 			{
-				// std::cerr << GetTheApplication()->GetRank() << " dropping " << rlist->GetRayCount() << " camera rays\n";
 				delete rlist;
 			}
 		}
-		// else
-			// std::cerr << GetTheApplication()->GetRank() << " no hits\n";
 
 
 #ifdef GXY_SYNCHRONOUS
@@ -618,7 +616,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
     if (nrays < 0)
       return;
 
-    RayList *rayList = new RayList(renderingSet, rendering, nrays, fnum);
+    RayList *rayList = new RayList(renderingSet, rendering, nrays, fnum, RayList::PRIMARY);
 
     vec2i *test_rays = new vec2i[nrays];
 

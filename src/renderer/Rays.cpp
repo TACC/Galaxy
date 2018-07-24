@@ -39,13 +39,13 @@ using namespace std;
 namespace gxy
 {
 
-RayList::RayList(RenderingSetP rs, RenderingP r, int nrays) 
-	: RayList(rs, r, nrays, rs->GetCurrentFrame()) {}
+RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, RayListType type) 
+	: RayList(rs, r, nrays, rs->GetCurrentFrame(), type) {}
 
 static pthread_mutex_t raylist_lock = PTHREAD_MUTEX_INITIALIZER;
 static int raylist_id = 0;
 
-RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, int frame)
+RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type)
 {
 	theRenderingSet = rs;
 	theRendering    = r;
@@ -62,6 +62,7 @@ RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, int frame)
 	h->renderingSetKey	= rs->getkey();
 	h->size 						= nrays;
 	h->aligned_size 		= nn;
+	h->type 						= type;
 
 	ispc = malloc(sizeof(ispc::RayList_ispc));
 	setup_ispc_pointers();
@@ -203,7 +204,7 @@ RayList::Split(vector<RayList*>& subsets)
   {
     int this_rpp = ((i + rpp) > GetRayCount()) ? GetRayCount() - i : rpp;
  
-    RayList *part = new RayList(GetTheRenderingSet(), GetTheRendering(), this_rpp, GetFrame());
+    RayList *part = new RayList(GetTheRenderingSet(), GetTheRendering(), this_rpp, GetFrame(), GetType());
 
     memcpy(part->get_ox_base(),     get_ox_base()     + i, this_rpp*sizeof(float));
     memcpy(part->get_oy_base(),     get_oy_base()     + i, this_rpp*sizeof(float));

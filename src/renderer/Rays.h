@@ -33,6 +33,10 @@ KEYED_OBJECT_POINTER(RenderingSet)
 
 class RayList 
 {
+public:
+	enum RayListType { PRIMARY, SECONDARY };
+
+private:
 	struct hdr
 	{
 		Key renderingKey;
@@ -41,6 +45,7 @@ class RayList
 		int frame;
 		int aligned_size;
 		int id;
+	  RayListType type;
 	};
 
 public:
@@ -74,9 +79,12 @@ public:
     dstRayList->set_term(dstRayIndex, srcRayList->get_term(srcRayIndex));
 	}
 
-	RayList(RenderingSetP rs, RenderingP r, int nrays, int frame);
-	RayList(RenderingSetP rs, RenderingP r, int nrays);
+	RayList(RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type);
+	RayList(RenderingSetP rs, RenderingP r, int nrays, RayListType type);
 	RayList(SharedP contents);
+
+	RayListType  GetType() { return ((struct hdr *)contents->get())->type; }
+	void SetType(RayListType t) { ((struct hdr *)contents->get())->type = t; };
 
 	int GetFrame() { return ((struct hdr *)contents->get())->frame; }
 	int GetRayCount() { return ((struct hdr *)contents->get())->size; }

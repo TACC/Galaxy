@@ -1,5 +1,5 @@
 // ========================================================================== //
-// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 k/
 // All rights reserved.                                                       //
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
@@ -260,7 +260,8 @@ Renderer::SaveStateToDocument(Document& doc)
 class processRays_task : public ThreadPoolTask
 {
 public:
-	processRays_task(RayList *raylist, Renderer *renderer) : raylist(raylist), renderer(renderer) {}
+	processRays_task(RayList *raylist, Renderer *renderer) : 
+		ThreadPoolTask(raylist->GetType() == RayList::PRIMARY ? 1 : 0), raylist(raylist), renderer(renderer) {}
   ~processRays_task() {}
 
 	int work() { 
@@ -486,7 +487,7 @@ public:
 			for (int i = 0; i < 7; i++)
 			{
 				if (knts[i])
-					ray_lists[i]   = new RayList(renderingSet, rendering, knts[i], raylist->GetFrame());
+					ray_lists[i]   = new RayList(renderingSet, rendering, knts[i], raylist->GetFrame(), raylist->GetType());
 				else
 					ray_lists[i]   = NULL;
 

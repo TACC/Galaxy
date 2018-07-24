@@ -361,7 +361,7 @@ render_thread(void *d)
 			first = false;
 			if ((X0 != X1) || (Y0 != Y1))
 			{
-				X0 = X1;
+				// Y0 = Y1 = 0.0;
 				if (mode == OBJECT_CENTER)
 				{
 					if (button == 0)
@@ -374,14 +374,9 @@ render_thread(void *d)
 						scaling = down_scaling * pow(10.0, d);
 					}
 					
-					std::cerr << "OP " << orig_viewdirection.x << " " << orig_viewdirection.y << " " << orig_viewdirection.z << "\n";
-					std::cerr << "OU " << orig_viewup.x << " " << orig_viewup.y << " " << orig_viewup.z << "\n";
 					vec3f d = trackball.rotate_vector(orig_viewdirection);
 					vec3f u = trackball.rotate_vector(orig_viewup);
 					vec3f p = center - d * orig_viewdistance * scaling;
-
-					std::cerr << "NP " << p.x << " " << p.y << " " << p.z << "\n";
-					std::cerr << "NU " << u.x << " " << u.y << " " << u.z << "\n";
 
 					theCamera->set_viewdirection(d);
 					theCamera->set_viewpoint(p);
