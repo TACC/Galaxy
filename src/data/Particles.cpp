@@ -88,6 +88,34 @@ Particles::~Particles()
   if (samples) free(samples);
 }
 
+int
+Particles::serialSize()
+{
+	return super::serialSize() + 2*sizeof(float);
+}
+
+unsigned char* 
+Particles::serialize(unsigned char *ptr)
+{
+	ptr = super::serialize(ptr);
+	*(float *)ptr = radius;
+	ptr += sizeof(float);
+	*(float *)ptr = radius_scale;
+	ptr += sizeof(float);
+	return ptr;
+}
+
+unsigned char* 
+Particles::deserialize(unsigned char *ptr)
+{
+	ptr = super::deserialize(ptr);
+	radius = *(float *)ptr;
+	ptr += sizeof(float);
+	radius_scale = *(float *)ptr;
+	ptr += sizeof(float);
+	return ptr;
+}
+
 void
 Particles::LoadPartitioning(string p)
 {
