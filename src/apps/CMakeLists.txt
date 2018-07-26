@@ -72,9 +72,9 @@ else(GXY_SYNCHRONOUS)
 
 endif (GXY_SYNCHRONOUS)
 
-# add_executable(sample sample.cpp)
-# target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-# set(BINS sample ${BINS})
+add_executable(sample sample.cpp)
+target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+set(BINS sample ${BINS})
 
 option(GXP_APP_CINEMA "Build cimema database generator" ON)
 if (WITH_CINEMA)
