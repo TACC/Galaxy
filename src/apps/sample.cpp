@@ -28,10 +28,26 @@
 
 #include <dtypes.h>
 #include <Application.h>
-#include "OSPRayRenderer.h"
+#include "Renderer.h"
+
+#include <ospray/ospray.h>
+
+int mpiRank, mpiSize;
+
+#include "Debug.h"
 
 using namespace gxy;
+using namespace std;
 
+int samples_per_partition = 100;
+
+#define WIDTH	 1920
+#define HEIGHT 1080
+
+int width  = WIDTH;
+int height = HEIGHT;
+
+float radius = 0.02;
 
 class SampleMsg : public Work
 {
@@ -69,14 +85,25 @@ public:
 
 		float *fsamples = (float *)v->get_samples();
 
-		p->allocate(100);
+		p->allocate(samples_per_partition);
 		Particle *particle = p->get_samples();
 
-		for (int i = 0; i < 100; i++)
+		for (int i = 0; i < samples_per_partition; i++)
 		{
-			float x = ((float)rand() / RAND_MAX) * (nx - 1);
-			float y = ((float)rand() / RAND_MAX) * (ny - 1);
-			float z = ((float)rand() / RAND_MAX) * (nz - 1);
+			float x, y, z;
+
+			if (samples_per_partition == 1)
+			{
+				x = 0.5 * (nx - 1);
+				y = 0.5 * (ny - 1);
+				z = 0.5 * (nz - 1);
+			}
+			else
+			{
+				x = ((float)rand() / RAND_MAX) * (nx - 1);
+				y = ((float)rand() / RAND_MAX) * (ny - 1);
+				z = ((float)rand() / RAND_MAX) * (nz - 1);
+			}
 
 			int ix = (int)x;
 			int iy = (int)y;
@@ -120,48 +147,85 @@ public:
 			particle ++;
 		}
 
-		std::cerr << "XXXX" << std::endl;
 		return false;
 	}
 };
 
 WORK_CLASS_TYPE(SampleMsg)
 
+void
+syntax(char *a)
+{
+  cerr << "syntax: " << a << " [options] data" << endl;
+  cerr << "optons:" << endl;
+  cerr << "  -D            run debugger" << endl;
+  cerr << "  -n nsamples   number of samples in each partition (100)" << endl;
+  cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
+  cerr << "  -r radius     radius of samples (" << radius << ")" << endl;
+  exit(1);
+}
+
+
 int
 main(int argc, char * argv[])
 {
-	Application theApplication(&argc, &argv);
+	string data = "";
+	char *dbgarg;
+  bool dbg = false;
 
+	ospInit(&argc, (const char **)argv);
+
+	Application theApplication(&argc, &argv);
 	theApplication.Start();
 
-	if (getenv("DEBUG"))
-	{
-		setup_debugger(argv[0]);
-		debugger(getenv("DEBUG"));
-	}
+  for (int i = 1; i < argc; i++)
+  {
+		if (argv[i][0] == '-')
+			switch (argv[i][1])
+			{
+				case 'D': dbg = true, dbgarg = argv[i] + 2; break;
+				case 'n': samples_per_partition = atoi(argv[++i]); break;
+				case 'r': radius = atof(argv[++i]); break;
+				case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
+				default:
+					syntax(argv[0]);
+			}
+    else if (data == "")   data = argv[i];
+    else syntax(argv[0]);
+  }
 
-	OSPRayRenderer *theRenderer = new OSPRayRenderer(&argc, &argv);
-
+	Renderer::Initialize();
 	theApplication.Run();
 
-  int r = theApplication.GetRank();
-  int s = theApplication.GetSize();
+	RendererP theRenderer = Renderer::NewP();
+
+  mpiRank = theApplication.GetRank();
+  mpiSize = theApplication.GetSize();
+
+	srand(mpiRank);
+
+  Debug *d = dbg ? new Debug(argv[0], false, dbgarg) : NULL;
 
 	SampleMsg::Register();
 
-	if (r == 0)
+	if (mpiRank == 0)
 	{
-		VolumeP volume = theRenderer->NewVolume();
+		VolumeP volume = Volume::NewP();
 		volume->Import(argv[1]);
 
-		ParticlesP samples = theRenderer->NewParticles();
+		ParticlesP samples = Particles::NewP();
+		samples->SetRadius(radius);
 
 		SampleMsg *smsg = new SampleMsg(volume, samples);
 		smsg->Broadcast(true, true);
 
-		theRenderer->SetALight(1.0, 2.0, 3.0);
-		theRenderer->SetLightingModel(0.4, 0.6);
-		theRenderer->SetRaycastLightingModel(false, 0, 0.0);
+		samples->Commit();
+
+		float light[] = {1.0, 2.0, 3.0}; int t = 1;
+		theRenderer->GetTheLighting()->SetLights(1, light, &t);
+		theRenderer->GetTheLighting()->SetK(0.4, 0.6);
+		theRenderer->GetTheLighting()->SetShadowFlag(false);
+		theRenderer->GetTheLighting()->SetAO(0, 0.0);
 		theRenderer->Commit();
 
 		DatasetsP theDatasets = Datasets::NewP();
@@ -169,6 +233,8 @@ main(int argc, char * argv[])
 		theDatasets->Commit();
 
 		vector<CameraP> theCameras;
+
+#if 0
 		for (int i = 0; i < 20; i++)
 		{
 			CameraP cam = Camera::NewP();
@@ -187,14 +253,22 @@ main(int argc, char * argv[])
 			cam->Commit();
 			theCameras.push_back(cam);
 		}
+#else
+		CameraP cam = Camera::NewP();
+		cam->set_viewup(0.0, 1.0, 0.0);
+		cam->set_angle_of_view(45.0);
+		cam->set_viewpoint(4.0, 0.0, 0.0);
+		cam->set_viewdirection(-2.0, 0.0, 0.0);
+		cam->Commit();
+		theCameras.push_back(cam);
+#endif
 
-		ParticlesVisP pvis = theRenderer->NewParticlesVis();
+		ParticlesVisP pvis = ParticlesVis::NewP();
 		pvis->SetName("samples");
-		pvis->SetRadius(0.02);
 		pvis->Commit(theDatasets);
 
-		VisualizationP v = theRenderer->NewVisualization();
-		v->AddVis(pvis);
+		VisualizationP v = Visualization::NewP();
+		v->AddOsprayGeometryVis(pvis);
 		v->Commit(theDatasets);
 
 		RenderingSetP theRenderingSet = RenderingSet::NewP();
@@ -203,12 +277,11 @@ main(int argc, char * argv[])
 		for (auto c : theCameras)
 		{
 			RenderingP theRendering = Rendering::NewP();
-			theRendering->SetTheOwner((indx++) % s);
-			theRendering->SetTheSize(1920, 1080);
+			theRendering->SetTheOwner((indx++) % mpiSize);
+			theRendering->SetTheSize(width, height);
 			theRendering->SetTheCamera(c);
 			theRendering->SetTheDatasets(theDatasets);
 			theRendering->SetTheVisualization(v);
-			theRendering->SetTheRenderingSet(theRenderingSet);
 			theRendering->Commit();
 			theRenderingSet->AddRendering(theRendering);
 		}
