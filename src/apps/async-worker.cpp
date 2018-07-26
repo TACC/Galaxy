@@ -33,29 +33,9 @@
 using namespace gxy;
 using namespace std;
 
-class Debug
-{
-public:
-  Debug(const char *executable, bool attach)
-  {
-    bool dbg = true;
-    std::stringstream cmd;
-    pid_t pid = getpid();
+int mpiRank, mpiSize;
 
-    if (attach)
-      std::cerr << "Attach to PID " << pid << endl;
-    else
-    {
-      cmd << "~/dbg_script " << executable << " " << pid << " &";
-      system(cmd.str().c_str());
-    }
-
-    while (dbg)
-      sleep(1);
-
-    std::cerr << "running" << endl;
-  }
-};
+#include "Debug.h"
 
 void
 syntax(char *a)
@@ -71,6 +51,7 @@ int
 main(int argc, char *argv[])
 {
   bool dbg = false, atch = false;
+	char *dbgarg;
 
   ospInit(&argc, (const char **)argv);
 
@@ -82,13 +63,18 @@ main(int argc, char *argv[])
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
+    else if (!strncmp(argv[i], "-D")) dbg = true, dbgarg = argv[i] + 2; break;
+		else syntax(argv[0]);
 	}
 
-  Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
 
   Renderer::Initialize();
   GetTheApplication()->Run();
+
+  mpiRank = theApplication.GetRank();
+  mpiSize = theApplication.GetSize();
+
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
 	GetTheApplication()->Wait();
 

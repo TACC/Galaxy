@@ -26,7 +26,6 @@
 #include <GL/glut.h>
 #include <pthread.h>
 
-#include "Debug.h"
 #include "Socket.h"
 #include "async.h"
 #include "Pixel.h"
@@ -34,6 +33,10 @@
 
 using namespace gxy;
 using namespace std;
+
+int mpiRank = 0, mpiSize = 1;
+
+#include "Debug.h"
 
 #define WIDTH  500
 #define HEIGHT 500
@@ -400,6 +403,7 @@ int
 main(int argc, char *argv[])
 {
   bool dbg = false, atch = false;
+	char *dbgarg;
 	string host = "localhost";
 	string statefile = "";
 	int port = 5001;
@@ -408,7 +412,7 @@ main(int argc, char *argv[])
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
+    else if (!strcmp(argv[i], "-D")) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-H")) host = argv[++i];
     else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-F")) no_mouse = true;
@@ -428,7 +432,7 @@ main(int argc, char *argv[])
 	if (statefile == "")
 		syntax(argv[0]);
 
-  Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarfg) : NULL;
 	skt = new Socket((char *)host.c_str(), port);
 
 	negative_pixels    = (float *)malloc(width*height*4*sizeof(float));

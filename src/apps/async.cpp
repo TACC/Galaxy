@@ -40,6 +40,11 @@ using namespace gxy;
 using namespace std;
 using namespace rapidjson;
 
+int mpiRank;
+int mpiSize;
+
+#include "Debug.h"
+
 #define WIDTH  500
 #define HEIGHT 500
 
@@ -118,30 +123,6 @@ wait_state(_state s)
 		pthread_cond_wait(&state_wait, &state_lock);
 	pthread_mutex_unlock(&state_lock);
 }
-
-class Debug
-{
-public:
-  Debug(const char *executable, bool attach)
-  {
-    bool dbg = true;
-    std::stringstream cmd;
-    pid_t pid = getpid();
-
-    if (attach)
-      std::cerr << "Attach to PID " << pid << endl;
-    else
-    {
-      cmd << "~/dbg_script " << executable << " " << pid << " &";
-      system(cmd.str().c_str());
-    }
-
-    while (dbg)
-      sleep(1);
-
-    std::cerr << "running" << endl;
-  }
-};
 
 void
 draw(void)
@@ -437,6 +418,7 @@ int
 main(int argc, char *argv[])
 {
   bool dbg = false, atch = false;
+	char *dbgarg;
 
   pargc = &argc;
   pargv = argv;
@@ -450,34 +432,8 @@ main(int argc, char *argv[])
 
   for (int i = 1; i < argc; i++)
   {
-    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
     else if (!strcmp(argv[i], "-a")) age = atof(argv[++i]), fadeout = atof(argv[++i]);
-    else if (!strncmp(argv[i], "-D", 2)) 
-		{
-		  atch = false;
-			dbg = false;
-			if (!strcmp(argv[i], "-D")) dbg = true;
-			else
-			{
-				char *a = argv[i] + 2;
-				while (a && !dbg)
-				{
-					char *b = a + 1;
-					while (b && (*b != ',' && *b != '\0')) b++;
-					if (*b == ',')
-					{
-						*b = '\0';
-						if (atoi(a) == theApplication.GetRank()) dbg = true;
-						a = b + 1; 
-					}
-					else
-					{
-						if (atoi(a) == theApplication.GetRank()) dbg = true;
-						a = NULL;
-					}
-				}
-			}
-		}
+		else if (!strcmp(argv[i], "-D")) dbg = true, dbgarg = argv[i] + 2; break;
     else if (!strcmp(argv[i], "-O")) mode = OBJECT_CENTER;
     else if (!strcmp(argv[i], "-E")) mode = EYE_CENTER;
     else if (!strcmp(argv[i], "-s"))
@@ -494,13 +450,14 @@ main(int argc, char *argv[])
   if (statefile == "")
     syntax(argv[0]);
 
-  Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
 
   Renderer::Initialize();
   GetTheApplication()->Run();
 
-  int mpiRank = GetTheApplication()->GetRank();
-  int mpiSize = GetTheApplication()->GetSize();
+  mpiRank = GetTheApplication()->GetRank();
+  mpiSize = GetTheApplication()->GetSize();
+
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
   if (mpiRank == 0)
   {

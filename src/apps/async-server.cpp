@@ -32,6 +32,8 @@
 #include "Renderer.h"
 #include "ServerRendering.h"
 
+int mpiRank, mpiSize;
+
 #include "Debug.h"
 
 #include "async.h"
@@ -236,12 +238,15 @@ main(int argc, char *argv[])
       syntax(argv[0]);
   }
 
+	mpiRank = GetTheApplication()->GetRank();
+	mpiSize = GetTheApplication()->GetSize();
+
   Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
 
   Renderer::Initialize();
   GetTheApplication()->Run();
 
-  if (GetTheApplication()->GetRank() == 0)
+  if (mpiRank == 0)
 	{
 		skt = new Socket(port);
 
