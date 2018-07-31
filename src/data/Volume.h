@@ -60,7 +60,6 @@ public:
 	void get_deltas(float &x, float &y, float &z) { x = deltas.x; y = deltas.y; z = deltas.z; }
 	void set_deltas(float x, float y, float z) { deltas.x = x; deltas.y = y; deltas.z = z; }
 
-
 	void get_global_origin(float &x, float &y, float &z) 
 	{
 		x = global_origin.x;
@@ -114,12 +113,20 @@ public:
 	  local_counts.z = nz;
 	}
 
+	void get_ghosted_local_offsets(int& ni, int& nj, int& nk) 
+	{
+		ni = ghosted_local_offset.x;
+		nj = ghosted_local_offset.y;
+		nk = ghosted_local_offset.z;
+	}
+
 	void get_ghosted_local_counts(int& nx, int& ny, int& nz) 
 	{
 		nx = ghosted_local_counts.x;
 		ny = ghosted_local_counts.y;
 		nz = ghosted_local_counts.z;
 	}
+
 	void set_ghosted_local_counts(int nx, int ny, int nz) 
 	{
 		ghosted_local_counts.x = nx;
