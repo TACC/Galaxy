@@ -58,6 +58,7 @@ float radius = 0.02;
 float target = 0.0;
 float power = 10.0;
 float sigma = 1.0;
+int   max_consecutive_misses = 10;
 
 variate_generator<mt19937, normal_distribution<> > *generator;
 
@@ -212,7 +213,7 @@ public:
 		MPI_Allreduce((void *)&local_total, (void *)&global_total, 1, MPI_FLOAT, MPI_SUM, c);
 
 		float local_average = local_total / local_count;
-		float global_average = local_total / global_count;
+		float global_average = global_total / global_count;
 
 		int local_samples = int(total_samples * (local_average / global_average) * (float(local_count) / global_count));
 
@@ -231,6 +232,7 @@ public:
 
 #define OUT(p) (p.xyz.x < ox || p.xyz.x > max_x || p.xyz.y < oy || p.xyz.y > max_y || p.xyz.z < oz || p.xyz.z > max_z)
 
+		int miss_count = 0;
 		for (int i = 0; i < local_samples; )
 		{
 			double rv[3];
@@ -249,7 +251,11 @@ public:
 				tq = cq;
 				p->push_back(tp);
 				i++;
+				miss_count = 0;
 			}
+			else
+				if (++miss_count > max_consecutive_misses)
+					break;
 		}
 
 		return false;
@@ -264,6 +270,7 @@ syntax(char *a)
   cerr << "syntax: " << a << " [options] data" << endl;
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;
+  cerr << "  -M m          max number of consecutive misses allowed (" << max_consecutive_misses << ")" << "\n";
   cerr << "  -n nsamples   target number of samples (" << total_samples << ")" << endl;
   cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -t target     value of highest interest (" << target << ")" << endl;
@@ -292,6 +299,7 @@ main(int argc, char * argv[])
 			switch (argv[i][1])
 			{
 				case 'D': dbg = true, dbgarg = argv[i] + 2; break;
+				case 'M': max_consecutive_misses = atoi(argv[++i]); break;
 				case 'n': total_samples = atoi(argv[++i]); break;
 				case 'r': radius = atof(argv[++i]); break;
 				case 't': target = atof(argv[++i]); break;
