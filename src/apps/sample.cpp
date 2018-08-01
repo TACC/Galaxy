@@ -43,7 +43,7 @@ public:
 	}
 	~SampleMsg() {}
 
-	WORK_CLASS(SampleMsg, true)
+	WORK_CLASS(SampleMsg, true /* bcast */)
 
 public:
 	bool CollectiveAction(MPI_Comm c, bool s)
@@ -151,11 +151,18 @@ main(int argc, char * argv[])
 
 	if (r == 0)
 	{
+		// create empty distributed container for volume data
 		VolumeP volume = theRenderer->NewVolume();
+		// import data to all processes, smartly distributes volume across processses
+		// this import defines the partitioning of the data across processses
+		// if subsequent Import commands have a different partition, an error will be thrown
 		volume->Import(argv[1]);
 
+		// create empty distributed container for particles
+		// particle partitioning will ma
 		ParticlesP samples = theRenderer->NewParticles();
 
+		// define action to perform on volume (see SampleMsg above)
 		SampleMsg *smsg = new SampleMsg(volume, samples);
 		smsg->Broadcast(true, true);
 
