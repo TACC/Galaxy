@@ -1,5 +1,5 @@
 // ========================================================================== //
-// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 k/
 // All rights reserved.                                                       //
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
@@ -150,6 +150,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 	int fnum = renderingSet->NeedInitialRays();
   if (fnum != -1)
 	{
+	  // std::cerr << GetTheApplication()->GetRank() << " starting " << frame << "\n";
 #ifdef GXY_LOGGING
 	if (GetTheApplication()->GetRank() == 0)
 		std:cerr << "starting ray processing\n";
@@ -259,7 +260,8 @@ Renderer::SaveStateToDocument(Document& doc)
 class processRays_task : public ThreadPoolTask
 {
 public:
-	processRays_task(RayList *raylist, Renderer *renderer) : raylist(raylist), renderer(renderer) {}
+	processRays_task(RayList *raylist, Renderer *renderer) : 
+		ThreadPoolTask(raylist->GetType() == RayList::PRIMARY ? 1 : 0), raylist(raylist), renderer(renderer) {}
   ~processRays_task() {}
 
 	int work() { 
@@ -278,9 +280,12 @@ public:
 		{
 		  if (raylist->GetFrame() != renderingSet->GetCurrentFrame())
 		  {
+				// std::cerr << GetTheApplication()->GetRank() << " dropping raylist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
 				delete raylist;
 				return 0;
 		  }
+			// else
+				// std::cerr << GetTheApplication()->GetRank() << " processing raylist " << raylist->GetRayCount() << "\n";
 
 			// This may put secondary lists on the ray queue
 			renderer->Trace(raylist);
@@ -325,14 +330,26 @@ public:
 					// A primary ray expires and is added to the FB if it terminated opaque OR if 
 					// it has timed out OR if it exitted the global box. 
 					//
+					// If its opaque it has a non-zero color component.  If it times out, it has a 
+					// non-zero lighting component.  In either case, we send it to the FB
+					//
+					// If it exits the global box, we only send it if it has a non-zero color component
+					//
 					// Otherwise, if it hit a *partition* boundary then it'll go to the neighbor.
 					//
 					// Otherwise, it better have hit a TRANSLUCENT  surface and will remain in the
 					// current partition.
 
-					if ((term & RAY_OPAQUE) | ((term & RAY_BOUNDARY) && exit_face == NO_NEIGHBOR) | (term & RAY_TIMEOUT))
+					if ((term & RAY_OPAQUE) | (term & RAY_TIMEOUT))
 					{
 						classification[i] = SEND_TO_FB;
+					}
+					else if ((term & RAY_BOUNDARY) && (exit_face == NO_NEIGHBOR))
+					{
+						if ((raylist->get_r(i) != 0) || (raylist->get_g(i) != 0) || (raylist->get_b(i) != 0))
+							classification[i] = SEND_TO_FB;
+						else
+							classification[i] = DROP_ON_FLOOR;
 					}
 					else if (term & RAY_BOUNDARY)  // then exit_face is not NO_NEIGHBOR -- see previous condition
 					{
@@ -470,7 +487,7 @@ public:
 			for (int i = 0; i < 7; i++)
 			{
 				if (knts[i])
-					ray_lists[i]   = new RayList(renderingSet, rendering, knts[i], raylist->GetFrame());
+					ray_lists[i]   = new RayList(renderingSet, rendering, knts[i], raylist->GetFrame(), raylist->GetType());
 				else
 					ray_lists[i]   = NULL;
 
@@ -528,10 +545,16 @@ public:
 			// If we AREN't the owner of the Rendering send the pixels to its owner
 			if (spmsg)
 			{
-			  if (raylist->GetFrame() != renderingSet->GetCurrentFrame())
+			  if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
+				{
+					// std::cerr << GetTheApplication()->GetRank() << " sending pixellist to owner " << rendering->GetTheOwner() << "\n";
 				  spmsg->Send(rendering->GetTheOwner());
+				}
 				else
+				{
+					// std::cerr << GetTheApplication()->GetRank() << " not sending pixellist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
 				  delete spmsg;
+				}
 			}
 
 			if (local_pixels)
@@ -549,7 +572,11 @@ public:
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 #else
 					if (ray_lists[i]->GetFrame() == renderingSet->GetCurrentFrame())
+					{
 						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
+					}
+					// else
+						// std::cerr << GetTheApplication()->GetRank() << " not sending raylist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
 #endif // GXY_SYNCHRONOUS
 
 					delete ray_lists[i];

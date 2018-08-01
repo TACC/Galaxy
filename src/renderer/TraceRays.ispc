@@ -35,7 +35,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "src/galaxy.h"
+#include "galaxy.h"
 
 #include "ospray/SDK/math/vec.ih"
 #include "ospray/SDK/common/Ray.ih"

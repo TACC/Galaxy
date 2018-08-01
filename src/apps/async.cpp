@@ -21,6 +21,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <GL/glut.h>
 #include <pthread.h>
@@ -39,6 +40,11 @@ using namespace gxy;
 using namespace std;
 using namespace rapidjson;
 
+int mpiRank;
+int mpiSize;
+
+#include "Debug.h"
+
 #define WIDTH  500
 #define HEIGHT 500
 
@@ -48,7 +54,8 @@ float X0, Y0;
 float X1, Y1;
 int button = -1;
 
-float age = 1.0;
+float age = 3.0;
+float fadeout = 1.0;
 
 volatile int frame = -1;
 
@@ -116,30 +123,6 @@ wait_state(_state s)
 		pthread_cond_wait(&state_wait, &state_lock);
 	pthread_mutex_unlock(&state_lock);
 }
-
-class Debug
-{
-public:
-  Debug(const char *executable, bool attach)
-  {
-    bool dbg = true;
-    std::stringstream cmd;
-    pid_t pid = getpid();
-
-    if (attach)
-      std::cerr << "Attach to PID " << pid << endl;
-    else
-    {
-      cmd << "~/dbg_script " << executable << " " << pid << " &";
-      system(cmd.str().c_str());
-    }
-
-    while (dbg)
-      sleep(1);
-
-    std::cerr << "running" << endl;
-  }
-};
 
 void
 draw(void)
@@ -262,7 +245,9 @@ mousefunc(int k, int s, int x, int y)
 		down_scaling = scaling;
   }
 	else
+	{
 		button = -1;
+	}
 }
   
 void
@@ -323,6 +308,7 @@ render_thread(void *d)
 	normalize(viewright);
 	orig_viewup = cross(viewright, orig_viewdirection);
 	theCamera->set_viewup(orig_viewup);
+	theCamera->Commit();
 
   theDatasets = Datasets::NewP();
   theDatasets->LoadFromJSON(*doc);
@@ -333,7 +319,7 @@ render_thread(void *d)
 	theVisualization->Commit(theDatasets);
 
 	theRendering = AsyncRendering::NewP();
-	theRendering->SetMaxAge(age);
+	theRendering->SetMaxAge(age, fadeout);
 	theRendering->SetTheOwner(0);
 	theRendering->SetTheSize(width, height);
 	theRendering->SetTheDatasets(theDatasets);
@@ -356,13 +342,14 @@ render_thread(void *d)
 			first = false;
 			if ((X0 != X1) || (Y0 != Y1))
 			{
+				// Y0 = Y1 = 0.0;
 				if (mode == OBJECT_CENTER)
 				{
 					if (button == 0)
 					{
 						trackball.spin(X0, Y0, X1, Y1);
 					}
-					else
+					else if (button != -1)
 					{
 						float d = (Y1 > Yd) ? 2.0 * ((Y1 - Yd) / (2.0 - Yd)) : -2.0 * ((Y1 - Yd)/(-2.0 - Yd));
 						scaling = down_scaling * pow(10.0, d);
@@ -418,12 +405,12 @@ syntax(char *a)
 {
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "options:" << endl;
-  cerr << "  -D         run debugger" << endl;
-  cerr << "  -A         wait for attachment" << endl;
-  cerr << "  -s w h     image size (512 x 512)" << endl;
-  cerr << "  -O         object-center model (default)" << endl;
-  cerr << "  -E         eye-center model" << endl;
-	cerr << "  -a age     limit on sample age (1.0)" << endl;
+  cerr << "  -D               run debugger" << endl;
+  cerr << "  -A               wait for attachment" << endl;
+  cerr << "  -s w h           image size (512 x 512)" << endl;
+  cerr << "  -O               object-center model (default)" << endl;
+  cerr << "  -E               eye-center model" << endl;
+	cerr << "  -a age fadeout   sample age to begin fadeout (3.0), fadeout (1.0)" << endl;
   exit(1);
 }
 
@@ -431,6 +418,7 @@ int
 main(int argc, char *argv[])
 {
   bool dbg = false, atch = false;
+	char *dbgarg;
 
   pargc = &argc;
   pargv = argv;
@@ -444,9 +432,8 @@ main(int argc, char *argv[])
 
   for (int i = 1; i < argc; i++)
   {
-    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strcmp(argv[i], "-a")) age = atof(argv[++i]);
-    else if (!strcmp(argv[i], "-D")) dbg = true, atch = false;
+    else if (!strcmp(argv[i], "-a")) age = atof(argv[++i]), fadeout = atof(argv[++i]);
+		else if (!strcmp(argv[i], "-D")) dbg = true, dbgarg = argv[i] + 2; break;
     else if (!strcmp(argv[i], "-O")) mode = OBJECT_CENTER;
     else if (!strcmp(argv[i], "-E")) mode = EYE_CENTER;
     else if (!strcmp(argv[i], "-s"))
@@ -463,13 +450,14 @@ main(int argc, char *argv[])
   if (statefile == "")
     syntax(argv[0]);
 
-  Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
 
   Renderer::Initialize();
   GetTheApplication()->Run();
 
-  int mpiRank = GetTheApplication()->GetRank();
-  int mpiSize = GetTheApplication()->GetSize();
+  mpiRank = GetTheApplication()->GetRank();
+  mpiSize = GetTheApplication()->GetSize();
+
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
   if (mpiRank == 0)
   {

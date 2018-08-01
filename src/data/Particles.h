@@ -98,11 +98,18 @@ public:
 	virtual void LoadFromJSON(rapidjson::Value&);
 	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
+	void SetRadius(float r) { radius = r; }
+	void SetRadiusScale(float s) { radius_scale = s; }
+
 protected:
   vtkClientSocket *skt;
   std::string filename;
   std::string layoutname;
   std::string partfilename;
+
+  virtual int serialSize();
+  virtual unsigned char* serialize(unsigned char *ptr);
+  virtual unsigned char* deserialize(unsigned char *ptr);
 
   float radius;
   float radius_scale;

@@ -323,10 +323,12 @@ struct args
 // be first-hit, figure out which actually are, create a raylist for them,
 // and queue them for processing
 
+// NOTE: spawning rays is the highest priority task
+
 class spawn_rays_task : public ThreadPoolTask
 {
 public:
-  spawn_rays_task(int start, int count, shared_ptr<args> _a) : start(start), count(count), a(_a) {}
+  spawn_rays_task(int start, int count, shared_ptr<args> _a) : ThreadPoolTask(2), start(start), count(count), a(_a) {}
   ~spawn_rays_task() {}
 
   virtual int work()
@@ -334,6 +336,8 @@ public:
 #if defined(EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
+
+		// std::cerr << GetTheApplication()->GetRank() << " SRT count = " << count << "\n";
 
 		RayList *rlist = NULL;
 
@@ -375,7 +379,7 @@ public:
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
       {
-				if (!rlist) rlist = new RayList(a->rs, a->r, count, a->fnum);
+				if (!rlist) rlist = new RayList(a->rs, a->r, count, a->fnum, RayList::PRIMARY);
 
 				rlist->set_x(dst, x);
 				rlist->set_y(dst, y);
@@ -411,8 +415,11 @@ public:
 				a->rs->Enqueue(rlist, true);
 			}
 			else
+			{
 				delete rlist;
+			}
 		}
+
 
 #ifdef GXY_SYNCHRONOUS
 		a->rs->DecrementActiveCameraCount(dst);				
@@ -465,12 +472,7 @@ void check_env(int width, int height)
 		permute = getenv("GXY_PERMUTE_PIXELS");
 
 		if (permute)
-		{
-			std::cerr << "permute pixels\n";
 			permutation = generate_permutation(width*height);
-		}
-		else
-			std::cerr << "NO permute pixels\n";
 
     if (getenv("GXY_CAMERA_RAYS_PER_PIXEL"))
        rays_per_packet = atoi(getenv("CAMERA_RAYS_PER_PIXEL"));
@@ -614,7 +616,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
     if (nrays < 0)
       return;
 
-    RayList *rayList = new RayList(renderingSet, rendering, nrays, fnum);
+    RayList *rayList = new RayList(renderingSet, rendering, nrays, fnum, RayList::PRIMARY);
 
     vec2i *test_rays = new vec2i[nrays];
 
@@ -649,7 +651,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
       bool hit = gbox->intersect(veye, vray, gmin, gmax);
 
       float lmin, lmax;
-      if (hit) hit = lbox->intersect(veye, vray, lmin, lmax);
+			if (hit) hit = lbox->intersect(veye, vray, lmin, lmax);
 
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))

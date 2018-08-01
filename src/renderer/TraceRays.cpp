@@ -112,7 +112,7 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
 
   if (nOutputRays)
   {
-    raysOut = new RayList(raysIn->GetTheRenderingSet(), raysIn->GetTheRendering(), nOutputRays, raysIn->GetFrame());
+    raysOut = new RayList(raysIn->GetTheRenderingSet(), raysIn->GetTheRendering(), nOutputRays, raysIn->GetFrame(), RayList::SECONDARY);
   }
   
 #ifdef GXY_REVERSE_LIGHTING

@@ -43,13 +43,13 @@ public:
 	static  void *FrameBufferAger_thread(void *p);
 	virtual void FrameBufferAger();
 
-	void SetMaxAge(float f) { max_age = f; }
+	void SetMaxAge(float m, float f = 1) { max_age = m; fadeout = f; }
 
 private:
 	long	my_time();
 	long  t_start;
 
-	float				 max_age;
+	float				 max_age, fadeout;
 
 	float*       pixels = NULL;
 	float*       negative_pixels = NULL;

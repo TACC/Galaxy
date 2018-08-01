@@ -111,7 +111,7 @@ if (ospray_DIR)
   include(ispc)
 
   include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
-  include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+  include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
 else(ospray_DIR)
   message(FATAL_ERROR "OSPRay not found. Please run ${PROJECT_SOURCE_DIR}/prep-third-party.sh and build the third-party dependencies before building Galaxy.")
 endif(ospray_DIR)
