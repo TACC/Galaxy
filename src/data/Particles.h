@@ -49,6 +49,10 @@ class Box;
 
 struct Particle
 {
+  Particle(float x, float y, float z, float v) { xyz.x = x, xyz.y = y, xyz.z = z, u.value = v; };
+	Particle(float x, float y, float z, int   t) { xyz.x = x, xyz.y = y, xyz.z = z, u.type = t; };
+  Particle(const  Particle& a) {xyz.x = a.xyz.x, xyz.y = a.xyz.y, xyz.z = a.xyz.z, u.value = a.u.value; }
+  Particle() {xyz.x = 0, xyz.y = 0, xyz.z = 0, u.value = 0; }
   vec3f xyz;
 	union {
 		int type;
@@ -77,8 +81,8 @@ public:
   virtual void local_import(char *, MPI_Comm);
   virtual bool local_load_timestep(MPI_Comm);
 
-  Particle *get_samples() { return samples; }
-  int get_n_samples() { return n_samples; }
+  Particle *get_samples() { return samples.data(); }
+  int get_n_samples() { return samples.size(); }
 
 	void allocate(int);
 
@@ -101,6 +105,8 @@ public:
 	void SetRadius(float r) { radius = r; }
 	void SetRadiusScale(float s) { radius_scale = s; }
 
+	void push_back(Particle p) { samples.push_back(p); }
+
 protected:
   vtkClientSocket *skt;
   std::string filename;
@@ -119,10 +125,9 @@ protected:
   void get_partitioning(rapidjson::Value&);
   void get_partitioning_from_file(char *);
 
-  Particle *samples;
-  int n_samples;
-
+  std::vector<Particle> samples;
   std::vector<Particle> ghosts;
+
 
 	class LoadPartitioningMsg : public Work
 	{

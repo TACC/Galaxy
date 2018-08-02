@@ -63,8 +63,6 @@ Particles::Register()
 void
 Particles::initialize()
 {
-  samples = NULL;
-  n_samples = 0;
   radius_scale = 1;
   radius = 0;
 	vtkobj = NULL;
@@ -74,18 +72,12 @@ Particles::initialize()
 void
 Particles::allocate(int n)
 {
-	n_samples = n;
-
-	if (samples)
-		delete[] samples;
-
-	samples  = new Particle[n_samples];
+	samples.reserve(n);
 }
 
 Particles::~Particles()
 {
 	if (vtkobj) vtkobj->Delete();
-  if (samples) free(samples);
 }
 
 int
@@ -390,18 +382,14 @@ Particles::local_import(char *p, MPI_Comm c)
 
   string f(args->s);
 	string dir = (f.find_last_of("/") == f.npos) ? "./" : f.substr(0, f.find_last_of("/") + 1);
-	// cerr << "rs: " << radius_scale << " radius: " << radius << " dor " << dir << endl;
 
 	if (vtkobj) vtkobj->Delete();
 	vtkobj = NULL;
 
-	if (samples) delete[] samples;
-	samples = NULL;
+	samples.clear();
 
   Document doc;
   doc.Parse(json.c_str());
-
-  if (samples) delete samples;
 
   get_partitioning(doc);
 
@@ -418,12 +406,12 @@ Particles::local_import(char *p, MPI_Comm c)
 			exit(1);
 		}
 
-		n_samples = info.st_size / sizeof(Particle);
-		samples  = new Particle[n_samples];
+		int n_samples = info.st_size / sizeof(Particle);
+		samples.resize(n_samples);
 
 		int fd = open(f.c_str(), O_RDONLY);
 
-		char *p = (char *)samples;
+		char *p = (char *)samples.data();;
 		int m, n = info.st_size;
 
 		for (n = info.st_size; n > 0; n -= m, p += m)
@@ -461,11 +449,8 @@ Particles::GetPolyData(vtkPolyData*& v)
 {
 	if (! vtkobj)
 	{
-		if (! samples)
-		{
-			cerr << "ERROR: GetPolyData needs samples or a vtkobj" << endl;
-			exit(1);
-		}
+		Particle *ptr = get_samples();
+		int n_samples = get_n_samples();
 
 		vtkobj = vtkPolyData::New();
 		vtkobj->Allocate(n_samples);
@@ -485,12 +470,12 @@ Particles::GetPolyData(vtkPolyData*& v)
 		vtkIdList *ids = vtkIdList::New();
 		ids->SetNumberOfIds(1);
 
-		for (int i = 0; i < n_samples; i++)
+		for (int i = 0; i < n_samples; i++, ptr++)
 		{
-			*pxyz++ = samples[i].xyz.x;
-			*pxyz++ = samples[i].xyz.y;
-			*pxyz++ = samples[i].xyz.z;
-			*pval++ = samples[i].u.value;
+			*pxyz++ = ptr->xyz.x;
+			*pxyz++ = ptr->xyz.y;
+			*pxyz++ = ptr->xyz.z;
+			*pval++ = ptr->u.value;
 			ids->SetId(0, i);
 			vtkobj->InsertNextCell(VTK_VERTEX, ids);
 		}
@@ -511,24 +496,22 @@ Particles::GetPolyData(vtkPolyData*& v)
 void
 Particles::GetSamples(Particle*& s, int& n)
 {
-	if (! samples)
+	if (samples.empty() && (!vtkobj || vtkobj->GetNumberOfPoints() == 0))
+		s = NULL, n = 0;
+	else if (! samples.empty())
+		s = samples.data(), n = samples.size();
+	else
 	{
-		if (! vtkobj)
-		{
-			cerr << "GetSamples needs samples or a vtkobj" << endl;
-			exit(1);
-		}
-
 		vtkPoints *pts = vtkobj->GetPoints();
 		vtkFloatArray *parr = vtkFloatArray::SafeDownCast(pts->GetData());
 
 		int indx;
 		vtkFloatArray *varr = vtkFloatArray::SafeDownCast(vtkobj->GetPointData()->GetAbstractArray("value", indx));
 
-		n_samples = parr->GetNumberOfTuples();
-		samples = new Particle[n_samples];
+		int n_samples = parr->GetNumberOfTuples();
+		samples.resize(n_samples);
 
-		Particle *dst = samples;
+		Particle *dst = samples.data();
 		float *pptr = (float *)parr->GetVoidPointer(0);
 		float *vptr = (float *) (varr ? varr->GetVoidPointer(0) : NULL);
 
@@ -539,10 +522,10 @@ Particles::GetSamples(Particle*& s, int& n)
 			dst->xyz.z = *pptr++;
 			dst->u.value = vptr ? *vptr++ : 0;
 		}
-	}
 
-	s = samples; 
-	n = n_samples;
+		s = samples.data(); 
+		n = samples.size();
+	}
 }
 
 } // namespace gxy

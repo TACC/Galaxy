@@ -76,6 +76,10 @@ add_executable(sample sample.cpp)
 target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 set(BINS sample ${BINS})
 
+add_executable(mh mh.cpp)
+target_link_libraries(mh ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+set(BINS mh ${BINS})
+
 option(GXP_APP_CINEMA "Build cimema database generator" ON)
 if (WITH_CINEMA)
 	set(GALAXY_LIBRARIES Cinema ${GALAXY_LIBRARIES})
