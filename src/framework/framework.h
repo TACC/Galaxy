@@ -18,31 +18,26 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
 
-#cmakedefine GALAXY_VERSION
-#cmakedefine GALAXY_SOVERSION
-#cmakedefine GALAXY_MAJOR_VER
-#cmakedefine GALAXY_MINOR_VER
-#cmakedefine GALAXY_PATCH_VER
-
-#cmakedefine GXY_WITH_VTK_RENDERER
-//#cmakedefine WITH_ICET
-//#cmakedefine EVENT_TRACKING
-
-#cmakedefine GXY_EVENT_TRACKING
-#cmakedefine GXY_LOGGING
-#cmakedefine GXY_PRODUCE_STATUS_MESSAGES
-#cmakedefine GXY_REVERSE_LIGHTING
-#cmakedefine GXY_SYNCHRONOUS
-#cmakedefine GXY_TIMING
-
-/*! \brief the Galaxy namespace.
- * \ingroup framework data renderer
+/*! \file framework.h
+ *  \brief A convenience header to include all Galaxy framework headers.
  */
-namespace gxy {};
 
-/*! \brief the RapidJSON namespace.
- * The namespace defined by the RapidJSON third-party library http://rapidjson.org/
- * \ingroup framework
+/*! \defgroup framework Galaxy Framework Module
+ * The Framework module contains all classes for Galaxy's asynchronous 
+ * distributed tasking and communication implementation.
  */
-namespace rapidjson {};
+
+#include "Application.h"
+#include "ClientServer.h"
+#include "debug.h"
+#include "Events.h"
+#include "KeyedObject.h"
+#include "Message.h"
+#include "MessageManager.h"
+#include "MessageQ.h"
+#include "smem.h"
+#include "ThreadPool.hpp"
+#include "Timer.h"
+#include "Work.h"

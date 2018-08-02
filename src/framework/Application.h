@@ -20,6 +20,10 @@
 
 #pragma once
 
+/*! \file Application.h 
+ * \brief The core class for applications to use the Galaxy asynchronous framework
+ */
+
 #include <pthread.h>
 #include <sstream>
 #include <string>
@@ -41,6 +45,18 @@
 namespace gxy
 {
 
+/*! \ingroup framework
+ * @{
+ */
+
+/*!
+ * Send the passed argument to a std::stringstream, 
+ * which is then printed by Application::Print
+ *
+ * \param x a set of stream operations suitable for std::stringstream, 
+ * \warning argument must begin with stream operator `<<`
+ * \sa gxy::Application::Print
+ */
 #define APP_PRINT(x)																				\
 {																														\
   std::stringstream ss;																			\
@@ -48,6 +64,16 @@ namespace gxy
 	GetTheApplication()->Print(ss.str());											\
 }
 
+/*!
+ * Send the passed argument to a std::stringstream,
+ * which is then logged by Application::Log. 
+ * The log message also includes the calling id, threadname, and calling 
+ * function.
+ * 
+ * \param x a set of stream operations suitable for std::stringstream, 
+ * \warnging argument must begin with stream operator `<<`
+ * \sa gxy::Application::Log
+ */
 #define APP_LOG(x)																					\
 {																														\
   std::stringstream ss;																			\
@@ -55,57 +81,120 @@ namespace gxy
 	GetTheApplication()->Log(ss.str());												\
 }
 
+/*! }@ */ // group framework 
+
+//! A table to track classes that define Work within Galaxy
+/*! \ingroup framework 
+ */
 struct ClassTableEntry
 {
-  ClassTableEntry(std::string s);
-	ClassTableEntry(const ClassTableEntry&);
-  ~ClassTableEntry();
+  ClassTableEntry(std::string s);          //!< constuctor
+	ClassTableEntry(const ClassTableEntry&); //!< copy constructor
+  ~ClassTableEntry();											 //!< destructor
+
+  //! returns table entry as a C character array
   const char *c_str();
-  std::string *my_string;                                   
-  int indx;
+
+  std::string *my_string; //!< Work class name as std::string
+  int indx; 						  //!< table entry index
 };
 
-class Application;
-extern Application* GetTheApplication();
-
+//! The core class for applications to use the Galaxy asynchronous framework
+/*!
+ * This class forms the core of the Galaxy asynchronous framework, including 
+ * launching distributed processes, submitting Work, processing communication,
+ * determining termination conditions, and outputting results.
+ *
+ * \ingroup framework
+ * \sa Work
+ */
 class Application {
 
 public:
-  Application();
-  Application(int *argc, char ***argv);
-  ~Application();
+  Application();  //!< default constructor
+  //! constructor that accepts command-line arguments to configure Galaxy
+  Application(int *argc, char ***argv); 
+  ~Application(); //!< default destructor
 
+  //! returns the application's MessageManager object.
   MessageManager *GetTheMessageManager() { return theMessageManager; }
+  //! returns the KeyedObjectFactory object, used to register data
   KeyedObjectFactory *GetTheKeyedObjectFactory() { return theKeyedObjectFactory; }
-
+  //! returns the ThreadPool object, used to manage the Application threads
   ThreadPool *GetTheThreadPool() { return threadPool; }
 
+  //! print a std::string to std::cerr in a distributed parallel friendly way
 	void Print(std::string);
+	//! log a std::string to the log in a distributed parallel friendly way
 	void Log(std::string);
+	//! dump the accumulated log 
+	/*! dumps the accumulated log to per-process log files `gxy_log_{i}` 
+	 * where `{i}` is the process rank.
+	 */
 	void DumpLog();
 
+	//! broadcast a 'Quit' message to all processes
+	/*! Broadcasts a special 'Quit' Work object which instructs all processes
+	 * to stop processing Work and terminate.
+	 */
   void QuitApplication();
+  //! broadcast a 'Sync' message to all processes
+  /*! Broadcasts a special 'Sync' Work object which acts as a barrier to 
+   * further Work processing by any process until all processes reach the sync.
+   */
   void SyncApplication();
-
+  //! broadcast a 'DumpEvents' message to all processes
 	void DumpEvents();
 
+	//! returns a pointer to the argc initialization argument
+	/*! returns a pointer to the argc initialization argument
+	 * \warning will return NULL if default constructor was used
+	 */
   int *GetPArgC() { return argcp; }
+	//! returns a pointer to the argv initialization argument
+	/*! returns a pointer to the argv initialization argument
+	 * \warning will return NULL if default constructor was used
+	 */
   char ***GetPArgV() { return argvp; }
 
+  //! returns the number of processes in the messaging MPI communicator
   int GetSize() { return GetTheMessageManager()->GetSize(); }
+  //! returns the rank of the calling process in the messaging MPI communicator
   int GetRank() { return GetTheMessageManager()->GetRank(); }
 
+  //! start Message processing by the Application
+  /*! signal to the Application threads to begin processing Message objects
+   * \param with_mpi if true, expect to use MPI for distributed message passing
+   * \sa Message, MessageManager, Work
+   */
   void Start(bool with_mpi = true);
+  //! notify the Application threads that the application is terminating
   void Kill();
+  //! notify the Application threads to wait until a Kill notification is received
 	void Wait();
+	//! returns true from initializtaion until Kill is called
   bool Running() { return !application_done; }
 
+  //! temporarily stop processing Message objects
 	void Pause() { GetTheMessageManager()->Pause(); }
+	//! begin (or resume) processing Message objects
 	void Run() { GetTheMessageManager()->Run(); }
 
+	//! convert a Message into a corresponding Work object
+	/*!
+	 * \returns a pointer to a Work object represented by the Message 
+	 * \sa Message, MessageManager, Work 
+	 */
   Work *Deserialize(Message *msg);
+
+  //! return the name of the Work object contained in the Message
+  /*!
+   * \returns a character array with the name of the Work object class contained 
+   *          in the Message
+   */
   const char *Identify(Message *msg);
 
+  //! adds the Work object class to the Application registry
   int RegisterWork(std::string name, Work *(*f)(SharedP)) {
     int n = (*deserializers).size();
     (*deserializers).push_back(f);
@@ -114,12 +203,22 @@ public:
     return n;
   }
 
+  //! is the application done (i.e. has a Kill notification been issued)?
   bool IsDoneSet() { return application_done; }
+  //! return the process id of the Application
 	pid_t get_pid() { return pid; }
 
+	//! read the specified Galaxy input file in JSON format
 	rapidjson::Document *OpenInputState(std::string s);
+	//! initialize the output state file using JSON format
+	/*! \returns a rapidjson::Document object pointer
+	 */
 	rapidjson::Document *OpenOutputState();
-	void SaveOutputState(rapidjson::Document *, std::string s);
+	//! write the output state file to the specified file
+	/*! \param doc a pointer to the output state document
+	 *  \param s the filename to create with the output state
+	 */
+	void SaveOutputState(rapidjson::Document *doc, std::string s);
 
 private:
 	std::vector<std::string> log;
@@ -189,10 +288,25 @@ private:
 	};
 };
 
+/*! \ingroup framework
+ * @{
+ */
+
+//! global gettor for the application pointer
+extern Application* GetTheApplication();  // TODO: make static class method?
+
+//! get thread id (masked by 0xFFFF)
 extern long my_gettid();
+//! return thread name for given id from global thread map
+/*! \param l thread id to query
+ */
 extern const char *threadname_by_id(long l);
+//! return the registered name of this thread, if any
 extern const char *my_threadname();
+//! register this thread with the given name
 extern void register_thread(std::string s);
+
+/*! }@  */ // group framework
 
 } // namespace gxy
 
