@@ -20,6 +20,10 @@
 
 #pragma once
 
+/*! \file Events.h 
+ * \brief expresses and tracks events in the Galaxy system
+ */
+
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -31,14 +35,17 @@
 namespace gxy
 {
 
-extern pthread_mutex_t EventsLock;
-
+//! marks a point in time
+/*! \ingroup framework
+ * \sa EventTracker
+ */
 class Event
 {
 public:
-	Event();
-	~Event();
+	Event(); //!< default constructor
+	~Event(); //!< default destructor
 
+	//! print this event timestamp
 	void Print(std::ostream& o) { print(o); }
 
 protected:
@@ -48,18 +55,27 @@ private:
 	double time;
 };
 
+//! manages timed events
+/*! \ingroup framework
+ * \sa Event
+ */
 class EventTracker
 {
 public:
-	EventTracker();
+	EventTracker(); //!< default constructor
 
+	//! dump events to file `gxy_events_N_R` where `N` is event count and `R` is process rank
 	void DumpEvents();
+	//! dump events to the given file stream
 	void DumpEvents(std::fstream& fs);
 
+	//! add an Event to this tracker
 	void Add(Event *e);
 
+	//! get an architecture-appropriate representation of the current time in seconds
 	static double gettime();
 
+	//! false if any events have been added by Add
 	bool is_empty() { return events.size() == 0; }
 	
 private:
@@ -67,6 +83,15 @@ private:
 	std::vector<Event*> events;
 };
 
+/*! \ingroup framework
+ * @{
+ */
+
+//! lock used to synchronize update to the EventTracker
+extern pthread_mutex_t EventsLock;
+//! return the EventTracker singleton
 extern EventTracker *GetTheEventTracker();
+
+/*! }@ */ // group framework
 
 } // namespace gxy

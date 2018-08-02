@@ -18,11 +18,31 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
+/*! \file debug.h 
+ * \brief configures and establishes connection with a running debugger
+ */
+
 namespace gxy
 {
-	
-void setup_debugger(char *);
-void debugger(char *);
-void popup_debugger();
+
+
+/*! \ingroup framework
+ * @{
+ */
+
+//! configure debugging session
+/*! \param e the executable name
+ */
+void setup_debugger(char * e);
+//! launch the debugging session
+/*! \param arg arguments to the debugger
+ */
+void debugger(char * arg);
+
+//void popup_debugger(); // TODO: unused?
+
+/*! }@ */ // group framework
 
 } // namespace gxy

@@ -71,7 +71,7 @@ namespace gxy
  * function.
  * 
  * \param x a set of stream operations suitable for std::stringstream, 
- * \warnging argument must begin with stream operator `<<`
+ * \warning argument must begin with stream operator `<<`
  * \sa gxy::Application::Log
  */
 #define APP_LOG(x)																					\
@@ -106,7 +106,7 @@ struct ClassTableEntry
  * determining termination conditions, and outputting results.
  *
  * \ingroup framework
- * \sa Work
+ * \sa Message, MessageManager, Work
  */
 class Application {
 
@@ -147,50 +147,63 @@ public:
 	void DumpEvents();
 
 	//! returns a pointer to the argc initialization argument
-	/*! returns a pointer to the argc initialization argument
-	 * \warning will return NULL if default constructor was used
+	/*! \warning will return NULL if default constructor was used
 	 */
   int *GetPArgC() { return argcp; }
 	//! returns a pointer to the argv initialization argument
-	/*! returns a pointer to the argv initialization argument
-	 * \warning will return NULL if default constructor was used
+	/*! \warning will return NULL if default constructor was used
 	 */
   char ***GetPArgV() { return argvp; }
 
   //! returns the number of processes in the messaging MPI communicator
+  /*! \returns the size of the MPI communicator pool
+   */
   int GetSize() { return GetTheMessageManager()->GetSize(); }
   //! returns the rank of the calling process in the messaging MPI communicator
+  /*! \returns the rank of this process in the MPI communicator pool
+   */
   int GetRank() { return GetTheMessageManager()->GetRank(); }
 
   //! start Message processing by the Application
   /*! signal to the Application threads to begin processing Message objects
-   * \param with_mpi if true, expect to use MPI for distributed message passing
+   * \param with_mpi if true, use MPI for distributed message passing
    * \sa Message, MessageManager, Work
    */
   void Start(bool with_mpi = true);
-  //! notify the Application threads that the application is terminating
-  void Kill();
+  //! notify the Application threads to terminate
+  /*! This is used by QuitApplication to gracefully end processing and terminate
+   * the Application.
+   * \sa QuitApplication, Wait
+   */
+   void Kill();
   //! notify the Application threads to wait until a Kill notification is received
+  /*! This is used by QuitApplication to gracefully end processing and terminate
+   * the Application.
+   * \sa Kill, QuitApplication
+   */
 	void Wait();
 	//! returns true from initializtaion until Kill is called
+	/* \sa Pause, Run */
   bool Running() { return !application_done; }
 
   //! temporarily stop processing Message objects
+  /*! \sa Run 
+   */
 	void Pause() { GetTheMessageManager()->Pause(); }
 	//! begin (or resume) processing Message objects
+	/* \sa Pause 
+	 */
 	void Run() { GetTheMessageManager()->Run(); }
 
 	//! convert a Message into a corresponding Work object
-	/*!
-	 * \returns a pointer to a Work object represented by the Message 
-	 * \sa Message, MessageManager, Work 
+	/*! \returns a pointer to a Work object represented by the Message 
+	 * \sa Message, MessageManager, Work
 	 */
   Work *Deserialize(Message *msg);
 
   //! return the name of the Work object contained in the Message
-  /*!
-   * \returns a character array with the name of the Work object class contained 
-   *          in the Message
+  /*! \returns a character array with the name of the Work object class contained 
+   *           in the Message
    */
   const char *Identify(Message *msg);
 

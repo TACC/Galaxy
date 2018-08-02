@@ -20,16 +20,37 @@
 
 #pragma once
 
+/*! \file ClientServer.h 
+ * \brief configures and establishes client-server socket connectivity for Galaxy communication
+ */
+
 namespace gxy
 {
 
+//! configures and establishes client-server socket connectivity for Galaxy communication
+/*! \ingroup framework
+ */	
 class ClientServer 
 {
 public: 	
-	ClientServer();
+	ClientServer(); //!< default constructor
 
+	//! configure and launch the client socket communicator
+	/*! \param server_host the server hostname
+	 *  \param port on which to establish the socket connection
+	 *  \warning server must be setup prior to calling this method
+	 *  \sa setup_server
+	 */
 	void setup_client(char *server_host, int port = 1900);
+	//! configure and launch the server socket communicator
+	/*! \param port on which to establish the socket connection
+	 *  \warning this method must be called prior to client setup
+	 *  \sa setup_client
+	 */
 	void setup_server(int port = 1900);
+	//! get the socket number for this client-server connection
+	/*! \returns the socket number
+	 */
 	int  get_socket() { return skt; }
 
 private:
