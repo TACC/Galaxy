@@ -45,14 +45,10 @@
 namespace gxy
 {
 
-/*! \ingroup framework
- * @{
- */
-
 /*!
  * Send the passed argument to a std::stringstream, 
  * which is then printed by Application::Print
- *
+ * \ingroup framework
  * \param x a set of stream operations suitable for std::stringstream, 
  * \warning argument must begin with stream operator `<<`
  * \sa gxy::Application::Print
@@ -69,7 +65,7 @@ namespace gxy
  * which is then logged by Application::Log. 
  * The log message also includes the calling id, threadname, and calling 
  * function.
- * 
+ * \ingroup framework
  * \param x a set of stream operations suitable for std::stringstream, 
  * \warning argument must begin with stream operator `<<`
  * \sa gxy::Application::Log
@@ -81,7 +77,6 @@ namespace gxy
 	GetTheApplication()->Log(ss.str());												\
 }
 
-/*! }@ */ // group framework 
 
 //! A table to track classes that define Work within Galaxy
 /*! \ingroup framework 

@@ -20,6 +20,10 @@
 
 #pragma once 
 
+/*! \file Work.h 
+ * \brief the base class for all Message payloads in Galaxy
+ */
+
 #include <iostream>
 #include <memory>
 #include <mpi.h>
@@ -29,31 +33,48 @@
 namespace gxy
 {
 
+//! the base class for all Message payloads in Galaxy
+/*! \ingroup framework */
 class Work
 {
 public:
-	Work();
-	Work(int n);
-	Work(SharedP s);
-	Work(const Work* o);
-	~Work();
+	Work(); //!< default constructor
+	Work(int n); //!< construct a Work object with `n` bytes of shareable memory 
+	Work(SharedP s); //!< construct a Work object with the given SharedP as contents
+	Work(const Work* o); //!< copy constructor
+	~Work();  //!< default destructor
 
+	//! return the contents of this Work object 
 	void *get() { return contents->get(); }
+	//! get the size of the contents of this Work object
 	int   get_size() { return contents->get_size(); }
 
+	//! default initialization (no-op)
   virtual void initialize() {};
+  //! default de-initialization (no-op)
   virtual void destructor() { std::cerr << "generic Work destructor" << std::endl; }
+  //! perform a non-collective action, as defined by the derived class (base is no-op)
   virtual bool Action(int sender) 
   { std::cerr << "killed by generic work Action()" << std::endl; return true; };
+  //! perform a collective action, as defined by the derived class (base is no-op)
   virtual bool CollectiveAction(MPI_Comm comm, bool isRoot) 
   { std::cerr << "killed by generic collective work Action()" << std::endl; return true; };
 
+  //! send this Work to the process rank `i`
 	void Send(int i);
+
+	//! broadcast this work to all processes
+	/*! \param c should this be collective (i.e. synchronizing)?
+	 * \param b should the sender block until the broadcast is complete?
+	 */
 	void Broadcast(bool c, bool b = false);
 
+	//! get the class name for this Work (should be set by derived classes)
 	std::string getClassName() { return className; };
+	//! get the type for this Work (should be set by derived classes)
   int GetType() { return type; }
 
+  //! returns a shared pointer to the contents of this Work
 	SharedP get_pointer() { return contents; }
 
 	void (*dtor)();
@@ -68,12 +89,20 @@ protected:
 	SharedP       contents;
 };
 
-
+//! defines a registry tracker for a Work-derived class 
+/*! \param ClassName the class name that has Work as an ancestor class
+ * \ingroup framework
+ */
 #define WORK_CLASS_TYPE(ClassName) 																											\
 		int ClassName::class_type = 0;        																							\
 		std::string ClassName::class_name = #ClassName; 							  										\
 
 
+//! provides class members for a class that derives from Work
+/*! \param ClassName the class name that has Work as an ancestor class
+ * \param bcast *unused*
+ * \ingroup framework
+ */
 #define WORK_CLASS(ClassName, bcast)				 																						\
  																																												\
 public: 																																								\

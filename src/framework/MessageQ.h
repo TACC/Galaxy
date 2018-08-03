@@ -20,6 +20,10 @@
 
 #pragma once 
 
+/*! \file MessageQ.h 
+ * \brief manages a communication queue of Messages for the MessageManager in Galaxy
+ */
+
 #include <deque>
 #include <iostream>
 #include <pthread.h>
@@ -29,8 +33,15 @@
 namespace gxy
 {
 
+//! manages a communication queue of Messages for the MessageManager in Galaxy
+/*! \ingroup framework
+ * \sa Message, MessageManager, Work
+ */
 class MessageQ {
 public:
+  //! constructor
+  /*! \param n the name for this message queue
+   */
   MessageQ(const char *n) : name(n)
   {
     pthread_mutex_init(&lock, NULL);
@@ -38,20 +49,38 @@ public:
     running = true;
   }
 
+  //! destructor
   ~MessageQ()
   {
     running = false;
     pthread_cond_broadcast(&signal);
   }
 
+  //! stop this message queue from processing further messages
+  /*! \warning after a Kill is issued, IsReady will return `1` (not ready) and 
+   * Dequeue will not wait for new messages, likely returning `NULL`
+   */
   void Kill();
 
+  //! add a Message to the queue
+  /*! When the message is added, this method also signals the mutex that a message has arrived.
+   */
   void Enqueue(Message *w);
+  //! remove a Message from the queue
+  /*! If the queue is empty and the queue is running, a call to this method will block until a message is received.
+   * If a Kill has been issued to this queue, this method will not block and return the next message in the queue,
+   * if any, or `NULL` if no messages are present.
+   */
   Message *Dequeue();
+  //! is this queue ready for additional messages?
+  /*! \returns `0` if the queue is empty and the queue is running, otherwise returns `1`
+   */
   int IsReady();
 
+  //! returns the number of Messages pending on this queue
 	int size() { return workq.size(); }
 
+  //! print the messages pending on this queue
 	void printContents();
 
 private:
@@ -63,8 +92,5 @@ private:
 
   std::deque<Message *> workq;
 };
-
-MessageQ *GetIncomingMessageQueue();
-MessageQ *GetOutgoingMessageQueue();
 
 } // namespace gxy

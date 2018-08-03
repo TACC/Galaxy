@@ -47,7 +47,7 @@ MessageQ::Dequeue()
   while (workq.empty() && running)
     pthread_cond_wait(&signal, &lock);
 
-  Message *r;
+  Message *r = NULL;
   if (! workq.empty())
 	{
     r = workq.front();
@@ -78,7 +78,7 @@ void
 MessageQ::Kill()
 {
   pthread_mutex_lock(&lock);
-	running = 0;
+	running = false;
 	pthread_cond_signal(&signal);
   pthread_mutex_unlock(&lock);
 }

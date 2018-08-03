@@ -20,6 +20,10 @@
 
 #pragma once
 
+/*! \file Message.h 
+ * \brief represents an interprocess Work message in Galaxy
+ */
+
 #include <mpi.h>
 #include <stdlib.h>
 #include <iostream>
@@ -31,31 +35,48 @@ namespace gxy
 
 class MessageManager;
 
+//! a unit of interprocess communication in Galaxy
+/*! \ingroup framework
+ * \sa MessageManager, Work
+ */
 class Message {
   friend class MessageManager;
 
 public:
-  // Point to point, fire-and-forget.   If i is -1, then we assume
-  // its client/server and the destination is the other guy
- 
+  //! constructor for a point-to-point message
+  /*! A point-to-point, fire-and-forget (non-blocking) message.   If i is -1, then we assume
+   * a client/server configuration and the destination is the other guy.
+   * \param w the Work message payload
+   * \param i the destination process (-1 for client-server special case)
+   */
   Message(Work *w, int i = -1);
 
-  // Collective, one-to-all.   If collective, will be run in MPI thread.
-	// May be blocking for the caller
-
+  //! constructor for a collective (broadcast, one-to-all) message
+  /*! A one-to-all message, which, if collective, will be run in Galaxy's MPI communication thread.
+	 * The message send can be set to be blocking for the sender.
+   * \param w the Work message payload
+   * \param collective is this Message collective (i.e. a synchronization point across processes)?
+   * \param blk should the sender block on this message until sent?
+   */
   Message(Work *w, bool collective, bool blk);
 
-	// Message to be read off MPI
+	//! constructor for a Message to be read off an MPI communicator
 	Message(MPI_Status&);
 
-	// Message to be read off socket
+	//! constructor for a Message to be read off a socket
+  /*! \param skt the socket where the message is to be read
+   * \param size the expected size of the message
+   */
 	Message(int skt, int size);
 
-  Message();
+  Message(); //!< default constructor
 
-  ~Message();
+  ~Message(); //!< default destructor
 
+  //! is this message blocking?
 	bool isBlocking() { return blocking; }
+
+  //! signal to a blocking thread that it should resume processing
 	void Signal()
 	{ 
 		pthread_mutex_lock(&lock);
@@ -64,38 +85,54 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
+  //! is this thread 
 	bool IsBusy() { return busy; }
 
-public:
-
+  //! return message type (Work type dependent)
   int  GetType() { return header.type; }
+  //! set message type (Work type dependent)
   void SetType(int t) { header.type = t; }
 
+  //! get the serialized content (payload) of the message as a byte stream
   unsigned char *GetContent() { return content->get(); }
+  //! get the size in bytes of the serialized message contents (payload)
   size_t GetSize() { return content->get_size(); }
 
+  //! get process id for the broadcast root, -1 for point-to-point message
   int GetRoot() { return header.broadcast_root; }
+  //! get the process id for the point-to-point message sender, -1 for broadcast message
   int GetSender() { return header.sender; }
 
+  //! is this message a broadcast message?
 	bool IsBroadcast() { return header.broadcast_root != -1; }
-	bool IsP2P() { return ! IsBroadcast(); }
+	//! is this message a point-to-point message?
+  bool IsP2P() { return ! IsBroadcast(); }
 
+  //! does this message have any (non-zero) content (payload)?
 	bool HasContent() { return header.HasContent(); }
 
+  //! set the destination process id for a point-to-point message (ignored for broadcast)
   void SetDestination(int i) { destination = i; }
+  //! get the destination process id for a point-to-point message (ignored for broadcast)
   int GetDestination() { return destination; }
 
+  //! return the serialized byte stream header for this message
 	unsigned char *GetHeader() { return (unsigned char *)&header; }
+  //! return the size of the serialized byte stream header for this message
 	int   GetHeaderSize() { return sizeof(header); }
 
-  // Wait for a blocking message to be handled.  This will return
-  // when the message has been sent, and if the message is a broadcast
-  // message (that is, runs in the messaging thread), for the message's
-  // action to happen locally.  ONLY VALID IF BLOCKING
+  //! Wait for a blocking message to be handled.  
+  /*! This will return when the message has been sent, and if the message is a broadcast
+   * message (that is, runs in the messaging thread), for the message's
+   * action to happen locally.  
+   * \warning only valid for blocking messages
+   */
   void Wait();
 
+  //! return a shared pointer to this message's content (payload)
 	SharedP ShareContent() { return content; }
 
+  //! is this message collective (i.e. synchrnoizing across processes)?
 	bool IsCollective() { return header.collective; }
 
 protected:

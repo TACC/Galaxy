@@ -18,6 +18,12 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
+/*! \file ThreadPool.hpp 
+ * \brief manages a pool of threads to handle priority-ranked tasks
+ */
+
 #include <iostream>
 #include <pthread.h>
 #include <vector>
@@ -28,50 +34,26 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-//
-// Basic pattern is to create a threadpool:
-//
-//    ThreadPool threadpool(# of threads);
-//
-// Then add tasks which are subclasses of ThreadPoolTask, implementing
-// the work() procedure.   Give AddTask a pointer to the task; it'll delete
-// the task when its finished.
-//
-//		for (i = 0; i < nTasks; i++)
-//  		threadpool.AddTask(myTask[i])
-//
-// Then you can wait for all the tasks that have been added to the task queue
-// (since its creation) to finish:
-// 
-//    threadpool.Wait()
-//
-// Or you can group up a bunch of tasks and wait for *them* to be processed:
-//
-//    std::vector< std::future<int> > task_list;
-//
-//		for (i = 0; i < nTasks; i++)
-//  		task_list.emplace_back(threadpool.AddTask(myTask[i]));
-//
-//    for (auto& t : task_list)
-//			t.get();
-//
-// In fact, work() should return an int, and the 't.get()' call should return
-// the result of the corresponding work unit
-//
 
 namespace gxy
 {
 
 class ThreadPool;
 
+//! a prioritized task to be handled by a thread from the pool
+/*! \ingroup framework
+ * \sa ThreadPool
+ */
 class ThreadPoolTask
 {
 public:
+	//! create a task with the given priority (larger int == higher priority)
 	ThreadPoolTask(int p = 0) : priority(p) {};
-	virtual ~ThreadPoolTask() {};
-	virtual int work() = 0;
-	virtual int get_priority() { return priority; }
+	virtual ~ThreadPoolTask() {}; //!< default destructor
+	virtual int work() = 0; //!< work to be performed by thread (must be defined by derived class) 
+	virtual int get_priority() { return priority; } //!< return the priority of this task (larger int == higher priority)
 
+	//! return the std::future signal for this thread
 	std::future<int> get_future() { return p.get_future(); }
 
 private:
@@ -79,7 +61,40 @@ private:
 	friend class ThreadPool;
 	int priority;
 };
-	
+
+//! manages a pool of threads to handle priority-ranked tasks
+/*! \ingroup framework 
+ * 
+ * Basic pattern is to create a threadpool:
+ * ```
+ *    ThreadPool threadpool(# of threads);
+ * ```
+ * Then add tasks which are subclasses of ThreadPoolTask, implementing
+ * the work() procedure.   Give AddTask a pointer to the task; it'll delete
+ * the task when its finished.
+ * ```
+ *		for (i = 0; i < nTasks; i++)
+ *  		threadpool.AddTask(myTask[i])
+ * ```
+ * Then you can wait for all the tasks that have been added to the task queue
+ * (since its creation) to finish:
+ * ```
+ *    threadpool.Wait()
+ * ```
+ * Or you can group up a bunch of tasks and wait for *them* to be processed:
+ * ```
+ *    std::vector< std::future<int> > task_list;
+ *
+ *		for (i = 0; i < nTasks; i++)
+ *  		task_list.emplace_back(threadpool.AddTask(myTask[i]));
+ *
+ *    for (auto& t : task_list)
+ *			t.get();
+ * ```
+ * In fact, `work()` should return an int, and the `t.get()` call should return
+ * the result of the corresponding work unit
+ * \sa ThreadPoolTask
+ */
 class ThreadPool
 {
 private:
@@ -113,6 +128,7 @@ private:
 	}
 
 public:
+	//! construct a thread pool with `n` threads
 	ThreadPool(int n) 
 	{
 		stop = false;
@@ -133,6 +149,7 @@ public:
 		}
 	}
 
+	//! destroy this thread pool
 	~ThreadPool()
 	{
 		pthread_mutex_lock(&lock);
@@ -147,6 +164,7 @@ public:
 		pthread_mutex_destroy(&lock);
 	}
 
+	//! return the highest priority task (in case of ties, selects the first in the task queue)
 	virtual ThreadPoolTask *ChooseTask()
 	{
 		std::list<ThreadPoolTask *>::iterator besti = task_list.begin();
@@ -172,6 +190,7 @@ public:
 		return task;
 	}
 
+	//! add a task to to the thread pool's queue
 	std::future<int> AddTask(ThreadPoolTask *task)
 	{
 		std::future<int> f = task->p.get_future();
@@ -184,6 +203,7 @@ public:
 		return f;
 	}
 
+	//! wait until all tasks in the queue have been processed
 	void Wait()
 	{
 		pthread_mutex_lock(&lock);

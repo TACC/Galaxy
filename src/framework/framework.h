@@ -24,9 +24,8 @@
  *  \brief A convenience header to include all Galaxy framework headers.
  */
 
-/*! \defgroup framework Galaxy Framework Module
- * The Framework module contains all classes for Galaxy's asynchronous 
- * distributed tasking and communication implementation.
+/*! \defgroup framework Framework 
+ * \brief all classes for Galaxy's asynchronous distributed tasking and communication implementation.
  */
 
 #include "Application.h"
