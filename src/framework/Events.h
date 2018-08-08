@@ -22,6 +22,7 @@
 
 /*! \file Events.h 
  * \brief expresses and tracks events in the Galaxy system
+ * \ingroup framework
  */
 
 #include <fstream>

@@ -21,7 +21,8 @@
 #pragma once
 
 /*! \file framework.h
- *  \brief A convenience header to include all Galaxy framework headers.
+ * \brief A convenience header to include all Galaxy framework headers.
+ * \ingroup framework
  */
 
 /*! \defgroup framework Framework 

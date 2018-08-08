@@ -22,6 +22,7 @@
 
 /*! \file ThreadPool.hpp 
  * \brief manages a pool of threads to handle priority-ranked tasks
+ * \ingroup framework
  */
 
 #include <iostream>

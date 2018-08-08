@@ -22,6 +22,7 @@
 
 /*! \file ClientServer.h 
  * \brief configures and establishes client-server socket connectivity for Galaxy communication
+ * \ingroup framework
  */
 
 namespace gxy

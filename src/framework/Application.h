@@ -22,6 +22,7 @@
 
 /*! \file Application.h 
  * \brief The core class for applications to use the Galaxy asynchronous framework
+ * \ingroup framework
  */
 
 #include <pthread.h>

@@ -22,6 +22,7 @@
 
 /*! \file debug.h 
  * \brief configures and establishes connection with a running debugger
+ * \ingroup framework
  */
 
 namespace gxy

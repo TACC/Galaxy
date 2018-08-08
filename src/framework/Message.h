@@ -22,6 +22,7 @@
 
 /*! \file Message.h 
  * \brief represents an interprocess Work message in Galaxy
+ * \ingroup framework
  */
 
 #include <mpi.h>

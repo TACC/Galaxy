@@ -22,6 +22,7 @@
 
 /*! \file Timer.h 
  * \brief provides a high-resolution timer for performance analysis in Galaxy
+ * \ingroup framework
  */
 
 #include <chrono>

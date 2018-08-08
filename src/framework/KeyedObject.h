@@ -22,6 +22,7 @@
 
 /*! \file KeyedObject.h 
  * \brief base class for registered (i.e. tracked) Work objects within Galaxy
+ * \ingroup framework
  */
 
 #include <string>

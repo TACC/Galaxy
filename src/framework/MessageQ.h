@@ -22,6 +22,7 @@
 
 /*! \file MessageQ.h 
  * \brief manages a communication queue of Messages for the MessageManager in Galaxy
+ * \ingroup framework
  */
 
 #include <deque>

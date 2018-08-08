@@ -22,6 +22,7 @@
 
 /*! \file MessageManager.h 
  * \brief manages communication of interprocess Messages in Galaxy
+ * \ingroup framework
  */
 
 #include <iostream>

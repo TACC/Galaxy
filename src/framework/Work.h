@@ -22,6 +22,7 @@
 
 /*! \file Work.h 
  * \brief the base class for all Message payloads in Galaxy
+ * \ingroup framework
  */
 
 #include <iostream>
@@ -77,8 +78,10 @@ public:
   //! returns a shared pointer to the contents of this Work
 	SharedP get_pointer() { return contents; }
 
+	//! function pointer for custom destructor
 	void (*dtor)();
 
+	//! returns the reference count for the shared pointer contents of this Work
 	int xyzzy() { return contents.use_count(); }
 
 protected:

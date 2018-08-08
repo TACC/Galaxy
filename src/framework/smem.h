@@ -22,6 +22,7 @@
 
 /*! \file smem.h 
  * \brief convenience class for shared memory shared pointers (SharedP) in Galaxy
+ * \ingroup framework
  */
 
 #include <iostream>
