@@ -571,7 +571,7 @@ MessageManager::setup_mpi(Application *app, MessageManager *mm)
 		MPI_Comm_size(MPI_COMM_WORLD, &sz);
 		mm->SetSize(sz);
 
-#if defined(EVENT_TRACKING)
+#if defined(GXY_EVENT_TRACKING)
 
     class PIDEvent : public Event
     {

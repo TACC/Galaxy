@@ -164,7 +164,7 @@ private:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 		{
 			MPI_Barrier(coll_comm);
-			GetTheApplication()->DumpEvents();
+			GetTheEventTracker()->DumpEvents();
 			MPI_Barrier(coll_comm);
 			return false;
 		}

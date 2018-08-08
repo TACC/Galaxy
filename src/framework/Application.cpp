@@ -47,6 +47,7 @@ namespace gxy
 WORK_CLASS_TYPE(Application::QuitMsg)
 WORK_CLASS_TYPE(Application::SyncMsg)
 WORK_CLASS_TYPE(Application::PrintMsg)
+WORK_CLASS_TYPE(Application::DumpEventsMsg)
 
 static Application *theApplication;
 
@@ -128,6 +129,7 @@ Application::Application()
 	QuitMsg::Register();
 	SyncMsg::Register();
   PrintMsg::Register();
+  DumpEventsMsg::Register();
 
 	KeyedObject::Register();
 	KeyedObjectFactory::Register();
@@ -190,7 +192,7 @@ Application::~Application()
 
 void Application::DumpEvents()
 {
-	DumpEventsMsg *d = new DumpEventsMsg();
+	DumpEventsMsg *d = new DumpEventsMsg(0);
 	d->Broadcast(true, true);
 }
 

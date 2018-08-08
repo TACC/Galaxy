@@ -18,16 +18,39 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
+cmake_minimum_required (VERSION 2.8.11)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galaxy.h.in ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h DESTINATION include/gxy)
+include_directories(${gxy_framework_SOURCE_DIR} 
+									  ${gxy_renderer_SOURCE_DIR}
+									  ${gxy_data_SOURCE_DIR}
+									  ${Galaxy_BINARY_DIR}/src)
 
-add_subdirectory(framework)
-add_subdirectory(data)
-add_subdirectory(renderer)
-add_subdirectory(apps)
-add_subdirectory(cinema)
-add_subdirectory(tests)
+set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
 
+set(BINS "")
 
+# executables NOT requiring GUI stuff - eg.
+
+add_executable(events events.cpp)
+target_link_libraries(events ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+set(BINS events ${BINS})
+
+find_package(X11)
+find_package(OpenGL)
+find_package(GLUT)
+
+if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
+
+	include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
+	link_libraries(${X11_LIBRARIES})
+
+	# executables requiring GUI stuff - eg.
+	# add_executable(async async.cpp quat.cpp AsyncRendering.cpp)
+	# target_link_libraries(async ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+	# set(BINS async ${BINS})
+
+endif(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
+
+install(TARGETS ${BINS} DESTINATION bin)

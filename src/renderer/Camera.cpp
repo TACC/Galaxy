@@ -333,7 +333,7 @@ public:
 
   virtual int work()
   {
-#if defined(EVENT_TRACKING)
+#if defined(GXY_EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
 

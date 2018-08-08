@@ -86,7 +86,7 @@ Event::print(ostream& o)
 void
 EventTracker::DumpEvents()
 {
-#if defined(EVENT_TRACKING)
+#if defined(GXY_EVENT_TRACKING)
 	int rank = GetTheApplication()->GetTheMessageManager()->GetRank();
 	fstream fs;
 	stringstream fname;
