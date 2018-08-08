@@ -20,20 +20,31 @@
 
 #pragma once
 
+/*! \file smem.h 
+ * \brief convenience class for shared memory shared pointers (SharedP) in Galaxy
+ */
+
 #include <iostream>
 #include <memory>
 
 namespace gxy
 {
 
+
+//! convenience class for shared memory shared pointers (SharedP) in Galaxy
+/*! \ingroup framework */
 class smem
 {
 public:
-  ~smem();
+  ~smem(); //!< default destructor
 
+  //! returns a new shared pointer (SharedP) of size `n` bytes
+  /*! \param n the size in bytes of the memory block pointed to by this SharedP */
 	static std::shared_ptr<smem> New(int n) { return std::shared_ptr<smem>(new smem(n)); }
 
+	//! get a pointer to the underlying data for this SharedP
 	unsigned char *get() { return ptr; }
+	//! get the size of the memory block pointed to by this SharedP
 	int   get_size() { return sz;  }
 
 private:
@@ -43,6 +54,8 @@ private:
 	int kk;
 };
 
+//! convenience type for shared pointers in Galaxy
+/*! \ingroup framework */
 typedef std::shared_ptr<smem> SharedP;
 
 } // namespace gxy

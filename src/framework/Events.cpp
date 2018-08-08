@@ -40,15 +40,31 @@ namespace gxy
 typedef numeric_limits< double > dbl;
 
 EventTracker *theEventTracker;
+EventTracker *GetTheEventTracker() { return theEventTracker; }
+
+pthread_mutex_t EventsLock = PTHREAD_MUTEX_INITIALIZER;
+
+Event::Event()
+{
+	time = EventTracker::gettime();
+}
+
+Event::~Event()
+{
+  cerr << "event dtor" << endl;
+}
+
+void
+Event::print(ostream& o)
+{
+	o << fixed << time << ": ";
+}
+
 EventTracker::EventTracker()
 {
   theEventTracker = this; 
 	event_dump_count = 0;
 }
-
-EventTracker *GetTheEventTracker() { return theEventTracker; }
-
-pthread_mutex_t EventsLock = PTHREAD_MUTEX_INITIALIZER;
 
 double
 EventTracker::gettime()
@@ -67,22 +83,6 @@ EventTracker::gettime()
 #endif
 }
 
-Event::Event()
-{
-	time = EventTracker::gettime();
-}
-
-Event::~Event()
-{
-  cerr << "event dtor" << endl;
-}
-
-void
-Event::print(ostream& o)
-{
-	o << fixed << time << ": ";
-}
-
 void
 EventTracker::DumpEvents()
 {
@@ -90,7 +90,7 @@ EventTracker::DumpEvents()
 	int rank = GetTheApplication()->GetTheMessageManager()->GetRank();
 	fstream fs;
 	stringstream fname;
-	fname << "events_" << event_dump_count << "_" << rank;
+	fname << "gxy_events_" << event_dump_count << "_" << rank;
 	fs.open(fname.str().c_str(), fstream::out);
 	DumpEvents(fs);
 	fs.close();

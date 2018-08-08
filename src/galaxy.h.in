@@ -35,3 +35,14 @@
 #cmakedefine GXY_REVERSE_LIGHTING
 #cmakedefine GXY_SYNCHRONOUS
 #cmakedefine GXY_TIMING
+
+/*! \brief the Galaxy namespace.
+ * \ingroup framework data renderer
+ */
+namespace gxy {};
+
+/*! \brief the RapidJSON namespace.
+ * The namespace defined by the RapidJSON third-party library http://rapidjson.org/
+ * \ingroup framework
+ */
+namespace rapidjson {};

@@ -157,7 +157,7 @@ Application::DumpLog()
 	{
 		std::stringstream fname;
 		int rank = GetTheMessageManager()->GetRank();
-		fname << "log_" << rank;
+		fname << "gxy_log_" << rank;
 
 		std::fstream fs;
 		fs.open(fname.str().c_str(), std::fstream::out | std::fstream::app);
