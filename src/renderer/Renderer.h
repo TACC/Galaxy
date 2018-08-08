@@ -69,6 +69,8 @@ public:
 
   virtual void localRendering(RenderingSetP, MPI_Comm c);
 
+  virtual void HandleTerminatedRays(RayList *raylist, int *classification);
+
   void LaunchInitialRays(RenderingSetP, RenderingP, std::vector<std::future<void>>&);
 
   virtual int SerialSize();

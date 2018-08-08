@@ -248,7 +248,7 @@ Renderer::SaveStateToDocument(Document& doc)
 
 // These defines categorize rays after a pass through the tracer
 
-#define SEND_TO_FB			-1
+#define TERMINATED			-1
 #define DROP_ON_FLOOR		-2
 #define KEEP_HERE				-3
 #define UNDETERMINED		-4
@@ -256,6 +256,66 @@ Renderer::SaveStateToDocument(Document& doc)
 // This define indicates that a ray exitting a partition face exits everything
 
 #define NO_NEIGHBOR 		-1
+
+void
+Renderer::HandleTerminatedRays(RayList *raylist, int *classification)
+{
+    int terminated_count = 0;
+
+    for (int i = 0; i < raylist->GetRayCount(); i++)
+        if (classification[i] == TERMINATED) terminated_count++;
+
+    RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+    RenderingP rendering = raylist->GetTheRendering();
+
+    if (terminated_count == 0) return;
+
+    Pixel *local_pixels = (rendering->IsLocal()) ? new Pixel[terminated_count] : NULL;
+
+    Renderer::SendPixelsMsg *spmsg = (!rendering->IsLocal()) ? 
+        new Renderer::SendPixelsMsg(rendering, renderingSet,
+        raylist->GetFrame(), terminated_count) : NULL;
+
+    Pixel *p = local_pixels;
+    for (int i = 0; i < raylist->GetRayCount(); i++)
+    {
+        if (classification[i] == TERMINATED)
+        {
+            if (rendering->IsLocal())
+            {
+                p->x = raylist->get_x(i);
+                p->y = raylist->get_y(i);
+                p->r = raylist->get_r(i);
+                p->g = raylist->get_g(i);
+                p->b = raylist->get_b(i);
+                p->o = raylist->get_o(i);
+                p++;
+            }
+            else
+            {
+                spmsg->StashPixel(raylist, i);
+            }
+        }
+   }
+
+    if (spmsg)
+    {
+      if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
+      {
+          spmsg->Send(rendering->GetTheOwner());
+      }
+      else
+      {
+          delete spmsg;
+      }
+    }
+
+    if (local_pixels)
+    {
+        rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
+        delete[] local_pixels;
+    }
+}
 
 class processRays_task : public ThreadPoolTask
 {
@@ -299,7 +359,7 @@ public:
 			Box *box = visualization->get_local_box();
 
 			// Where does each ray go next?  Either nowhere (DROP_ON_FLOOR), into one of
-			// the 0->5 neighbors, to the FB (SEND_TO_FB) or remain here (KEEP_HERE)
+			// the 0->5 neighbors, to the FB (TERMINATED) or remain here (KEEP_HERE)
 
 			int *classification = new int[raylist->GetRayCount()];
 
@@ -342,12 +402,14 @@ public:
 
 					if ((term & RAY_OPAQUE) | (term & RAY_TIMEOUT))
 					{
-						classification[i] = SEND_TO_FB;
+                        // DHR sample here
+                        // renderer->do_your_stuff()
+						classification[i] = TERMINATED;
 					}
 					else if ((term & RAY_BOUNDARY) && (exit_face == NO_NEIGHBOR))
 					{
 						if ((raylist->get_r(i) != 0) || (raylist->get_g(i) != 0) || (raylist->get_b(i) != 0))
-							classification[i] = SEND_TO_FB;
+							classification[i] = TERMINATED;
 						else
 							classification[i] = DROP_ON_FLOOR;
 					}
@@ -379,7 +441,7 @@ public:
 #ifdef GXY_REVERSE_LIGHTING
 							classification[i] = DROP_ON_FLOOR;
 #else
-							classification[i] = SEND_TO_FB;
+							classification[i] = TERMINATED;
 #endif
 						}
 						else
@@ -390,7 +452,7 @@ public:
 						// We don't need to add in the light's contribution
 						// OR, if reverse lighting, send to FB to ADD the (negative) shadow
 #ifdef GXY_REVERSE_LIGHTING
-					classification[i] = SEND_TO_FB;
+					classification[i] = TERMINATED;
 #else
           classification[i] = DROP_ON_FLOOR;
 #endif
@@ -417,7 +479,7 @@ public:
 #ifdef GXY_REVERSE_LIGHTING
 							classification[i] = DROP_ON_FLOOR;
 #else
-							classification[i] = SEND_TO_FB;
+							classification[i] = TERMINATED;
 #endif
 						}
 						else
@@ -429,7 +491,7 @@ public:
 						// OR, if reverse lighting, send to FB to ADD the (negative)
 						// ambient contribution
 #ifdef GXY_REVERSE_LIGHTING
-						classification[i] = SEND_TO_FB;
+						classification[i] = TERMINATED;
 #else
 						classification[i] = DROP_ON_FLOOR;
 #endif
@@ -443,7 +505,7 @@ public:
 #ifdef GXY_REVERSE_LIGHTING
 						classification[i] = DROP_ON_FLOOR;
 #else
-						classification[i] = SEND_TO_FB;
+						classification[i] = TERMINATED;
 #endif
 					}
 					else
@@ -464,7 +526,7 @@ public:
 			{
         int clss = classification[i];
 
-				if (clss == SEND_TO_FB)
+				if (clss == TERMINATED)
 					fbknt++;
 				else if (clss == KEEP_HERE)
 					knts[6] ++;
@@ -496,18 +558,11 @@ public:
 			}
 
 
-			// Now we sort the rays based on the classification.   If SEND_TO_FB
+			// Now we sort the rays based on the classification.   If TERMINATED
 			// and the FB is local,  just do it.  Otherwise, set up a message buffer.
 
-			RenderingP rendering = raylist->GetTheRendering();
+            renderer->HandleTerminatedRays(raylist, classification);
 
-			Renderer::SendPixelsMsg *spmsg = (fbknt && !rendering->IsLocal()) ? 
-						new Renderer::SendPixelsMsg(rendering, renderingSet, raylist->GetFrame(), fbknt) : NULL;
-
-			Pixel *local_pixels = (fbknt && rendering->IsLocal()) ? new Pixel[fbknt] : NULL;
-
-			fbknt = 0;
-			int lclknt = 0;
 			for (int i = 0; i < raylist->GetRayCount(); i++)
 			{
 				int clss = classification[i];
@@ -519,49 +574,7 @@ public:
 					RayList::CopyRay(raylist, i, ray_lists[clss], knts[clss]);
 					knts[clss]++;
 				}
-				else if (clss == SEND_TO_FB)
-				{
-					if (rendering->IsLocal())
-					{
-						Pixel *p = local_pixels + lclknt;
-
-						p->x = raylist->get_x(i);
-						p->y = raylist->get_y(i);
-						p->r = raylist->get_r(i);
-						p->g = raylist->get_g(i);
-						p->b = raylist->get_b(i);
-						p->o = raylist->get_o(i);
-
-						lclknt++;
-					}
-					else
-					{
-						spmsg->StashPixel(raylist, i);
-						fbknt++;
-					}
-				}
-			}
-
-			// If we AREN't the owner of the Rendering send the pixels to its owner
-			if (spmsg)
-			{
-			  if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
-				{
-					// std::cerr << GetTheApplication()->GetRank() << " sending pixellist to owner " << rendering->GetTheOwner() << "\n";
-				  spmsg->Send(rendering->GetTheOwner());
-				}
-				else
-				{
-					// std::cerr << GetTheApplication()->GetRank() << " not sending pixellist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
-				  delete spmsg;
-				}
-			}
-
-			if (local_pixels)
-			{
-				rendering->AddLocalPixels(local_pixels, lclknt, raylist->GetFrame(), GetTheApplication()->GetRank());
-				delete[] local_pixels;
-			}
+            }
 
 			for (int i = 0; i < 6; i++)
 				if (knts[i])
@@ -570,15 +583,11 @@ public:
 					// This process gets "ownership" of the new ray list until its recipient acknowleges 
 					renderingSet->IncrementRayListCount();
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
-#else
+#endif
 					if (ray_lists[i]->GetFrame() == renderingSet->GetCurrentFrame())
 					{
 						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 					}
-					// else
-						// std::cerr << GetTheApplication()->GetRank() << " not sending raylist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
-#endif // GXY_SYNCHRONOUS
-
 					delete ray_lists[i];
 				}
 
