@@ -128,6 +128,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 #ifdef GXY_EVENT_TRACKING
 	GetTheEventTracker()->Add(new StartRenderingEvent);
 #endif
+
 #ifdef GXY_LOGGING
 	APP_LOG(<< "Renderer::localRendering start");
 #endif

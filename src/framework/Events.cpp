@@ -62,18 +62,10 @@ Event::print(ostream& o)
 
 EventTracker::EventTracker()
 {
-	Application *a = GetTheApplication();
-	if (a)
-		std::cerr << "(" << a->GetRank() << ":" << pthread_self() << ") ET ctor\n";
-	else
-		std::cerr << "(" << pthread_self() << ") ET ctor\n";
-	
 }
 
 EventTracker::~EventTracker()
 {
-	Application *a = GetTheApplication();
-	std::cerr << "(" << a->GetRank() << ":" << pthread_self() << ") ET dtor\n";
 }
 
 

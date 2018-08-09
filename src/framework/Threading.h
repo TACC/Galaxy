@@ -175,6 +175,8 @@ private:
 	static void* thread(void *d);
 
 public:
+	enum PoolEventType { WAKE, START, FINISH };
+
 	//! construct a thread pool with `n` threads
 	ThreadPool(int n);
 
@@ -187,19 +189,15 @@ public:
 		std::list<ThreadPoolTask *>::iterator besti = task_list.begin();
 		int bestp = (*besti)->get_priority();
 
-		// int pknts[] = {0, 0, 0};
 		for (std::list<ThreadPoolTask *>::iterator it = task_list.begin(); it != task_list.end(); ++it)
 		{
 			int p = (*it)->get_priority();
-			// pknts[p] ++;
 			if (p > bestp)
 			{
 				besti = it;
 				bestp = (*it)->get_priority();
 			}
 		}
-
-		// std::cerr << pknts[0] << " " << pknts[1] << " " << pknts[2] << ": " << bestp << "\n";
 
 		ThreadPoolTask *task = (*besti);
 		task_list.erase(besti);
@@ -229,6 +227,12 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
+	//! add an event noting an event (wake, start, finish task)
+	void PoolEvent(PoolEventType e)
+	{
+		GetTheEventTracker()->Add(new PoolThreadEvent(e));
+	}
+
 private:
 	std::vector<pthread_t> thread_ids;
 	std::list<ThreadPoolTask *> task_list;
@@ -238,6 +242,29 @@ private:
 	pthread_mutex_t lock;
 	pthread_cond_t wait;
 	pthread_cond_t wait_for_done;
+
+  class PoolThreadEvent : public Event
+  {
+  public:
+    PoolThreadEvent(PoolEventType e) : pe(e) {}
+
+  protected:
+    void print(std::ostream& o)
+    {
+      Event::print(o);
+
+			switch(pe)
+			{
+				case WAKE:   o << "pool thread wakeup"; break;
+				case START:  o << "pool thread start task"; break;
+				case FINISH: o << "pool thread finish task"; break;
+			}
+    }
+
+  private:
+    PoolEventType pe;
+  };
+
 };
 
 } // namespace gxy

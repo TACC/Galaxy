@@ -32,14 +32,11 @@ namespace gxy
 
 ThreadManager::TLS::TLS(int i, pthread_key_t k, std::string n, void *(*s)(void *), void *a) : index(i), key(k), name(n), start(s), arg(a)
 {
-  int rank = GetTheApplication()->GetRank();
-	std::cerr << "TLS (" << rank << ":" << pthread_self() << ") ctor\n";
 }
 
 ThreadManager::TLS::~TLS()
 {
   int rank = GetTheApplication()->GetTheMessageManager()->GetRank();
-	std::cerr << "TLS (" << rank << ":" << pthread_self() << ") dtor\n";
   fstream fs;
   stringstream fname;
   fname << "gxy_events" << "_" << rank << "_" << index;
@@ -58,7 +55,6 @@ ThreadManager::ThreadManager()
 
 ThreadManager::~ThreadManager()
 {
-	std::cerr << "ThreadManager dtor\n";
 #if defined(GXY_EVENT_TRACKING)
   int rank = GetTheApplication()->GetTheMessageManager()->GetRank();
   fstream fs;
@@ -134,14 +130,21 @@ ThreadPool::thread(void *d)
 
 		if (! pool->stop)
 		{
+			pool->PoolEvent(WAKE);
+
 			ThreadPoolTask *task = pool->ChooseTask();
 			pthread_mutex_unlock(&pool->lock);
+
+			pool->PoolEvent(START);
 
 			task->p.set_value(task->work());
 			delete task;
 
+			pool->PoolEvent(FINISH);
+
 			pthread_mutex_lock(&pool->lock);
 			pthread_cond_signal(&pool->wait_for_done);
+
 		}
 	}
 
