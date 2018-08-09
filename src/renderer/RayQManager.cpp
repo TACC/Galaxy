@@ -23,6 +23,7 @@
 #include <pthread.h>
 
 #include "Application.h"
+#include "Threading.h"
 #include "Renderer.h"
 #include "RayQManager.h"
 #include "Rays.h"
@@ -94,7 +95,7 @@ RayQManager::RayQManager(Renderer *r)
 	paused = false;
   done = false;
 
-	pthread_create(&tid, NULL, RayQManager::theRayQWorker, this);
+  GetTheApplication()->GetTheThreadManager()->create_thread(string("rayQWorker"), &tid, NULL, RayQManager::theRayQWorker, this);
 }
 
 void

@@ -114,7 +114,6 @@ main(int argc, char *argv[])
 		TestEventMsg t(string("hello"));
 		t.Broadcast(true, true);
 
-		theApplication.DumpEvents();
 		theApplication.QuitApplication();
 	}
 

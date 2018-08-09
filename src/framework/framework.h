@@ -37,6 +37,6 @@
 #include "MessageManager.h"
 #include "MessageQ.h"
 #include "smem.h"
-#include "ThreadPool.hpp"
+#include "Threading.hpp"
 #include "Timer.h"
 #include "Work.h"

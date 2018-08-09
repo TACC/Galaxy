@@ -32,7 +32,7 @@
 using namespace gxy;
 using namespace std;
 
-int mpiRank, mpiSize;
+int mpiRank = 0, mpiSize = 1;
 
 void
 syntax(char *a)
@@ -203,7 +203,6 @@ int main(int argc,  char *argv[])
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
           if (c == 's') { cerr << "got s" << endl; rs->DumpState(); }
 #endif
-          if (c == 'd') { cerr << "got d" << endl; theApplication.DumpEvents(); }
           if (c == 'q') break;
         }
       }

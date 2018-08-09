@@ -27,8 +27,8 @@
 #include <sys/socket.h>
 
 #include "Application.h"
+#include "Threading.h"
 #include "MessageManager.h"
-
 #include "Message.h"
 #include "MessageQ.h"
 
@@ -174,7 +174,7 @@ void *MessageManager::messageThread(void *p)
   Application *app = GetTheApplication();
   MessageManager *mm = app->GetTheMessageManager();
 
-  if (pthread_create(&mm->work_tid, NULL, workThread, mm))
+  if (GetTheApplication()->GetTheThreadManager()->create_thread(string("workThread"), &mm->work_tid, NULL, workThread, mm))
 	{
     cerr << "ERROR: Failed to spawn work thread" << endl;
     exit(1);
@@ -293,7 +293,7 @@ void MessageManager::Start(bool m)
 	wait = 2;
 	with_mpi = m;
 
-  if (pthread_create(&message_tid, NULL, messageThread, NULL))
+	if (GetTheApplication()->GetTheThreadManager()->create_thread(string("messageThread"), &message_tid, NULL, messageThread, NULL))
 	{
     std::cerr << "Failed to spawn messaging thread\n";
     exit(1);

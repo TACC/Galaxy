@@ -41,6 +41,7 @@
 #include "Renderer.h"
 #include "TraceRays.h"
 #include "Work.h"
+#include "Threading.h"
 
 #include "Rays_ispc.h"
 #include "TraceRays_ispc.h"

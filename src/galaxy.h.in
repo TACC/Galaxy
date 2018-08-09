@@ -36,6 +36,8 @@
 #cmakedefine GXY_SYNCHRONOUS
 #cmakedefine GXY_TIMING
 
+#ifndef ISPC
+
 /*! \brief the Galaxy namespace.
  * \ingroup framework data renderer
  */
@@ -46,3 +48,5 @@ namespace gxy {};
  * \ingroup framework
  */
 namespace rapidjson {};
+
+#endif

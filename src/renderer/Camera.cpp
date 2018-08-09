@@ -41,6 +41,7 @@
 #include "Renderer.h"
 #include "Rendering.h"
 #include "RenderingSet.h"
+#include "Threading.h"
 
 using namespace rapidjson;
 using namespace std;

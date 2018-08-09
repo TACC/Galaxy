@@ -20,8 +20,8 @@
 
 #pragma once
 
-/*! \file ThreadPool.hpp 
- * \brief manages a pool of threads to handle priority-ranked tasks
+/*! \file Threading.h 
+ * \brief manages threading including isolated threads and a pool of ganged threads
  */
 
 #include <iostream>
@@ -34,9 +34,83 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "Application.h"
+#include "Events.h"
 
 namespace gxy
 {
+
+//! manages all threads.   Gives access to per-thread data for each thread
+/*! \ingroup framework
+ */
+
+class ThreadManager
+{
+private:
+
+  struct TLS
+  {
+    TLS(int i, pthread_key_t k, std::string n, void *(*s)(void *), void *a);
+    ~TLS();
+
+    pthread_key_t key;
+		int 					index;
+    void*         (*start)(void *);
+    void*         arg;
+    long          tid;
+    std::string   name;
+		EventTracker  events;
+  };
+
+  static void DTOR(void *v) { TLS *foo = (TLS *)v; delete foo; }
+
+  static void *START(void *v)
+  {
+    TLS *tls = (TLS *)v;
+    tls->tid = ((long)pthread_self() & 0xffff);
+    pthread_setspecific(tls->key, (void *)tls);
+    return tls->start(tls->arg);
+  }
+
+  TLS *get_tls() { return (TLS *)pthread_getspecific(thr_id_key); }
+
+  pthread_key_t thr_id_key;
+  pthread_mutex_t lock;
+	int index;
+
+	EventTracker events; // event tracker for main thread and other non-managed threads 
+
+public:
+  ThreadManager();
+  ~ThreadManager();
+
+	//! Get argument passed to the current thread in its creation
+  void* get_arg() { return get_tls()->arg; }
+
+	//! Get the name of the current thread
+  std::string get_name() { return get_tls()->name; }
+
+	//! Get the index of the current thread
+  int get_index() { return get_tls()->index; }
+
+	//! Get the event handler of the current thread or the manager's thread if not a managed thread
+  EventTracker* get_events() {
+		if (get_tls() == NULL)
+			return &events;
+		else
+			return &get_tls()->events;
+	}
+
+  //! create a new thread. 
+	/*! Corresponds to pthread_create
+   * \param name name assigned to current thread
+	 * \param tid place to put the threads tid (see pthread_create)
+	 * \param attr attributes for thread generation (see pthread_create)
+	 * \param start_routine thread routine (see pthread_create)
+	 * \param arg argument for thread routine (see pthread_create)
+	 */
+  int create_thread(std::string name, pthread_t *tid, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+};
 
 class ThreadPool;
 
@@ -98,71 +172,14 @@ private:
 class ThreadPool
 {
 private:
-	static void* thread(void *d) 
-	{
-		ThreadPool *pool = (ThreadPool *)d;
-
-		pthread_mutex_lock(&pool->lock);
-
-		while (! pool->stop)
-		{
-			while ((! pool->stop) && pool->task_list.empty())
-				pthread_cond_wait(&pool->wait, &pool->lock);
-
-			if (! pool->stop)
-			{
-				ThreadPoolTask *task = pool->ChooseTask();
-				pthread_mutex_unlock(&pool->lock);
-
-				task->p.set_value(task->work());
-				delete task;
-
-				pthread_mutex_lock(&pool->lock);
-				pthread_cond_signal(&pool->wait_for_done);
-			}
-		}
-
-		pthread_cond_signal(&pool->wait);
-		pthread_mutex_unlock(&pool->lock);
-		pthread_exit(NULL);
-	}
+	static void* thread(void *d);
 
 public:
 	//! construct a thread pool with `n` threads
-	ThreadPool(int n) 
-	{
-		stop = false;
-
-		pthread_mutex_init(&lock, NULL);
-		pthread_cond_init(&wait, NULL);
-		pthread_cond_init(&wait_for_done, NULL);
-
-		for (int i = 0; i < n; i++)
-		{
-			pthread_t t;
-			if (pthread_create(&t, NULL, thread, (void *)this))
-			{
-				std::cerr << "error creating thread pool" << std::endl;
-				exit(1);
-			}
-			thread_ids.push_back(t);
-		}
-	}
+	ThreadPool(int n);
 
 	//! destroy this thread pool
-	~ThreadPool()
-	{
-		pthread_mutex_lock(&lock);
-		stop = true;
-		pthread_cond_signal(&wait);
-		pthread_mutex_unlock(&lock);
-
-		for (std::vector<pthread_t>::iterator it = thread_ids.begin(); it != thread_ids.end(); ++it)
-			pthread_join(*it, NULL);
-
-		pthread_cond_destroy(&wait);
-		pthread_mutex_destroy(&lock);
-	}
+	~ThreadPool();
 
 	//! return the highest priority task (in case of ties, selects the first in the task queue)
 	virtual ThreadPoolTask *ChooseTask()

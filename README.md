@@ -146,47 +146,19 @@ Make some volumetric test data
 
 `radial -r 256 256 256`
 
-will create a .VTI dataset with several variables: ramps in X, Y and Z; oneBall is f(x, y, z) = mag(x, y, z) and eightBalls is f(x, y, z) = mag(abs(x) - 0.5, abs(y) - 0.5, abs(z) - 0.5)    We can create native format datasets:
+will create a .VTI dataset (radial-0.vti - note that radial will create timestep data if requested and the '-0' reflects the timestep) with several variables: ramps in X, Y and Z; oneBall is f(x, y, z) = mag(x, y, z) and eightBalls is f(x, y, z) = mag(abs(x) - 0.5, abs(y) - 0.5, abs(z) - 0.5)    We can create native format datasets:
 
-`vti2raw radial-0.vti oneBall`
+`vti2vol radial-0.vti oneBall eightBalls`
 
-will create oneBall-0.vol and …raw.
-
-Now we can use the Viewer.
-
-`Viewer &`
-
-In the dialog, select oneBall.vol and Open.   This will load the dataset into memory.   Note that this auto partitions the data - had I run 
-
-`mpirun -np 4 Viewer &`
-
-It would divide the data into 4 parts and assign one to each process.   Anyway, its in memory now; we can create a viewer:   in the menu bar, Viewers->New will pop up an empty viewer.  Now we attach the dataset to the viewer by hitting control-P on the viewer window to open its properties window.   Hitting Add will present you with a menu of the loaded datasets; doubleclick oneBall.
-
-Still, nothing in the viewer, since we have yet to tell it how to visualize the data.   It should put up an outline, but it doesn’t.   Anyway, you’ll see oneBall in the viewer’s property window.   Select it and hit Edit to get the dataset’s properties.  In the Isovalues tab, hit Add to add an isovalue, and Commit.  Slide the widget and you should see a sphere of varying radius.  Similarly, Add in the Slices tab to add a slice and Commit.  Use of the Volume Rendering tab is left as an exercise for the user.
-
-Now lets create a second dataset: back in the xterm, 
-
-`vti2raw radial-0.vti eightBalls`
-
-Then, select the viewer to get its menu bar, and File->Load Dataset  and load eightBalls.vol   You might need to change the file name extension in the dialog.   Now control-p in the viewer, and Add.   That’ll pop up a menu of available datasets - oneBall and eightBalls.   Doubleclick eightBalls and it will appear in the viewer’s property window; select it and Edit to get its properties, and you can add slices, isovalues, or volume rendering as above.  
-
-Note the little ‘x’ button next to slice and isovalue interactors; it’ll delete the slice/isosurface.
-
-By default the lighting is in object space; in the viewer’s dialog, select the Lights tab to change the lighting.   The little unlabelled checkbox will shift the light to be relative to the camera rather than the object.  You can also turn on shadows here, and change from a fixed ambient component to trace some AO rays.   32 is reasonable.  You can also change the radius of effect of the AO rays; here about 0.1 is reasonable.   Take a look, then turn it AO off again.  In the next section it’ll slow things down.
-
-Now lets add some particles to the mix.   In the xterm, run:
-
-`particles oneBall-0.vol -n 10000 -s PPP -r 0.05`
-
-This will generate 10000 particles in the bounding box of the oneBall-0.vol dataset.   Unfortunately, particles datasets are not currently auto partitioned, so the PPP parameter specifies the number of partitions.   The -r parameter is a ghost zone width; particles within the ghost zone are duplicated in each partition so fragmentary particles don’t appear at boundaries.   The correct value would be the largest radius that particles will be rendered.     The particles.part output file contains the layout of the partitioned dataset (in XML format), indicating the bounding box and data file for each partition.
-
-As before, add the particles.part data to the viewer.   By default, the radius is large; in the particles dataset properties, one parameter is available - the radius - and is given by a slider with bounds at 0 and 1.   Change the upper bound to 0.1 and move the slider down to get a reasonable result.  A value of 0.02 is reasonable.
+will create radial-0-oneBall.vol, radial-0-eightBalls.vol and corresponding …raw files that actually contain the data as bricks of floats.
 
 ### Batch Mode
 
-Batch mode relies on a state file to define the one or more visualizations.   State files define a set of visualizations and a set of cameras.   A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc.   The effect of the state file is the cross product of the sets of visualizations and cameras: a rendering of each visualization from every camera will be produced.
+Batch mode relies on a state file to define one or more visualizations and one or more cameras. 
+A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc.   
+The result of the state file is the cross product of the sets of visualizations and cameras: a rendering of each visualization from every camera will be produced.
 
-The following is a state file that should work with the datasets we created above, and will result in three renderings: a single visualization, containing two datasets, rendered from each of the three cameras.
+The following is a state file that should work with the datasets we created above, and will result in six renderings: two visualizations rendered from each of the three cameras.
 
 ```json
 {
@@ -195,22 +167,22 @@ The following is a state file that should work with the datasets we created abov
       {
         "name": "oneBall",
         "type": "Volume",
-        "filename": "oneBall-0.vol"
+        "filename": "radial-0-oneBall.vol"
       },
       {
         "name": "eightBalls",
         "type": "Volume",
-        "filename": "eightBalls-0.vol"
+        "filename": "radial-0-eightBalls.vol"
       }
     ],
     "Renderer": {
         "Lighting": {
-          "Sources": [[0, 0, -4]],
+          "Sources": [[1, 1, 0, 1]],
           "shadows": true,
-          "Ka": 0.2,
-          "Kd": 0.8,
-          "ao count": 0,
-          "ao radius": 0.1
+          "Ka": 0.4,
+          "Kd": 0.6,
+          "ao count": 16,
+          "ao radius": 0.5
       }
     },
     "Visualizations":
@@ -221,29 +193,35 @@ The following is a state file that should work with the datasets we created abov
           [
             {
               "type": "Volume",
-              "dataset": "eightBalls",
-              "volume rendering": true,
-              "isovalues": [ 0.05 ],
-              "slices": [ [0, 0, 1, 0] ],
+              "dataset": "oneBall",
+              "isovalues": [ 0.25 ],
+              "volume rendering": false,
               "colormap": [
                 [0.00,1.0,0.5,0.5],
                 [0.25,0.5,1.0,0.5],
                 [0.50,0.5,0.5,1.0],
                 [0.75,1.0,1.0,0.5],
                 [1.00,1.0,0.5,1.0]
-              ],
+               ],
+							"slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
               "opacitymap": [
-              [ 0.00, 0.05],
-              [ 0.20, 0.02],
-              [ 0.21, 0.00],
-              [ 1.00, 0.00]
-             ]
-            },
+                [ 0.00, 0.05],
+                [ 0.20, 0.05],
+                [ 0.21, 0.00],
+                [ 1.00, 0.00]
+               ]
+            }
+          ]
+      },
+      {
+        "annotation": "",
+        "operators":
+          [
             {
               "type": "Volume",
-              "dataset": "oneBall",
-              "isovalues": [ 0.25 ],
-              "volume rendering": false,
+              "dataset": "eightBalls",
+							"slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
+              "volume rendering": true,
               "colormap": [
                 [0.00,1.0,0.5,0.5],
                 [0.25,0.5,1.0,0.5],
@@ -264,23 +242,27 @@ The following is a state file that should work with the datasets we created abov
     "Cameras":
     [
       {
-        "viewpoint": [3, 0, -4],
+        "aov": 30,
+        "Xaov": 20,
+        "viewpoint": [1, 2, -3],
         "viewcenter": [0, 0, 0],
-        "viewup": [0, 1, 0],
-        "aov": 30
+        "viewup": [0, 1, 0]
       },
       {
-        "viewpoint": [2, 3, -4],
+        "aov": 30,
+        "Xaov": 20,
+        "viewpoint": [2, 1, -3],
         "viewcenter": [0, 0, 0],
-        "viewup": [0, 1, 0],
-        "aov": 30
+        "viewup": [0, 1, 0]
       },
       {
-        "viewpoint": [4, 3, -2],
+        "aov": 30,
+        "Xaov": 20,
+        "viewpoint": [3, 1, -2],
         "viewcenter": [0, 0, 0],
-        "viewup": [0, 1, 0],
-        "aov": 30
+        "viewup": [0, 1, 0]
       }
+
     ]
 }
 ```
@@ -318,9 +300,9 @@ The Visualizations section is an array, where each element (a visualization) con
 
 Finally, the Cameras section is also an array, consisting of the cameras to be used.   Cameras are very simply specified.
 
-If you cut’n’paste the complete state file above into a text file named batch.json in the test directory, you can run:
+If you cut’n’paste the complete state file above into a text file named radial.json in the test directory, you can run:
 
-`[mpirun mpiargs] state [-s width height] batch.json`
+`[mpirun mpiargs] vis [-s width height] radial.json`
 
 You will produce three output .png files.   
 
