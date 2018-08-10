@@ -24,6 +24,8 @@ install(PROGRAMS vtp2tri.py async-wrapper csv2xyz vti2vol pv-cam-to-json.py DEST
 install(PROGRAMS galaxy.env DESTINATION .)
 if(APPLE)
 	install(PROGRAMS dbg_script.macos DESTINATION scripts RENAME dbg_script)
+	install(PROGRAMS galaxy.env.macos DESTINATION . RENAME galaxy.env)
 elseif(UNIX)
 	install(PROGRAMS dbg_script.linux DESTINATION scripts RENAME dbg_script)
+	install(PROGRAMS galaxy.env.linux DESTINATION . RENAME galaxy.env)
 endif()
