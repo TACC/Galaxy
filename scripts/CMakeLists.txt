@@ -21,7 +21,6 @@
 cmake_minimum_required(VERSION 2.8.7)
 project(Util)
 install(PROGRAMS vtp2tri.py async-wrapper csv2xyz vti2vol pv-cam-to-json.py DESTINATION bin)
-install(PROGRAMS galaxy.env DESTINATION .)
 if(APPLE)
 	install(PROGRAMS dbg_script.macos DESTINATION scripts RENAME dbg_script)
 	install(PROGRAMS galaxy.env.macos DESTINATION . RENAME galaxy.env)
