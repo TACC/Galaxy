@@ -63,8 +63,7 @@ Particles::Register()
 void
 Particles::initialize()
 {
-  radius_scale = 1;
-  radius = 0;
+  radius = 1;
 	vtkobj = NULL;
   super::initialize();
 }
@@ -83,7 +82,7 @@ Particles::~Particles()
 int
 Particles::serialSize()
 {
-	return super::serialSize() + 2*sizeof(float);
+	return super::serialSize() + sizeof(float);
 }
 
 unsigned char* 
@@ -91,8 +90,6 @@ Particles::serialize(unsigned char *ptr)
 {
 	ptr = super::serialize(ptr);
 	*(float *)ptr = radius;
-	ptr += sizeof(float);
-	*(float *)ptr = radius_scale;
 	ptr += sizeof(float);
 	return ptr;
 }
@@ -102,8 +99,6 @@ Particles::deserialize(unsigned char *ptr)
 {
 	ptr = super::deserialize(ptr);
 	radius = *(float *)ptr;
-	ptr += sizeof(float);
-	radius_scale = *(float *)ptr;
 	ptr += sizeof(float);
 	return ptr;
 }
@@ -149,8 +144,7 @@ Particles::Import(string s)
 	char *tmp = new char[sz];
 	struct foo *args = (struct foo *)tmp;
 	
-	args->r[0] = radius_scale;
-	args->r[1] = radius;
+	args->r[0] = radius;
 	strcpy(args->s, s.c_str());
 
 	Geometry::Import(buf, (void *)tmp, sz);
@@ -161,9 +155,6 @@ Particles::Import(string s)
 void
 Particles::LoadFromJSON(Value& v)
 {
-  if (v.HasMember("radius_scale"))
-    radius_scale = v["radius_scale"].GetDouble();
-
   if (v.HasMember("radius"))
 	{
     radius = v["radius"].GetDouble();
@@ -204,9 +195,6 @@ Particles::SaveToJSON(Value& v, Document& doc)
 
 	container.AddMember("type", Value().SetString("Particles", doc.GetAllocator()), doc.GetAllocator());
 
-	if (radius_scale > 0)
-		container.AddMember("radius_scale", Value().SetDouble(radius_scale), doc.GetAllocator());
-
 	if (radius > 0)
 		container.AddMember("radius", Value().SetDouble(radius), doc.GetAllocator());
 
@@ -230,7 +218,6 @@ Particles::local_commit(MPI_Comm c)
   ospSetData(ospg, "spheres", data);
 
   ospSet1i(ospg, "offset_value", 12);
-  ospSet1f(ospg, "radius_scale", radius_scale);
   ospSet1f(ospg, "radius", radius);
 
 	srand(GetTheApplication()->GetRank());
@@ -377,8 +364,7 @@ Particles::local_import(char *p, MPI_Comm c)
 
   struct foo *args = (struct foo *)(p + strlen(p) + 1);
 
-  radius_scale = args->r[0];
-  radius = args->r[1];
+  radius = args->r[0];
 
   string f(args->s);
 	string dir = (f.find_last_of("/") == f.npos) ? "./" : f.substr(0, f.find_last_of("/") + 1);

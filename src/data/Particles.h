@@ -103,7 +103,6 @@ public:
 	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
 	void SetRadius(float r) { radius = r; }
-	void SetRadiusScale(float s) { radius_scale = s; }
 
 	void push_back(Particle p) { samples.push_back(p); }
 
@@ -118,7 +117,6 @@ protected:
   virtual unsigned char* deserialize(unsigned char *ptr);
 
   float radius;
-  float radius_scale;
 
 	vtkPolyData *vtkobj;
 
