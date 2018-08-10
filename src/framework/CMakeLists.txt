@@ -32,7 +32,6 @@ set (CPP_SOURCES
 			Application.cpp
 			Threading.cpp
 			ClientServer.cpp
-			debug.cpp
 			Events.cpp
 			KeyedObject.cpp
 			Message.cpp
@@ -54,7 +53,7 @@ install(FILES
 	Application.h 
 	ClientServer.h  
 	Threading.h
-	debug.h 
+	Debug.h 
 	Events.h
 	KeyedObject.h
 	Message.h 

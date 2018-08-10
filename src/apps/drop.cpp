@@ -37,9 +37,6 @@ main(int argc, char * argv[])
 	Application theApplication(&argc, &argv);
 	theApplication.Start();
 
-  setup_debugger(argv[0]);
-  debugger(argv[1]);
-
 	theApplication.Run();
 
 	TestObject::Register();

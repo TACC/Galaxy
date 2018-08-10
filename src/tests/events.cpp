@@ -28,7 +28,7 @@ int mpiRank, mpiSize;
 
 using namespace std;
 
-#include "../apps/Debug.h"
+#include "Debug.h"
 
 using namespace gxy;
 

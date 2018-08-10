@@ -29,9 +29,6 @@
 #include "Renderer.h"
 #include "Work.h"
 
-#include "debug.h"
-
-
 namespace gxy
 {
 

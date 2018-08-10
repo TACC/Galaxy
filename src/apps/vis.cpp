@@ -40,7 +40,7 @@ syntax(char *a)
   cerr << "syntax: " << a << " [options] json" << endl;
   cerr << "optons:" << endl;
   cerr << "  -C cdb     put output in Cinema DB (no)" << endl;
-  cerr << "  -D         run debugger" << endl;
+  cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
   cerr << "  -A         wait for attachment" << endl;
   cerr << "  -s w h     window width, height (1920 1080)" << endl;
   cerr << "  -S k       render only every k'th rendering" << endl;
@@ -83,7 +83,7 @@ int main(int argc,  char *argv[])
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strcmp(argv[i], "-c")) clientserver = true;
-    else if ((argv[i][0] == '-') && (argv[i][1] == 'D')) dbg = true, atch = false, dbgarg = argv[i] + 2;
+    else if (!strncmp(argv[i],"-D", 2)) std::cerr << "AAAA]n", dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-S")) skip = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-N")) maxConcurrentRenderings = atoi(argv[++i]);

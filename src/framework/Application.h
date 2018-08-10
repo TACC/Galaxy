@@ -31,7 +31,6 @@
 #include <unistd.h>
 #include <vector>
 
-#include "debug.h"
 #include "galaxy.h"
 #include "KeyedObject.h"
 #include "MessageManager.h"
