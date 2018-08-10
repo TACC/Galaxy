@@ -60,7 +60,7 @@ public:
 
 				if (found)
 				{
-					cmd << "~/dbg_script " << executable << " " << pid << " &";
+					cmd << scriptname << " " << executable << " " << pid << " &";
 					system(cmd.str().c_str());
 					while (dbg)
 						sleep(1);

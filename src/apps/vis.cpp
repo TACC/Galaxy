@@ -83,7 +83,7 @@ int main(int argc,  char *argv[])
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strcmp(argv[i], "-c")) clientserver = true;
-    else if (!strncmp(argv[i],"-D", 2)) std::cerr << "AAAA]n", dbg = true, atch = false, dbgarg = argv[i] + 2;
+    else if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-S")) skip = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-N")) maxConcurrentRenderings = atoi(argv[++i]);
