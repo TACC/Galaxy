@@ -54,6 +54,7 @@ install(FILES
 	ClientServer.h  
 	debug.h 
 	Events.h
+	framework.h
 	KeyedObject.h
 	Message.h 
 	MessageManager.h 
