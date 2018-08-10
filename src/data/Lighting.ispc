@@ -141,14 +141,4 @@ export void Lighting_GetShadowFlag(void *uniform _self, uniform int *uniform b)
 	*b = self->do_shadows;
 }
 	
-export void Lighting_SetEpsilon(void *uniform _self, uniform float e)
-{
-  Lighting_ispc *uniform self = (uniform Lighting_ispc *)_self;
-	self->epsilon = e;
-}
-	
-export void Lighting_GetEpsilon(void *uniform _self, uniform float *uniform e)
-{
-  Lighting_ispc *uniform self = (uniform Lighting_ispc *)_self;
-	*e = self->epsilon;
-}
+

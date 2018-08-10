@@ -93,6 +93,7 @@ Box::exit_face(float x, float y, float z, float dx, float dy, float dz)
 	if (tx < ty && tx < tz) return (dx < 0) ? 0 : 1;
 	else if (ty < tz) return (dy < 0) ? 2 : 3;
 	else return (dz < 0) ? 4 : 5;
+	// TODO: this will silently return 4 or 5 if vector origin is outside box. Fix?
 }
 
 bool

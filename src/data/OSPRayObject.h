@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file OSPRayObject.h 
+ * \brief base class for data objects that will be passed to OSPRay
+ * \ingroup data
+ */
+
 #include <ospray/ospray.h>
 
 #include "KeyedDataObject.h"
@@ -30,17 +35,23 @@ namespace gxy
 	
 KEYED_OBJECT_POINTER(OSPRayObject)
 
-class Box;
-
+//! base class for data objects that will be passed to OSPRay 
+/*! Galaxy utilizes the Intel OSPRay ray tracing engine. 
+ * This class serves as a base for Galaxy data objects to ease OSPRay integration.
+ * \ingroup data
+ * \sa KeyedObject, KeyedDataObject
+ */
 class OSPRayObject : public KeyedDataObject
 {
   KEYED_OBJECT_SUBCLASS(OSPRayObject, KeyedDataObject)
 
 public:
-	virtual void initialize();
-	virtual ~OSPRayObject();
+	virtual void initialize(); //!< initialize this object
+	virtual ~OSPRayObject(); //!< default destructor
 
+	//! get the OSPRay representation of this object
 	OSPObject GetOSP() { return theOSPRayObject; }
+	//! get the ISPC-based OSPRay representation of this object
 	void      *GetOSP_IE() { return osp_util::GetIE((void *)theOSPRayObject); }
 
 protected:

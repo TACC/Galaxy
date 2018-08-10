@@ -29,6 +29,5 @@ struct Lighting_ispc
 	uniform int   *types;
   uniform vec3f *uniform lights;
   uint32 nLights;
-  float epsilon;
 };
 

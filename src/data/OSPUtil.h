@@ -20,10 +20,16 @@
 
 #pragma once
 
+/*! \file OSPUtil.h 
+ * \brief helpers for data exchange to and from OSPRay
+ * \ingroup data
+ */
+
 namespace gxy
 {
 namespace osp_util
 {
+	//! return the ISPC-based OSPRay version of this object
 	void * GetIE(void *a);
 } // namespace osp_util
 } // namespace gxy

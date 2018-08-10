@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file ISPCObject.h 
+ * \brief base class for data objects that will be passed to OSPRay for processing within ISPC routines
+ * \ingroup data
+ */
+
 #include <string>
 #include <string.h>
 #include <vector>
@@ -28,12 +33,21 @@
 namespace gxy
 {
 
+
+//! base class for data objects that will be passed to OSPRay for processing within ISPC routines
+/*! Galaxy utilizes the Intel OSPRay and Embree ray tracing engines, 
+ * both of which use the Intel ISPC parallel language for instruction-level parallelism.
+ * This class serves as a base for Galaxy data objects to ease ISPC integration.
+ * \ingroup data
+ */
 class ISPCObject 
 {
 public:
+	//! default constructor
   ISPCObject() { ispc = NULL; }
-  virtual ~ISPCObject() { destroy_ispc(); }
+  virtual ~ISPCObject() { destroy_ispc(); } //!< default destructor
 
+  //! return a pointer to the ISPC environment
   void *GetISPC() { return ispc; }
 
 protected:

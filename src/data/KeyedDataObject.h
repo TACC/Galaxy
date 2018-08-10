@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file KeyedDataObject.h 
+ * \brief base class for registered (i.e. tracked) data objects within Galaxy
+ * \ingroup data
+ */
+
 #include <memory>
 #include <string>
 
@@ -35,6 +40,15 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(KeyedDataObject)
 
+//! base class for registered (i.e. tracked) data objects within Galaxy
+/*! Galaxy maintains a global registry of objects in order to route data to the appropriate process. 
+ * In order to be tracked in the registry, the object should derive from KeyedDataObject and call the
+ * KEYED_OBJECT_POINTER macro in its header file (outside of the class definition) and the 
+ * KEYED_OBJECT or KEYED_OBJECT_SUBCLASS macro in its class definition.
+ *
+ * \ingroup data
+ * \sa KeyedObject, KeyedObjectFactory, Work
+ */
 class KeyedDataObject : public KeyedObject
 {
 	KEYED_OBJECT(KeyedDataObject)
@@ -44,32 +58,59 @@ class KeyedDataObject : public KeyedObject
 	friend class LoadTimestepMsg;
 
 public:
-	virtual ~KeyedDataObject();
-	virtual void initialize();
+	virtual ~KeyedDataObject(); //!< destructor
+	virtual void initialize(); //!< initialize this KeyedDataObject
 
+  //! commit this object to the local registry
 	virtual bool local_commit(MPI_Comm);
 
+  //! returns a pointer to a Box that represents the global data extent across all processes
 	Box *get_global_box() { return &global_box; }
+  //! returns a pointer to a Box that represents the local data extent at this process
 	Box *get_local_box() { return &local_box; }
 
+  //! return the data key that is the `i^th` neighbor of this proces
+  /*! This method uses the Box face orientation indices for neighbor indexing
+   *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
+   *          - xz-face neighbors - `2` for the lower (left) `y`, `3` for the higher (right) `y`
+   *          - xy-face neighbors - `4` for the lower (left) `z`, `5` for the higher (right) `z`
+   */
 	int get_neighbor(int i) { return neighbors[i]; }
+  //! return true if the requested neighbor exists
+  /*! This method uses the Box face orientation indices for neighbor indexing
+   *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
+   *          - xz-face neighbors - `2` for the lower (left) `y`, `3` for the higher (right) `y`
+   *          - xy-face neighbors - `4` for the lower (left) `z`, `5` for the higher (right) `z`
+   */
   bool has_neighbor(unsigned int face) { return neighbors[face] >= 0; }
 
+  //! is this KeyedDataObject time varying?
 	bool is_time_varying() { return time_varying; }
+  //! set whether this KeyedDataObject is time varying
 	void set_time_varying(bool t = true) { time_varying = t; }
 
+  //! is this KeyedDataObject attached to a dynamic data source (e.g. a running simulation in an in situ context)?
 	bool is_attached() { return attached; }
+  //! set whether this KeyedDataObject is attached to a dynamic data source 
 	void set_attached(bool t = true) { attached = t; }
 
+  //! broadcast an ImportMsg to all Galaxy processes to import the given data file
 	virtual void Import(std::string);
+
+  //! broadcast an ImportMsg to all Galaxy processes to import the given data file using the given arguments
 	virtual void Import(std::string, void *args, int argsSize);
 
+  //! broadcat an AttachMsg to all Galaxy processes to attach to a data source at the given address and port
   virtual bool Attach(std::string);
+  //! broadcat an AttachMsg to all Galaxy processes to attach to a data source at the given address and port using the given arguments
   virtual bool Attach(std::string, void *args, int argsSize);
 
-	virtual void LoadTimestep();
+  //! broadcast a LoadTimestepMsg to all Galaxy processes for all attached data sources (e.g. a running simulation for in situ analysis)
+	virtual void LoadTimestep(); 
+  //! wait for receipt of next timestep for all attached data sources (e.g. a running simulation for in situ analysis)
 	virtual bool WaitForTimestep();
 
+  //! copy the data partitioning of the given KeyedDataObject
 	void CopyPartitioning(KeyedDataObjectP o);
 
 protected:
@@ -84,6 +125,7 @@ protected:
 	Box global_box, local_box;
 	int neighbors[6];
 
+  //! tell a Galaxy processes to import a given data file
   class ImportMsg : public Work
   {
   public:
@@ -119,6 +161,7 @@ protected:
 		}
   };
 
+  //! tell a Galaxy process to attach to a dynamic data source
   class AttachMsg : public Work
   {
   public:
@@ -134,6 +177,7 @@ protected:
     bool CollectiveAction(MPI_Comm c, bool isRoot);
   };
 
+  //! tell a Galaxy process to load a timestep from a dynamic data source
   class LoadTimestepMsg : public Work
   {
   public:

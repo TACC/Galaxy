@@ -20,9 +20,18 @@
 
 #pragma once
 
+/*! \file DataObjects.h 
+ * \brief register Galaxy data objects in the KeyedObject registry
+ * \ingroup data
+ */
+
 namespace gxy 
 {
 
+//! register Galaxy data objects in the KeyedObject registry
+/*! \sa gxy::KeyedObject, gxy::KeyedDataObject, gxy::Vis, gxy::Visualization 
+ * \ingroup data
+ */
 extern void RegisterDataObjects();
 
 } // namespace gxy

@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file MappedVis.h 
+ * \brief a Vis that uses a color map and opacity map to define its rendering behavior
+ * \ingroup data
+ */
+
 #include <string>
 #include <string.h>
 #include <vector>
@@ -39,24 +44,34 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(MappedVis)
 
+//! a Vis that uses a color map and opacity map to define its rendering behavior
+/*! \ingroup data
+ * \sa KeyedObject, KeyedDataObject, Vis
+ */
 class MappedVis : public Vis
 {
   KEYED_OBJECT_SUBCLASS(MappedVis, Vis)
 
 public:
 
-  virtual ~MappedVis();
+  virtual ~MappedVis(); //!< default destructor
 
-  virtual void initialize();
+  virtual void initialize(); //!< initialize this MappedVis object
 
+  //! commit this object to the global registry across all processes
   virtual void Commit(DatasetsP);
 
+  //! set the colormap for this MappedVis as an array of XRGB values
   void SetColorMap(int, vec4f *);
+  //! set the opacity map for this MappedVis as an array of XO values
   void SetOpacityMap(int, vec2f *);
 
+  //! construct a MappedVis from a Galaxy JSON specification
   virtual void LoadFromJSON(rapidjson::Value&);
+  //! save this MappedVis to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
+  //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
 
  protected:

@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file Geometry.h 
+ * \brief representation for 3D renderable geometry in Galaxy
+ * \ingroup data
+ */
+
 #include <string>
 #include <string.h>
 #include <memory.h>
@@ -32,8 +37,10 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(Geometry)
 
-class Box;
-
+//! representation for 3D renderable geometry in Galaxy
+/*! \ingroup data 
+ * \sa KeyedObject, OSPRayObject
+ */
 class Geometry : public OSPRayObject
 {
   KEYED_OBJECT_SUBCLASS(Geometry, OSPRayObject)

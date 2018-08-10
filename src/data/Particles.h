@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file Particles.h 
+ * \brief represents a particle dataset within Galaxy
+ * \ingroup data
+ */
+
 #include <string>
 #include <string.h>
 #include <memory.h>
@@ -45,8 +50,8 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(Particles)
 
-class Box;
-
+//! a particle within Galaxy
+/*! \ingroup data */
 struct Particle
 {
   Particle(float x, float y, float z, float v) { xyz.x = x, xyz.y = y, xyz.z = z, u.value = v; };
@@ -60,6 +65,10 @@ struct Particle
 	} u;
 };
 
+//! represents a particle dataset within Galaxy
+/* \ingroup data 
+ * \sa Geometry, KeyedObject, KeyedDataObject
+ */
 class Particles : public Geometry
 {
   KEYED_OBJECT_SUBCLASS(Particles, Geometry)
@@ -67,32 +76,59 @@ class Particles : public Geometry
 	friend class LoadPartitioningMsg;
 
 public:
-	void initialize();
-	virtual ~Particles();
+	void initialize(); //!< initialize this Particles object
+	virtual ~Particles(); //!< default destructor
 
+  //! register the message types used when processing Particle data
   static void RegisterMessages()
   {
 		LoadPartitioningMsg::Register();
   }
 
+  //! broadcast an ImportMsg to all Galaxy processes to import the given data file
 	virtual void Import(std::string);
 
+  //! commit this object to the local registry
+  /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
+  //! import the given data file into local memory
+  /*! This action is performed in response to a ImportMsg */
   virtual void local_import(char *, MPI_Comm);
+  //! load a timestep into local memory
+  /*! This action is performed in response to a LoadTimestepMsg */
   virtual bool local_load_timestep(MPI_Comm);
 
+  //! return an array of Particle objects
   Particle *get_samples() { return samples.data(); }
+  //! return the number of Particle objects held in this dataset
   int get_n_samples() { return samples.size(); }
-
+  //! allocate a memory block to hold the given number of Particle elements
 	void allocate(int);
 
+// TODO: undefined
   void gather_global_info();
 
+  //! return true if the requested neighbor exists
+  /*! This method uses the Box face orientation indices for neighbor indexing
+   *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
+   *          - xz-face neighbors - `2` for the lower (left) `y`, `3` for the higher (right) `y`
+   *          - xy-face neighbors - `4` for the lower (left) `z`, `5` for the higher (right) `z`
+   */  
   bool has_neighbor(unsigned int face) { return neighbors[face] >= 0; }
 
+  //! broadcast a LoadPartitioningMsg to all Galaxy processes to import the given data partition description file
 	void LoadPartitioning(std::string partitioning);
-
+  //! return the Particle elements of this object in the given vtkPolyData object
+  /*! If the Particle elements are already stored as a vtk object, the pointer to this object is returned.
+   * Otherwise, the Particle array is converted to a vtk object and the pointer to this new object is returned.
+   * *Note:* if the array to vtk conversion occurs, both the vtk and array versions of the data are maintained.
+   */
 	void GetPolyData(vtkPolyData*& v);
+  //! return the Particle elements of this object as a Particle array
+  /*! If the Particle elements are already stored as an array, the pointer to this object is returned.
+   * Otherwise, the vtk object is converted to an array and the pointer to this new array is returned.
+   * *Note:* if the vtk to array conversion occurs, both the vtk and array versions of the data are maintained.
+   */  
 	void GetSamples(Particle*& s, int& n);
 
 	void set_filename(std::string s)     { filename = s; }

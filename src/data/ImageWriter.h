@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file ImageWriter.h 
+ * \brief writes PNG format images 
+ * \ingroup data
+ */
+
 #include <iostream>
 #include <string>
 #include <png.h>
@@ -27,12 +32,29 @@
 namespace gxy
 {
 
+//! writes PNG format images
+/*! \ingroup data 
+ */
 class ImageWriter
 {
 public:
+	//! constructor which uses the given string for the image file base name
+	/*! \param b the filename base to use for image files, 
+	 *          e.g. `foo` produces image filenames `foo_0000.png`, `foo_0001.png`, etc.
+	 */
 	ImageWriter(std::string b) : basename(b), frame(0) {}
-	ImageWriter() : basename("frame"), frame(0) {}
+	//! default constructor which uses `frame` for the image file base name
+	/*! produces image filenames `frame_0000.png`, `frame_0001.png`, etc.
+	 */
+ 	ImageWriter() : basename("frame"), frame(0) {}
 
+ 	//! write a given RGBA array as a PNG image
+ 	/*! \param w the image width
+ 	 * \param h the image height
+ 	 * \param rgba a buffer of float RGBA values with size `4 * w * h`
+	 * \param name the filename to use for this image (if NULL, uses basename and frame count)
+	 * \warning assumes existence of alpha channel but ignores its value, using full opacity instead
+	 */
 	void Write(int w, int h, float *rgba, const char *name=NULL)
 	{
 		unsigned char *buf = new unsigned char[w*h*4];
@@ -48,6 +70,12 @@ public:
 		delete[] buf;
 	}
 
+ 	//! write a given RGBA array as a PNG image
+ 	/*! \param w the image width
+ 	 * \param h the image height
+ 	 * \param rgba a buffer of RGBA values with size `4 * w * h`
+	 * \param name the filename to use for this image (if NULL, uses basename and frame count)
+	 */
 	void Write(int w, int h, unsigned int *rgba, const char *name=NULL)
 	{
 		if (name)
@@ -60,9 +88,15 @@ public:
 		}
 	}
 
+ 	//! write a given RGBA array as a PNG image
+ 	/*! \param w the image width
+ 	 * \param h the image height
+ 	 * \param rgba a buffer of RGBA values with size `4 * w * h`
+	 * \param name the filename to use for this image (if NULL, uses basename and frame count)
+	 */
 	void Write(int w, int h, unsigned char *rgba, const char *name=NULL)
 	{
-		Write(w, h, (unsigned char *)rgba);
+		Write(w, h, (unsigned int *)rgba, name);
 	}
 
 private:

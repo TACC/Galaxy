@@ -300,17 +300,5 @@ Lighting::GetShadowFlag(bool &b)
   b = bb == 1;
 }
  
-void
-Lighting::SetEpsilon(float e)
-{
-  ispc::Lighting_SetEpsilon(GetISPC(), e);
-}
- 
-void
-Lighting::GetEpsilon(float& e)
-{
-  ispc::Lighting_GetEpsilon(GetISPC(), &e);
-}
-
 } // namespace gxy
 

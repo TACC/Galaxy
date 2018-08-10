@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file Lighting.h 
+ * \brief represents a light source within Galaxy
+ * \ingroup data
+ */
+
 #include <iostream>
 #include <vector>
 
@@ -30,34 +35,65 @@
 namespace gxy
 {
 
+//! represents a light source within Galaxy
+/*! \ingroup data 
+ * \sa ISPCObject
+ */  
 class Lighting : public ISPCObject
 {
 public:
-   Lighting();
-  ~Lighting();
+   Lighting(); //!< default constructor
+  ~Lighting(); //!< default destructor
 
+  //! returns the size in bytes of the serialization of this Lighting object
   virtual int SerialSize();
+  //! serialize this Lighting object to a given byte array
   virtual unsigned char *Serialize(unsigned char *);
+  //! deserialize a Lighting object from a given byte array into this object
   virtual unsigned char *Deserialize(unsigned char *);
 
+  //! load a Lighting object from a given Galaxy JSON Value object into this object
   void LoadStateFromValue(rapidjson::Value&);
+  //! save this Lighting object as a JSON Value object to a given Galaxy JSON document
   void SaveStateToValue(rapidjson::Value&, rapidjson::Document&);
 
+  //! set a number of lights with a given luminance and type
+  /*! \param n number of lights
+   * \param l an `n * RGB` value array of luminance values for each light
+   * \param t an `n` value array of OSPRay light type values for each light
+   */
   void SetLights(int n, float* l, int* t);
+  //! get the number of defined lights, with luminance values and types of each
+  /*! \param n number of lights
+   * \param l an `n * RGB` value array of luminance values for each light
+   * \param t an `n` value array of OSPRay light type values for each light
+   */
   void GetLights(int& n, float*& l, int*& t);
 
+  //! set the ambient and diffuse lighting values for this Lighting object
   void SetK(float ka, float kd);
+  //! get the ambient and diffuse lighting values for this Lighting object
   void GetK(float& ka, float& kd);
 
+  //! set the number of ambient occlusion rays to be cast within the given radius 
+  /*! \param n the number of ambient occlusion (AO) rays to be cast
+   * \param r the distance from their origin each ray should travel. 
+   *          If a ray reaches its maximum distance without hitting anything, the origin is considered unoccluded by that ray
+   */
   void SetAO(int n, float r);
+  //! get the number of ambient occlusion rays to be cast within the given radius 
+  /*! \param n the number of ambient occlusion (AO) rays to be cast
+   * \param r the distance from their origin each ray should travel. 
+   *          If a ray reaches its maximum distance without hitting anything, the origin is considered unoccluded by that ray
+   */
   void GetAO(int& n, float& r);
 
+  //! set whether Galaxy should render shadows
   void SetShadowFlag(bool b);
+  //! get whether Galaxy will render shadows
   void GetShadowFlag(bool& b);
 
-  void SetEpsilon(float e);
-  void GetEpsilon(float& e);
-
+  //! has this Lighting object been initialized?
 	bool isSet() { return set; }
 
 protected:

@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file Datasets.h 
+ * \brief container for KeyedDataObjects within Galaxy
+ * \ingroup data
+ */
+
 #include <iostream>
 #include <map>
 #include <string>
@@ -37,6 +42,10 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(Datasets)
 
+//! container for KeyedDataObjects within Galaxy
+/*! \ingroup data 
+ * \sa KeyedObject, KeyedDataObject
+ */
 class Datasets : public KeyedDataObject
 {
   KEYED_OBJECT_SUBCLASS(Datasets, KeyedDataObject)
@@ -44,16 +53,26 @@ class Datasets : public KeyedDataObject
 	using datasets_t = std::map<std::string, KeyedDataObjectP>;
 
 public:
-	void initialize();
-	virtual	~Datasets();
+	void initialize(); //!< initialize this Datasets object
+	virtual	~Datasets(); //!< default destructor
 
+	//! commit this object to the global registry across all processes
 	virtual void Commit();
 
+	//! add the given KeyedDataObject to this Datasets object
+	/* \param name the name for the KeyedDataObject
+	 * \param val a pointer to the KeyedDataObject
+	 */
   void Insert(std::string name, KeyedDataObjectP val) 
   {
   	datasets.insert(std::pair<std::string, KeyedDataObjectP>(name, val));
   }
 
+  //! find the Key for a KeyedDataObject in this Datasets
+  /*! \param name the name of the desired KeyedDataObject
+   * \returns the Key for the KeyedDataObject with the given name, 
+   *          or `-1` if no such object exists
+   */
 	Key FindKey(std::string name)
 	{
 		KeyedDataObjectP kdop = Find(name);
@@ -63,6 +82,7 @@ public:
 			return (Key)-1;
 	}
 
+	//! return a std::vector containing the names of data in this Datasets object
 	std::vector<std::string> GetDatasetNames()
 	{
 		std::vector<std::string> v;
@@ -71,6 +91,11 @@ public:
 		return v;
 	}
 			
+  //! find a KeyedDataObject in this Datasets
+  /*! \param name the name of the desired KeyedDataObject
+   * \returns a pointer to the KeyedDataObject with the given name, 
+   *          or `NULL` if no such object exists
+   */
   KeyedDataObjectP Find(std::string name)
   {
   	std::map<std::string, KeyedDataObjectP>::iterator it = datasets.find(name);
@@ -78,16 +103,21 @@ public:
   	else return (*it).second;
   }
 
+  //! construct a Datasets from a Galaxy JSON specification
   virtual void  LoadFromJSON(rapidjson::Value&);
+  //! save this Datasets to a Galaxy JSON specification 
   virtual void  SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
-	bool IsTimeVarying();
-  bool WaitForTimestep();
-  void LoadTimestep();
+	bool IsTimeVarying(); //!< are the data in this Datasets time-varying?
+  bool WaitForTimestep(); //!< wait for receipt of next timestep for all attached data sources (e.g. a running simulation for in situ analysis)
+  void LoadTimestep(); //!< broadcast a LoadTimestepMsg to all Galaxy processes for all attached data sources (e.g. a running simulation for in situ analysis)
 
 	using iterator = datasets_t::iterator;
+	//! return an iterator positioned at the beginning of the data list for this Datasets
   iterator begin() { return datasets.begin(); }
+	//! return an iterator positioned at the end of the data list for this Datasets
   iterator end() { return datasets.end(); }
+  //! return the number of data objects in this Datasets
   size_t size() { return datasets.size(); }
 
 protected:

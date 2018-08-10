@@ -20,18 +20,33 @@
 
 #pragma once
 
-/*! \file mypng.h 
- * \brief writes PNG format images 
- * \ingroup data
+/*! \file data.h
+ *  \brief A convenience header to include all Galaxy data headers.
  */
 
-namespace gxy 
-{
-
-//! writes PNG format images
-/*! \sa gxy::ImageWriter
- * \ingroup data
+/*! \defgroup data Data 
+ * \brief all classes for Galaxy's supported data types and data operations (filters)
  */
-int write_png(const char *filename, int w, int h, unsigned int *rgba);
 
-}
+#include "Box.h"
+#include "DataObjects.h"
+#include "Datasets.h"
+#include "Geometry.h"
+#include "ImageWriter.h"
+#include "ISPCObject.h"
+#include "KeyedDataObject.h"
+#include "Lighting.h"
+#include "MappedVis.h"
+#include "mypng.h"
+#include "OSPRayObject.h"
+#include "OSPUtil.h"
+#include "Particles.h"
+#include "ParticlesVis.h"
+#include "Triangles.h"
+#include "TrianglesVis.h"
+#include "Vis.h"
+#include "Visualization.h"
+#include "Volume.h"
+#include "VolumeVis.h"
+#include "vtkerror.h"
+
