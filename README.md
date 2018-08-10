@@ -15,7 +15,6 @@ Galaxy has two types of dependencies: (1) components assumed to be already insta
 Galaxy assumes the following are already installed on your system in an accessible spot (these should all be available via package manager for your OS):
   * a modern MPI (Message Passing Interface) implementation
   * [a recent VTK][4] (at least version 7.x)
-  * [a recent Qt][5] (for the Qt-based viewer app, at least version 5.x)
   * [Intel Thread Building Blocks (TBB)][6]
   * [PNG image format library][7]
   * [zlib compression library][8]
@@ -127,15 +126,15 @@ If cmake complains about missing dependencies, you can specify or change their l
 
 ## Running Galaxy
 
-There are three ways to run Galaxy: 
+There are several ways to run Galaxy.   In this document we currently only describe the batch mode applications; interactive viewers will be added to the documentation as time allows.
 
-* interactively using the Viewer
-* in batch mode to produce a set of PNG image files
-* in batch mode to produce a Cinema[17] image database
+### Setting up the environment
 
-### Using the Viewer
+In the install root, `galaxy.env` contains the necessary environment variable settings for running Galaxy.   Iff you use the bash or sh shells, you can 'source' that file; for csh you'll need to modify it.
 
-So - lets give it a whirl.
+We currently assume that your environment has been set up to find both VTK and Intel OSPRay libraries.   
+
+### Preparing test data
 
 ```bash
 mkdir $PROJECT/test

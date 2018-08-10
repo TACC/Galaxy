@@ -36,6 +36,7 @@ ThreadManager::TLS::TLS(int i, pthread_key_t k, std::string n, void *(*s)(void *
 
 ThreadManager::TLS::~TLS()
 {
+#if defined(GXY_EVENT_TRACKING)
   int rank = GetTheApplication()->GetTheMessageManager()->GetRank();
   fstream fs;
   stringstream fname;
@@ -44,6 +45,7 @@ ThreadManager::TLS::~TLS()
 	fs << "thread name: " << name << "\n";
   events.DumpEvents(fs);
   fs.close();
+#endif
 }
 
 ThreadManager::ThreadManager()
