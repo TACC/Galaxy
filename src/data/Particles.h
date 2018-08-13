@@ -21,7 +21,7 @@
 #pragma once
 
 /*! \file Particles.h 
- * \brief represents a particle dataset within Galaxy
+ * \brief  a particle dataset within Galaxy
  * \ingroup data
  */
 
@@ -65,9 +65,9 @@ struct Particle
 	} u;
 };
 
-//! represents a particle dataset within Galaxy
+//!  a particle dataset within Galaxy
 /* \ingroup data 
- * \sa Geometry, KeyedObject, KeyedDataObject
+ * \sa Geometry, KeyedObject, KeyedDataObject, OSPRayObject
  */
 class Particles : public Geometry
 {
@@ -105,9 +105,6 @@ public:
   //! allocate a memory block to hold the given number of Particle elements
 	void allocate(int);
 
-// TODO: undefined
-  void gather_global_info();
-
   //! return true if the requested neighbor exists
   /*! This method uses the Box face orientation indices for neighbor indexing
    *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
@@ -118,12 +115,14 @@ public:
 
   //! broadcast a LoadPartitioningMsg to all Galaxy processes to import the given data partition description file
 	void LoadPartitioning(std::string partitioning);
+
   //! return the Particle elements of this object in the given vtkPolyData object
   /*! If the Particle elements are already stored as a vtk object, the pointer to this object is returned.
    * Otherwise, the Particle array is converted to a vtk object and the pointer to this new object is returned.
    * *Note:* if the array to vtk conversion occurs, both the vtk and array versions of the data are maintained.
    */
 	void GetPolyData(vtkPolyData*& v);
+
   //! return the Particle elements of this object as a Particle array
   /*! If the Particle elements are already stored as an array, the pointer to this object is returned.
    * Otherwise, the vtk object is converted to an array and the pointer to this new array is returned.
@@ -131,16 +130,18 @@ public:
    */  
 	void GetSamples(Particle*& s, int& n);
 
+  //! set the file name for this Particles data set
 	void set_filename(std::string s)     { filename = s; }
-	void set_layoutname(std::string s)   { layoutname = s; }
-	void set_partfilename(std::string s) { partfilename = s; }
 
+  //! construct a Particles from a Galaxy JSON specification
 	virtual void LoadFromJSON(rapidjson::Value&);
+  //! save this Particles to a Galaxy JSON specification 
 	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
+  //! set the sphere radius to use when rendering these Particles
 	void SetRadius(float r) { radius = r; }
-	void SetRadiusScale(float s) { radius_scale = s; }
 
+  //! add a Particle to this Particles dataset
 	void push_back(Particle p) { samples.push_back(p); }
 
 protected:

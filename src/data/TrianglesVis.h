@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file TrianglesVis.h 
+ * \brief a visualization element operating on a triangle (tessellated) dataset within Galaxy
+ * \ingroup data
+ */
+
 #include "Application.h"
 #include "Datasets.h"
 #include "dtypes.h"
@@ -32,14 +37,20 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(TrianglesVis)
 
+//! a visualization element operating on a triangle (tessellated) dataset within Galaxy
+/* \ingroup data 
+ * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
+ */
 class TrianglesVis : public Vis
 {
   KEYED_OBJECT_SUBCLASS(TrianglesVis, Vis) 
 
 public:
-	~TrianglesVis();
+	~TrianglesVis(); //!< default destructor
   
+  //! initialize this TrianglesVis object
   virtual void initialize();
+  //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
 
 protected:

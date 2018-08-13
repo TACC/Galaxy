@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file Volume.h 
+ * \brief a regular-grid volumetric dataset within Galaxy
+ * \ingroup data
+ */
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -38,88 +43,105 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(Volume)
 
+//! a regular-grid volumetric dataset within Galaxy
+/*! \ingroup data 
+ * \sa KeyedObject, KeyedDataObject, OSPRayObject
+ */
 class Volume : public OSPRayObject
 {
 	KEYED_OBJECT_SUBCLASS(Volume, OSPRayObject)
 
 public:
-	virtual void initialize();
-	virtual ~Volume();
+	virtual void initialize(); //!< initialize this Volume object
+	virtual ~Volume(); //!< default destructor
 
+	//! supported volumetric datatypes
 	enum DataType
 	{
 		FLOAT, UCHAR
 	};
 
-	void print_partition_boxes();
-
+	//! get the samples array for this Volume
 	unsigned char *get_samples() { return samples; }
-	void set_samples(void * s) { if (samples != NULL) 
-	{ std::cerr << "WARNING: overwriting (and leaking) PVOL samples array!" << std::endl;} samples = (unsigned char*)s; }
+	//! set the samples array for this Volume
+	void set_samples(void * s) 
+	{ 
+		if (samples != NULL) 
+	  { std::cerr << "WARNING: overwriting (and leaking) Galaxy samples array!" << std::endl;} 
+	  samples = (unsigned char*)s; 
+	}
 
+	//! get the deltas (grid step size) for this Volume
 	void get_deltas(float &x, float &y, float &z) { x = deltas.x; y = deltas.y; z = deltas.z; }
+	//! set the deltas (grid step size) for this Volume
 	void set_deltas(float x, float y, float z) { deltas.x = x; deltas.y = y; deltas.z = z; }
 
+	//! get the global origin for the data in this Volume
 	void get_global_origin(float &x, float &y, float &z) 
 	{
 		x = global_origin.x;
 		y = global_origin.y;
 		z = global_origin.z;
 	}
+	//! set the global origin for the data in this Volume
 	void set_global_origin(float x, float y, float z) 
 	{
 		global_origin.x = x;
 		global_origin.y = y;
 		global_origin.z = z;
 	}
-
+	//! get the local origin for the data at this process in this Volume
+	/*! These values are computed from the global origin and local offsets */
 	void get_local_origin(float &x, float &y, float &z)
 	{
 		x = global_origin.x + local_offset.x * deltas.x;
 		y = global_origin.y + local_offset.y * deltas.y;
 		z = global_origin.z + local_offset.z * deltas.z;
 	}
-
+	//! get the local origin, including ghost zones / cells, for the data at this process in this Volume
+	/*! These values are computed from the global origin and ghosted local offsets */
 	void get_ghosted_local_origin(float &x, float &y, float &z)
 	{
 		x = global_origin.x + ghosted_local_offset.x * deltas.x;
 		y = global_origin.y + ghosted_local_offset.y * deltas.y;
 		z = global_origin.z + ghosted_local_offset.z * deltas.z;
 	}
-
+	//! get the global number of cells per axis
 	void get_global_counts(int& nx, int& ny, int& nz) 
 	{
 		nx = global_counts.x;
 		ny = global_counts.y;
 		nz = global_counts.z;
 	}
+	//! set the global number of cells per axis
 	void set_global_counts(int nx, int ny, int nz) 
 	{
 		global_counts.x = nx;
 		global_counts.y = ny;
 		global_counts.z = nz;
 	}
-
+	//! get the local number of cells per axis for data at this process
 	void get_local_counts(int& nx, int& ny, int& nz) 
 	{
 		nx = local_counts.x;
 	 	ny = local_counts.y;
 	  nz = local_counts.z;
 	}
+	//! set the local number of cells per axis for data at this process
 	void set_local_counts(int nx, int ny, int nz) 
 	{
 		local_counts.x = nx;
 	 	local_counts.y = ny;
 	  local_counts.z = nz;
 	}
-
+	//! get the local offset for ghost cells / zones at this process
 	void get_ghosted_local_offsets(int& ni, int& nj, int& nk) 
 	{
 		ni = ghosted_local_offset.x;
 		nj = ghosted_local_offset.y;
 		nk = ghosted_local_offset.z;
 	}
-
+	//! get the local number of cells per axis, including ghost cells / zones, at this process
 	void get_ghosted_local_counts(int& nx, int& ny, int& nz) 
 	{
 		nx = ghosted_local_counts.x;
@@ -127,6 +149,7 @@ public:
 		nz = ghosted_local_counts.z;
 	}
 
+	//! set the local number of cells per axis, including ghost cells / zones, at this process
 	void set_ghosted_local_counts(int nx, int ny, int nz) 
 	{
 		ghosted_local_counts.x = nx;
@@ -134,20 +157,29 @@ public:
 		ghosted_local_counts.z = nz;
 	}
 
-
-	void gather_global_info();
-
+	//! get the type of data used in this Volume
 	DataType get_type() { return type; }
+	//! set the type of data used in this Volume
 	void set_type(DataType t) { type = t; }
 
+  //! commit this object to the local registry
+  /*! This action is performed in response to a CommitMsg */
 	virtual bool local_commit(MPI_Comm);
+  //! import the given data file into local memory
+  /*! This action is performed in response to a ImportMsg */
 	virtual void local_import(char *fname, MPI_Comm c);
+  //! load a timestep into local memory
+  /*! This action is performed in response to a LoadTimestepMsg */
 	virtual bool local_load_timestep(MPI_Comm c);
 
+	//! get the global min and max data values for this Volume
 	void get_global_minmax(float &min, float &max) { min = global_min; max = global_max; }
+	//! get the local min and max data values for this Volume at this process
 	void get_local_minmax(float &min, float &max) { min = local_min; max = local_max; }
 
+  //! construct a Volume from a Galaxy JSON specification
   virtual void LoadFromJSON(rapidjson::Value&);
+  //! save this Volume to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
 protected:

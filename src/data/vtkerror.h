@@ -18,19 +18,30 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
+/*! \file vtkerror.h 
+ * \brief a wrapper class for VTK warnings and errors within Galaxy
+ * \ingroup data
+ */
+
 #include <iostream>
 #include <vtkAlgorithm.h>
 #include <vtkCommand.h>
 #include <vtkExecutive.h>
 
+//! a wrapper class for VTK warnings and errors within Galaxy
+/*! \ingroup data 
+ */
 class VTKError : public vtkCommand
 {
 public:
-  VTKError(): Error(false), Warning(false) {}
-  static VTKError *New() { return new VTKError; }
-  bool GetError() const { return this->Error; }
-  bool GetWarning() const { return this->Warning; }
+  VTKError(): Error(false), Warning(false) {} //!< default constructor
+  static VTKError *New() { return new VTKError; } //!< create a new VTKError object
+  bool GetError() const { return this->Error; } //!< does this represent an error?
+  bool GetWarning() const { return this->Warning; } //!< does this represent a warning?
   
+  //! add warning and error event observers to a given vtkAlgorithm
   void watch(vtkAlgorithm *a)
   { 
     a->AddObserver(vtkCommand::ErrorEvent, this);
@@ -39,6 +50,8 @@ public:
     a->GetExecutive()->AddObserver(vtkCommand::WarningEvent, this);
   }
   
+  //! executed when a warning or error event is triggered by the watched vtkAlgorithm
+  /* \sa watch */
   virtual void Execute(vtkObject *vtkNotUsed(caller), unsigned long event, void *calldata)
   { 
     switch(event)

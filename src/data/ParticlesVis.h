@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file ParticlesVis.h 
+ * \brief a visualization element operating on a particle dataset within Galaxy
+ * \ingroup data
+ */
+
 #include "dtypes.h"
 #include "Application.h"
 #include "Vis.h"
@@ -35,14 +40,20 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(ParticlesVis)
 
+//!  a visualization element operating on a particle dataset within Galaxy
+/* \ingroup data 
+ * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
+ */
 class ParticlesVis : public Vis
 {
   KEYED_OBJECT_SUBCLASS(ParticlesVis, Vis) 
 
 public:
-	~ParticlesVis();
+	~ParticlesVis(); //!< destructor
   
-  virtual void initialize();
+  virtual void initialize(); //!< initialize this ParticlesVis object
+  //! commit this object to the local registry
+  /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
 protected:
@@ -59,4 +70,4 @@ protected:
   virtual unsigned char* deserialize(unsigned char *ptr);
 };
 
-}
+} // namespace gxy

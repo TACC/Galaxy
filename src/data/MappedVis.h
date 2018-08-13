@@ -21,7 +21,7 @@
 #pragma once
 
 /*! \file MappedVis.h 
- * \brief a Vis that uses a color map and opacity map to define its rendering behavior
+ * \brief a visualization element that uses a color map and opacity map to define its rendering behavior
  * \ingroup data
  */
 
@@ -44,7 +44,7 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(MappedVis)
 
-//! a Vis that uses a color map and opacity map to define its rendering behavior
+//! a visualization element that uses a color map and opacity map to define its rendering behavior
 /*! \ingroup data
  * \sa KeyedObject, KeyedDataObject, Vis
  */

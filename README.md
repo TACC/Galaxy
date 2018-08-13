@@ -1,7 +1,7 @@
 # Galaxy: an asynchronous distributed parallel visualization ray tracer
 Galaxy is an asynchronous parallel visualization ray tracer for performant rendering in distributed computing environments. Galaxy builds upon [Intel OSPRay][1] and [Intel Embree][2], including ray queueing and sending logic inspired by [TACC GraviT][3]. 
 
-Galaxy has been developed by Greg Abram, Paul Navratil and David Rogers with funding from the US Department of Energy's Office of Science ASCR program (Drs. Lucy Nowell and Laura Biven, program managers) through sub-award from Los Alamos National Laboratory; from Intel Corporation through Intel Parallel Computing Center awards; and from the Texas Advanced Computing Center at the University of Texas at Austin.
+Galaxy has been developed primarily by Greg Abram and Paul Navratil with funding from the US Department of Energy's Office of Science ASCR program (Drs. Lucy Nowell and Laura Biven, program managers) through sub-award from Los Alamos National Laboratory; from Intel Corporation through Intel Parallel Computing Center awards; and from the Texas Advanced Computing Center at the University of Texas at Austin.
 A full list of contributors can be found in the CONTRIBUTORS file.
 
 Galaxy is licensed under the Apache License, Version 2.0 (the "License");

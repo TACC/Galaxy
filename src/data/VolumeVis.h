@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file VolumeVis.h 
+ * \brief a visualization element operating on a regular-grid volumetric dataset within Galaxy
+ * \ingroup data
+ */
+
 #include "Application.h"
 #include "Datasets.h"
 #include "dtypes.h"
@@ -32,20 +37,27 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(VolumeVis)
 
+//! a visualization element operating on a regular-grid volumetric dataset within Galaxy
+/*! \ingroup data 
+ * \sa MappedVis, Vis, KeyedObject, ISPCObject, OSPRayObject
+ */
 class VolumeVis : public MappedVis
 {
   KEYED_OBJECT_SUBCLASS(VolumeVis, MappedVis) 
 
 public:
-	~VolumeVis();
+	~VolumeVis(); //!< default destructor
   
+  //! initialize this VolumeVis object
   virtual void initialize();
 
+  //! add a slice plane to this VolumeVis object
   void AddSlice(vec4f s)
   {
     slices.push_back(s);
   }
 
+  //! set the slice plane(s) to use in this VolumeVis object
   void SetSlices(int n, vec4f *s)
   {
     slices.clear();
@@ -53,17 +65,20 @@ public:
       AddSlice(s[i]);
   }
   
+  //! get the slice plane(s) used in this VolumeVis object
   void GetSlices(int& n, vec4f*& s)
   {
     n = slices.size();
     s = slices.data();
   }
 
+  //! add an isovalue to extract from this VolumeVis object
   void AddIsovalue(float iv)
   {
     isovalues.push_back(iv);
   }
 
+  //! set the isovalue(s) to extract from this VolumeVis object
   void SetIsovalues(int n, float *isos)
   {
     isovalues.clear();
@@ -71,13 +86,16 @@ public:
       AddIsovalue(isos[i]);
   }
   
+  //! get the isovalue(s) to extract from this VolumeVis object
   void GetIsovalues(int& n, float*& i)
   {
     n = isovalues.size();
     i = isovalues.data();
   }
 
+  //! set whether to use direct volume rendering to render this VolumeVis
   void SetVolumeRendering(bool yn) { volume_rendering = yn; }
+  //! is direct volume rendering used to render this VolumeVis?
   bool GetVolumeRendering() { return volume_rendering; }
 
   virtual bool local_commit(MPI_Comm);

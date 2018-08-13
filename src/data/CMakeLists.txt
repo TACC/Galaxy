@@ -68,6 +68,7 @@ endif()
 
 install(FILES 
   Box.h
+  data.h
   DataObjects.h
   Datasets.h
   Geometry.h

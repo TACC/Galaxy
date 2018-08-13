@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file Triangles.h 
+ * \brief a triangle (tessellated) dataset within Galaxy
+ * \ingroup data
+ */
+
 #include <string>
 #include <string.h>
 #include <memory.h>
@@ -39,18 +44,28 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(Triangles)
 
+//! a triangle (tessellated) dataset within Galaxy
+/* \ingroup data 
+ * \sa KeyedObject, KeyedDataObject, OSPRayObject
+ */
 class Triangles : public Geometry
 {
   KEYED_OBJECT_SUBCLASS(Triangles, Geometry)
 
 public:
-	void initialize();
-	virtual ~Triangles();
+	void initialize(); //!< initialize this Triangles object
+	virtual ~Triangles(); //!< default destructor 
 
+  //! commit this object to the local registry
+  /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
+  //! import the given data file into local memory
+  /*! This action is performed in response to a ImportMsg */
   virtual void local_import(char *, MPI_Comm);
 
+  //! construct a Triangles from a Galaxy JSON specification
   virtual void LoadFromJSON(rapidjson::Value&);
+  //! save this Triangles to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
 private:

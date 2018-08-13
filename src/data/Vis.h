@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file Vis.h 
+ * \brief the parent class for visualization elements that operate on a dataset within Galaxy
+ * \ingroup data
+ */
+
 #include <string>
 #include <string.h>
 #include <vector>
@@ -37,20 +42,36 @@ namespace gxy
 
 KEYED_OBJECT_POINTER(Vis)
   
+//! the parent class for visualization elements that operate on a dataset within Galaxy
+/* This object represents a single visualization element, namely a set of filters applied to data. 
+ * In contrast, a Visualization object combines one or more Vis objects with
+ * with lighting information.
+ * \ingroup data 
+ * \sa Visualization, KeyedObject, ISPCObject, OSPRayObject
+ */
 class Vis : public KeyedObject, public ISPCObject
 {
     KEYED_OBJECT(Vis)
 
 public:
-    virtual ~Vis();
+    virtual ~Vis(); //!< default destructor
 
+    //! commit this object to the global registry across all processes
     virtual void Commit(DatasetsP);
+    //! return a pointer to the OSPRayObject data that this Vis targets
     OSPRayObjectP GetTheData() { return data; }
+    //! set the OSPRayObject data that this Vis should target
     void SetTheData( OSPRayObjectP d ) { data = d; }
 
+    //! construct a Vis from a Galaxy JSON specification
     virtual void LoadFromJSON(rapidjson::Value&);
+    //! save this Vis to a Galaxy JSON specification 
     virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+
+    //! set the name of this Vis
     void SetName(std::string n) { name = n; }
+
+    //! commit this object to the local registry
     virtual bool local_commit(MPI_Comm);
 
 protected:
