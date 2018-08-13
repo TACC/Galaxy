@@ -35,7 +35,7 @@ namespace gxy
 RayQManager *RayQManager::theRayQManager;
 RayQManager *RayQManager::GetTheRayQManager() { return RayQManager::theRayQManager; }
 
-#if defined(EVENT_TRACKING)
+#if defined(GXY_EVENT_TRACKING)
 
 class ProcessRaysEvent : public Event
 {
@@ -145,7 +145,7 @@ RayQManager::Dequeue()
 
 	Lock();
 
-#if defined(EVENT_TRACKING)
+#if defined(GXY_EVENT_TRACKING)
 
 	if (!done && rayQ.empty())
 	{

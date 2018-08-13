@@ -132,7 +132,7 @@ Rendering::IsLocal()
 void
 Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 {
-#if defined(EVENT_TRACKING)
+#if defined(GXY_EVENT_TRACKING)
 	GetTheEventTracker()->Add(new LocalPixelsEvent(n, this->getkey(), f));
 #endif
 
