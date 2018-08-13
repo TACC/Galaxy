@@ -241,7 +241,7 @@ main(int argc, char *argv[])
 	mpiRank = GetTheApplication()->GetRank();
 	mpiSize = GetTheApplication()->GetSize();
 
-  Debug *d = dbg ? new Debug(argv[0], atch) : NULL;
+  Debug *d = dbg ? new Debug(argv[0], atch, "") : NULL;
 
   Renderer::Initialize();
   GetTheApplication()->Run();

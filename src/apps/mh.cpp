@@ -29,6 +29,7 @@
 #include <dtypes.h>
 #include <Application.h>
 #include "Renderer.h"
+#include "RenderingSet.h"
 
 #include <ospray/ospray.h>
 
@@ -410,7 +411,11 @@ main(int argc, char * argv[])
 		theRenderingSet->Commit();
 
 		theRenderer->Render(theRenderingSet);
+
+#ifdef GXY_SYNCHRONOUS
 		theRenderingSet->WaitForDone();
+#endif
+		
 		theRenderingSet->SaveImages(string("samples"));
 
 		theApplication.QuitApplication();

@@ -48,7 +48,6 @@ export void Lighting_initialize(void *uniform _self)
   self->types[0]      = 0;
 #endif
 
-  self->epsilon       = 0.001;
 }
 
 export void Lighting_destroy(void *uniform _self)

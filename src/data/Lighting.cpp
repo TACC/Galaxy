@@ -201,13 +201,6 @@ Lighting::Serialize(unsigned char *p)
   }
 
   {
-    float e;
-    GetEpsilon(e);
-    *(float *)p = e;
-    p += sizeof(float);
-  }
-
-  {
     int n; float *l; int *t;
     GetLights(n, l, t);
     *(int *)p = n;
@@ -232,9 +225,6 @@ Lighting::Deserialize(unsigned char *p)
 
   SetK(*(float *)p, *(float *)(p + sizeof(float)));
   p += 2*sizeof(float);
-
-  SetEpsilon(*(float *)p);
-  p += sizeof(float);
 
   int n = *(int *)p;
   p += sizeof(int);

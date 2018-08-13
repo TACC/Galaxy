@@ -88,6 +88,7 @@ public:
 
   //! deserialize this object from a byte stream
   /*! \warning derived classes should implement an overload of deserialize.
+   */
   static KeyedObjectP Deserialize(unsigned char *p);
   //! serialize this object to a byte stream for communication
   /*! \warning derived classes should not overload this method. Instead, implement an override of serialize.

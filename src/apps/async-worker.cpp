@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "Application.h"
 #include "Renderer.h"
@@ -62,9 +63,9 @@ main(int argc, char *argv[])
 
   for (int i = 1; i < argc; i++)
   {
-    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strncmp(argv[i], "-D")) dbg = true, dbgarg = argv[i] + 2; break;
-		else syntax(argv[0]);
+    if (!strcmp(argv[i], "-A")) { dbg = true, atch = true; }
+    else if (!strcmp(argv[i], "-D")) { dbg = true, dbgarg = argv[i] + 2; break; }
+		else { syntax(argv[0]); }
 	}
 
 

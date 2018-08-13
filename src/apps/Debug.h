@@ -1,3 +1,7 @@
+#pragma once
+
+#include <sstream>
+
 class Debug
 {
 public:

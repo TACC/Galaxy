@@ -296,7 +296,9 @@ main(int argc, char * argv[])
 		theRenderingSet->Commit();
 
 		theRenderer->Render(theRenderingSet);
+#ifdef GXY_SYNCHRONOUS
 		theRenderingSet->WaitForDone();
+#endif 
 		theRenderingSet->SaveImages(string("samples"));
 
 		theApplication.QuitApplication();

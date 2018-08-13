@@ -432,19 +432,19 @@ main(int argc, char *argv[])
 
   for (int i = 1; i < argc; i++)
   {
-    else if (!strcmp(argv[i], "-a")) age = atof(argv[++i]), fadeout = atof(argv[++i]);
-		else if (!strcmp(argv[i], "-D")) dbg = true, dbgarg = argv[i] + 2; break;
-    else if (!strcmp(argv[i], "-O")) mode = OBJECT_CENTER;
-    else if (!strcmp(argv[i], "-E")) mode = EYE_CENTER;
+    if (!strcmp(argv[i], "-a")) { age = atof(argv[++i]), fadeout = atof(argv[++i]); }
+		else if (!strcmp(argv[i], "-D")) { dbg = true, dbgarg = argv[i] + 2; break; }
+    else if (!strcmp(argv[i], "-O")) { mode = OBJECT_CENTER; }
+    else if (!strcmp(argv[i], "-E")) { mode = EYE_CENTER; }
     else if (!strcmp(argv[i], "-s"))
     {
       width  = atoi(argv[++i]);
       height = atoi(argv[++i]);
     }
     else if (statefile == "")
-      statefile = argv[i];
+    { statefile = argv[i]; }
     else
-      syntax(argv[0]);
+    { syntax(argv[0]); }
   }
 
   if (statefile == "")

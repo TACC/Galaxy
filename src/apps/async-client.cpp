@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 	if (statefile == "")
 		syntax(argv[0]);
 
-  Debug *d = dbg ? new Debug(argv[0], atch, dbgarfg) : NULL;
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 	skt = new Socket((char *)host.c_str(), port);
 
 	negative_pixels    = (float *)malloc(width*height*4*sizeof(float));

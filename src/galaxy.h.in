@@ -36,13 +36,15 @@
 #cmakedefine GXY_SYNCHRONOUS
 #cmakedefine GXY_TIMING
 
+#ifdef __cplusplus
 /*! \brief the Galaxy namespace.
  * \ingroup framework data renderer
  */
-namespace gxy {};
+namespace gxy {}
 
 /*! \brief the RapidJSON namespace.
  * The namespace defined by the RapidJSON third-party library http://rapidjson.org/
  * \ingroup framework
  */
-namespace rapidjson {};
+namespace rapidjson {}
+#endif
