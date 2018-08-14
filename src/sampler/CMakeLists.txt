@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 ## ========================================================================== ##
 ## Copyright (c) 2014-2018 The University of Texas at Austin.                 ##
 ## All rights reserved.                                                       ##
@@ -18,44 +17,33 @@
 ## limitations under the License.                                             ##
 ##                                                                            ##
 ## ========================================================================== ##
-  
-import sys
-from vtk import *
-from vtk.util import numpy_support as ns
 
-rdr = vtkXMLImageDataReader()
-rdr.SetFileName(sys.argv[1])
-rdr.Update()
-o = rdr.GetOutput()
-a = o.GetPointData().GetArray(sys.argv[2])
-nd = ns.vtk_to_numpy(a)
-if nd.dtype == 'float32':
-  dtype = 'float'
-elif nd.dtype == 'float64'or nd.dtype == 'int32' or nd.dtype == 'int32':
-  nd = nd.astype('float32')
-  dtype = 'float'
-else:
-  dtype = 'uchar'
+cmake_minimum_required (VERSION 2.8.11)
+project (gxy_renderer)
 
-tt = sys.argv[1].rsplit('.', 1)[0]
-if len(tt.rsplit('-')) > 1:
-  basename = sys.argv[2] + '-' + tt.rsplit('-')[1]
-else:
-  basename = sys.argv[2]
+include_directories(${gxy_framework_SOURCE_DIR}
+										${gxy_renderer_SOURCE_DIR}
+										${gxy_data_SOURCE_DIR}
+										${gxy_data_BINARY_DIR}
+                    ${Galaxy_BINARY_DIR}/src)
 
-volname = basename + '.vol'
-rawname = basename + '.raw'
+link_directories(${Galaxy_BINARY_DIR}/src/data 
+                 ${Galaxy_BINARY_DIR}/src/framework)
 
-of = open(rawname, 'wb')
-nd.tofile(of)
-of.close()
+set (ISPC_SOURCES 
+)
 
-of = open(volname, 'w')
-of.write('%s\n' % dtype)
-of.write('%f %f %f\n' % tuple([o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]))
-of.write('%d %d %d\n' % o.GetDimensions())
-of.write('%f %f %f\n' % o.GetSpacing())
-of.write(rawname + '\n')
-of.close()
+set (CPP_SOURCES 
+  Sampler.cpp)
 
+if (ospray_DIR)
+  ospray_create_library(gxy_sampler ${CPP_SOURCES} ${ISPC_SOURCES} 
+    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework COMPONENT lib)
+  set_target_properties(gxy_sampler PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+  install(TARGETS gxy_sampler DESTINATION lib)
+endif()
 
+install(FILES 
+  Sampler.h 
+  DESTINATION include)
+ 

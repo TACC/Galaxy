@@ -1,0 +1,15 @@
+#! /bin/bash
+
+cat > cmds.$$ << EOFEOF
+up 2
+p dbg = 0
+#
+# set breakpoints here
+#
+c
+EOFEOF
+
+(( x = ($3 /2) * 250  ))
+(( y = ($3 % 2) * 500 ))
+xterm -geometry 50x25+$x+$y -e gdb $1 -p $2 -x cmds.$$
+

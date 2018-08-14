@@ -30,8 +30,8 @@ include_directories(
 
 set (CPP_SOURCES 
 			Application.cpp
+			Threading.cpp
 			ClientServer.cpp
-			debug.cpp
 			Events.cpp
 			KeyedObject.cpp
 			Message.cpp
@@ -52,7 +52,8 @@ endif()
 install(FILES 
 	Application.h 
 	ClientServer.h  
-	debug.h 
+	Threading.h
+	Debug.h 
 	Events.h
 	framework.h
 	KeyedObject.h

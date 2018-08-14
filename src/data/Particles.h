@@ -155,7 +155,6 @@ protected:
   virtual unsigned char* deserialize(unsigned char *ptr);
 
   float radius;
-  float radius_scale;
 
 	vtkPolyData *vtkobj;
 

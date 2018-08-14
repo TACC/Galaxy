@@ -28,7 +28,7 @@ int mpiRank, mpiSize;
 
 using namespace std;
 
-#include "../apps/Debug.h"
+#include "Debug.h"
 
 using namespace gxy;
 
@@ -114,7 +114,6 @@ main(int argc, char *argv[])
 		TestEventMsg t(string("hello"));
 		t.Broadcast(true, true);
 
-		theApplication.DumpEvents();
 		theApplication.QuitApplication();
 	}
 

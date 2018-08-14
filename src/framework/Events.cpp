@@ -31,6 +31,7 @@
 
 #include "Events.h"
 #include "Application.h"
+#include "Threading.h"
 
 using namespace std;
 
@@ -39,8 +40,7 @@ namespace gxy
 
 typedef numeric_limits< double > dbl;
 
-EventTracker *theEventTracker;
-EventTracker *GetTheEventTracker() { return theEventTracker; }
+EventTracker *GetTheEventTracker() { return GetTheApplication()->GetTheThreadManager()->get_events(); }
 
 pthread_mutex_t EventsLock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -62,9 +62,12 @@ Event::print(ostream& o)
 
 EventTracker::EventTracker()
 {
-  theEventTracker = this; 
-	event_dump_count = 0;
 }
+
+EventTracker::~EventTracker()
+{
+}
+
 
 double
 EventTracker::gettime()
@@ -88,9 +91,10 @@ EventTracker::DumpEvents()
 {
 #if defined(GXY_EVENT_TRACKING)
 	int rank = GetTheApplication()->GetTheMessageManager()->GetRank();
+	int tid = GetTheApplication()->GetTheThreadManager()->get_index();
 	fstream fs;
 	stringstream fname;
-	fname << "gxy_events_" << event_dump_count << "_" << rank;
+	fname << "gxy_events_" << "_" << rank << "_" << tid;
 	fs.open(fname.str().c_str(), fstream::out);
 	DumpEvents(fs);
 	fs.close();
@@ -110,22 +114,7 @@ EventTracker::DumpEvents(fstream& fs)
 void
 EventTracker::Add(Event *e)
 {
-	pthread_mutex_lock(&EventsLock);
-#if 1
-	// events.push_back(shared_ptr<Event>(e));
 	events.push_back(e);
-#else 
-	int rank = GetTheApplication()->GetRank();
-	std::fstream fs;
-	std::stringstream fname;
-	f {}name << "events_" << rank;
-	fs.open(fname.str().c_str(), std::fstream::out | std::ofstream::app);
-	e->Print(fs);
-	fs << "\n";
-	fs.close();
-	delete e;
-#endif
-	pthread_mutex_unlock(&EventsLock);
 }
 
 } // namespace gxy

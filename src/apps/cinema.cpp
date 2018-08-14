@@ -64,7 +64,6 @@ syntax(char *a)
   	std::cerr << "    -R                          : use raycaster (default)\n";
   	std::cerr << "    -V                          : use VTK\n";
 #endif
-  	std::cerr << "    -D dbg                      : debug - dbg is -1 for all, or k to debug rank k\n";
   }
 
 	exit(1);
@@ -107,11 +106,7 @@ main(int argc, char *argv[])
 	Renderer  *theRenderer = (Renderer *) new OSPRayRenderer(&argc, &argv);
 #endif
 
-	setup_debugger(argv[0]);
-	debugger(dbg);
-
 	theApplication.Run();
-
 
 	bool first = true;
 	if (theApplication.GetRank() == 0)

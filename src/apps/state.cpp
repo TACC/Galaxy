@@ -48,7 +48,7 @@ using namespace std;
 using namespace rapidjson;
 
 static int width = 1920, height = 1080;
-static int mpiRank, mpiSize;
+static int mpiRank = 0, mpiSize = 1;
 
 char  *
 timestamp()
@@ -66,7 +66,7 @@ syntax(string executable)
 		std::cerr << "syntax: " << executable << " state.json [options]\n";
 		std::cerr << "options:\n";
 		std::cerr << "  -s w h            width and height of image (" << width << ", " << height << ")\n";
-  	std::cerr << "  -D dbg            debug - dbg is -1 for all, or k to debug rank k\n";
+		std::cerr << "  -D[which]         run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
     std::cerr << "  -f fname          filename (defaults to xyzzy)\n";
     std::cerr << "  -C                cinema filenames (./cinema.cdb/image/img + annotations)\n";
     std::cerr << "  -S                synchronous - each V/C Rendering in a separate RenderingSet, rendered 1 by 1\n";
@@ -79,6 +79,7 @@ int
 main(int argc, char * argv[])
 {
 	string statefile("");
+	bool atch;
 	char *dbg = NULL;
 	int iKnt = 1;
 	int oKnt = 1;
@@ -96,6 +97,7 @@ main(int argc, char * argv[])
 		else if (!strcmp(argv[i], "-I")) iKnt = atoi(argv[++i]);
 		else if (!strcmp(argv[i], "-O")) oKnt = atoi(argv[++i]);
 		else if (!strcmp(argv[i], "-D")) dbg = argv[++i];
+    else if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
 		else if (!strcmp(argv[i], "-W")) write_image = false;
 		else if (!strcmp(argv[i], "-f")) fname = argv[++i];
 		else if (!strcmp(argv[i], "-C")) fname = "./cinema.cdb/image/img";
@@ -104,8 +106,7 @@ main(int argc, char * argv[])
 		else syntax(argv[0]);
 	}
 
-	setup_debugger(argv[0]);
-	debugger(dbg);
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
   RaycastRenderer  *theRenderer = (RaycastRenderer *) new OSPRayRenderer(&argc, &argv);
 

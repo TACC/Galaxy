@@ -18,58 +18,22 @@
 //                                                                            //
 // ========================================================================== //
 
-#include <string>
-#include "Application.h"
+#pragma once 
 
-using namespace std;
+#include <vector>
+
+#include "Renderer.h"
 
 namespace gxy
 {
 
-static string executable;
+KEYED_OBJECT_POINTER(Sampler)
 
-void setup_debugger(char *e)
+class Sampler : public Renderer
 {
-	executable = e;
-}
-
-static bool debugger_running = false;
-
-void debugger(char *arg)
-{
-	if (arg == NULL)
-		return;
-
-  int rank = GetTheApplication()->GetRank();
-
-  auto c = arg;
-  bool done = false, dbg = *c == 0;
-  while (!done && !dbg)
-  {
-    auto d = c;
-    while (*d && *d != ',') d++;
-    done = (*d == 0);
-		auto r = atoi(c);
-		dbg = ((r == -1) || (r == rank));
-    c = d + 1;
-  }
-
-  if (dbg)
-	{
-		if (! debugger_running)
-		{
-			stringstream cmd;
-			pid_t pid = GetTheApplication()->get_pid();
-
-			cmd << "~/dbg_script " << executable << " " << pid << " " << GetTheApplication()->GetRank() << " &";
-			cerr << "running command: " << cmd.str() << endl;
-			system(cmd.str().c_str());
-		}
-
-		int dbg = 1;
-		while (dbg)
-			sleep(1);
-	}
-}
+  KEYED_OBJECT_SUBCLASS(Sampler, Renderer)
+    
+public:
+};
 
 } // namespace gxy

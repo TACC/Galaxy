@@ -32,19 +32,18 @@
 #include <unistd.h>
 #include <vector>
 
-#include "debug.h"
-#include "Events.h"
 #include "galaxy.h"
 #include "KeyedObject.h"
 #include "MessageManager.h"
 #include "Work.h"
 
-#include "ThreadPool.hpp"
-
 #include "rapidjson/document.h"
 
 namespace gxy
 {
+
+class ThreadManager;
+class ThreadPool;
 
 /*!
  * Send the passed argument to a std::stringstream, 
@@ -116,7 +115,9 @@ public:
   MessageManager *GetTheMessageManager() { return theMessageManager; }
   //! returns the KeyedObjectFactory object, used to register data
   KeyedObjectFactory *GetTheKeyedObjectFactory() { return theKeyedObjectFactory; }
-  //! returns the ThreadPool object, used to manage the Application threads
+  //! returns the ThreadPool object, used to manage all threads created by the Application
+  ThreadManager *GetTheThreadManager() { return threadManager; }
+  //! returns the ThreadPool object, used to manage a pool of threads waiting for work tasks
   ThreadPool *GetTheThreadPool() { return threadPool; }
 
   //! print a std::string to std::cerr in a distributed parallel friendly way
@@ -139,8 +140,6 @@ public:
    * further Work processing by any process until all processes reach the sync.
    */
   void SyncApplication();
-  //! broadcast a 'DumpEvents' message to all processes
-	void DumpEvents();
 
 	//! returns a pointer to the argc initialization argument
 	/*! \warning will return NULL if default constructor was used
@@ -155,10 +154,11 @@ public:
   /*! \returns the size of the MPI communicator pool
    */
   int GetSize() { return GetTheMessageManager()->GetSize(); }
+
   //! returns the rank of the calling process in the messaging MPI communicator
-  /*! \returns the rank of this process in the MPI communicator pool
+  /*! \returns the rank of this process in the MPI communicator pool (or -1 if MPI has not been initialized)
    */
-  int GetRank() { return GetTheMessageManager()->GetRank(); }
+  int GetRank() { return GetTheMessageManager() ? GetTheMessageManager()->GetRank() : -1; }
 
   //! start Message processing by the Application
   /*! signal to the Application threads to begin processing Message objects
@@ -237,6 +237,7 @@ private:
   std::vector<Work *(*)(SharedP)> *deserializers;
   std::vector<ClassTableEntry> *class_table;
 
+	ThreadManager *threadManager;
   ThreadPool *threadPool;
 
   bool application_done;
@@ -249,8 +250,6 @@ private:
   pthread_mutex_t lock;
   pthread_cond_t cond;
 
-	EventTracker eventTracker;
-
 private:
 	class QuitMsg : public Work
 	{
@@ -260,22 +259,6 @@ private:
 
 	public:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
-	};
-
-	class DumpEventsMsg : public Work
-	{
-	public:
-		DumpEventsMsg(){};
-		WORK_CLASS(DumpEventsMsg, true)
-
-	public:
-		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot)
-		{
-			MPI_Barrier(coll_comm);
-			GetTheEventTracker()->DumpEvents();
-			MPI_Barrier(coll_comm);
-			return false;
-		}
 	};
 
 	class SyncMsg : public Work

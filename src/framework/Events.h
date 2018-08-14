@@ -64,8 +64,9 @@ class EventTracker
 {
 public:
 	EventTracker(); //!< default constructor
+	~EventTracker(); //!< default destructor
 
-	//! dump events to file `gxy_events_N_R` where `N` is event count and `R` is process rank
+	//! dump events to file `gxy_events_R_T` where `R` is process rank and `T` is the thread index
 	void DumpEvents();
 	//! dump events to the given file stream
 	void DumpEvents(std::fstream& fs);

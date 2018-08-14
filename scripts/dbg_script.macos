@@ -1,0 +1,34 @@
+#! /bin/bash
+
+if test 0 == 1 ; then
+echo attach to $2
+else
+
+executable=`which $1`
+
+if test ! -d ~/tmp ; then 
+	mkdir ~/tmp
+fi
+
+cat > ~/tmp/wrpr.$$ << EOFEOF
+#! /bin/bash
+lldb -s ~/tmp/cmds.$$
+EOFEOF
+
+chmod a+x ~/tmp/wrpr.$$
+
+cat > ~/tmp/cmds.$$ << EOFEOF
+file $executable
+attach $2
+up 3
+p dbg = 0
+#
+# set breakpoints here
+#
+c
+EOFEOF
+
+scrpt="\"open -a Terminal ~/tmp/wrpr.$$\""
+osascript -e "do shell script $scrpt"
+
+fi

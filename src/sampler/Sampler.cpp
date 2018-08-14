@@ -1,5 +1,5 @@
 // ========================================================================== //
-// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 k/
 // All rights reserved.                                                       //
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
@@ -18,32 +18,6 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 
-/*! \file debug.h 
- * \brief configures and establishes connection with a running debugger
- * \ingroup framework
- */
-
-namespace gxy
-{
-
-
-/*! \ingroup framework
- * @{
- */
-
-//! configure debugging session
-/*! \param e the executable name
- */
-void setup_debugger(char * e);
-//! launch the debugging session
-/*! \param arg arguments to the debugger
- */
-void debugger(char * arg);
-
-//void popup_debugger(); // TODO: unused?
-
-/*! }@ */ // group framework
-
-} // namespace gxy
+#include "Sampler.h"

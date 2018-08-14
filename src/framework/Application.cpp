@@ -29,6 +29,8 @@
 
 #include "Application.h"
 #include "KeyedObject.h"
+#include "Threading.h"
+#include "Events.h"
 
 #include "tbb/tbb.h"
 #include "tbb/task_scheduler_init.h"
@@ -47,9 +49,8 @@ namespace gxy
 WORK_CLASS_TYPE(Application::QuitMsg)
 WORK_CLASS_TYPE(Application::SyncMsg)
 WORK_CLASS_TYPE(Application::PrintMsg)
-WORK_CLASS_TYPE(Application::DumpEventsMsg)
 
-static Application *theApplication;
+static Application *theApplication = NULL;
 
 int cte_indx = 0;
 
@@ -93,6 +94,7 @@ Application::Application()
   int n_threads =  getenv("GXY_NTHREADS") ?  atoi(getenv("GXY_NTHREADS")) : 5;
   std::cerr << "Using " << n_threads << " threads in rendering thread pool." << std::endl;
 
+  threadManager = new ThreadManager;
   threadPool = new ThreadPool(n_threads);
 
   class_table = new vector<ClassTableEntry>;
@@ -129,7 +131,6 @@ Application::Application()
 	QuitMsg::Register();
 	SyncMsg::Register();
   PrintMsg::Register();
-  DumpEventsMsg::Register();
 
 	KeyedObject::Register();
 	KeyedObjectFactory::Register();
@@ -179,7 +180,6 @@ Application::Print(std::string s)
 Application::~Application()
 {
 	DumpLog();
-	eventTracker.DumpEvents();
 	
   pthread_mutex_unlock(&lock);
 
@@ -188,12 +188,7 @@ Application::~Application()
 	delete deserializers;
 	delete theMessageManager;
 	delete theKeyedObjectFactory;
-}
-
-void Application::DumpEvents()
-{
-	DumpEventsMsg *d = new DumpEventsMsg(0);
-	d->Broadcast(true, true);
+	delete threadManager;
 }
 
 void Application::QuitApplication()
@@ -325,13 +320,6 @@ my_threadname()
   else
     return thread_map[my_gettid()].c_str();
 
-}
-
-const char *
-threadname_by_id(long l)
-{
-  if (l == -1) return "nobody";
-  else return thread_map[l].c_str();
 }
 
 void
