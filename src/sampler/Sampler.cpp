@@ -21,17 +21,71 @@
 #define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 
 #include "Sampler.h"
-// #include "Rays.h"
-// #include "Renderer.h"
+#include "Rays.h"
 
 namespace gxy 
 {
 
-/*
+using namespace gxy;
+
 void
 Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
 {
+    int terminated_count = 0;
+
+    for (int i = 0; i < raylist->GetRayCount(); i++)
+        if (classification[i] == Renderer::TERMINATED) terminated_count++;
+
+    RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+    RenderingP rendering = raylist->GetTheRendering();
+
+    if (terminated_count == 0) return;
+
+    Pixel *local_pixels = (rendering->IsLocal()) ? new Pixel[terminated_count] : NULL;
+
+    Renderer::SendPixelsMsg *spmsg = (!rendering->IsLocal()) ? 
+        new Renderer::SendPixelsMsg(rendering, renderingSet,
+        raylist->GetFrame(), terminated_count) : NULL;
+
+    Pixel *p = local_pixels;
+    for (int i = 0; i < raylist->GetRayCount(); i++)
+    {
+        if (classification[i] == Renderer::TERMINATED)
+        {
+            if (rendering->IsLocal())
+            {
+                p->x = raylist->get_x(i);
+                p->y = raylist->get_y(i);
+                p->r = raylist->get_r(i);
+                p->g = raylist->get_g(i);
+                p->b = raylist->get_b(i);
+                p->o = raylist->get_o(i);
+                p++;
+            }
+            else
+            {
+                spmsg->StashPixel(raylist, i);
+            }
+        }
+   }
+
+    if (spmsg)
+    {
+      if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
+      {
+          spmsg->Send(rendering->GetTheOwner());
+      }
+      else
+      {
+          delete spmsg;
+      }
+    }
+
+    if (local_pixels)
+    {
+        rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
+        delete[] local_pixels;
+    }
 }
-*/
 
 } // namespace gxy
