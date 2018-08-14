@@ -21,3 +21,17 @@
 #define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 
 #include "Sampler.h"
+// #include "Rays.h"
+// #include "Renderer.h"
+
+namespace gxy 
+{
+
+/*
+void
+Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
+{
+}
+*/
+
+} // namespace gxy
