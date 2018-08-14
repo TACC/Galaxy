@@ -412,7 +412,7 @@ main(int argc, char * argv[])
 
 		theRenderer->Render(theRenderingSet);
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 		theRenderingSet->WaitForDone();
 #endif
 		

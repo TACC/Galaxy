@@ -65,9 +65,9 @@ WORK_CLASS_TYPE(Renderer::StatisticsMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);
 WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 WORK_CLASS_TYPE(Renderer::AckRaysMsg);
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 KEYED_OBJECT_TYPE(Renderer)
 
@@ -89,9 +89,9 @@ Renderer::Initialize()
   SendPixelsMsg::Register();
   StatisticsMsg::Register();
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
   AckRaysMsg::Register();
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 }
 
@@ -158,7 +158,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		std:cerr << "starting ray processing\n";
 #endif
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 		GetTheRayQManager()->Pause();
 
 		if (renderingSet->CameraIsActive())
@@ -178,7 +178,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		renderingSet->_initStateTimer();
 #endif
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 		renderingSet->initializeSpawnedRayCount();
 #endif
 
@@ -204,7 +204,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		GetTheEventTracker()->Add(new CameraLoopEndEvent);
 #endif
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 		for (auto& r : rvec)
 			r.get();
 
@@ -218,7 +218,7 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 			renderingSet->Finalize();
 		else
 			renderingSet->DecrementActiveCameraCount(0);
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 	}
 	
 }
@@ -581,7 +581,7 @@ public:
 			for (int i = 0; i < 6; i++)
 				if (knts[i])
 				{
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 					// This process gets "ownership" of the new ray list until its recipient acknowleges 
 					renderingSet->IncrementRayListCount();
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
@@ -602,10 +602,10 @@ public:
 			raylist = ray_lists[6];
 		}
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 		// Finished processing this ray list.  
 		renderingSet->DecrementRayListCount();
-#endif //  GXY_SYNCHRONOUS
+#endif //  GXY_WRITE_IMAGES
 
 		return 0;
 	}
@@ -689,7 +689,7 @@ Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
 void 
 Renderer::SendRays(RayList *rays, int destination)
 {
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 	rays->GetTheRenderingSet()->IncrementInFlightCount();
 #endif
 
@@ -741,10 +741,10 @@ Renderer::SendRaysMsg::Action(int sender)
 
 	renderingSet->Enqueue(rayList);
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 	Renderer::AckRaysMsg ack(renderingSet);
 	ack.Send(sender);
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 	
 	return false;
 }
@@ -771,7 +771,7 @@ Renderer::Deserialize(unsigned char *p)
 	return p;
 }
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 Renderer::AckRaysMsg::AckRaysMsg(RenderingSetP rs) : AckRaysMsg(sizeof(Key))
 {
 	*(Key *)contents->get() = rs->getkey();
@@ -785,7 +785,7 @@ Renderer::AckRaysMsg::Action(int sender)
 	rs->DecrementRayListCount();
 	return false;
 }
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 void
 Renderer::Render(RenderingSetP rs)

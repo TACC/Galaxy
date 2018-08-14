@@ -29,12 +29,12 @@ namespace gxy
 
 WORK_CLASS_TYPE(RenderingSet::SaveImagesMsg);
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 WORK_CLASS_TYPE(RenderingSet::PropagateStateMsg);
 WORK_CLASS_TYPE(RenderingSet::SynchronousCheckMsg);
 WORK_CLASS_TYPE(RenderingSet::ResetMsg);
 WORK_CLASS_TYPE(RenderingSet::DumpStateMsg);
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 KEYED_OBJECT_TYPE(RenderingSet)
 
@@ -45,24 +45,24 @@ RenderingSet::Register()
 
 	SaveImagesMsg::Register();
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 	PropagateStateMsg::Register();
 	SynchronousCheckMsg::Register();
 	ResetMsg::Register();
 	DumpStateMsg::Register();
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 }
 
 RenderingSet::~RenderingSet()
 {
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 	pthread_mutex_destroy(&lck);
 	pthread_cond_destroy(&w8);
 	pthread_mutex_destroy(&local_lock);
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 }
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
 void
 RenderingSet::DumpState()
@@ -71,7 +71,7 @@ RenderingSet::DumpState()
 	msg->Broadcast(true, true);
 }
 #endif // GXY_PRODUCE_STATUS_MESSAGES
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 	
 
 void
@@ -82,7 +82,7 @@ RenderingSet::initialize()
 	current_frame = -1;
 	next_frame = 0;
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
 	activeCameraCount = 0;
 
@@ -114,10 +114,10 @@ RenderingSet::initialize()
 	InitializeState();
 #endif // GXY_PRODUCE_STATUS_MESSAGES
 
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 }
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
 void
 RenderingSet::SetInitialState(int local_ray_count, int left_state, int right_state)
@@ -569,7 +569,7 @@ RenderingSet::PropagateStateMsg::Action(int sender)
   return false;
 }
 
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 int
 RenderingSet::serialSize()
@@ -643,7 +643,7 @@ RenderingSet::SaveImagesMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 	return false;
 }
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
 RenderingSet::ResetMsg::ResetMsg(RenderingSet *r) : ResetMsg(sizeof(Key))
 {
@@ -666,7 +666,7 @@ APP_LOG(<< "RenderingSet::ResetMsg::CollectiveActionResetMsg : " << key);
 	return false;
 }
 
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 void
 RenderingSet::AddRendering(RenderingP r)
@@ -699,9 +699,9 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 	
 		RayQManager::GetTheRayQManager()->Enqueue(rl);
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 		IncrementRayListCount(silent);
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 	}
 	else
 	{
@@ -735,7 +735,7 @@ RenderingSet::KeepRays(RayList *rl)
 		return false;
 }
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
 void 
@@ -794,7 +794,7 @@ RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
 #endif
 	return false;
 }
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 } // namespace gxy
 

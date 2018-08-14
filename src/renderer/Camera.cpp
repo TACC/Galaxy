@@ -422,7 +422,7 @@ public:
 		}
 
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 		a->rs->DecrementActiveCameraCount(dst);				
 #endif
 
@@ -734,7 +734,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 
                 for (int i = 0; i < (iwidth * iheight); i += rays_per_packet)
                 {
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
                         renderingSet->IncrementActiveCameraCount();     // Matching Decrement in thread
 #endif
 

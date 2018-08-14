@@ -90,7 +90,7 @@ public:
 	{
 		if (framebuffer) delete[] framebuffer;
 		framebuffer = new float[width * height * 4];
-#ifndef GXY_SYNCHRONOUS
+#ifndef GXY_WRITE_IMAGES
 		if (kbuffer) delete[] kbuffer;
 #endif
 	}
@@ -121,7 +121,7 @@ protected:
 	int accumulation_knt;
 
 	float *framebuffer;
-#ifndef GXY_SYNCHRONOUS
+#ifndef GXY_WRITE_IMAGES
   int *kbuffer;
 #endif
 

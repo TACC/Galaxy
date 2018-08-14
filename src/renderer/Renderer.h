@@ -161,7 +161,7 @@ public:
     bool Action(int sender);
   };
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
   class AckRaysMsg : public Work
   {
@@ -174,7 +174,7 @@ public:
     bool Action(int sender);
   };
 
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
   class SendPixelsMsg : public Work
   {
@@ -221,7 +221,7 @@ public:
 
 			Work::Send(i);
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
       rset->SentPixels(h->count);
 #endif
 		}
@@ -254,7 +254,7 @@ public:
       if (! rs)
         return false;
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
       rs->ReceivedPixels(h->count);
 #endif
 

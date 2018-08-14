@@ -33,7 +33,7 @@
 #cmakedefine GXY_LOGGING
 #cmakedefine GXY_PRODUCE_STATUS_MESSAGES
 #cmakedefine GXY_REVERSE_LIGHTING
-#cmakedefine GXY_SYNCHRONOUS
+#cmakedefine GXY_WRITE_IMAGES
 #cmakedefine GXY_TIMING
 
 #ifdef __cplusplus

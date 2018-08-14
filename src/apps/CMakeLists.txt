@@ -31,13 +31,13 @@ set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
 
 set(BINS "")
 
-if (GXY_SYNCHRONOUS)
+if (GXY_WRITE_IMAGES)
 
 	add_executable(vis vis.cpp)
 	target_link_libraries(vis ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 	set(BINS vis ${BINS})
 
-else(GXY_SYNCHRONOUS)
+else(GXY_WRITE_IMAGES)
 
 	add_executable(async-server async-server.cpp Socket.cpp ServerRendering.cpp quat.cpp)
 	target_link_libraries(async-server ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
@@ -70,7 +70,7 @@ else(GXY_SYNCHRONOUS)
 		message(WARNING "Could not find all GUI components for async client: X11 ${X11_FOUND}, OpenGL ${OpenGL_FOUND}, GLUT ${GLUT_FOUND}")
 	endif(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 
-endif (GXY_SYNCHRONOUS)
+endif (GXY_WRITE_IMAGES)
 
 add_executable(sample sample.cpp)
 target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})

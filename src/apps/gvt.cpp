@@ -152,7 +152,7 @@ main(int argc, char * argv[])
 
 		theRenderer->Render(rs);
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 		rs->WaitForDone();
 #else
 		std::cerr << "hit a char when you are ready to write the image: ";

@@ -197,7 +197,7 @@ RayQManager::Dequeue()
 	return r;
 }
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 void
 RayQManager::Pause()
 {

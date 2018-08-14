@@ -71,7 +71,7 @@ public:
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
 	int activeCameraCount;
 
@@ -147,13 +147,13 @@ public:
 		Signal();
 	};
 			
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 protected:
 
 	std::vector<RenderingP> renderings;
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
 	void Lock()   { pthread_mutex_lock(&lck); 		}
 	void Unlock() { pthread_mutex_unlock(&lck); 	}
@@ -194,7 +194,7 @@ protected:
 
 	// int get_state_counter() { return state_counter++; }
 
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 
 public:
 
@@ -225,7 +225,7 @@ private:
     bool CollectiveAction(MPI_Comm c, bool);
   };
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
 	bool done;
 
@@ -301,7 +301,7 @@ private:
   };
 
 
-#endif // GXY_SYNCHRONOUS
+#endif // GXY_WRITE_IMAGES
 };
 
 } // namespace gxy

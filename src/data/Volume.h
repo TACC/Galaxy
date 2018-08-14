@@ -61,9 +61,9 @@ public:
 		FLOAT, UCHAR
 	};
 
-	//! get the samples array for this Volume
+	//! get the samples (i.e. data value) array for this Volume
 	unsigned char *get_samples() { return samples; }
-	//! set the samples array for this Volume
+	//! set the samples (i.e. data value) array for this Volume
 	void set_samples(void * s) 
 	{ 
 		if (samples != NULL) 
@@ -98,7 +98,7 @@ public:
 		y = global_origin.y + local_offset.y * deltas.y;
 		z = global_origin.z + local_offset.z * deltas.z;
 	}
-	//! get the local origin, including ghost zones / cells, for the data at this process in this Volume
+	//! get the local origin, including ghost data, for the data at this process in this Volume
 	/*! These values are computed from the global origin and ghosted local offsets */
 	void get_ghosted_local_origin(float &x, float &y, float &z)
 	{
@@ -106,42 +106,42 @@ public:
 		y = global_origin.y + ghosted_local_offset.y * deltas.y;
 		z = global_origin.z + ghosted_local_offset.z * deltas.z;
 	}
-	//! get the global number of cells per axis
+	//! get the global number of sample points (i.e. data values) per axis
 	void get_global_counts(int& nx, int& ny, int& nz) 
 	{
 		nx = global_counts.x;
 		ny = global_counts.y;
 		nz = global_counts.z;
 	}
-	//! set the global number of cells per axis
+	//! set the global number of sample points (i.e. data values) per axis
 	void set_global_counts(int nx, int ny, int nz) 
 	{
 		global_counts.x = nx;
 		global_counts.y = ny;
 		global_counts.z = nz;
 	}
-	//! get the local number of cells per axis for data at this process
+	//! get the local number of sample points (i.e. data values) per axis for data at this process
 	void get_local_counts(int& nx, int& ny, int& nz) 
 	{
 		nx = local_counts.x;
 	 	ny = local_counts.y;
 	  nz = local_counts.z;
 	}
-	//! set the local number of cells per axis for data at this process
+	//! set the local number of sample points (i.e. data values) per axis for data at this process
 	void set_local_counts(int nx, int ny, int nz) 
 	{
 		local_counts.x = nx;
 	 	local_counts.y = ny;
 	  local_counts.z = nz;
 	}
-	//! get the local offset for ghost cells / zones at this process
+	//! get the local offset for ghost data at this process
 	void get_ghosted_local_offsets(int& ni, int& nj, int& nk) 
 	{
 		ni = ghosted_local_offset.x;
 		nj = ghosted_local_offset.y;
 		nk = ghosted_local_offset.z;
 	}
-	//! get the local number of cells per axis, including ghost cells / zones, at this process
+	//! get the local number of sample points (i.e. data values) per axis, including ghost data, at this process
 	void get_ghosted_local_counts(int& nx, int& ny, int& nz) 
 	{
 		nx = ghosted_local_counts.x;
@@ -149,7 +149,7 @@ public:
 		nz = ghosted_local_counts.z;
 	}
 
-	//! set the local number of cells per axis, including ghost cells / zones, at this process
+	//! set the local number of sample points (i.e. data values) per axis, including ghost data, at this process
 	void set_ghosted_local_counts(int nx, int ny, int nz) 
 	{
 		ghosted_local_counts.x = nx;

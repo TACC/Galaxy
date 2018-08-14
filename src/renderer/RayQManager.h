@@ -76,7 +76,7 @@ public:
 	int current_frame_id() { return frame_id; }
 	void bump_frame_id() { frame_id ++; }
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 	void Pause();
 	void Resume();
 	void  GetQueuedRayCount(int&, int&);

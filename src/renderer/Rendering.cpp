@@ -54,7 +54,7 @@ Rendering::initialize()
   framebuffer = NULL;
 	frame = -1;
 
-#ifndef GXY_SYNCHRONOUS
+#ifndef GXY_WRITE_IMAGES
   kbuffer = NULL;
 #endif
 }
@@ -77,7 +77,7 @@ Rendering::~Rendering()
 		delete[] framebuffer;
 	}
 
-#ifndef GXY_SYNCHRONOUS
+#ifndef GXY_WRITE_IMAGES
   if (kbuffer) delete[] kbuffer;
 #endif
 }
@@ -93,7 +93,7 @@ Rendering::IsLocal()
   return owner == GetTheApplication()->GetRank();
 }
 
-#ifdef GXY_SYNCHRONOUS
+#ifdef GXY_WRITE_IMAGES
 
 #define ACCUMULATE_PIXEL(X, Y, R, G, B, O)                            	 \
 {                                                                        \
@@ -149,7 +149,7 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 		
 		while (n-- > 0)
 		{
-	#ifdef GXY_SYNCHRONOUS
+	#ifdef GXY_WRITE_IMAGES
 			ACCUMULATE_PIXEL(p->x, p->y, p->r, p->g, p->b, p->o);
 	#else
 			ACCUMULATE_PIXEL(f, p->x, p->y, p->r, p->g, p->b, p->o);
@@ -234,14 +234,14 @@ Rendering::local_commit(MPI_Comm c)
     if (framebuffer)
       delete[] framebuffer;
 
-#ifndef GXY_SYNCHRONOUS
+#ifndef GXY_WRITE_IMAGES
 		if (kbuffer)
 			delete[] kbuffer;
 #endif
 
     framebuffer = new float[width*height*4];
 
-#ifndef GXY_SYNCHRONOUS
+#ifndef GXY_WRITE_IMAGES
 		if (kbuffer)
 			delete[] kbuffer;
     kbuffer = new int[width*height];
@@ -264,7 +264,7 @@ Rendering::local_reset()
     }
     for (float *p = framebuffer; p < framebuffer + width*height*4; *p++ = 0.0);
 
-#ifndef GXY_SYNCHRONOUS
+#ifndef GXY_WRITE_IMAGES
 		memset(kbuffer, 0, width*height*sizeof(int));
 #endif
   }
