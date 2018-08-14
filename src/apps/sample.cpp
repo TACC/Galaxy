@@ -215,7 +215,7 @@ main(int argc, char * argv[])
     // import data to all processes, smartly distributes volume across processses
     // this import defines the partitioning of the data across processses
     // if subsequent Import commands have a different partition, an error will be thrown
-    volume->Import(argv[1]);
+    volume->Import(data);
 
     // create empty distributed container for particles
     // particle partitioning will match volume partition

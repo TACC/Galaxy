@@ -71,7 +71,7 @@ Particles::initialize()
 void
 Particles::allocate(int n)
 {
-	samples.reserve(n);
+	samples.resize(n);
 }
 
 Particles::~Particles()
