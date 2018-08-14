@@ -258,14 +258,14 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 						*pix++ = (*npix + p->b);
 					  *npix = 0.0;
 					  npix++;
-#if 1
+#if 0
 						if (pix[-3] < 0.01 && pix[-2] < 0.01 && pix[-1] < 0.01) 
 							std::cerr << "B " << p->r << " " << p->g << " " << p->b << "\n";
 #endif
 					}
 					else
 					{
-#if 1
+#if 0
 						if (p->r < 0.01 && p->g < 0.01 && p->b < 0.01)
 							std::cerr << "C last is overridden by " << p->r << " " << p->g << " " << p->b << "\n";
 #endif
