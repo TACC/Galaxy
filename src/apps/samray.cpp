@@ -295,9 +295,9 @@ main(int argc, char * argv[])
 
     theRenderingSet->Commit();
 
-		theRenderer->Render(theRenderingSet);
-#ifdef GXY_WRITE_IMAGES
-		theRenderingSet->WaitForDone();
+    theRenderer->Render(theRenderingSet);
+#ifdef GXY_SYNCHRONOUS
+    theRenderingSet->WaitForDone();
 #endif 
     theRenderingSet->SaveImages(string("samples"));
 

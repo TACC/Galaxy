@@ -72,6 +72,10 @@ else(GXY_WRITE_IMAGES)
 
 endif (GXY_WRITE_IMAGES)
 
+add_executable(samray samray.cpp)
+target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+set(BINS samray ${BINS})
+
 add_executable(sample sample.cpp)
 target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 set(BINS sample ${BINS})
@@ -135,5 +139,7 @@ set(BINS particles ${BINS})
 add_executable(partition partition.cpp)
 target_link_libraries(partition ${MPI_LIBRARIES})
 set(BINS partition ${BINS})
+
+install(PROGRAMS blazar DESTINATION python)
 
 install(TARGETS ${BINS} DESTINATION bin)
