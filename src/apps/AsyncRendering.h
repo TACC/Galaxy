@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
 #include "Application.h"
 #include "Rendering.h"
 #include "Socket.h"
