@@ -299,6 +299,7 @@ main(int argc, char * argv[])
 #ifdef GXY_WRITE_IMAGES
 		theRenderingSet->WaitForDone();
 #endif 
+
     theRenderingSet->SaveImages(string("samples"));
 
     theApplication.QuitApplication();
