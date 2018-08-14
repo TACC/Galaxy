@@ -73,6 +73,13 @@ KEYED_OBJECT_TYPE(Renderer)
 
 Renderer *Renderer::theRenderer;
 
+// define class static variables
+int Renderer::TERMINATED    = -1;
+int Renderer::DROP_ON_FLOOR = -2;
+int Renderer::KEEP_HERE     = -3;
+int Renderer::UNDETERMINED  = -4;
+int Renderer::NO_NEIGHBOR   = -1;
+
 void
 Renderer::Initialize()
 {
@@ -248,24 +255,13 @@ Renderer::SaveStateToDocument(Document& doc)
 	doc.AddMember("Renderer", r, doc.GetAllocator());
 }
 
-// These defines categorize rays after a pass through the tracer
-
-#define TERMINATED			-1
-#define DROP_ON_FLOOR		-2
-#define KEEP_HERE				-3
-#define UNDETERMINED		-4
-
-// This define indicates that a ray exitting a partition face exits everything
-
-#define NO_NEIGHBOR 		-1
-
 void
 Renderer::HandleTerminatedRays(RayList *raylist, int *classification)
 {
     int terminated_count = 0;
 
     for (int i = 0; i < raylist->GetRayCount(); i++)
-        if (classification[i] == TERMINATED) terminated_count++;
+        if (classification[i] == Renderer::TERMINATED) terminated_count++;
 
     RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
     RenderingP rendering = raylist->GetTheRendering();
@@ -281,7 +277,7 @@ Renderer::HandleTerminatedRays(RayList *raylist, int *classification)
     Pixel *p = local_pixels;
     for (int i = 0; i < raylist->GetRayCount(); i++)
     {
-        if (classification[i] == TERMINATED)
+        if (classification[i] == Renderer::TERMINATED)
         {
             if (rendering->IsLocal())
             {
@@ -384,7 +380,7 @@ public:
 																		 raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
 
 					if (! visualization->has_neighbor(exit_face)) 
-						exit_face = NO_NEIGHBOR;
+						exit_face = Renderer::NO_NEIGHBOR;
 				}
 
 				if (typ == RAY_PRIMARY)
@@ -406,14 +402,14 @@ public:
 					{
                         // DHR sample here
                         // renderer->do_your_stuff()
-						classification[i] = TERMINATED;
+						classification[i] = Renderer::TERMINATED;
 					}
-					else if ((term & RAY_BOUNDARY) && (exit_face == NO_NEIGHBOR))
+					else if ((term & RAY_BOUNDARY) && (exit_face == Renderer::NO_NEIGHBOR))
 					{
 						if ((raylist->get_r(i) != 0) || (raylist->get_g(i) != 0) || (raylist->get_b(i) != 0))
-							classification[i] = TERMINATED;
+							classification[i] = Renderer::TERMINATED;
 						else
-							classification[i] = DROP_ON_FLOOR;
+							classification[i] = Renderer::DROP_ON_FLOOR;
 					}
 					else if (term & RAY_BOUNDARY)  // then exit_face is not NO_NEIGHBOR -- see previous condition
 					{
@@ -421,7 +417,7 @@ public:
 					}
 					else		// Translucent surface
 					{
-						classification[i] = KEEP_HERE;
+						classification[i] = Renderer::KEEP_HERE;
 					}
 				}
     
@@ -434,16 +430,16 @@ public:
 					if (term & RAY_BOUNDARY)
 					{
 						// If an EXTERNAL boundary....
-						if (exit_face == NO_NEIGHBOR)
+						if (exit_face == Renderer::NO_NEIGHBOR)
 						{
 							// Then send the rays to the FB to add in the directed-light contribution
 							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
 							// to ADD the (negative) shadow
 
 #ifdef GXY_REVERSE_LIGHTING
-							classification[i] = DROP_ON_FLOOR;
+							classification[i] = Renderer::DROP_ON_FLOOR;
 #else
-							classification[i] = TERMINATED;
+							classification[i] = Renderer::TERMINATED;
 #endif
 						}
 						else
@@ -454,15 +450,15 @@ public:
 						// We don't need to add in the light's contribution
 						// OR, if reverse lighting, send to FB to ADD the (negative) shadow
 #ifdef GXY_REVERSE_LIGHTING
-					classification[i] = TERMINATED;
+					classification[i] = Renderer::TERMINATED;
 #else
-          classification[i] = DROP_ON_FLOOR;
+          classification[i] = Renderer::DROP_ON_FLOOR;
 #endif
 					}
 					else 
 					{
 						std::cerr << "Shadow ray died for an unknown reason\n";
-						classification[i] = DROP_ON_FLOOR;
+						classification[i] = Renderer::DROP_ON_FLOOR;
 					}
 				}
 
@@ -472,16 +468,16 @@ public:
 				{
 					if (term & RAY_BOUNDARY)
 					{
-						if (exit_face == NO_NEIGHBOR)
+						if (exit_face == Renderer::NO_NEIGHBOR)
 						{
 							// Then send the rays to the FB to add in the ambient-light contribution
 							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
 							// to ADD the (negative) shadow
 
 #ifdef GXY_REVERSE_LIGHTING
-							classification[i] = DROP_ON_FLOOR;
+							classification[i] = Renderer::DROP_ON_FLOOR;
 #else
-							classification[i] = TERMINATED;
+							classification[i] = Renderer::TERMINATED;
 #endif
 						}
 						else
@@ -493,9 +489,9 @@ public:
 						// OR, if reverse lighting, send to FB to ADD the (negative)
 						// ambient contribution
 #ifdef GXY_REVERSE_LIGHTING
-						classification[i] = TERMINATED;
+						classification[i] = Renderer::TERMINATED;
 #else
-						classification[i] = DROP_ON_FLOOR;
+						classification[i] = Renderer::DROP_ON_FLOOR;
 #endif
 					}
 					else if (term == RAY_TIMEOUT)
@@ -505,9 +501,9 @@ public:
 						// otherwise, send  to FB to add in (positive) ambient
 						// contribution
 #ifdef GXY_REVERSE_LIGHTING
-						classification[i] = DROP_ON_FLOOR;
+						classification[i] = Renderer::DROP_ON_FLOOR;
 #else
-						classification[i] = TERMINATED;
+						classification[i] = Renderer::TERMINATED;
 #endif
 					}
 					else
@@ -528,13 +524,13 @@ public:
 			{
         int clss = classification[i];
 
-				if (clss == TERMINATED)
+				if (clss == Renderer::TERMINATED)
 					fbknt++;
-				else if (clss == KEEP_HERE)
+				else if (clss == Renderer::KEEP_HERE)
 					knts[6] ++;
 				else if (clss >= 0 && clss < 6)
 					knts[clss] ++;
-				else if (clss != DROP_ON_FLOOR)
+				else if (clss != Renderer::DROP_ON_FLOOR)
 					std::cerr << "CLASSIFICATION ERROR 1\n";
 			}
 

@@ -110,6 +110,15 @@ public:
 
 	int GetMaxRayListSize() { return max_rays_per_packet; }
 
+  // These defines categorize rays after a pass through the tracer
+  static int TERMINATED;
+  static int DROP_ON_FLOOR;
+  static int KEEP_HERE;
+  static int UNDETERMINED;
+  static int NO_NEIGHBOR;
+    // This define indicates that a ray exiting a partition face 
+    // exits everything
+
 private:
 
 	std::vector<std::future<void>> rvec;

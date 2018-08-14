@@ -45,5 +45,5 @@ required_args.add_argument(  "-s", "--sampler",
 args = parser.parse_args()
 
 
-command = "echo {} {}".format( args.sampler, args.input )
+command = "{} {} -r 0.025".format( args.sampler, args.input )
 os.system( command )
