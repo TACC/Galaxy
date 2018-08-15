@@ -24,6 +24,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
 include_directories(${gxy_framework_SOURCE_DIR} 
 									  ${gxy_renderer_SOURCE_DIR}
+									  ${gxy_sampler_SOURCE_DIR}
 									  ${gxy_data_SOURCE_DIR}
 									  ${Galaxy_BINARY_DIR}/src)
 
