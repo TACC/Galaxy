@@ -26,7 +26,7 @@
 namespace gxy 
 {
 
-using namespace gxy;
+KEYED_OBJECT_TYPE(Sampler)
 
 void
 Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
