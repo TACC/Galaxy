@@ -39,8 +39,6 @@
 namespace gxy
 {
 
-
-
 class RayList;
 
 KEYED_OBJECT_POINTER(Sampler)
@@ -51,6 +49,11 @@ class Sampler : public Renderer
     
 public:
   virtual void HandleTerminatedRays(RayList *raylist, int *classification);
+  void SetSamples(Particles * p);
+  ParticlesP *GetSamples() {return mSamples;}
+
+private:
+  ParticlesP *mSamples = NULL;
 
 };
 

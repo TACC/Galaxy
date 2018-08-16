@@ -74,7 +74,7 @@ else(GXY_WRITE_IMAGES)
 endif (GXY_WRITE_IMAGES)
 
 add_executable(samray samray.cpp)
-target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} gxy_sampler)
 set(BINS samray ${BINS})
 
 add_executable(sample sample.cpp)
