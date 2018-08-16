@@ -195,11 +195,19 @@ main(int argc, char * argv[])
     else syntax(argv[0]);
   }
 
+  // order here does not matter
+  Sampler::Initialize();
   Renderer::Initialize();
+
   theApplication.Run();
 
+  // order here appears to matter
+    // this works 
+  SamplerP   theSampler  = Sampler::NewP();
   RendererP theRenderer = Renderer::NewP();
-  SamplerP  theSampler  = Sampler::NewP();
+    // this does not work 
+  // RendererP theRenderer = Renderer::NewP();
+  // SamplerP   theSampler  = Sampler::NewP();
 
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
@@ -214,10 +222,9 @@ main(int argc, char * argv[])
   {
     // create empty distributed container for volume data
     VolumeP volume = Volume::NewP();
-    // import data to all processes, distributes volume across processses
+    // import data to all processes, smartly distributes volume across processses
     // this import defines the partitioning of the data across processses
-    // if subsequent Import commands have a different partition, 
-    // an error will be thrown
+    // if subsequent Import commands have a different partition, an error will be thrown
     volume->Import(data);
 
     // create empty distributed container for particles
@@ -244,6 +251,26 @@ main(int argc, char * argv[])
 
     vector<CameraP> theCameras;
 
+#if 0
+    for (int i = 0; i < 20; i++)
+    {
+      CameraP cam = Camera::NewP();
+
+      cam->set_viewup(0.0, 1.0, 0.0);
+      cam->set_angle_of_view(45.0);
+
+      float angle = 2*3.1415926*(i / 20.0);
+
+      float vpx = 8.0 * cos(angle);
+      float vpy = 8.0 * sin(angle);
+
+      cam->set_viewpoint(vpx, vpy, 0.0);
+      cam->set_viewdirection(-vpx, -vpy, 0.0);
+
+      cam->Commit();
+      theCameras.push_back(cam);
+    }
+#else
     CameraP cam = Camera::NewP();
     cam->set_viewup(0.0, 1.0, 0.0);
     cam->set_angle_of_view(45.0);
@@ -251,6 +278,7 @@ main(int argc, char * argv[])
     cam->set_viewdirection(-2.0, 0.0, 0.0);
     cam->Commit();
     theCameras.push_back(cam);
+#endif
 
     ParticlesVisP pvis = ParticlesVis::NewP();
     pvis->SetName("samples");
@@ -278,6 +306,9 @@ main(int argc, char * argv[])
     theRenderingSet->Commit();
 
 		theRenderer->Render(theRenderingSet);
+#ifdef GXY_WRITE_IMAGES
+		theRenderingSet->WaitForDone();
+#endif 
 
     theRenderingSet->SaveImages(string("samples"));
 
