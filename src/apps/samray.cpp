@@ -200,14 +200,6 @@ main(int argc, char * argv[])
   Sampler::Initialize();
   Renderer::Initialize();
   theApplication.Run();
-
-
-  // order here does not matter
-  Sampler::Initialize();
-  Renderer::Initialize();
-
-  theApplication.Run();
-
   // order here appears to matter
     // this works 
   SamplerP   theSampler  = Sampler::NewP();
