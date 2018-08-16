@@ -57,7 +57,7 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
         newsample.xyz.x = raylist->get_ox(i);
         newsample.xyz.y = raylist->get_oy(i);
         newsample.xyz.z = raylist->get_oz(i);
-        // this->GetSamples()->push_back(newsample);
+        this->GetSamples()->push_back(newsample);
       }
       else
       {
