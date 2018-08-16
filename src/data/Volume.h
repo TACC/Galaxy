@@ -98,6 +98,27 @@ public:
 		y = global_origin.y + local_offset.y * deltas.y;
 		z = global_origin.z + local_offset.z * deltas.z;
 	}
+        //! set the local bounding box 
+        /*! The input are the extreme corners of the bounding box. The coordinates of the corner nearest the origin and those of the corner farthest from the origin. */
+        void set_local_box(vec3f low, vec3f high) 
+        {
+            local_box = Box(low,high);
+        }
+        //! set the ghosted local offset values. 
+        /* The values of the ghosted_local_offset are directly set with this method */
+        void set_ghosted_local_offset(int x, int y, int z)
+        {
+            ghosted_local_offset.x = x;
+            ghosted_local_offset.y = y;
+            ghosted_local_offset.z = z;
+        }
+        //! set the local offset values.
+        void set_local_offset(int x, int y, int z)
+        {
+            local_offset.x = x;
+            local_offset.y = y;
+            local_offset.z = z;
+        }
 	//! get the local origin, including ghost data, for the data at this process in this Volume
 	/*! These values are computed from the global origin and ghosted local offsets */
 	void get_ghosted_local_origin(float &x, float &y, float &z)
@@ -132,7 +153,7 @@ public:
 	{
 		local_counts.x = nx;
 	 	local_counts.y = ny;
-	  local_counts.z = nz;
+	        local_counts.z = nz;
 	}
 	//! get the local offset for ghost data at this process
 	void get_ghosted_local_offsets(int& ni, int& nj, int& nk) 
