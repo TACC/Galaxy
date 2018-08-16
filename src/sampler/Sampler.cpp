@@ -21,6 +21,7 @@
 #define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 
 #include "Sampler.h"
+#include "Particles.h"
 #include "Rays.h"
 
 namespace gxy 
@@ -31,61 +32,51 @@ KEYED_OBJECT_TYPE(Sampler)
 void
 Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
 {
-    int terminated_count = 0;
+  int terminated_count = 0;
 
-    for (int i = 0; i < raylist->GetRayCount(); i++)
-        if (classification[i] == Renderer::TERMINATED) terminated_count++;
+  for (int i = 0; i < raylist->GetRayCount(); i++)
+    if (classification[i] == Renderer::TERMINATED) terminated_count++;
 
-    RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-    RenderingP rendering = raylist->GetTheRendering();
+  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingP rendering = raylist->GetTheRendering();
 
-    if (terminated_count == 0) return;
+  if (terminated_count == 0) return;
 
-    Pixel *local_pixels = (rendering->IsLocal()) ? new Pixel[terminated_count] : NULL;
+  Renderer::SendPixelsMsg *spmsg = (!rendering->IsLocal()) ? 
+    new Renderer::SendPixelsMsg(rendering, renderingSet,
+    raylist->GetFrame(), terminated_count) : NULL;
 
-    Renderer::SendPixelsMsg *spmsg = (!rendering->IsLocal()) ? 
-        new Renderer::SendPixelsMsg(rendering, renderingSet,
-        raylist->GetFrame(), terminated_count) : NULL;
-
-    Pixel *p = local_pixels;
-    for (int i = 0; i < raylist->GetRayCount(); i++)
+  Particle newsample;
+  for (int i = 0; i < raylist->GetRayCount(); i++)
+  {
+    if (classification[i] == Renderer::TERMINATED)
     {
-        if (classification[i] == Renderer::TERMINATED)
-        {
-            if (rendering->IsLocal())
-            {
-                p->x = raylist->get_x(i);
-                p->y = raylist->get_y(i);
-                p->r = raylist->get_r(i);
-                p->g = raylist->get_g(i);
-                p->b = raylist->get_b(i);
-                p->o = raylist->get_o(i);
-                p++;
-            }
-            else
-            {
-                spmsg->StashPixel(raylist, i);
-            }
-        }
-   }
-
-    if (spmsg)
-    {
-      if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
+      if (rendering->IsLocal())
       {
-          spmsg->Send(rendering->GetTheOwner());
+        // add a particle, setting position from ray
+        newsample.xyz.x = raylist->get_ox(i);
+        newsample.xyz.y = raylist->get_oy(i);
+        newsample.xyz.z = raylist->get_oz(i);
+        // this->GetSamples()->push_back(newsample);
       }
       else
       {
-          delete spmsg;
+        spmsg->StashPixel(raylist, i);
       }
     }
+  }
 
-    if (local_pixels)
+  if (spmsg)
+  {
+    if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
     {
-        rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
-        delete[] local_pixels;
+      spmsg->Send(rendering->GetTheOwner());
     }
+    else
+    {
+      delete spmsg;
+    }
+  }
 }
 
 } // namespace gxy
