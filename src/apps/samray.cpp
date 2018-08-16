@@ -231,6 +231,7 @@ main(int argc, char * argv[])
     // particle partitioning will match volume partition
     ParticlesP samples = Particles::NewP();
     samples->SetRadius(radius);
+    theSampler->SetSamples(samples);
 
     // define action to perform on volume (see SampleMsg above)
     SampleMsg *smsg = new SampleMsg(volume, samples);
