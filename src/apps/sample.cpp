@@ -85,8 +85,12 @@ public:
 
     float *fsamples = (float *)v->get_samples();
 
+#if 0
     p->allocate(samples_per_partition);
     Particle *particle = p->get_samples();
+#else
+    Particle particle;
+#endif
 
     for (int i = 0; i < samples_per_partition; i++)
     {
@@ -131,6 +135,7 @@ public:
       float b110 = (dx) * (dy) * (1.0 - dz);
       float b111 = (dx) * (dy) * (dz);
 
+#if 0
       particle->u.value = fsamples[v000]*b000 +
                           fsamples[v001]*b001 +
                           fsamples[v010]*b010 +
@@ -145,6 +150,22 @@ public:
       particle->xyz.z = oz + z*deltaZ;
 
       particle ++;
+#else
+      particle.u.value = fsamples[v000]*b000 +
+                          fsamples[v001]*b001 +
+                          fsamples[v010]*b010 +
+                          fsamples[v011]*b011 +
+                          fsamples[v100]*b100 +
+                          fsamples[v101]*b101 +
+                          fsamples[v110]*b110 +
+                          fsamples[v111]*b111;
+
+      particle.xyz.x = ox + x*deltaX;
+      particle.xyz.y = oy + y*deltaY;
+      particle.xyz.z = oz + z*deltaZ;
+
+      p->push_back(particle);
+#endif
     }
 
     return false;
@@ -221,6 +242,7 @@ main(int argc, char * argv[])
     // particle partitioning will match volume partition
     ParticlesP samples = Particles::NewP();
     samples->SetRadius(radius);
+    std::cerr << "radius is " << radius << "\n";
 
     // define action to perform on volume (see SampleMsg above)
     SampleMsg *smsg = new SampleMsg(volume, samples);
@@ -295,10 +317,14 @@ main(int argc, char * argv[])
 
     theRenderingSet->Commit();
 
+std::cerr << "RENDER\n";
 		theRenderer->Render(theRenderingSet);
-#ifdef GXY_WRITE_IMAGES
+// #ifdef GXY_WRITE_IMAGES
+std::cerr << "WAIT\n";
 		theRenderingSet->WaitForDone();
-#endif 
+std::cerr << "WAIT DONE\n";
+    
+// #endif 
 
     theRenderingSet->SaveImages(string("samples"));
 
