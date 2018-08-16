@@ -44,6 +44,7 @@ int samples_per_partition = 100;
 
 #define WIDTH  1920
 #define HEIGHT 1080
+#define SAMPLE 0
 
 int width  = WIDTH;
 int height = HEIGHT;
@@ -198,6 +199,12 @@ main(int argc, char * argv[])
   // order here does not matter
   Sampler::Initialize();
   Renderer::Initialize();
+  theApplication.Run();
+
+
+  // order here does not matter
+  Sampler::Initialize();
+  Renderer::Initialize();
 
   theApplication.Run();
 
@@ -231,13 +238,26 @@ main(int argc, char * argv[])
     // particle partitioning will match volume partition
     ParticlesP samples = Particles::NewP();
     samples->SetRadius(radius);
-    theSampler->SetSamples(samples);
+
+    ParticlesP samrays = Particles::NewP();
+    samrays->SetRadius(radius);
+    if (SAMPLE)
+    {
+      theSampler->SetSamples(samrays);
+    }
 
     // define action to perform on volume (see SampleMsg above)
     SampleMsg *smsg = new SampleMsg(volume, samples);
     smsg->Broadcast(true, true);
 
-    samples->Commit();
+    if (SAMPLE)
+    {    
+      samrays->Commit();
+    }
+    else
+    {
+      samples->Commit();
+    }
 
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
     theRenderer->GetTheLighting()->SetLights(1, light, &t);
@@ -246,8 +266,25 @@ main(int argc, char * argv[])
     theRenderer->GetTheLighting()->SetAO(0, 0.0);
     theRenderer->Commit();
 
+    // treat the Sampler the same way, for now
+    if (SAMPLE)
+    {
+      theSampler->GetTheLighting()->SetLights(1, light, &t);
+      theSampler->GetTheLighting()->SetK(0.4, 0.6);
+      theSampler->GetTheLighting()->SetShadowFlag(false);
+      theSampler->GetTheLighting()->SetAO(0, 0.0);
+      theSampler->Commit();
+    }
     DatasetsP theDatasets = Datasets::NewP();
-    theDatasets->Insert("samples", samples);
+    // add the new samples, not the old ones
+    if (SAMPLE)
+    {
+      theDatasets->Insert("samples", samrays);
+    }
+    else
+    {
+      theDatasets->Insert("samples", samples);
+    }
     theDatasets->Commit();
 
     vector<CameraP> theCameras;
