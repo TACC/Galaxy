@@ -347,8 +347,13 @@ main(int argc, char * argv[])
     pvis->SetName("samples");
     pvis->Commit(theDatasets);
 
+    ParticlesVisP pvis1 = ParticlesVis::NewP();
+    pvis1->SetName("samrays");
+    pvis1->Commit(theDatasets);
+
     VisualizationP v = Visualization::NewP();
     v->AddOsprayGeometryVis(pvis);
+    v->AddOsprayGeometryVis(pvis1);
     v->Commit(theDatasets);
 
     RenderingSetP theRenderingSet = RenderingSet::NewP();
