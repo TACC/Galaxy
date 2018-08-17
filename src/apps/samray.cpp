@@ -209,9 +209,7 @@ execute_sampler(SamplerP sampler)
 
     samples->push_back(particle);
 
-    /*
     samples->Commit();
-    */
 }
 
 
@@ -279,7 +277,8 @@ main(int argc, char * argv[])
     samples->SetRadius(radius);
 // SAMPLE
     ParticlesP samrays = Particles::NewP();
-    samrays->SetRadius(radius);
+    samrays->SetRadius(4*radius);
+    samrays->CopyPartitioning(volume);
 // SAMPLE
     std::cerr << "radius is " << radius << "\n";
 
