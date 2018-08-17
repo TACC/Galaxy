@@ -44,7 +44,6 @@ int samples_per_partition = 100;
 
 #define WIDTH  1920
 #define HEIGHT 1080
-#define SAMPLE 0
 
 int width  = WIDTH;
 int height = HEIGHT;
@@ -87,8 +86,12 @@ public:
 
     float *fsamples = (float *)v->get_samples();
 
+#if 0
     p->allocate(samples_per_partition);
     Particle *particle = p->get_samples();
+#else
+    Particle particle;
+#endif
 
     for (int i = 0; i < samples_per_partition; i++)
     {
@@ -133,6 +136,7 @@ public:
       float b110 = (dx) * (dy) * (1.0 - dz);
       float b111 = (dx) * (dy) * (dz);
 
+#if 0
       particle->u.value = fsamples[v000]*b000 +
                           fsamples[v001]*b001 +
                           fsamples[v010]*b010 +
@@ -147,6 +151,22 @@ public:
       particle->xyz.z = oz + z*deltaZ;
 
       particle ++;
+#else
+      particle.u.value = fsamples[v000]*b000 +
+                          fsamples[v001]*b001 +
+                          fsamples[v010]*b010 +
+                          fsamples[v011]*b011 +
+                          fsamples[v100]*b100 +
+                          fsamples[v101]*b101 +
+                          fsamples[v110]*b110 +
+                          fsamples[v111]*b111;
+
+      particle.xyz.x = ox + x*deltaX;
+      particle.xyz.y = oy + y*deltaY;
+      particle.xyz.z = oz + z*deltaZ;
+
+      p->push_back(particle);
+#endif
     }
 
     return false;
@@ -165,6 +185,27 @@ syntax(char *a)
   cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -r radius     radius of samples (" << radius << ")" << endl;
   exit(1);
+}
+
+// SAMPLE 
+void
+execute_sampler(SamplerP sampler)
+{
+    /*
+    sampler->Commit();
+    ParticlesP samples = sampler->GetSamples();
+
+    // create and add some samples, just to test
+    Particle particle;
+
+    particle.xyz.x = 0.0;
+    particle.xyz.y = 0.0;
+    particle.xyz.z = 0.0;
+
+    samples->push_back(particle);
+
+    samples->Commit();
+    */
 }
 
 
@@ -196,17 +237,17 @@ main(int argc, char * argv[])
     else syntax(argv[0]);
   }
 
-  // order here does not matter
+// SAMPLE
   Sampler::Initialize();
+// SAMPLE
   Renderer::Initialize();
   theApplication.Run();
-  // order here appears to matter
-    // this works 
+
+// SAMPLE
+  // order matters here
   SamplerP   theSampler  = Sampler::NewP();
+// SAMPLE
   RendererP theRenderer = Renderer::NewP();
-    // this does not work 
-  // RendererP theRenderer = Renderer::NewP();
-  // SamplerP   theSampler  = Sampler::NewP();
 
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
@@ -230,26 +271,22 @@ main(int argc, char * argv[])
     // particle partitioning will match volume partition
     ParticlesP samples = Particles::NewP();
     samples->SetRadius(radius);
-
+// SAMPLE
     ParticlesP samrays = Particles::NewP();
     samrays->SetRadius(radius);
-    if (SAMPLE)
-    {
-      theSampler->SetSamples(samrays);
-    }
+// SAMPLE
+    std::cerr << "radius is " << radius << "\n";
 
     // define action to perform on volume (see SampleMsg above)
     SampleMsg *smsg = new SampleMsg(volume, samples);
     smsg->Broadcast(true, true);
 
-    if (SAMPLE)
-    {    
-      samrays->Commit();
-    }
-    else
-    {
-      samples->Commit();
-    }
+    samples->Commit();
+
+// SAMPLE
+    // this creates samples in the Particles data structure above 
+    execute_sampler(theSampler);
+// SAMPLE
 
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
     theRenderer->GetTheLighting()->SetLights(1, light, &t);
@@ -258,25 +295,12 @@ main(int argc, char * argv[])
     theRenderer->GetTheLighting()->SetAO(0, 0.0);
     theRenderer->Commit();
 
-    // treat the Sampler the same way, for now
-    if (SAMPLE)
-    {
-      theSampler->GetTheLighting()->SetLights(1, light, &t);
-      theSampler->GetTheLighting()->SetK(0.4, 0.6);
-      theSampler->GetTheLighting()->SetShadowFlag(false);
-      theSampler->GetTheLighting()->SetAO(0, 0.0);
-      theSampler->Commit();
-    }
     DatasetsP theDatasets = Datasets::NewP();
-    // add the new samples, not the old ones
-    if (SAMPLE)
-    {
-      theDatasets->Insert("samples", samrays);
-    }
-    else
-    {
-      theDatasets->Insert("samples", samples);
-    }
+    theDatasets->Insert("samples", samples);
+// SAMPLE
+    // add the new samples 
+    theDatasets->Insert("samrays", samrays);
+// SAMPLE
     theDatasets->Commit();
 
     vector<CameraP> theCameras;
@@ -335,10 +359,14 @@ main(int argc, char * argv[])
 
     theRenderingSet->Commit();
 
+std::cerr << "RENDER\n";
 		theRenderer->Render(theRenderingSet);
-#ifdef GXY_WRITE_IMAGES
+// #ifdef GXY_WRITE_IMAGES
+std::cerr << "WAIT\n";
 		theRenderingSet->WaitForDone();
-#endif 
+std::cerr << "WAIT DONE\n";
+    
+// #endif 
 
     theRenderingSet->SaveImages(string("samples"));
 
