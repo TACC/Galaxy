@@ -94,7 +94,7 @@ Sampler::SerialSize()
 unsigned char *
 Sampler::Serialize(unsigned char *p)
 {
-  p = super::Serialize();
+  p = super::Serialize(p);
   *(Key *)p = mSamples->getkey();
   p = p + sizeof(Key);
   return p;
@@ -103,8 +103,7 @@ Sampler::Serialize(unsigned char *p)
 unsigned char *
 Sampler::Deserialize(unsigned char *p)
 {
-  p = lighting.Deserialize(p);
-  p = tracer.Deserialize(p);
+  p = super::Deserialize(p);
   mSamples = Particles::GetByKey(*(Key *)p);
   p = p + sizeof(Key);
   return p;
