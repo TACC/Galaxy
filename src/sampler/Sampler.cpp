@@ -79,4 +79,30 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
   }
 }
 
+int
+Sampler::SerialSize()
+{
+  return super::SerialSize() + sizeof(Key);
+}
+
+unsigned char *
+Sampler::Serialize(unsigned char *p)
+{
+  p = super::Serialize();
+  *(Key *)p = mSamples->getkey();
+  p = p + sizeof(Key);
+  return p;
+}
+
+unsigned char *
+Sampler::Deserialize(unsigned char *p)
+{
+  p = lighting.Deserialize(p);
+  p = tracer.Deserialize(p);
+  mSamples = Particles::GetByKey(*(Key *)p);
+  p = p + sizeof(Key);
+  return p;
+}
+
+
 } // namespace gxy

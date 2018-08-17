@@ -52,6 +52,10 @@ public:
   void SetSamples(ParticlesP p) {mSamples = p;}
   ParticlesP GetSamples() {return mSamples;}
 
+  virtual int SerialSize();
+  virtual unsigned char *Serialize(unsigned char *);
+  virtual unsigned char *Deserialize(unsigned char *);
+
 private:
   ParticlesP mSamples = NULL;
 
