@@ -30,6 +30,12 @@ namespace gxy
 KEYED_OBJECT_TYPE(Sampler)
 
 void
+Sampler::Initialize()
+{ 
+  RegisterClass();
+}
+
+void
 Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
 {
   int terminated_count = 0;
