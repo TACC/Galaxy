@@ -48,6 +48,7 @@ class Sampler : public Renderer
   KEYED_OBJECT_SUBCLASS(Sampler, Renderer)
     
 public:
+  static void Initialize();
   virtual void HandleTerminatedRays(RayList *raylist, int *classification);
   void SetSamples(ParticlesP p) {mSamples = p;}
   ParticlesP GetSamples() {return mSamples;}
