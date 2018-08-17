@@ -191,8 +191,13 @@ syntax(char *a)
 void
 execute_sampler(SamplerP sampler)
 {
-    /*
+    float light[] = {1.0, 2.0, 3.0}; int t = 1;
+    sampler->GetTheLighting()->SetLights(1, light, &t);
+    sampler->GetTheLighting()->SetK(0.4, 0.6);
+    sampler->GetTheLighting()->SetShadowFlag(false);
+    sampler->GetTheLighting()->SetAO(0, 0.0);
     sampler->Commit();
+
     ParticlesP samples = sampler->GetSamples();
 
     // create and add some samples, just to test
@@ -204,6 +209,7 @@ execute_sampler(SamplerP sampler)
 
     samples->push_back(particle);
 
+    /*
     samples->Commit();
     */
 }
@@ -285,6 +291,9 @@ main(int argc, char * argv[])
 
 // SAMPLE
     // this creates samples in the Particles data structure above 
+    theSampler->SetSamples(samrays);
+    theSampler->Commit();
+
     execute_sampler(theSampler);
 // SAMPLE
 
