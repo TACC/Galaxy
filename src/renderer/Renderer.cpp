@@ -581,11 +581,12 @@ public:
 					// This process gets "ownership" of the new ray list until its recipient acknowleges 
 					renderingSet->IncrementRayListCount();
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
-#endif
+#else
 					if (ray_lists[i]->GetFrame() == renderingSet->GetCurrentFrame())
 					{
 						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 					}
+#endif
 					delete ray_lists[i];
 				}
 
