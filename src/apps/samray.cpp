@@ -293,7 +293,7 @@ main(int argc, char * argv[])
     theSampler->SetSamples(samrays);
     theSampler->Commit();
 
-    execute_sampler(theSampler);
+    // execute_sampler(theSampler);
 // SAMPLE
 
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
@@ -373,10 +373,13 @@ main(int argc, char * argv[])
     theRenderingSet->Commit();
 
 std::cerr << "RENDER\n";
-		theRenderer->Render(theRenderingSet);
+    theSampler->Render(theRenderingSet);
+    theRenderingSet->WaitForDone();
+
+    theRenderer->Render(theRenderingSet);
 // #ifdef GXY_WRITE_IMAGES
 std::cerr << "WAIT\n";
-		theRenderingSet->WaitForDone();
+    theRenderingSet->WaitForDone();
 std::cerr << "WAIT DONE\n";
     
 // #endif 
