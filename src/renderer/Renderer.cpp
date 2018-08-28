@@ -52,11 +52,7 @@
 
 #ifdef GXY_TIMING
 #include "Timer.h"
-<<<<<<< HEAD
-static Timer timer("ray_processing");
-=======
 static gxy::Timer timer("ray_processing");
->>>>>>> master
 #endif
 
 using namespace rapidjson;
