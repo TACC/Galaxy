@@ -18,7 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
-#define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
+//#define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 #include <sched.h>
 
 #include <iostream>
@@ -51,7 +51,7 @@
 #include "rapidjson/stringbuffer.h"
 
 #ifdef GXY_TIMING
-#include "Timing.h"
+#include "Timer.h"
 static Timer timer("ray_processing");
 #endif
 
