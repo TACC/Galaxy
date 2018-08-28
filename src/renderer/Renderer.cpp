@@ -51,8 +51,8 @@
 #include "rapidjson/stringbuffer.h"
 
 #ifdef GXY_TIMING
-#include "Timing.h"
-static Timer timer("ray_processing");
+#include "Timer.h"
+static gxy::Timer timer("ray_processing");
 #endif
 
 using namespace rapidjson;
