@@ -28,6 +28,7 @@
 #include <chrono>
 #include <ctime>
 #include <ratio>
+#include <string>
 
 namespace gxy
 {
@@ -47,7 +48,7 @@ class Timer
 {
 public:
   //! construct a timer with the given name
-  Timer(string f) : basename(f)
+  Timer(std::string f) : basename(f)
   {
     tot = 0;
     first = true;
@@ -56,9 +57,9 @@ public:
   //! write out the results of this timer to file and destroy the Timer object
   ~Timer()
   {
-    stringstream ss;
+    std::stringstream ss;
     ss << "gxytimer_" << basename << "-" << rank << ".out";
-    ofstream log;
+    std::ofstream log;
     log.open (ss.str());
     log << tot << " seconds\n";
     log.close();
@@ -72,22 +73,22 @@ public:
       first = false;
       rank = GetTheApplication()->GetRank();
     }
-    t0 = high_resolution_clock::now();
+    t0 = std::chrono::high_resolution_clock::now();
   }
 
   //! stop this timer
   void stop()
   {
-    duration<double> d = duration_cast<duration<double>>(high_resolution_clock::now() - t0);
+    std::chrono::duration<double> d = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - t0);
     tot += d.count();
   }
 
 private:
   bool first;
   int rank;
-  high_resolution_clock::time_point t0;
+  std::chrono::high_resolution_clock::time_point t0;
   double tot;
-  string basename;
+  std::string basename;
 };
 
 } // namespace gxy
