@@ -77,8 +77,6 @@ RenderingSet::DumpState()
 void
 RenderingSet::initialize()
 {
-	// state_counter = 0;
-	
 	current_frame = -1;
 	next_frame = 0;
 

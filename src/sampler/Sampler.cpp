@@ -26,6 +26,7 @@
 
 namespace gxy 
 {
+WORK_CLASS_TYPE(Sampler::SampleMsg);
 
 KEYED_OBJECT_TYPE(Sampler)
 
@@ -33,6 +34,7 @@ void
 Sampler::Initialize()
 { 
   RegisterClass();
+  SampleMsg::Register();
 }
 
 void
@@ -107,6 +109,40 @@ Sampler::Deserialize(unsigned char *p)
   mSamples = Particles::GetByKey(*(Key *)p);
   p = p + sizeof(Key);
   return p;
+}
+
+void
+Sampler::Sample(RenderingSetP rs)
+{   
+  SampleMsg msg(this, rs);
+  msg.Broadcast(true, true);
+}
+
+Sampler::SampleMsg::SampleMsg(Sampler* r, RenderingSetP rs) :
+  Sampler::SampleMsg(sizeof(Key) + r->SerialSize() + sizeof(Key))
+{
+  unsigned char *p = contents->get();
+  *(Key *)p = r->getkey();
+  p = p + sizeof(Key);
+  p = r->Serialize(p);
+  *(Key *)p = rs->getkey();
+}
+
+bool
+Sampler::SampleMsg::CollectiveAction(MPI_Comm c, bool isRoot)
+{
+  unsigned char *p = (unsigned char *)get();
+  Key sampler_key = *(Key *)p;
+  p += sizeof(Key);
+
+  SamplerP sampler = Sampler::GetByKey(sampler_key);
+  p = sampler->Deserialize(p);
+
+  RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
+
+  sampler->localRendering(sampler, rs, c);
+
+  return false;
 }
 
 

@@ -373,7 +373,7 @@ main(int argc, char * argv[])
     theRenderingSet->Commit();
 
 std::cerr << "RENDER\n";
-    theSampler->Render(theRenderingSet);
+    theSampler->Sample(theRenderingSet);
     theRenderingSet->WaitForDone();
 
     theRenderer->Render(theRenderingSet);

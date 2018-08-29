@@ -57,9 +57,6 @@ public:
 
   void SetEpsilon(float e);
 
-  static Renderer *theRenderer;
-  static Renderer *GetTheRenderer() { return theRenderer; }
-  
   RayQManager *GetTheRayQManager() { return rayQmanager; }
   
   Lighting *GetTheLighting() { return &lighting; }
@@ -67,7 +64,7 @@ public:
   virtual void LoadStateFromDocument(rapidjson::Document&);
   virtual void SaveStateToDocument(rapidjson::Document&);
 
-  virtual void localRendering(RenderingSetP, MPI_Comm c);
+  virtual void localRendering(RendererP, RenderingSetP, MPI_Comm c);
 
   virtual void HandleTerminatedRays(RayList *raylist, int *classification);
 

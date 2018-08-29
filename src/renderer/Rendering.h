@@ -107,7 +107,7 @@ public:
 	float *GetPixels() { return framebuffer; }
 	Lighting *GetLighting() { return &lights; }
 
-	void resolve_lights();
+	void resolve_lights(RendererP);
 	
 protected:
 	Lighting lights;

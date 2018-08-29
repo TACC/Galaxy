@@ -39,14 +39,15 @@ using namespace std;
 namespace gxy
 {
 
-RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, RayListType type) 
-	: RayList(rs, r, nrays, rs->GetCurrentFrame(), type) {}
+RayList::RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, RayListType type) 
+	: RayList(renderer, rs, r, nrays, rs->GetCurrentFrame(), type) {}
 
 static pthread_mutex_t raylist_lock = PTHREAD_MUTEX_INITIALIZER;
 static int raylist_id = 0;
 
-RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type)
+RayList::RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type)
 {
+	theRenderer = renderer;
 	theRenderingSet = rs;
 	theRendering    = r;
 
@@ -58,6 +59,7 @@ RayList::RayList(RenderingSetP rs, RenderingP r, int nrays, int frame, RayListTy
 	
 	hdr *h  = (hdr *)contents->get();
 	h->frame        		= frame;
+	h->rendererKey			= renderer->getkey();
 	h->renderingKey			= r->getkey();
 	h->renderingSetKey	= rs->getkey();
 	h->size 						= nrays;
@@ -77,6 +79,7 @@ RayList::RayList(SharedP c)
 	contents = c;
 
 	hdr *h  = (hdr *)contents->get();
+	theRenderer = Renderer::GetByKey(h->rendererKey);
 	theRenderingSet = RenderingSet::GetByKey(h->renderingSetKey);
 	theRendering = Rendering::GetByKey(h->renderingKey);
 
@@ -199,12 +202,12 @@ RayList::setup_ispc_pointers()
 void
 RayList::Split(vector<RayList*>& subsets)
 {
-  int rpp = Renderer::GetTheRenderer()->GetMaxRayListSize();
+  int rpp = GetTheRenderer()->GetMaxRayListSize();
   for (int i = 0; i < GetRayCount(); i += rpp)
   {
     int this_rpp = ((i + rpp) > GetRayCount()) ? GetRayCount() - i : rpp;
  
-    RayList *part = new RayList(GetTheRenderingSet(), GetTheRendering(), this_rpp, GetFrame(), GetType());
+    RayList *part = new RayList(GetTheRenderer(), GetTheRenderingSet(), GetTheRendering(), this_rpp, GetFrame(), GetType());
 
     memcpy(part->get_ox_base(),     get_ox_base()     + i, this_rpp*sizeof(float));
     memcpy(part->get_oy_base(),     get_oy_base()     + i, this_rpp*sizeof(float));

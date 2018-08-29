@@ -162,15 +162,15 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 vec3f scale1(float s, vec3f v) { return vec3f(s*v.x, s*v.y, s*v.z); }
 
 void
-Rendering::resolve_lights()
+Rendering::resolve_lights(RendererP renderer)
 {
-	Lighting *theRendererLights = Renderer::GetTheRenderer()->get_the_lights(); 
+	Lighting *theRendererLights = renderer->get_the_lights(); 
 	Lighting *theVisualizationLights = GetTheVisualization()->get_the_lights();
 
 	CameraP  theCamera = GetTheCamera();
 
 	Lighting *srcLights = theVisualizationLights->isSet() ? GetTheVisualization()->get_the_lights() 
-																												: Renderer::GetTheRenderer()->get_the_lights();
+																												: renderer->get_the_lights();
 
 	vec3f viewpoint, viewup, viewdir;
 	theCamera->get_viewpoint(viewpoint);

@@ -82,8 +82,6 @@ public:
 	void  GetQueuedRayCount(int&, int&);
 #endif
     
-    Renderer *GetTheRenderer() { return renderer; }
-
 private:
     Renderer *renderer;
 

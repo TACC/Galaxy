@@ -78,7 +78,7 @@ RayQManager::theRayQWorker(void *d)
 	
 	RayList *r;
 	while ((r = theRayQManager->Dequeue()) != NULL)
-		theRayQManager->GetTheRenderer()->ProcessRays(r);
+		r->GetTheRenderer()->ProcessRays(r);
 
 	theRayQManager->Unlock();
 	pthread_exit(0);

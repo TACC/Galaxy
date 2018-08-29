@@ -303,11 +303,11 @@ struct args
 {
   args(int fnum, float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy, 
 			 vec3f& vr, vec3f& vu, vec3f& veye, vec3f center, 
-			 Box *lb, Box *gb, RenderingSetP rs, RenderingP r) :
+			 Box *lb, Box *gb, RendererP rndr, RenderingSetP rs, RenderingP r) :
 			 fnum(fnum), iwidth(iw), ixmin(ixmin), iymin(iymin),
 			 scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
 			 vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
-			 rs(rs), r(r) {}
+			 renderer(rndr), rs(rs), r(r) {}
   ~args() {}
 
 	int fnum;
@@ -316,6 +316,7 @@ struct args
   float off_x, off_y;
   vec3f vr, vu, veye, center;
   Box *lbox, *gbox;
+	RendererP renderer;
 	RenderingSetP rs;
 	RenderingP r;
 };
@@ -380,7 +381,7 @@ public:
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
       {
-				if (!rlist) rlist = new RayList(a->rs, a->r, count, a->fnum, RayList::PRIMARY);
+				if (!rlist) rlist = new RayList(a->renderer, a->rs, a->r, count, a->fnum, RayList::PRIMARY);
 
 				rlist->set_x(dst, x);
 				rlist->set_y(dst, y);
@@ -412,7 +413,7 @@ public:
 				GetTheEventTracker()->Add(new InitialRaysEvent(rlist));
 #endif
 
-				Renderer::GetTheRenderer()->add_originated_ray_count(rlist->GetRayCount());
+				a->renderer->add_originated_ray_count(rlist->GetRayCount());
 				a->rs->Enqueue(rlist, true);
 			}
 			else
@@ -434,11 +435,11 @@ public:
   }
 
 private:
-	int start, count;
-  shared_ptr<args> a;
+int start, count;
+    shared_ptr<args> a;
 };
 
-void check_env(int width, int height)
+void check_env(RendererP renderer, int width, int height)
 {
 	static bool first = true;
 
@@ -469,24 +470,21 @@ void check_env(int width, int height)
 			if (Ymax >= (height-1)) Ymax = height-1;
 		}
 
-		rays_per_packet = Renderer::GetTheRenderer()->GetMaxRayListSize();
 		permute = getenv("GXY_PERMUTE_PIXELS");
-
 		if (permute)
 			permutation = generate_permutation(width*height);
-
-    if (getenv("GXY_CAMERA_RAYS_PER_PIXEL"))
-       rays_per_packet = atoi(getenv("CAMERA_RAYS_PER_PIXEL"));
 	}
 }
 		
 void
-Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<int>>& rvec, int fnum)
+Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<int>>& rvec, int fnum)
 {
+  int rays_per_packet = renderer->GetMaxRayListSize();
+
   int width, height;
   rendering->GetTheSize(width, height);
 
-	check_env(width, height);
+	check_env(renderer, width, height);
 
   vec3f veye(eye);
   vec3f vu(up);
@@ -617,7 +615,7 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
     if (nrays < 0)
       return;
 
-    RayList *rayList = new RayList(renderingSet, rendering, nrays, fnum, RayList::PRIMARY);
+    RayList *rayList = new RayList(renderer, renderingSet, rendering, nrays, fnum, RayList::PRIMARY);
 
     vec2i *test_rays = new vec2i[nrays];
 
@@ -685,8 +683,8 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 			GetTheEventTracker()->Add(new InitialRaysEvent(rayList));
 #endif
 
-			rayList->GetTheRenderingSet()->Enqueue(rayList, true);
-			Renderer::GetTheRenderer()->add_originated_ray_count(rayList->GetRayCount());
+			renderingSet->Enqueue(rayList, true);
+			renderer->add_originated_ray_count(rayList->GetRayCount());
 		}
 		else
 			delete rayList;
@@ -730,7 +728,8 @@ Camera::generate_initial_rays(RenderingSetP renderingSet, RenderingP rendering, 
 																									 ixmin, iymin,
 																									 off_x, off_y, 
 																									 vr, vu, veye, center, 
-																									 lbox, gbox, renderingSet, rendering));
+																									 lbox, gbox, 
+                                                   renderer, renderingSet, rendering));
 
                 for (int i = 0; i < (iwidth * iheight); i += rays_per_packet)
                 {
