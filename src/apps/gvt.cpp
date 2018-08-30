@@ -113,10 +113,10 @@ main(int argc, char * argv[])
 		std::cerr << "renderer initted" << std::endl;
 
 		CameraP c = Camera::NewP();
-		c->set_viewpoint(0.0, 0.0, -5.0);
-		c->set_viewdirection(0.0, 0.0, 1.0);
+		c->set_viewpoint(1.0, 2.0, -3.0);
+		c->set_viewdirection(-1.0, -2.0, 3.0);
 		c->set_viewup(0.0, 1.0, 0.0);
-		c->set_angle_of_view(45.0);
+		c->set_angle_of_view(30.0);
 		c->Commit();
 
 		VolumeP v = Volume::NewP();
@@ -124,12 +124,12 @@ main(int argc, char * argv[])
 		v->Commit();
 
 		DatasetsP d = Datasets::NewP();
-	  d->Insert("oneBall", v);
+	        d->Insert("oneBall", v);
 		d->Commit();
 
 		VolumeVisP vv = VolumeVis::NewP();
 		vv->SetName("oneBall");
-		vec4f slice(0.0, 0.0, -1.0, 0.0);
+		vec4f slice(0.0, 0.0, 1.0, 0.0);
 		vv->AddSlice(slice);
 		vv->AddIsovalue(0.25);
 		vv->Commit(d);
