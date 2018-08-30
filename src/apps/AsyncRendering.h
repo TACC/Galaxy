@@ -45,6 +45,28 @@ public:
 	static  void *FrameBufferAger_thread(void *p);
 	virtual void FrameBufferAger();
 
+  void partial_frame_test()
+  {
+    if (number_of_partial_frames == -1)
+    {
+      if (getenv("GXY_N_PARTIAL_FRAMES"))
+        number_of_partial_frames = atoi(getenv("GXY_N_PARTIAL_FRAMES"));
+      else
+        number_of_partial_frames = 10;
+    }
+
+    save_partial_updates = true;
+
+    partial_frame_pixel_count = this_frame_pixel_count;
+    partial_frame_pixel_delta = (partial_frame_pixel_count / number_of_partial_frames) + 1;
+    next_partial_frame_pixel_count = partial_frame_pixel_delta;
+    current_partial_frame_count = 0;
+
+    Clear();
+  }
+
+  void Clear();
+              
 	void SetMaxAge(float m, float f = 1) { max_age = m; fadeout = f; }
 
 private:
@@ -52,6 +74,14 @@ private:
 	long  t_start;
 
 	float				 max_age, fadeout;
+
+  bool  save_partial_updates;
+  int   number_of_partial_frames;
+  int   current_partial_frame_count;
+  int   partial_frame_pixel_count;
+  int   this_frame_pixel_count;
+  int   partial_frame_pixel_delta;
+  int   next_partial_frame_pixel_count;
 
 	float*       pixels = NULL;
 	float*       negative_pixels = NULL;

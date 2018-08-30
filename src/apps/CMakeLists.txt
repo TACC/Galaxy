@@ -38,6 +38,14 @@ if (GXY_WRITE_IMAGES)
 	target_link_libraries(vis ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 	set(BINS vis ${BINS})
 
+  add_executable(samray samray.cpp)
+  target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} gxy_sampler)
+  set(BINS samray ${BINS})
+
+  add_executable(sample sample.cpp)
+  target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  set(BINS sample ${BINS})
+
 else(GXY_WRITE_IMAGES)
 
 	add_executable(async-server async-server.cpp Socket.cpp ServerRendering.cpp quat.cpp)
@@ -72,14 +80,6 @@ else(GXY_WRITE_IMAGES)
 	endif(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 
 endif (GXY_WRITE_IMAGES)
-
-add_executable(samray samray.cpp)
-target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} gxy_sampler)
-set(BINS samray ${BINS})
-
-add_executable(sample sample.cpp)
-target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-set(BINS sample ${BINS})
 
 add_executable(mh mh.cpp)
 target_link_libraries(mh ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
