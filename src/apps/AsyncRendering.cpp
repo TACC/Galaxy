@@ -187,7 +187,6 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 		
 		if (frame > current)
 		{
-      std::cerr << this_frame_pixel_count << "\n";
       this_frame_pixel_count = 0;
 			current = frame;
 
@@ -296,7 +295,6 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
       {
         if (this_frame_pixel_count >= next_partial_frame_pixel_count)
         {
-          std::cerr << this_frame_pixel_count << " " << next_partial_frame_pixel_count;
           std::stringstream s;
           s << "partial-" << current_partial_frame_count << ".png";
           ImageWriter writer;
@@ -312,14 +310,9 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
           }
           else
             save_partial_updates = false;
-
-          std::cerr << " :: " << next_partial_frame_pixel_count << "\n";
         }
       }
 		}
-
-    std::cerr << this_frame_pixel_count << " ??? " << next_partial_frame_pixel_count << 
-          (save_partial_updates ? "SPU TRUE" : "SPU FALSE") << "\n";
 	}
 
 	pthread_mutex_unlock(&lock);
