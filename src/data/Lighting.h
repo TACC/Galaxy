@@ -38,6 +38,14 @@ namespace gxy
 //! represents a light source within Galaxy
 /*! \ingroup data 
  * \sa ISPCObject
+ * Three types of light sources are currently supported: lights given by a 
+ * displacement vector from the camera location, lights given as points in 
+ * object space, and lights infinitely distant along a vector.   Lights are 
+ * specified by an array of 3-float vectors along with a corresponding array
+ * of ints denoting th elight type: 0 for local point, 1 for camera-relative, 
+ * and 2 for infinite.  In all cases the light is white.
+ *
+ * Default is a single light at infinity in the direction (1,1,1)
  */  
 class Lighting : public ISPCObject
 {
@@ -57,16 +65,16 @@ public:
   //! save this Lighting object as a JSON Value object to a given Galaxy JSON document
   void SaveStateToValue(rapidjson::Value&, rapidjson::Document&);
 
-  //! set a number of lights with a given luminance and type
+  //! set a number of lights with a given position/direction and type (camera-attached (0), local absolute (1) or infinite (2)
   /*! \param n number of lights
-   * \param l an `n * RGB` value array of luminance values for each light
-   * \param t an `n` value array of OSPRay light type values for each light
+   * \param l an `n * RGB` value array of position/directions for each light
+   * \param t an `n` value array of type values for each light
    */
   void SetLights(int n, float* l, int* t);
-  //! get the number of defined lights, with luminance values and types of each
+  //! get a number of lights with a given position/direction and type (camera-attached (0), local absolute (1) or infinite (2)
   /*! \param n number of lights
-   * \param l an `n * RGB` value array of luminance values for each light
-   * \param t an `n` value array of OSPRay light type values for each light
+   * \param l an `n * RGB` value array of position/directions for each light
+   * \param t an `n` value array of type values for each light
    */
   void GetLights(int& n, float*& l, int*& t);
 
