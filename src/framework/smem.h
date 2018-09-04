@@ -41,7 +41,7 @@ public:
 
   //! returns a new shared pointer (SharedP) of size `n` bytes
   /*! \param n the size in bytes of the memory block pointed to by this SharedP */
-	static std::shared_ptr<smem> New(int n) { return std::shared_ptr<smem>(new smem(n)); }
+	static std::shared_ptr<smem> New(size_t n) { return std::shared_ptr<smem>(new smem(n)); }
 
 	//! get a pointer to the underlying data for this SharedP
 	unsigned char *get() { return ptr; }
@@ -49,9 +49,9 @@ public:
 	int   get_size() { return sz;  }
 
 private:
-  smem(int n);
+  smem(size_t n);
 	unsigned char *ptr;
-	int sz;
+	size_t sz;
 	int kk;
 };
 

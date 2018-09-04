@@ -54,7 +54,7 @@ smem::~smem()
 
 static int nalloc = 0;
 
-smem::smem(int n)
+smem::smem(size_t n)
 {
 	kk = k++;
 
