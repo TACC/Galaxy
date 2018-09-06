@@ -36,18 +36,11 @@ export void Lighting_initialize(void *uniform _self)
   self->Ka            = 0.5;
   self->Kd            = 0.5;
 
-#if 1
-  self->lights        = NULL;
-  self->types         = NULL;
-  self->nLights       = 0;
-#else
   self->lights        = uniform new vec3f[1];
   self->types         = uniform new int[1];
   self->nLights       = 1;
   self->lights[0]     = make_vec3f(1, 1, 1);
-  self->types[0]      = 0;
-#endif
-
+  self->types[0]      = 2;
 }
 
 export void Lighting_destroy(void *uniform _self)

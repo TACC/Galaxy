@@ -103,11 +103,10 @@ public:
 	virtual int serialSize();
 	virtual unsigned char *serialize(unsigned char *);
 	virtual unsigned char *deserialize(unsigned char *);
-
 	float *GetPixels() { return framebuffer; }
-	Lighting *GetLighting() { return &lights; }
 
-	void resolve_lights();
+	Lighting *GetLighting() { return &lights; }
+	void resolve_lights(RendererP);
 	
 protected:
 	Lighting lights;

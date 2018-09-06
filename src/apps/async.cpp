@@ -192,6 +192,11 @@ keyboard(unsigned char ch, int x, int y)
 			}
 			break;
 
+    case 0x54: // T
+      theRendering->partial_frame_test();
+      render_one = true;
+      break;
+
 		case 0x53:
 		case 0x73:
 				image_writer.Write(width, height, pixels);

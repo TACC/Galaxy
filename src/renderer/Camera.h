@@ -36,6 +36,7 @@
 namespace gxy
 {
 
+KEYED_OBJECT_POINTER(Renderer)
 KEYED_OBJECT_POINTER(Rendering)
 KEYED_OBJECT_POINTER(RenderingSet)
 KEYED_OBJECT_POINTER(Camera)
@@ -86,7 +87,7 @@ public:
 
 	void print();
 
-	void generate_initial_rays(RenderingSetP, RenderingP, Box*, Box*, std::vector<std::future<int>>& rvec, int);
+	void generate_initial_rays(RendererP, RenderingSetP, RenderingP, Box*, Box*, std::vector<std::future<int>>& rvec, int);
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *ptr);

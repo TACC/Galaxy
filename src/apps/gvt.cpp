@@ -109,8 +109,11 @@ main(int argc, char * argv[])
 	if (theApplication.GetRank() == 0)
 	{
 		RendererP theRenderer = Renderer::NewP();
+    Lighting *l = theRenderer->GetTheLighting();
+    float camera_relative[] = {5.0, 5.0, 0.0};
+    int   type[] = { 1 };
+    l->SetLights(1, camera_relative, type);
 		theRenderer->Commit();
-		std::cerr << "renderer initted" << std::endl;
 
 		CameraP c = Camera::NewP();
 		c->set_viewpoint(1.0, 2.0, -3.0);
@@ -132,7 +135,28 @@ main(int argc, char * argv[])
 		vec4f slice(0.0, 0.0, 1.0, 0.0);
 		vv->AddSlice(slice);
 		vv->AddIsovalue(0.25);
+    
+    vec4f cmap[] = {
+        {0.00,1.0,0.5,0.5},
+        {0.25,0.5,1.0,0.5},
+        {0.50,0.5,0.5,1.0},
+        {0.75,1.0,1.0,0.5},
+        {1.00,1.0,0.5,1.0}
+    };
+    
+    vv->SetColorMap(5, cmap);
+
+    vec2f omap[] = {
+                { 0.00, 0.05 },
+                { 0.20, 0.05 },
+                { 0.21, 0.00 },
+                { 1.00, 0.00 }
+               };
+
+    vv->SetOpacityMap(4, omap);
+
 		vv->Commit(d);
+
 
 		VisualizationP vis = Visualization::NewP();
 		vis->AddVolumeVis(vv);
@@ -140,7 +164,7 @@ main(int argc, char * argv[])
 
 		RenderingP r = Rendering::NewP();
 		r->SetTheOwner(0);
-		r->SetTheSize(200, 200);
+		r->SetTheSize(201, 201);
 		r->SetTheCamera(c);
 		r->SetTheDatasets(d);
 		r->SetTheVisualization(vis);

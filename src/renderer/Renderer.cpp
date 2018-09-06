@@ -71,8 +71,6 @@ WORK_CLASS_TYPE(Renderer::AckRaysMsg);
 
 KEYED_OBJECT_TYPE(Renderer)
 
-Renderer *Renderer::theRenderer;
-
 // define class static variables
 int Renderer::TERMINATED    = -1;
 int Renderer::DROP_ON_FLOOR = -2;
@@ -105,8 +103,6 @@ Renderer::Initialize()
 void
 Renderer::initialize()
 {
-  theRenderer = this;
-
 	frame = 0;
   rayQmanager = new RayQManager(this);
 	pthread_mutex_init(&lock, NULL);
@@ -130,7 +126,7 @@ Renderer::SetEpsilon(float e)
 }
 
 void
-Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
+Renderer::localRendering(RendererP renderer, RenderingSetP renderingSet, MPI_Comm c)
 {
 #ifdef GXY_EVENT_TRACKING
 	GetTheEventTracker()->Add(new StartRenderingEvent);
@@ -193,14 +189,14 @@ Renderer::localRendering(RenderingSetP renderingSet, MPI_Comm c)
 		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
 		{
 			RenderingP rendering = renderingSet->GetRendering(i);
-			rendering->resolve_lights();
+			rendering->resolve_lights(renderer);
 
 			CameraP camera = rendering->GetTheCamera();
 			VisualizationP visualization = rendering->GetTheVisualization();
 			Box *gBox = visualization->get_global_box();
 			Box *lBox = visualization->get_local_box();
 
-			camera->generate_initial_rays(renderingSet, rendering, lBox, gBox, rvec, fnum);
+			camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
 		}
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
@@ -324,6 +320,7 @@ public:
 
 	int work() { 
 
+		RendererP      renderer      = raylist->GetTheRenderer();
 		RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
 		RenderingP     rendering     = raylist->GetTheRendering();
 		VisualizationP visualization = rendering->GetTheVisualization();
@@ -547,7 +544,7 @@ public:
 			for (int i = 0; i < 7; i++)
 			{
 				if (knts[i])
-					ray_lists[i]   = new RayList(renderingSet, rendering, knts[i], raylist->GetFrame(), raylist->GetType());
+					ray_lists[i]   = new RayList(renderer, renderingSet, rendering, knts[i], raylist->GetFrame(), raylist->GetType());
 				else
 					ray_lists[i]   = NULL;
 
@@ -581,11 +578,12 @@ public:
 					// This process gets "ownership" of the new ray list until its recipient acknowleges 
 					renderingSet->IncrementRayListCount();
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
-#endif
+#else
 					if (ray_lists[i]->GetFrame() == renderingSet->GetCurrentFrame())
 					{
 						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 					}
+#endif
 					delete ray_lists[i];
 				}
 
@@ -614,6 +612,7 @@ private:
 void
 Renderer::Trace(RayList *raylist)
 {
+	RendererP      renderer  = raylist->GetTheRenderer();
 	RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
 	RenderingP     rendering     = raylist->GetTheRendering();
 	VisualizationP visualization = rendering->GetTheVisualization();
@@ -627,7 +626,7 @@ Renderer::Trace(RayList *raylist)
 	RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
 	if (out)
 	{
-		if (out->GetRayCount() > Renderer::GetTheRenderer()->GetMaxRayListSize())
+		if (out->GetRayCount() > renderer->GetMaxRayListSize())
 		{
 			vector<RayList*> rayLists;
 			out->Split(rayLists);
@@ -702,7 +701,7 @@ Renderer::SendRaysMsg::Action(int sender)
 	RayList *rayList = new RayList(this->contents);
 
 	int nReceived = rayList->GetRayCount();
-	Renderer::GetTheRenderer()->_received_from(sender, nReceived);
+	rayList->GetTheRenderer()->_received_from(sender, nReceived);
 
 	RenderingP rendering = rayList->GetTheRendering();
 	RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
@@ -844,7 +843,7 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
-  renderer->localRendering(rs, c);
+  renderer->localRendering(renderer, rs, c);
 
   return false;
 }

@@ -39,6 +39,7 @@ public:
 private:
 	struct hdr
 	{
+		Key rendererKey;
 		Key renderingKey;
 		Key renderingSetKey;
 		int size;
@@ -79,8 +80,8 @@ public:
     dstRayList->set_term(dstRayIndex, srcRayList->get_term(srcRayIndex));
 	}
 
-	RayList(RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type);
-	RayList(RenderingSetP rs, RenderingP r, int nrays, RayListType type);
+	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type);
+	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, RayListType type);
 	RayList(SharedP contents);
 
 	RayListType  GetType() { return ((struct hdr *)contents->get())->type; }
@@ -177,10 +178,12 @@ public:
 	void set_type(int i, int v);
 	void set_term(int i, int v);
 
+	RendererP     GetTheRenderer() { return theRenderer; }
 	RenderingSetP GetTheRenderingSet() { return theRenderingSet; }
 	RenderingP    GetTheRendering() { return theRendering; }
 
 private:
+	RendererP theRenderer;
 	RenderingP theRendering;
 	RenderingSetP theRenderingSet;
 

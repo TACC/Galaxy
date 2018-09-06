@@ -19,6 +19,7 @@
 // ========================================================================== //
 
 #include "AsyncRendering.h"
+#include "ImageWriter.h"
 #include <pthread.h>
 #include <time.h>
 
@@ -31,6 +32,11 @@ void
 AsyncRendering::initialize()
 {
   Rendering::initialize();
+
+  save_partial_updates = false;
+  number_of_partial_frames = -1;
+  this_frame_pixel_count = 0;
+
   current = -1;
 	max_age = 3.0;
 	fadeout = 1.0;
@@ -60,6 +66,14 @@ AsyncRendering::~AsyncRendering()
   if (negative_frameids) free(negative_frameids);
   if (frame_times) free(frame_times);
 }
+
+void AsyncRendering::Clear()
+{
+  float *pix = framebuffer;
+  for (int i = 0; i < 4*width*height; i++)
+    *pix++ = 0.0;
+}
+
 
 long 
 AsyncRendering::my_time()
@@ -173,6 +187,7 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 		
 		if (frame > current)
 		{
+      this_frame_pixel_count = 0;
 			current = frame;
 
 			for (int offset = 0; offset < width*height; offset++)
@@ -181,7 +196,7 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 
 		// Only bump current frame IF this is a positive pixel
 
-		for (int i = 0; i < n; i++, p++)
+		for (int i = 0; i < n; i++, p++, this_frame_pixel_count++)
 		{
 			size_t offset = p->y*GetTheWidth() + p->x;
 			float *pix = framebuffer + (offset<<2);
@@ -219,7 +234,7 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 			}
 			else
 			{
-				if (p->r < 0.0 || p->g < 0.0 || p->b < 0.0)
+        if (p->r < 0.0 || p->g < 0.0 || p->b < 0.0)
 				{
 					// If its a NEGATIVE sample and...
 
@@ -275,6 +290,28 @@ AsyncRendering::AddLocalPixels(Pixel *p, int n, int frame, int s)
 					}
 				}
 			}
+
+      if (save_partial_updates)
+      {
+        if (this_frame_pixel_count >= next_partial_frame_pixel_count)
+        {
+          std::stringstream s;
+          s << "partial-" << current_partial_frame_count << ".png";
+          ImageWriter writer;
+          writer.Write(width, height, framebuffer, s.str().c_str());
+
+          current_partial_frame_count ++;
+
+          if (current_partial_frame_count < (number_of_partial_frames - 1))
+            next_partial_frame_pixel_count += partial_frame_pixel_delta;
+          else if (current_partial_frame_count == (number_of_partial_frames - 1))
+          {
+            next_partial_frame_pixel_count = partial_frame_pixel_count - 2;
+          }
+          else
+            save_partial_updates = false;
+        }
+      }
 		}
 	}
 

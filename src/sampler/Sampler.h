@@ -57,8 +57,24 @@ public:
   virtual unsigned char *Serialize(unsigned char *);
   virtual unsigned char *Deserialize(unsigned char *);
 
+  virtual void Sample(RenderingSetP);
+
 private:
   ParticlesP mSamples = NULL;
+
+  class SampleMsg : public Work
+  {
+  public:
+    SampleMsg(Sampler *, RenderingSetP);
+    ~SampleMsg() {}
+
+    WORK_CLASS(SampleMsg, true);
+
+    bool CollectiveAction(MPI_Comm, bool isRoot);
+
+    private:
+        int frame;
+  };
 
 };
 
