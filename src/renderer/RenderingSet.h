@@ -206,7 +206,16 @@ public:
 	// NeedInitialRays returns the new frame number;
 
 	int  NeedInitialRays();
-	bool KeepRays(RayList *rl);
+
+	// Returns true of false depending on whether fnum is an active frame.
+	// Just what an active frame is depends.   If we are in asyncronous mode,
+	// we might consider only the latest frame active - in which case, if 
+	// fnum > current_frame, then current_frame gets bumped and we return 
+	// fnum == current_frame.   If we don't want ALL frames to be considered
+	// active we just return true.
+
+	bool IsActive(int fnum);
+
 
 private:
 

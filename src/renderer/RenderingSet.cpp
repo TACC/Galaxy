@@ -691,10 +691,8 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 	APP_LOG(<< "RenderingSet   enqueing " << std::hex << rl);
 #endif
 
-	if (rl->GetFrame() >= current_frame)
+	if (IsActive(rl->GetFrame()))
 	{
-		current_frame = rl->GetFrame();
-	
 		RayQManager::GetTheRayQManager()->Enqueue(rl);
 
 #ifdef GXY_WRITE_IMAGES
@@ -711,26 +709,22 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 int
 RenderingSet::NeedInitialRays()
 {
-	next_frame ++;
-	if (next_frame >= current_frame)
-	{
-		current_frame = next_frame;
-		return current_frame;
-	}
+	if (IsActive(++next_frame))
+		return next_frame;
 	else
 		return -1;
 }
 
-bool
-RenderingSet::KeepRays(RayList *rl)
+bool 
+RenderingSet::IsActive(int fnum)
 {
-	if (rl->GetFrame() >= current_frame)
-	{
-		current_frame = rl->GetFrame();
-		return true;
-	}
-	else
-		return false;
+	if (fnum > current_frame)
+		current_frame = fnum;
+#if 0
+	return fnum == current_frame;
+#else
+	return  true;
+#endif
 }
 
 #ifdef GXY_WRITE_IMAGES

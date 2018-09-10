@@ -76,7 +76,7 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
 
   if (spmsg)
   {
-    if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
+    if (renderingSet->IsActive(raylist->GetFrame()))
     {
       spmsg->Send(rendering->GetTheOwner());
     }
