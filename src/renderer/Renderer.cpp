@@ -294,7 +294,7 @@ Renderer::HandleTerminatedRays(RayList *raylist, int *classification)
 
     if (spmsg)
     {
-      if (raylist->GetFrame() == renderingSet->GetCurrentFrame())
+			if (renderingSet->IsActive(raylist->GetFrame()))
       {
           spmsg->Send(rendering->GetTheOwner());
       }
@@ -315,7 +315,7 @@ class processRays_task : public ThreadPoolTask
 {
 public:
 	processRays_task(RayList *raylist, Renderer *renderer) : 
-		ThreadPoolTask(raylist->GetType() == RayList::PRIMARY ? 1 : 0), raylist(raylist), renderer(renderer) {}
+		ThreadPoolTask(raylist->GetType() == RayList::PRIMARY ? 3 : 2), raylist(raylist), renderer(renderer) {}
   ~processRays_task() {}
 
 	int work() { 
@@ -333,7 +333,7 @@ public:
 
 		while (raylist)
 		{
-		  if (raylist->GetFrame() != renderingSet->GetCurrentFrame())
+			if (! renderingSet->IsActive(raylist->GetFrame()))
 		  {
 				// std::cerr << GetTheApplication()->GetRank() << " dropping raylist (" << raylist->GetFrame() << ", " <<  renderingSet->GetCurrentFrame() << ")\n";
 				delete raylist;
@@ -579,7 +579,7 @@ public:
 					renderingSet->IncrementRayListCount();
 					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 #else
-					if (ray_lists[i]->GetFrame() == renderingSet->GetCurrentFrame())
+					if (renderingSet->IsActive(ray_lists[i]->GetFrame()))
 					{
 						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
 					}

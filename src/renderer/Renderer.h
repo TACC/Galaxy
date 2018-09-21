@@ -268,7 +268,7 @@ public:
 			GetTheEventTracker()->Add(new RcvPixelsEvent(h->count, h->rkey, h->frame, s));
 #endif
 
-			if (h->frame == rs->GetCurrentFrame())
+			if (rs->IsActive(h->frame))
 				r->AddLocalPixels(pixels, h->count, h->frame, h->source);
 
       return false;

@@ -30,6 +30,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <deque>
 #include <future>
 #include <stdio.h>
 #include <stdlib.h>
@@ -175,6 +176,16 @@ class ThreadPool
 private:
 	static void* thread(void *d);
 
+	struct PriorityLevel
+	{
+		PriorityLevel(int p) : priority(p) {}
+		int priority;
+		std::deque<ThreadPoolTask*> tasks;
+	};
+
+	std::list<PriorityLevel *> priority_list;
+  int number_of_tasks;
+
 public:
 	enum PoolEventType { WAKE, START, FINISH };
 
@@ -185,45 +196,16 @@ public:
 	~ThreadPool();
 
 	//! return the highest priority task (in case of ties, selects the first in the task queue)
-	virtual ThreadPoolTask *ChooseTask()
-	{
-		std::list<ThreadPoolTask *>::iterator besti = task_list.begin();
-		int bestp = (*besti)->get_priority();
-
-		for (std::list<ThreadPoolTask *>::iterator it = task_list.begin(); it != task_list.end(); ++it)
-		{
-			int p = (*it)->get_priority();
-			if (p > bestp)
-			{
-				besti = it;
-				bestp = (*it)->get_priority();
-			}
-		}
-
-		ThreadPoolTask *task = (*besti);
-		task_list.erase(besti);
-
-		return task;
-	}
+	virtual ThreadPoolTask *ChooseTask();
 
 	//! add a task to to the thread pool's queue
-	std::future<int> AddTask(ThreadPoolTask *task)
-	{
-		std::future<int> f = task->p.get_future();
-
-		pthread_mutex_lock(&lock);
-		task_list.push_back(task);
-		pthread_cond_signal(&wait);
-		pthread_mutex_unlock(&lock);
-
-		return f;
-	}
+	std::future<int> AddTask(ThreadPoolTask *task);
 
 	//! wait until all tasks in the queue have been processed
 	void Wait()
 	{
 		pthread_mutex_lock(&lock);
-		while(task_list.size())
+		while(number_of_tasks == 0)
 			pthread_cond_wait(&wait_for_done, &lock);
 		pthread_mutex_unlock(&lock);
 	}
@@ -234,15 +216,28 @@ public:
 		GetTheEventTracker()->Add(new PoolThreadEvent(e));
 	}
 
+	int GetNumberOfTasks() { return number_of_tasks; }
+
 private:
 	std::vector<pthread_t> thread_ids;
-	std::list<ThreadPoolTask *> task_list;
 
 	bool stop;
 
 	pthread_mutex_t lock;
 	pthread_cond_t wait;
 	pthread_cond_t wait_for_done;
+
+	double tWait, tWork, tChoose, tStart;
+	int nPoolThreads;
+
+	void stats(double wait, double choose, double work);
+
+	double gettime()
+  {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ts.tv_sec + (ts.tv_nsec / 1000000000.0);
+  }
 
   class PoolThreadEvent : public Event
   {

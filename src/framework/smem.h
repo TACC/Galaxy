@@ -46,7 +46,7 @@ public:
 	//! get a pointer to the underlying data for this SharedP
 	unsigned char *get() { return ptr; }
 	//! get the size of the memory block pointed to by this SharedP
-	int   get_size() { return sz;  }
+	size_t   get_size() { return sz;  }
 
 private:
   smem(size_t n);
