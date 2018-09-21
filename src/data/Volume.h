@@ -153,7 +153,7 @@ public:
 	{
 		local_counts.x = nx;
 	 	local_counts.y = ny;
-	        local_counts.z = nz;
+    local_counts.z = nz;
 	}
 	//! get the local offset for ghost data at this process
 	void get_ghosted_local_offsets(int& ni, int& nj, int& nk) 
