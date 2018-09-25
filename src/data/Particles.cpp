@@ -222,10 +222,15 @@ Particles::local_commit(MPI_Comm c)
 
 	srand(GetTheApplication()->GetRank());
 	int r = random();
+
+#if COLOR_BY_PARTITION
 	unsigned int color = (r & 0x1 ? 0x000000ff : 0x000000A6) |
 											 (r & 0x2 ? 0x0000ff00 : 0x0000A600) |
 											 (r & 0x4 ? 0x00ff0000 : 0x00A60000) |
 							         0xff000000;
+#else
+	unsigned int color = 0xffffffff;
+#endif
 
 	unsigned int *colors = new unsigned int[n_samples];
 	for (int i = 0; i < n_samples; i++)

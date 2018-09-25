@@ -56,6 +56,7 @@ int height = HEIGHT;
 float radius = 0.02;
 float sigma = 1.0;
 int   max_consecutive_misses = 10;
+
 int   iteration_limit = 200000;
 int   hot_start = 1000;
 float scaling = 1.0;

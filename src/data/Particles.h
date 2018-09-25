@@ -144,6 +144,9 @@ public:
   //! add a Particle to this Particles dataset
 	void push_back(Particle p) { samples.push_back(p); }
 
+	//! clear the particles list
+	void clear() { samples.clear(); }
+
 protected:
   vtkClientSocket *skt;
   std::string filename;

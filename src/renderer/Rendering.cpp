@@ -234,16 +234,12 @@ Rendering::local_commit(MPI_Comm c)
     if (framebuffer)
       delete[] framebuffer;
 
-#ifndef GXY_WRITE_IMAGES
-		if (kbuffer)
-			delete[] kbuffer;
-#endif
-
     framebuffer = new float[width*height*4];
 
 #ifndef GXY_WRITE_IMAGES
 		if (kbuffer)
 			delete[] kbuffer;
+
     kbuffer = new int[width*height];
 		memset(kbuffer, 0, width*height*sizeof(int));
 #endif

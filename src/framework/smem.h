@@ -51,7 +51,7 @@ public:
 private:
   smem(size_t n);
 	unsigned char *ptr;
-	int sz;
+	size_t sz;
 	int kk;
 };
 
