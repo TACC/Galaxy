@@ -56,6 +56,7 @@ install(FILES
   Pixel.h 
   RayQManager.h 
   Rays.h 
+  render.h
   Renderer.h
   Rendering.h 
   RenderingSet.h 

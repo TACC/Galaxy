@@ -59,13 +59,6 @@ Rendering::initialize()
 #endif
 }
 
-void
-Rendering::SetTheSize(int w, int h)
-{
-  width = w;
-  height = h;
-}
-
 Rendering::~Rendering() 
 {
 #ifdef GXY_LOGGING

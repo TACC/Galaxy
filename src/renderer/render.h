@@ -20,13 +20,23 @@
 
 #pragma once
 
-/*! \file hits.h 
- * \brief ray intersection ("hit") test result codes
- * \ingroup render
+/*! \file render.h
+ *  \brief A convenience header to include all Galaxy render headers.
  */
 
-#define HIT_MISS               -1
-#define HIT_SURFACE             1
-#define HIT_TERMINATING         2
-#define HIT_CONTINUING          3
+/*! \defgroup render Render 
+ * \brief all classes for Galaxy's supported render types and operations
+ */
 
+#include "Camera.h"
+#include "dtypes.h"
+#include "hits.h"
+#include "Pixel.h"
+#include "RayFlags.h"
+#include "RayQManager.h"
+#include "Rays.h"
+#include "Renderer.h"
+#include "Rendering.h"
+#include "RenderingEvents.h"
+#include "RenderingSet.h"
+#include "TraceRays.h"

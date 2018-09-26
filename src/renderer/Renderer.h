@@ -20,6 +20,11 @@
 
 #pragma once 
 
+/*! \file Renderer.h 
+ * \brief the primary class controlling rendering within Galaxy
+ * \ingroup render
+ */
+
 #include <vector>
 
 #include "dtypes.h"
@@ -42,44 +47,55 @@ class RayList;
 
 KEYED_OBJECT_POINTER(Renderer)
 
+//! the primary class controlling rendering within Galaxy
+/* \sa KeyedObject
+ * \ingroup render
+ */
 class Renderer : public KeyedObject
 {
   KEYED_OBJECT(Renderer)
     
 public:
-  static void Initialize();
+  static void Initialize(); //!< initialize the Renderer subcomponents
 
-  virtual ~Renderer();
-  virtual void initialize();
+  virtual ~Renderer(); //!< default destructor
+  virtual void initialize(); //!< initializes the singleton Renderer
 
-  void ProcessRays(RayList *);
-  void SendRays(RayList *, int);
+  void ProcessRays(RayList *); //!< add the given RayList as a Task for the ThreadPool
+  void SendRays(RayList *, int); //!< send the given RayList to the specified process rank
 
-  void SetEpsilon(float e);
+  void SetEpsilon(float e); //!< set the epsilon distance for the Renderer to avoid exact comparison in certain tests
 
   RayQManager *GetTheRayQManager() { return rayQmanager; }
-  
+  //! returns a pointer to the singleton Lighting object for this process
   Lighting *GetTheLighting() { return &lighting; }
 
+  //! load a Renderer object from a Galaxy JSON document
   virtual void LoadStateFromDocument(rapidjson::Document&);
+  //! save this Renderer object to a Galaxy JSON document
   virtual void SaveStateToDocument(rapidjson::Document&);
 
+  //! render the given RenderingSet at this process, in response to a received RenderMsg
   virtual void localRendering(RendererP, RenderingSetP, MPI_Comm c);
-
+  //! extract and retire any terminated rays in the given RayList
+  /*! \param raylist the RayList to process
+   * \param classification an array of ray states corresponding to the rays in the RayList
+   */
   virtual void HandleTerminatedRays(RayList *raylist, int *classification);
 
-  void LaunchInitialRays(RenderingSetP, RenderingP, std::vector<std::future<void>>&);
+  virtual int SerialSize(); //!< return the size in bytes for the serialization of this Renderer
+  virtual unsigned char *Serialize(unsigned char *); //!< serialize this Renderer to the given byte array
+  virtual unsigned char *Deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
 
-  virtual int SerialSize();
-  virtual unsigned char *Serialize(unsigned char *);
-  virtual unsigned char *Deserialize(unsigned char *);
-
+  //! broadcasts a RenderMsg to all processes to begin rendering via each localRendering method
 	virtual void Render(RenderingSetP);
+  //! return the frame number for the current render
 	int GetFrame() { return frame; }
 
-	void DumpStatistics();
-	void _dumpStats();
+	void DumpStatistics(); //!< broadcast a StatisticsMsg to all processes to write rendering stats to local file via _dumpStats()
+	void _dumpStats(); //!< write local rendering statistics to file via APP_LOG()
 
+  //! log that n rays were sent to process d
 	void _sent_to(int d, int n)
 	{
 		pthread_mutex_lock(&lock);
@@ -87,6 +103,7 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
+  //! log that n rays were received from process d
 	void _received_from(int d, int n)
 	{
 		pthread_mutex_lock(&lock);
@@ -94,6 +111,7 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
+  //! log that n rays originated at this process
 	void add_originated_ray_count(int n)
 	{
 		pthread_mutex_lock(&lock);
@@ -101,18 +119,22 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
+  //! return a pointer to the Lighting singleton for this process
 	Lighting *get_the_lights() { return &lighting; }
 
+  //! process the given RayList using the current Rendering, RenderingSet, and Visualization
 	void Trace(RayList *);
 
+  //! return the maximum number of rays allowed in each RayList
 	int GetMaxRayListSize() { return max_rays_per_packet; }
 
   // These defines categorize rays after a pass through the tracer
-  static int TERMINATED;
-  static int DROP_ON_FLOOR;
-  static int KEEP_HERE;
-  static int UNDETERMINED;
-  static int NO_NEIGHBOR;
+  // TODO: reimplement as enum
+  static int TERMINATED;  //!< mark that this ray has been terminated
+  static int DROP_ON_FLOOR; //!< mark that this ray should be discarded
+  static int KEEP_HERE; //!< mark that this ray should be kept at this process
+  static int UNDETERMINED; //!< mark that no action has yet been determined for this ray
+  static int NO_NEIGHBOR; //!< mark that this ray has no neighbor to be sent to and has left the global volume
     // This define indicates that a ray exiting a partition face 
     // exits everything
 
@@ -157,6 +179,7 @@ private:
   };
 
 public:
+  //! a Work unit to send rays between Galaxy processes
   class SendRaysMsg : public Work
   {
   public:
@@ -168,7 +191,7 @@ public:
   };
 
 #ifdef GXY_WRITE_IMAGES
-
+  //! a Work unit to acknowledge the receipt of rays from another process
   class AckRaysMsg : public Work
   {
   public:
@@ -182,6 +205,7 @@ public:
 
 #endif // GXY_WRITE_IMAGES
 
+  //! a Work unit to send pixel contributions to another process
   class SendPixelsMsg : public Work
   {
   private:
@@ -278,6 +302,7 @@ public:
     int nxt;
   };
 
+  //! a Work unit to instruct Galaxy processes to begin rendering
   class RenderMsg : public Work
   {
   public:

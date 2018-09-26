@@ -20,9 +20,16 @@
 
 #pragma once
 
+/*! \file Pixel.h 
+ * \brief data for a single pixel in a Rendering
+ * \ingroup render
+ */
+
 namespace gxy
 {
 
+//! data for a single pixel in a Rendering
+/*! \ingroup render */
 struct Pixel 
 {
   int x, y;

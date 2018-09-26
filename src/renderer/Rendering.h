@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file Rendering.h 
+ * \brief represents an image of a Visualization rendered using a certain Camera 
+ * \ingroup render
+ */
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -42,50 +47,49 @@ KEYED_OBJECT_POINTER(Rendering)
 
 class Ray;
 
+//! represents an image of a Visualization rendered using a certain Camera 
+/* \sa KeyedObject
+ * \ingroup render
+ */
 class Rendering : public KeyedObject
 {
 	KEYED_OBJECT(Rendering);
+	//! default destructor
 	virtual ~Rendering();								// to get rid of the FB
 
 public:
+	//! register message types with the Galaxy system (currently noop)
 	static void RegisterMessages()
 	{
 	}
 	
-	virtual void initialize();
+	virtual void initialize(); //!< initialize this Rendering object
 
+	//! (re-)allocate the local framebuffer and image buffers for this Rendering, if owned by this process
   virtual bool local_commit(MPI_Comm);
+  //! (re-)initialize the local framebuffer and image buffers to zero, if owned by this process
   virtual void local_reset();
 
-	Key GetTheRenderingSetKey();
-	RenderingSetP GetTheRenderingSet();
-	void SetTheRenderingSet(Key rsk);
-	void SetTheRenderingSet(RenderingSetP rs);
+	CameraP GetTheCamera(); //!< returns a pointer to the Camera used for this Rendering
+	void SetTheCamera(CameraP c); //!< set the Camera to use for this Rendering
 
-	Key GetTheCameraKey();
-	CameraP GetTheCamera();
-	void SetTheCamera(Key c);
-	void SetTheCamera(CameraP c);
+	DatasetsP GetTheDatasets(); //!< returns a pointer to the Datasets used in this Rendering
+	void SetTheDatasets(DatasetsP c); //!< set the Datasets to use for this Rendering
 
-	Key GetTheDatasetsKey();
-	DatasetsP GetTheDatasets();
-	void SetTheDatasets(Key c);
-	void SetTheDatasets(DatasetsP c);
+	VisualizationP GetTheVisualization(); //!< returns a pointer to the Visualization used in this Rendering
+	void SetTheVisualization(VisualizationP v); //!< set the Visualization to use for this Rendering
 
-	Key GetTheVisualizationKey();
-	VisualizationP GetTheVisualization();
-	void SetTheVisualization(Key v);
-	void SetTheVisualization(VisualizationP v);
+	int GetTheOwner() { return owner; } //!< returns the rank of the process that owns the framebuffer for this Rendering
+	void SetTheOwner(int o) { owner = o; } //!< set the rank of the process that owns this Rendering
 
-	int GetTheOwner() { return owner; }
-	void SetTheOwner(int o) { owner = o; }
-
-	int  GetTheWidth()  { return width; }
-	int  GetTheHeight() { return height; }
+	int  GetTheWidth()  { return width; } //!< return the width of the framebuffer for this Rendering
+	int  GetTheHeight() { return height; } //!< return the height of the framebuffer for this Rendering
+	//! return the width and height of the framebuffer for this Rendering
 	void GetTheSize(int& w, int &h) { w = width; h = height; }
+	//! set the width and height of the framebuffer for this Rendering
+	void SetTheSize(int w, int h) { width = w; height = h; }
 
-	void SetTheSize(int w, int h);
-
+	//! allocate the framebuffer for this Rendering according to the current width and height
 	void AllocateFrameBuffer()
 	{
 		if (framebuffer) delete[] framebuffer;
@@ -95,17 +99,26 @@ public:
 #endif
 	}
 
-	virtual void AddLocalPixels(Pixel *, int, int, int sender = -1);	// Add to local FB from received send buffer
+	//! add the given Pixel contributions for the specified frame to the local framebuffer
+	/*! \param p an array of Pixel objects to add 
+	 * \param n the number of Pixel objects in the array
+	 * \param f the frame number to which these Pixels belong
+	 * \param sender the rank of the process from which these Pixels were received
+	 */
+	virtual void AddLocalPixels(Pixel *p, int n, int f, int sender = -1);	// Add to local FB from received send buffer
 
-	bool IsLocal();
-	void SaveImage(std::string, int);
+	bool IsLocal(); //!< returns true if the calling process owns this Rendering (i.e. if the process rank matches the owner tag)
+	void SaveImage(std::string, int); //!< save the current framebuffer to a PNG file using the given filename base and index increment
 
-	virtual int serialSize();
-	virtual unsigned char *serialize(unsigned char *);
-	virtual unsigned char *deserialize(unsigned char *);
+	virtual int serialSize(); //!< returns the size in bytes for the serialization of this Rendering
+	virtual unsigned char *serialize(unsigned char *); //!< serialize this Rendering to the given byte array
+	virtual unsigned char *deserialize(unsigned char *); //!< deserialize a Rendering from the given byte array into this Rendering
+
+	//! return a pointer to the framebuffer for this Rendering
 	float *GetPixels() { return framebuffer; }
-
+	//! return a pointer to the Lighting singleton for this rendering
 	Lighting *GetLighting() { return &lights; }
+	//! set lights for this Rendering using the given Renderer
 	void resolve_lights(RendererP);
 	
 protected:

@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file RenderingEvents.h 
+ * \brief the classes that represent rendering events within Galaxy
+ * \ingroup render
+ */
+
 #include "Events.h"
 
 #include <iostream>
