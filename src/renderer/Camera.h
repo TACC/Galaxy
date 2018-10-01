@@ -130,7 +130,7 @@ public:
 	 * @param rvec a vector of return values for worker threads processing RayLists of these primary rays
 	 * @param fnum the frame number for these rays
 	 */
-	void generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<int>>& rvec, int fnum);
+	void generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, std::vector<std::future<int>>& rvec, int fnum);
 
 	//! the size in bytes for the serialization of this Camera object
   virtual int serialSize();
