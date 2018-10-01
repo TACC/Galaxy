@@ -478,7 +478,7 @@ void check_env(RendererP renderer, int width, int height)
 }
 		
 void
-Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<int>>& rvec, int fnum)
+Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, std::vector<std::future<int>>& rvec, int fnum)
 {
   int rays_per_packet = renderer->GetMaxRayListSize();
 
