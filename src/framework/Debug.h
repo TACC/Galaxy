@@ -39,26 +39,44 @@ public:
     bool dbg = true;
     std::stringstream cmd;
     pid_t pid = getpid();
+		bool do_me, first = true;
 
-    bool do_me = true;
-		bool first = true;
-    if (*arg)
-    { 
-      int i; 
-      for (i = 0; i < strlen(arg); i++)
-        if (arg[i] == '-')
-          break;
-      
-      if (i < strlen(arg))
-      { 
-        arg[i] = 0;
-        int s = atoi(arg); 
-        int e = atoi(arg + i + 1);
-        do_me = (mpiRank >= s) && (mpiRank <= e);
-				first = mpiRank == s;
+    if (! *arg)
+      do_me = true;
+    else
+    {
+      do_me = false;
+      while (! do_me && *arg)
+      {
+        char *narg = NULL;
+
+        int i; 
+        for (i = 0; i < strlen(arg); i++)
+          if (arg[i] == ',')
+          {
+            narg = arg + i + 1;
+            arg[i] = '\0';
+            break;
+          }
+        
+        for (i = 0; i < strlen(arg); i++)
+          if (arg[i] == '-')
+            break;
+        
+        if (i < strlen(arg))
+        { 
+          arg[i] = 0;
+          int s = atoi(arg); 
+          int e = atoi(arg + i + 1);
+          if ((mpiRank >= s) && (mpiRank <= e))
+            do_me = true;
+        }
+        else
+          do_me = (mpiRank == atoi(arg));
+    
+        if (! narg) break;
+        arg = narg;
       }
-      else
-        do_me = (mpiRank == atoi(arg));
     }
 
     if (do_me)
@@ -95,7 +113,7 @@ public:
 					while (dbg)
 						sleep(1);
 				}
-				else if (first)
+				else 
 				{
 					cerr << "no debug script found, can't debug\n";
 					do_me = false;
