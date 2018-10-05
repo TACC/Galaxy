@@ -76,7 +76,8 @@ public:
   virtual void SaveStateToDocument(rapidjson::Document&);
 
   //! render the given RenderingSet at this process, in response to a received RenderMsg
-  virtual void localRendering(RendererP, RenderingSetP, MPI_Comm c);
+  virtual void localRendering(RendererP, RenderingSetP);
+
   //! extract and retire any terminated rays in the given RayList
   /*! \param raylist the RayList to process
    * \param classification an array of ray states corresponding to the rays in the RayList
@@ -311,7 +312,7 @@ public:
 
     WORK_CLASS(RenderMsg, true);
 
-    bool CollectiveAction(MPI_Comm, bool isRoot);
+    bool Action(int sender);
 
 	private:
 		int frame;

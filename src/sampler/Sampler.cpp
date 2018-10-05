@@ -115,7 +115,7 @@ void
 Sampler::Sample(RenderingSetP rs)
 {   
   SampleMsg msg(this, rs);
-  msg.Broadcast(true, true);
+  msg.Broadcast(false, true);
 }
 
 Sampler::SampleMsg::SampleMsg(Sampler* r, RenderingSetP rs) :
@@ -129,7 +129,7 @@ Sampler::SampleMsg::SampleMsg(Sampler* r, RenderingSetP rs) :
 }
 
 bool
-Sampler::SampleMsg::CollectiveAction(MPI_Comm c, bool isRoot)
+Sampler::SampleMsg::Action(int sender)
 {
   unsigned char *p = (unsigned char *)get();
   Key sampler_key = *(Key *)p;
@@ -140,7 +140,7 @@ Sampler::SampleMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
-  sampler->localRendering(sampler, rs, c);
+  sampler->localRendering(sampler, rs);
 
   return false;
 }

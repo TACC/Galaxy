@@ -70,7 +70,7 @@ private:
 
     WORK_CLASS(SampleMsg, true);
 
-    bool CollectiveAction(MPI_Comm, bool isRoot);
+    bool Action(int s);
 
     private:
         int frame;

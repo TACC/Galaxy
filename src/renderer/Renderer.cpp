@@ -126,7 +126,7 @@ Renderer::SetEpsilon(float e)
 }
 
 void
-Renderer::localRendering(RendererP renderer, RenderingSetP renderingSet, MPI_Comm c)
+Renderer::localRendering(RendererP renderer, RenderingSetP renderingSet)
 {
 #ifdef GXY_EVENT_TRACKING
 	GetTheEventTracker()->Add(new StartRenderingEvent);
@@ -211,16 +211,7 @@ Renderer::localRendering(RendererP renderer, RenderingSetP renderingSet, MPI_Com
 		for (auto& r : rvec)
 			r.get();
 
-		int global_spawned_ray_count, local_spawned_ray_count = renderingSet->getSpawnedRayCount();
-		if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
-			MPI_Allreduce(&local_spawned_ray_count, &global_spawned_ray_count, 1, MPI_INT, MPI_SUM, c);
-		else
-			global_spawned_ray_count = local_spawned_ray_count;
-
-		if (global_spawned_ray_count == 0)
-			renderingSet->Finalize();
-		else
-			renderingSet->DecrementActiveCameraCount(0);
+		renderingSet->DecrementActiveCameraCount(0);
 #endif // GXY_WRITE_IMAGES
 	}
 	
@@ -808,7 +799,7 @@ Renderer::Render(RenderingSetP rs)
 #endif
 
   RenderMsg msg(this, rs);
-  msg.Broadcast(true, true);
+  msg.Broadcast(false, true);
 }
 
 void Renderer::DumpStatistics()
@@ -832,7 +823,7 @@ Renderer::RenderMsg::RenderMsg(Renderer* r, RenderingSetP rs) :
 }
 
 bool
-Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
+Renderer::RenderMsg::Action(int sender)
 {
   unsigned char *p = (unsigned char *)get();
   Key renderer_key = *(Key *)p;
@@ -843,7 +834,7 @@ Renderer::RenderMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
-  renderer->localRendering(renderer, rs, c);
+  renderer->localRendering(renderer, rs);
 
   return false;
 }
