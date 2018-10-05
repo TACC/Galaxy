@@ -40,6 +40,8 @@ namespace gxy
 
 Message::Message(Work *w, bool collective, bool blk)
 {
+  // if (GetTheApplication()->GetRank() == 1) std::cerr << "M::M 1 " << std::hex << this << "\n";
+
   content = w->get_pointer();
   header.type = w->GetType();
 
@@ -64,6 +66,8 @@ Message::Message(Work *w, bool collective, bool blk)
 
 Message::Message(Work *w, int i)
 {
+  // if (GetTheApplication()->GetRank() == 1) std::cerr << "M::M 2 " << std::hex << this << "\n";
+
   blocking = false;
 	header.collective = false;
 
@@ -80,6 +84,8 @@ Message::Message(Work *w, int i)
 
 Message::Message(MPI_Status &status)
 {
+  // if (GetTheApplication()->GetRank() == 1) std::cerr << "M::M 3 " << std::hex << this << "\n";
+
   Application *theApplication = GetTheApplication();
   MessageManager *theMessageManager = theApplication->GetTheMessageManager();
 
@@ -105,6 +111,8 @@ Message::Message(MPI_Status &status)
 
 Message::Message(int skt, int size)
 {
+  // if (GetTheApplication()->GetRank() == 1) std::cerr << "M::M 4 " << std::hex << this << "\n";
+
 	if (recv(skt, &header, sizeof(header), 0) == -1)
 	{
 		cerr << "ERROR: error receiving Message header!" << endl;
@@ -125,10 +133,12 @@ Message::Message(int skt, int size)
 
 Message::Message()
 {
+  // if (GetTheApplication()->GetRank() == 1) std::cerr << "M::M 4 " << std::hex << this << "\n";
 }
 
 Message::~Message()
 {
+  // if (GetTheApplication()->GetRank() == 1) std::cerr << "dtor  " << std::hex << this << "\n";
 }
 
 void Message::Wait()

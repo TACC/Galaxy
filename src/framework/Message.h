@@ -70,6 +70,8 @@ public:
    */
 	Message(int skt, int size);
 
+  Message(const Message& o); //! copy constructor
+
   Message(); //!< default constructor
 
   ~Message(); //!< default destructor
