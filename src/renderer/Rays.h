@@ -37,7 +37,7 @@ KEYED_OBJECT_POINTER(Rendering)
 KEYED_OBJECT_POINTER(RenderingSet)
 
 //! a list of rays, the primary work unit in Galaxy's renderer
-/* \sa KeyedObject, Rendering, RenderingSet
+/*! \sa KeyedObject, Rendering, RenderingSet
  * \ingroup render
  */
 class RayList 
