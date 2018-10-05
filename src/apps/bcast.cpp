@@ -35,6 +35,11 @@
 using namespace gxy;
 using namespace std;
 
+int mpiRank;
+int mpiSize;
+
+#include "Debug.h"
+
 class BcastEvent : public Event
 { 
 public:
@@ -63,8 +68,10 @@ public:
 public:
 	bool CollectiveAction(MPI_Comm s, bool isRoot)
 	{
+    MPI_Barrier(s);
 		GetTheEventTracker()->Add(new BcastEvent);
 		stringstream xx;
+    xx << GetTheApplication()->GetRank() << ": ";
 		for (int i = 0; i < 10; i++)
 			xx << i << " ";
 		APP_PRINT(<< xx.str());
@@ -74,32 +81,51 @@ public:
 
 WORK_CLASS_TYPE(BcastMsg)
 
+void
+syntax(char *a)
+{
+  cerr << "syntax: " << a << " [options] " << endl;
+  cerr << "optons:" << endl;
+  cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
+  exit(1);
+}
+
+
 int
 main(int argc, char * argv[])
 {
+  bool dbg = false;
+  char *dbgarg;
+
 	Application theApplication(&argc, &argv);
 	theApplication.Start();
+
+  for (int i = 1; i < argc; i++)
+  {
+    if (!strncmp(argv[i],"-D", 2)) dbg = true, dbgarg = argv[i] + 2;
+    else syntax(argv[0]);
+  }
 
 	theApplication.Run();
 
 	BcastMsg::Register();
 
-	int r = theApplication.GetRank();
-	int s = theApplication.GetSize();
+	mpiRank = theApplication.GetRank();
+	mpiSize = theApplication.GetSize();
 
-	if (r == 0)
+  Debug *d = dbg ? new Debug(argv[0], false, dbgarg) : NULL;
+
+	if (mpiRank == 0)
 	{
 		BcastMsg b0;
 		b0.Broadcast(true, true);
-		sleep(100000);
+
+    BcastMsg *b1 = new BcastMsg;
+		b1->Broadcast(true, true);
+    delete b1;
+
 		theApplication.QuitApplication();
 	}
-	else
-	{
-		stringstream xx;
-		xx << "hello " << GetTheApplication()->GetRank();
-		APP_PRINT(<< xx.str());
-	}
-
-	theApplication.Wait();
+  else
+    theApplication.Wait();
 }
