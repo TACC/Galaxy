@@ -193,9 +193,8 @@ Application::~Application()
 
 void Application::QuitApplication()
 {
-	QuitMsg *q = new QuitMsg(0);
-	q->Broadcast(true, true);
-
+	QuitMsg q;
+	q.Broadcast(true, true);
 	Application::Wait();
 }
 
@@ -221,9 +220,11 @@ void Application::Kill()
 bool
 Application::QuitMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 {
+#if 0
 	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
 		MPI_Barrier(coll_comm);
-	return true;
+#endif
+  return true;
 }
 
 bool
