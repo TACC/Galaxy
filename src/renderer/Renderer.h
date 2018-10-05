@@ -48,7 +48,7 @@ class RayList;
 KEYED_OBJECT_POINTER(Renderer)
 
 //! the primary class controlling rendering within Galaxy
-/* \sa KeyedObject
+/*! \sa KeyedObject
  * \ingroup render
  */
 class Renderer : public KeyedObject

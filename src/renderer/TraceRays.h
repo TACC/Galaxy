@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file TraceRays.h 
+ * \brief controls the ray tracing loop within Galaxy
+ * \ingroup render
+ */
+
 #include <memory>
 #include <string.h>
 #include <string>
@@ -35,23 +40,38 @@ namespace gxy
 {
 KEYED_OBJECT_POINTER(TraceRays)
 
+//! controls the ray tracing loop within Galaxy
+/*! \sa KeyedObject, ISPCObject
+ * \ingroup render
+ */
 class TraceRays : public ISPCObject
 {
 public:
-  TraceRays();
-  ~TraceRays();
+  TraceRays(); //!< default constructor
+  ~TraceRays(); //!< default destructor
 
+  //! populate state into this TraceRays object from a Galaxy JSON object
   virtual void LoadStateFromValue(rapidjson::Value&);
-  virtual void SaveStateToValue(rapidjson::Value&, rapidjson::Document&);
+  //!< save the state of this TraceRays object to a Galaxy JSON object
+  virtual void SaveStateToValue(rapidjson::Value&, rapidjson::Document&); 
 
-  void SetEpsilon(float e);
-  float GetEpsilon();
+  void SetEpsilon(float e); //!< set the epsilon ray offset value for use by this TraceRays object
+  float GetEpsilon(); //!< return the current epsilon ray offset value used by this TraceRays object
 
-  RayList *Trace(Lighting*, VisualizationP, RayList *);
+  //! trace a given RayList against the given Visualization using the given Lighting
+  /*! \returns a RayList pointer to rays spawned during this trace
+   * \param lights a pointer to the Lighting object to use during this trace
+   * \param visualization a pointer to the Visualization to trace
+   * \param raysIn a pointer to the RayList of rays to trace
+   */
+  RayList *Trace(Lighting* lights, VisualizationP visualization, RayList * raysIn);
 
-  virtual int SerialSize();
-  virtual unsigned char *Serialize(unsigned char *);
-  virtual unsigned char *Deserialize(unsigned char *);
+  //! return the size in bytes of this TraceRays object
+  virtual int SerialSize(); 
+  //! serialize this TraceRays object to the given byte stream
+  virtual unsigned char *Serialize(unsigned char *); 
+  //! deserialize a TraceRays object from the given byte stream into this object
+  virtual unsigned char *Deserialize(unsigned char *); 
 
 protected:
 

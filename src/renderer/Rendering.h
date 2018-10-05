@@ -48,7 +48,7 @@ KEYED_OBJECT_POINTER(Rendering)
 class Ray;
 
 //! represents an image of a Visualization rendered using a certain Camera 
-/* \sa KeyedObject
+/*! \sa KeyedObject
  * \ingroup render
  */
 class Rendering : public KeyedObject
