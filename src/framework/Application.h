@@ -254,7 +254,6 @@ private:
 	class QuitMsg : public Work
 	{
 	public:
-		QuitMsg(){};
 		WORK_CLASS(QuitMsg, true)
 
 	public:
@@ -264,7 +263,6 @@ private:
 	class SyncMsg : public Work
 	{
 	public:
-		SyncMsg(){};
 		WORK_CLASS(SyncMsg, true)
 
 	public:

@@ -43,43 +43,56 @@ int mpiSize;
 class BcastEvent : public Event
 { 
 public:
- BcastEvent() {}
+ BcastEvent(int t) : typ(t) {}
 
 protected:
   void print(ostream& o)
   {
     Event::print(o);
-    o << "BCAST";
+    o << ((typ == 0) ? "BCAST COLLECTIVE" : "BCAST ASYNC");
   }
+
+  int typ;
 };
 
-class BcastMsg : public Work
+class BcastCollectiveMsg : public Work
 {
 public:
-	BcastMsg() : BcastMsg(10*sizeof(int)) 
-	{
-		int *p = (int *)contents->get();
-		for (int i = 0; i < 10; i++) *p++ = i + GetTheApplication()->GetRank();
-	}
-	~BcastMsg() {}
+	BcastCollectiveMsg(std::string m) : BcastCollectiveMsg(m.size() + 1) { strcpy((char *)get(), m.c_str()); }
+	~BcastCollectiveMsg() {}
 
-	WORK_CLASS(BcastMsg, true)
+	WORK_CLASS(BcastCollectiveMsg, true)
 
 public:
 	bool CollectiveAction(MPI_Comm s, bool isRoot)
 	{
     MPI_Barrier(s);
-		GetTheEventTracker()->Add(new BcastEvent);
-		stringstream xx;
-    xx << GetTheApplication()->GetRank() << ": ";
-		for (int i = 0; i < 10; i++)
-			xx << i << " ";
-		APP_PRINT(<< xx.str());
+		GetTheEventTracker()->Add(new BcastEvent(0));
+		APP_PRINT(<< (char *)get());
 		return false;
 	}
 };
 
-WORK_CLASS_TYPE(BcastMsg)
+WORK_CLASS_TYPE(BcastCollectiveMsg)
+
+class BcastAsyncMsg : public Work
+{
+public:
+	BcastAsyncMsg(std::string m) : BcastAsyncMsg(m.size() + 1) { strcpy((char *)get(), m.c_str()); }
+	~BcastAsyncMsg() {}
+
+	WORK_CLASS(BcastAsyncMsg, true)
+
+public:
+	bool Action(int s)
+	{
+		GetTheEventTracker()->Add(new BcastEvent(1));
+		APP_PRINT(<< (char *)get());
+		return false;
+	}
+};
+
+WORK_CLASS_TYPE(BcastAsyncMsg)
 
 void
 syntax(char *a)
@@ -108,7 +121,8 @@ main(int argc, char * argv[])
 
 	theApplication.Run();
 
-	BcastMsg::Register();
+	BcastCollectiveMsg::Register();
+	BcastAsyncMsg::Register();
 
 	mpiRank = theApplication.GetRank();
 	mpiSize = theApplication.GetSize();
@@ -117,12 +131,14 @@ main(int argc, char * argv[])
 
 	if (mpiRank == 0)
 	{
-		BcastMsg b0;
+		BcastCollectiveMsg b0("collective");
 		b0.Broadcast(true, true);
 
-    BcastMsg *b1 = new BcastMsg;
-		b1->Broadcast(true, true);
+    BcastAsyncMsg *b1 = new BcastAsyncMsg("async");
+		b1->Broadcast(false, true);
     delete b1;
+
+    sleep(1);
 
 		theApplication.QuitApplication();
 	}

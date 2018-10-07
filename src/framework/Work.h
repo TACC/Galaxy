@@ -110,7 +110,7 @@ protected:
  																																												\
 public: 																																								\
  																																												\
-	ClassName(size_t n) : Work(n)																													\
+	ClassName(size_t n = 0) : Work(n)																													\
 	{																							 																				\
     className = std::string(#ClassName); 																								\
     type = ClassName::class_type; 																											\
