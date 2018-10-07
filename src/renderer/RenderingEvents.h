@@ -72,6 +72,7 @@ protected:
 class RayListEvent : public Event
 {
 public:
+ RayListEvent() {}
  RayListEvent(RayList *rl)
 	{
 		n  = rl->GetRayCount();
