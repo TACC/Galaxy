@@ -34,7 +34,8 @@
 #include <Application.h>
 #include <Renderer.h>
 #include <Camera.h>
-#include <Volume.h>
+//#include <Volume.h>
+#include <AmrVolume.h>
 #include <Datasets.h>
 #include <VolumeVis.h>
 #include <Visualization.h>
@@ -116,14 +117,21 @@ main(int argc, char * argv[])
 		theRenderer->Commit();
 
 		CameraP c = Camera::NewP();
-		c->set_viewpoint(1.0, 2.0, -3.0);
-		c->set_viewdirection(-1.0, -2.0, 3.0);
-		c->set_viewup(0.0, 1.0, 0.0);
+		c->set_viewpoint(3.0, 3.0,3.0);
+		c->set_viewdirection(-4.0, -4.0, -4.0);
+
+		//c->set_viewpoint(0.0, 0.0, 4.0);
+		//c->set_viewdirection(0.0, 0.0, -2.0);
+
+		c->set_viewup(0.0, 0.0, 1.0);
 		c->set_angle_of_view(30.0);
 		c->Commit();
 
-		VolumeP v = Volume::NewP();
-		v->Import("oneBall-0.vol");
+		// VolumeP v = Volume::NewP();
+		// v->Import("oneBall-0.vol");
+        
+		AmrVolumeP v = AmrVolume::NewP();
+		v->Import("ballinthecorner.amrvol");
 		v->Commit();
 
 		DatasetsP d = Datasets::NewP();
@@ -132,25 +140,34 @@ main(int argc, char * argv[])
 
 		VolumeVisP vv = VolumeVis::NewP();
 		vv->SetName("oneBall");
-		vec4f slice(0.0, 0.0, 1.0, 0.0);
-		vv->AddSlice(slice);
-		vv->AddIsovalue(0.25);
+		//vec4f slice(0.0,0.0, 1.0, 0.25);
+		//vv->AddSlice(slice);
+		vv->AddIsovalue(5.0);
+		vv->AddIsovalue(1.0);
+        //vv->SetVolumeRendering(true);
     
     vec4f cmap[] = {
+        {0.00,1.0,0.5,0.5},
+        {17.25,0.5,1.0,0.5},
+        {35.50,0.5,0.5,1.0},
+        {52.75,1.0,1.0,0.5},
+        {72.00,1.0,0.5,1.0}
+    };
+    /*vec4f cmap[] = {
         {0.00,1.0,0.5,0.5},
         {0.25,0.5,1.0,0.5},
         {0.50,0.5,0.5,1.0},
         {0.75,1.0,1.0,0.5},
         {1.00,1.0,0.5,1.0}
-    };
+    };*/
     
     vv->SetColorMap(5, cmap);
 
     vec2f omap[] = {
-                { 0.00, 0.05 },
-                { 0.20, 0.05 },
-                { 0.21, 0.00 },
-                { 1.00, 0.00 }
+                { 0.00, 1.00 },
+                { 0.20, 1.00 },
+                { 0.71, 1.00 },
+                { 71.00, 1.00 }
                };
 
     vv->SetOpacityMap(4, omap);
@@ -164,7 +181,7 @@ main(int argc, char * argv[])
 
 		RenderingP r = Rendering::NewP();
 		r->SetTheOwner(0);
-		r->SetTheSize(201, 201);
+		r->SetTheSize(512, 512);
 		r->SetTheCamera(c);
 		r->SetTheDatasets(d);
 		r->SetTheVisualization(vis);

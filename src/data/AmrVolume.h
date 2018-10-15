@@ -28,6 +28,9 @@
 #include <Volume.h>
 #include <ospray/ospray.h>
 
+#include <vtkStructuredPointsReader.h>
+#include <vtkStructuredPoints.h>
+
 namespace gxy
 {
 KEYED_OBJECT_POINTER(AmrVolume)
@@ -53,8 +56,39 @@ public:
         virtual void local_import(char *fname, MPI_Comm c);
         //! load a timestep into local memory
         /*! This action is performed in response to LoadTimestepMsg */
-        virtual bool local_load_tiestep(MPI_Comm c);
+        virtual bool local_load_timestep(MPI_Comm c);
+        //! method to read gxyamr data
+        /*! an internal method used to load gxyamr metadata */
+
+private:
+        enum amrtype {GXYAMR,ENZOAMR,NOEXT};
+        //! method to read gxyamr data
+        /*! an internal method used to load gxyamr metadata */
+        void ReadGxyAmrHeader();
+        //! method to read Enzo data
+        /*! an internal method used to load Enzo Hierarchy metadata */
+        void ReadEnzoHierarchy();
+        int get_grid_index(int level, int grid);
+        float *getScalarData(int level, int grid);
+        void get_counts(int level,int grid, int& cx,int& cy,int& cz);
+        vec3i get_counts(int level,int grid);
+        vec3f get_origin(int level,int grid);
+        void get_origin(int level, int grid, float& x,float& y, float& z);
+        void get_deltas(int level, int grid, float& sx, float& sy, float& sz);
+        void set_counts(int level, int grid, vec3i& counts);
+        void set_deltas(int level, int grid, vec3f& deltas);
 
 
+
+protected:
+        int numlevels;
+        int numgrids;
+        std::vector<int> levelnumgrids;
+        std::vector<std::string> gridfilenames;
+        float samplingRate;
+        std::vector<vec3f> gridorigin;
+        std::vector<vec3f> gridspacing;
+        std::vector<vec3i> gridcounts;
+        std::vector<float*> gridsamples;
 };
 } // namespace gxy

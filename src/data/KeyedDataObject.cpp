@@ -23,6 +23,7 @@
 #include "Datasets.h"
 #include "Geometry.h"
 #include "Volume.h"
+#include "AmrVolume.h"
 
 using namespace std;
 
@@ -45,6 +46,7 @@ KeyedDataObject::Register()
   Datasets::Register();
   Geometry::Register();
   Volume::Register();
+  AmrVolume::Register();
 }
 
 KEYED_OBJECT_TYPE(KeyedDataObject)
