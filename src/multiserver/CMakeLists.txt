@@ -18,20 +18,32 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
+cmake_minimum_required (VERSION 2.8.11)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galaxy.h.in ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h DESTINATION include/gxy)
+include_directories(${gxy_framework_SOURCE_DIR} 
+									  ${gxy_renderer_SOURCE_DIR}
+									  ${gxy_sampler_SOURCE_DIR}
+									  ${gxy_data_SOURCE_DIR}
+									  ${Galaxy_BINARY_DIR}/src)
 
-add_subdirectory(framework)
-add_subdirectory(data)
-add_subdirectory(renderer)
-add_subdirectory(sampler)
-add_subdirectory(apps)
-add_subdirectory(multiserver)
-add_subdirectory(cinema)
-add_subdirectory(tests)
+set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
 
+set(BINS "")
+set(WORKERS "")
 
+add_executable(multiserver server.cpp MultiServer.cpp MultiServerSocket.cpp)
+target_link_libraries(multiserver ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+set(BINS multiserver ${BINS})
 
+add_executable(multiserver-viewer viewer.cpp ClientWindow.cpp MultiServerSocket.cpp IF.cpp)
+target_link_libraries(multiserver-viewer ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} pthread)
+set(BINS multiserver-viewer ${BINS})
+
+add_library(viewer-if MODULE viewer-if.cpp MultiServer.cpp MultiServerSocket.cpp ServerRendering.cpp IF.cpp)
+target_link_libraries(viewer-if ${GALAXY_LIBRARIES})
+install(TARGETS viewer-if DESTINATION lib RENAME viewer-if.so)
+
+install(TARGETS ${BINS} DESTINATION bin)
 
