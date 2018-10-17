@@ -459,19 +459,13 @@ MessageManager::check_outgoing(MessageManager *mm)
 					if (kill_app) killer(); // for debugging
 					delete w;
 
-					// If we sent the message further down the tree, we wait until the message is sure
-					// to have been sent (in purge_completed_mpi_buffers) to signal (if the message is 
-					// blocking) or delete it (if not).   If we DID NOT send it farther down the tree,
-					// then we do it here.
-          //
-          // THIS HAS CHANGED!   We now copy the message in Export, and put the copy on the
-          // list to be held until the message actually leaves.   SO here we acknowlege that the
+          // We copy the message in Export, and put the copy on the list to be held until 
+          // the message actually leaves.   So here we acknowlege that the
           // collective action finishes.   The collective action can block, so we won't get here
           // until the messages have arrived down the tree
 
           if (outgoing_message->isBlocking())
           {
-            // std::cerr << "signalling\n";
             outgoing_message->Signal();        // blocked guy will delete
           }
 				}
