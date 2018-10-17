@@ -44,7 +44,7 @@ class RayList;
 // Manage completeness of a SET of renderings
 //! represents a set of Rendering objects
 /*! a set of images of a Visualization rendered using a certain Camera 
-/* \sa KeyedObject, Rendering, Visualization, Camera
+ * \sa KeyedObject, Rendering, Visualization, Camera
  * \ingroup render
  */
 class RenderingSet : public KeyedObject, public std::enable_shared_from_this<RenderingSet>
