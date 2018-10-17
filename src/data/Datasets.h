@@ -103,10 +103,14 @@ public:
   	else return (*it).second;
   }
 
-  //! construct a Datasets from a Galaxy JSON specification
+  //! load from a Galaxy JSON specification
   virtual void  LoadFromJSON(rapidjson::Value&);
+
   //! save this Datasets to a Galaxy JSON specification 
   virtual void  SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+
+  //! load from a file containing a JSON spec
+  virtual void LoadFromJSONFile(std::string);
 
 	bool IsTimeVarying(); //!< are the data in this Datasets time-varying?
   bool WaitForTimestep(); //!< wait for receipt of next timestep for all attached data sources (e.g. a running simulation for in situ analysis)
