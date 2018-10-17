@@ -34,6 +34,8 @@
 class Debug
 {
 public:
+  Debug(const char *executable, bool attach, const char *arg) : Debug(executable, attach, const_cast<char*>(arg)) {}
+
   Debug(const char *executable, bool attach, char *arg)
   { 
     bool dbg = true;
