@@ -46,6 +46,7 @@ set (CPP_SOURCES
   Vis.cpp
   Visualization.cpp
   Volume.cpp 
+  AmrVolume.cpp
   VolumeVis.cpp)
 
 set (ISPC_SOURCES   
@@ -86,6 +87,7 @@ install(FILES
   Vis.h
   Visualization.h
   Volume.h
+  AmrVolume.h
   VolumeVis.h
   DESTINATION include/gxy)
 
