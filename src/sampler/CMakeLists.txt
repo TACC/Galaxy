@@ -19,7 +19,8 @@
 ## ========================================================================== ##
 
 cmake_minimum_required (VERSION 2.8.11)
-project (gxy_sampler)
+cmake_policy(SET CMP0048 NEW)
+project (gxy_sampler VERSION ${GALAXY_VERSION})
 
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}

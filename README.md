@@ -404,6 +404,7 @@ The following environment variables affect Galaxy behavior:
   * **GXY_NTHREADS** : use the requested number of threads in the rendering thread pool (default 1)
   * **GXY_APP_NTHREADS** : use the requested number of threads for the application (default *TBB default*)
   * **GXY_FULLWINDOW** : render using the full window
+  * **GXY_PERMUTE_PIXELS** : vary the order in which pixels are processed (can improve image quality under camera movement)
   * **GXY_RAYS_PER_PACKET** : The number of rays to include in a transmission packet (default 10000000)
   * **GXY_RAYDEBUG** : turn on ray debug pathway, taking **GXY_X**, **GXY_Y**, **GXY_XMIN**, **GXY_XMAX**, **GXY_YMIN**, **GXY_YMAX** from environment variables
   * **GXY_X** : x coordinate for single-ray debug (requires **GXY_RAYDEBUG**)
