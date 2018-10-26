@@ -104,6 +104,12 @@ public:
         {
             local_box = Box(low,high);
         }
+        //! set the global bounding box
+        /*! The inputs are the extreme corners of the bounding box. The coordinates of the corner nearest the origin and those of the corner farthest from the orgin */
+        void set_global_box(vec3f low, vec3f high)
+        {
+            global_box = Box(low,high);
+        }
         //! set the ghosted local offset values. 
         /* The values of the ghosted_local_offset are directly set with this method */
         void set_ghosted_local_offset(int x, int y, int z)
@@ -193,6 +199,9 @@ public:
   /*! This action is performed in response to a LoadTimestepMsg */
 	virtual bool local_load_timestep(MPI_Comm c);
 
+	//! set the global min and max data values for this Volume
+    void set_global_scalar_minmax(float min, float max) {set_global_minmax(min,max);};
+    void set_local_scalar_minmax(float min, float max) {set_local_minmax(min,max);};
 	//! get the global min and max data values for this Volume
 	void get_global_minmax(float &min, float &max) { min = global_min; max = global_max; }
 	//! get the local min and max data values for this Volume at this process
@@ -202,6 +211,7 @@ public:
   virtual void LoadFromJSON(rapidjson::Value&);
   //! save this Volume to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+  void VolumeHasNoNeighbors() { for(int i =0;i<6;i++) neighbors[i] = -1;};
 
 protected:
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep

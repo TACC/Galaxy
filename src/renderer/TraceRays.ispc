@@ -348,6 +348,8 @@ SampleVolumes(const varying vec3f& coord,
   {
     uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
     uniform Volume *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
+print("vol%\n",vol);
+print("x%\ny%\nz%\n",coord.x,coord.y,coord.z);
     s[major] = vol->sample(vol, coord);
   }
 }
@@ -366,7 +368,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
-#if 0
+#if 1
   print("BOX [(%f %f %f)-(%f %f %f)]\n",
         box.lower.x,
         box.lower.y,
@@ -494,10 +496,12 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       {
         iterations = iterations + 1;
 
-//print("tThis: %\ntLast: %\n", tThis, tLast);
+print("tThis: %\ntLast: %\n", tThis, tLast);
 //print("t %\n", tThis);
         vec3f coord = ray.org + tThis * ray.dir;
 
+print("x%\ny%\nz%\n",coord.x,coord.y,coord.z);
+print("vis%\n",vis);
         SampleVolumes(coord, vis, sThis);
 
 

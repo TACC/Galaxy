@@ -83,6 +83,7 @@ public:
 	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type);
 	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, RayListType type);
 	RayList(SharedP contents);
+    RayList(int nrays);
 
 	RayListType  GetType() { return ((struct hdr *)contents->get())->type; }
 	void SetType(RayListType t) { ((struct hdr *)contents->get())->type = t; };

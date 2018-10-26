@@ -74,6 +74,24 @@ RayList::RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, 
 	pthread_mutex_unlock(&raylist_lock);
 };
 
+// construct a raylist without the benefit of the rendering or renderingset objects
+RayList::RayList(int nrays)
+{
+    int nn = ROUND_UP_TO_MULTIPLE_OF_16(nrays);
+    contents = smem::New(HDRSZ + nn * (20*sizeof(float) + 4*sizeof(int)));
+        hdr *h = (hdr *)contents->get();
+            h->frame = 0;
+            h->size = nrays;
+            h->aligned_size = nn;
+            // ispc voodoo
+            ispc = malloc(sizeof(ispc::RayList_ispc));
+            setup_ispc_pointers();
+
+            pthread_mutex_lock(&raylist_lock);
+            h->id = raylist_id++;
+            pthread_mutex_unlock(&raylist_lock);
+}
+
 RayList::RayList(SharedP c)
 {
 	contents = c;
