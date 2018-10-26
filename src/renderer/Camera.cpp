@@ -330,17 +330,18 @@ struct args
 class spawn_rays_task : public ThreadPoolTask
 {
 public:
-  spawn_rays_task(int start, int count, shared_ptr<args> _a) : ThreadPoolTask(2), start(start), count(count), a(_a) {}
+  spawn_rays_task(int start, int count, shared_ptr<args> _a) : ThreadPoolTask(1), start(start), count(count), a(_a) {}
   ~spawn_rays_task() {}
 
   virtual int work()
   {
+		if (! a->rs->IsActive(a->fnum))
+			return 0;
+
 #if defined(GXY_EVENT_TRACKING)
 		GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
-
-		// std::cerr << GetTheApplication()->GetRank() << " SRT count = " << count << "\n";
-
+		
 		RayList *rlist = NULL;
 
     int dst = 0;
@@ -404,7 +405,7 @@ public:
 
     if (rlist)
     {
-			if (a->fnum == a->rs->GetCurrentFrame())
+			if (a->rs->IsActive(a->fnum))
 		  {
 				if (dst < rlist->GetRayCount())
 					rlist->Truncate(dst);
@@ -477,7 +478,7 @@ void check_env(RendererP renderer, int width, int height)
 }
 		
 void
-Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, vector<future<int>>& rvec, int fnum)
+Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, std::vector<std::future<int>>& rvec, int fnum)
 {
   int rays_per_packet = renderer->GetMaxRayListSize();
 

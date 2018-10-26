@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file RayFlags.h 
+ * \brief ray state flags supported by Galaxy
+ * \ingroup render
+ */
+
 #define RAY_PRIMARY              0x001
 #define RAY_SHADOW               0x002
 #define RAY_AO                   0x004

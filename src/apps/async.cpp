@@ -174,6 +174,22 @@ keyboard(unsigned char ch, int x, int y)
 			break;
 
 
+    case 0x43: // C show camera
+            {
+                float p[3];
+                theCamera->get_viewpoint(p);
+                std::cerr << "P: " << p[0] << " " << p[1] << " " << p[2] << "\n";
+                theCamera->get_viewdirection(p);
+                std::cerr << "D: " << p[0] << " " << p[1] << " " << p[2] << "\n";
+                theCamera->get_viewup(p);
+                std::cerr << "U: " << p[0] << " " << p[1] << " " << p[2] << "\n";
+                float a;
+                theCamera->get_angle_of_view(a);
+                std::cerr << "U: " << a << "\n";
+            }
+            break;
+
+ 
     case 0x63: // c reset camera
 			{
 				trackball.reset();

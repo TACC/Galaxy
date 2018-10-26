@@ -83,6 +83,12 @@ ThreadPool::ThreadPool(int n)
 {
 	stop = false;
 
+	tChoose = tWait = tWork = 0;
+	tStart = gettime();
+	nPoolThreads = n;
+
+	number_of_tasks = 0;
+
 	pthread_mutex_init(&lock, NULL);
 	pthread_cond_init(&wait, NULL);
 	pthread_cond_init(&wait_for_done, NULL);
@@ -115,7 +121,6 @@ ThreadPool::~ThreadPool()
 	pthread_mutex_destroy(&lock);
 }
 
-
 void *
 ThreadPool::thread(void *d) 
 {
@@ -127,32 +132,126 @@ ThreadPool::thread(void *d)
 
 	while (! pool->stop)
 	{
-		while ((! pool->stop) && pool->task_list.empty())
+		double tWaitStart = pool->gettime();
+
+		while ((! pool->stop) && (pool->GetNumberOfTasks() == 0))
 			pthread_cond_wait(&pool->wait, &pool->lock);
+
+		double tWaitEnd = pool->gettime();
 
 		if (! pool->stop)
 		{
 			pool->PoolEvent(WAKE);
 
+			double tChooseStart = pool->gettime();
 			ThreadPoolTask *task = pool->ChooseTask();
+			double tChooseEnd  = pool->gettime();
+
 			pthread_mutex_unlock(&pool->lock);
 
 			pool->PoolEvent(START);
 
+			double tWorkStart = pool->gettime();
 			task->p.set_value(task->work());
+			double tWorkEnd = pool->gettime();
 			delete task;
 
 			pool->PoolEvent(FINISH);
 
 			pthread_mutex_lock(&pool->lock);
-			pthread_cond_signal(&pool->wait_for_done);
 
+			pool->stats(tWaitEnd - tWaitStart, tChooseEnd - tChooseStart, tWorkEnd - tWorkStart);
+
+			pthread_cond_signal(&pool->wait_for_done);
 		}
 	}
 
 	pthread_cond_signal(&pool->wait);
 	pthread_mutex_unlock(&pool->lock);
 	pthread_exit(NULL);
+}
+
+static int hw = 0;
+
+ThreadPoolTask *
+ThreadPool::ChooseTask()
+{   
+	// Search for either the appropriate list or the location to insert one
+	//
+	for (std::list<PriorityLevel *>::iterator it = priority_list.begin(); it != priority_list.end(); it++)
+		if ((*it)->tasks.size() > 0)
+		{
+			ThreadPoolTask *tpt = (*it)->tasks.back();
+			(*it)->tasks.pop_back();
+			number_of_tasks --;
+			return tpt;
+		}
+
+	std::cerr << "Choosing task from empty task list?";
+	return NULL;
+}
+
+std::future<int> 
+ThreadPool::AddTask(ThreadPoolTask *task)
+{
+	std::future<int> f = task->p.get_future();
+
+	pthread_mutex_lock(&lock);
+
+	std::deque<ThreadPoolTask*> *l = NULL;
+	std::list<PriorityLevel *>::iterator it;
+
+	// Search for either the appropriate list or the location to insert one
+	//
+	for (it = priority_list.begin(); it != priority_list.end(); it++)
+	{
+		if ((*it)->priority < task->get_priority())
+			break;
+		else if ((*it)->priority == task->get_priority())
+		{
+			l = &(*it)->tasks;
+			break;
+		}
+	}
+
+	// If no appropriate list, create one and insert it
+	// 
+	if (!l)
+	{
+			PriorityLevel *pl = new PriorityLevel(task->get_priority());
+			priority_list.insert(it, pl);
+			l = &(pl->tasks);
+	}
+
+	l->push_back(task);
+	number_of_tasks ++;
+
+	pthread_cond_signal(&wait);
+	pthread_mutex_unlock(&lock);
+
+	return f;
+}
+
+void 
+ThreadPool::stats(double wait, double choose, double work)
+{
+	tWait += wait;
+	tChoose += choose;
+	tWork += work;
+	
+	double tNow = gettime();
+	double tElapsed = tNow - tStart;
+	if (tNow - tStart > 10)
+	{
+		std::cerr << "wait: " << ((tWait / nPoolThreads) / tElapsed) << 
+								 " work: " << ((tWork / nPoolThreads) / tElapsed) << 
+								 " choose: " << (tChoose / tElapsed) << 
+								 " sum: " << (((tWait + tWork + tChoose) / nPoolThreads) / tElapsed) << 
+								 "\n";
+
+		tWait = tChoose = tWork = 0;
+		tStart = tNow;
+	}
 }
 
 }

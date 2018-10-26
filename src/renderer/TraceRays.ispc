@@ -196,7 +196,6 @@ LookForSliceHit(varying bool shadeFlag,
     for (uniform  int major = 0; major < vis->nVolumeVis; major++)      // which volume?
     {
       uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
-      //print("nslices: %\n", vvis->nSlices);
 
       for (uniform int minor = 0; minor < vvis->nSlices; minor ++)
       {
@@ -239,7 +238,6 @@ LookForSliceHit(varying bool shadeFlag,
     }
   }
 
-//print("vid %\nsid %\n", vid, sid);
   if (h)
   {
 

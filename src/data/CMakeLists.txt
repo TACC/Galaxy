@@ -19,7 +19,8 @@
 ## ========================================================================== ##
 
 cmake_minimum_required(VERSION 2.8)
-project (gxy_data)
+cmake_policy(SET CMP0048 NEW)
+project (gxy_data VERSION ${GALAXY_VERSION})
 
 find_library(PNG_LIBRARY_RELEASE png)
 

@@ -22,6 +22,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <dlfcn.h>
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -49,6 +51,7 @@ namespace gxy
 WORK_CLASS_TYPE(Application::QuitMsg)
 WORK_CLASS_TYPE(Application::SyncMsg)
 WORK_CLASS_TYPE(Application::PrintMsg)
+WORK_CLASS_TYPE(Application::LoadSOMsg)
 
 static Application *theApplication = NULL;
 
@@ -69,7 +72,6 @@ ClassTableEntry::ClassTableEntry(const ClassTableEntry& o)
 
 ClassTableEntry::~ClassTableEntry()
 {
-	// std::cerr << "CTE dtor " << indx << " " << my_string << " " << my_string->c_str() << "\n";
 	delete my_string;
 }
 
@@ -131,6 +133,7 @@ Application::Application()
 	QuitMsg::Register();
 	SyncMsg::Register();
   PrintMsg::Register();
+  LoadSOMsg::Register();
 
 	KeyedObject::Register();
 	KeyedObjectFactory::Register();
@@ -193,9 +196,8 @@ Application::~Application()
 
 void Application::QuitApplication()
 {
-	QuitMsg *q = new QuitMsg(0);
-	q->Broadcast(true, true);
-
+	QuitMsg q;
+	q.Broadcast(true, true);
 	Application::Wait();
 }
 
@@ -203,6 +205,26 @@ void Application::SyncApplication()
 {
 	SyncMsg *q = new SyncMsg(0);
 	q->Broadcast(true, true);
+}
+
+void *Application::LoadSO(string soname)
+{
+	LoadSOMsg *l = new LoadSOMsg(soname.size() + 1);
+	unsigned char *ptr = (unsigned char *)l->get();
+	memcpy(ptr, soname.c_str(), soname.size() + 1);
+
+	l->Broadcast(true, true);
+
+  void *handle = dlopen(const_cast<char *>(soname.c_str()), RTLD_NOW);
+
+  if (handle)
+  {
+    void *(*init)();
+    init = (void *(*)()) dlsym(handle, const_cast<char *>("init"));
+    init();
+  }
+
+  return handle;
 }
 
 void Application::Start(bool with_mpi)
@@ -221,9 +243,26 @@ void Application::Kill()
 bool
 Application::QuitMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 {
-	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
-		MPI_Barrier(coll_comm);
-	return true;
+  return true;
+}
+
+bool
+Application::LoadSOMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
+{
+  if (! isRoot)
+  {
+    void *handle = dlopen(const_cast<char *>((char *)get()), RTLD_NOW);
+    if (handle)
+    {
+      void *(*init)();
+      init = (void *(*)()) dlsym(handle, const_cast<char *>("init"));
+      init();
+    }
+  }
+
+  MPI_Barrier(coll_comm);
+
+  return false;
 }
 
 bool

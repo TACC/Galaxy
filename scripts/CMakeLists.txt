@@ -19,7 +19,8 @@
 ## ========================================================================== ##
 
 cmake_minimum_required(VERSION 2.8.7)
-project(Util)
+cmake_policy(SET CMP0048 NEW)
+project(Util VERSION ${GALAXY_VERSION})
 install(PROGRAMS vtp2tri.py async-wrapper csv2xyz vti2vol pv-cam-to-json.py DESTINATION bin)
 if(APPLE)
 	install(PROGRAMS dbg_script.macos DESTINATION scripts RENAME dbg_script)

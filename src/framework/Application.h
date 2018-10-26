@@ -140,6 +140,12 @@ public:
    * further Work processing by any process until all processes reach the sync.
    */
   void SyncApplication();
+  //! broadcast a "LoadSO" message to all processes
+  /*! Broadcast a "LoadSO" message to all processes causing them to load a
+      module and run its 'init' procedure.  Master process opens the SO and
+      returns the handle; the non-masters dlclose the SO.
+   */
+  void *LoadSO(std::string soname);
 
 	//! returns a pointer to the argc initialization argument
 	/*! \warning will return NULL if default constructor was used
@@ -254,8 +260,16 @@ private:
 	class QuitMsg : public Work
 	{
 	public:
-		QuitMsg(){};
 		WORK_CLASS(QuitMsg, true)
+
+	public:
+		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+	};
+
+	class LoadSOMsg : public Work
+	{
+	public:
+		WORK_CLASS(LoadSOMsg, true)
 
 	public:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
@@ -264,7 +278,6 @@ private:
 	class SyncMsg : public Work
 	{
 	public:
-		SyncMsg(){};
 		WORK_CLASS(SyncMsg, true)
 
 	public:

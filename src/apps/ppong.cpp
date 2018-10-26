@@ -38,8 +38,8 @@ pthread_cond_t  w8 = PTHREAD_COND_INITIALIZER;
 class PPongMsg : public Work
 {
 public:
-	PPongMsg() : PPongMsg(100) { strcpy((char *)get(), (char *)"ppong"); /* std::cerr << "PPongMsg ctor\n"; */}
-	~PPongMsg(){ /* std::cerr << GetTheApplication()->GetRank() << ": PPongMsg dtor\n"; */}
+	PPongMsg(std::string m) : PPongMsg(m.size() + 1) { strcpy((char *)get(), m.c_str()); }
+	~PPongMsg() {}
 	WORK_CLASS(PPongMsg, true)
 
 public:
@@ -50,7 +50,7 @@ public:
 
 		if (rank != 0)
 		{ 
-			PPongMsg m;
+			PPongMsg m("ppong");
 			m.Send((rank == (size-1)) ? 0 : rank + 1);
 		}
 		else
@@ -72,8 +72,8 @@ public:
 class BcastMsg : public Work
 {
 public:
-	BcastMsg() : BcastMsg(101) { strcpy((char *)get(), (char *)"bcast"); /* std::cerr << "BcastMsg ctor\n"; */ }
-	~BcastMsg(){ /* std::cerr << GetTheApplication()->GetRank() << ": BcastMsg dtor\n"; */ }
+	BcastMsg(std::string m) : BcastMsg(m.size() + 1) { strcpy((char *)get(), m.c_str()); }
+	~BcastMsg() {}
 	WORK_CLASS(BcastMsg, true)
 
 public:
@@ -112,7 +112,7 @@ main(int argc, char * argv[])
 			pthread_mutex_unlock(&lck);
 		}
 
-		BcastMsg b0;
+		BcastMsg b0("bcast");
 		b0.Broadcast(true, true);
 
 		BcastMsg *b1 = new BcastMsg;

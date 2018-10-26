@@ -54,7 +54,6 @@ struct mpi_send_buffer
 	MPI_Request rrq; 
 
 	int n;
-	Message *msg;
 	unsigned char *send_buffer;
 	int total_size;
 };
@@ -85,16 +84,8 @@ purge_completed_mpi_buffers()
 				done = false;
 
 				mpi_in_flight.erase(i);
+        free(m->send_buffer);
 
-				if (m->msg->GetHeader() != m->send_buffer)
-					free(m->send_buffer);
-
-				int r = GetTheApplication()->GetRank();
-				if (m->msg->isBlocking() && (r == m->msg->GetSender() || r == m->msg->GetRoot()))
-					m->msg->Signal();
-				else
-					delete m->msg;
-			
 				delete m;
 			}
 		}
@@ -122,7 +113,7 @@ MessageManager::workThread(void *p)
 		mm->Signal();
   mm->Unlock();
 
-  Message m;
+  // Message m;
   while (!mm->quit)
 	{
 		Message *m = mm->GetIncomingMessageQueue()->Dequeue();
@@ -317,13 +308,14 @@ void
 MessageManager::BroadcastWork(Work *w, bool collective, bool block)
 {
 	Message* m = new Message(w, collective, block);
+
 	GetOutgoingMessageQueue()->Enqueue(m);
 
 	if (block)
-	{
+  {
 		m->Wait();
-		delete m;
-	}
+    delete m;
+  }
 }
 
 int
@@ -351,24 +343,16 @@ MessageManager::Export(Message *m)
 	// on the broadcast root, the rank and the size.  Otherwise, just ship it.
 
 	struct mpi_send_buffer *msb = new mpi_send_buffer;
-	msb->msg = m;
 
 	// Send_buffer is the pointer that'll actually get written.
 	// If the message has content, allocate and copy in.  Otherwise
 	// just point at the header address
 	
+  msb->total_size = m->GetHeaderSize() + (m->HasContent() ? m->GetSize() : 0);
+  msb->send_buffer = (unsigned char *)malloc(msb->total_size);
+  memcpy(msb->send_buffer, m->GetHeader(), m->GetHeaderSize());
   if (m->HasContent())
-	{
-		msb->total_size = m->GetHeaderSize() + m->GetSize();
-		msb->send_buffer = (unsigned char *)malloc(msb->total_size);
-		memcpy(msb->send_buffer, m->GetHeader(), m->GetHeaderSize());
-		memcpy(msb->send_buffer + m->GetHeaderSize(), m->GetContent(), m->GetSize());
-	}
-	else
-	{
-		msb->send_buffer = m->GetHeader();
-		msb->total_size = m->GetHeaderSize();
-	}
+    memcpy(msb->send_buffer + m->GetHeaderSize(), m->GetContent(), m->GetSize());
 
   if (m->IsBroadcast())
 	{
@@ -424,14 +408,15 @@ MessageManager::check_mpi(MessageManager *mm)
 
 		if (incoming_message->IsBroadcast())
 		{
+      mm->Export(incoming_message);
+
 			if (incoming_message->IsCollective())
 			{
-				mm->Export(incoming_message);
-
 				Work *w  = app->Deserialize(incoming_message);
 				kill_app = w->CollectiveAction(mm->getCollComm(), GetTheApplication()->GetRank() == incoming_message->header.broadcast_root);
 				if (kill_app) killer(); // for debugging
 				delete w;
+        delete incoming_message;
 			}
 			else
 			{
@@ -474,18 +459,15 @@ MessageManager::check_outgoing(MessageManager *mm)
 					if (kill_app) killer(); // for debugging
 					delete w;
 
-					// If we sent the message further down the tree, we wait until the message is sure
-					// to have been sent (in purge_completed_mpi_buffers) to signal (if the message is 
-					// blocking) or delete it (if not).   If we DID NOT send it farther down the tree,
-					// then we do it here.
+          // We copy the message in Export, and put the copy on the list to be held until 
+          // the message actually leaves.   So here we acknowlege that the
+          // collective action finishes.   The collective action can block, so we won't get here
+          // until the messages have arrived down the tree
 
-					if (nsent == 0)
-					{
-						if (outgoing_message->isBlocking())
-							outgoing_message->Signal();        // blocked guy will delete
-						else
-							delete outgoing_message;
-					}
+          if (outgoing_message->isBlocking())
+          {
+            outgoing_message->Signal();        // blocked guy will delete
+          }
 				}
 				else
 				{

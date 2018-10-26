@@ -20,6 +20,11 @@
 
 #pragma once
 
+/*! \file RayQManager.h 
+ * \brief the manager for RayList processing at each node
+ * \ingroup render
+ */
+
 #include <list>
 #include <pthread.h>
 #include <time.h>
@@ -34,32 +39,32 @@ namespace gxy
 
 class Renderer;
 
+//! the manager for RayList processing at each node
+/*! \ingroup render */
 class RayQManager
 {
 public:
-	RayQManager(Renderer *);
-	~RayQManager();
+	RayQManager(Renderer *); //!< constructor
+	~RayQManager(); //!< default destructor
 
+	//! returns a pointer to the RayList manager singleton for this process
 	static RayQManager *GetTheRayQManager();
-	static RayQManager 	*theRayQManager;
-
-	void ResetState();
+	static RayQManager 	*theRayQManager; //!< the RayList manager singleton
 
 	// These are used to protect enqueuing and dequeuing.
+	void Lock(); //!< lock the queue (e.g. to perform an atomic action on it)
+	void Unlock(); //!< unlock the queue
+	void Wait(); //!< wait until a Signal is received
+	void Signal(); //!< resume processing after a Wait
 
-	void Lock();
-	void Unlock();
-	void Wait();
-	void Signal();
+	void Kill(); //!< terminate processing for this ray queue
 
-	void Kill();
+	void Enqueue(RayList *r); //!< add the given RayList to this ray queue
+	RayList *Dequeue(); //!< remove a RayList from this ray queue
 
-	void Enqueue(RayList *r);
-	RayList *Dequeue();
-
-	void CheckState();
-	void UpdateChildState(bool busy, int child);
-
+	//! global check across all processes whether the rendering is done
+	/*! this call is used when Galaxy writes images to determine if a frame is done and the image can be written
+	 */
 	void CheckWhetherDone()
 	{
 		SynchronousCheckMsg *msg = new SynchronousCheckMsg(0);
@@ -70,16 +75,20 @@ public:
 	// called from IceT's callback function, can't return until all rendering is
 	// done - that is, when all rays are retired throughout the system - because
 	// when it does, IceT will start compositing.  So Render waits on the transition
-	// from Busy to Idle.  This is signalled from the message loop when the master determines
+	// from Busy to Idle.  This is signaled from the message loop when the master determines
 	// that its done.
 
-	int current_frame_id() { return frame_id; }
-	void bump_frame_id() { frame_id ++; }
+	int current_frame_id() { return frame_id; } //!< return the current frame being rendered
+	void bump_frame_id() { frame_id ++; } //!< move to the next frame to render
 
 #ifdef GXY_WRITE_IMAGES
-	void Pause();
-	void Resume();
-	void  GetQueuedRayCount(int&, int&);
+	void Pause(); //!< pause queue processing, used when writing an image
+	void Resume(); //!< resume queue processing after a Pause
+	//! put the number of RayList objects and the total number of Rays into the given ints
+	/*! \param n receives the number of RayList objects
+	 * \param k receives the total number of Rays
+	 */
+	void  GetQueuedRayCount(int& n, int& k); 
 #endif
     
 private:

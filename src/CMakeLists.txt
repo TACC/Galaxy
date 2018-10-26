@@ -28,6 +28,7 @@ add_subdirectory(data)
 add_subdirectory(renderer)
 add_subdirectory(sampler)
 add_subdirectory(apps)
+add_subdirectory(multiserver)
 add_subdirectory(cinema)
 add_subdirectory(tests)
 

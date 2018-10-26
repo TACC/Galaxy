@@ -19,7 +19,8 @@
 ## ========================================================================== ##
 
 cmake_minimum_required (VERSION 2.8.11)
-project (gxy_renderer)
+cmake_policy(SET CMP0048 NEW)
+project (gxy_renderer VERSION ${GALAXY_VERSION})
 
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
@@ -56,6 +57,7 @@ install(FILES
   Pixel.h 
   RayQManager.h 
   Rays.h 
+  render.h
   Renderer.h
   Rendering.h 
   RenderingSet.h 

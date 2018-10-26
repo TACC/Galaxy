@@ -35,71 +35,113 @@
 using namespace gxy;
 using namespace std;
 
+int mpiRank;
+int mpiSize;
+
+#include "Debug.h"
+
 class BcastEvent : public Event
 { 
 public:
- BcastEvent() {}
+ BcastEvent(int t) : typ(t) {}
 
 protected:
   void print(ostream& o)
   {
     Event::print(o);
-    o << "BCAST";
+    o << ((typ == 0) ? "BCAST COLLECTIVE" : "BCAST ASYNC");
   }
+
+  int typ;
 };
 
-class BcastMsg : public Work
+class BcastCollectiveMsg : public Work
 {
 public:
-	BcastMsg() : BcastMsg(10*sizeof(int)) 
-	{
-		int *p = (int *)contents->get();
-		for (int i = 0; i < 10; i++) *p++ = i + GetTheApplication()->GetRank();
-	}
-	~BcastMsg() {}
+	BcastCollectiveMsg(std::string m) : BcastCollectiveMsg(m.size() + 1) { strcpy((char *)get(), m.c_str()); }
+	~BcastCollectiveMsg() {}
 
-	WORK_CLASS(BcastMsg, true)
+	WORK_CLASS(BcastCollectiveMsg, true)
 
 public:
 	bool CollectiveAction(MPI_Comm s, bool isRoot)
 	{
-		GetTheEventTracker()->Add(new BcastEvent);
-		stringstream xx;
-		for (int i = 0; i < 10; i++)
-			xx << i << " ";
-		APP_PRINT(<< xx.str());
+    MPI_Barrier(s);
+		GetTheEventTracker()->Add(new BcastEvent(0));
+		APP_PRINT(<< (char *)get());
 		return false;
 	}
 };
 
-WORK_CLASS_TYPE(BcastMsg)
+WORK_CLASS_TYPE(BcastCollectiveMsg)
+
+class BcastAsyncMsg : public Work
+{
+public:
+	BcastAsyncMsg(std::string m) : BcastAsyncMsg(m.size() + 1) { strcpy((char *)get(), m.c_str()); }
+	~BcastAsyncMsg() {}
+
+	WORK_CLASS(BcastAsyncMsg, true)
+
+public:
+	bool Action(int s)
+	{
+		GetTheEventTracker()->Add(new BcastEvent(1));
+		APP_PRINT(<< (char *)get());
+		return false;
+	}
+};
+
+WORK_CLASS_TYPE(BcastAsyncMsg)
+
+void
+syntax(char *a)
+{
+  cerr << "syntax: " << a << " [options] " << endl;
+  cerr << "optons:" << endl;
+  cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
+  exit(1);
+}
+
 
 int
 main(int argc, char * argv[])
 {
+  bool dbg = false;
+  char *dbgarg;
+
 	Application theApplication(&argc, &argv);
 	theApplication.Start();
 
+  for (int i = 1; i < argc; i++)
+  {
+    if (!strncmp(argv[i],"-D", 2)) dbg = true, dbgarg = argv[i] + 2;
+    else syntax(argv[0]);
+  }
+
 	theApplication.Run();
 
-	BcastMsg::Register();
+	BcastCollectiveMsg::Register();
+	BcastAsyncMsg::Register();
 
-	int r = theApplication.GetRank();
-	int s = theApplication.GetSize();
+	mpiRank = theApplication.GetRank();
+	mpiSize = theApplication.GetSize();
 
-	if (r == 0)
+  Debug *d = dbg ? new Debug(argv[0], false, dbgarg) : NULL;
+
+	if (mpiRank == 0)
 	{
-		BcastMsg b0;
+		BcastCollectiveMsg b0("collective");
 		b0.Broadcast(true, true);
-		sleep(100000);
+
+    BcastAsyncMsg *b1 = new BcastAsyncMsg("async");
+		b1->Broadcast(false, true);
+    delete b1;
+
+    sleep(1);
+
 		theApplication.QuitApplication();
 	}
-	else
-	{
-		stringstream xx;
-		xx << "hello " << GetTheApplication()->GetRank();
-		APP_PRINT(<< xx.str());
-	}
-
-	theApplication.Wait();
+  else
+    theApplication.Wait();
 }

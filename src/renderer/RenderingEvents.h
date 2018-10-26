@@ -20,12 +20,21 @@
 
 #pragma once
 
+/*! \file RenderingEvents.h 
+ * \brief the classes that represent rendering events within Galaxy, used primarily for debugging
+ * \ingroup render
+ */
+
 #include "Events.h"
 
 #include <iostream>
 
 namespace gxy
 {
+//! event signal that rendering has begun (for debugging)
+/* \sa Event, Rendering, Renderer
+ * \ingroup render
+ */
 class StartRenderingEvent : public Event
 {
 public:
@@ -39,6 +48,10 @@ protected:
   }
 };
 
+//! event signal that a camera loop has ended (for debugging)
+/* \sa Event, Camera
+ * \ingroup render
+ */
 class CameraLoopEndEvent : public Event
 {
 public:
@@ -52,9 +65,14 @@ protected:
   }
 };
 
+//! event signal base class for RayList events (for debugging)
+/* \sa Event, RayList, ProcessRayListEvent, SecondariesGeneratedEvent, ProcessRayListCompletedEvent
+ * \ingroup render
+ */
 class RayListEvent : public Event
 {
 public:
+ RayListEvent() {}
  RayListEvent(RayList *rl)
 	{
 		n  = rl->GetRayCount();
@@ -72,6 +90,10 @@ protected:
 	int f;
 };
 
+//! event signal that a RayList has been selected for processing (for debugging)
+/* \sa Event, RayList, RayListEvent
+ * \ingroup render
+ */
 class ProcessRayListEvent : public RayListEvent
 {
 public:
@@ -85,6 +107,10 @@ protected:
   }
 };
 
+//! event signal that a RayList of secondary rays has been generated (for debugging)
+/* \sa Event, RayList, RayListEvent
+ * \ingroup render
+ */
 class SecondariesGeneratedEvent : public RayListEvent
 {
 public:
@@ -95,60 +121,6 @@ protected:
   {
     Event::print(o);
     o << "SecondariesGenerated:  id " << id << " n " << n << " r " << r << " rs " << rs << " f " << f;
-  }
-};
-
-class PixelsEvent : public Event
-{
-public: 
-	PixelsEvent(int n, Key rk, int f) : n(n), rk(rk), f(f) {}
-
-protected:
-	int n;
-	Key rk;
-	int f;
-};
-
-class LocalPixelsEvent : public PixelsEvent
-{
-public:
-	LocalPixelsEvent(int n, Key rk, int f) : PixelsEvent(n, rk, f) {}
-
-protected:
-  void print(std::ostream& o)
-  {
-    Event::print(o);
-    o << "LocalPixelsEvent: n " << n << " r " << rk << " f " << f;
-  }
-};
-
-class SendPixelsEvent : public PixelsEvent
-{
-public: 
-	SendPixelsEvent(int n, Key rk, int f, int d) : dst(d), PixelsEvent(n, rk, f) {}
-
-protected:
-	int dst;
-
-  void print(std::ostream& o)
-  {
-    Event::print(o);
-    o << "SendPixelsEvent: n " << n << " r " << rk << " f " << f << " dst " << dst;
-  }
-};
-
-class RcvPixelsEvent : public PixelsEvent
-{
-public: 
-	RcvPixelsEvent(int n, Key rk, int f, int s) : src(s), PixelsEvent(n, rk, f) {}
-
-protected:
-	int src;
-
-  void print(std::ostream& o)
-  {
-    Event::print(o);
-    o << "RcvPixelsEvent: n " << n << " r " << rk << " f " << f << " src " << src;
   }
 };
 
@@ -174,7 +146,11 @@ protected:
 
 #endif
 
-class ProcessRayListCompletedEvent : public Event
+//! event signal that processing for a RayList has completed (for debugging)
+/* \sa Event, RayList, RayListEvent
+ * \ingroup render
+ */
+class ProcessRayListCompletedEvent : public RayListEvent
 {
 public:
   ProcessRayListCompletedEvent(int ni, int nn, int nr, int ns) : nIn(ni), nSecondaries(nn), nRetired(nr), nSent(ns) {}
@@ -188,6 +164,76 @@ protected:
 
 private:
   int nIn, nSecondaries, nSent, nRetired;
+};
+
+//! event signal base class for Pixel events (for debugging)
+/* \sa Event, LocalPixlesEvent, SendPixelsEvent, RcvPixelsEvent
+ * \ingroup render
+ */
+class PixelsEvent : public Event
+{
+public: 
+	PixelsEvent(int n, Key rk, int f) : n(n), rk(rk), f(f) {}
+
+protected:
+	int n;
+	Key rk;
+	int f;
+};
+
+//! event signal that a set of Pixels has been generated for the local framebuffer (for debugging)
+/* \sa Event, PixelsEvent
+ * \ingroup render
+ */
+class LocalPixelsEvent : public PixelsEvent
+{
+public:
+	LocalPixelsEvent(int n, Key rk, int f) : PixelsEvent(n, rk, f) {}
+
+protected:
+  void print(std::ostream& o)
+  {
+    Event::print(o);
+    o << "LocalPixelsEvent: n " << n << " r " << rk << " f " << f;
+  }
+};
+
+//! event signal that a set of Pixels has been sent to a remote process (for debugging)
+/* \sa Event, PixelsEvent
+ * \ingroup render
+ */
+class SendPixelsEvent : public PixelsEvent
+{
+public: 
+	SendPixelsEvent(int n, Key rk, int f, int d) : dst(d), PixelsEvent(n, rk, f) {}
+
+protected:
+	int dst;
+
+  void print(std::ostream& o)
+  {
+    Event::print(o);
+    o << "SendPixelsEvent: n " << n << " r " << rk << " f " << f << " dst " << dst;
+  }
+};
+
+//! event signal that a set of Pixels has been received from a remote process (for debugging)
+/* \sa Event, PixelsEvent
+ * \ingroup render
+ */
+class RcvPixelsEvent : public PixelsEvent
+{
+public: 
+	RcvPixelsEvent(int n, Key rk, int f, int s) : src(s), PixelsEvent(n, rk, f) {}
+
+protected:
+	int src;
+
+  void print(std::ostream& o)
+  {
+    Event::print(o);
+    o << "RcvPixelsEvent: n " << n << " r " << rk << " f " << f << " src " << src;
+  }
 };
 
 #if 0

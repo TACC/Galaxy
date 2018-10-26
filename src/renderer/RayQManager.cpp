@@ -248,9 +248,8 @@ RayQManager::Enqueue(RayList *r)
 	// This is called when a ray list is introduced - either
 	// the initial local rays or from another process.
 
-  if (r->GetFrame() < r->GetTheRenderingSet()->GetCurrentFrame())
-    delete r;
-  else
+	
+  if (r->GetTheRenderingSet()->IsActive(r->GetFrame()))
   {
     if (! r)
 			cerr << "WARNING: Enqueuing NULL raylist!" << endl;
@@ -264,6 +263,8 @@ RayQManager::Enqueue(RayList *r)
 
 		Unlock();
 	}
+	else
+    delete r;
 }
 
 } // namespace gxy

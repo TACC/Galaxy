@@ -26,6 +26,10 @@
 #include "Particles.h"
 #include "Triangles.h"
 
+#include "rapidjson/rapidjson.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/stringbuffer.h"
+
 using namespace rapidjson;
 using namespace std;
 
@@ -127,8 +131,27 @@ Datasets::LoadFromJSON(Value& v)
 	}
 	else
 		loadTyped(ds);
+}
 
-	// Commit();
+void
+Datasets::LoadFromJSONFile(std::string fname)
+{
+  Document doc;
+
+  FILE *pFile = fopen (fname.c_str() , "r");
+  if (! pFile)
+  {
+    std::cerr << "Unable to open " << fname << "\n";
+  }
+  else
+  {
+    char buf[64];
+    rapidjson::FileReadStream is(pFile,buf,64);
+    doc.ParseStream<0>(is);
+    fclose(pFile);
+
+    LoadFromJSON(doc);
+  }
 }
 
 void

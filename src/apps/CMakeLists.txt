@@ -64,6 +64,10 @@ else(GXY_WRITE_IMAGES)
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
 		link_libraries(${X11_LIBRARIES})
 
+		add_executable(amh amh.cpp quat.cpp AsyncRendering.cpp)
+		target_link_libraries(amh ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+		set(BINS amh ${BINS})
+
 		add_executable(async async.cpp quat.cpp AsyncRendering.cpp)
 		target_link_libraries(async ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 

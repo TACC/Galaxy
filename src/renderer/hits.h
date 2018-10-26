@@ -18,6 +18,13 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
+/*! \file hits.h 
+ * \brief ray intersection ("hit") test result codes
+ * \ingroup render
+ */
+
 #define HIT_MISS               -1
 #define HIT_SURFACE             1
 #define HIT_TERMINATING         2
