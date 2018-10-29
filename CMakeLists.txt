@@ -17,7 +17,7 @@
 ## limitations under the License.                                             ##
 ##                                                                            ##
 ## ========================================================================== ##
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.9)
 
 cmake_policy(SET CMP0048 NEW)
 PROJECT(Galaxy VERSION 0.9.0)
