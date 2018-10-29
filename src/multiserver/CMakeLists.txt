@@ -33,6 +33,9 @@ set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
 set(BINS "")
 set(WORKERS "")
 
+# include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
+
 add_executable(multiserver server.cpp MultiServer.cpp MultiServerSocket.cpp)
 target_link_libraries(multiserver ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 set(BINS multiserver ${BINS})
