@@ -181,7 +181,7 @@ main(int argc, char * argv[])
 
 		RenderingP r = Rendering::NewP();
 		r->SetTheOwner(0);
-		r->SetTheSize(512, 512);
+		r->SetTheSize(64, 64);
 		r->SetTheCamera(c);
 		r->SetTheDatasets(d);
 		r->SetTheVisualization(vis);
