@@ -115,11 +115,7 @@ else(ospray_DIR)
 endif(ospray_DIR)
 
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-SET(CMAKE_INSTALL_RPATH 
-  "${OSPRAY_ROOT}/lib"
-  "${EMBREE_ROOT_DIR}/lib"
-  "${CMAKE_INSTALL_PREFIX}/lib"
-  "${CMAKE_INSTALL_PREFIX}/ospray/lib")
+SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib ${CMAKE_INSTALL_PREFIX}/third-party)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -145,4 +141,5 @@ install(FILES "${CMAKE_BINARY_DIR}/${GALAXY_CONFIG}" "${CMAKE_BINARY_DIR}/${GALA
 add_subdirectory(scripts)
 add_subdirectory(src)
 
+install(CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/install-third-party.sh ${CMAKE_INSTALL_PREFIX} ${OSPRAY_ROOT} ${EMBREE_ROOT_DIR})")
 
