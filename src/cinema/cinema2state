@@ -114,7 +114,7 @@ def recur(s, vis, vis_set, anno, lights):
                 newop['isovalues'] = [ iv ]
                 anno1 = anno + "_" + str(iv)
                 if len(s) == 1:
-                  a = {'annotation': anno, 'operators': vis + [ newop ]}
+                  a = {'annotation': anno1, 'operators': vis + [ newop ]}
                   if lights != None:
                     a['lighting'] = lights
                   vis_set.append(a)
@@ -143,7 +143,7 @@ def recur(s, vis, vis_set, anno, lights):
             newop['plane'] = plane
 
             if len(s) == 1:
-              a = {'annotation': anno, 'operators': vis + [ newop ]}
+              a = {'annotation': anno1, 'operators': vis + [ newop ]}
               if lights != None:
                 a['lighting'] = lights
               vis_set.append(a)
@@ -171,7 +171,7 @@ def recur(s, vis, vis_set, anno, lights):
               anno1 = anno + "_" + str(w)
     
               if len(s) == 1:
-                a = {'annotation': anno, 'operators': vis + [ newop ]}
+                a = {'annotation': anno1, 'operators': vis + [ newop ]}
                 if lights != None:
                   a['lighting'] = lights
                 vis_set.append(a)
