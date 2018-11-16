@@ -26,7 +26,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_TYPE(AsyncRendering)
+OBJECT_CLASS_TYPE(AsyncRendering)
 
 void
 AsyncRendering::initialize()

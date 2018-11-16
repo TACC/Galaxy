@@ -40,7 +40,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(Datasets)
+OBJECT_POINTER_TYPES(Datasets)
 
 //! container for KeyedDataObjects within Galaxy
 /*! \ingroup data 
@@ -103,6 +103,14 @@ public:
   	else return (*it).second;
   }
 
+  //! delete a data object
+  /*! \param name the name of the dataset to drop
+   */
+  void Drop(std::string name)
+  {
+    datasets.erase(name);
+  }
+
   //! load from a Galaxy JSON specification
   virtual void  LoadFromJSON(rapidjson::Value&);
 
@@ -137,6 +145,7 @@ protected:
 	int nkeys;
 	Key *keys;
 };
+
 
 } // namespace gxy
 

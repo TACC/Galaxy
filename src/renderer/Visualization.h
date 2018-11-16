@@ -37,12 +37,10 @@
 
 #include <ospray/ospray.h>
 
-#include <map>
-
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(Visualization)
+OBJECT_POINTER_TYPES(Visualization)
 
 //! a visualization of one or more visualization elements (Vis objects) in Galaxy
 /* This object represents a combination of one or more visualization elements (Vis objects)
@@ -70,12 +68,8 @@ public:
   //! remove this object from the global registry
   virtual void Drop();
 
-  //! Add a TrianglesVis object to this Visualization
-  void AddOsprayGeometryVis(VisP g);
-  //! Add a MappedVis object to this Visualization
-  void AddMappedGeometryVis(VisP m);
-  //! Add a VolumeVis object to this Visualization
-  void AddVolumeVis(VisP v);
+  //! Add a Vis object to this Visualization
+  void AddVis(VisP g);
 
   //! save this Vis to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
@@ -113,6 +107,12 @@ public:
   //! get a pointer to the Lighting object for this Visualization
 	Lighting *get_the_lights() { return &lighting; }
 
+  int GetNumberOfVis() { return vis.size(); }
+  VisP GetVis(int i) { return vis[i]; }
+
+  //! Set OSPRay-side data for each attached Vis
+  void SetOSPRayObjects(std::map<Key, OSPRayObjectP>&);
+
 protected:
 	Lighting lighting;
 
@@ -128,9 +128,7 @@ protected:
 
   std::string annotation;
 
-  vis_t osprayGeometries;
-  vis_t mappedGeometries;
-  vis_t volumes;
+  vis_t vis;
 
   Box global_box;
   Box local_box;

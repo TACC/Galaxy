@@ -26,7 +26,7 @@ namespace gxy
 
 static pthread_mutex_t serverrendering_lock = PTHREAD_MUTEX_INITIALIZER;
 
-KEYED_OBJECT_TYPE(ServerRendering)
+OBJECT_CLASS_TYPE(ServerRendering)
 
 void
 ServerRendering::initialize()

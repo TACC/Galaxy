@@ -38,12 +38,12 @@
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(KeyedDataObject)
+OBJECT_POINTER_TYPES(KeyedDataObject)
 
 //! base class for registered (i.e. tracked) data objects within Galaxy
 /*! Galaxy maintains a global registry of objects in order to route data to the appropriate process. 
  * In order to be tracked in the registry, the object should derive from KeyedDataObject and call the
- * KEYED_OBJECT_POINTER macro in its header file (outside of the class definition) and the 
+ * OBJECT_POINTER_TYPES macro in its header file (outside of the class definition) and the 
  * KEYED_OBJECT or KEYED_OBJECT_SUBCLASS macro in its class definition.
  *
  * \ingroup data
@@ -51,7 +51,8 @@ KEYED_OBJECT_POINTER(KeyedDataObject)
  */
 class KeyedDataObject : public KeyedObject
 {
-	KEYED_OBJECT(KeyedDataObject)
+	KEYED_OBJECT_SUBCLASS(KeyedDataObject, KeyedObject)
+	// KEYED_OBJECT(KeyedDataObject)
 
 	friend class ImportMsg;
 	friend class AttachMsg;
@@ -200,3 +201,4 @@ protected:
 };
 
 } // namespace gxy
+

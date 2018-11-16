@@ -32,7 +32,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_TYPE(VolumeVis)
+OBJECT_CLASS_TYPE(VolumeVis)
 
 void
 VolumeVis::Register()
@@ -42,7 +42,6 @@ VolumeVis::Register()
 
 VolumeVis::~VolumeVis()
 {
-  //std::cerr << "VolumeVis dtor: " << this << " ispc " << ispc << "\n";
 	VolumeVis::destroy_ispc();
 }
 

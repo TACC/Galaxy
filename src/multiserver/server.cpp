@@ -8,7 +8,6 @@ using namespace std;
 #include <dlfcn.h>
 
 #include "Application.h"
-#include "Renderer.h"
 #include "MultiServer.h"
 
 using namespace gxy;
@@ -22,7 +21,7 @@ syntax(char *a)
 {
   if (mpiRank == 0)
   {
-    cerr << "syntax: " << a << " [datasets.json] [options]" << endl;
+    cerr << "syntax: " << a << " [options]" << endl;
     cerr << "options:" << endl;
     cerr << "  -D         run debugger" << endl;
     cerr << "  -A         wait for attachment" << endl;
@@ -38,9 +37,6 @@ main(int argc, char *argv[])
   bool dbg = false, atch = false;
   char *dbgarg = "";
   int port = 5001;
-  string datasets = "";
-
-  ospInit(&argc, (const char **)argv);
 
   Application theApplication(&argc, &argv);
   theApplication.Start();
@@ -53,25 +49,35 @@ main(int argc, char *argv[])
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
     else if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
-    else if (datasets == "") datasets = argv[i];
     else
       syntax(argv[0]);
   }
 
   Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
-  Renderer::Initialize();
   GetTheApplication()->Run();
 
   if (mpiRank == 0)
   {
+    MultiServer server(port);
+
+    bool done = false;
+    while (! done)
     {
-      MultiServer server(port);
-      if (datasets != "")
-        server.Load(datasets);
+      cerr << "? ";
+      
+      string cmd;
+      cin >> cmd;
+
+      if (cmd == "q")
+        done = true;
+      else
+        cerr << "huh? ";
     }
     GetTheApplication()->QuitApplication();
   }
   else
+  {
     GetTheApplication()->Wait();
+  }
 }

@@ -8,7 +8,6 @@
 #include <dlfcn.h>
 
 #include "Application.h"
-#include "Renderer.h"
 
 #include "MultiServer.h"
 #include "MultiServerSocket.h"
@@ -17,12 +16,12 @@ using namespace gxy;
 
 MultiServer::MultiServer(int p) : port(p), done(false)
 {
-  theDatasets = Datasets::NewP();
   pthread_create(&watch_tid, NULL, watch, (void *)this);
 }
 
 MultiServer::~MultiServer()
 {
+  done = 1;
   pthread_join(watch_tid, NULL);
 }
 
@@ -45,7 +44,6 @@ MultiServer::start(void *d)
   {
     typedef void (*server_function_t)(MultiServer *, MultiServerSocket *);
     server_function_t server_function = (server_function_t)dlsym(handle, "server");
-    // dlclose(handle);
 
     if (! server_function)
     {
@@ -127,10 +125,6 @@ MultiServer::watch(void *d)
       }
     }
   }
-}
 
-void
-MultiServer::Load(std::string datasets)
-{
-  theDatasets->LoadFromJSONFile(datasets);
+  pthread_exit(NULL);
 }

@@ -35,21 +35,20 @@
 
 #include "Box.h"
 #include "dtypes.h"
-#include "KeyedObject.h"
-#include "OSPRayObject.h"
+#include "KeyedDataObject.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(Volume)
+OBJECT_POINTER_TYPES(Volume)
 
 //! a regular-grid volumetric dataset within Galaxy
 /*! \ingroup data 
- * \sa KeyedObject, KeyedDataObject, OSPRayObject
+ * \sa KeyedObject, KeyedDataObject
  */
-class Volume : public OSPRayObject
+class Volume : public KeyedDataObject
 {
-	KEYED_OBJECT_SUBCLASS(Volume, OSPRayObject)
+	KEYED_OBJECT_SUBCLASS(Volume, KeyedDataObject)
 
 public:
 	virtual void initialize(); //!< initialize this Volume object
@@ -183,9 +182,9 @@ public:
 	//! set the type of data used in this Volume
 	void set_type(DataType t) { type = t; }
 
-  //! commit this object to the local registry
-  /*! This action is performed in response to a CommitMsg */
-	virtual bool local_commit(MPI_Comm);
+  //! is this a float volume?
+  bool isFloat() { return get_type() == FLOAT; }
+
   //! import the given data file into local memory
   /*! This action is performed in response to a ImportMsg */
 	virtual void local_import(char *fname, MPI_Comm c);

@@ -28,15 +28,18 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "KeyedObject.h"
+#include "OSPRayObject.h"
+#include "Datasets.h"
 #include "Rays.h"
 #include "Work.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(RenderingSet)
+OBJECT_POINTER_TYPES(RenderingSet)
 
 class Camera;
 class RayList;
@@ -180,6 +183,9 @@ public:
 			
 #endif // GXY_WRITE_IMAGES
 
+  // set up internal data structures including attaching OSPRayObject's to OVis's.
+  virtual bool local_commit(MPI_Comm);
+
 protected:
 
 	std::vector<RenderingP> renderings;
@@ -250,8 +256,16 @@ public:
 	 */
 	bool IsActive(int fnum);
 
+  //! Set the datasets this rendering set will refer to
+  void SetTheDatasets(DatasetsP d) { datasets = d; }
+  
+  //! Get the datasets this rendering set will refer to
+  DatasetsP getTheDatasets() { return datasets; }
 
 private:
+
+  DatasetsP datasets;
+  std::map<Key, OSPRayObjectP> ospray_object_map;
 
 	int current_frame;
 	int next_frame;

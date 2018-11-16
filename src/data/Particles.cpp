@@ -50,7 +50,7 @@ namespace gxy
 
 WORK_CLASS_TYPE(Particles::LoadPartitioningMsg);
 
-KEYED_OBJECT_TYPE(Particles)
+OBJECT_CLASS_TYPE(Particles)
 
 void
 Particles::Register()
@@ -199,54 +199,6 @@ Particles::SaveToJSON(Value& v, Document& doc)
 		container.AddMember("radius", Value().SetDouble(radius), doc.GetAllocator());
 
 	v.PushBack(container, doc.GetAllocator());
-}
-
-bool
-Particles::local_commit(MPI_Comm c)
-{
-	if (Geometry::local_commit(c))
-		return true; 
-	OSPGeometry ospg = ospNewGeometry("spheres");
-
-  int n_samples;
-  Particle *samples;
-  GetSamples(samples, n_samples);
-
-  OSPData data = ospNewData(n_samples * sizeof(Particle), OSP_UCHAR, samples, OSP_DATA_SHARED_BUFFER);
-  ospCommit(data);
-
-  ospSetData(ospg, "spheres", data);
-
-  ospSet1i(ospg, "offset_value", 12);
-  ospSet1f(ospg, "radius", radius);
-
-	srand(GetTheApplication()->GetRank());
-	int r = random();
-
-#if COLOR_BY_PARTITION
-	unsigned int color = (r & 0x1 ? 0x000000ff : 0x000000A6) |
-											 (r & 0x2 ? 0x0000ff00 : 0x0000A600) |
-											 (r & 0x4 ? 0x00ff0000 : 0x00A60000) |
-							         0xff000000;
-#else
-	unsigned int color = 0xffffffff;
-#endif
-
-	unsigned int *colors = new unsigned int[n_samples];
-	for (int i = 0; i < n_samples; i++)
-		colors[i] = color;
-
-	OSPData clr = ospNewData(n_samples, OSP_UCHAR4, colors);
-	delete[] colors;
-	ospCommit(clr);
-	ospSetObject(ospg, "color", clr);
-	ospRelease(clr);
-
-  ospCommit(ospg);
-
-	theOSPRayObject = (OSPObject)ospg;
-
-	return false;
 }
 
 bool

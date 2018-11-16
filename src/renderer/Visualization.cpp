@@ -18,22 +18,34 @@
 //                                                                            //
 // ========================================================================== //
 
+#include "Application.h"
+#include "Renderer.h"
+
+#include "Rendering.h"
+#include "Rendering.h"
 #include "Visualization.h"
 #include "Visualization_ispc.h"
 
-#include "Application.h"
+#include <ospray/ospray.h>
+
+#include "OVolume.h"
+#include "OParticles.h"
+#include "OTriangles.h"
 #include "OSPUtil.h"
 
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
+
+#include <map>
+
 using namespace std;
 
 namespace gxy
 {
 
-KEYED_OBJECT_TYPE(Visualization)
+OBJECT_CLASS_TYPE(Visualization)
 
 void
 Visualization::Register()
@@ -68,22 +80,10 @@ Visualization::initialize_ispc()
 void
 Visualization::Drop()
 {
-	while(! volumes.empty())
+	while(! vis.empty())
 	{
-		volumes.back()->Drop();
-		volumes.pop_back();
-	}
-
-	while(! mappedGeometries.empty())
-	{
-		mappedGeometries.back()->Drop();
-		mappedGeometries.pop_back();
-	}
-
-	while(! osprayGeometries.empty())
-	{
-		osprayGeometries.back()->Drop();
-		osprayGeometries.pop_back();
+		vis.back()->Drop();
+		vis.pop_back();
 	}
 
 	KeyedObject::Drop();
@@ -92,13 +92,7 @@ Visualization::Drop()
 void
 Visualization::Commit(DatasetsP datasets)
 {
-	for (auto s : volumes)
-		s->Commit(datasets);
-
-	for (auto s : mappedGeometries)
-		s->Commit(datasets);
-
-	for (auto s : osprayGeometries)
+	for (auto s : vis)
 		s->Commit(datasets);
 
 	KeyedObject::Commit();
@@ -178,90 +172,94 @@ Visualization::local_commit(MPI_Comm c)
 {
 	bool first = true;
 
+  for (auto v : vis)
+    v->local_commit(c);
+
+	CHECKBOX(vis)
+	return false;
+}
+
+void
+Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
+{
   if (! ispc)
 	{
     allocate_ispc();
 		initialize_ispc();
 	}
 
-	CHECKBOX(osprayGeometries)
-	CHECKBOX(mappedGeometries)
-	CHECKBOX(volumes)
-
-   
-	// Model for stuff that we'll be rtcIntersecting
+	// Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
+  // volumevis
 
 	if (ospModel) ospRelease(ospModel);
 	ospModel = ospNewModel();
 
-  for (auto ospg : osprayGeometries)
-		if (ospg->GetTheData()->GetOSP() != nullptr)
-			ospAddGeometry(ospModel, (OSPGeometry)ospg->GetTheData()->GetOSP());
-  
+  void *mispc[vis.size()]; int nmispc = 0;
+  void *vispc[vis.size()]; int nvispc = 0;
+
+  for (auto v : vis)
+  {
+    OSPRayObjectP op;
+    KeyedDataObjectP kdop = v->GetTheData();
+
+    Key key = kdop->getkey();
+
+    auto it = ospray_object_map.find(key);
+    if (it == ospray_object_map.end())
+    {
+      if (Volume::IsA(kdop))
+        op = OSPRayObject::Cast(OVolume::NewP(Volume::Cast(kdop)));
+      else if (Particles::IsA(kdop))
+        op = OSPRayObject::Cast(OParticles::NewP(Particles::Cast(kdop)));
+      else if (Triangles::IsA(kdop))
+        op = OSPRayObject::Cast(OTriangles::NewP(Triangles::Cast(kdop)));
+      else
+      {
+        cerr << "huh?";
+        exit(1);
+      }
+
+      ospray_object_map[key] = op;
+    }
+    else
+      op = it->second;
+
+    v->SetTheOSPRayDataObject(op);
+    
+    if (OVolume::IsA(op))
+      vispc[nvispc++] = v->GetISPC();
+    else if (ParticlesVis::IsA(v))
+      ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
+    else
+      mispc[nmispc++] = v->GetISPC();
+  }
+
   ospCommit(ospModel);
    
-  //cerr << "volumes: " << volumes.size() <<  " " <<  volumes.data() << endl;
-  //cerr << "mappedGeometries: " << mappedGeometries.size() <<  " " <<  mappedGeometries.data() << endl;
-  
-  void *mispc[mappedGeometries.size()+1];   
-  for (int i = 0; i < mappedGeometries.size(); i++)
-    mispc[i] = mappedGeometries[i]->GetISPC();
-  
-  void *vispc[volumes.size()+1];
-  for (int i = 0; i < volumes.size(); i++)
-    vispc[i] = volumes[i]->GetISPC();
-  
   ispc::Visualization_commit(ispc, 
           osp_util::GetIE(ospModel),
-          volumes.size(), vispc,
-          mappedGeometries.size(), mispc,
+          nvispc, vispc,
+          nmispc, mispc,
           global_box.get_min(), global_box.get_max(),
           local_box.get_min(), local_box.get_max());
-  
-	return false;
 }
 
 void
-Visualization::AddMappedGeometryVis(VisP o)
+Visualization::AddVis(VisP o)
 {
-	mappedGeometries.push_back(o);
-}
-
-void
-Visualization::AddOsprayGeometryVis(VisP o)
-{
-	osprayGeometries.push_back(o);
-}
-
-void
-Visualization::AddVolumeVis(VisP o)
-{
-	volumes.push_back(o);
+	vis.push_back(o);
 }
 
 void 
 Visualization::SaveToJSON(Value& v, Document&  doc)
 {
 	Value varray(kArrayType);
-	for (auto it : mappedGeometries)
+	for (auto it : vis)
 	{
 		Value v(kObjectType);
 		it->SaveToJSON(v, doc);
 		varray.PushBack(v, doc.GetAllocator());
 	}
-	for (auto it : osprayGeometries)
-	{
-		Value v(kObjectType);
-		it->SaveToJSON(v, doc);
-		varray.PushBack(v, doc.GetAllocator());
-	}
-	for (auto it : volumes)
-	{
-		Value v(kObjectType);
-		it->SaveToJSON(v, doc);
-		varray.PushBack(v, doc.GetAllocator());
-	}
-
 	v.AddMember("Visualization", varray, doc.GetAllocator());
 }
 
@@ -296,19 +294,19 @@ Visualization::LoadFromJSON(Value& v)
 		{
 			VisP vp = VolumeVis::NewP();
 			vp->LoadFromJSON(vv);
-			AddVolumeVis(vp);
+			AddVis(vp);
 		}
 		else if (t == "Particles")
 		{
 			VisP p = ParticlesVis::NewP();
 			p->LoadFromJSON(vv);
-			AddOsprayGeometryVis(p);
+			AddVis(p);
 		}
 		else if (t == "Triangles")
 		{
 			VisP p = TrianglesVis::NewP();
 			p->LoadFromJSON(vv);
-			AddOsprayGeometryVis(p);
+			AddVis(p);
 		}
 		else
 		{
@@ -322,9 +320,7 @@ int
 Visualization::serialSize()
 {
 	return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) 
-		+ sizeof(int) + osprayGeometries.size()*sizeof(Key)
-		+ sizeof(int) + mappedGeometries.size()*sizeof(Key)
-		+ sizeof(int) + volumes.size()*sizeof(Key) 
+		+ sizeof(int) + vis.size()*sizeof(Key)
 		+ lighting.SerialSize();
 }
 
@@ -341,28 +337,10 @@ Visualization::serialize(unsigned char *p)
   p[l-1] = 0;
   p += l;
 
-	*(int *)p = osprayGeometries.size();
+	*(int *)p = vis.size();
 	p += sizeof(int);
 
-	for (auto v : osprayGeometries)
-	{
-		*(Key *)p = v->getkey();
-		p += sizeof(Key);
-	}
-
-	*(int *)p = mappedGeometries.size();
-	p += sizeof(int);
-
-	for (auto v : mappedGeometries)
-	{
-		*(Key *)p = v->getkey();
-		p += sizeof(Key);
-	}
-
-	*(int *)p = volumes.size();
-	p += sizeof(int);
-
-	for (auto v : volumes)
+	for (auto v : vis)
 	{
 		*(Key *)p = v->getkey();
 		p += sizeof(Key);
@@ -388,27 +366,7 @@ Visualization::deserialize(unsigned char *p)
 	{
 		Key k = *(Key *)p;
 		p += sizeof(Key);
-		AddOsprayGeometryVis(Vis::GetByKey(k));
-	}
-
-	n = *(int *)p;
-	p += sizeof(int);
-
-	for (int i = 0; i < n; i++)
-	{
-		Key k = *(Key *)p;
-		p += sizeof(Key);
-		AddMappedGeometryVis(Vis::GetByKey(k));
-	}
-
-	n = *(int *)p;
-	p += sizeof(int);
-
-	for (int i = 0; i < n; i++)
-	{
-		Key k = *(Key *)p;
-		p += sizeof(Key);
-		AddVolumeVis(Vis::GetByKey(k));
+		AddVis(Vis::GetByKey(k));
 	}
 
 	return p;
@@ -419,7 +377,6 @@ Visualization::destroy_ispc()
 {
   if (ispc)
   {
-    //cerr << "Visualization destroying " << this << " ispc: " << ispc << endl;
     ispc::Visualization_destroy(ispc);
   }
 }

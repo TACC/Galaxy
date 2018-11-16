@@ -35,7 +35,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(VolumeVis)
+OBJECT_POINTER_TYPES(VolumeVis)
 
 //! a visualization element operating on a regular-grid volumetric dataset within Galaxy
 /*! \ingroup data 

@@ -22,74 +22,34 @@ cmake_minimum_required(VERSION 2.8)
 cmake_policy(SET CMP0048 NEW)
 project (gxy_data VERSION ${GALAXY_VERSION})
 
-find_library(PNG_LIBRARY_RELEASE png)
-
-include_directories(${gxy_framework_SOURCE_DIR}
-                    ${gxy_renderer_SOURCE_DIR}
-                    ${gxy_data_SOURCE_DIR}
-                    ${Galaxy_BINARY_DIR}/src)
+include_directories(${gxy_framework_SOURCE_DIR} ${gxy_data_SOURCE_DIR} ${Galaxy_BINARY_DIR}/src)
 
 set (CPP_SOURCES     
   Box.cpp 
   DataObjects.cpp
   Datasets.cpp
   Geometry.cpp 
-  ISPCObject.cpp
   KeyedDataObject.cpp
-  Lighting.cpp
-  MappedVis.cpp
-  OSPRayObject.cpp
-  OSPUtil.cpp
   Particles.cpp 
-  ParticlesVis.cpp
   Triangles.cpp 
-  TrianglesVis.cpp
-  Vis.cpp
-  Visualization.cpp
   Volume.cpp 
-  AmrVolume.cpp
-  VolumeVis.cpp)
+  AmrVolume.cpp)
 
-set (ISPC_SOURCES   
-  ISPCObject.ispc
-  Lighting.ispc
-  MappedVis.ispc
-  ParticlesVis.ispc
-  TrianglesVis.ispc
-  Vis.ispc
-  Visualization.ispc
-  VolumeVis.ispc)
-
-if (ospray_DIR)
-  ospray_create_library(gxy_data ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_framework ${PNG_LIBRARY_RELEASE} 
-    COMPONENT lib)
-  set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_data DESTINATION lib)
-endif()
+add_library(gxy_data data.cpp ${CPP_SOURCES})
+target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework)
 
 install(FILES 
+  dtypes.h
   Box.h
   data.h
   DataObjects.h
   Datasets.h
   Geometry.h
-  ImageWriter.h
-  ISPCObject.h
   KeyedDataObject.h
-  Lighting.h
-  MappedVis.h
-  OSPRayObject.h
-  OSPUtil.h
   Particles.h
-  ParticlesVis.h
   Triangles.h
-  TrianglesVis.h
-  Vis.h
-  Visualization.h
   Volume.h
   AmrVolume.h
-  VolumeVis.h
   DESTINATION include/gxy)
 
 

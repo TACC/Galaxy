@@ -176,7 +176,7 @@ main(int argc, char * argv[])
 
 
 		VisualizationP vis = Visualization::NewP();
-		vis->AddVolumeVis(vv);
+		vis->AddVis(vv);
 		vis->Commit(d);
 
 		RenderingP r = Rendering::NewP();

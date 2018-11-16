@@ -49,7 +49,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_TYPE(Camera)
+OBJECT_CLASS_TYPE(Camera)
 
 vector<int> permutation;
 int rays_per_packet;

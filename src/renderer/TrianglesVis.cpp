@@ -18,44 +18,101 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "TrianglesVis.h"
+#include "TrianglesVis_ispc.h"
 
-/*! \file OSPRayObject.h 
- * \brief base class for data objects that will be passed to OSPRay
- * \ingroup data
- */
+#include <fstream>
+#include <iostream>
+#include <math.h>
+#include <sstream>
+#include <stdlib.h>
+#include <string>
 
-#include <ospray/ospray.h>
+#include "Application.h"
+#include "Datasets.h"
 
-#include "KeyedDataObject.h"
-#include "OSPUtil.h"
+using namespace rapidjson;
 
 namespace gxy
 {
-	
-KEYED_OBJECT_POINTER(OSPRayObject)
 
-//! base class for data objects that will be passed to OSPRay 
-/*! Galaxy utilizes the Intel OSPRay ray tracing engine. 
- * This class serves as a base for Galaxy data objects to ease OSPRay integration.
- * \ingroup data
- * \sa KeyedObject, KeyedDataObject
- */
-class OSPRayObject : public KeyedDataObject
+OBJECT_CLASS_TYPE(TrianglesVis)
+
+void
+TrianglesVis::Register()
 {
-  KEYED_OBJECT_SUBCLASS(OSPRayObject, KeyedDataObject)
+  RegisterClass();
+}
 
-public:
-	virtual void initialize(); //!< initialize this object
-	virtual ~OSPRayObject(); //!< default destructor
+TrianglesVis::~TrianglesVis()
+{
+	TrianglesVis::destroy_ispc();
+}
 
-	//! get the OSPRay representation of this object
-	OSPObject GetOSP() { return theOSPRayObject; }
-	//! get the ISPC-based OSPRay representation of this object
-	void      *GetOSP_IE() { return osp_util::GetIE((void *)theOSPRayObject); }
+void
+TrianglesVis::initialize()
+{
+  super::initialize();
+}
 
-protected:
-	OSPObject theOSPRayObject;
-};
+void
+TrianglesVis::initialize_ispc()
+{
+  super::initialize_ispc();
+  ispc::TrianglesVis_initialize(ispc);
+} 
+    
+void
+TrianglesVis::allocate_ispc()
+{
+  ispc = ispc::TrianglesVis_allocate();
+}
+
+int 
+TrianglesVis::serialSize()
+{
+  return super::serialSize();
+}
+
+unsigned char *
+TrianglesVis::serialize(unsigned char *ptr)
+{
+  ptr = super::serialize(ptr);
+  return ptr;
+}
+
+unsigned char *
+TrianglesVis::deserialize(unsigned char *ptr)
+{
+  ptr = super::deserialize(ptr);
+  return ptr;
+}
+
+void 
+TrianglesVis::LoadFromJSON(Value& v)
+{
+  super::LoadFromJSON(v);
+}
+
+void
+TrianglesVis::SaveToJSON(Value& v, Document&  doc)
+{
+  Vis::SaveToJSON(v, doc);
+}
+
+void
+TrianglesVis::destroy_ispc()
+{
+  if (ispc)
+  {
+    ispc::TrianglesVis_destroy(ispc);
+  }
+}
+
+bool
+TrianglesVis::local_commit(MPI_Comm c)
+{  
+	return super::local_commit(c);
+}
 
 } // namespace gxy

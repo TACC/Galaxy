@@ -20,68 +20,74 @@
 
 #pragma once
 
-/*! \file Triangles.h 
- * \brief a triangle (tessellated) dataset within Galaxy
+/*! \file MappedVis.h 
+ * \brief a visualization element that uses a color map and opacity map to define its rendering behavior
  * \ingroup data
  */
 
 #include <string>
 #include <string.h>
-#include <memory.h>
+#include <vector>
+#include <memory>
 
-#include "Application.h"
-#include "Box.h"
+#include "ospray/ospray.h"
+
 #include "dtypes.h"
-#include "Geometry.h"
+#include "Vis.h"
+#include "Datasets.h"
+#include "KeyedObject.h"
 
 #include "rapidjson/document.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Triangles)
+OBJECT_POINTER_TYPES(MappedVis)
 
-//! a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
+//! a visualization element that uses a color map and opacity map to define its rendering behavior
+/*! \ingroup data
+ * \sa KeyedObject, KeyedDataObject, Vis
  */
-class Triangles : public Geometry
+class MappedVis : public Vis
 {
-  KEYED_OBJECT_SUBCLASS(Triangles, Geometry)
+  KEYED_OBJECT_SUBCLASS(MappedVis, Vis)
 
 public:
-	void initialize(); //!< initialize this Triangles object
-	virtual ~Triangles(); //!< default destructor 
 
-  /*! This action is performed in response to a ImportMsg */
-  virtual void local_import(char *, MPI_Comm);
+  virtual ~MappedVis(); //!< default destructor
 
-  //! construct a Triangles from a Galaxy JSON specification
+  virtual void initialize(); //!< initialize this MappedVis object
+
+  //! commit this object to the global registry across all processes
+  virtual void Commit(DatasetsP);
+
+  //! set the colormap for this MappedVis as an array of XRGB values
+  void SetColorMap(int, vec4f *);
+  //! set the opacity map for this MappedVis as an array of XO values
+  void SetOpacityMap(int, vec2f *);
+
+  //! construct a MappedVis from a Galaxy JSON specification
   virtual void LoadFromJSON(rapidjson::Value&);
-  //! save this Triangles to a Galaxy JSON specification 
+  //! save this MappedVis to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
-  //! Get the number of vertices
-  int GetNumberOfVertices() { return n_vertices; }
+  //! commit this object to the local registry
+  virtual bool local_commit(MPI_Comm);
 
-  //! Get the number of triangles
-  int GetNumberOfTriangles() { return n_triangles; }
+ protected:
+  virtual void allocate_ispc();
+  virtual void initialize_ispc();
+ 
+  std::vector<vec4f> colormap;
+  std::vector<vec2f> opacitymap;
 
-  //! Get the vertices
-  float *GetVertices() { return vertices; }
+  virtual int serialSize();
+  virtual unsigned char *serialize(unsigned char *);
+  virtual unsigned char *deserialize(unsigned char *);
 
-  //! Get the normals
-  float *GetNormals() { return normals; }
-
-  //! Get the triangles
-  int *GetTriangles() { return triangles; }
-
-private:
-	int n_triangles;
-	int n_vertices;
-	float *vertices;
-	float *normals;
-	int *triangles;
+  OSPTransferFunction transferFunction;
+  
 };
 
 } // namespace gxy
+

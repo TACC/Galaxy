@@ -29,7 +29,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(TestObject)
+OBJECT_POINTER_TYPES(TestObject)
 
 class TestObject : public gxy::KeyedObject
 {

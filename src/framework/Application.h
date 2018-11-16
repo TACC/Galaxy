@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <map>
 
 #include "galaxy.h"
 #include "KeyedObject.h"
@@ -235,7 +236,30 @@ public:
 	 */
 	void SaveOutputState(rapidjson::Document *doc, std::string s);
 
+  //! save a KeyedObject as a global
+	/*! \param name the name under which the object is saved
+	 *  \param obj the object to save
+   */
+  void SetGlobal(std::string name, KeyedObjectP obj) { globals[name] = obj; }
+
+  //! retrieve a global KeyedObject.  NULL if it isn't there
+	/*! \param name the name under which the object is saved
+	 *  \param obj the object to save
+   */
+  KeyedObjectP GetGlobal(std::string name) { return globals[name]; }
+
+  //! delete global reference to a global KeyedObject.
+	/*! \param name the name under which the object is saved
+   */
+  void DropGlobal(std::string name) { globals.erase(name); }
+
 private:
+  std::map<std::string, KeyedObjectP> globals;      // Globally-known variables
+
+  bool loadSO(std::string s);
+  void *getSOFunction(std::string s, std::string p);
+  std::map<std::string, void *> shared_objects;
+
 	std::vector<std::string> log;
 	MessageManager *theMessageManager;
 	KeyedObjectFactory *theKeyedObjectFactory;

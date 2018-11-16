@@ -297,7 +297,7 @@ main(int argc, char * argv[])
     pvis->Commit(theDatasets);
 
     VisualizationP v = Visualization::NewP();
-    v->AddOsprayGeometryVis(pvis);
+    v->AddVis(pvis);
     v->Commit(theDatasets);
 
     RenderingSetP theRenderingSet = RenderingSet::NewP();

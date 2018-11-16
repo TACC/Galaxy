@@ -27,21 +27,20 @@
 
 #include <string>
 #include <iostream>
-#include <memory>
 #include <vector>
 
+#include "GalaxyObject.h"
 #include "Work.h"
 
 #include "rapidjson/document.h"
 
 namespace gxy
 {
-class KeyedObject;
-typedef std::shared_ptr<KeyedObject> KeyedObjectP;
 
-typedef int KeyedObjectClass;
+OBJECT_POINTER_TYPES(KeyedObject)
+
+typedef int  KeyedObjectClass;
 typedef long Key;
-
 
 class KeyedObjectFactory;
 
@@ -53,7 +52,7 @@ extern KeyedObjectFactory* GetTheKeyedObjectFactory();
 //! base class for registered Work objects in Galaxy
 /*! Galaxy maintains a global registry of objects in order to route Work to the appropriate process. 
  * In order to be tracked in the registry, the object should derive from KeyedObject and call the
- * KEYED_OBJECT_POINTER macro in its header file (outside of the class definition) and the 
+ * OBJECT_POINTER_TYPES macro in its header file (outside of the class definition) and the 
  * KEYED_OBJECT or KEYED_OBJECT_SUBCLASS macro in its class definition.
  *
  * The creation and registration of KeyedObject classes are maintained by the KeyedObjectFactory class.
@@ -61,7 +60,7 @@ extern KeyedObjectFactory* GetTheKeyedObjectFactory();
  * \ingroup framework
  * \sa KeyedObjectFactory, Work
  */
-class KeyedObject
+class KeyedObject : public GalaxyObject
 {
 public:
   KeyedObject(KeyedObjectClass c, Key k); //!< constructor
@@ -142,13 +141,13 @@ public:
 //! Factory class to create and maintain KeyedObject derived objects
 /*! Galaxy maintains a global registry of objects in order to route Work to the appropriate process. 
  * In order to be tracked in the registry, the object should derive from KeyedObject and call the
- * KEYED_OBJECT_POINTER macro in its header file (outside of the class definition) and the 
+ * OBJECT_POINTER_TYPES macro in its header file (outside of the class definition) and the 
  * KEYED_OBJECT or KEYED_OBJECT_SUBCLASS macro in its class definition.
  *
  * The creation and registration of KeyedObject classes are maintained by the KeyedObjectFactory class.
  *
  * \ingroup framework
- * \sa KeyedObject, Work, KEYED_OBJECT_POINTER, KEYED_OBJECT, KEYED_OBJECT_SUBCLASS
+ * \sa KeyedObject, Work, OBJECT_POINTER_TYPES, KEYED_OBJECT, KEYED_OBJECT_SUBCLASS
  */
 class KeyedObjectFactory
 {
@@ -175,8 +174,8 @@ public:
 	}
 
   //! create a new instance of a KeyedObject-derived class
-  /*! \param c the KeyedObject class id, which is created using the KEYED_OBJECT_TYPE macro
-   * \sa KEYED_OBJECT_TYPE
+  /*! \param c the KeyedObject class id, which is created using the OBJECT_CLASS_TYPE macro
+   * \sa OBJECT_CLASS_TYPE
    */
   KeyedObjectP New(KeyedObjectClass c)
   {
@@ -191,9 +190,9 @@ public:
   }
 
   //! create a new instance of a KeyedObject-derived class with a given Key
-  /*! \param c the KeyedObject class id, which is created using the KEYED_OBJECT_TYPE macro
+  /*! \param c the KeyedObject class id, which is created using the OBJECT_CLASS_TYPE macro
    * \param k the key id to use for this KeyedObject
-   * \sa KEYED_OBJECT_TYPE
+   * \sa OBJECT_CLASS_TYPE
    */
   KeyedObjectP New(KeyedObjectClass c, Key k)
   {
@@ -293,24 +292,6 @@ public:
   };
 };
 
-//! defines std::shared_ptr and std::weak_ptr for class
-/*! \param typ the class name that has KeyedObject as an ancestor class
- * \ingroup framework
- */
-#define KEYED_OBJECT_POINTER(typ)                                                         \
-class typ;                                                                                \
-typedef std::shared_ptr<typ> typ ## P;                                                    \
-typedef std::weak_ptr<typ> typ ## W;
-
-
-//! defines a ClassType registry tracker for class
-/*! \param typ the class name that has KeyedObject as an ancestor class
- * \ingroup framework
- */
-#define KEYED_OBJECT_TYPE(typ)                                                            \
-int typ::ClassType;                                                        
-
-
 //! provides class members for a class that derives directly from KeyedObject
 /*! \param typ the class name that derives directly from KeyedObject
  * \ingroup framework
@@ -322,44 +303,38 @@ int typ::ClassType;
  * \param parent the parent class for the specified new class (can be KeyedObject or derivative)
  * \ingroup framework
  */
-#define KEYED_OBJECT_SUBCLASS(typ, parent)                                                \
-                                                                                          \
-protected:                                                                                \
-  typ(Key k = -1) : parent(ClassType, k) {}                                               \
-  typ(KeyedObjectClass c, Key k = -1) : parent(c, k) {}                                   \
-                                                                                          \
-private:                                                                                  \
-  static KeyedObject *_New(Key k)                                                         \
-  {                                                                                       \
-    typ *t = new typ(k);                                                                  \
-    t->initialize();                                                                      \
-    return (KeyedObject *)t;                                                              \
-  }                                                                                       \
-                                                                                          \
-public:                                                                                   \
-  typedef parent super;                                                                   \
-  KeyedObjectClass GetClass() { return keyedObjectClass; }                                \
-  static bool IsA(KeyedObjectP a) { return dynamic_cast<typ *>(a.get()) != NULL; }        \
-  static typ ## P Cast(KeyedObjectP kop) { return std::dynamic_pointer_cast<typ>(kop); }  \
-  static typ ## P GetByKey(Key k) { return Cast(GetTheKeyedObjectFactory()->get(k)); }    \
-  static void Register();                                                                 \
-                                                                                          \
-  std::string GetClassName()                                                              \
-  {                                                                                       \
-    return GetTheKeyedObjectFactory()->GetClassName(keyedObjectClass);                    \
-  }                                                                                       \
-                                                                                          \
-  static typ ## P NewP()                                                                  \
-  {                                                                                       \
-    KeyedObjectP kop = GetTheKeyedObjectFactory()->New(ClassType);                        \
-    return Cast(kop);                                                                     \
-  }                                                                                       \
-                                                                                          \
-  static void RegisterClass()                                                             \
-  {                                                                                       \
-    typ::ClassType = GetTheKeyedObjectFactory()->register_class(typ::_New, std::string(#typ)); \
-  }                                                                                       \
-  static int  ClassType;
+
+#define KEYED_OBJECT_SUBCLASS(typ, parent)                                                      \
+                                                                                                \
+public:                                                                                         \
+  GALAXY_OBJECT_SUBCLASS(typ, parent)                                                           \
+                                                                                                \
+protected:                                                                                      \
+  typ(Key k = -1) : parent(ClassType, k) {}                                                     \
+  typ(KeyedObjectClass c, Key k = -1) : parent(c, k) {}                                         \
+                                                                                                \
+private:                                                                                        \
+  static KeyedObject *_New(Key k)                                                               \
+  {                                                                                             \
+    typ *t = new typ(k);                                                                        \
+    t->initialize();                                                                            \
+    return (KeyedObject *)t;                                                                    \
+  }                                                                                             \
+                                                                                                \
+public:                                                                                         \
+  static typ ## P GetByKey(Key k) { return Cast(GetTheKeyedObjectFactory()->get(k)); }          \
+  static void Register();                                                                       \
+                                                                                                \
+  static typ ## P NewP()                                                                        \
+  {                                                                                             \
+    KeyedObjectP kop = GetTheKeyedObjectFactory()->New(ClassType);                              \
+    return Cast(kop);                                                                           \
+  }                                                                                             \
+                                                                                                \
+  static void RegisterClass()                                                                   \
+  {                                                                                             \
+    typ::ClassType = GetTheKeyedObjectFactory()->register_class(typ::_New, std::string(#typ));  \
+  }                                                                                             
 
 } // namespace gxy
 

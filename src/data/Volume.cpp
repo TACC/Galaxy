@@ -22,7 +22,6 @@
 
 #include "Application.h"
 #include "Volume.h"
-#include "Datasets.h"
 
 #include <vtkNew.h>
 #include <vtkDataSetReader.h>
@@ -37,7 +36,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_TYPE(Volume)
+OBJECT_CLASS_TYPE(Volume)
 
 void
 Volume::initialize()
@@ -56,49 +55,9 @@ Volume::Register()
 
 Volume::~Volume()
 {
+  cerr << "deleted a volume\n";
 	if (vtkobj) vtkobj->Delete();
 	if (samples) free(samples);
-}
-
-bool 
-Volume::local_commit(MPI_Comm c)
-{
-	OSPRayObject::local_commit(c);
-
-	OSPVolume ospv = ospNewVolume("shared_structured_volume");
-
-  osp::vec3i counts;
-  get_ghosted_local_counts(counts.x, counts.y, counts.z);
-
-  OSPData data = ospNewData(counts.x*counts.y*counts.z, get_type() == FLOAT ? OSP_FLOAT : OSP_UCHAR, (void *)get_samples(), OSP_DATA_SHARED_BUFFER);
-  ospCommit(data);
-
-  ospSetObject(ospv, "voxelData", data);
-
-  ospSetVec3i(ospv, "dimensions", counts);
-
-  osp::vec3f origin;
-  get_ghosted_local_origin(origin.x, origin.y, origin.z);
-  ospSetVec3f(ospv, "gridOrigin", origin);
-
-  osp::vec3f spacing;
-  get_deltas(spacing.x, spacing.y, spacing.z);
-  ospSetVec3f(ospv, "gridSpacing", spacing);
-
-  ospSetString(ospv, "voxelType", get_type() == FLOAT ? "float" : "uchar");
-
-	ospSetObject(ospv, "transferFunction", ospNewTransferFunction("piecewise_linear"));
-
-	ospSetf(ospv, "samplingRate", 1.0);
-
-  ospCommit(ospv);
-
-  if (theOSPRayObject)
-    ospRelease(theOSPRayObject);
-  
-	theOSPRayObject = ospv;
-
-	return false;
 }
 
 void

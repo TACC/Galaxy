@@ -38,9 +38,9 @@ if (GXY_WRITE_IMAGES)
 	target_link_libraries(vis ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 	set(BINS vis ${BINS})
 
-  add_executable(samray samray.cpp)
-  target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} gxy_sampler)
-  set(BINS samray ${BINS})
+  # add_executable(samray samray.cpp)
+  # target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} gxy_sampler)
+  # set(BINS samray ${BINS})
 
   add_executable(sample sample.cpp)
   target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})

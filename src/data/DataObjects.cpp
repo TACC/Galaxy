@@ -20,8 +20,6 @@
 
 #include "DataObjects.h"
 #include "KeyedDataObject.h"
-#include "Vis.h"
-#include "Visualization.h"
 
 namespace gxy
 {
@@ -29,8 +27,6 @@ namespace gxy
 void RegisterDataObjects()
 {
 	KeyedDataObject::Register();
-	Vis::Register();
-	Visualization::Register();
 }
 
 } // namespace gxy

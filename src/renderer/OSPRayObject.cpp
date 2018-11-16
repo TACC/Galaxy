@@ -18,53 +18,24 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
-
-/*! \file TrianglesVis.h 
- * \brief a visualization element operating on a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
-
-#include "Application.h"
-#include "Datasets.h"
-#include "dtypes.h"
-#include "KeyedObject.h"
-#include "Triangles.h"
-#include "Vis.h"
+#include "OSPRayObject.h"
+#include "Geometry.h"
+#include "Volume.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(TrianglesVis)
+OBJECT_CLASS_TYPE(OSPRayObject)
 
-//! a visualization element operating on a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
- */
-class TrianglesVis : public Vis
+OSPRayObject::OSPRayObject()
 {
-  KEYED_OBJECT_SUBCLASS(TrianglesVis, Vis) 
+	theOSPRayObject = NULL;
+}
 
-public:
-	~TrianglesVis(); //!< default destructor
-  
-  //! initialize this TrianglesVis object
-  virtual void initialize();
-  //! commit this object to the local registry
-  virtual bool local_commit(MPI_Comm);
-
-protected:
-
-	virtual void initialize_ispc();
-	virtual void allocate_ispc();
-	virtual void destroy_ispc();
-
-  virtual void LoadFromJSON(rapidjson::Value&);
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
-
-  virtual int serialSize();
-  virtual unsigned char* serialize(unsigned char *ptr);
-  virtual unsigned char* deserialize(unsigned char *ptr);
-};
+OSPRayObject::~OSPRayObject()
+{
+	if (theOSPRayObject)
+		ospRelease((OSPObject)theOSPRayObject);
+}
 
 } // namespace gxy

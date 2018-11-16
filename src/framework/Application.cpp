@@ -104,6 +104,7 @@ Application::Application()
 	theMessageManager = new MessageManager; 
 	theKeyedObjectFactory = new KeyedObjectFactory; 
 
+#if 0
 	if (getenv("GXY_APP_NTHREADS"))
 	{
 		int nthreads = atoi(getenv("GXY_APP_NTHREADS"));
@@ -115,6 +116,7 @@ Application::Application()
 		int n = tbb::task_scheduler_init::default_num_threads();
 		std::cerr << "using " << n << " TBB threads for application." << std::endl;
 	}
+#endif
 
 	pid = getpid();
 
@@ -207,24 +209,51 @@ void Application::SyncApplication()
 	q->Broadcast(true, true);
 }
 
+bool
+Application::loadSO(string soname)
+{
+  if (shared_objects.find(soname) == shared_objects.end())
+  {
+    void *handle = dlopen(const_cast<char *>(soname.c_str()), RTLD_NOW);
+    if (handle)
+    {
+      cerr << "initting " << soname << "\n";
+
+      void *(*init)();
+      init = (void *(*)()) dlsym(handle, const_cast<char *>("init"));
+      init();
+    }
+    else
+      std::cerr << "Error opening SO: " << dlerror() << "\n";
+
+    shared_objects[soname] = handle;
+    return true;
+  }
+  else
+    return false;
+
+}
+   
 void *Application::LoadSO(string soname)
 {
-	LoadSOMsg *l = new LoadSOMsg(soname.size() + 1);
-	unsigned char *ptr = (unsigned char *)l->get();
-	memcpy(ptr, soname.c_str(), soname.size() + 1);
-
-	l->Broadcast(true, true);
-
-  void *handle = dlopen(const_cast<char *>(soname.c_str()), RTLD_NOW);
-
-  if (handle)
+  if (shared_objects.find(soname) == shared_objects.end())
   {
-    void *(*init)();
-    init = (void *(*)()) dlsym(handle, const_cast<char *>("init"));
-    init();
+    LoadSOMsg *l = new LoadSOMsg(soname.size() + 1);
+    unsigned char *ptr = (unsigned char *)l->get();
+    memcpy(ptr, soname.c_str(), soname.size() + 1);
+
+    l->Broadcast(true, true);
   }
 
-  return handle;
+  return shared_objects.find(soname)->second;
+}
+
+bool
+Application::LoadSOMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
+{
+  GetTheApplication()->loadSO((char *)get());
+  MPI_Barrier(coll_comm);
+  return false;
 }
 
 void Application::Start(bool with_mpi)
@@ -244,25 +273,6 @@ bool
 Application::QuitMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 {
   return true;
-}
-
-bool
-Application::LoadSOMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
-{
-  if (! isRoot)
-  {
-    void *handle = dlopen(const_cast<char *>((char *)get()), RTLD_NOW);
-    if (handle)
-    {
-      void *(*init)();
-      init = (void *(*)()) dlsym(handle, const_cast<char *>("init"));
-      init();
-    }
-  }
-
-  MPI_Barrier(coll_comm);
-
-  return false;
 }
 
 bool

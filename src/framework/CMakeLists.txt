@@ -57,6 +57,7 @@ install(FILES
 	Debug.h 
 	Events.h
 	framework.h
+  GalaxyObject.h
 	KeyedObject.h
 	Message.h 
 	MessageManager.h 

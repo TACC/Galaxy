@@ -34,7 +34,6 @@
 #include "Application.h"
 #include "Camera.h"
 #include "DataObjects.h"
-#include "Datasets.h"
 #include "Pixel.h"
 #include "RayFlags.h"
 #include "RayQManager.h"
@@ -46,6 +45,10 @@
 #include "Rays_ispc.h"
 #include "TraceRays_ispc.h"
 #include "Visualization_ispc.h"
+
+#include "OVolume.h"
+#include "OTriangles.h"
+#include "OParticles.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -69,7 +72,7 @@ WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
 WORK_CLASS_TYPE(Renderer::AckRaysMsg);
 #endif // GXY_WRITE_IMAGES
 
-KEYED_OBJECT_TYPE(Renderer)
+OBJECT_CLASS_TYPE(Renderer)
 
 // define class static variables
 int Renderer::TERMINATED    = -1;
@@ -93,6 +96,11 @@ Renderer::Initialize()
   SendRaysMsg::Register();
   SendPixelsMsg::Register();
   StatisticsMsg::Register();
+
+  Datasets::Register();
+
+  Vis::Register();
+  Visualization::Register();
 
 #ifdef GXY_WRITE_IMAGES
   AckRaysMsg::Register();
@@ -125,8 +133,15 @@ Renderer::SetEpsilon(float e)
   tracer.SetEpsilon(e); 
 }
 
+bool
+Renderer::local_commit(MPI_Comm c)
+{
+  if (super::local_commit(c)) return true;
+  return false;
+}
+
 void
-Renderer::localRendering(RendererP renderer, RenderingSetP renderingSet)
+Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
 {
 #ifdef GXY_EVENT_TRACKING
 	GetTheEventTracker()->Add(new StartRenderingEvent);
@@ -193,6 +208,7 @@ Renderer::localRendering(RendererP renderer, RenderingSetP renderingSet)
 
 			CameraP camera = rendering->GetTheCamera();
 			VisualizationP visualization = rendering->GetTheVisualization();
+
 			Box *gBox = visualization->get_global_box();
 			Box *lBox = visualization->get_local_box();
 
@@ -746,6 +762,7 @@ Renderer::Serialize(unsigned char *p)
 {
 	p = lighting.Serialize(p);
 	p = tracer.Serialize(p);
+
 	return p;
 }
 
@@ -754,6 +771,7 @@ Renderer::Deserialize(unsigned char *p)
 {
 	p = lighting.Deserialize(p);
 	p = tracer.Deserialize(p);
+
 	return p;
 }
 
@@ -834,7 +852,7 @@ Renderer::RenderMsg::Action(int sender)
   
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
-  renderer->localRendering(renderer, rs);
+  renderer->local_render(renderer, rs);
 
   return false;
 }

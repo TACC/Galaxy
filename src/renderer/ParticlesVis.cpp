@@ -18,56 +18,95 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "ParticlesVis.h"
+#include "ParticlesVis_ispc.h"
 
-/*! \file ParticlesVis.h 
- * \brief a visualization element operating on a particle dataset within Galaxy
- * \ingroup data
- */
-
-#include "dtypes.h"
 #include "Application.h"
-#include "Vis.h"
-#include "Particles.h"
 #include "Datasets.h"
 
-#include "KeyedObject.h"
-
-#include "rapidjson/document.h"
+using namespace rapidjson;
 
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(ParticlesVis)
+OBJECT_CLASS_TYPE(ParticlesVis)
 
-//!  a visualization element operating on a particle dataset within Galaxy
-/* \ingroup data 
- * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
- */
-class ParticlesVis : public Vis
+void
+ParticlesVis::Register()
 {
-  KEYED_OBJECT_SUBCLASS(ParticlesVis, Vis) 
+  RegisterClass();
+}
 
-public:
-	~ParticlesVis(); //!< destructor
-  
-  virtual void initialize(); //!< initialize this ParticlesVis object
-  //! commit this object to the local registry
-  /*! This action is performed in response to a CommitMsg */
-  virtual bool local_commit(MPI_Comm);
+ParticlesVis::~ParticlesVis()
+{
+	ParticlesVis::destroy_ispc();
+}
 
-protected:
+void
+ParticlesVis::initialize()
+{
+  super::initialize();
+}
 
-	virtual void initialize_ispc();
-	virtual void allocate_ispc();
-	virtual void destroy_ispc();
+void
+ParticlesVis::initialize_ispc()
+{
+  super::initialize_ispc();
+  ispc::ParticlesVis_initialize(ispc);
+} 
+    
+void
+ParticlesVis::allocate_ispc()
+{
+  ispc = ispc::ParticlesVis_allocate();
+}
 
-  virtual void LoadFromJSON(rapidjson::Value&);
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+int 
+ParticlesVis::serialSize()
+{
+  return super::serialSize();
+}
 
-  virtual int serialSize();
-  virtual unsigned char* serialize(unsigned char *ptr);
-  virtual unsigned char* deserialize(unsigned char *ptr);
-};
+unsigned char *
+ParticlesVis::serialize(unsigned char *ptr)
+{
+  ptr = super::serialize(ptr);
+  return ptr;
+}
+
+unsigned char *
+ParticlesVis::deserialize(unsigned char *ptr)
+{
+  ptr = super::deserialize(ptr);
+  return ptr;
+}
+
+void 
+ParticlesVis::LoadFromJSON(Value& v)
+{
+  super::LoadFromJSON(v);
+}
+
+void
+ParticlesVis::SaveToJSON(Value& v, Document&  doc)
+{
+  Vis::SaveToJSON(v, doc);
+}
+
+void
+ParticlesVis::destroy_ispc()
+{
+  if (ispc)
+  {
+    ispc::ParticlesVis_destroy(ispc);
+  }
+}
+
+bool
+ParticlesVis::local_commit(MPI_Comm c)
+{  
+	return super::local_commit(c);
+}
 
 } // namespace gxy
+

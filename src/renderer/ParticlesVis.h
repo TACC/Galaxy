@@ -20,21 +20,17 @@
 
 #pragma once
 
-/*! \file MappedVis.h 
- * \brief a visualization element that uses a color map and opacity map to define its rendering behavior
+/*! \file ParticlesVis.h 
+ * \brief a visualization element operating on a particle dataset within Galaxy
  * \ingroup data
  */
 
-#include <string>
-#include <string.h>
-#include <vector>
-#include <memory>
-
-#include "ospray/ospray.h"
-
 #include "dtypes.h"
+#include "Application.h"
 #include "Vis.h"
+#include "Particles.h"
 #include "Datasets.h"
+
 #include "KeyedObject.h"
 
 #include "rapidjson/document.h"
@@ -42,52 +38,36 @@
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(MappedVis)
+OBJECT_POINTER_TYPES(ParticlesVis)
 
-//! a visualization element that uses a color map and opacity map to define its rendering behavior
-/*! \ingroup data
- * \sa KeyedObject, KeyedDataObject, Vis
+//!  a visualization element operating on a particle dataset within Galaxy
+/* \ingroup data 
+ * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
  */
-class MappedVis : public Vis
+class ParticlesVis : public Vis
 {
-  KEYED_OBJECT_SUBCLASS(MappedVis, Vis)
+  KEYED_OBJECT_SUBCLASS(ParticlesVis, Vis) 
 
 public:
-
-  virtual ~MappedVis(); //!< default destructor
-
-  virtual void initialize(); //!< initialize this MappedVis object
-
-  //! commit this object to the global registry across all processes
-  virtual void Commit(DatasetsP);
-
-  //! set the colormap for this MappedVis as an array of XRGB values
-  void SetColorMap(int, vec4f *);
-  //! set the opacity map for this MappedVis as an array of XO values
-  void SetOpacityMap(int, vec2f *);
-
-  //! construct a MappedVis from a Galaxy JSON specification
-  virtual void LoadFromJSON(rapidjson::Value&);
-  //! save this MappedVis to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
-
+	~ParticlesVis(); //!< destructor
+  
+  virtual void initialize(); //!< initialize this ParticlesVis object
   //! commit this object to the local registry
+  /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
- protected:
-  virtual void allocate_ispc();
-  virtual void initialize_ispc();
- 
-  std::vector<vec4f> colormap;
-  std::vector<vec2f> opacitymap;
+protected:
+
+	virtual void initialize_ispc();
+	virtual void allocate_ispc();
+	virtual void destroy_ispc();
+
+  virtual void LoadFromJSON(rapidjson::Value&);
+  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   virtual int serialSize();
-  virtual unsigned char *serialize(unsigned char *);
-  virtual unsigned char *deserialize(unsigned char *);
-
-  OSPTransferFunction transferFunction;
-  
+  virtual unsigned char* serialize(unsigned char *ptr);
+  virtual unsigned char* deserialize(unsigned char *ptr);
 };
 
 } // namespace gxy
-

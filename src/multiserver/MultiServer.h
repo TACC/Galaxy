@@ -3,8 +3,6 @@
 #include <pthread.h>
 #include <string>
 
-#include "Datasets.h"
-
 namespace gxy
 {
 
@@ -27,14 +25,12 @@ public:
 
   void Load(std::string);
   void Quit() { done = true; }
-  DatasetsP GetTheDatasets() { return theDatasets; }
 
 private:
   int port;
   int fd;
   bool done;
   pthread_t watch_tid;
-  DatasetsP theDatasets;
 };
 
 }

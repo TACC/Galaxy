@@ -36,7 +36,7 @@ WORK_CLASS_TYPE(RenderingSet::ResetMsg);
 WORK_CLASS_TYPE(RenderingSet::DumpStateMsg);
 #endif // GXY_WRITE_IMAGES
 
-KEYED_OBJECT_TYPE(RenderingSet)
+OBJECT_CLASS_TYPE(RenderingSet)
 
 void
 RenderingSet::Register()
@@ -73,7 +73,6 @@ RenderingSet::DumpState()
 #endif // GXY_PRODUCE_STATUS_MESSAGES
 #endif // GXY_WRITE_IMAGES
 	
-
 void
 RenderingSet::initialize()
 {
@@ -113,6 +112,19 @@ RenderingSet::initialize()
 #endif // GXY_PRODUCE_STATUS_MESSAGES
 
 #endif // GXY_WRITE_IMAGES
+}
+
+bool
+RenderingSet::local_commit(MPI_Comm c)
+{
+  if (super::local_commit(c)) return true;
+
+  ospray_object_map.clear();
+
+  for (auto r : renderings)
+    r->GetTheVisualization()->SetOSPRayObjects(this->ospray_object_map);
+
+  return false;
 }
 
 #ifdef GXY_WRITE_IMAGES

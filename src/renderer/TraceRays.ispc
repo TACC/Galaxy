@@ -127,18 +127,14 @@ LookForGeometryHit(varying bool shadeFlag,
                    uniform Visualization_ispc *uniform vis,
                    varying Hit &hit)
 {
-// print("LookForGeometryHit\n");
-
   traceRay(model, ray);
 
   if(ray.geomID < 0)
   {
-// print("miss!\n");
     return false;
   }
   else
   {
-// print("hit!\n");
     if (shadeFlag)
     {
       DifferentialGeometry dg;
@@ -190,7 +186,6 @@ LookForSliceHit(varying bool shadeFlag,
   bool h = false;
   int vid = -1, sid = -1;
 
-  //print("slice tested... nv = %\n", vis->nVolumeVis);
   if (vis->nVolumeVis > 0)
   {
     for (uniform  int major = 0; major < vis->nVolumeVis; major++)      // which volume?
@@ -200,8 +195,6 @@ LookForSliceHit(varying bool shadeFlag,
       for (uniform int minor = 0; minor < vvis->nSlices; minor ++)
       {
         uniform vec4f plane = vvis->slices[minor];
-
-        //print("plane: % % % %\n", plane.x, plane.y, plane.z, plane.w);
 
         vec3f pnorm = make_vec3f(plane.x, plane.y, plane.z);
 
@@ -213,13 +206,8 @@ LookForSliceHit(varying bool shadeFlag,
         {
           float t = (d - dot(ray.org, pnorm)) / denom;
 
-// print("denom: %\n", denom);
-// print("ray t: %\n   t0: %\n", ray.t, ray.t0);
-// print("t: %\n", t);
-
           if (t >= ray.t0 && t <= ray.t)
           {
-// print("sh hit % %\n", major, minor);
 
             if (denom > 0)
               hit.normal   = neg(pnorm);
@@ -252,17 +240,13 @@ LookForSliceHit(varying bool shadeFlag,
           uniform VolumeVis_ispc *uniform vvis = (VolumeVis_ispc *)vis->volumeVis[major];
           uniform TransferFunction *uniform tf = (uniform TransferFunction *uniform )((MappedVis_ispc *)vvis)->transferFunction;
           uniform Volume *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
-
           hit.sample = vol->sample(vol, hit.point);
-// print("sample: %\n", hit.sample);
           hit.color = tf->getColorForValue(tf, hit.sample);
-// print("color:\nR: %\nG: %\nB: %\n", hit.color.x, hit.color.y, hit.color.z);
           hit.opacity = 1.0;
         }
     }
   }
-//else print("sh m\n");
-    
+
   return h;
 }
 
@@ -364,16 +348,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
-#if 0
-  print("BOX [(%f %f %f)-(%f %f %f)]\n",
-        box.lower.x,
-        box.lower.y,
-        box.lower.z,
-        box.upper.x,
-        box.upper.y,
-        box.upper.z);
-#endif
-
   step = -1;
   for (uniform int major = 0; major < vis->nVolumeVis; major++)
   {
@@ -394,8 +368,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       epsilon = self->epsilon * s;
     }
   }
-
-// print("nRaysIn: %, integrate = %\n", nRaysIn, integrate);
 
   foreach (i = 0 ... nRaysIn)
   {
@@ -469,8 +441,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     if (integrate)
     {
-//print("integrating... epsilon %, step %\n", epsilon, step);
-
       // Now iterate up the interval from tEntry to tTermination, accruing volume contributions and looking for
       // isosurfaces
 

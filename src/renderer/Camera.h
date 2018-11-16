@@ -41,10 +41,10 @@
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(Renderer)
-KEYED_OBJECT_POINTER(Rendering)
-KEYED_OBJECT_POINTER(RenderingSet)
-KEYED_OBJECT_POINTER(Camera)
+OBJECT_POINTER_TYPES(Renderer)
+OBJECT_POINTER_TYPES(Rendering)
+OBJECT_POINTER_TYPES(RenderingSet)
+OBJECT_POINTER_TYPES(Camera)
 
 class Rays;
 class Rendering;

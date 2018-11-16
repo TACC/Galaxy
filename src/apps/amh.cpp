@@ -160,8 +160,8 @@ SetupVisualization()
 	theVolumeVis->Commit(theDatasets);
 
 	theVisualization = Visualization::NewP();
-	theVisualization->AddOsprayGeometryVis(theParticlesVis);
-	theVisualization->AddVolumeVis(theVolumeVis);
+	theVisualization->AddVis(theParticlesVis);
+	theVisualization->AddVis(theVolumeVis);
 	theVisualization->Commit(theDatasets);
 
 	theRendering->SetTheVisualization(theVisualization);

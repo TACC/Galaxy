@@ -30,20 +30,20 @@
 #include <memory.h>
 #include <vector>
 
-#include "OSPRayObject.h"
+#include "KeyedDataObject.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(Geometry)
+OBJECT_POINTER_TYPES(Geometry)
 
 //! representation for 3D renderable geometry in Galaxy
 /*! \ingroup data 
- * \sa KeyedObject, OSPRayObject
+ * \sa KeyedDataObject
  */
-class Geometry : public OSPRayObject
+class Geometry : public KeyedDataObject
 {
-  KEYED_OBJECT_SUBCLASS(Geometry, OSPRayObject)
+  KEYED_OBJECT_SUBCLASS(Geometry, KeyedDataObject)
 };
 
 } // namespace gxy

@@ -37,7 +37,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_TYPE(Vis)
+OBJECT_CLASS_TYPE(Vis)
 
 void
 Vis::Register()
@@ -103,6 +103,12 @@ Vis::SaveToJSON(Value& v, Document& doc)
 	v.AddMember("dataset", Value().SetString(name.c_str(), doc.GetAllocator()), doc.GetAllocator());
 }
 
+void
+Vis::SetTheOSPRayDataObject(OSPRayObjectP o)
+{
+	ispc::Vis_set_data(GetISPC(), o->GetOSP_IE());
+}
+
 int
 Vis::serialSize() 
 {
@@ -142,10 +148,7 @@ Vis::local_commit(MPI_Comm c)
 
 	super::local_commit(c);
 
-	data = OSPRayObject::Cast(KeyedDataObject::GetByKey(datakey));
-
-	if (data->GetOSP() != nullptr)
-		ispc::Vis_set_data(GetISPC(), data->GetOSP_IE());
+  data = KeyedDataObject::GetByKey(datakey);
 
 	return false;
 }

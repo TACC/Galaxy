@@ -464,8 +464,8 @@ main(int argc, char * argv[])
     vvis->Commit(theDatasets);
 
     VisualizationP v = Visualization::NewP();
-    v->AddOsprayGeometryVis(pvis);
-    v->AddVolumeVis(vvis);
+    v->AddVis(pvis);
+    v->AddVis(vvis);
     v->Commit(theDatasets);
 
     RenderingSetP theRenderingSet = RenderingSet::NewP();

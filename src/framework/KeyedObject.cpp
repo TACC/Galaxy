@@ -92,17 +92,10 @@ KeyedObjectFactory::erase(Key k)
 void
 KeyedObjectFactory::add(KeyedObjectP p)
 {
-#if 0
-	for (int i = kmap.size(); i < p->getkey(); i++)
-		kmap.push_back(NULL);
-
-	kmap.push_back(p);
-#else
-  	for (int i = kmap.size(); i <= p->getkey(); i++)
+  for (int i = kmap.size(); i <= p->getkey(); i++)
 		kmap.push_back(NULL);
 
 	kmap[p->getkey()] = p;
-#endif
 }
 
 void
@@ -114,7 +107,6 @@ KeyedObject::Drop()
 KeyedObject::KeyedObject(KeyedObjectClass c, Key k) : keyedObjectClass(c), key(k)
 {  
 	ko_count++;
-	// cerr << "KeyedObject ctor: " << GetTheKeyedObjectFactory()->GetClassName(c) << " key " << k << endl;
 	initialize();
 }
 

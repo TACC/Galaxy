@@ -34,7 +34,6 @@
 #include "Application.h"
 #include "Box.h"
 #include "Geometry.h"
-#include "Datasets.h"
 #include "KeyedDataObject.h"
 
 #include <vtkSmartPointer.h>
@@ -43,12 +42,10 @@
 
 #include "rapidjson/document.h"
 
-#include "ospray/ospray.h"
-
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(Particles)
+OBJECT_POINTER_TYPES(Particles)
 
 //! a particle within Galaxy
 /*! \ingroup data */
@@ -67,7 +64,7 @@ struct Particle
 
 //!  a particle dataset within Galaxy
 /* \ingroup data 
- * \sa Geometry, KeyedObject, KeyedDataObject, OSPRayObject
+ * \sa Geometry, KeyedObject, KeyedDataObject
  */
 class Particles : public Geometry
 {
@@ -88,9 +85,6 @@ public:
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file
 	virtual void Import(std::string);
 
-  //! commit this object to the local registry
-  /*! This action is performed in response to a CommitMsg */
-  virtual bool local_commit(MPI_Comm);
   //! import the given data file into local memory
   /*! This action is performed in response to a ImportMsg */
   virtual void local_import(char *, MPI_Comm);
@@ -140,6 +134,11 @@ public:
 
   //! set the sphere radius to use when rendering these Particles
 	void SetRadius(float r) { radius = r; }
+  void SetRadiusScale(float s) { radius_scale = s; }
+
+  //! get the sphere radius to use when rendering these Particles
+	float GetRadius() { return radius; }
+  float GetRadiusScale() { return radius_scale; }
 
   //! add a Particle to this Particles dataset
 	void push_back(Particle p) { samples.push_back(p); }
@@ -158,6 +157,7 @@ protected:
   virtual unsigned char* deserialize(unsigned char *ptr);
 
   float radius;
+  float radius_scale;
 
 	vtkPolyData *vtkobj;
 

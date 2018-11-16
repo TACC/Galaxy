@@ -29,9 +29,11 @@
 
 #include "dtypes.h"
 #include "KeyedObject.h"
+#include "Datasets.h"
 #include "Lighting.h"
 #include "pthread.h"
 #include "Rays.h"
+#include "Visualization.h"
 #include "Rendering.h"
 #include "RenderingEvents.h"
 #include "RenderingSet.h"
@@ -45,7 +47,7 @@ class RayQManager;
 class Pixel;
 class RayList;
 
-KEYED_OBJECT_POINTER(Renderer)
+OBJECT_POINTER_TYPES(Renderer)
 
 //! the primary class controlling rendering within Galaxy
 /*! \sa KeyedObject
@@ -57,6 +59,9 @@ class Renderer : public KeyedObject
     
 public:
   static void Initialize(); //!< initialize the Renderer subcomponents
+
+  //! Converts OSPRay objects for Galaxy::Data objects  - ALWAYS CALLED FROM COMMIT
+  virtual bool local_commit(MPI_Comm);
 
   virtual ~Renderer(); //!< default destructor
   virtual void initialize(); //!< initializes the singleton Renderer
@@ -76,7 +81,7 @@ public:
   virtual void SaveStateToDocument(rapidjson::Document&);
 
   //! render the given RenderingSet at this process, in response to a received RenderMsg
-  virtual void localRendering(RendererP, RenderingSetP);
+  virtual void local_render(RendererP, RenderingSetP);
 
   //! extract and retire any terminated rays in the given RayList
   /*! \param raylist the RayList to process
@@ -140,7 +145,6 @@ public:
     // exits everything
 
 private:
-
 	std::vector<std::future<void>> rvec;
 
 	int frame;

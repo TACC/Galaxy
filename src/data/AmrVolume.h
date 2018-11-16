@@ -26,19 +26,18 @@
  */
 
 #include <Volume.h>
-#include <ospray/ospray.h>
 
 #include <vtkStructuredPointsReader.h>
 #include <vtkStructuredPoints.h>
 
 namespace gxy
 {
-KEYED_OBJECT_POINTER(AmrVolume)
+OBJECT_POINTER_TYPES(AmrVolume)
 
 //! an AMR volumetric dataset within Galaxy. This class encapsulates an ospray 
 //  AMR volume object and makes it available to Galaxy
 /*! \ingroup data
- *  \sa Volume, KeyedObject, KeyedDataObject, OSPRayObject
+ *  \sa Volume, KeyedObject, KeyedDataObject
  */
 class AmrVolume : public Volume
 {
@@ -49,9 +48,6 @@ public:
         virtual ~AmrVolume(); //!< default destructor
 
         //! commit this object to the local registry
-        /*! This action is performed in response to a CommitMsg */
-        virtual bool local_commit(MPI_Comm);
-        //! import the given data file into local memory
         /*! This action is performed in response to a ImportMsg */
         virtual void local_import(char *fname, MPI_Comm c);
         //! load a timestep into local memory

@@ -23,15 +23,13 @@
 #include <memory.h>
 #include <vector>
 
-#include <ospray/ospray.h>
-
 #include "Geometry.h"
 #include "Particles.h"
 #include "Triangles.h"
 
 namespace gxy
 {
-KEYED_OBJECT_TYPE(Geometry)
+OBJECT_CLASS_TYPE(Geometry)
 
 void
 Geometry::Register()

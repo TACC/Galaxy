@@ -36,7 +36,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_TYPE(MappedVis)
+OBJECT_CLASS_TYPE(MappedVis)
 
 void
 MappedVis::Register()
@@ -219,7 +219,6 @@ MappedVis::serialize(unsigned char *ptr)
 	*(int *)ptr = colormap.size();
 	ptr += sizeof(int);
 	memcpy(ptr, colormap.data(), colormap.size()*sizeof(vec4f));
-  //std::cerr << "DS " << ((float *)ptr)[0] << " "<< ((float *)ptr)[1] << " " << ((float *)ptr)[2] << " " << ((float *)ptr)[3] << std::endl;
 	ptr += colormap.size()*sizeof(vec4f);
 
 	*(int *)ptr = opacitymap.size();

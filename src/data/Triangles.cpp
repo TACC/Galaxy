@@ -45,7 +45,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_TYPE(Triangles) 
+OBJECT_CLASS_TYPE(Triangles) 
 
 void     
 Triangles::Register()
@@ -372,54 +372,6 @@ Triangles::local_import(char *f, MPI_Comm c)
     }
   }
 }
-
-bool
-Triangles::local_commit(MPI_Comm c)
-{
-  if (Geometry::local_commit(c))
-    return true;
-
-	if (n_vertices > 0)
-	{
-		float *cptr, *colors = new float[n_vertices * 4];
-		cptr = colors;
-		for (int i = 0; i < n_vertices; i++)
-		{
-			*cptr++ = 173.0 / 255.0;
-			*cptr++ = 224.0 / 255.0;
-			*cptr++ = 255.0 / 255.0;
-			*cptr++ = 1.0;
-		} 
-     
-		OSPData pdata = ospNewData(n_vertices, OSP_FLOAT3, vertices, OSP_DATA_SHARED_BUFFER);
-		ospCommit(pdata);
-				
-		OSPData ndata = ospNewData(n_vertices, OSP_FLOAT3, normals, OSP_DATA_SHARED_BUFFER); 
-		ospCommit(ndata);
-		
-		OSPData tdata = ospNewData(n_triangles, OSP_INT3, triangles);
-		ospCommit(tdata);
-  
-		OSPData cdata = ospNewData(n_vertices, OSP_FLOAT4, colors);
-		ospCommit(cdata);
-		delete[] colors;
-    
-		OSPGeometry ospg = ospNewGeometry("triangles");
-
-		ospSetData(ospg, "vertex", pdata);
-		ospSetData(ospg, "vertex.normal", ndata);
-		ospSetData(ospg, "index", tdata);
-		ospSetData(ospg, "color", cdata);
-
-		ospCommit(ospg);
-
-		theOSPRayObject = (OSPObject)ospg;
-	}
-	else
-		theOSPRayObject = nullptr;
-
-  return false;
-} 
 
 void
 Triangles::LoadFromJSON(Value& v)

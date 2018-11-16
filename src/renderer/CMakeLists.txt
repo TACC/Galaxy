@@ -22,6 +22,8 @@ cmake_minimum_required (VERSION 2.8.11)
 cmake_policy(SET CMP0048 NEW)
 project (gxy_renderer VERSION ${GALAXY_VERSION})
 
+find_library(PNG_LIBRARY_RELEASE png)
+
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
 										${gxy_data_SOURCE_DIR}
@@ -32,28 +34,54 @@ link_directories(${Galaxy_BINARY_DIR}/src/data
                  ${Galaxy_BINARY_DIR}/src/framework)
 
 set (ISPC_SOURCES 
+  ISPCObject.ispc
+ 	MappedVis.ispc
+	Rays.ispc
+	TrianglesVis.ispc
+  Visualization.ispc
+  Lighting.ispc
+	ParticlesVis.ispc
+  TraceRays.ispc
+	Vis.ispc
+	VolumeVis.ispc
   Rays.ispc
   TraceRays.ispc)
 
 set (CPP_SOURCES 
+  mypng.cpp
   Camera.cpp 
+  ISPCObject.cpp
+  Lighting.cpp
+  MappedVis.cpp
+  OSPRayObject.cpp
+  OTriangles.cpp
+  OParticles.cpp
+  OVolume.cpp
+  OSPUtil.cpp
+  ParticlesVis.cpp
   RayQManager.cpp
   Rays.cpp 
   Renderer.cpp
   Rendering.cpp 
+  RenderingEvents.cpp
   RenderingSet.cpp 
-  TraceRays.cpp)
+  TraceRays.cpp
+  TrianglesVis.cpp
+  Vis.cpp
+  Visualization.cpp
+  VolumeVis.cpp)
 
 if (ospray_DIR)
   ospray_create_library(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework COMPONENT lib)
+    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
   set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   install(TARGETS gxy_renderer DESTINATION lib)
 endif()
 
 install(FILES 
   Camera.h 
-  dtypes.h  
+  ImageWriter.h 
+  Lighting.h
   Pixel.h 
   RayQManager.h 
   Rays.h 

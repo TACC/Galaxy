@@ -40,7 +40,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER(Vis)
+OBJECT_POINTER_TYPES(Vis)
   
 //! the parent class for visualization elements that operate on a dataset within Galaxy
 /* This object represents a single visualization element, namely a set of filters applied to data. 
@@ -58,10 +58,16 @@ public:
 
     //! commit this object to the global registry across all processes
     virtual void Commit(DatasetsP);
-    //! return a pointer to the OSPRayObject data that this Vis targets
-    OSPRayObjectP GetTheData() { return data; }
-    //! set the OSPRayObject data that this Vis should target
-    void SetTheData( OSPRayObjectP d ) { data = d; }
+
+    //! return a pointer to the KeyedDataObject data that this Vis targets
+    KeyedDataObjectP GetTheData() { return data; }
+
+    //! set the KeyedDataObject data that this Vis should target
+    void SetTheData( KeyedDataObjectP d ) { data = d; }
+
+    //! set the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.
+    //! 
+    void SetTheOSPRayDataObject(OSPRayObjectP o);
 
     //! construct a Vis from a Galaxy JSON specification
     virtual void LoadFromJSON(rapidjson::Value&);
@@ -85,7 +91,7 @@ protected:
 
     std::string name;
     Key datakey;
-    OSPRayObjectP data;
+    KeyedDataObjectP data;
 };
 
 } // namespace gxy

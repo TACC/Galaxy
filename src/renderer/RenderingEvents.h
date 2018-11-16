@@ -25,6 +25,7 @@
  * \ingroup render
  */
 
+#include "Rays.h"
 #include "Events.h"
 
 #include <iostream>
@@ -73,14 +74,7 @@ class RayListEvent : public Event
 {
 public:
  RayListEvent() {}
- RayListEvent(RayList *rl)
-	{
-		n  = rl->GetRayCount();
-		id = rl->GetId();
-		r  = rl->GetTheRendering()->getkey();
-		rs = rl->GetTheRenderingSet()->getkey();
-		f  = rl->GetFrame();
-	}
+ RayListEvent(RayList *rl);
 
 protected:
   int n;

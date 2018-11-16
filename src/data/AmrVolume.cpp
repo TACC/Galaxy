@@ -23,11 +23,10 @@
 
 #include "Application.h"
 #include "AmrVolume.h"
-#include "Datasets.h"
 
 namespace gxy
 {
-KEYED_OBJECT_TYPE(AmrVolume)
+OBJECT_CLASS_TYPE(AmrVolume)
 
 void
 AmrVolume::initialize()
@@ -47,79 +46,9 @@ AmrVolume::Register()
     RegisterClass();
 }
 
-bool
-AmrVolume::local_commit(MPI_Comm c)
-{
-    std::cerr << "Commit amr volume" << std::endl;
-    OSPRayObject::local_commit(c);
-    OSPVolume ospv = ospNewVolume("amr_volume");
-    // these two vectors hold the topology and data
-    // of each grid respectively.
-    std::vector<OSPData> brickDataArray;
-    std::vector<osp::amr_brick_info> brickInfoArray;
-    osp::vec3f globalorigin;
-    get_origin(0,0,globalorigin.x,globalorigin.y,globalorigin.z);
-    float *fltptr;
-    // Traverse the AMR levels and grids per level
-    for(int level=0; level < numlevels; level++ ) 
-    {
-        for(int grid = 0; grid < levelnumgrids[level];grid++) 
-        {
-            std::cerr << "AMRV level: " << level << " grid: " << grid << std::endl;
-            osp::vec3i counts,lo_v,hi_v;
-            osp::vec3f spacing,origin;
-            get_deltas(level,grid,spacing.x,spacing.y,spacing.z); 
-            std::cerr <<"deltas " << spacing.x << " " << spacing.y << " " <<spacing.z << std::endl;
-            // set up the scalars for this grid
-            fltptr = getScalarData(level,grid);
-            std::cerr << "commit first flt " << fltptr[0] << std::endl;
-            get_counts(level,grid,counts.x,counts.y,counts.z); 
-            std::cerr <<"counts " << counts.x << " " << counts.y << " " <<counts.z << std::endl;
-            get_origin(level,grid,origin.x,origin.y,origin.z);
-            std::cerr <<"origin " << origin.x << " " << origin.y << " " <<origin.z << std::endl;
-            OSPData odata = ospNewData(counts.x*counts.y*counts.z,
-             get_type() == FLOAT?OSP_FLOAT:OSP_UCHAR,(void*)fltptr,OSP_DATA_SHARED_BUFFER);
-            ospCommit(odata);
-            brickDataArray.push_back(odata);
-            lo_v.x = std::lround((origin.x - globalorigin.x)/spacing.x);
-            lo_v.y = std::lround((origin.y - globalorigin.y)/spacing.y);
-            lo_v.z = std::lround((origin.z - globalorigin.z)/spacing.z);
-            hi_v.x = lo_v.x + counts.x;
-            hi_v.y = lo_v.y + counts.y;
-            hi_v.z = lo_v.z + counts.z;
-            std::cerr << lo_v.x << " " << lo_v.y << " " << lo_v.z << std::endl;
-            std::cerr << hi_v.x << " " << hi_v.y << " " << hi_v.z << std::endl;
-            osp::box3i obox={lo_v,hi_v};
-            osp::amr_brick_info bi;
-            bi.bounds = obox;
-            bi.cellWidth = spacing.x;
-            bi.refinementLevel = level;
-            brickInfoArray.push_back(bi);
-        }
-    }
-    ospSet1f(ospv,"samplingRate",this->samplingRate);
-    ospSetString(ospv, "voxelType", get_type() == FLOAT ? "float" : "uchar");
-    osp::vec3f origin;
-    get_ghosted_local_origin(origin.x,origin.y,origin.z);
-    std::cerr << " g_local_o " << origin.x <<" "<<origin.y << " " << origin.z << std::endl;
-    ospSet3f(ospv,"gridOrigin",origin.x,origin.y,origin.z);
-    OSPData brickDataData=ospNewData(brickDataArray.size(),
-            OSP_OBJECT,&brickDataArray[0],0);
-    ospCommit(brickDataData);
-    ospSetData(ospv,"brickData",brickDataData);
-    OSPData brickInfoData = ospNewData(brickInfoArray.size()*sizeof(brickInfoArray[0])
-            ,OSP_RAW,&brickInfoArray[0],0);
-    ospCommit(brickInfoData);
-    ospSetData(ospv,"brickInfo",brickInfoData);
-    ospSetObject(ospv,"transferFunction",ospNewTransferFunction("piecewise_linear"));
-    ospCommit(ospv);
-    if(theOSPRayObject)
-        ospRelease(theOSPRayObject);
-    theOSPRayObject = ospv;
-    return false;
-}
 // this is the same factor function taken from Volume.cpp. Declared as static there.
 // this version may take into account amr nature of the data
+
 static void
 factor(int ijk, vec3i &factors)
 {
