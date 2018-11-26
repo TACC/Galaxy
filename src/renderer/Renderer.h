@@ -30,7 +30,6 @@
 #include "dtypes.h"
 #include "KeyedObject.h"
 #include "Datasets.h"
-#include "Lighting.h"
 #include "pthread.h"
 #include "Rays.h"
 #include "Visualization.h"
@@ -72,8 +71,6 @@ public:
   void SetEpsilon(float e); //!< set the epsilon distance for the Renderer to avoid exact comparison in certain tests
 
   RayQManager *GetTheRayQManager() { return rayQmanager; }
-  //! returns a pointer to the singleton Lighting object for this process
-  Lighting *GetTheLighting() { return &lighting; }
 
   //! load a Renderer object from a Galaxy JSON document
   virtual void LoadStateFromDocument(rapidjson::Document&);
@@ -125,9 +122,6 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
-  //! return a pointer to the Lighting singleton for this process
-	Lighting *get_the_lights() { return &lighting; }
-
   //! process the given RayList using the current Rendering, RenderingSet, and Visualization
 	void Trace(RayList *);
 
@@ -162,7 +156,6 @@ private:
 	int *received_from;
 
   TraceRays tracer;
-  Lighting  lighting;
   RayQManager *rayQmanager;
 
   pthread_mutex_t lock;

@@ -107,13 +107,10 @@ main(int argc, char * argv[])
 
 	theApplication.Run();
 
+  RendererP theRenderer = Renderer::NewP();
+
 	if (theApplication.GetRank() == 0)
 	{
-		RendererP theRenderer = Renderer::NewP();
-    Lighting *l = theRenderer->GetTheLighting();
-    float camera_relative[] = {5.0, 5.0, 0.0};
-    int   type[] = { 1 };
-    l->SetLights(1, camera_relative, type);
 		theRenderer->Commit();
 
 		CameraP c = Camera::NewP();
@@ -177,6 +174,10 @@ main(int argc, char * argv[])
 
 		VisualizationP vis = Visualization::NewP();
 		vis->AddVis(vv);
+    Lighting *l = vis->get_the_lights();
+    float camera_relative[] = {5.0, 5.0, 0.0};
+    int   type[] = { 1 };
+    l->SetLights(1, camera_relative, type);
 		vis->Commit(d);
 
 		RenderingP r = Rendering::NewP();

@@ -231,6 +231,8 @@ main(int argc, char * argv[])
 
   if (mpiRank == 0)
   {
+    theRenderer->Commit();
+
     // create empty distributed container for volume data
     VolumeP volume = Volume::NewP();
     // import data to all processes, smartly distributes volume across processses
@@ -249,13 +251,6 @@ main(int argc, char * argv[])
     smsg->Broadcast(true, true);
 
     samples->Commit();
-
-    float light[] = {1.0, 2.0, 3.0}; int t = 1;
-    theRenderer->GetTheLighting()->SetLights(1, light, &t);
-    theRenderer->GetTheLighting()->SetK(0.4, 0.6);
-    theRenderer->GetTheLighting()->SetShadowFlag(false);
-    theRenderer->GetTheLighting()->SetAO(0, 0.0);
-    theRenderer->Commit();
 
     DatasetsP theDatasets = Datasets::NewP();
     theDatasets->Insert("samples", samples);
@@ -298,6 +293,11 @@ main(int argc, char * argv[])
 
     VisualizationP v = Visualization::NewP();
     v->AddVis(pvis);
+    float light[] = {1.0, 2.0, 3.0}; int t = 1;
+    v->get_the_lights()->SetLights(1, light, &t);
+    v->get_the_lights()->SetK(0.4, 0.6);
+    v->get_the_lights()->SetShadowFlag(false);
+    v->get_the_lights()->SetAO(0, 0.0);
     v->Commit(theDatasets);
 
     RenderingSetP theRenderingSet = RenderingSet::NewP();

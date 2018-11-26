@@ -238,11 +238,6 @@ Renderer::LoadStateFromDocument(Document& doc)
 {
 	Value& v = doc["Renderer"];
 
-	if (v.HasMember("Lighting"))
-		lighting.LoadStateFromValue(v["Lighting"]);
-	else if (v.HasMember("lighting"))
-		lighting.LoadStateFromValue(v["lighting"]);
-
 	if (v.HasMember("Tracer"))
 		tracer.LoadStateFromValue(v["Tracer"]);
 }
@@ -252,7 +247,6 @@ Renderer::SaveStateToDocument(Document& doc)
 {
   Value r(kObjectType);
 
-  lighting.SaveStateToValue(r, doc);
   tracer.SaveStateToValue(r, doc);
 
 	doc.AddMember("Renderer", r, doc.GetAllocator());
@@ -754,13 +748,12 @@ Renderer::SendRaysMsg::Action(int sender)
 int
 Renderer::SerialSize()
 {
-	return tracer.SerialSize() + lighting.SerialSize();
+	return tracer.SerialSize();
 }
 
 unsigned char *
 Renderer::Serialize(unsigned char *p)
 {
-	p = lighting.Serialize(p);
 	p = tracer.Serialize(p);
 
 	return p;
@@ -769,7 +762,6 @@ Renderer::Serialize(unsigned char *p)
 unsigned char *
 Renderer::Deserialize(unsigned char *p)
 {
-	p = lighting.Deserialize(p);
 	p = tracer.Deserialize(p);
 
 	return p;
