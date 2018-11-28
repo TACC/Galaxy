@@ -31,6 +31,7 @@
 #include <pthread.h>
 
 using namespace gxy;
+using namespace std;
 
 pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  w8 = PTHREAD_COND_INITIALIZER;
@@ -39,7 +40,7 @@ class PPongMsg : public Work
 {
 public:
 	PPongMsg(std::string m) : PPongMsg(m.size() + 1) { strcpy((char *)get(), m.c_str()); }
-	~PPongMsg() {}
+	~PPongMsg() { std::cerr << "pp dtor\n"; }
 	WORK_CLASS(PPongMsg, true)
 
 public:
@@ -61,7 +62,7 @@ public:
 			pthread_mutex_unlock(&lck);
 		}
 
-#if GXY_LOGGING
+#ifdef GXY_LOGGING
 		APP_LOG(<< rank << ": ppong");
 #endif
 
@@ -83,29 +84,56 @@ public:
 WORK_CLASS_TYPE(PPongMsg)
 WORK_CLASS_TYPE(BcastMsg)
 
+
+int mpiRank = 0, mpiSize = 1;
+#include "Debug.h"
+
+void
+syntax(char *a)
+{
+  if (mpiRank == 0)
+  {
+    std::cerr << "syntax: " << a << " [options] " << endl;
+    std::cerr << "options:" << endl;
+    std::cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
+  }
+  exit(1);
+}
+
 int
 main(int argc, char * argv[])
 {
+  char *dbgarg;
+  bool dbg = false;
+  bool atch = false;
+
 	Application theApplication(&argc, &argv);
 	theApplication.Start();
+
+  for (int i = 1; i < argc; i++)
+    if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
+    else syntax(argv[0]);
+
+  mpiRank = theApplication.GetRank();
+  mpiSize = theApplication.GetSize();
+
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
 	theApplication.Run();
 
 	PPongMsg::Register();
 	BcastMsg::Register();
 
-	int r = theApplication.GetRank();
-	int s = theApplication.GetSize();
-
-	if (r == 0)
+	if (mpiRank == 0)
 	{
 
 		pthread_mutex_lock(&lck);
 
-		if (s > 1)
+		if (mpiSize > 1)
 		{
-			PPongMsg m;
-			m.Send(1);
+			PPongMsg *m = new PPongMsg("hello");
+			m->Send(1);
+      delete m;
 
 			pthread_cond_wait(&w8, &lck);
 			std::cerr << "lock signalled" << std::endl;
@@ -119,9 +147,9 @@ main(int argc, char * argv[])
 		b1->Broadcast(true, true);
 		delete b1;
 
-		if (s > 1)
+		if (mpiSize > 1)
 		{
-			PPongMsg m;
+			PPongMsg m("goodbye");
 			m.Send(1);
 
 			pthread_cond_wait(&w8, &lck);
@@ -133,4 +161,5 @@ main(int argc, char * argv[])
 	}
 
 	theApplication.Wait();
+  std::cerr << "done\n";
 }
