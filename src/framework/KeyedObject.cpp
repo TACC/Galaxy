@@ -28,6 +28,51 @@ using namespace std;
 namespace gxy
 {
 
+#ifdef GXY_OBJECT_REF_LIST
+
+//
+// The following stuff can be used to find hanging objects.   It maintains lists of allocated KeyedObjects
+// of each type.   You can call dol() to print out a row for each non-empty type and shows the number of
+// references on each existing object of that type.   This data structure itself has a reference on each.
+// 
+// aol(KeyedObjectP&) adds a newly created object to the data structure
+// rmol(int type) removes the data structure's reference to each object of type 
+//
+std::vector<KeyedObjectP> object_lists[32];
+extern void rmol(int);
+void dol()
+{
+  std::cerr << "=========== " << GetTheApplication()->GetRank() << " ===========\n";
+  for (auto i = 0; i < 32; i++)
+  {
+    auto ol = object_lists[i];
+    if (ol.size() > 0)
+    {
+      std::cerr << GetTheKeyedObjectFactory()->GetClassName(i) << " (" << i << ") :";
+      for (auto j = 0; j < ol.size(); j++)
+        std::cerr << " " << (ol[j].use_count() - 1);  // -1 to ignore this local reference
+      std::cerr << "\n";
+    }
+  }
+  std::cerr << "\n";
+}
+void aol(KeyedObjectP& p)
+{
+  std::vector<KeyedObjectP>::iterator it;
+  for (it = object_lists[p->getclass()].begin(); it != object_lists[p->getclass()].end(); it++)
+    if (*it == p)
+      break;
+  if (it == object_lists[p->getclass()].end())
+    object_lists[p->getclass()].push_back(p);
+}
+
+void rmol(int i)
+{
+  object_lists[i].clear();
+}
+
+#endif
+
 static int ko_count = 0;
 static int get_ko_count() { return ko_count; }
 
@@ -53,6 +98,14 @@ KeyedObjectFactory::NewMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 	}
 
 	return false;
+}
+
+void
+KeyedObjectFactory::Clear()
+{
+  for (auto i = kmap.begin(); i != kmap.end(); i++)
+    if (*i)
+      (*i)->Drop();
 }
 
 void
@@ -90,7 +143,7 @@ KeyedObjectFactory::erase(Key k)
 }
 
 void
-KeyedObjectFactory::add(KeyedObjectP p)
+KeyedObjectFactory::add(KeyedObjectP& p)
 {
   for (int i = kmap.size(); i <= p->getkey(); i++)
 		kmap.push_back(NULL);
