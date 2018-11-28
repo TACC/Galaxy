@@ -58,7 +58,8 @@ class ThreadPool;
 {																														\
   std::stringstream ss;																			\
 	ss x;																											\
-	GetTheApplication()->Print(ss.str());											\
+  if (GetTheApplication())                                  \
+    GetTheApplication()->Print(ss.str());										\
 }
 
 /*!
@@ -71,11 +72,14 @@ class ThreadPool;
  * \warning argument must begin with stream operator `<<`
  * \sa gxy::Application::Log
  */
-#define APP_LOG(x)																					\
-{																														\
-  std::stringstream ss;																			\
-	ss << my_gettid() << " " << my_threadname() << " " <<  __FUNCTION__ << ": " x;			\
-	GetTheApplication()->Log(ss.str());												\
+#define APP_LOG(x)																					                            \
+{																														                            \
+  if (GetTheApplication())                                                              \
+  {                                                                                     \
+    std::stringstream ss;																			                          \
+    ss << my_gettid() << " " << my_threadname() << " " <<  __FUNCTION__ << ": " x;			\
+    GetTheApplication()->Log(ss.str());												                          \
+  }                                                                                     \
 }
 
 

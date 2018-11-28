@@ -194,10 +194,14 @@ Application::~Application()
 	delete theMessageManager;
 	delete theKeyedObjectFactory;
 	delete threadManager;
+
+  theApplication = NULL;
 }
 
 void Application::QuitApplication()
 {
+  GetTheKeyedObjectFactory()->Clear();
+
 	QuitMsg q;
 	q.Broadcast(true, true);
 	Application::Wait();
