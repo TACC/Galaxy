@@ -95,7 +95,7 @@ server(MultiServer *srvr, MultiServerSocket *skt)
         kop->Drop();
       }
       else
-        cerr << "couln't find it in theDatasets\n";
+        cerr << "couldn't find it in theDatasets\n";
       std::string ok("ok");
       skt->CSend(ok.c_str(), ok.length()+1);
     }
