@@ -96,132 +96,137 @@ int main(int argc,  char *argv[])
 
   Renderer::Initialize();
 
-  theApplication.Run();
-
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
 
   Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
+  theApplication.Run();
+
 	long t_run_start = my_time();
 
   if (mpiRank == 0)
   {
-    if (clientserver)
     {
-      char hn[256];
-      gethostname(hn, 256);
-      cerr << "root is on host: " << hn << endl;
-      cs.setup_server();
-      cerr << "connection ok" << endl;
-    }
+        if (clientserver)
+        {
+          char hn[256];
+          gethostname(hn, 256);
+          cerr << "root is on host: " << hn << endl;
+          cs.setup_server();
+          cerr << "connection ok" << endl;
+        }
 
-    RendererP theRenderer = Renderer::NewP();
+        RendererP theRenderer = Renderer::NewP();
 
-    rapidjson::Document *doc = GetTheApplication()->OpenInputState(statefile);
+        rapidjson::Document *doc = GetTheApplication()->OpenInputState(statefile);
 
-    theRenderer->LoadStateFromDocument(*doc);
+        theRenderer->LoadStateFromDocument(*doc);
 
-    vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
-    for (auto c : theCameras)
-      c->Commit();
+        vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
+        for (auto c : theCameras)
+          c->Commit();
 
-    DatasetsP theDatasets = Datasets::NewP();
-    theDatasets->LoadFromJSON(*doc);
-    theDatasets->Commit();
+        DatasetsP theDatasets = Datasets::NewP();
+        theDatasets->LoadFromJSON(*doc);
+        theDatasets->Commit();
 
-    vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
-    for (auto v : theVisualizations)
-    {
-        v->Commit(theDatasets);
-    }
-
-    vector<RenderingSetP> theRenderingSets;
-
-    RenderingSetP rs = RenderingSet::NewP();
-    theRenderingSets.push_back(rs);
-
-    int index = 0, k = 0;
-    for (auto c : theCameras)
+        vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
         for (auto v : theVisualizations)
         {
-            if (skip && (k % skip) != 0)
-						{
-							std::cerr << "S";
-              continue;
-						}
+            v->Commit(theDatasets);
+        }
 
-            if (rs->GetNumberOfRenderings() >= maxConcurrentRenderings)
+        vector<RenderingSetP> theRenderingSets;
+
+        RenderingSetP rs = RenderingSet::NewP();
+        theRenderingSets.push_back(rs);
+
+        int index = 0, k = 0;
+        for (auto c : theCameras)
+            for (auto v : theVisualizations)
             {
-              rs = RenderingSet::NewP();
-              theRenderingSets.push_back(rs);
+                if (skip && (k % skip) != 0)
+                {
+                  std::cerr << "S";
+                  continue;
+                }
+
+                if (rs->GetNumberOfRenderings() >= maxConcurrentRenderings)
+                {
+                  rs = RenderingSet::NewP();
+                  theRenderingSets.push_back(rs);
+                }
+
+                RenderingP theRendering = Rendering::NewP();
+                theRendering->SetTheOwner(index++ % mpiSize );
+                theRendering->SetTheSize(width, height);
+                theRendering->SetTheCamera(c);
+                theRendering->SetTheDatasets(theDatasets);
+                theRendering->SetTheVisualization(v);
+                theRendering->Commit();
+                rs->AddRendering(theRendering);
+
+                k ++;
             }
 
-            RenderingP theRendering = Rendering::NewP();
-            theRendering->SetTheOwner(index++ % mpiSize );
-            theRendering->SetTheSize(width, height);
-            theRendering->SetTheCamera(c);
-            theRendering->SetTheDatasets(theDatasets);
-            theRendering->SetTheVisualization(v);
-            theRendering->Commit();
-            rs->AddRendering(theRendering);
+        cout << "index = " << index << endl;
 
-            k ++;
-        }
+        rs->Commit();
 
-    cout << "index = " << index << endl;
+        theApplication.SyncApplication();
 
-    rs->Commit();
+        long t_rendering_start = my_time();
 
-    theApplication.SyncApplication();
-
-		long t_rendering_start = my_time();
-
-    for (auto rs : theRenderingSets)
-    {
-			long t0 = my_time();
-      cout << "render start" << endl;
-
-			rs->Commit();
-      theRenderer->Render(rs);
-
-#if 1
-#ifdef GXY_PRODUCE_STATUS_MESSAGES
-      while (rs->Busy())
-      {
-        rs->DumpState();
-        sleep(1);
-      }
-#else
-      if (clientserver)
-      {
-        std::cerr << "Renderer running" << endl;
-
-        char c;
-        while (read(cs.get_socket(), &c, 1) > 0)
+        for (auto rs : theRenderingSets)
         {
-#ifdef GXY_PRODUCE_STATUS_MESSAGES
-          if (c == 's') { cerr << "got s" << endl; rs->DumpState(); }
-#endif
-          if (c == 'q') break;
+          long t0 = my_time();
+          cout << "render start" << endl;
+
+          rs->Commit();
+          theRenderer->Render(rs);
+
+    #if 1
+    #ifdef GXY_PRODUCE_STATUS_MESSAGES
+          while (rs->Busy())
+          {
+            rs->DumpState();
+            sleep(1);
+          }
+    #else
+          if (clientserver)
+          {
+            std::cerr << "Renderer running" << endl;
+
+            char c;
+            while (read(cs.get_socket(), &c, 1) > 0)
+            {
+    #ifdef GXY_PRODUCE_STATUS_MESSAGES
+              if (c == 's') { cerr << "got s" << endl; rs->DumpState(); }
+    #endif
+              if (c == 'q') break;
+            }
+          }
+    #endif
+    #endif
+
+          rs->WaitForDone();
+
+          rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image");
+
+          long t1 = my_time();
+          cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds" << endl;
         }
-      }
-#endif
-#endif
 
-      rs->WaitForDone();
-
-      rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image");
-
-			long t1 = my_time();
-			cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds" << endl;
+        long t_done = my_time();
+        cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
     }
-
-		long t_done = my_time();
-		cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
 
     theApplication.QuitApplication();
   }
 
   theApplication.Wait();
+
+  std::cerr << "done\n";
+  
 }
