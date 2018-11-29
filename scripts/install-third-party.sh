@@ -19,9 +19,10 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
+
 if [ "x$1" != "x" ]; then
-	echo "usage: prep-third-party.sh"
-	echo "This script will init and update submodules, download ispc, and apply patches to the third-party libraries."
+	echo "usage: install-third-party.sh"
+	echo "This script will build and install the third-party libraries for Galaxy's use assuming reasonable defaults."
 	exit 1
 fi
 
@@ -32,58 +33,57 @@ function fail
 }
 
 GXY_ROOT=$PWD
-GXY_DONE_TAG=".gxy_third_party_prep_done"
+GXY_PREP_SCRIPT=prep-third-party.sh
+GXY_DONE_TAG=".gxy_third_party_installed"
+CMAKE_BIN=`which cmake`
+
+if [ -f ${GXY_ROOT}/install-third-party.sh ]; then
+	# running from script dir, help a user out
+	GXY_ROOT=${PWD}/..
+fi
+
 if [ ! -d ${GXY_ROOT}/third-party ]; then
 	fail "Please run this script from the root directory of the Galaxy repository."
 fi
 
 if [ -f ${GXY_ROOT}/${GXY_DONE_TAG} ]; then
-	echo "third-party libraries already prepped!"
+	echo "Galaxy third-party libraries already built and installed!"
 	exit 0
 fi
 
-echo "initializing submodules..."
-git submodule --quiet init
-if [ $? != 0 ]; then
-	fail "submodule init returned error code $?"
+if [ ! -x ${CMAKE_BIN} ]; then
+	fail "Could not find or run cmake. Please make sure CMake is installed and on your \$PATH."
 fi
 
-echo "updating submodules..."
-git submodule --quiet update
-if [ $? != 0 ]; then
-	fail "submodule update returned error code $?"
+# ensure third-party libraries are prepped
+# the prep script should bail if libs are already prepped
+if [ ! -x ${GXY_ROOT}/scripts/${GXY_PREP_SCRIPT} ]; then 
+	fail "Could not run the third-pary prep script. Please make sure ${GXY_PREP_SCRIPT} is present and executable."
+else
+	${GXY_ROOT}/scripts/${GXY_PREP_SCRIPT}
 fi
 
-echo "checking ispc..."
-cd ${GXY_ROOT}/third-party/ispc
-./get-ispc.sh
 if [ $? != 0 ]; then
-	fail
+	fail "Could not prep the third-party libraries. Bailing out."
 fi
 
-echo "applying patches..."
-PATCH_DIR=${GXY_ROOT}/third-party/patches
-cd ${PATCH_DIR}
-for patch in *.patch ; do
-	PATCH_TARGET=`echo ${patch} | sed -e 's/\.patch//'`
-	if [ ! -d ${GXY_ROOT}/third-party/${PATCH_TARGET} ]; then
-		fail "could not find ${PATCH_TARGET} at ${GXY_ROOT}/third-party/${PATCH_TARGET}"
-	fi
-	echo "  patching ${PATCH_TARGET} ..."
-	cd ${GXY_ROOT}/third-party/${PATCH_TARGET}
-	git apply ${PATCH_DIR}/${patch}
+cd ${GXY_ROOT}/third-party
+for tp_lib_dir in embree ospray rapidjson; do
+	echo "building ${tp_lib_dir}..."
+	pushd $tp_lib_dir
+	mkdir build
+	cd build
+	${CMAKE_BIN} .. && make install
 	if [ $? != 0 ]; then
-		fail "patch application for ${PATCH_TARGET} returned error code $?"
+		fail "Build failed for ${tp_lib_dir}."
 	fi
+	popd
 done
 
 echo "done!"
 cd ${GXY_ROOT}
 touch ${GXY_ROOT}/${GXY_DONE_TAG}
 exit 0
-
-
-
 
 
 
