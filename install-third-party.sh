@@ -1,17 +1,83 @@
-#! /bin/bash
+#!/bin/bash
+## ========================================================================== ##
+## Copyright (c) 2014-2018 The University of Texas at Austin.                 ##
+## All rights reserved.                                                       ##
+##                                                                            ##
+## Licensed under the Apache License, Version 2.0 (the "License");            ##
+## you may not use this file except in compliance with the License.           ##
+## A copy of the License is included with this software in the file LICENSE.  ##
+## If your copy does not contain the License, you may obtain a copy of the    ##
+## License at:                                                                ##
+##                                                                            ##
+##     https://www.apache.org/licenses/LICENSE-2.0                            ##
+##                                                                            ##
+## Unless required by applicable law or agreed to in writing, software        ##
+## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  ##
+## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           ##
+## See the License for the specific language governing permissions and        ##
+## limitations under the License.                                             ##
+##                                                                            ##
+## ========================================================================== ##
 
-echo INSTALL-THIRD-PARTY $*
-tpdir=$1/third-party
-shift
 
-if test ! -e $tpdir ; then
-  mkdir $tpdir
+if [ "x$1" != "x" ]; then
+	echo "usage: install-third-party.sh"
+	echo "This script will build and install the third-party libraries for Galaxy's use assuming reasonable defaults."
+	exit 1
 fi
 
-for i in $* ; do
-  for j in lib lib64 ; do
-    if test -e $i/$j ; then
-      cp -R $i/$j/*  $tpdir
-    fi
-  done
+function fail
+{
+	echo "ERROR: $1"
+	exit 1
+}
+
+GXY_ROOT=$PWD
+GXY_PREP_SCRIPT=${GXY_ROOT}/prep-third-party.sh
+GXY_DONE_TAG=".gxy_third_party_installed"
+CMAKE_BIN=`which cmake`
+
+if [ ! -d ${GXY_ROOT}/third-party ]; then
+	fail "Please run this script from the root directory of the Galaxy repository."
+fi
+
+if [ -f ${GXY_ROOT}/${GXY_DONE_TAG} ]; then
+	echo "third-party libraries already built and installed!"
+	exit 0
+fi
+
+if [ ! -x ${CMAKE_BIN} ]; then
+	fail "Could not find or run cmake. Please make sure CMake is installed and on your \$PATH."
+fi
+
+# ensure third-party libraries are prepped
+# the prep script should bail if libs are already prepped
+if [ ! -x ${GXY_PREP_SCRIPT} ]; then 
+	fail "Could not run the third-pary prep script. Please make sure ${GXY_PREP_SCRIPT} is present and executable."
+else
+	${GXY_PREP_SCRIPT}
+fi
+
+if [ $? != 0 ]; then
+	fail "Could not prep the third-party libraries. Bailing out."
+fi
+
+cd ${GXY_ROOT}/third-party
+for tp_lib_dir in embree ospray rapidjson; do
+	echo "building ${tp_lib_dir}..."
+	cd $tp_lib_dir
+	mkdir build
+	cd build
+	${CMAKE_BIN} .. && make install
+	if [ $? != 0 ]; then
+		fail "Build failed for ${tp_lib_dir}."
+	fi
 done
+
+echo "done!"
+cd ${GXY_ROOT}
+touch ${GXY_ROOT}/${GXY_DONE_TAG}
+exit 0
+
+
+

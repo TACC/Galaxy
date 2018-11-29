@@ -32,8 +32,14 @@ function fail
 }
 
 GXY_ROOT=$PWD
+GXY_DONE_TAG=".gxy_third_party_prep_done"
 if [ ! -d ${GXY_ROOT}/third-party ]; then
 	fail "Please run this script from the root directory of the Galaxy repository."
+fi
+
+if [ -f ${GXY_ROOT}/${GXY_DONE_TAG} ]; then
+	echo "third-party libraries already prepped!"
+	exit 0
 fi
 
 echo "initializing submodules..."
@@ -73,6 +79,7 @@ done
 
 echo "done!"
 cd ${GXY_ROOT}
+touch ${GXY_ROOT}/${GXY_DONE_TAG}
 exit 0
 
 
