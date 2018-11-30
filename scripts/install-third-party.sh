@@ -73,7 +73,7 @@ for tp_lib_dir in embree ospray rapidjson; do
 	pushd $tp_lib_dir
 	mkdir build
 	cd build
-	${CMAKE_BIN} .. && make install
+	${CMAKE_BIN} .. && make -j 4 install
 	if [ $? != 0 ]; then
 		fail "Build failed for ${tp_lib_dir}."
 	fi
