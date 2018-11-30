@@ -1,0 +1,28 @@
+language: cpp
+os: 
+  - linux
+  - osx
+branches:
+  only:
+    - travis-ci
+compiler:
+  - clang
+  - gcc
+
+addons:
+  apt:
+    packages: 
+      - vtk
+  homebrew:
+    taps: 
+      - homebrew/homebrew-science
+    packages: 
+      - vtk
+
+before_install:
+  - scripts/install-third-party.sh
+
+install:
+  - mkdir build
+  - cd build
+  - cmake .. && make install
