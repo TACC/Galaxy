@@ -60,6 +60,8 @@ float X0, Y0;
 float X1, Y1;
 int button = -1;
 
+bool window_ready = false;
+
 float age = 3.0;
 float fadeout = 1.0;
 
@@ -84,11 +86,28 @@ float scaling;
 ClientWindow *theClientWindow;
 CameraIF theCamera;
 
+int mpiRank = 0, mpiSize = 1;
+#include "Debug.h"
+
 void
 quit()
 {
   cerr << "quit\n";
   exit(0);
+}
+
+void
+Render()
+{
+  if (window_ready)
+  {
+    string s("render");
+    if (! theClientWindow->GetSocket()->CSendRecv(s))
+    {
+      cerr << "render request send failed\n";
+      exit(1);
+    }
+  }
 }
 
 void
@@ -115,23 +134,22 @@ LoadState(string sfile)
 
   // cerr << "reply to sending JSON: " << s << "\n";
 
-  s = "render";
-  if (! theClientWindow->GetSocket()->CSendRecv(s))
-  {
-    cerr << "render request send failed\n";
-    exit(1);
-  }
-
-  // cerr << "reply to sending render request: " << s << "\n";
+  Render();
 }
+
+float *xyzzy = NULL;
 
 void
 draw(void)
 {
   float *pixels = theClientWindow->GetPixels();
-
 	if (pixels)
 	{
+    if (xyzzy == NULL)
+      xyzzy = pixels;
+    else if (xyzzy != pixels)
+      std::cerr << "PIXELS ERROR!\n";
+
 		float *p = pixels + 3;
 		for (int i = 0; i < (theClientWindow->GetWidth()*theClientWindow->GetHeight()); i++)
 			*p = 1.0, p += 4;
@@ -318,6 +336,9 @@ glut_loop()
   glOrtho(-1, 1, -1, 1, -1, 1);
   glMatrixMode(GL_MODELVIEW);
   glRasterPos2i(-1, -1);
+
+  window_ready = true;
+
   glutMainLoop();
 }
 
@@ -385,12 +406,7 @@ render_thread(void *d)
 				}
 			}
 
-      string s("render");
-      if (! theClientWindow->GetSocket()->CSendRecv(s))
-      {
-        cerr << "render request send failed\n";
-        exit(1);
-      }
+      Render();
 
       // cerr << "reply to sending render request: " << s << "\n";
       render_one = false;
@@ -412,8 +428,9 @@ syntax(char *a)
 {
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "options:" << endl;
-  cerr << "  -H host    host (localhost)" << endl;
-  cerr << "  -P port    port (5001)" << endl;
+  cerr << "  -H host          host (localhost)" << endl;
+  cerr << "  -P port          port (5001)" << endl;
+  cerr << "  -D[which]        run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
   cerr << "  -so sofile       interface SO (libviewer-if.so)\n";
   cerr << "  -A               wait for attachment" << endl;
   cerr << "  -s w h           image size (512 x 512)" << endl;
@@ -430,7 +447,7 @@ main(int argc, char *argv[])
   bool dbg = false, atch = false;
   string host = "localhost";
   string statefile = "";
-  string sofile = "libviewer-if.so";
+  string sofile = "libviewerlib.so";
   int port = 5001;
 
 	char *dbgarg;
@@ -442,6 +459,7 @@ main(int argc, char *argv[])
   {
     if (!strcmp(argv[i], "-a")) { age = atof(argv[++i]), fadeout = atof(argv[++i]); }
     else if (!strcmp(argv[i], "-H")) host = argv[++i];
+    else if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
 		else if (!strncmp(argv[i], "-D", 2)) { dbg = true, dbgarg = argv[i] + 2; break; }
     else if (!strcmp(argv[i], "-O")) { mode = OBJECT_CENTER; }
@@ -460,6 +478,8 @@ main(int argc, char *argv[])
 
   if (statefile == "")
     syntax(argv[0]);
+
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
   theClientWindow = new ClientWindow(width, height);
   theClientWindow->Connect(host.c_str(), port);
