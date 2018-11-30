@@ -298,6 +298,12 @@ ClientWindow::AddPixels(Pixel *p, int n, int frame)
 
 		for (int i = 0; i < n; i++, p++, this_frame_pixel_count++)
 		{
+      if (p->x < 0 || p->x >= width || p->y < 0 || p->y >= height)
+      {
+        std::cerr << "pixel error: " << p->x << " " << p->y << "\n";
+        exit(1);
+      }
+
 			size_t offset = p->y*width + p->x;
 			float *pix = pixels + (offset<<2);
 			float *npix = negative_pixels + (offset<<2);
