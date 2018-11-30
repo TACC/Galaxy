@@ -9,15 +9,20 @@ compiler:
   - clang
   - gcc
 
+git:
+  submodules: false # submodule init handled by prep-third-party.sh
+
 addons:
   apt:
     packages: 
-      - vtk
   homebrew:
     taps: 
       - homebrew/homebrew-science
     packages: 
       - vtk
+
+before_script:
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cmake .. && sudo make -j 8 install; fi
 
 before_install:
   - scripts/install-third-party.sh
