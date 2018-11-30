@@ -34,7 +34,7 @@ function fail
 
 GXY_ROOT=$PWD
 GXY_PREP_SCRIPT=prep-third-party.sh
-GXY_DONE_TAG=".gxy_third_party_installed"
+GXY_DONE_TAG="gxy_third_party_installed"
 CMAKE_BIN=`which cmake`
 
 if [ -f ${GXY_ROOT}/install-third-party.sh ]; then
@@ -46,7 +46,7 @@ if [ ! -d ${GXY_ROOT}/third-party ]; then
 	fail "Please run this script from the root directory of the Galaxy repository."
 fi
 
-if [ -f ${GXY_ROOT}/${GXY_DONE_TAG} ]; then
+if [ -f ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG} ]; then
 	echo "Galaxy third-party libraries already built and installed!"
 	exit 0
 fi
@@ -82,7 +82,8 @@ done
 
 echo "done!"
 cd ${GXY_ROOT}
-touch ${GXY_ROOT}/${GXY_DONE_TAG}
+mkdir -p ${GXY_ROOT}/.galaxy
+touch ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
 exit 0
 
 

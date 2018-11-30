@@ -32,7 +32,7 @@ function fail
 }
 
 GXY_ROOT=$PWD
-GXY_DONE_TAG=".gxy_third_party_prep_done"
+GXY_DONE_TAG="gxy_third_party_prep_done"
 
 if [ -f ${GXY_ROOT}/prep-third-party.sh ]; then
 	# running from script dir, help a user out
@@ -43,7 +43,7 @@ if [ ! -d ${GXY_ROOT}/third-party ]; then
 	fail "Please run this script from the root directory of the Galaxy repository."
 fi
 
-if [ -f ${GXY_ROOT}/${GXY_DONE_TAG} ]; then
+if [ -f ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG} ]; then
 	echo "Galaxy third-party libraries already prepped!"
 	exit 0
 fi
@@ -85,7 +85,8 @@ done
 
 echo "done!"
 cd ${GXY_ROOT}
-touch ${GXY_ROOT}/${GXY_DONE_TAG}
+mkdir -p ${GXY_ROOT}/.galaxy
+touch ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
 exit 0
 
 
