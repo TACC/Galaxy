@@ -35,32 +35,33 @@ MultiServer::start(void *d)
   char *buf; int sz;
   skt.CRecv(buf, sz);
 
-  void *handle = GetTheApplication()->LoadSO(buf);
-  if (! handle)
+  void *dl_handle = GetTheApplication()->LoadSO(buf);
+  if (! dl_handle)
   {
     std::cerr << "unable to open requested worker SO: " << buf << "\n";
+    pthread_exit(NULL);
+  }
+
+  typedef void (*server_function_t)(MultiServer *, MultiServerSocket *);
+  server_function_t server_function = (server_function_t)dlsym(dl_handle, "server");
+
+  if (! server_function)
+  {
+    std::cerr << "unable to find server in SO " << buf << ": " << dlerror() <<  "\n";
   }
   else
   {
-    typedef void (*server_function_t)(MultiServer *, MultiServerSocket *);
-    server_function_t server_function = (server_function_t)dlsym(handle, "server");
-
-    if (! server_function)
-    {
-      std::cerr << "unable to find server in SO " << buf << ": " << dlerror() <<  "\n";
-    }
-    else
-    {
-      std::string ok("ok");
-      skt.CSend(ok.c_str(), ok.length()+1);
-      server_function(a->srvr, &skt);
-    }
+    std::string ok("ok");
+    skt.CSend(ok.c_str(), ok.length()+1);
+    server_function(a->srvr, &skt);
   }
 
   free(buf);
   delete a;
 
-  pthread_exit(NULL);
+  std::cerr << "dropping handle\n";
+  dlclose(dl_handle);
+
 }
 
 void *
