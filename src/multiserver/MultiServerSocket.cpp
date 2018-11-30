@@ -18,7 +18,8 @@ using namespace gxy;
 
 MultiServerSocket::MultiServerSocket(const char *host, int port)
 {
-  pthread_mutex_init(&lock, NULL);
+  pthread_mutex_init(&c_lock, NULL);
+  pthread_mutex_init(&d_lock, NULL);
 
   struct hostent *server;
 
@@ -50,7 +51,8 @@ MultiServerSocket::MultiServerSocket(const char *host, int port)
 
 MultiServerSocket::~MultiServerSocket()
 {
-  pthread_mutex_destroy(&lock);
+  pthread_mutex_destroy(&c_lock);
+  pthread_mutex_destroy(&d_lock);
 }
 
 int
@@ -144,7 +146,7 @@ MultiServerSocket::Recv(int fd, char*& b, int& n)
   int nn = n;
   while (nn)
   {
-    int t = read(fd, bb, n);
+    int t = read(fd, bb, nn);
     if (t <= 0)
       return false;
 
