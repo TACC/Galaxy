@@ -11,6 +11,15 @@ compiler:
 git:
   submodules: false # submodule init handled by prep-third-party.sh
 
+cache:
+  directories:
+    - third-party/ispc
+    - third-party/embree
+    - third-party/ospray
+    - third-party/rapidjson
+    - .gxy_third_party_prep_done
+    - .gxy_third_party_installed
+
 addons:
   apt:
     packages:
@@ -26,11 +35,12 @@ addons:
       - open-mpi
       - freeglut
 
-before_install:
+install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cmake .. && sudo make -j 8 install; fi
 #  - scripts/install-third-party.sh
 
-install:
+script:
   - mkdir build
   - cd build
+  - ls /usr/local/Cellar/freeglut/3.0.0
 #  - cmake .. && make install
