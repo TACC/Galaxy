@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#include <ospray/ospray.h>
+
 #include <string.h>
 
 #include "rapidjson/document.h"
@@ -39,6 +41,8 @@ class RenderingState
 public:
   RenderingState(MultiServer *srvr, MultiServerSocket *skt) : srvr(srvr), skt(skt)
   {
+    first = true;
+
     datasets = Datasets::Cast(GetTheApplication()->GetGlobal("global datasets"));
     if (! datasets)
     {
@@ -64,6 +68,14 @@ public:
     renderingSet = RenderingSet::NewP();
     renderingSet->AddRendering(rendering);
     renderingSet->Commit();
+
+#if 0
+    renderer->Commit();
+    visualization->Commit(datasets);
+    camera->Commit();
+    rendering->Commit();
+    renderingSet->Commit();
+#endif
   }
 
   DatasetsP        GetTheDatasets() { return datasets; }
@@ -75,13 +87,16 @@ public:
 
   void render()
   {
-#if 0
-    renderer->Commit();
-    visualization->Commit(datasets);
+    if (first)
+    {
+      renderer->Commit();
+      visualization->Commit(datasets);
+      rendering->Commit();
+      renderingSet->Commit();
+      first = false;
+    }
+
     camera->Commit();
-    rendering->Commit();
-    renderingSet->Commit();
-#endif
 
     renderer->Render(renderingSet);
     std::string ok("render ok");
@@ -89,6 +104,8 @@ public:
   }
 
 private:
+  bool first;
+
   MultiServer       *srvr;
   MultiServerSocket *skt;
 
@@ -117,10 +134,7 @@ server(MultiServer *srvr, MultiServerSocket *skt)
   {
     char *buf; int sz;
     if (! skt->CRecv(buf, sz))
-    {
-      cerr << "receive failed\n";
       break;
-    }
 
     if (!strncmp(buf, "json", 4))
     {
@@ -195,12 +209,13 @@ server(MultiServer *srvr, MultiServerSocket *skt)
     free(buf);
   }
 
-  cerr << "worker exits\n";
   return true;
 }
 
 extern "C" void
 init()
 {
+  ospInit(0, NULL);
+  Renderer::Initialize();
   ServerRendering::RegisterClass();
 }
