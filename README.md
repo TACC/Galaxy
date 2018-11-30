@@ -28,6 +28,8 @@ Galaxy has the following components associated in the `third-party` subdirectory
   * [Intel OSPRay][13]
   * [rapidjson][16]
 
+*NOTE:* the third-party component locations are intended for development builds of Galaxy. If you intend to install Galaxy for general use, you should install Embree, OSPRay and rapidjson into a generally-accessible location and use those locations in the Galaxy build.
+
 ## Installing Galaxy associated dependencies
 Prior to building Galaxy itself, you should ensure that all the general dependencies are installed (we recommend your humble OS package manager). Once those are in place, you're ready to install the dependencies in `third-party`. 
 
