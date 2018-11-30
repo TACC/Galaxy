@@ -1,6 +1,6 @@
 language: cpp
 os: 
-  - linux
+  #- linux
   - osx
 branches:
   only:
@@ -15,12 +15,14 @@ addons:
   apt:
     packages:
       - libtbb-dev
+      - libboost-all-dev
   homebrew:
     taps: 
       - homebrew/homebrew-science
     packages: 
       - vtk
       - tbb
+      - boost
 
 before_install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cmake .. && sudo make -j 8 install; fi
