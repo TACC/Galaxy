@@ -108,7 +108,6 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
 	}
 
 	int shadow_ray_knt = nOutputRays - ao_ray_knt;
-	//cerr << nOutputRays << " output rays" << endl;
 
   if (nOutputRays)
   {

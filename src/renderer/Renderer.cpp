@@ -265,50 +265,38 @@ Renderer::HandleTerminatedRays(RayList *raylist, int *classification)
 
     if (terminated_count == 0) return;
 
-    Pixel *local_pixels = (rendering->IsLocal()) ? new Pixel[terminated_count] : NULL;
-
-    Renderer::SendPixelsMsg *spmsg = (!rendering->IsLocal()) ? 
-        new Renderer::SendPixelsMsg(rendering, renderingSet,
-        raylist->GetFrame(), terminated_count) : NULL;
-
-    Pixel *p = local_pixels;
-    for (int i = 0; i < raylist->GetRayCount(); i++)
+    if (rendering->IsLocal())
     {
+      Pixel *local_pixels = new Pixel[terminated_count];
+
+      Pixel *p = local_pixels;
+      for (int i = 0; i < raylist->GetRayCount(); i++)
         if (classification[i] == Renderer::TERMINATED)
         {
-            if (rendering->IsLocal())
-            {
-                p->x = raylist->get_x(i);
-                p->y = raylist->get_y(i);
-                p->r = raylist->get_r(i);
-                p->g = raylist->get_g(i);
-                p->b = raylist->get_b(i);
-                p->o = raylist->get_o(i);
-                p++;
-            }
-            else
-            {
-                spmsg->StashPixel(raylist, i);
-            }
+          p->x = raylist->get_x(i);
+          p->y = raylist->get_y(i);
+          p->r = raylist->get_r(i);
+          p->g = raylist->get_g(i);
+          p->b = raylist->get_b(i);
+          p->o = raylist->get_o(i);
+          p++;
         }
-   }
 
-    if (spmsg)
-    {
-			if (renderingSet->IsActive(raylist->GetFrame()))
-      {
-          spmsg->Send(rendering->GetTheOwner());
-      }
-      else
-      {
-          delete spmsg;
-      }
+      rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
+      delete[] local_pixels;
     }
-
-    if (local_pixels)
+    else
     {
-        rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
-        delete[] local_pixels;
+      Renderer::SendPixelsMsg *spmsg = new Renderer::SendPixelsMsg(rendering, renderingSet, raylist->GetFrame(), terminated_count);
+
+      for (int i = 0; i < raylist->GetRayCount(); i++)
+        if (classification[i] == Renderer::TERMINATED)
+          spmsg->StashPixel(raylist, i);
+
+			if (renderingSet->IsActive(raylist->GetFrame()))
+        spmsg->Send(rendering->GetTheOwner());
+
+      delete spmsg;
     }
 }
 
@@ -557,7 +545,7 @@ public:
 			// Now we sort the rays based on the classification.   If TERMINATED
 			// and the FB is local,  just do it.  Otherwise, set up a message buffer.
 
-            renderer->HandleTerminatedRays(raylist, classification);
+      renderer->HandleTerminatedRays(raylist, classification);
 
 			for (int i = 0; i < raylist->GetRayCount(); i++)
 			{
@@ -838,10 +826,10 @@ Renderer::RenderMsg::Action(int sender)
   unsigned char *p = (unsigned char *)get();
   Key renderer_key = *(Key *)p;
   p += sizeof(Key);
- 
+
   RendererP renderer = Renderer::GetByKey(renderer_key);
   p = renderer->Deserialize(p);
-  
+
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
   renderer->local_render(renderer, rs);

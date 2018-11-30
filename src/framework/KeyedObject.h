@@ -37,6 +37,7 @@
 namespace gxy
 {
 
+
 OBJECT_POINTER_TYPES(KeyedObject)
 
 typedef int  KeyedObjectClass;
@@ -138,6 +139,19 @@ public:
   Key key;
 };
 
+#ifdef GXY_OBJECT_REF_LIST
+
+// see doc in KeyedObject.cpp to understand what these are for
+
+extern std::vector<KeyedObjectP> object_lists[32];
+extern void aol(KeyedObjectP& p);
+
+#else
+
+#define aol(j)
+
+#endif
+
 //! Factory class to create and maintain KeyedObject derived objects
 /*! Galaxy maintains a global registry of objects in order to route Work to the appropriate process. 
  * In order to be tracked in the registry, the object should derive from KeyedObject and call the
@@ -181,6 +195,7 @@ public:
   {
     Key k = keygen();
     KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
+    aol(kop);
     add(kop);
 
     NewMsg msg(c, k);
@@ -197,6 +212,7 @@ public:
   KeyedObjectP New(KeyedObjectClass c, Key k)
   {
     KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
+    aol(kop);
     add(kop);
 
     return kop;
@@ -208,6 +224,9 @@ public:
     return class_names[c];
   }
 
+  //! drop all objects held by the keymap
+  void Clear();
+
   //! return a pointer to the registered KeyedObject corresponding to a given Key
   /*! \param k the key for the desired KeyedObject
    * \returns a pointer to the requested KeyedObject or `NULL` if not found
@@ -217,7 +236,7 @@ public:
   //! add a KeyedObject to the local registry
   /*! \param p a pointer to the KeyedObject to add
    */
-  void add(KeyedObjectP p);
+  void add(KeyedObjectP& p);
 
   //! print the local KeyedObject registry to std::cerr
 	void Dump();
@@ -328,6 +347,7 @@ public:                                                                         
   static typ ## P NewP()                                                                        \
   {                                                                                             \
     KeyedObjectP kop = GetTheKeyedObjectFactory()->New(ClassType);                              \
+    aol(kop);                                                                                   \
     return Cast(kop);                                                                           \
   }                                                                                             \
                                                                                                 \
@@ -335,6 +355,7 @@ public:                                                                         
   {                                                                                             \
     typ::ClassType = GetTheKeyedObjectFactory()->register_class(typ::_New, std::string(#typ));  \
   }                                                                                             
+
 
 } // namespace gxy
 

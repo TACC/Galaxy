@@ -55,7 +55,6 @@ Volume::Register()
 
 Volume::~Volume()
 {
-  cerr << "deleted a volume\n";
 	if (vtkobj) vtkobj->Delete();
 	if (samples) free(samples);
 }
