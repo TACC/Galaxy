@@ -17,18 +17,20 @@ addons:
       - libtbb-dev
       - libboost-all-dev
       - mpi-default-dev
+      - freeglut3-dev
   homebrew:
     packages: 
       - vtk
       - tbb
       - boost
       - open-mpi
+      - freeglut
 
 before_install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cmake .. && sudo make -j 8 install; fi
-  - scripts/install-third-party.sh
+#  - scripts/install-third-party.sh
 
 install:
   - mkdir build
   - cd build
-  - cmake .. && make install
+#  - cmake .. && make install
