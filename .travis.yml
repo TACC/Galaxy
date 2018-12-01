@@ -39,8 +39,6 @@ install:
   - scripts/install-third-party.sh
 
 script:
-  - ls -al
   - mkdir build
   - cd build
-  - ls /usr/local/Cellar/freeglut/3.0.0/lib
-#  - if [ $TRAVIS_OS_NAME == "osx" ]; then cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib .. && make install
+  - if [ $TRAVIS_OS_NAME == "osx" ]; then cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib .. && make install
