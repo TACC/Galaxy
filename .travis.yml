@@ -28,6 +28,7 @@ addons:
       - libboost-all-dev
       - mpi-default-dev
       - freeglut3-dev
+      - libxrandr-dev
   homebrew:
     packages: 
       - vtk
