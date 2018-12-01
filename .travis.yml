@@ -18,6 +18,7 @@ cache:
     - third-party/embree
     - third-party/ospray
     - third-party/rapidjson
+    - third-party/VTK-8.1.2
 
 addons:
   apt:
@@ -35,12 +36,12 @@ addons:
       - freeglut
 
 install:
-  - if [ $TRAVIS_OS_NAME == "linux" ]; then wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake .. && sudo make -j 8 install; fi
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && sudo make -j 8 install; popd; fi
   - scripts/install-third-party.sh
 
 script:
   - mkdir build
   - cd build
   - if [ $TRAVIS_OS_NAME == "osx" ]; then cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib .. && make install; fi
-  - if [ $TRAVIS_OS_NAME == "linux" ]; then cmake .. && make install; fi
+ # - if [ $TRAVIS_OS_NAME == "linux" ]; then cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 .. && make install; fi
 
