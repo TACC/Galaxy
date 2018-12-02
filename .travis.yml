@@ -30,6 +30,7 @@ addons:
       - freeglut3-dev
       - libxrandr-dev
       - libxinerama-dev
+      - libxcursor-dev
   homebrew:
     packages: 
       - vtk
@@ -39,7 +40,7 @@ addons:
       - freeglut
 
 install:
-  - if [ $TRAVIS_OS_NAME == "linux" ] && [ ! -f third-party/VTK-8.1.2.tar.gz ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && sudo make -j 8 install; popd; fi
+  - if [ $TRAVIS_OS_NAME == "linux" ] && [ ! -d third-party/VTK-8.1.2 ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && sudo make -j 8 install; popd; fi
   - scripts/install-third-party.sh
 
 script:
