@@ -68,7 +68,7 @@ if [ $? != 0 ]; then
 fi
 
 cd ${GXY_ROOT}/third-party
-for tp_lib_dir in embree  rapidjson; do
+for tp_lib_dir in embree ospray rapidjson; do
 	echo "building ${tp_lib_dir}..."
 	pushd $tp_lib_dir
 	mkdir build
@@ -83,7 +83,7 @@ done
 echo "done!"
 cd ${GXY_ROOT}
 mkdir -p ${GXY_ROOT}/.galaxy
-#touch ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
+touch ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
 exit 0
 
 
