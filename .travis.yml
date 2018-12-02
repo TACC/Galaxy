@@ -47,5 +47,5 @@ script:
   - mkdir build
   - cd build
   - if [ $TRAVIS_OS_NAME == "osx" ]; then cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib .. && make install; fi
-  - if [ $TRAVIS_OS_NAME == "linux" ]; then cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 -D CMAKE_CXX_FLAGS:STRING="-fPIC" -D CMAKE_C_FLAGS:STRING="-fPIC" .. && make install; fi
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 -D CMAKE_CXX_FLAGS:STRING="-fPIC" -D CMAKE_C_FLAGS:STRING="-fPIC" .. && grep GLUT CMakeCache.txt ; ls -l /usr/include ; fi #&& make install; fi
 
