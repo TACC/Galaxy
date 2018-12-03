@@ -32,6 +32,8 @@ addons:
       - libxrandr-dev
       - libxinerama-dev
       - libxcursor-dev
+      - gcc-7
+      - g++-7
   homebrew:
     packages: 
       - vtk
