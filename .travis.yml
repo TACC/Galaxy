@@ -2,7 +2,7 @@ language: cpp
 dist: xenial # get a semi-modern linux
 os: 
   - linux
-  #- osx
+  - osx
 branches:
   only:
     - travis-ci
@@ -42,20 +42,21 @@ addons:
       - boost
       - open-mpi
       - freeglut
+      - gcc
 
-# before_install:
-#   - export CC=gcc-7; export CC_FOR_BUILD=gcc-7
-#   - export CXX=g++-7; export CXX_FOR_BUILD=g++-7
+before_install:
+  - export CC=gcc-7; export CC_FOR_BUILD=gcc-7
+  - export CXX=g++-7; export CXX_FOR_BUILD=g++-7
 
 install:
   - if [ $TRAVIS_OS_NAME == "linux" ] && [ ! -d third-party/VTK-8.1.2 ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && sudo make -j 8 install; popd; fi  
-  - if [ $TRAVIS_OS_NAME == "linux" ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir -p build && cd build && make clean && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && make -j 8 install; popd; fi
-  - rm -rf third-party/embree/build third-party/embree/install third-party/ospray/build third-party/ospray/install third-party/rapidjson/build third-party/rapidjson/install .galaxy/gxy_third_party_installed
+  # - if [ $TRAVIS_OS_NAME == "linux" ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir -p build && cd build && make clean && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && make -j 8 install; popd; fi
+  # - rm -rf third-party/embree/build third-party/embree/install third-party/ospray/build third-party/ospray/install third-party/rapidjson/build third-party/rapidjson/install .galaxy/gxy_third_party_installed
   - scripts/install-third-party.sh
 
 script:
   - mkdir build
   - cd build
   - if [ $TRAVIS_OS_NAME == "osx" ]; then cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib .. && make install; fi
-  - if [ $TRAVIS_OS_NAME == "linux" ]; then cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 -D CMAKE_CXX_FLAGS:STRING="-fPIC" -D CMAKE_C_FLAGS:STRING="-fPIC" -D GLUT_INCLUDE_DIR:PATH=/usr/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so .. && make VERBOSE=1 install; fi
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 -D CMAKE_CXX_FLAGS:STRING="-fPIC" -D CMAKE_C_FLAGS:STRING="-fPIC" -D GLUT_INCLUDE_DIR:PATH=/usr/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so .. && make install; fi
 
