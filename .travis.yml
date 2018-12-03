@@ -1,5 +1,5 @@
 language: cpp
-dist: bionic #xenial # get a semi-modern linux
+dist: xenial # get a semi-modern linux
 os: 
   - linux
   #- osx
@@ -24,7 +24,10 @@ cache:
 
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
+      - g++-7
       - libtbb-dev
       - libboost-all-dev
       - mpi-default-dev
