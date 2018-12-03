@@ -34,7 +34,7 @@ set(SERVERS "")
 include_directories(${GLUT_INCLUDE_DIR})
 
 add_executable(multiserver server.cpp MultiServer.cpp MultiServerSocket.cpp)
-target_link_libraries(multiserver gxy_framework)
+target_link_libraries(multiserver gxy_framework pthread dl)
 set(BINS multiserver ${BINS})
 
 add_executable(multiserver-viewer viewer.cpp ClientWindow.cpp MultiServerSocket.cpp IF.cpp)
