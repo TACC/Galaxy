@@ -42,7 +42,7 @@ addons:
       - boost
       - open-mpi
       - freeglut
-      - gcc
+      - gcc-7
 
 before_install:
   - export CC=gcc-7; export CC_FOR_BUILD=gcc-7
