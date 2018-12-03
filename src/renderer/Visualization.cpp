@@ -189,10 +189,11 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
 	}
 
 	// Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
-  // volumevis
+  // volumevis - NULL unless there's some model data
+
 
 	if (ospModel) ospRelease(ospModel);
-	ospModel = ospNewModel();
+  ospModel = NULL;
 
   void *mispc[vis.size()]; int nmispc = 0;
   void *vispc[vis.size()]; int nvispc = 0;
@@ -229,15 +230,20 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
     if (OVolume::IsA(op))
       vispc[nvispc++] = v->GetISPC();
     else if (ParticlesVis::IsA(v))
+    {
+      if (! ospModel)
+        ospModel = ospNewModel();
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
+    }
     else
       mispc[nmispc++] = v->GetISPC();
   }
 
-  ospCommit(ospModel);
+  if (ospModel)
+    ospCommit(ospModel);
    
   ispc::Visualization_commit(ispc, 
-          osp_util::GetIE(ospModel),
+          ospModel ? osp_util::GetIE(ospModel) : NULL,
           nvispc, vispc,
           nmispc, mispc,
           global_box.get_min(), global_box.get_max(),

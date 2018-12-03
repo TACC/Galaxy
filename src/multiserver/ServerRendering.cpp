@@ -60,7 +60,11 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 
     if (socket)
       socket->DSendV(ptrs, szs);
+
+    // std::cerr << "after... n = " << n << " f = " << f << "\n";
 	}
+  // else
+    // std::cerr << "skipped\n";
 
   pthread_mutex_unlock(&lock);
 }
