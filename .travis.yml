@@ -15,7 +15,7 @@ matrix:
     - os: osx
       compiler: gcc
       env:
-        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
     - os: linux
       compiler: clang
@@ -61,7 +61,7 @@ addons:
       - boost
       - open-mpi
       - freeglut
-      - gcc
+      - gcc-7
 
 before_install:
   - eval "${MATRIX_EVAL}"
