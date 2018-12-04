@@ -1,7 +1,7 @@
 language: cpp
 dist: xenial # get a semi-modern linux
 os: 
-  - linux
+  # - linux
   - osx
 branches:
   only:
@@ -42,11 +42,11 @@ addons:
       - boost
       - open-mpi
       - freeglut
-      - gcc-7
+      - gcc
 
 before_install:
-  - export CC=gcc-7; export CC_FOR_BUILD=gcc-7
-  - export CXX=g++-7; export CXX_FOR_BUILD=g++-7
+  - export CC=gcc; export CC_FOR_BUILD=gcc
+  - export CXX=g++; export CXX_FOR_BUILD=g++
 
 install:
   - if [ $TRAVIS_OS_NAME == "linux" ] && [ ! -d third-party/VTK-8.1.2 ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && sudo make -j 8 install; popd; fi  
