@@ -9,19 +9,23 @@ matrix:
   include:
     - os: osx
       compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
     - os: osx
       compiler: gcc
       env:
-        - CC=gcc-8 && CXX=g++-8
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
 
     - os: linux
       compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
     - os: linux
       compiler: gcc
       env:
-        - CC=gcc-7 && CXX=g++-7
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
@@ -59,9 +63,8 @@ addons:
       - freeglut
       - gcc
 
-# before_install:
-#   - export CC=gcc; export CC_FOR_BUILD=gcc
-#   - export CXX=g++; export CXX_FOR_BUILD=g++
+before_install:
+  - eval "${MATRIX_EVAL}"
 
 install:
   - if [ $TRAVIS_OS_NAME == "linux" ] && [ ! -d third-party/VTK-8.1.2 ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && make -j 8 install; popd; fi  
