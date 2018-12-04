@@ -12,10 +12,10 @@ matrix:
       env:
         - MATRIX_EVAL=""
 
-    - os: osx
-      compiler: gcc
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    # - os: osx
+    #   compiler: gcc
+    #   env:
+    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
     - os: linux
       compiler: clang
@@ -61,13 +61,13 @@ addons:
       - boost
       - open-mpi
       - freeglut
-      - gcc-7
+      # - gcc-7
 
 before_install:
   - eval "${MATRIX_EVAL}"
 
 install:
-  - if [ $TRAVIS_OS_NAME == "linux" ] && [ ! -d third-party/VTK-8.1.2 ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && make -j 8 install; popd; fi  
+  - if [ $TRAVIS_OS_NAME == "linux" ] && [ ! -d third-party/VTK-8.1.2/install ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && make -j 8 install; popd; fi  
   - scripts/install-third-party.sh
 
 script:
