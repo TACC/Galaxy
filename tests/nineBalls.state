@@ -1,0 +1,96 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "oneBall",
+        "type": "Volume",
+        "filename": "radial-0-oneBall.vol"
+      },
+      {
+        "name": "eightBalls",
+        "type": "Volume",
+        "filename": "radial-0-eightBalls.vol"
+      }
+    ],
+    "Renderer": {
+        "Lighting": {
+          "Sources": [[0, 0, -4]],
+          "shadows": true,
+          "Ka": 0.2,
+          "Kd": 0.8,
+          "ao count": 0,
+          "ao radius": 0.1
+      }
+    },
+    "Visualizations":
+    [
+      {
+        "annotation": "",
+        "operators":
+          [
+            {
+              "type": "Volume",
+              "dataset": "eightBalls",
+              "volume rendering": true,
+              "isovalues": [ 0.05 ],
+              "slices": [ [0, 0, 1, 0] ],
+              "colormap": [
+                [0.00,1.0,0.5,0.5],
+                [0.25,0.5,1.0,0.5],
+                [0.50,0.5,0.5,1.0],
+                [0.75,1.0,1.0,0.5],
+                [1.00,1.0,0.5,1.0]
+              ],
+              "opacitymap": [
+              [ 0.00, 0.05],
+              [ 0.20, 0.02],
+              [ 0.21, 0.00],
+              [ 1.00, 0.00]
+             ]
+            },
+            {
+              "type": "Volume",
+              "dataset": "oneBall",
+              "isovalues": [ 0.25 ],
+              "volume rendering": false,
+              "colormap": [
+                [0.00,1.0,0.5,0.5],
+                [0.25,0.5,1.0,0.5],
+                [0.50,0.5,0.5,1.0],
+                [0.75,1.0,1.0,0.5],
+                [1.00,1.0,0.5,1.0]
+               ],
+              "opacitymap": [
+                [ 0.00, 0.05],
+                [ 0.20, 0.05],
+                [ 0.21, 0.00],
+                [ 1.00, 0.00]
+               ]
+            }
+          ]
+       }
+    ],
+    "Cameras":
+    [
+      {
+        "viewpoint": [3, 0, -4],
+        "viewcenter": [0, 0, 0],
+        "viewup": [0, 1, 0],
+        "aov": 30
+      },
+      {
+        "viewpoint": [2, 3, -4],
+        "viewcenter": [0, 0, 0],
+        "viewup": [0, 1, 0],
+        "aov": 30
+      },
+      {
+        "viewpoint": [4, 3, -2],
+        "viewcenter": [0, 0, 0],
+        "viewup": [0, 1, 0],
+        "aov": 30
+      }
+    ]
+}
+
+

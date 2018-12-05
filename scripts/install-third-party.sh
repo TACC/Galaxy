@@ -20,7 +20,7 @@
 ## ========================================================================== ##
 
 
-if [ "x$1" != "x" ]; then
+if [ -n $1 ]; then
 	echo "usage: install-third-party.sh"
 	echo "This script will build and install the third-party libraries for Galaxy's use assuming reasonable defaults."
 	exit 1
