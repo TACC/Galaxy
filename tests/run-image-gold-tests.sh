@@ -54,6 +54,7 @@ GXY_BIN=${GXY_ROOT}/install/bin
 GXY_RADIAL=${GXY_BIN}/radial
 GXY_VTI2VOL=${GXY_BIN}/vti2vol
 GXY_IMAGE_WRITER=${GXY_BIN}/vis
+GXY_ENV=${GXY_ROOT}/install/galaxy.env
 IMAGEMAGICK_COMPARE=`which compare`
 
 if [ ! -x ${GXY_RADIAL} ]; then
@@ -64,6 +65,9 @@ if [ ! -x ${GXY_VTI2VOL} ]; then
 fi
 if [ ! -x ${GXY_IMAGE_WRITER} ]; then
 	fail "Could not find or execute the Galaxy image writer '${GXY_IMAGE_WRITER}'. Ensure Galaxy was configured with -D GXY_WRITE_IMAGES=ON"
+fi
+if [ ! -f ${GXY_ENV} ]; then
+	fail "Could not find Galaxy environment file at '${GXY_ENV}'"
 fi
 if [ -z $IMAGEMAGICK_COMPARE ]; then
 	fail "Could not find ImageMagick compare"
@@ -80,6 +84,9 @@ ${GXY_VTI2VOL} radial-0.vti oneBall eightBalls
 if [ $? != 0 ]; then
 	fail "$GXY_VTI2VOL exited with code $?"
 fi
+
+report "Sourcing Galaxy environment"
+. ${GXY_ENV}
 
 for i in oneBall nineBalls; do
 	report "Generating $i images"
