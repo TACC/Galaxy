@@ -88,4 +88,4 @@ if [ -z ${GXY_BUILT_VTK} ]; then
 fi
 
 report "done!"
-return 0
+exit 0
