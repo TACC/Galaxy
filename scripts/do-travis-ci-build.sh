@@ -1,0 +1,91 @@
+#!/bin/bash
+## ========================================================================== ##
+## Copyright (c) 2014-2018 The University of Texas at Austin.                 ##
+## All rights reserved.                                                       ##
+##                                                                            ##
+## Licensed under the Apache License, Version 2.0 (the "License");            ##
+## you may not use this file except in compliance with the License.           ##
+## A copy of the License is included with this software in the file LICENSE.  ##
+## If your copy does not contain the License, you may obtain a copy of the    ##
+## License at:                                                                ##
+##                                                                            ##
+##     https://www.apache.org/licenses/LICENSE-2.0                            ##
+##                                                                            ##
+## Unless required by applicable law or agreed to in writing, software        ##
+## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  ##
+## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           ##
+## See the License for the specific language governing permissions and        ##
+## limitations under the License.                                             ##
+##                                                                            ##
+## ========================================================================== ##
+
+function report
+{
+	echo "GALAXY: $1"
+}
+
+function fail
+{
+	echo "GALAXY ERROR: $1"
+	exit 1
+}
+
+report "running $0"
+
+if [ $TRAVIS_OS_NAME == "linux" ]; then
+	report "checking for linux VTK build..."
+	if [ -d third-party/VTK-8.1.2/install ]; then
+		report "found VTK-8.1.2 in third-party"
+	else
+		GXY_BUILT_VTK=1
+		report "VTK not found, building and caching for this run"
+		report "that's all we can do within travis-ci time limits, skipping full build"
+		pushd third-party
+		wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz \
+		  && tar xf VTK-8.1.2.tar.gz \
+		  && cd VTK-8.1.2 \
+		  && mkdir build \
+		  && cd build \
+		  && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. \
+		  && make -j 8 install 
+		if [ $? != 0 ]; then
+			fail "VTK build failed with code $?"
+		fi
+		popd
+	fi
+fi
+
+
+if [ -z ${GXY_BUILT_VTK} ]; then
+	report "ensuring third-party libraries are built"
+	scripts/install-third-party.sh
+
+	report "building interactive interface"
+  mkdir -p build
+  pushd build
+  if [ $TRAVIS_OS_NAME == "osx" ]; then 
+  	cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include \
+  		-D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib .. \
+  		&& make install
+  elif [ $TRAVIS_OS_NAME == "linux" ]; then 
+  	cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
+  		-D CMAKE_CXX_FLAGS:STRING="-fPIC" \
+  		-D CMAKE_C_FLAGS:STRING="-fPIC" \
+  		-D GLUT_INCLUDE_DIR:PATH=/usr/include \
+  		-D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so .. \
+  		&& make install
+	fi
+	if [ $? != 0 ]; then
+		fail "interactive interface build failed!"
+	fi
+
+	report "building image-writing interface"
+	# this should work for both osx and linux, since cmake was configured above
+	cmake -D GXY_WRITE_IMAGES:BOOL=ON . && make install 
+	if [ $? != 0 ]; then
+		fail "image-writing interface build failed!"
+	fi
+fi
+
+report "done!"
+return 0
