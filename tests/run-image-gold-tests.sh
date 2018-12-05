@@ -19,11 +19,17 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
+
 if [ "x$1" != "x" ]; then
-	echo "usage: prep-third-party.sh"
-	echo "This script will init and update submodules, download ispc, and apply patches to the third-party libraries."
+	echo "usage: run-image-gold-tests.sh"
+	echo "This script will generate a radial dataset, render it with Galaxy, and compare the results against the golden images in this directory."
 	exit 1
 fi
+
+function report
+{
+	echo "GALAXY: $1"
+}
 
 function fail
 {
@@ -31,72 +37,23 @@ function fail
 	exit 1
 }
 
-function report
-{
-	echo "GALAXY: $1"
-}
+GXY_ROOT=..
+GXY_BIN=${GXY_ROOT}/install/bin
+GXY_RADIAL_BIN=${GXY_BIN}/radial
+GXY_IMAGE_BIN=${GXY_BIN}/vis
 
-
-GXY_ROOT=$PWD
-GXY_DONE_TAG="gxy_third_party_prep_done"
-
-if [ -f ${GXY_ROOT}/prep-third-party.sh ]; then
-	# running from script dir, help a user out
-	GXY_ROOT=${PWD}/..
+if [ ! -x ${GXY_RADIAL_BIN} ]; then
+	fail "Could not find or execute the Galaxy radial generator '${GXY_RADIAL_BIN}'"
 fi
 
-if [ ! -d ${GXY_ROOT}/third-party ]; then
-	fail "Please run this script from the root directory of the Galaxy repository."
+if [ ! -x ${GXY_IMAGE_BIN} ]; then
+	fail "Could not find or execute the Galaxy image writer '${GXY_IMAGE_BIN}'. Ensure Galaxy was configured with -D GXY_WRITE_IMAGES=ON"
 fi
 
-if [ -f ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG} ]; then
-	report "third-party libraries already prepped!"
-	exit 0
-fi
+report "Generating radial-0.vti with ${GXY_RADIAL_BIN}"
+${GXY_RADIAL_BIN}
 
-report "initializing submodules..."
-git submodule --quiet init
 if [ $? != 0 ]; then
-	fail "submodule init returned error code $?"
+	fail "$GXY_RADIAL_BIN exited with code $?"
 fi
-
-report "updating submodules..."
-git submodule --quiet update
-if [ $? != 0 ]; then
-	fail "submodule update returned error code $?"
-fi
-
-report "checking ispc..."
-cd ${GXY_ROOT}/third-party/ispc
-./get-ispc.sh
-if [ $? != 0 ]; then
-	fail
-fi
-
-report "applying patches..."
-PATCH_DIR=${GXY_ROOT}/third-party/patches
-cd ${PATCH_DIR}
-for patch in *.patch ; do
-	PATCH_TARGET=`echo ${patch} | sed -e 's/\.patch//'`
-	if [ ! -d ${GXY_ROOT}/third-party/${PATCH_TARGET} ]; then
-		fail "could not find ${PATCH_TARGET} at ${GXY_ROOT}/third-party/${PATCH_TARGET}"
-	fi
-	report "  patching ${PATCH_TARGET} ..."
-	cd ${GXY_ROOT}/third-party/${PATCH_TARGET}
-	git apply ${PATCH_DIR}/${patch}
-	if [ $? != 0 ]; then
-		fail "patch application for ${PATCH_TARGET} returned error code $?"
-	fi
-done
-
-cd ${GXY_ROOT}
-mkdir -p ${GXY_ROOT}/.galaxy
-touch ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
-report "done!"
-exit 0
-
-
-
-
-
 

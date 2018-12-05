@@ -28,8 +28,13 @@ fi
 
 function fail
 {
-	echo "ERROR: $1"
+	echo "GALAXY: ERROR - $1"
 	exit 1
+}
+
+function report
+{
+	echo "GALAXY: $1"
 }
 
 GXY_ROOT=$PWD
@@ -47,7 +52,7 @@ if [ ! -d ${GXY_ROOT}/third-party ]; then
 fi
 
 if [ -f ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG} ]; then
-	echo "Galaxy third-party libraries already built and installed!"
+	report "third-party libraries already built and installed!"
 	exit 0
 fi
 
@@ -69,7 +74,7 @@ fi
 
 cd ${GXY_ROOT}/third-party
 for tp_lib_dir in embree ospray rapidjson; do
-	echo "building ${tp_lib_dir}..."
+	report "building ${tp_lib_dir}..."
 	pushd $tp_lib_dir
 	mkdir build
 	cd build
@@ -80,7 +85,7 @@ for tp_lib_dir in embree ospray rapidjson; do
 	popd
 done
 
-echo "done!"
+report "done!"
 cd ${GXY_ROOT}
 mkdir -p ${GXY_ROOT}/.galaxy
 touch ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}

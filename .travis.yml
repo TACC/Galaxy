@@ -68,6 +68,6 @@ before_install:
 
 script:
   - scripts/do-travis-ci-build.sh
+  - tests/run-image-gold-tests.sh
 
-  
 

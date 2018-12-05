@@ -26,7 +26,7 @@ function report
 
 function fail
 {
-	echo "GALAXY ERROR: $1"
+	echo "GALAXY: ERROR - $1"
 	exit 1
 }
 
