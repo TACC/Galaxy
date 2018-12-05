@@ -7,20 +7,20 @@ branches:
 
 matrix:
   include:
-    # - os: osx
-    #   compiler: clang
-    #   env:
-    #     - MATRIX_EVAL=""
+    - os: osx
+      compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
-    # - os: osx
-    #   compiler: gcc
-    #   env:
-    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - os: osx
+      compiler: gcc
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - MATRIX_EVAL=""
+    - os: linux
+      compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
     - os: linux
       compiler: gcc
@@ -68,13 +68,13 @@ before_install:
 
 install:
   - if [ $TRAVIS_OS_NAME == "linux" ] && [ ! -d third-party/VTK-8.1.2/install ]; then pushd third-party; wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz && tar xf VTK-8.1.2.tar.gz && cd VTK-8.1.2 && mkdir build && cd build && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. && make -j 8 install; popd; fi  
-#  - scripts/install-third-party.sh
+  - scripts/install-third-party.sh
 
 script:
   - mkdir -p build
   - cd build
   # first build Galaxy interactive foo
-  - if [ $TRAVIS_OS_NAME == "osx" ]; then cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib .. && make install; fi
+  # - if [ $TRAVIS_OS_NAME == "osx" ]; then cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib .. && make install; fi
   # - if [ $TRAVIS_OS_NAME == "linux" ]; then cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 -D CMAKE_CXX_FLAGS:STRING="-fPIC" -D CMAKE_C_FLAGS:STRING="-fPIC" -D GLUT_INCLUDE_DIR:PATH=/usr/include -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so .. && make install; fi
   # now build Galaxy image writer
   # - cmake -D GXY_WRITE_IMAGES:BOOL=ON . && make install
