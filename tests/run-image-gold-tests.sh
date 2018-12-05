@@ -20,7 +20,7 @@
 ## ========================================================================== ##
 
 
-if [ -n $1 ]; then
+if [ $1 ]; then
 	echo "usage: run-image-gold-tests.sh"
 	echo "This script will generate a radial dataset, render it with Galaxy, and compare the results against the golden images in this directory."
 	exit 1

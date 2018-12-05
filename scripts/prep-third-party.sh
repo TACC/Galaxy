@@ -19,7 +19,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-if [ -n $1 ]; then
+if [ $1 ]; then
 	echo "usage: prep-third-party.sh"
 	echo "This script will init and update submodules, download ispc, and apply patches to the third-party libraries."
 	exit 1
