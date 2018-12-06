@@ -46,7 +46,10 @@ if [ $TRAVIS_OS_NAME == "linux" ]; then
 		  && cd VTK-8.1.2 \
 		  && mkdir build \
 		  && cd build \
-		  && cmake -D CMAKE_BUILD_TYPE:STRING=Release -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install .. \
+		  && cmake -D CMAKE_BUILD_TYPE:STRING=Release \
+		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
+		           -D VTK_WRAP_PYTHON:BOOL=ON \
+		           .. \
 		  && make -j 8 install 
 		if [ $? != 0 ]; then
 			fail "VTK build failed with code $?"
@@ -65,15 +68,17 @@ if [ -z ${GXY_BUILT_VTK} ]; then
   pushd build
   if [ $TRAVIS_OS_NAME == "osx" ]; then 
   	cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include \
-  		-D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib .. \
+          -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib \
+          .. \
   		&& make install
   elif [ $TRAVIS_OS_NAME == "linux" ]; then 
   	cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
-  		-D CMAKE_CXX_FLAGS:STRING="-fPIC" \
-  		-D CMAKE_C_FLAGS:STRING="-fPIC" \
-  		-D GLUT_INCLUDE_DIR:PATH=/usr/include \
-  		-D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so .. \
-  		&& make install
+          -D CMAKE_CXX_FLAGS:STRING="-fPIC" \
+          -D CMAKE_C_FLAGS:STRING="-fPIC" \
+          -D GLUT_INCLUDE_DIR:PATH=/usr/include \
+          -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
+          .. \
+      && make install
 	fi
 	if [ $? != 0 ]; then
 		fail "interactive interface build failed!"

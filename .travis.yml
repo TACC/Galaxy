@@ -7,10 +7,10 @@ branches:
 
 matrix:
   include:
-    - os: osx
-      compiler: clang
-      env:
-        - MATRIX_EVAL=""
+    # - os: osx
+    #   compiler: clang
+    #   env:
+    #     - MATRIX_EVAL=""
 
     # - os: osx
     #   compiler: gcc
@@ -22,10 +22,10 @@ matrix:
       env:
         - MATRIX_EVAL=""
 
-    - os: linux
-      compiler: gcc
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    # - os: linux
+    #   compiler: gcc
+    #   env:
+    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
@@ -69,7 +69,8 @@ before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
+  - rm -rf third-party/VTK-8.1.2
   - scripts/do-travis-ci-build.sh
-  - tests/run-image-gold-tests.sh
+  # - tests/run-image-gold-tests.sh
 
 
