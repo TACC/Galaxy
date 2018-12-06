@@ -73,6 +73,9 @@ if [ -z $IMAGEMAGICK_COMPARE ]; then
 	fail "Could not find ImageMagick compare"
 fi
 
+report "Sourcing Galaxy environment"
+. ${GXY_ENV}
+
 report "Generating radial-0.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256
 if [ $? != 0 ]; then
@@ -85,9 +88,6 @@ if [ $? != 0 ]; then
 	fail "$GXY_VTI2VOL exited with code $?"
 fi
 
-report "Sourcing Galaxy environment"
-. ${GXY_ENV}
-
 for i in oneBall nineBalls; do
 	report "Generating $i images"
 	${GXY_IMAGE_WRITER} $i.state
@@ -95,11 +95,14 @@ for i in oneBall nineBalls; do
 		fail "$GXY_IMAGE_WRITER exited with code $?"
 	fi
 
+	report "Showing files"
+	ls -l
+
 	report "Comparing generated images with golds"
 	for j in image*png; do
-		GOLD=$(echo $j | sed s/image/$i/)
+		GOLD=golds/$(echo $j | sed s/image/$i/)
 		report "  comparing $j to $GOLD"
-		${IMAGEMAGICK_COMPARE} $j golds/$GOLD
+		${IMAGEMAGICK_COMPARE} $j $GOLD
 		report "  comparison returned $?"
 	done 
 done
