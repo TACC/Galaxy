@@ -48,6 +48,8 @@ if [ $TRAVIS_OS_NAME == "linux" ]; then
 		  && cd build \
 		  && cmake -D CMAKE_BUILD_TYPE:STRING=Release \
 		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
+               -D CMAKE_C_FLAGS:STRING="-Wno-deprecated-register" \
+               -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-register" \
 		           .. \
 		  && make -j 4 install 
 		if [ $? != 0 ]; then
