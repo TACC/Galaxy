@@ -50,7 +50,7 @@ if [ $TRAVIS_OS_NAME == "linux" ]; then
 		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
 		           -D VTK_WRAP_PYTHON:BOOL=ON \
 		           .. \
-		  && make -j 8 install 
+		  && make -j 4 install 
 		if [ $? != 0 ]; then
 			fail "VTK build failed with code $?"
 		fi
