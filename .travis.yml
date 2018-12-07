@@ -69,8 +69,8 @@ before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
-  - rm -rf third-party/VTK-8.1.2
-  - scripts/do-travis-ci-build.sh
+  - cd third-party/VTK-8.1.2/build && cmake -D VTK_WRAP_PYTHON:BOOL=ON . && make -j 4 install
+  # - scripts/do-travis-ci-build.sh
   # - tests/run-image-gold-tests.sh
 
 
