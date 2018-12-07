@@ -48,7 +48,6 @@ if [ $TRAVIS_OS_NAME == "linux" ]; then
 		  && cd build \
 		  && cmake -D CMAKE_BUILD_TYPE:STRING=Release \
 		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
-		           -D VTK_WRAP_PYTHON:BOOL=ON \
 		           .. \
 		  && make -j 4 install 
 		if [ $? != 0 ]; then
