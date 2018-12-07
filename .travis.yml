@@ -7,11 +7,13 @@ branches:
 
 matrix:
   include:
-    # - os: osx
-    #   compiler: clang
-    #   env:
-    #     - MATRIX_EVAL=""
+    - os: osx
+      compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
+    # TODO: currently fails due to --std=c++11 flag inclusion 
+    #       since cmake detects mac/clang and gcc barfs rather than ignores
     # - os: osx
     #   compiler: gcc
     #   env:
@@ -22,10 +24,10 @@ matrix:
       env:
         - MATRIX_EVAL=""
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - os: linux
+      compiler: gcc
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
@@ -69,9 +71,18 @@ before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
-  # - rm -rf third-party/VTK-8.1.2 # use to rebuild VTK cache for linux
-  - cd third-party/VTK-8.1.2/build && cmake -D VTK_WRAP_PYTHON:BOOL=ON . && make -j 4 install
-  # - scripts/do-travis-ci-build.sh
-  # - tests/run-image-gold-tests.sh
+  # use this line only to rebuild VTK cache for linux
+  # - rm -rf third-party/VTK-8.1.2 
+  #- cd third-party/VTK-8.1.2/build && cmake -D VTK_WRAP_PYTHON:BOOL=ON . && make -j 4 install
+
+  # the travis-ci build script does the following:
+  # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
+  # 0b. if no VTK python wrappers: build, cache and exit (linux only)
+  # 0c. if no third-party builds (ospray, embree, rapidjson): build and cache 
+  # 1. build Galaxy interactive interface
+  # 2. build Galaxy image writing interface
+  # 3. run gold image tests
+  - scripts/do-travis-ci-build.sh
+  - tests/run-image-gold-tests.sh
 
 

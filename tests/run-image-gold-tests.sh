@@ -56,6 +56,7 @@ GXY_VTI2VOL=${GXY_BIN}/vti2vol
 GXY_IMAGE_WRITER=${GXY_BIN}/vis
 GXY_ENV=${GXY_ROOT}/install/galaxy.env
 IMAGEMAGICK_COMPARE=`which compare`
+IMAGEMAGICK_IDENTIFY=`which identify`
 
 if [ ! -x ${GXY_RADIAL} ]; then
 	fail "Could not find or execute the Galaxy radial generator '${GXY_RADIAL}'"
@@ -69,8 +70,11 @@ fi
 if [ ! -f ${GXY_ENV} ]; then
 	fail "Could not find Galaxy environment file at '${GXY_ENV}'"
 fi
-if [ -z $IMAGEMAGICK_COMPARE ]; then
+if [ -z ${IMAGEMAGICK_COMPARE} ]; then
 	fail "Could not find ImageMagick compare"
+fi
+if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
+	fail "Could not find ImageMagick identify"
 fi
 
 report "Sourcing Galaxy environment"
@@ -102,6 +106,7 @@ for i in oneBall nineBalls; do
 	for j in image*png; do
 		GOLD=golds/$(echo $j | sed s/image/$i/)
 		report "  comparing $j to $GOLD"
+		${IMAGEMAGICK_IDENTIFY} $j $GOLD
 		${IMAGEMAGICK_COMPARE} $j $GOLD
 		report "  comparison returned $?"
 	done 

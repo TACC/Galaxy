@@ -35,11 +35,11 @@ report "running $0"
 if [ $TRAVIS_OS_NAME == "linux" ]; then
 	report "checking for linux VTK build..."
 	if [ -d third-party/VTK-8.1.2/install ]; then
-		report "found VTK-8.1.2 in third-party"
+		report "  found VTK-8.1.2 in third-party."
 	else
 		GXY_BUILT_VTK=1
-		report "VTK not found, building and caching for this run"
-		report "that's all we can do within travis-ci time limits, skipping full build"
+		report "  VTK not found, building and caching for this run"
+		report "  that's all we can do within travis-ci time limits, skipping full build"
 		pushd third-party
 		wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz \
 		  && tar xf VTK-8.1.2.tar.gz \
@@ -57,14 +57,30 @@ if [ $TRAVIS_OS_NAME == "linux" ]; then
 		fi
 		popd
 	fi
+
+  report "checking for VTK python wrapper..."
+  if [ -z ${GXY_BUILD_VTK} ] && [ -d third-party/VTK-8.1.2/install/lib/python2.7/site-packages/vtk ]; then
+    report "  found python wrappers in VTK install."
+  else
+    GXY_BUILT_VTK=1
+    report "  VTK python wrappers not found, building and caching for this run"
+    report "  that's all we can do within travis-ci time limits, skipping full build"
+    pushd third-party/VTK-8.1.2/build \
+      && cmake -D VTK_WRAP_PYTHON:BOOL=ON .. \
+      && make -j 4 install
+    if [ $? != 0 ]; then
+      fail "VTK python wrapper failed with code $?"
+    fi
+    popd
+  fi
 fi
 
 
 if [ -z ${GXY_BUILT_VTK} ]; then
-	report "ensuring third-party libraries are built"
+	report "ensuring third-party libraries are built..."
 	scripts/install-third-party.sh
 
-	report "building interactive interface"
+	report "building interactive interface..."
   mkdir -p build
   pushd build
   if [ $TRAVIS_OS_NAME == "osx" ]; then 
@@ -85,7 +101,7 @@ if [ -z ${GXY_BUILT_VTK} ]; then
 		fail "interactive interface build failed!"
 	fi
 
-	report "building image-writing interface"
+	report "building image-writing interface..."
 	# this should work for both osx and linux, since cmake was configured above
 	cmake -D GXY_WRITE_IMAGES:BOOL=ON . && make install 
 	if [ $? != 0 ]; then
