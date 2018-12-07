@@ -69,7 +69,7 @@ before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
-  - cd third-party/VTK-8.1.2/build && cmake -D VTK_WRAP_PYTHON:BOOL=ON . && make -j 4 install
+  - cd third-party/VTK-8.1.2/build && cmake -D CMAKE_C_FLAGS:STRING="-Wno-deprecated-register" -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-register" -D VTK_WRAP_PYTHON:BOOL=ON . && make -j 4 install
   # - scripts/do-travis-ci-build.sh
   # - tests/run-image-gold-tests.sh
 
