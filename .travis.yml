@@ -57,6 +57,7 @@ addons:
       - libxinerama-dev
       - libxcursor-dev
       - imagemagick
+      - python-numpy
   homebrew:
     packages: 
       - vtk
