@@ -89,7 +89,8 @@ fi
 report "Converting vti to vol with ${GXY_VTI2VOL}"
 # TODO: remove this hack once galaxy.env includes VTK on PYTHONPATH
 if [ ${TRAVIS_OS_NAME} == "linux" ]; then
-	PYTHONPATH=${GXY_ROOT}/third-party/VTK-8.1.2/install/lib/python2.7/site-packages:${PYTHONPATH}
+	export PYTHONPATH=${GXY_ROOT}/third-party/VTK-8.1.2/install/lib/python2.7/site-packages:${PYTHONPATH}
+	report "PYTHONPATH is now ${PYTHONPATH}"
 fi
 ${GXY_VTI2VOL} radial-0.vti oneBall eightBalls
 if [ $? != 0 ]; then
