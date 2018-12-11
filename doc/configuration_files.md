@@ -92,9 +92,9 @@ Render spec example:
 
 Galaxy light spec is in the format `\[ x, y, z, type \]` where `x, y, z` specifies a point or vector, depending on light type, and where `type` specifies an optional light type: 
 
-* `0` - point light, `x, y, z` specifies location (default if type is not specified)
-* `1` - directional light, `x, y, z` specifies direction (infinitely far from data)
-* `2` - camera light, `x, y, z` specifies displacement from camera point
+* `0` - directional light, `x, y, z` specifies direction (default if type is not specified, infinitely far from data)
+* `1` - camera light, `x, y, z` specifies displacement from camera point
+* `2` - point light, `x, y, z` specifies location 
 
 Visualization spec example:
 ```json

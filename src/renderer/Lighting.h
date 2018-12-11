@@ -42,8 +42,8 @@ namespace gxy
  * displacement vector from the camera location, lights given as points in 
  * object space, and lights infinitely distant along a vector.   Lights are 
  * specified by an array of 3-float vectors along with a corresponding array
- * of ints denoting th elight type: 0 for local point, 1 for camera-relative, 
- * and 2 for infinite.  In all cases the light is white.
+ * of ints denoting the light type: 0 for infinite, 1 for camera-relative, 
+ * and 2 for absolute location.  In all cases the light is white.
  *
  * Default is a single light at infinity in the direction (1,1,1)
  */  
