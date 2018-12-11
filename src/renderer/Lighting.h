@@ -40,10 +40,11 @@ namespace gxy
  * \sa ISPCObject
  * Three types of light sources are currently supported: lights given by a 
  * displacement vector from the camera location, lights given as points in 
- * object space, and lights infinitely distant along a vector.   Lights are 
+ * object space, and lights from infinitely distant sources, specified as 
+ * the direction the light is pointing.  Lights are 
  * specified by an array of 3-float vectors along with a corresponding array
- * of ints denoting th elight type: 0 for local point, 1 for camera-relative, 
- * and 2 for infinite.  In all cases the light is white.
+ * of ints denoting th elight type: 0 for infinite, 1 for camera-relative, 
+ * and 2 for absolute world-space point.  In all cases the light is white.
  *
  * Default is a single light at infinity in the direction (1,1,1)
  */  
