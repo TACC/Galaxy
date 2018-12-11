@@ -84,7 +84,7 @@ script:
   # 1. build Galaxy interactive interface
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
-  - scripts/do-travis-ci-build.sh
-  - if [ -z ${GXY_REBUILDING_CACHE} ]; then tests/run-image-gold-tests.sh; fi
+  - scripts/travis-ci-build.sh
+  - if [ -z ${GXY_REBUILDING_CACHE} ]; then tests/image-gold-tests.sh; fi
 
 
