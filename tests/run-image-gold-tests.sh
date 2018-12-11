@@ -73,9 +73,9 @@ fi
 if [ -z ${IMAGEMAGICK_COMPARE} ]; then
 	fail "Could not find ImageMagick compare"
 fi
-if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
-	fail "Could not find ImageMagick identify"
-fi
+# if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
+# 	fail "Could not find ImageMagick identify"
+# fi
 
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
@@ -112,13 +112,13 @@ for i in oneBall nineBalls; do
 	for j in image*png; do
 		GOLD=golds/$(echo $j | sed s/image/$i/)
 		report "  comparing $j to $GOLD"
-		${IMAGEMAGICK_IDENTIFY} $j $GOLD
+		# ${IMAGEMAGICK_IDENTIFY} $j $GOLD
 		${IMAGEMAGICK_COMPARE} $j $GOLD diff.png
 		if [ $? == 0 ]; then
 			report "  test passed: $j $GOLD"
 		else
 			report "  test FAILED: $j $GOLD ====="
-			FAILS = $((${FAILS} + 1))
+			FAILS=$((${FAILS} + 1))
 		fi
 	done 
 done
