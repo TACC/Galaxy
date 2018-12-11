@@ -119,7 +119,7 @@ for i in oneBall nineBalls; do
 		else
 			report "  test FAILED: ${j} ${GOLD} ====="
 			echo "build ${TRAVIS_OS_NAME} ${TRAVIS_COMPILER}" \
-			  | mail -s "FAILED: Galaxy image test ${GOLD}" -a $j
+			  | mail -s "FAILED: Galaxy image test ${GOLD}" -a $j pnav@tacc.utexas.edu
 			FAILS=$((${FAILS} + 1))
 		fi
 	done 
