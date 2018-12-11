@@ -830,22 +830,15 @@ export void TraceRays_generateShadowRays(void *uniform _self,
 													       		     raysIn->oy[i] + raysIn->t[i]*raysIn->dy[i] + epsilon*raysIn->ny[i],
 															           raysIn->oz[i] + raysIn->t[i]*raysIn->dz[i] + epsilon*raysIn->nz[i]);
 
-				// print("ZSP:\nX %\nY %\nZ %\n", surface_point.x, surface_point.y, surface_point.z);
+				vec3f lvec;
 
-				float d; vec3f lvec;
 				if (lights->types[k])
-				{
 					lvec = safe_normalize(lights->lights[k] - surface_point);
-					d = dot(surface_normal, lvec);
-			  }
 				else
-				{
-					lvec = safe_normalize(lights->lights[k]);
-					d = dot(surface_normal, lights->lights[k]);
-				}
-					
-				// print("LP:\nX %\nY %\nZ %\n", lights->lights[k].x, lights->lights[k].y, lights->lights[k].z);
-				// print("LV:\nX %\nY %\nZ %\n", lvec.x, lvec.y, lvec.z);
+          lvec = neg(lights->lights[k]);
+
+        lvec = safe_normalize(lvec);
+        float d = dot(surface_normal, lvec);
 
         if (d < 0) d = 0;
 
@@ -889,15 +882,12 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
   uniform RayList_ispc *uniform raysIn  = (RayList_ispc *uniform)_raysIn;
 
   uniform float Kd = lights->Kd / lights->nLights;
-// print("Kd: %\n", Kd);
 
   foreach (i = 0 ... nRaysIn)
   {
     if ((raysIn->type[i] == RAY_PRIMARY) && (raysIn->term[i] & RAY_SURFACE))
     {
       vec3f surface_normal = make_vec3f(raysIn->nx[i], raysIn->ny[i], raysIn->nz[i]);
-
-      //print("SN:\n%\n%\n%\n", surface_normal.x, surface_normal.y, surface_normal.z);
 
       float tot_dff_r = 0;
       float tot_dff_g = 0;
@@ -907,6 +897,7 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
       {
 				float d;
 
+        vec3f lvec;
 				if (lights->types[k])
 				{
 					float t = raysIn->t[i];
@@ -915,31 +906,15 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
 																					 raysIn->oy[i] + t*raysIn->dy[i],
 																					 raysIn->oz[i] + t*raysIn->dz[i]);
 
-					vec3f lvec = safe_normalize(lights->lights[k] - surface_point);
+					lvec = safe_normalize(lights->lights[k] - surface_point);
 
-#if 0
-					print("SP\nX %\ny %\nZ %\n", 
-							surface_point.x, surface_point.y, surface_point.z);
-
-					print("SN\nX %\ny %\nZ %\n", 
-							surface_normal.x, surface_normal.y, surface_normal.z);
-
-					print("light\nX %\nY %\nZ %\n",
-							lights->lights[k].x, lights->lights[k].y, lights->lights[k].z);
-
-					print("LV\nX %\nY %\nZ %\n", lvec.x, lvec.y, lvec.z);
-#endif
-
-					d = dot(surface_normal, lvec);
 				}
 				else
 				{
-					d = dot(surface_normal, lights->lights[k]);
+          lvec = neg(lights->lights[k]);
 				}
 
-// print("normal:\n%\n%\n%\n", surface_normal.x, surface_normal.y, surface_normal.z);
-// print("light:\n%\n%\n%\n", lights->lights[k].x, lights->lights[k].y, lights->lights[k].z);
-// print("d: %\n", d);
+        d = dot(surface_normal, lvec);
 
         if (d > 0)
         {
