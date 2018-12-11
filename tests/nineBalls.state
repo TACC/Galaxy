@@ -13,20 +13,19 @@
       }
     ],
     "Renderer": {
-        "Lighting": {
-          "Sources": [[0, 0, -4]],
-          "shadows": true,
-          "Ka": 0.2,
-          "Kd": 0.8,
-          "ao count": 0,
-          "ao radius": 0.1
-      }
     },
     "Visualizations":
     [
       {
-        "annotation": "",
-        "operators":
+          "Lighting": {
+            "Sources": [[0, 0, 4, 0]],
+            "shadows": true,
+            "Ka": 0.2,
+            "Kd": 0.8,
+            "ao count": 0,
+            "ao radius": 0.1
+          },
+          "operators":
           [
             {
               "type": "Volume",

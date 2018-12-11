@@ -1,0 +1,47 @@
+{
+    "Cameras": [
+        {
+            "annotation": "", 
+            "aov": 45, 
+            "viewcenter": [ 0, 0, 0 ], 
+            "viewpoint": [ 0.0, 0.0, 4.0 ], 
+            "viewup": [ 0.0, 1.0, 0.0 ]
+        }
+    ], 
+    "Datasets": [
+        {
+            "filename": "radial-0-oneBall.vol", 
+            "name": "oneBall", 
+            "type": "Volume"
+        }
+    ], 
+    "Renderer": {
+    }, 
+    "Visualizations": [
+        {
+            "Lighting": {
+                "Ka": 0.5, 
+                "Kd": 0.5, 
+                "Sources": [ [  8, 0, 0, 1 ] ], 
+                "ao count": 0, 
+                "ao radius": 1.0, 
+                "shadows": true
+            }, 
+            "operators": [
+                {
+                    "colormap": [
+                        [ 0.0, 1.0, 0.5, 0.5 ], 
+                        [ 0.25, 0.5, 1.0, 0.5 ], 
+                        [ 0.5, 0.5, 0.5, 1.0 ], 
+                        [ 0.75, 1.0, 1.0, 0.5 ], 
+                        [ 1.0, 1.0, 0.5, 1.0 ]
+                    ], 
+                    "dataset": "oneBall", 
+                    "isovalues": [ 0.2 ],
+                    "plane": [1.0, 0, 0, -0.95],
+                    "type": "Volume"
+                }
+            ]
+        }
+    ]
+}

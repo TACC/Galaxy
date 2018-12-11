@@ -73,9 +73,9 @@ fi
 if [ -z ${IMAGEMAGICK_COMPARE} ]; then
 	fail "Could not find ImageMagick compare"
 fi
-# if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
-# 	fail "Could not find ImageMagick identify"
-# fi
+if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
+	fail "Could not find ImageMagick identify"
+fi
 
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
@@ -95,31 +95,31 @@ if [ ${TRAVIS_OS_NAME} == "linux" ]; then
 	export PYTHONPATH=${GXY_ROOT}/third-party/VTK-8.1.2/install/lib/python2.7/site-packages:${PYTHONPATH}
 	report "PYTHONPATH is now ${PYTHONPATH}"
 fi
-${GXY_VTI2VOL} radial-0.vti oneBall eightBalls
+${GXY_VTI2VOL} radial-0.vti oneBall eightBalls xramp yramp zramp
 if [ $? != 0 ]; then
 	fail "$GXY_VTI2VOL exited with code $?"
 fi
 
+RESOLUTION="-s 512 512"
 FAILS=0
-for i in oneBall nineBalls; do
-	report "Generating $i images"
-	${GXY_IMAGE_WRITER} $i.state
+for state in *.state; do
+	TEST=$(echo ${state} | sed s/\.state//)
+	report "Generating ${TEST} images"
+	${GXY_IMAGE_WRITER} ${RESOLUTION} ${state}
 	if [ $? != 0 ]; then
 		fail "$GXY_IMAGE_WRITER exited with code $?"
 	fi
 
 	report "Comparing generated images with golds"
-	for j in image*png; do
-		GOLD=golds/$(echo ${j} | sed s/image/$i/)
-		report "  comparing ${j} to ${GOLD}"
-		# ${IMAGEMAGICK_IDENTIFY} ${j} ${GOLD}
-		${IMAGEMAGICK_COMPARE} ${j} $GOLD diff.png
+	for image in image*png; do
+		GOLD=golds/$(echo ${image} | sed s/image/${TEST}/)
+		report "  comparing ${image} to ${GOLD}"
+		${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
+		${IMAGEMAGICK_COMPARE} ${image} $GOLD diff.png
 		if [ $? == 0 ]; then
-			report "  test passed: ${j} ${GOLD}"
+			report "  test passed: ${image} ${GOLD}"
 		else
-			report "  test FAILED: ${j} ${GOLD} ====="
-			echo "build ${TRAVIS_OS_NAME} ${TRAVIS_COMPILER}" \
-			  | mail -s "FAILED: Galaxy image test ${GOLD}" -a $j pnav@tacc.utexas.edu
+			report "  test FAILED: ${image} ${GOLD} ====="
 			FAILS=$((${FAILS} + 1))
 		fi
 	done 

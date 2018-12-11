@@ -8,6 +8,10 @@
       }
     ],
     "Renderer": {
+    },
+    "Visualizations":
+    [
+      {
         "Lighting": {
           "Sources": [[1, 1, 0, 1]],
           "shadows": true,
@@ -15,12 +19,7 @@
           "Kd": 0.6,
           "ao count": 32,
           "ao radius": 1.0
-      }
-    },
-    "Visualizations":
-    [
-      {
-        "annotation": "",
+        },
         "operators":
           [
             {
