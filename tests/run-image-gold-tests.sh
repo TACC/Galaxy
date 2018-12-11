@@ -105,7 +105,6 @@ RESOLUTION="-s 512 512"
 TESTS=0
 FAILS=0
 for state in *.state; do
-	TESTS=$((${TESTS} + 1))
 	test=$(echo ${state} | sed s/\.state//)
 	report "Generating ${test} images"
 	${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
@@ -115,6 +114,7 @@ for state in *.state; do
 
 	report "Comparing generated images with golds"
 	for image in image*png; do
+		TESTS=$((${TESTS} + 1))
 		GOLD=golds/$(echo ${image} | sed s/image/${test}/)
 		report "  comparing ${image} to ${GOLD}"
 		${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
@@ -125,7 +125,9 @@ for state in *.state; do
 			report "  test FAILED ($?): ${image} ${GOLD} ====="
 			FAILS=$((${FAILS} + 1))
 		fi
-	done 
+	done
+	report "Cleaning up ${test} images"
+	rm -f image*png
 done
 
 if [ ${FAILS} == 0 ]; then
