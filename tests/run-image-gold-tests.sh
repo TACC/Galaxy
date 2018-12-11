@@ -84,51 +84,54 @@ export GXY_APP_NTHREADS=1
 export GXY_NTHREADS=4
 
 report "Generating radial-0.vti with ${GXY_RADIAL}"
-${GXY_RADIAL} -r 256 256 256
+${GXY_RADIAL} -r 256 256 256 > /dev/null 2>&1
 if [ $? != 0 ]; then
 	fail "$GXY_RADIAL exited with code $?"
 fi
 
+GXY_VOLS="oneBall eightBalls xramp yramp zramp"
 report "Converting vti to vol with ${GXY_VTI2VOL}"
 # TODO: remove this hack once galaxy.env includes VTK on PYTHONPATH
 if [ ${TRAVIS_OS_NAME} == "linux" ]; then
 	export PYTHONPATH=${GXY_ROOT}/third-party/VTK-8.1.2/install/lib/python2.7/site-packages:${PYTHONPATH}
 	report "PYTHONPATH is now ${PYTHONPATH}"
 fi
-${GXY_VTI2VOL} radial-0.vti oneBall eightBalls xramp yramp zramp
+${GXY_VTI2VOL} radial-0.vti ${GXY_VOLS} > /dev/null 2>&1
 if [ $? != 0 ]; then
 	fail "$GXY_VTI2VOL exited with code $?"
 fi
 
 RESOLUTION="-s 512 512"
+TESTS=0
 FAILS=0
 for state in *.state; do
-	TEST=$(echo ${state} | sed s/\.state//)
-	report "Generating ${TEST} images"
-	${GXY_IMAGE_WRITER} ${RESOLUTION} ${state}
+	TESTS=$((${TESTS} + 1))
+	test=$(echo ${state} | sed s/\.state//)
+	report "Generating ${test} images"
+	${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
 	if [ $? != 0 ]; then
 		fail "$GXY_IMAGE_WRITER exited with code $?"
 	fi
 
 	report "Comparing generated images with golds"
 	for image in image*png; do
-		GOLD=golds/$(echo ${image} | sed s/image/${TEST}/)
+		GOLD=golds/$(echo ${image} | sed s/image/${test}/)
 		report "  comparing ${image} to ${GOLD}"
 		${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
 		${IMAGEMAGICK_COMPARE} ${image} $GOLD diff.png
 		if [ $? == 0 ]; then
 			report "  test passed: ${image} ${GOLD}"
 		else
-			report "  test FAILED: ${image} ${GOLD} ====="
+			report "  test FAILED ($?): ${image} ${GOLD} ====="
 			FAILS=$((${FAILS} + 1))
 		fi
 	done 
 done
 
 if [ ${FAILS} == 0 ]; then
-	report "all image comparison tests passed"
+	report "${TESTS}/${TESTS} image comparison tests passed"
 else
-	fail "${FAILS} image comparisons failed"
+	fail "${FAILS}/${TESTS} image comparisons failed"
 fi
 
 report "done!"
