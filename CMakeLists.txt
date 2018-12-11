@@ -34,6 +34,9 @@ if (COMMAND cmake_policy)
 
   # ignore rpath setting effects for certain vars under MacOS
   cmake_policy(SET CMP0068 NEW)
+
+  # use <PackageName>_ROOT variables as search paths
+  cmake_policy(SET CMP0074 NEW)
 endif(COMMAND cmake_policy)
 
 # use C++11 foo explicitly

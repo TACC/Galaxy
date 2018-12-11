@@ -18,9 +18,20 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
 project (gxy_framework VERSION ${GALAXY_VERSION})
+
+if (COMMAND cmake_policy)
+	# use rpath on MacOS
+  cmake_policy(SET CMP0042 NEW)
+
+  # interpret if args as vars only if unquoted
+  cmake_policy(SET CMP0054 NEW)
+
+  # ignore rpath setting effects for certain vars under MacOS
+  cmake_policy(SET CMP0068 NEW)
+endif(COMMAND cmake_policy)
 
 include_directories(
 			${gxy_framework_SOURCE_DIR}

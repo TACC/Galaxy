@@ -79,6 +79,9 @@ fi
 
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
+# reasonable settings for Travis-CI VM environment
+export GXY_APP_NTHREADS=1
+export GXY_NTHREADS=4
 
 report "Generating radial-0.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256
@@ -97,6 +100,7 @@ if [ $? != 0 ]; then
 	fail "$GXY_VTI2VOL exited with code $?"
 fi
 
+FAILS=0
 for i in oneBall nineBalls; do
 	report "Generating $i images"
 	${GXY_IMAGE_WRITER} $i.state
@@ -104,18 +108,26 @@ for i in oneBall nineBalls; do
 		fail "$GXY_IMAGE_WRITER exited with code $?"
 	fi
 
-	report "Showing files"
-	ls -l
-
 	report "Comparing generated images with golds"
 	for j in image*png; do
 		GOLD=golds/$(echo $j | sed s/image/$i/)
 		report "  comparing $j to $GOLD"
 		${IMAGEMAGICK_IDENTIFY} $j $GOLD
-		${IMAGEMAGICK_COMPARE} $j $GOLD
-		report "  comparison returned $?"
+		${IMAGEMAGICK_COMPARE} $j $GOLD diff.png
+		if [ $? == 0 ]; then
+			report "  test passed: $j $GOLD"
+		else
+			report "  test FAILED: $j $GOLD ====="
+			FAILS = $((${FAILS} + 1))
+		fi
 	done 
 done
+
+if [ ${FAILS} == 0 ]; then
+	report "all image comparison tests passed"
+else
+	fail "${FAILS} image comparisons failed"
+fi
 
 report "done!"
 cd ${GXY_ROOT}

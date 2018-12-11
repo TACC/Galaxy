@@ -45,14 +45,14 @@ for var in sys.argv[2:]:
     dtype = 'uchar'
 
   if isfile(rawname):
-    print "skipping raw", var, "data"
+    print ("skipping raw", var, "data")
   else:
     of = open(rawname, 'wb')
     nd.tofile(of)
     of.close()
 
   if isfile(ospname):
-    print "skipping", var, "osp file"
+    print ("skipping", var, "osp file")
   else:
     of = open(ospname, 'w')
     of.write('<?xml version="1.0"?>\n')
@@ -65,7 +65,7 @@ for var in sys.argv[2:]:
     of.close()
 
   if isfile(volname):
-    print "skipping", var, "vol file"
+    print ("skipping", var, "vol file")
   else:
     sz = [o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]
     nsz = [sz[j]/max(sz) for j in range(3)]

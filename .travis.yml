@@ -4,6 +4,8 @@ dist: xenial # get a semi-modern linux
 branches:
   only:
     - travis-ci
+    - dev
+    - master
 
 matrix:
   include:
@@ -73,8 +75,7 @@ before_install:
 
 script:
   # use this line only to rebuild VTK cache for linux
-  # - rm -rf third-party/VTK-8.1.2 
-  #- cd third-party/VTK-8.1.2/build && cmake -D VTK_WRAP_PYTHON:BOOL=ON . && make -j 4 install
+  # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
@@ -84,6 +85,6 @@ script:
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
   - scripts/do-travis-ci-build.sh
-  - tests/run-image-gold-tests.sh
+  - if [ -z ${GXY_REBUILDING_CACHE} ]; then tests/run-image-gold-tests.sh; fi
 
 
