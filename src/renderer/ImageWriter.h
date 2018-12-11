@@ -58,14 +58,18 @@ public:
 	void Write(int w, int h, float *rgba, const char *name=NULL)
 	{
 		unsigned char *buf = new unsigned char[w*h*4];
-		float *p = rgba; unsigned char *b = buf;
-		for (int i = 0; i < w*h; i++)
-		{
-			*b++ = (unsigned char)(255*(*p++));
-			*b++ = (unsigned char)(255*(*p++));
-			*b++ = (unsigned char)(255*(*p++));
-			*b++ = 0xff ; p ++;
-		}
+		float *p = rgba;
+		for (int y = 0; y < h; y++)
+    {
+      unsigned char *b = buf + ((h-1)-y)*w*4;
+      for (int x = 0; x < w; x++)
+      {
+        *b++ = (unsigned char)(255*(*p++));
+        *b++ = (unsigned char)(255*(*p++));
+        *b++ = (unsigned char)(255*(*p++));
+        *b++ = 0xff ; p ++;
+      }
+    }
 		Write(w, h, (unsigned int *)buf, name);
 		delete[] buf;
 	}
