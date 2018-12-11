@@ -35,8 +35,11 @@ if (COMMAND cmake_policy)
   # ignore rpath setting effects for certain vars under MacOS
   cmake_policy(SET CMP0068 NEW)
 
-  # use <PackageName>_ROOT variables as search paths
-  cmake_policy(SET CMP0074 NEW)
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0") 
+    # use <PackageName>_ROOT variables as search paths
+    # needed since OSPRay includes TBB_ROOT
+    cmake_policy(SET CMP0074 NEW)
+  endif()
 endif(COMMAND cmake_policy)
 
 # use C++11 foo explicitly
