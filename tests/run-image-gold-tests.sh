@@ -110,14 +110,16 @@ for i in oneBall nineBalls; do
 
 	report "Comparing generated images with golds"
 	for j in image*png; do
-		GOLD=golds/$(echo $j | sed s/image/$i/)
-		report "  comparing $j to $GOLD"
-		# ${IMAGEMAGICK_IDENTIFY} $j $GOLD
-		${IMAGEMAGICK_COMPARE} $j $GOLD diff.png
+		GOLD=golds/$(echo ${j} | sed s/image/$i/)
+		report "  comparing ${j} to ${GOLD}"
+		# ${IMAGEMAGICK_IDENTIFY} ${j} ${GOLD}
+		${IMAGEMAGICK_COMPARE} ${j} $GOLD diff.png
 		if [ $? == 0 ]; then
-			report "  test passed: $j $GOLD"
+			report "  test passed: ${j} ${GOLD}"
 		else
-			report "  test FAILED: $j $GOLD ====="
+			report "  test FAILED: ${j} ${GOLD} ====="
+			echo "build ${TRAVIS_OS_NAME} ${TRAVIS_COMPILER}" \
+			  | mail -s "FAILED: Galaxy image test ${GOLD}" -a $j
 			FAILS=$((${FAILS} + 1))
 		fi
 	done 
