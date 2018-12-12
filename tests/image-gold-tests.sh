@@ -55,8 +55,6 @@ GXY_RADIAL=${GXY_BIN}/radial
 GXY_VTI2VOL=${GXY_BIN}/vti2vol
 GXY_IMAGE_WRITER=${GXY_BIN}/vis
 GXY_ENV=${GXY_ROOT}/install/galaxy.env
-IMAGEMAGICK_COMPARE=`which compare`
-IMAGEMAGICK_IDENTIFY=`which identify`
 PERCEPTUAL_DIFF=`which perceptualdiff`
 
 if [ ! -x ${GXY_RADIAL} ]; then
@@ -71,12 +69,6 @@ fi
 if [ ! -f ${GXY_ENV} ]; then
 	fail "Could not find Galaxy environment file at '${GXY_ENV}'"
 fi
-if [ -z ${IMAGEMAGICK_COMPARE} ]; then
-	fail "Could not find ImageMagick compare"
-fi
-# if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
-# 	fail "Could not find ImageMagick identify"
-# fi
 if [ -z ${PERCEPTUAL_DIFF} ]; then
 	fail "could not find perceptualdiff"
 fi
@@ -95,11 +87,6 @@ fi
 
 GXY_VOLS="oneBall eightBalls xramp yramp zramp"
 report "Converting vti to vol with ${GXY_VTI2VOL}"
-# TODO: remove this hack once galaxy.env includes VTK on PYTHONPATH
-# if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-# 	export PYTHONPATH=${GXY_ROOT}/third-party/VTK-8.1.2/install/lib/python2.7/site-packages:${PYTHONPATH}
-# 	report "PYTHONPATH is now ${PYTHONPATH}"
-# fi
 ${GXY_VTI2VOL} radial-0.vti ${GXY_VOLS} > /dev/null 2>&1
 if [ $? != 0 ]; then
 	fail "$GXY_VTI2VOL exited with code $?"
@@ -122,9 +109,8 @@ for state in *.state; do
 		TESTS=$((${TESTS} + 1))
 		GOLD=golds/$(echo ${image} | sed s/image/${test}/)
 		report "  comparing ${image} to ${GOLD}"
-		# ${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
-		#${IMAGEMAGICK_COMPARE} -verbose ${image} ${GOLD} diff.png
-		${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
+		# ${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
+		${PERCEPTUAL_DIFF} ${image} golds/xyz_00000.png ${PDIFF_OPTIONS}
 		if [ $? == 0 ]; then
 			report "    test passed: ${image} ${GOLD}"
 		else
