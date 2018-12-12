@@ -57,6 +57,7 @@ GXY_IMAGE_WRITER=${GXY_BIN}/vis
 GXY_ENV=${GXY_ROOT}/install/galaxy.env
 IMAGEMAGICK_COMPARE=`which compare`
 IMAGEMAGICK_IDENTIFY=`which identify`
+PERCEPTUAL_DIFF=`which perceptualdiff`
 
 if [ ! -x ${GXY_RADIAL} ]; then
 	fail "Could not find or execute the Galaxy radial generator '${GXY_RADIAL}'"
@@ -76,6 +77,9 @@ fi
 # if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
 # 	fail "Could not find ImageMagick identify"
 # fi
+if [ -z ${PERCEPTUAL_DIFF} ]; then
+	fail "could not find perceptualdiff"
+fi
 
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
@@ -118,7 +122,8 @@ for state in *.state; do
 		GOLD=golds/$(echo ${image} | sed s/image/${test}/)
 		report "  comparing ${image} to ${GOLD}"
 		# ${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
-		${IMAGEMAGICK_COMPARE} -verbose ${image} $GOLD diff.png
+		#${IMAGEMAGICK_COMPARE} -verbose ${image} ${GOLD} diff.png
+		${PERCEPTUAL_DIFF} ${image} ${GOLD} -verbose
 		if [ $? == 0 ]; then
 			report "    test passed: ${image} ${GOLD}"
 		else

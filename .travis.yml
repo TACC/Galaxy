@@ -59,6 +59,7 @@ addons:
       - libxinerama-dev
       - libxcursor-dev
       - imagemagick
+      - perceptualdiff
       - python-numpy
   homebrew:
     packages: 
@@ -68,6 +69,7 @@ addons:
       - open-mpi
       - freeglut
       - imagemagick
+      - perceptualdiff
       # - gcc@7
 
 before_install:
