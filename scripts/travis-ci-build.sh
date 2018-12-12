@@ -90,8 +90,6 @@ if [ -z ${GXY_BUILT_VTK} ]; then
   		&& make install
   elif [ $TRAVIS_OS_NAME == "linux" ]; then 
   	cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
-          -D CMAKE_CXX_FLAGS:STRING="-fPIC" \
-          -D CMAKE_C_FLAGS:STRING="-fPIC" \
           -D GLUT_INCLUDE_DIR:PATH=/usr/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
           .. \
