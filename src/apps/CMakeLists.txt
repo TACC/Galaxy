@@ -112,19 +112,19 @@ if(GXY_APP_PISO)
 endif(GXY_APP_PISO)
 
 add_executable(client client.cpp)
-target_link_libraries(client gxy_framework)
+target_link_libraries(client gxy_framework ${TBB_LIBRARY})
 set(BINS client ${BINS})
 
 add_executable(ppong ppong.cpp)
-target_link_libraries(ppong gxy_framework)
+target_link_libraries(ppong gxy_framework ${TBB_LIBRARY})
 set(BINS ppong ${BINS})
 
 add_executable(bcast bcast.cpp)
-target_link_libraries(bcast gxy_framework)
+target_link_libraries(bcast gxy_framework ${TBB_LIBRARY})
 set(BINS bcast ${BINS})
 
 add_executable(drop drop.cpp TestObject.cpp)
-target_link_libraries(drop gxy_framework)
+target_link_libraries(drop gxy_framework ${TBB_LIBRARY})
 set(BINS drop ${BINS})
 
 add_executable(gvt gvt.cpp)

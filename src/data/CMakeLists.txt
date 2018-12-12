@@ -36,7 +36,8 @@ endif(COMMAND cmake_policy)
 include_directories(${gxy_framework_SOURCE_DIR} ${gxy_data_SOURCE_DIR} ${Galaxy_BINARY_DIR}/src)
 
 set (CPP_SOURCES     
-  Box.cpp 
+  Box.cpp
+  data.cpp 
   DataObjects.cpp
   Datasets.cpp
   Geometry.cpp 
@@ -46,7 +47,7 @@ set (CPP_SOURCES
   Volume.cpp 
   AmrVolume.cpp)
 
-add_library(gxy_data data.cpp ${CPP_SOURCES})
+add_library(gxy_data SHARED ${CPP_SOURCES})
 target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework)
 
 install(FILES 

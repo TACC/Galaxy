@@ -18,7 +18,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.9)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
@@ -34,7 +34,7 @@ set(SERVERS "")
 include_directories(${GLUT_INCLUDE_DIR})
 
 add_executable(multiserver server.cpp MultiServer.cpp MultiServerSocket.cpp)
-target_link_libraries(multiserver gxy_framework pthread dl)
+target_link_libraries(multiserver gxy_framework pthread dl ${TBB_LIBRARY})
 set(BINS multiserver ${BINS})
 
 add_executable(multiserver-viewer viewer.cpp ClientWindow.cpp MultiServerSocket.cpp IF.cpp)
@@ -51,8 +51,8 @@ set(BINS ping ${BINS})
 add_executable(data data.cpp MultiServerSocket.cpp)
 set(BINS data ${BINS})
 
-add_executable(test test.cpp MultiServerSocket.cpp)
-set(BINS test ${BINS})
+add_executable(mstest test.cpp MultiServerSocket.cpp)
+set(BINS mstest ${BINS})
 
 add_library(pinglib MODULE pinglib.cpp MultiServer.cpp MultiServerSocket.cpp)
 target_link_libraries(pinglib gxy_framework)
