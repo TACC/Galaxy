@@ -106,6 +106,7 @@ if [ $? != 0 ]; then
 fi
 
 RESOLUTION="-s 512 512"
+PDIFF_OPTIONS="-verbose -fov 85"
 TESTS=0
 FAILS=0
 for state in *.state; do
@@ -123,7 +124,7 @@ for state in *.state; do
 		report "  comparing ${image} to ${GOLD}"
 		# ${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
 		#${IMAGEMAGICK_COMPARE} -verbose ${image} ${GOLD} diff.png
-		${PERCEPTUAL_DIFF} ${image} ${GOLD} -verbose
+		${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
 		if [ $? == 0 ]; then
 			report "    test passed: ${image} ${GOLD}"
 		else
