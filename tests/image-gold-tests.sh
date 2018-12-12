@@ -104,9 +104,6 @@ fi
 RESOLUTION="-s 512 512"
 TESTS=0
 FAILS=0
-COLOR_RED='\033[0;31m'
-COLOR_GREEN='\033[0;32m'
-COLOR_WHITE='\033[0m'
 for state in *.state; do
 	test=$(echo ${state} | sed s/\.state//)
 	report "Generating ${test} images"
@@ -121,11 +118,11 @@ for state in *.state; do
 		GOLD=golds/$(echo ${image} | sed s/image/${test}/)
 		report "  comparing ${image} to ${GOLD}"
 		# ${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
-		${IMAGEMAGICK_COMPARE} ${image} $GOLD diff.png
+		${IMAGEMAGICK_COMPARE} -verbose ${image} $GOLD diff.png
 		if [ $? == 0 ]; then
-			report "  ${COLOR_GREEN} test passed: ${image} ${GOLD} ${COLOR_WHITE}"
+			report "    test passed: ${image} ${GOLD}"
 		else
-			report "  ${COLOR_RED} test FAILED ($?): ${image} ${GOLD} ===== ${COLOR_WHITE}"
+			report "    test FAILED ($?): ${image} ${GOLD} ====="
 			FAILS=$((${FAILS} + 1))
 		fi
 	done
@@ -134,9 +131,9 @@ for state in *.state; do
 done
 
 if [ ${FAILS} == 0 ]; then
-	report "${COLOR_GREEN}${TESTS}/${TESTS} image comparison tests passed${COLOR_WHITE}"
+	report "${TESTS}/${TESTS} image comparison tests passed"
 else
-	fail "${COLOR_RED}${FAILS}/${TESTS} image comparisons failed${COLOR_WHITE}"
+	report "${FAILS}/${TESTS} image comparisons failed"
 fi
 
 report "done!"
