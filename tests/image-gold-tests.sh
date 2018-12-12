@@ -21,7 +21,7 @@
 
 
 if [ $1 ]; then
-	echo "usage: run-image-gold-tests.sh"
+	echo "usage: image-gold-tests.sh"
 	echo "This script will generate a radial dataset, render it with Galaxy, and compare the results against the golden images in this directory."
 	exit 1
 fi
@@ -39,7 +39,7 @@ function fail
 
 GXY_ROOT=$PWD
 
-if [ -f ${GXY_ROOT}/run-image-gold-tests.sh ]; then
+if [ -f ${GXY_ROOT}/image-gold-tests.sh ]; then
 	# already in test dir, help a user out
 	GXY_ROOT=${PWD}/..
 elif [ -d ${GXY_ROOT}/tests ]; then
@@ -73,9 +73,9 @@ fi
 if [ -z ${IMAGEMAGICK_COMPARE} ]; then
 	fail "Could not find ImageMagick compare"
 fi
-if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
-	fail "Could not find ImageMagick identify"
-fi
+# if [ -z ${IMAGEMAGICK_IDENTIFY} ]; then
+# 	fail "Could not find ImageMagick identify"
+# fi
 
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
@@ -92,10 +92,10 @@ fi
 GXY_VOLS="oneBall eightBalls xramp yramp zramp"
 report "Converting vti to vol with ${GXY_VTI2VOL}"
 # TODO: remove this hack once galaxy.env includes VTK on PYTHONPATH
-if [ ${TRAVIS_OS_NAME} == "linux" ]; then
-	export PYTHONPATH=${GXY_ROOT}/third-party/VTK-8.1.2/install/lib/python2.7/site-packages:${PYTHONPATH}
-	report "PYTHONPATH is now ${PYTHONPATH}"
-fi
+# if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+# 	export PYTHONPATH=${GXY_ROOT}/third-party/VTK-8.1.2/install/lib/python2.7/site-packages:${PYTHONPATH}
+# 	report "PYTHONPATH is now ${PYTHONPATH}"
+# fi
 ${GXY_VTI2VOL} radial-0.vti ${GXY_VOLS} > /dev/null 2>&1
 if [ $? != 0 ]; then
 	fail "$GXY_VTI2VOL exited with code $?"
@@ -117,7 +117,7 @@ for state in *.state; do
 		TESTS=$((${TESTS} + 1))
 		GOLD=golds/$(echo ${image} | sed s/image/${test}/)
 		report "  comparing ${image} to ${GOLD}"
-		${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
+		# ${IMAGEMAGICK_IDENTIFY} ${image} ${GOLD}
 		${IMAGEMAGICK_COMPARE} ${image} $GOLD diff.png
 		if [ $? == 0 ]; then
 			report "  test passed: ${image} ${GOLD}"
