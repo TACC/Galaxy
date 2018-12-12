@@ -84,6 +84,7 @@ find_package(OpenGL REQUIRED)
 find_package(VTK REQUIRED NO_MODULE)
 include(${VTK_USE_FILE})
 find_package(PNG REQUIRED)
+find_package(PythonInterp REQUIRED)
 
 # find third-party directory dependencies
 find_package(RapidJSON PATHS
@@ -132,7 +133,7 @@ SET(CMAKE_INSTALL_RPATH
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
-set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}")
 set(GALAXY_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
 set(GALAXY_INCLUDE_DIRS "${CMAKE_INSTALL_INCLUDEDIR}")
 set(GALAXY_CONFIG "${PROJECT_NAME}Config.cmake")
