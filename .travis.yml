@@ -4,7 +4,7 @@ dist: xenial # get a semi-modern linux
 branches:
   only:
     - travis-ci
-    # - dev
+    - dev
     # - master
 
 matrix:

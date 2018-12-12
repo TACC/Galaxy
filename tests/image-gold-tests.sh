@@ -93,7 +93,7 @@ if [ $? != 0 ]; then
 fi
 
 RESOLUTION="-s 512 512"
-PDIFF_OPTIONS="-verbose -fov 85"
+PDIFF_OPTIONS="-fov 85"
 TESTS=0
 FAILS=0
 for state in *.state; do
@@ -109,8 +109,7 @@ for state in *.state; do
 		TESTS=$((${TESTS} + 1))
 		GOLD=golds/$(echo ${image} | sed s/image/${test}/)
 		report "  comparing ${image} to ${GOLD}"
-		# ${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
-		${PERCEPTUAL_DIFF} ${image} golds/xyz_00000.png ${PDIFF_OPTIONS}
+		${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
 		if [ $? == 0 ]; then
 			report "    test passed: ${image} ${GOLD}"
 		else
@@ -125,7 +124,7 @@ done
 if [ ${FAILS} == 0 ]; then
 	report "${TESTS}/${TESTS} image comparison tests passed"
 else
-	report "${FAILS}/${TESTS} image comparisons failed"
+	fail "${FAILS}/${TESTS} image comparisons failed"
 fi
 
 report "done!"
