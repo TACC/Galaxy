@@ -43,7 +43,6 @@ set(BINS multiserver-viewer ${BINS})
 
 add_library(gxy_module_viewer MODULE viewerlib.cpp MultiServer.cpp MultiServerSocket.cpp ServerRendering.cpp IF.cpp)
 target_link_libraries(gxy_module_viewer ${GALAXY_LIBRARIES})
-set_target_properties(gxy_module_viewer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 install(TARGETS gxy_module_viewer DESTINATION ${CMAKE_INSTALL_LIBDIR} RENAME viewerlib.so)
 
 add_executable(ping ping.cpp MultiServerSocket.cpp)
@@ -57,17 +56,14 @@ set(BINS multiserver_test ${BINS})
 
 add_library(gxy_module_ping MODULE pinglib.cpp MultiServer.cpp MultiServerSocket.cpp)
 target_link_libraries(gxy_module_ping gxy_framework)
-set_target_properties(gxy_module_ping PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 set(SERVERS gxy_module_ping ${SERVERS})
 
 add_library(gxy_module_data MODULE datalib.cpp MultiServer.cpp MultiServerSocket.cpp)
 target_link_libraries(gxy_module_data gxy_data gxy_framework)
-set_target_properties(gxy_module_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 set(SERVERS gxy_module_data ${SERVERS})
 
 add_library(gxy_module_test MODULE testlib.cpp MultiServer.cpp MultiServerSocket.cpp)
 target_link_libraries(gxy_module_test gxy_data gxy_framework)
-set_target_properties(gxy_module_test PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 set(SERVERS gxy_module_test ${SERVERS})
 
 install(TARGETS ${BINS} DESTINATION bin)
