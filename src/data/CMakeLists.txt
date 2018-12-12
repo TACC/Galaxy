@@ -49,6 +49,8 @@ set (CPP_SOURCES
 
 add_library(gxy_data SHARED ${CPP_SOURCES})
 target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework)
+set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+install(TARGETS gxy_data DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
   dtypes.h

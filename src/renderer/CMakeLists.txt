@@ -86,7 +86,7 @@ if (ospray_DIR)
   ospray_create_library(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES} 
     LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
   set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_renderer DESTINATION lib)
+  # install(TARGETS gxy_renderer DESTINATION lib)
 endif()
 
 install(FILES 

@@ -53,9 +53,9 @@ set (CPP_SOURCES
 			Work.cpp)
 
 add_library(gxy_framework SHARED ${CPP_SOURCES})
-target_link_libraries(gxy_framework  ${MPI_LIBRARIES})
-
-install(TARGETS gxy_framework DESTINATION lib)
+target_link_libraries(gxy_framework  ${MPI_LIBRARIES} ${TBB_LIBRARY})
+set_target_properties(gxy_framework PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+install(TARGETS gxy_framework DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
 	Application.h 
