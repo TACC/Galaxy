@@ -21,15 +21,15 @@ matrix:
     #   env:
     #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    - os: linux
-      compiler: clang
-      env:
-        - MATRIX_EVAL=""
-
     # - os: linux
-    #   compiler: gcc
+    #   compiler: clang
     #   env:
-    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    #     - MATRIX_EVAL=""
+
+    - os: linux
+      compiler: gcc
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
@@ -85,7 +85,7 @@ script:
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
   - scripts/travis-ci-build.sh
-  - if [ -z ${GXY_REBUILDING_CACHE} ]; then tests/image-gold-tests.sh; fi
+  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
 
 notifications:
   slack:
