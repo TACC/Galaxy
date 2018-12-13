@@ -1,5 +1,17 @@
 # Galaxy Release Notes
 
+## version 0.2.0 - pending
+
+Refactorization of Galaxy core to cleanly partition framework, data, and renderer layers. Initial release of multiserver modularization of Galaxy framework.
+
+* Added new `multiserver` component that enables Galaxy to live as a service (e.g. alongside a simulation *in situ*) and process requests that arrive via remote connections.
+* Removed OSPRay and Embree dependencies from framework and data layers.
+* Install now generates a GalaxyConfig.cmake file so that Galaxy components can be included in other programs
+* Added Travis-CI build and test integration
+* Added sanity-check gold image tests in `tests`
+* Added Galaxy state file documentation in `doc/configuration_files.md`
+* Added Python as a prerequisite for testing and use of python scripts in `scripts`
+
 ## version 0.1.0 - 20181005
 
 Initial Galaxy release!

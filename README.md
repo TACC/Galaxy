@@ -25,6 +25,7 @@ Galaxy assumes the following are already installed on your system in an accessib
   * [zlib compression library][8]
   * [CMake cross-platform build utility][9]
   * [GLFW][14] (required by OSPRay build)
+  * [Python][18] (required for testing and using python scripts in `scripts`)
 
 Galaxy has the following components associated in the `third-party` subdirectory:
   * [Intel ISPC][10]
@@ -437,4 +438,6 @@ The following environment variables affect Galaxy behavior:
 [15]: https://www.apache.org/licenses/LICENSE-2.0
 [16]: http://rapidjson.org/
 [17]: https://cinemascience.org/
+[18]: https://www.python.org/
+[19]: 
 
