@@ -1,7 +1,7 @@
 # Galaxy: an asynchronous distributed parallel framework
 
-[![Master Build Status](https://travis-ci.org/TACC/Galaxy.svg?branch=master)](https://travis-ci.org/TACC/Galaxy)
-[![Dev Build Status](https://travis-ci.org/TACC/Galaxy.svg?branch=dev)](https://travis-ci.org/TACC/Galaxy)
+`master`: [![Build Status](https://travis-ci.org/TACC/Galaxy.svg?branch=master)](https://travis-ci.org/TACC/Galaxy)
+`dev`: [![Build Status](https://travis-ci.org/TACC/Galaxy.svg?branch=dev)](https://travis-ci.org/TACC/Galaxy)
 
 Galaxy is an asynchronous parallel visualization framework for ray-based operations, including ray tracing, sampling and volume integration. Galaxy has been designed for performance in distributed computing environments, including in situ use. Galaxy builds upon [Intel OSPRay][1] and [Intel Embree][2] and includes ray queueing and sending logic inspired by [TACC GraviT][3]. 
 
