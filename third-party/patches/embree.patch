@@ -38,7 +38,7 @@ index b6954fb2b..102b5ec2e 100644
  INCLUDE(test)
  
 diff --git a/common/cmake/embree-config.cmake b/common/cmake/embree-config.cmake
-index be80bb0d7..0970d10f7 100644
+index be80bb0d7..a9ad3ae5b 100644
 --- a/common/cmake/embree-config.cmake
 +++ b/common/cmake/embree-config.cmake
 @@ -14,6 +14,9 @@
@@ -51,14 +51,17 @@ index be80bb0d7..0970d10f7 100644
  SET(EMBREE_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/@EMBREE_RELATIV_ROOT_DIR@)
  GET_FILENAME_COMPONENT(EMBREE_ROOT_DIR "${EMBREE_ROOT_DIR}" ABSOLUTE)
  
-@@ -55,3 +58,10 @@ SET(EMBREE_GEOMETRY_CURVE @EMBREE_GEOMETRY_CURVE@)
+@@ -55,3 +58,13 @@ SET(EMBREE_GEOMETRY_CURVE @EMBREE_GEOMETRY_CURVE@)
  SET(EMBREE_GEOMETRY_SUBDIVISION @EMBREE_GEOMETRY_SUBDIVISION@)
  SET(EMBREE_GEOMETRY_USER @EMBREE_GEOMETRY_USER@)
  SET(EMBREE_RAY_PACKETS @EMBREE_RAY_PACKETS@)
 +
 +# GALAXY BEGIN ADDED CODE - by Galaxy patch
 +IF(EMBREE_STATIC_LIB)
-+  INCLUDE(${EMBREE_ROOT_DIR}/@EMBREE_CMAKECONFIG_DIR@/embree-targets.cmake)
++  FILE(GLOB CONFIG_FILES "${EMBREE_ROOT_DIR}/@EMBREE_CMAKECONFIG_DIR@/*-targets.cmake")
++  FOREACH(f ${CONFIG_FILES})
++    INCLUDE(${f})
++  ENDFOREACH()
 +  LINK_DIRECTORIES(${EMBREE_ROOT_DIR}/@CMAKE_INSTALL_LIBDIR@)
 +ENDIF()
 +# GALAXY END ADDED CODE - by Galaxy patch
@@ -99,7 +102,7 @@ index 2c5757f6c..d13ba646e 100644
    ENDFOREACH()
  
 diff --git a/common/cmake/package.cmake b/common/cmake/package.cmake
-index f4db3c0ac..2571ed474 100644
+index f4db3c0ac..8d4d8f1f8 100644
 --- a/common/cmake/package.cmake
 +++ b/common/cmake/package.cmake
 @@ -14,6 +14,9 @@
@@ -306,7 +309,7 @@ index 191799faa..a4788bde5 100644
    IF (EMBREE_STATIC_LIB)
 -    INSTALL(TARGETS embree_avx ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
 +    # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
-+    # original code: INSTALL(TARGETS embree_avx ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    # original code:     INSTALL(TARGETS embree_avx ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
 +    INSTALL(TARGETS embree_avx EXPORT embree_avx-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
 +    INSTALL(EXPORT embree_avx-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
 +    # GALAXY END MODIFIED CODE - by Galaxy patch
