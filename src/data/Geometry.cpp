@@ -29,7 +29,7 @@
 
 namespace gxy
 {
-OBJECT_CLASS_TYPE(Geometry)
+KEYED_OBJECT_CLASS_TYPE(Geometry)
 
 void
 Geometry::Register()

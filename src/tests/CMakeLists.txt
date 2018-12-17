@@ -37,6 +37,10 @@ add_executable(events events.cpp)
 target_link_libraries(events ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 set(BINS events ${BINS})
 
+add_executable(objects objects.cpp)
+target_link_libraries(objects gxy_framework)
+set(BINS objects ${BINS})
+
 find_package(X11)
 find_package(OpenGL)
 find_package(GLUT)

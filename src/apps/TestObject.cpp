@@ -23,7 +23,7 @@
 
 using namespace gxy;
 
-OBJECT_CLASS_TYPE(TestObject)
+KEYED_OBJECT_CLASS_TYPE(TestObject)
 WORK_CLASS_TYPE(TestObject::DoitMsg);
 
 void TestObject::initialize() { APP_PRINT(<< "TestObject initialize"); }

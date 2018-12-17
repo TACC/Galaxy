@@ -45,7 +45,7 @@ using namespace std;
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(Triangles) 
+KEYED_OBJECT_CLASS_TYPE(Triangles) 
 
 void     
 Triangles::Register()

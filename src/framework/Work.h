@@ -28,8 +28,9 @@
 #include <iostream>
 #include <memory>
 #include <mpi.h>
-#include <smem.h>
 #include <vector>
+
+#include "smem.h"
 
 namespace gxy
 {

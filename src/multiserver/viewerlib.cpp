@@ -78,6 +78,16 @@ public:
 #endif
   }
 
+  ~RenderingState()
+  {
+    Delete(datasets);
+    Delete(visualization);
+    Delete(camera);
+    Delete(rendering);
+    Delete(renderingSet);
+    Delete(renderer);
+  }
+
   DatasetsP        GetTheDatasets() { return datasets; }
   RendererP        GetTheRenderer() { return renderer; }
   VisualizationP   GetTheVisualization() { return visualization; }
@@ -209,13 +219,14 @@ server(MultiServer *srvr, MultiServerSocket *skt)
     free(buf);
   }
 
+  // ospShutdown();
+
   return true;
 }
 
 extern "C" void
 init()
 {
-  ospInit(0, NULL);
   Renderer::Initialize();
   ServerRendering::RegisterClass();
 }

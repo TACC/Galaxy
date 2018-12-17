@@ -38,7 +38,7 @@ syntax(char *a)
   cerr << "options:" << endl;
   cerr << "  -H host    host (localhost)" << endl;
   cerr << "  -P port    port (5001)" << endl;
-  cerr << "  -so sofile       interface SO (libping.so)\n";
+  cerr << "  -so sofile       interface SO (libpinglib.so)\n";
   exit(1);
 }
 
@@ -50,7 +50,7 @@ main(int argc, char *argv[])
   string host = "localhost";
   int port = 5001;
 
-  string sofile = "libping.so";
+  string sofile = "libpinglib.so";
 
 	char *dbgarg;
 
@@ -74,23 +74,16 @@ main(int argc, char *argv[])
     exit(1);
   }
 
-  bool done = false;
-  while (!done)
+  string cmd;
+  for (cerr << "? ", cin >> cmd; !cin.eof() && cmd != "q" && cmd != "quit"; cerr << "? ", cin >> cmd)
   {
-    cerr << "? ";
-
-    string s;
-    cin >> s;
-
-    done = s == "quit";
-
-    if (! mskt.CSendRecv(s))
+    if (! mskt.CSendRecv(cmd))
     {
       cerr << "send/receive failed\n";
       exit(1);
     }
 
-    cout << "reply: " << s << "\n";
+    cout << "reply: " << cmd << "\n";
   }
 
   return 0;

@@ -50,7 +50,7 @@ namespace gxy
 
 WORK_CLASS_TYPE(Particles::LoadPartitioningMsg);
 
-OBJECT_CLASS_TYPE(Particles)
+KEYED_OBJECT_CLASS_TYPE(Particles)
 
 void
 Particles::Register()

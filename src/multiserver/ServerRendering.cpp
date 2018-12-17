@@ -24,7 +24,7 @@
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(ServerRendering)
+KEYED_OBJECT_CLASS_TYPE(ServerRendering)
 
 void
 ServerRendering::initialize()

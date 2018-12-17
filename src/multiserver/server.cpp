@@ -61,19 +61,15 @@ main(int argc, char *argv[])
   {
     MultiServer server(port);
 
-    bool done = false;
-    while (! done)
+    string cmd;
+    for (cerr << "? ", cin >> cmd; !cin.eof() && cmd != "q" && cmd != "quit"; cerr << "? ", cin >> cmd)
     {
-      cerr << "? ";
-      
-      string cmd;
-      cin >> cmd;
-
-      if (cmd == "q")
-        done = true;
-      else
+      if (cmd == "help")
+        cout << "control-D, q or quit to quit\n";
+      else 
         cerr << "huh? ";
     }
+
     GetTheApplication()->QuitApplication();
   }
   else

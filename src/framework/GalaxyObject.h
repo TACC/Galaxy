@@ -39,7 +39,8 @@ namespace gxy
 #define OBJECT_POINTER_TYPES(typ)                                                         \
 class typ;                                                                                \
 typedef std::shared_ptr<typ> typ ## P;                                                    \
-typedef std::weak_ptr<typ> typ ## W;
+typedef std::weak_ptr<typ> typ ## W;                                                      \
+void Delete(typ ## P& p);
 
 OBJECT_POINTER_TYPES(GalaxyObject)
 
@@ -48,15 +49,16 @@ OBJECT_POINTER_TYPES(GalaxyObject)
  *  \ingroup framework
  */
 
-#define OBJECT_CLASS_TYPE(typ)                                                            \
-int typ::ClassType;
+#define OBJECT_CLASS_TYPE(typ)                                                              \
+int typ::ClassType;                                                                         \
+void Delete(typ ## P& p) { p = NULL; }
 
-#define GALAXY_OBJECT_SUBCLASS(typ, parent)                                               \
-public:                                                                                   \
-  typedef parent super;                                                                   \
-  static typ ## P Cast(GalaxyObjectP kop) { return std::dynamic_pointer_cast<typ>(kop); }  \
-  static bool IsA(GalaxyObjectP a) { return dynamic_cast<typ *>(a.get()) != NULL; }        \
-  std::string GetClassName() { return std::string(#typ); }                                \
+#define GALAXY_OBJECT_SUBCLASS(typ, parent)                                                 \
+public:                                                                                     \
+  typedef parent super;                                                                     \
+  static typ ## P Cast(GalaxyObjectP kop) { return std::dynamic_pointer_cast<typ>(kop); }   \
+  static bool IsA(GalaxyObjectP a) { return dynamic_cast<typ *>(a.get()) != NULL; }         \
+  std::string GetClassName() { return std::string(#typ); }                                  \
   static int  ClassType;
 
 

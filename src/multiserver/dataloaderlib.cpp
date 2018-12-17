@@ -37,10 +37,7 @@ server(MultiServer *srvr, MultiServerSocket *skt)
   {
     char *buf; int sz;
     if (! skt->CRecv(buf, sz))
-    {
-      cerr << "receive failed\n";
       break;
-    }
 
     cerr << "received " << buf << "\n";
 
@@ -77,8 +74,7 @@ server(MultiServer *srvr, MultiServerSocket *skt)
     {
       char objName[256], cmd[256];
       sscanf(buf, "%s%s", cmd, objName);
-      cerr << "dropping " << objName << "\n";
-      theDatasets->Drop(objName);
+      theDatasets->DropDataset(objName);
       std::string ok("ok");
       skt->CSend(ok.c_str(), ok.length()+1);
     }
@@ -86,16 +82,15 @@ server(MultiServer *srvr, MultiServerSocket *skt)
     {
       char objName[256], cmd[256];
       sscanf(buf, "%s%s", cmd, objName);
-      cerr << "trying to delete " << objName << "\n";
       KeyedDataObjectP kop = theDatasets->Find(objName);
       if (kop)
       {
-        cerr << "found in theDatasets\n";
-        theDatasets->Drop(objName);
-        kop->Drop();
+        theDatasets->DropDataset(objName);
+        Delete(kop);
       }
       else
         cerr << "couldn't find it in theDatasets\n";
+
       std::string ok("ok");
       skt->CSend(ok.c_str(), ok.length()+1);
     }
@@ -111,5 +106,5 @@ server(MultiServer *srvr, MultiServerSocket *skt)
     free(buf);
   }
 
-  pthread_exit(NULL);
+  return true;
 }

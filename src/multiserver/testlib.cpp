@@ -53,7 +53,7 @@ private:
   string str;
 };
 
-OBJECT_CLASS_TYPE(TestObject)
+KEYED_OBJECT_CLASS_TYPE(TestObject)
 
 class TestMsg : public Work
 {

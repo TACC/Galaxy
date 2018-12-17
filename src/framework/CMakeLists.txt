@@ -50,6 +50,7 @@ set (CPP_SOURCES
 			MessageManager.cpp 
 			MessageQ.cpp 
 			smem.cpp
+      SOManager.cpp
 			Work.cpp)
 
 add_library(gxy_framework SHARED ${CPP_SOURCES})
@@ -70,6 +71,7 @@ install(FILES
 	MessageManager.h 
 	MessageQ.h 
 	smem.h 
+  SOManager.h
 	Timer.h 
 	Work.h 
 	DESTINATION include/gxy)

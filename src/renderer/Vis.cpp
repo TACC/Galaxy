@@ -37,7 +37,7 @@ using namespace std;
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(Vis)
+KEYED_OBJECT_CLASS_TYPE(Vis)
 
 void
 Vis::Register()

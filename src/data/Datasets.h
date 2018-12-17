@@ -106,7 +106,7 @@ public:
   //! delete a data object
   /*! \param name the name of the dataset to drop
    */
-  void Drop(std::string name)
+  void DropDataset(std::string name)
   {
     datasets.erase(name);
   }

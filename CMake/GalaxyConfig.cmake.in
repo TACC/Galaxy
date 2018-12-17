@@ -22,15 +22,18 @@
 
 get_filename_component(Galaxy_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
-set_and_check( Galaxy_INCLUDE_DIR  "@PACKAGE_GALAXY_INCLUDE_DIR@" )
+set_and_check( Galaxy_INSTALL_DIR   ${PACKAGE_PREFIX_DIR} )
+set_and_check( Galaxy_INCLUDE_DIR   "@PACKAGE_GALAXY_INCLUDE_DIR@" )
 set_and_check( Galaxy_INCLUDE_DIRS  "@PACKAGE_GALAXY_INCLUDE_DIR@" )
-set_and_check( Galaxy_LIBRARIES 
-	"@PACKAGE_GALAXY_FRAMEWORK_LIB@" 
-	"@PACKAGE_GALAXY_DATA_LIB@"
-	"@PACKAGE_GALAXY_RENDERER_LIB@"
-	"@PACKAGE_GALAXY_SAMPLER_LIB@")
+set_and_check( Galaxy_LIBRARY_DIR   ${PACKAGE_PREFIX_DIR}/lib )
+set( Galaxy_LIBRARIES libgxy_data.dylib libgxy_framework.dylib )
+set( Galaxy_RENDERING_LIBRARIES libgxy_renderer.dylib )
+
+find_package(embree 3 PATHS ${PACKAGE_PREFIX_DIR}/third-party/lib/cmake)
+find_package(ospray 1 PATHS ${PACKAGE_PREFIX_DIR}/third-party/lib/cmake)
+include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 
 check_required_components("@PROJECT_NAME@")
 
-#message(STATUS "Galaxy found. Headers: ${Galaxy_INCLUDE_DIRS} Libraries: ${Galaxy_LIBRARIES}")
+message(STATUS "Galaxy found. Headers: ${Galaxy_INCLUDE_DIRS} Libraries: ${Galaxy_LIBRARIES}")
 

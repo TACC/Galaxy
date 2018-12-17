@@ -45,7 +45,7 @@ using namespace std;
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(Visualization)
+KEYED_OBJECT_CLASS_TYPE(Visualization)
 
 void
 Visualization::Register()

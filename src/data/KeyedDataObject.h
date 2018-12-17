@@ -52,7 +52,6 @@ OBJECT_POINTER_TYPES(KeyedDataObject)
 class KeyedDataObject : public KeyedObject
 {
 	KEYED_OBJECT_SUBCLASS(KeyedDataObject, KeyedObject)
-	// KEYED_OBJECT(KeyedDataObject)
 
 	friend class ImportMsg;
 	friend class AttachMsg;

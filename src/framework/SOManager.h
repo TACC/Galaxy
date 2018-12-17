@@ -18,95 +18,51 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ParticlesVis.h"
-#include "ParticlesVis_ispc.h"
+#pragma once
 
-#include "Application.h"
-#include "Datasets.h"
-
-using namespace rapidjson;
+#include <string>
+#include <dlfcn.h>
+#include <vector>
+#include <memory>
 
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(ParticlesVis)
+class SOManager
+{
+  enum so_task { LOAD, RELEASE };
 
-void
-ParticlesVis::Register()
-{
-  RegisterClass();
-}
-
-ParticlesVis::~ParticlesVis()
-{
-	ParticlesVis::destroy_ispc();
-}
-
-void
-ParticlesVis::initialize()
-{
-  super::initialize();
-}
-
-void
-ParticlesVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::ParticlesVis_initialize(ispc);
-} 
-    
-void
-ParticlesVis::allocate_ispc()
-{
-  ispc = ispc::ParticlesVis_allocate();
-}
-
-int 
-ParticlesVis::serialSize()
-{
-  return super::serialSize();
-}
-
-unsigned char *
-ParticlesVis::serialize(unsigned char *ptr)
-{
-  ptr = super::serialize(ptr);
-  return ptr;
-}
-
-unsigned char *
-ParticlesVis::deserialize(unsigned char *ptr)
-{
-  ptr = super::deserialize(ptr);
-  return ptr;
-}
-
-void 
-ParticlesVis::LoadFromJSON(Value& v)
-{
-  super::LoadFromJSON(v);
-}
-
-void
-ParticlesVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-}
-
-void
-ParticlesVis::destroy_ispc()
-{
-  if (ispc)
+  class SOMsg : public Work
   {
-    ispc::ParticlesVis_destroy(ispc);
-  }
+  public:
+    SOMsg(so_task t, std::string s);
+    WORK_CLASS(SOMsg, true)
+
+  public:
+    bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+  };
+  
+  struct SO
+  {
+    SO(void *h, std::string n) : name(n), handle(h), refknt(1) {}
+    ~SO() { std::cerr << "closing " << name << "\n"; dlclose(handle); }
+
+    void *handle;
+    std::string name;
+    int refknt;
+  };
+
+public:
+  SOManager();
+
+  void Load(std::string);
+  void Release(std::string);
+  void *GetSym(std::string, std::string);
+
+  void _load(std::string s);
+  void _release(std::string s);
+
+  std::vector<std::shared_ptr<SO>> somap;
+};
+
 }
-
-bool
-ParticlesVis::local_commit(MPI_Comm c)
-{  
-	return super::local_commit(c);
-}
-
-} // namespace gxy
-

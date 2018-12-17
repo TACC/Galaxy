@@ -37,6 +37,9 @@
 namespace gxy
 {
 
+#define KEYED_OBJECT_CLASS_TYPE(typ)                       \
+  int typ::ClassType;                                      \
+  void Delete(typ ## P& p) { p->Drop(); p = NULL; }
 
 OBJECT_POINTER_TYPES(KeyedObject)
 
@@ -175,6 +178,15 @@ public:
    */
   int register_class(KeyedObject *(*n)(Key), std::string s)
   {
+    for (auto i = 0; i < class_names.size(); i++)
+      if (class_names[i] == s)
+      {
+        if (new_procs[i] != n)
+          new_procs[i] = n;
+
+        return i;
+      }
+
     new_procs.push_back(n);
     class_names.push_back(s);
     return new_procs.size() - 1;

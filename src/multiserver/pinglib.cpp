@@ -70,5 +70,5 @@ server(MultiServer *srvr, MultiServerSocket *skt)
     free(buf);
   }
 
-  pthread_exit(NULL);
+  return true;
 }

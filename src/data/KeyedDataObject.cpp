@@ -49,7 +49,7 @@ KeyedDataObject::Register()
   AmrVolume::Register();
 }
 
-OBJECT_CLASS_TYPE(KeyedDataObject)
+KEYED_OBJECT_CLASS_TYPE(KeyedDataObject)
 
 KeyedDataObject::~KeyedDataObject()
 {

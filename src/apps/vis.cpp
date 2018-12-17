@@ -73,7 +73,7 @@ int main(int argc,  char *argv[])
   ClientServer cs;
   int maxConcurrentRenderings = 99999999;
 
-  ospInit(&argc, (const char **)argv);
+  // ospInit(&argc, (const char **)argv);
 
   Application theApplication(&argc, &argv);
   theApplication.Start();
@@ -226,6 +226,9 @@ int main(int argc,  char *argv[])
   }
 
   theApplication.Wait();
+
+  std::cerr << "? ";
+  getchar();
 
   std::cerr << "done\n";
   

@@ -36,7 +36,7 @@ using namespace std;
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(Rendering)
+KEYED_OBJECT_CLASS_TYPE(Rendering)
 
 void
 Rendering::Register()

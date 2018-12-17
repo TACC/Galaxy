@@ -36,13 +36,13 @@
 #include "galaxy.h"
 #include "KeyedObject.h"
 #include "MessageManager.h"
+#include "SOManager.h"
 #include "Work.h"
 
 #include "rapidjson/document.h"
 
 namespace gxy
 {
-
 class ThreadManager;
 class ThreadPool;
 
@@ -81,23 +81,6 @@ class ThreadPool;
     GetTheApplication()->Log(ss.str());												                          \
   }                                                                                     \
 }
-
-
-//! A table to track classes that define Work within Galaxy
-/*! \ingroup framework 
- */
-struct ClassTableEntry
-{
-  ClassTableEntry(std::string s);          //!< constuctor
-	ClassTableEntry(const ClassTableEntry&); //!< copy constructor
-  ~ClassTableEntry();											 //!< destructor
-
-  //! returns table entry as a C character array
-  const char *c_str();
-
-  std::string *my_string; //!< Work class name as std::string
-  int indx; 						  //!< table entry index
-};
 
 //! The core class for applications to use the Galaxy asynchronous framework
 /*!
@@ -145,12 +128,26 @@ public:
    * further Work processing by any process until all processes reach the sync.
    */
   void SyncApplication();
-  //! broadcast a "LoadSO" message to all processes
-  /*! Broadcast a "LoadSO" message to all processes causing them to load a
-      module and run its 'init' procedure.  Master process opens the SO and
-      returns the handle; the non-masters dlclose the SO.
+
+  //! Load a shared object
+  /*! Issue a broadcast message to cause all processes to load a
+      shared library, When a shared object is loaded its 'init' routine
+      is called.  Note that shared objects are ref counted; when the
+      requested shard object is already loaded its ref count is bumped
+      and the so is not loaded, nor is its 'init' procedure called.
    */
-  void *LoadSO(std::string soname);
+  void LoadSO(std::string soname);
+
+  //! Get a symbol from a managed SO
+  /*! Get a symbol from a SO - like an entrypoint
+   */
+  void *GetSOSym(std::string soname, std::string symbol);
+
+  //! Release a shared object.  
+  /*! Decrement the shared object's reference count and if it goes to 0 then
+      issue a broadcast message to cause all processes to close it.
+   */
+  void ReleaseSO(std::string soname);
 
 	//! returns a pointer to the argc initialization argument
 	/*! \warning will return NULL if default constructor was used
@@ -215,11 +212,19 @@ public:
   const char *Identify(Message *msg);
 
   //! adds the Work object class to the Application registry
-  int RegisterWork(std::string name, Work *(*f)(SharedP)) {
-    int n = (*deserializers).size();
-    (*deserializers).push_back(f);
-		ClassTableEntry c(name.c_str());
-		(*class_table).push_back(c);
+  int RegisterWork(std::string name, Work *(*f)(SharedP))
+  {
+    for (int i = 0; i < class_table.size(); i++)
+      if (class_table[i] == name)
+      {
+        if (deserializers[i] != f)
+          deserializers[i] = f;
+        return i;
+      }
+
+    int n = deserializers.size();
+    deserializers.push_back(f);
+		class_table.emplace_back(name);
     return n;
   }
 
@@ -257,19 +262,28 @@ public:
    */
   void DropGlobal(std::string name) { globals.erase(name); }
 
+  //! local call to load  a shared object.  Should never be called directly
+  /*! \param name the name under which the object is saved
+   */
+  void _loadSO(std::string soname);
+
+  //! local call to release a shared object.  Should never be called directly
+  /*! \param name the name under which the object is saved
+   */
+  void _releaseSO(std::string soname);
+
 private:
+
   std::map<std::string, KeyedObjectP> globals;      // Globally-known variables
 
-  bool loadSO(std::string s);
-  void *getSOFunction(std::string s, std::string p);
-  std::map<std::string, void *> shared_objects;
+  SOManager *soManager;
 
 	std::vector<std::string> log;
 	MessageManager *theMessageManager;
 	KeyedObjectFactory *theKeyedObjectFactory;
 
-  std::vector<Work *(*)(SharedP)> *deserializers;
-  std::vector<ClassTableEntry> *class_table;
+  std::vector<Work *(*)(SharedP)> deserializers;
+  std::vector<std::string> class_table;
 
 	ThreadManager *threadManager;
   ThreadPool *threadPool;
@@ -294,10 +308,10 @@ private:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
 	};
 
-	class LoadSOMsg : public Work
+	class ManageSOMsg : public Work
 	{
 	public:
-		WORK_CLASS(LoadSOMsg, true)
+		WORK_CLASS(ManageSOMsg, true)
 
 	public:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);

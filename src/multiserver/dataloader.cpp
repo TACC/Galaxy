@@ -74,16 +74,9 @@ main(int argc, char *argv[])
     exit(1);
   }
 
-  bool done = false;
-  while (!done)
+  string cmd;
+  for (cerr << "? ", cin >> cmd; !cin.eof() && cmd != "q" && cmd != "quit"; cerr << "? ", cin >> cmd)
   {
-    cerr << "? ";
-
-    string cmd;
-    cin >> cmd;
-
-    done = cmd == "quit";
-
     if (cmd == "import")
     {
       cerr << "enter JSON, END to end\n";
@@ -133,8 +126,6 @@ main(int argc, char *argv[])
       }
       cout << "reply: " << cmd << "\n";
     }
-    else if (cmd == "quit" || cmd == "q")
-      done = true;
     else
       cerr << "huh?\n";
   }

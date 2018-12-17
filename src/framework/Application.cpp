@@ -51,31 +51,8 @@ namespace gxy
 WORK_CLASS_TYPE(Application::QuitMsg)
 WORK_CLASS_TYPE(Application::SyncMsg)
 WORK_CLASS_TYPE(Application::PrintMsg)
-WORK_CLASS_TYPE(Application::LoadSOMsg)
 
 static Application *theApplication = NULL;
-
-int cte_indx = 0;
-
-ClassTableEntry::ClassTableEntry(string s)
-{
-	my_string = new string(s.c_str());
-	indx = cte_indx++;
-}
-
-ClassTableEntry::ClassTableEntry(const ClassTableEntry& o)
-{
-	
-	indx = cte_indx++;
-	my_string = new string(o.my_string->c_str());
-}
-
-ClassTableEntry::~ClassTableEntry()
-{
-	delete my_string;
-}
-
-const char *ClassTableEntry::c_str() { return my_string->c_str(); }
 
 Application *
 GetTheApplication()
@@ -99,8 +76,6 @@ Application::Application()
   threadManager = new ThreadManager;
   threadPool = new ThreadPool(n_threads);
 
-  class_table = new vector<ClassTableEntry>;
-  deserializers =  new vector<Work *(*)(SharedP)>;
 	theMessageManager = new MessageManager; 
 	theKeyedObjectFactory = new KeyedObjectFactory; 
 
@@ -135,10 +110,11 @@ Application::Application()
 	QuitMsg::Register();
 	SyncMsg::Register();
   PrintMsg::Register();
-  LoadSOMsg::Register();
 
 	KeyedObject::Register();
 	KeyedObjectFactory::Register();
+
+  soManager = new SOManager();
 
   pthread_mutex_unlock(&lock);
 }
@@ -189,11 +165,10 @@ Application::~Application()
   pthread_mutex_unlock(&lock);
 
   delete threadPool;
-	delete class_table;
-	delete deserializers;
 	delete theMessageManager;
 	delete theKeyedObjectFactory;
 	delete threadManager;
+	delete soManager;
 
   theApplication = NULL;
 }
@@ -213,53 +188,36 @@ void Application::SyncApplication()
 	q->Broadcast(true, true);
 }
 
-bool
-Application::loadSO(string soname)
+void
+Application::LoadSO(string soname)
 {
-  if (shared_objects.find(soname) == shared_objects.end())
-  {
-    void *handle = dlopen(const_cast<char *>(soname.c_str()), RTLD_NOW);
-    if (handle)
-    {
-      cerr << "initting " << soname << "\n";
-
-      void *(*init)();
-      init = (void *(*)()) dlsym(handle, const_cast<char *>("init"));
-      init();
-    }
-    else
-      std::cerr << "Error opening SO: " << dlerror() << "\n";
-
-    shared_objects[soname] = handle;
-    return true;
-  }
-  else
-    return false;
-
+  return soManager->Load(soname);
 }
    
-void *Application::LoadSO(string soname)
+void
+Application::ReleaseSO(string soname)
 {
-  if (shared_objects.find(soname) == shared_objects.end())
-  {
-    LoadSOMsg *l = new LoadSOMsg(soname.size() + 1);
-    unsigned char *ptr = (unsigned char *)l->get();
-    memcpy(ptr, soname.c_str(), soname.size() + 1);
-
-    l->Broadcast(true, true);
-  }
-
-  return shared_objects.find(soname)->second;
+  return soManager->Release(soname);
+}
+   
+void *
+Application::GetSOSym(string soname, string symbol)
+{
+  return soManager->GetSym(soname, symbol);
 }
 
-bool
-Application::LoadSOMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
+void
+Application::_loadSO(string soname)
 {
-  GetTheApplication()->loadSO((char *)get());
-  MPI_Barrier(coll_comm);
-  return false;
+  return soManager->_load(soname);
 }
-
+   
+void
+Application::_releaseSO(string soname)
+{
+  return soManager->_release(soname);
+}
+   
 void Application::Start(bool with_mpi)
 {
   GetTheMessageManager()->Start(with_mpi);
@@ -289,13 +247,13 @@ Application::SyncMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 Work *
 Application::Deserialize(Message *msg)
 {
-	return (*deserializers)[msg->GetType()](msg->ShareContent());
+	return deserializers[msg->GetType()](msg->ShareContent());
 }
 
 const char *
 Application::Identify(Message *msg)
 {
-	return (*class_table)[msg->GetType()].c_str();
+	return class_table[msg->GetType()].c_str();
 }
 
 void

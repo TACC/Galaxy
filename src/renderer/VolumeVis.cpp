@@ -32,7 +32,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(VolumeVis)
+KEYED_OBJECT_CLASS_TYPE(VolumeVis)
 
 void
 VolumeVis::Register()

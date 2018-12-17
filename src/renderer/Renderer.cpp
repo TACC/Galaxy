@@ -72,7 +72,7 @@ WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
 WORK_CLASS_TYPE(Renderer::AckRaysMsg);
 #endif // GXY_WRITE_IMAGES
 
-OBJECT_CLASS_TYPE(Renderer)
+KEYED_OBJECT_CLASS_TYPE(Renderer)
 
 // define class static variables
 int Renderer::TERMINATED    = -1;
@@ -119,12 +119,16 @@ Renderer::initialize()
 	received_from = new int[GetTheApplication()->GetSize()];
 
 	max_rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
+
+  ospInit(0, NULL);
 }
 
 Renderer::~Renderer()
 {
   	rayQmanager->Kill();
     delete rayQmanager;
+
+    ospShutdown();
  }
 
 void 

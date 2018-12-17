@@ -36,7 +36,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(MappedVis)
+KEYED_OBJECT_CLASS_TYPE(MappedVis)
 
 void
 MappedVis::Register()
