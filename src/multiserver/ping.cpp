@@ -50,7 +50,7 @@ main(int argc, char *argv[])
   string host = "localhost";
   int port = 5001;
 
-  string sofile = "libping.so";
+  string sofile = "libgxy_module_ping.so";
 
 	char *dbgarg;
 

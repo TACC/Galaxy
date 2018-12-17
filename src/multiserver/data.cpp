@@ -50,7 +50,7 @@ main(int argc, char *argv[])
   string host = "localhost";
   int port = 5001;
 
-  string sofile = "libdatalib.so";
+  string sofile = "libgxy_module_data.so";
 
 	char *dbgarg;
 
