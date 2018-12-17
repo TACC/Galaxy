@@ -21,32 +21,32 @@
 
 
 if [ $1 ]; then
-	echo "usage: image-gold-tests.sh"
-	echo "This script will generate a radial dataset, render it with Galaxy, and compare the results against the golden images in this directory."
-	exit 1
+  echo "usage: image-gold-tests.sh"
+  echo "This script will generate a radial dataset, render it with Galaxy, and compare the results against the golden images in this directory."
+  exit 1
 fi
 
 function report
 {
-	echo "GALAXY: $1"
+  echo "GALAXY: $1"
 }
 
 function fail
 {
-	echo "GALAXY: ERROR - $1"
-	exit 1
+  echo "GALAXY: ERROR - $1"
+  exit 1
 }
 
 GXY_ROOT=$PWD
 
 if [ -f ${GXY_ROOT}/image-gold-tests.sh ]; then
-	# already in test dir, help a user out
-	GXY_ROOT=${PWD}/..
+  # already in test dir, help a user out
+  GXY_ROOT=${PWD}/..
 elif [ -d ${GXY_ROOT}/tests ]; then
-	# in root dir, move to tests
-	cd ${GXY_ROOT}/tests
+  # in root dir, move to tests
+  cd ${GXY_ROOT}/tests
 else 
-	fail "could not find tests dir from PWD: $PWD"
+  fail "could not find tests dir from PWD: $PWD"
 fi
 
 
@@ -58,19 +58,19 @@ GXY_ENV=${GXY_ROOT}/install/galaxy.env
 PERCEPTUAL_DIFF=`which perceptualdiff`
 
 if [ ! -x ${GXY_RADIAL} ]; then
-	fail "Could not find or execute the Galaxy radial generator '${GXY_RADIAL}'"
+  fail "Could not find or execute the Galaxy radial generator '${GXY_RADIAL}'"
 fi
 if [ ! -x ${GXY_VTI2VOL} ]; then
-	fail "Could not find or execute the Galaxy vti2vol '${GXY_VTI2VOL}'"
+  fail "Could not find or execute the Galaxy vti2vol '${GXY_VTI2VOL}'"
 fi
 if [ ! -x ${GXY_IMAGE_WRITER} ]; then
-	fail "Could not find or execute the Galaxy image writer '${GXY_IMAGE_WRITER}'. Ensure Galaxy was configured with -D GXY_WRITE_IMAGES=ON"
+  fail "Could not find or execute the Galaxy image writer '${GXY_IMAGE_WRITER}'. Ensure Galaxy was configured with -D GXY_WRITE_IMAGES=ON"
 fi
 if [ ! -f ${GXY_ENV} ]; then
-	fail "Could not find Galaxy environment file at '${GXY_ENV}'"
+  fail "Could not find Galaxy environment file at '${GXY_ENV}'"
 fi
 if [ -z ${PERCEPTUAL_DIFF} ]; then
-	fail "could not find perceptualdiff"
+  fail "could not find perceptualdiff"
 fi
 
 report "Sourcing Galaxy environment"
@@ -82,49 +82,53 @@ export GXY_NTHREADS=4
 report "Generating radial-0.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256 > /dev/null 2>&1
 if [ $? != 0 ]; then
-	fail "$GXY_RADIAL exited with code $?"
+  fail "$GXY_RADIAL exited with code $?"
 fi
 
 GXY_VOLS="oneBall eightBalls xramp yramp zramp"
 report "Converting vti to vol with ${GXY_VTI2VOL}"
 ${GXY_VTI2VOL} radial-0.vti ${GXY_VOLS} > /dev/null 2>&1
 if [ $? != 0 ]; then
-	fail "$GXY_VTI2VOL exited with code $?"
+  fail "$GXY_VTI2VOL exited with code $?"
 fi
 
 RESOLUTION="-s 512 512"
 PDIFF_OPTIONS="-fov 85"
+MPIEXEC="mpiexec -np 2"
 TESTS=0
 FAILS=0
-for state in *.state; do
-	test=$(echo ${state} | sed s/\.state//)
-	report "Generating ${test} images"
-	${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
-	if [ $? != 0 ]; then
-		fail "$GXY_IMAGE_WRITER exited with code $?"
-	fi
+for do_mpi in "" ${MPIEXEC}; do
+  report "Performing image tests with MPI command '${do_mpi}'"
+  for state in *.state; do
+    test=$(echo ${state} | sed s/\.state//)
+    report "Generating ${test} images"
+    ${do_mpi} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
+    if [ $? != 0 ]; then
+      fail "$GXY_IMAGE_WRITER exited with code $?"
+    fi
 
-	report "Comparing generated images with golds"
-	for image in image*png; do
-		TESTS=$((${TESTS} + 1))
-		GOLD=golds/$(echo ${image} | sed s/image/${test}/)
-		report "  comparing ${image} to ${GOLD}"
-		${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
-		if [ $? == 0 ]; then
-			report "    test passed: ${image} ${GOLD}"
-		else
-			report "    test FAILED ($?): ${image} ${GOLD} ====="
-			FAILS=$((${FAILS} + 1))
-		fi
-	done
-	report "Cleaning up ${test} images"
-	rm -f image*png
+    report "Comparing generated images with golds"
+    for image in image*png; do
+      TESTS=$((${TESTS} + 1))
+      GOLD=golds/$(echo ${image} | sed s/image/${test}/)
+      report "  comparing ${image} to ${GOLD}"
+      ${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
+      if [ $? == 0 ]; then
+        report "    test passed: ${image} ${GOLD}"
+      else
+        report "    test FAILED ($?): ${image} ${GOLD} ====="
+        FAILS=$((${FAILS} + 1))
+      fi
+    done
+    report "Cleaning up ${test} images"
+    rm -f image*png
+  done
 done
 
 if [ ${FAILS} == 0 ]; then
-	report "${TESTS}/${TESTS} image comparison tests passed"
+  report "${TESTS}/${TESTS} image comparison tests passed"
 else
-	fail "${FAILS}/${TESTS} image comparisons failed"
+  fail "${FAILS}/${TESTS} image comparisons failed"
 fi
 
 report "done!"
