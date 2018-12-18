@@ -106,7 +106,8 @@ for do_mpi in 0 1; do
       MPI=""
     else
       report "  using multiprocess with MPI command '${MPI_COMMAND}'"
-      MPI="GXY_NTHREADS=1 ${MPI_COMMAND}"
+      export GXY_NTHREADS=1
+      MPI=${MPI_COMMAND}
     fi
     ${MPI} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} #> /dev/null 2>&1
     if [ $? != 0 ]; then
