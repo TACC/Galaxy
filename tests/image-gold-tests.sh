@@ -78,6 +78,9 @@ report "Sourcing Galaxy environment"
 # reasonable settings for Travis-CI VM environment
 export GXY_APP_NTHREADS=1
 export GXY_NTHREADS=4
+RESOLUTION="-s 512 512"
+PDIFF_OPTIONS="-fov 85"
+MPI_COMMAND="mpirun -n 2"
 
 report "Generating radial-0.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256 > /dev/null 2>&1
@@ -92,12 +95,9 @@ if [ $? != 0 ]; then
   fail "$GXY_VTI2VOL exited with code $?"
 fi
 
-RESOLUTION="-s 512 512"
-PDIFF_OPTIONS="-fov 85"
-MPI_COMMAND="mpirun -n 2"
 TESTS=0
 FAILS=0
-for do_mpi in "0 1"; do
+for do_mpi in 0 1; do
   for state in *.state; do
     test=$(echo ${state} | sed s/\.state//)
     report "Generating ${test} images"
