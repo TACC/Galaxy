@@ -80,7 +80,7 @@ export GXY_APP_NTHREADS=1
 export GXY_NTHREADS=4
 RESOLUTION="-s 512 512"
 PDIFF_OPTIONS="-fov 85"
-MPI_COMMAND="mpirun -n 2"
+MPI_COMMAND="mpirun -np 2 -v"
 
 report "Generating radial-0.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256 > /dev/null 2>&1
