@@ -102,9 +102,11 @@ for do_mpi in 0 1; do
     test=$(echo ${state} | sed s/\.state//)
     report "Generating ${test} images"
     if [ ${do_mpi} == 0 ]; then
+      report "  using single process"
       MPI=""
     else
-      MPI=${MPI_COMMAND}
+      report "  using multiprocess with MPI command '${MPI_COMMAND}'"
+      MPI="GXY_NTHREADS=1 ${MPI_COMMAND}"
     fi
     ${MPI} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} #> /dev/null 2>&1
     if [ $? != 0 ]; then
