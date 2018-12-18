@@ -97,7 +97,7 @@ PDIFF_OPTIONS="-fov 85"
 MPI_COMMAND="mpirun -n 2"
 TESTS=0
 FAILS=0
-for do_mpi in 0 1 do
+for do_mpi in "0 1"; do
   for state in *.state; do
     test=$(echo ${state} | sed s/\.state//)
     report "Generating ${test} images"
@@ -106,7 +106,7 @@ for do_mpi in 0 1 do
     else
       MPI=${MPI_COMMAND}
     fi
-    ${MPI} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
+    ${MPI} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} #> /dev/null 2>&1
     if [ $? != 0 ]; then
       fail "$GXY_IMAGE_WRITER exited with code $?"
     fi
