@@ -37,6 +37,41 @@ function fail
   exit 1
 }
 
+function run_tests()
+{
+  for state in *.state; do
+    test=$(echo ${state} | sed s/\.state//)
+    report "  Generating ${test} images"
+    ${MPI_COMMAND} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
+    if [ $? != 0 ]; then
+      fail "$GXY_IMAGE_WRITER exited with code $?"
+    fi
+
+    report "  Comparing generated images with golds"
+    for image in image*png; do
+      TESTS=$((${TESTS} + 1))
+      GOLD=golds/$(echo ${image} | sed s/image/${test}/)
+      report "    comparing ${image} to ${GOLD}"
+      ${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
+      if [ $? == 0 ]; then
+        report "    test passed: ${image} ${GOLD}"
+      else
+        report "    test FAILED ($?): ${image} ${GOLD} ====="
+        FAILS=$((${FAILS} + 1))
+      fi
+    done
+    report "  Cleaning up ${test} images"
+    rm -f image*png
+  done
+}
+
+
+#######################
+#                     #
+#  begin main script  #
+#                     #
+#######################
+
 GXY_ROOT=$PWD
 
 if [ -f ${GXY_ROOT}/image-gold-tests.sh ]; then
@@ -75,12 +110,6 @@ fi
 
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
-# reasonable settings for Travis-CI VM environment
-export GXY_APP_NTHREADS=1
-export GXY_NTHREADS=4
-RESOLUTION="-s 512 512"
-PDIFF_OPTIONS="-fov 85"
-MPI_COMMAND="mpirun -np 2 -v"
 
 report "Generating radial-0.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256 > /dev/null 2>&1
@@ -95,42 +124,23 @@ if [ $? != 0 ]; then
   fail "$GXY_VTI2VOL exited with code $?"
 fi
 
+# reasonable settings for Travis-CI VM environment
+export GXY_APP_NTHREADS=1
+export GXY_NTHREADS=4
+RESOLUTION="-s 512 512"
+PDIFF_OPTIONS="-fov 85"
 TESTS=0
 FAILS=0
-for do_mpi in 0 1; do
-  for state in *.state; do
-    test=$(echo ${state} | sed s/\.state//)
-    report "Generating ${test} images"
-    if [ ${do_mpi} == 0 ]; then
-      report "  using single process"
-      MPI=""
-    else
-      report "  using multiprocess with MPI command '${MPI_COMMAND}'"
-      export GXY_NTHREADS=1
-      MPI=${MPI_COMMAND}
-    fi
-    ${MPI} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} #> /dev/null 2>&1
-    if [ $? != 0 ]; then
-      fail "$GXY_IMAGE_WRITER exited with code $?"
-    fi
 
-    report "Comparing generated images with golds"
-    for image in image*png; do
-      TESTS=$((${TESTS} + 1))
-      GOLD=golds/$(echo ${image} | sed s/image/${test}/)
-      report "  comparing ${image} to ${GOLD}"
-      ${PERCEPTUAL_DIFF} ${image} ${GOLD} ${PDIFF_OPTIONS}
-      if [ $? == 0 ]; then
-        report "    test passed: ${image} ${GOLD}"
-      else
-        report "    test FAILED ($?): ${image} ${GOLD} ====="
-        FAILS=$((${FAILS} + 1))
-      fi
-    done
-    report "Cleaning up ${test} images"
-    rm -f image*png
-  done
-done
+MPI_COMMAND=""
+report "Running single process tests..."
+run_tests
+
+if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+  MPI_COMMAND="mpirun -np 2"
+  report "Running MPI tests with command '${MPI_COMMAND}'..."
+  run_tests
+fi
 
 if [ ${FAILS} == 0 ]; then
   report "${TESTS}/${TESTS} image comparison tests passed"
