@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b6954fb2b..102b5ec2e 100644
+index b6954fb2b..b1020f432 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -14,6 +14,9 @@
@@ -37,6 +37,24 @@ index b6954fb2b..102b5ec2e 100644
  
  INCLUDE(test)
  
+@@ -98,12 +109,16 @@ INCLUDE(test)
+ 
+ GET_PROPERTY(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
+ IF(SHARED_LIBS_SUPPORTED)
+-  OPTION(EMBREE_STATIC_LIB "Build Embree as a static library.")
++  # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++  # original code: OPTION(EMBREE_STATIC_LIB "Build Embree as a static library.")
++  OPTION(EMBREE_STATIC_LIB "Build Embree as a static library." ON)
++  # GALAXY END MODIFIED CODE - by Galaxy patch
+   MARK_AS_ADVANCED(CLEAR EMBREE_STATIC_LIB)
+ ELSE()
+   SET(EMBREE_STATIC_LIB ON CACHE BOOL "Build Embree as a static library." FORCE)
+   MARK_AS_ADVANCED(EMBREE_STATIC_LIB)
+ ENDIF()
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
+ IF (EMBREE_STATIC_LIB)
+   SET(EMBREE_LIB_TYPE STATIC)
+   ADD_DEFINITIONS(-DEMBREE_STATIC_LIB)
 diff --git a/common/cmake/embree-config.cmake b/common/cmake/embree-config.cmake
 index be80bb0d7..a9ad3ae5b 100644
 --- a/common/cmake/embree-config.cmake
