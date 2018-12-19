@@ -78,7 +78,7 @@ script:
   # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
   # special one-time change for move embree to static build
-  - pushd third-party/embree/build && cmake -D EMBREE_STATIC_LIB:BOOL=ON . && rm -rf ../install/* && make -j 4 install && popd && pushd third-party/ospray/build && make -j 4 install && popd
+  - pushd third-party/embree/build && cmake -D EMBREE_STATIC_LIB:BOOL=ON . && rm -rf ../install/* && make -j 2 install && popd && pushd third-party/ospray && git reset --hard && git apply ../patches/ospray.patch && cd build && make -j 2 install && popd
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
