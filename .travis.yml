@@ -78,7 +78,7 @@ script:
   # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
   # special one-time change to pull static embree into ospray
-  - pushd third-party/ospray && patch -p1 < ../patches/ospray-static.patch && cd build && make -j 2 install && popd
+  - pushd third-party/ospray/build && rm -rf * && make -j 2 install && popd
   # - pushd third-party/ospray && ls -la && echo "exit 1" | bash
 
   # the travis-ci build script does the following:
