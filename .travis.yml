@@ -21,15 +21,15 @@ matrix:
     #   env:
     #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    - os: linux
-      compiler: clang
-      env:
-        - MATRIX_EVAL=""
+    # - os: linux
+    #   compiler: clang
+    #   env:
+    #     - MATRIX_EVAL=""
 
-    - os: linux
-      compiler: gcc
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    # - os: linux
+    #   compiler: gcc
+    #   env:
+    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
@@ -78,8 +78,8 @@ script:
   # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
   # special one-time change to pull static embree into ospray
+  - pushd third-party/embree/build && rm -rf * && cmake .. && make -j 2 install && popd
   - pushd third-party/ospray/build && rm -rf * && cmake .. && make -j 2 install && popd
-  # - pushd third-party/ospray && ls -la && echo "exit 1" | bash
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
@@ -88,8 +88,8 @@ script:
   # 1. build Galaxy interactive interface
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
-  - scripts/travis-ci-build.sh
-  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
+  # - scripts/travis-ci-build.sh
+  # - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
 
 notifications:
   slack:
