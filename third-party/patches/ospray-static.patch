@@ -1,0 +1,17 @@
+diff --git a/cmake/ospray_macros.cmake b/cmake/ospray_macros.cmake
+index 7a6bb843..49a16eb5 100644
+--- a/cmake/ospray_macros.cmake
++++ b/cmake/ospray_macros.cmake
+@@ -58,6 +68,12 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
+     get_filename_component(EMBREE_LIBRARY ${EMBREE_LIBRARY} REALPATH)
+   endif()
+ 
++  # GALAXY BEGIN ADDED CODE - by Galaxy patch
++  if (EMBREE_STATIC_LIB)
++    # use import target to include full static lib chain
++    set(EMBREE_LIBRARY embree)
++  endif()
++  # GALAXY END ADDED CODE - by Galaxy patch
+   set(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
+ endmacro()
+
