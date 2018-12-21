@@ -9,10 +9,10 @@ branches:
 
 matrix:
   include:
-    - os: osx
-      compiler: clang
-      env:
-        - MATRIX_EVAL=""
+    # - os: osx
+    #   compiler: clang
+    #   env:
+    #     - MATRIX_EVAL=""
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
     #       since cmake detects mac/clang and gcc barfs rather than ignores
@@ -21,15 +21,15 @@ matrix:
     #   env:
     #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - MATRIX_EVAL=""
+    - os: linux
+      compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - os: linux
+      compiler: gcc
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
