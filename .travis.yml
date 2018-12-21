@@ -79,8 +79,8 @@ script:
 
   # special one-time change to pull static embree into ospray
   - rm -rf third-party/embree/install/* third-party/ospray/install/*
-  - pushd third-party/embree/build && rm -rf * && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install && popd
-  - pushd third-party/ospray/build && rm -rf * && cmake .. && make -j 4 install && popd
+  - pushd third-party/embree && patch -N -p1 < ../patches/embree.patch && rm -rf build/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install && popd
+  - pushd third-party/ospray && patch -N -p1 < ../patches/ospray.patch && rm -rf build/* && cd build && cmake .. && make -j 4 install && popd
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
