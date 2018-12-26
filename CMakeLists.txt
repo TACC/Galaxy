@@ -96,7 +96,7 @@ find_package(RapidJSON PATHS
   ${PROJECT_SOURCE_DIR}/third-party/rapidjson/build)
 include_directories(${RapidJSON_INCLUDE_DIRS})
 
-find_package(embree 3 PATHS 
+find_package(embree 3 QUIET PATHS 
   ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib64/cmake
   ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib/cmake
   ${PROJECT_SOURCE_DIR}/../third-party/embree/build
