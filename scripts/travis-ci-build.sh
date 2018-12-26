@@ -95,7 +95,7 @@ if [ -z ${GXY_BUILT_VTK} ]; then
           -D GLUT_INCLUDE_DIR:PATH=/usr/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
           .. \
-      && make install
+      && make VERBOSE=1 install
 	fi
 	if [ $? != 0 ]; then
 		fail "interactive interface build failed!"

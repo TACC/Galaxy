@@ -77,8 +77,6 @@ script:
   # use this line only to rebuild VTK cache for linux
   # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
-  - find . -name '*.rej' -exec rm '{}' \;
-
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
   # 0b. if no VTK python wrappers: build, cache and exit (linux only)
