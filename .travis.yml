@@ -78,7 +78,8 @@ script:
   # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
   - pushd third-party/embree && patch -p1 -N < ../patches/embree.patch ; popd
-  - pushd third-party/ospray && patch -p1 -N < ../patches/ospray.pathc ; popd
+  - pushd third-party/ospray && patch -p1 -N < ../patches/ospray.patch ; popd
+  - find third-party -name '*.rej' -exec rm -f '{}' \;
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
