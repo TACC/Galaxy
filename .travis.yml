@@ -87,6 +87,7 @@ script:
   - ls -l third-party/embree/install/lib
   - ls -l third-party/embree/install/lib/cmake/embree-3.2.0
   - cat third-party/embree/install/lib/cmake/embree-3.2.0/embree-config.cmake
+  - cat third-party/embree/install/lib/cmake/embree-3.2.0/embree-targets-release.cmake
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
