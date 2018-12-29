@@ -84,10 +84,7 @@ script:
   # - pushd third-party/embree && rm -rf build/* && rm -rf install/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
   # - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
 
-  - ls -l third-party/embree/install/lib
-  - ls -l third-party/embree/install/lib/cmake/embree-3.2.0
-  - cat third-party/embree/install/lib/cmake/embree-3.2.0/embree-config.cmake
-  - cat third-party/embree/install/lib/cmake/embree-3.2.0/embree-targets-release.cmake
+  - find . -name CMakeLists.txt -exec md5sum '{}' \; 
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
