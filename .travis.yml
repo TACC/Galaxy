@@ -82,7 +82,7 @@ script:
   # - find third-party -name '*.rej' -exec rm -f '{}' \;
 
   # - pushd third-party/embree && rm -rf build/* && rm -rf install/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
-  - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
+  # - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
@@ -91,8 +91,8 @@ script:
   # 1. build Galaxy interactive interface
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
-  # - scripts/travis-ci-build.sh
-  # - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
+  - scripts/travis-ci-build.sh
+  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
 
 notifications:
   slack:
