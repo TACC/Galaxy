@@ -21,10 +21,10 @@ matrix:
     #   env:
     #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - MATRIX_EVAL=""
+    - os: linux
+      compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
     - os: linux
       compiler: gcc
@@ -82,12 +82,7 @@ script:
   # - find third-party -name '*.rej' -exec rm -f '{}' \;
 
   # - pushd third-party/embree && rm -rf build/* && rm -rf install/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
-  # - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
-
-
-  - find . -name '*.rej' -exec rm -f '{}' \;
-  # - rm -f third-party/ospray/cmake/ospray_macros.cmake.orig
-  - pushd third-party/ospray && patch -p1 < ../patches/ospray-static.patch
+  - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
 
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
