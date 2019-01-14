@@ -18,31 +18,78 @@
 //                                                                            //
 // ========================================================================== //
 
+
+//! ClientWindow is a socket-connected endpoint for receiving pixels
+/*! 
+ * ClientWindow is a class that provides a socket-connected
+ * endpoint for receiving pixels from a remote renderer, maintaining
+ * a asynchronously updated image buffer.
+ * 
+ * A viewer using this class will typically create an actual window
+ * that will present the image, then a) watch the window for user
+ * interactions that cause re-rendering, and b) update the actual
+ * window pixels from the image buffer maintained by the ClientWindow.
+ * 
+ * The ClientWindow manages asynchronous update by using several 
+ * pixel-resolution buffers:
+ * 
+ * pixels, which contains the current pixel contents of the window
+ * as (r,g,b,a) floats
+ * 
+ * - frameids, which contains the most advanced frame ID encountered
+ *   for each pixel. This is used to recognize new frames and 
+ *   therefore the new pixels will replace, rather than accumlate 
+ *   with, prior values
+ * 
+ * - negative_pixels, containing the sum of any negative pixels that
+ *   arrive before the first positive values for the corresponding pixel
+ * 
+ * - negative_frameids, which are to negative_pixels as frameids are to pixels
+ * 
+ * - frame_times, holding the most recent modification time for each pixel
+ * 
+ * The ClientWindow implements two threads - the rcvr_thread, which watches the input
+ * socket connection and modifies the above buffers when pixel messages arrive, and
+ * the ager_thread, which runs every tenth of a second, looking for pixels that have 
+ * not been updated recently and can be faded out.
+ */
+
 #pragma once
 
 #include "Pixel.h"
-#include "MultiServerSocket.h"
+#include "SocketHandler.h"
 
 #include <pthread.h>
 
 namespace gxy
 {
 
-class ClientWindow 
+class ClientWindow : public SocketHandler
 { 
 private:
+  //! Thread that watches data sockets for incoming pixel messages 
   static void *rcvr_thread(void *);
+
+  //! Thread that manages aging not-recently-updated pixels out
 	static void *ager_thread(void *p);
   
 public:
-  ClientWindow(int, int);
+  //! Creator with width, height, host and port
+  ClientWindow(int, int, std::string, int);
+
+  //! Destructor
 	~ClientWindow();
 
-  bool Connect(const char* host, int port);
+  // //! Called to establish connection with pixel source.  Blocking.  
+  // bool Connect(const char* host, int port);
 
+  //! Resize frame buffers
   void Resize(int w, int h);
+
+  //! Virtual function called by the ager thread to implement the actual aging algorithm
 	virtual void FrameBufferAger();
 
+  //! Toggle the saving of partial frame buffer contents to a file.   If the GXY_N_PARTIAL_FRAMES env var is set, it holds the number of partial frames to save for each full frame, defaulting to 10.
   void partial_frame_test()
   {
     if (number_of_partial_frames == -1)
@@ -51,29 +98,36 @@ public:
         number_of_partial_frames = atoi(getenv("GXY_N_PARTIAL_FRAMES"));
       else
         number_of_partial_frames = 10;
+
+      current_partial_frame_count = 0;
+      partial_frame_pixel_count = this_frame_pixel_count;
+      partial_frame_pixel_delta = (partial_frame_pixel_count / number_of_partial_frames) + 1;
+      next_partial_frame_pixel_count = partial_frame_pixel_delta;
     }
 
-    save_partial_updates = true;
-
-    partial_frame_pixel_count = this_frame_pixel_count;
-    partial_frame_pixel_delta = (partial_frame_pixel_count / number_of_partial_frames) + 1;
-    next_partial_frame_pixel_count = partial_frame_pixel_delta;
-    current_partial_frame_count = 0;
-
+    save_partial_updates = !save_partial_updates;
+    
     Clear();
   }
 
+  //! Clear the buffers
   void Clear();
               
+  //! Set parameters on the ager.  
+  //! \param m the number of seconds to retain the pixels before fading begins
+  //! \param fadeout the number of seconds that fading out will take
 	void SetMaxAge(float m, float f = 1) { max_age = m; fadeout = f; }
+
+  //! Get a pointer to the current pixel buffer
   float *GetPixels() { return pixels; }
+
+  //! Get width of image buffer
   int GetWidth() { return width; }
+
+  //! Get height of image buffer
   int GetHeight() { return height; }
 
-  MultiServerSocket *GetSocket() { return socket; }
-
 private:
-  MultiServerSocket *socket;
   int width, height;
 
   void AddPixels(Pixel *, int, int);

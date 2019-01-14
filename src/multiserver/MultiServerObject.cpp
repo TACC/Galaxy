@@ -18,96 +18,24 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ParticlesVis.h"
-#include "ParticlesVis_ispc.h"
-
 #include "Application.h"
-#include "Datasets.h"
-
-using namespace rapidjson;
+#include "MultiServerHandler.h"
+#include "MultiServerObject.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(ParticlesVis)
-
-void
-ParticlesVis::Register()
+MultiServerObject::MultiServerObject()
 {
-  RegisterClass();
+  if (GetTheApplication()->GetRank() == 0)
+    dlp = MultiServerHandler::GetTheThreadMultiServerHandler()->GetTheDynamicLibrary();
+  else
+    dlp = nullptr;
 }
 
-ParticlesVis::~ParticlesVis()
+MultiServerObject::~MultiServerObject()
 {
-	ParticlesVis::destroy_ispc();
+  dlp = nullptr;
 }
 
-void
-ParticlesVis::initialize()
-{
-  super::initialize();
 }
-
-void
-ParticlesVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::ParticlesVis_initialize(ispc);
-} 
-    
-void
-ParticlesVis::allocate_ispc()
-{
-  ispc = ispc::ParticlesVis_allocate();
-}
-
-int 
-ParticlesVis::serialSize()
-{
-  return super::serialSize();
-}
-
-unsigned char *
-ParticlesVis::serialize(unsigned char *ptr)
-{
-  ptr = super::serialize(ptr);
-  
-  return ptr;
-}
-
-unsigned char *
-ParticlesVis::deserialize(unsigned char *ptr)
-{
-  ptr = super::deserialize(ptr);
-  return ptr;
-}
-
-void 
-ParticlesVis::LoadFromJSON(Value& v)
-{
-  super::LoadFromJSON(v);
-}
-
-void
-ParticlesVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-}
-
-void
-ParticlesVis::destroy_ispc()
-{
-  if (ispc)
-  {
-    ispc::ParticlesVis_destroy(ispc);
-  }
-}
-
-bool
-ParticlesVis::local_commit(MPI_Comm c)
-{  
-	return super::local_commit(c);
-}
-
-} // namespace gxy
-

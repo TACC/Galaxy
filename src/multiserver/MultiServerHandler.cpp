@@ -18,51 +18,72 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
-
+#include <iostream>
 #include <string>
-#include <dlfcn.h>
-#include <vector>
-#include <memory>
+#include <sstream>
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <math.h>
+#include <string.h>
+#include <fcntl.h>
+
+#include "MultiServer.h"
+#include "MultiServerHandler.h"
 
 namespace gxy
 {
 
-class SOManager
+thread_local MultiServerHandler* thread_msh;
+
+MultiServerHandler*
+MultiServerHandler::GetTheThreadMultiServerHandler() { return gxy::thread_msh; }
+
+bool
+MultiServerHandler::RunServer()
 {
-  enum so_task { LOAD, RELEASE };
-
-  class SOMsg : public Work
-  {
-  public:
-    SOMsg(so_task t, std::string s);
-    WORK_CLASS(SOMsg, true)
-
-  public:
-    bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
-  };
+  thread_msh = this;
   
-  struct SO
-  {
-    SO(void *h, std::string n) : name(n), handle(h), refknt(1) {}
-    ~SO() { std::cerr << "closing " << name << "\n"; dlclose(handle); }
+  char *libname; int sz;
+  CRecv(libname, sz);
 
-    void *handle;
-    std::string name;
-    int refknt;
-  };
+  std::string ok("ok");
+  CSend(ok.c_str(), ok.length()+1);
 
-public:
-  SOManager();
+  dlp = MultiServer::Get()->getTheDynamicLibraryManager()->Load(libname);
+  free(libname);
 
-  void Load(std::string);
-  void Release(std::string);
-  void *GetSym(std::string, std::string);
+  if (!dlp)
+    return false;
 
-  void _load(std::string s);
-  void _release(std::string s);
+  server_func server = (server_func)dlp->GetSym("server");
+  if (! server)
+    return false;
 
-  std::vector<std::shared_ptr<SO>> somap;
-};
+  if (! server(this))
+    return false;
+
+  return true;
+}
+
+static void
+brk(){ std::cerr << "break\n"; }
+
+bool
+MultiServerHandler::handle(char *s)
+{
+  std::stringstream ss(s);
+  std::string cmd;
+
+  ss >> cmd;
+  if (cmd == "sbreak") { brk(); return true; }
+  else { std::cerr << "huh?"; return false; }
+}
 
 }

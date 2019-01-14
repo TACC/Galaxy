@@ -76,12 +76,6 @@ public:
 	void initialize(); //!< initialize this Particles object
 	virtual ~Particles(); //!< default destructor
 
-  //! register the message types used when processing Particle data
-  static void RegisterMessages()
-  {
-		LoadPartitioningMsg::Register();
-  }
-
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file
 	virtual void Import(std::string);
 
@@ -140,6 +134,26 @@ public:
 	float GetRadius() { return radius; }
   float GetRadiusScale() { return radius_scale; }
 
+  //! set the default color to use when rendering these Particles
+	void SetDefaultColor(vec4f dc) { default_color = dc; }
+	void SetDefaultColor(float r, float g, float b, float a)
+  {
+    default_color.x = r;
+    default_color.y = g;
+    default_color.z = b;
+    default_color.w = a;
+  }
+
+  //! get the default color to use when rendering these Particles
+	void GetDefaultColor(vec4f& dc) { dc = default_color; }
+	void GetDefaultColor(float& r, float& g, float& b, float& a)
+  {
+    r = default_color.x;
+    g = default_color.y;
+    b = default_color.z;
+    a = default_color.w;
+  }
+
   //! add a Particle to this Particles dataset
 	void push_back(Particle p) { samples.push_back(p); }
 
@@ -151,6 +165,8 @@ protected:
   std::string filename;
   std::string layoutname;
   std::string partfilename;
+
+  vec4f default_color;
 
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);

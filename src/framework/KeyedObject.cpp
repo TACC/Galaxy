@@ -266,10 +266,8 @@ KeyedObjectFactory::~KeyedObjectFactory()
 	while (kmap.size() > 0)
 		kmap.pop_back();
 
-#if 0
 	if (ko_count > 0)
-		cerr << ko_count << " shared objects remain" << endl;
-#endif
+		cerr << ko_count << " shared objects remain!!!" << endl;
 }
 
 } // namespace gxy

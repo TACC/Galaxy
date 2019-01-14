@@ -1,4 +1,25 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #include <iostream>
+#include <string>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -12,18 +33,31 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include "MultiServerSocket.h"
+#include "SocketHandler.h"
 
-using namespace gxy;
+namespace gxy
+{
 
-MultiServerSocket::MultiServerSocket(const char *host, int port)
+SocketHandler::SocketHandler()
+{
+  pthread_mutex_init(&c_lock, NULL);
+  pthread_mutex_init(&d_lock, NULL);
+}
+
+SocketHandler::SocketHandler(int cfd, int dfd) : SocketHandler::SocketHandler() 
+{
+  data_fd = dfd;
+  control_fd = cfd;
+}
+
+SocketHandler::SocketHandler(std::string host, int port)
 {
   pthread_mutex_init(&c_lock, NULL);
   pthread_mutex_init(&d_lock, NULL);
 
   struct hostent *server;
 
-  server = gethostbyname(host);
+  server = gethostbyname(host.c_str());
   if (server == NULL)
   {
     std::cerr <<  "ERROR: no such host (" << host << ")\n";
@@ -49,14 +83,14 @@ MultiServerSocket::MultiServerSocket(const char *host, int port)
   }
 }
 
-MultiServerSocket::~MultiServerSocket()
+SocketHandler::~SocketHandler()
 {
   pthread_mutex_destroy(&c_lock);
   pthread_mutex_destroy(&d_lock);
 }
 
 int
-MultiServerSocket::connect_fd(struct sockaddr* serv_addr)
+SocketHandler::connect_fd(struct sockaddr* serv_addr)
 {
   int fd = socket(AF_INET, SOCK_STREAM, 0);
   if (fd < 0) return -1;
@@ -78,7 +112,7 @@ MultiServerSocket::connect_fd(struct sockaddr* serv_addr)
 }
 
 bool
-MultiServerSocket::Send(int fd, const char *b, int n)
+SocketHandler::Send(int fd, const char *b, int n)
 {
   if (sizeof(n) > write(fd, &n, sizeof(n)))
   {
@@ -99,7 +133,7 @@ MultiServerSocket::Send(int fd, const char *b, int n)
 }
 
 bool
-MultiServerSocket::SendV(int fd, char **b, int* n)
+SocketHandler::SendV(int fd, char **b, int* n)
 {
   int sz = 0;
 
@@ -127,7 +161,7 @@ MultiServerSocket::SendV(int fd, char **b, int* n)
 }
 
 bool
-MultiServerSocket::Recv(int fd, char*& b, int& n)
+SocketHandler::Recv(int fd, char*& b, int& n)
 {
   fd_set fds;
   FD_ZERO(&fds);
@@ -158,7 +192,7 @@ MultiServerSocket::Recv(int fd, char*& b, int& n)
 }
 
 bool
-MultiServerSocket::Wait(int fd, float sec)
+SocketHandler::Wait(int fd, float sec)
 {
   struct timeval tv;
   tv.tv_sec  = floor(sec);
@@ -169,4 +203,6 @@ MultiServerSocket::Wait(int fd, float sec)
   FD_SET(fd, &fds);
 
   return select(fd+1, &fds, NULL, NULL, &tv) != 0;
+}
+
 }

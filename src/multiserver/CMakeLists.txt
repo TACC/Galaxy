@@ -33,52 +33,51 @@ set(SERVERS "")
 
 include_directories(${GLUT_INCLUDE_DIR})
 
-add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerSocket.cpp)
+add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerHandler.cpp MultiServerObject.cpp SocketHandler.cpp DynamicLibraryManager.cpp)
 target_link_libraries(gxy_multiserver gxy_framework)
 install(TARGETS gxy_multiserver DESTINATION lib)
 
-add_executable(multiserver server.cpp)
-target_link_libraries(multiserver gxy_multiserver gxy_data gxy_framework)
-set(BINS multiserver ${BINS})
+add_executable(msserver msserver.cpp CommandLine.cpp)
+target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework)
+set(BINS msserver ${BINS})
 
-add_executable(multiserver-viewer viewer.cpp ClientWindow.cpp IF.cpp)
-target_link_libraries(multiserver-viewer gxy_multiserver ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} ${OSPRAY_LIBRARIES} pthread)
-set(BINS multiserver-viewer ${BINS})
+add_executable(msviewer msviewer.cpp ClientWindow.cpp IF.cpp CommandLine.cpp)
+target_link_libraries(msviewer gxy_multiserver ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} ${OSPRAY_LIBRARIES} pthread)
+set(BINS msviewer ${BINS})
 
 add_library(gxy_module_viewer MODULE viewerlib.cpp ServerRendering.cpp IF.cpp)
-target_link_libraries(gxy_module_viewer gxy_multiserver ${GALAXY_LIBRARIES})
+target_link_libraries(gxy_module_viewer gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
 install(TARGETS gxy_module_viewer DESTINATION lib RENAME viewerlib.so)
 
-add_executable(ping ping.cpp)
-target_link_libraries(ping gxy_multiserver)
-set(BINS ping ${BINS})
-
-add_executable(dataloader dataloader.cpp)
-target_link_libraries(dataloader gxy_multiserver gxy_framework)
-set(BINS dataloader ${BINS})
-
-add_executable(multiserver_test test.cpp)
-target_link_libraries(multiserver_test gxy_multiserver)
-set(BINS multiserver_test ${BINS})
+add_executable(msclient msclient.cpp CommandLine.cpp)
+target_link_libraries(msclient gxy_multiserver)
+set(BINS msclient ${BINS})
 
 add_library(gxy_module_ping MODULE pinglib.cpp)
 target_link_libraries(gxy_module_ping gxy_multiserver gxy_framework)
 set(SERVERS gxy_module_ping ${SERVERS})
 
-add_library(gxy_module_dataloader MODULE dataloaderlib.cpp)
-target_link_libraries(gxy_module_dataloader gxy_multiserver gxy_data gxy_framework)
-set(SERVERS gxy_module_dataloader ${SERVERS})
+add_library(gxy_module_globals MODULE globalslib.cpp)
+target_link_libraries(gxy_module_globals gxy_multiserver gxy_framework)
+set(SERVERS gxy_module_globals ${SERVERS})
 
-add_library(gxy_module_test MODULE testlib.cpp)
-target_link_libraries(gxy_module_test gxy_multiserver gxy_data gxy_framework)
-set(SERVERS gxy_module_test ${SERVERS})
+add_library(gxy_module_data MODULE datalib.cpp)
+target_link_libraries(gxy_module_data gxy_multiserver gxy_data gxy_framework)
+set(SERVERS gxy_module_data ${SERVERS})
+
+add_library(gxy_module_mhsampler MODULE mhsamplelib.cpp)
+target_link_libraries(gxy_module_mhsampler gxy_multiserver gxy_data gxy_framework)
+set(SERVERS gxy_module_mhsampler ${SERVERS})
 
 install(TARGETS ${BINS} DESTINATION bin)
 install(TARGETS ${SERVERS} DESTINATION lib)
 
 install(FILES
+  CommandLine.h
+  DynamicLibraryManager.h
   MultiServer.h
-  MultiServerSocket.h
+  MultiServerHandler.h
+  MultiServerObject.h
+  SocketHandler.h
   DESTINATION include/gxy)
-
 

@@ -33,9 +33,6 @@ using namespace std;
 namespace gxy 
 {
 
-RayQManager *RayQManager::theRayQManager;
-RayQManager *RayQManager::GetTheRayQManager() { return RayQManager::theRayQManager; }
-
 #if defined(GXY_EVENT_TRACKING)
 
 class ProcessRaysEvent : public Event
@@ -86,7 +83,6 @@ RayQManager::theRayQWorker(void *d)
 
 RayQManager::RayQManager(Renderer *r)
 {
-	RayQManager::theRayQManager = this;
   renderer = r;
 
 	pthread_mutex_init(&lock, NULL);

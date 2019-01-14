@@ -41,6 +41,10 @@ add_executable(objects objects.cpp)
 target_link_libraries(objects gxy_framework)
 set(BINS objects ${BINS})
 
+add_executable(bcast_messages bcast_messages.cpp)
+target_link_libraries(bcast_messages gxy_framework)
+set(BINS bcast_messages ${BINS})
+
 find_package(X11)
 find_package(OpenGL)
 find_package(GLUT)

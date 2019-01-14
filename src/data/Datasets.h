@@ -108,7 +108,10 @@ public:
    */
   void DropDataset(std::string name)
   {
-    datasets.erase(name);
+    if (datasets.find(name) == datasets.end())
+      std::cerr  << "no dataset named " << name << "\n";
+    else
+      datasets.erase(name);
   }
 
   //! load from a Galaxy JSON specification

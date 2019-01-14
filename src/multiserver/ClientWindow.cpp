@@ -28,10 +28,8 @@
 namespace gxy
 {
 
-ClientWindow::ClientWindow(int w, int h) 
+ClientWindow::ClientWindow(int width, int height, std::string host, int port) : SocketHandler(host, port)
 {
-  socket = NULL;
-
   current_frame     = -1;
 	max_age           = 3.0;
 	fadeout           = 1.0;
@@ -44,9 +42,6 @@ ClientWindow::ClientWindow(int w, int h)
 
   kill_threads      = false;
 
-	ager_tid          = (pthread_t)-1;
-	rcvr_tid          = (pthread_t)-1;
-	
 	t_start = my_time();
 
 	pthread_mutex_init(&lock, NULL);
@@ -55,14 +50,22 @@ ClientWindow::ClientWindow(int w, int h)
   number_of_partial_frames = -1;
   this_frame_pixel_count   = 0;
 
-  Resize(w, h);
+  std::string so("libgxy_module_viewer.so");
+  if (! CSendRecv(so))
+  {
+    std::cerr << "Server-side library load failed\n";
+    exit(1);
+  }
+
+  Resize(width, height);
+
+  pthread_create(&ager_tid, NULL, rcvr_thread, (void *)this);
+  pthread_create(&rcvr_tid, NULL, ager_thread, (void *)this);
 }
 
 ClientWindow::~ClientWindow()
 {
   pthread_mutex_lock(&lock);
-
-  delete socket;
 
   if (pixels)
   {
@@ -90,27 +93,6 @@ ClientWindow::~ClientWindow()
 	}
 
   pthread_mutex_unlock(&lock);
-}
-
-bool
-ClientWindow::Connect(const char* host, int port)
-{
-  if (socket)
-  {
-    std::cerr << "ClientWindow already connected!\n";
-    return true;
-  }
-
-  socket = new MultiServerSocket(host, port);
-
-  if (socket)
-  {
-    pthread_create(&ager_tid, NULL, rcvr_thread, (void *)this);
-    pthread_create(&rcvr_tid, NULL, ager_thread, (void *)this);
-    return true;
-  }
-  else
-    return false;
 }
 
 void
@@ -150,12 +132,9 @@ ClientWindow::Resize(int w, int h)
     negative_pixels[i] = (i & 0x3) == 0x3 ? 1.0 : 0.0;
   }
 
-  if (socket)
-  {
-    std::stringstream wndw;
-    wndw << "window " << width << " " << height;
-    socket->CSend(wndw.str().c_str(), wndw.str().size()+1);
-  }
+  std::stringstream wndw;
+  wndw << "window " << width << " " << height;
+  CSend(wndw.str().c_str(), wndw.str().size()+1);
 
   pthread_mutex_unlock(&lock);
 
@@ -243,10 +222,10 @@ ClientWindow::rcvr_thread(void *p)
 
 	while (!me->kill_threads)
   {
-    if (me->socket->DWait(0.1))
+    if (me->DWait(0.1))
     {
       char *buf; int n;
-      me->socket->DRecv(buf, n);
+      me->DRecv(buf, n);
 
       char *ptr = buf;
       int knt = *(int *)ptr;

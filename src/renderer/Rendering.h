@@ -58,11 +58,6 @@ class Rendering : public KeyedObject
 	virtual ~Rendering();								// to get rid of the FB
 
 public:
-	//! register message types with the Galaxy system (currently noop)
-	static void RegisterMessages()
-	{
-	}
-	
 	virtual void initialize(); //!< initialize this Rendering object
 
 	//! (re-)allocate the local framebuffer and image buffers for this Rendering, if owned by this process

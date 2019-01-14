@@ -705,7 +705,7 @@ RenderingSet::Enqueue(RayList *rl, bool silent)
 
 	if (IsActive(rl->GetFrame()))
 	{
-		RayQManager::GetTheRayQManager()->Enqueue(rl);
+		rl->GetTheRenderer()->GetTheRayQManager()->Enqueue(rl);
 
 #ifdef GXY_WRITE_IMAGES
 		IncrementRayListCount(silent);
@@ -751,26 +751,24 @@ RenderingSet::_initStateTimer()
 void
 RenderingSet::_dumpState(MPI_Comm c, const char *base)
 {
-  int snddata[5];
-  int *rcvdata = (int *)malloc(GetTheApplication()->GetSize() * 5 * sizeof(int));
+  int snddata[3];
+  int *rcvdata = (int *)malloc(GetTheApplication()->GetSize() * 3 * sizeof(int));
 
 	snddata[0] = CameraIsActive() ;
   snddata[1] = get_local_raylist_count();
   snddata[2] = get_local_inflight_count();
 
-  RayQManager::GetTheRayQManager()->GetQueuedRayCount(snddata[3], snddata[4]);
-
 	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
-		MPI_Gather((const void *)snddata, 5, MPI_INT, (void *)rcvdata, 5, MPI_INT, 0, c);
+		MPI_Gather((const void *)snddata, 3, MPI_INT, (void *)rcvdata, 3, MPI_INT, 0, c);
 	else
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < 3; i++)
 			rcvdata[i] = snddata[i];
 
   if (GetTheApplication()->GetRank() == 0)
 	{
 		int rlk = 0, ifk = 0;
 		for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-			rlk += rcvdata[i*5+1], ifk += rcvdata[i*5+2];
+			rlk += rcvdata[i*3+1], ifk += rcvdata[i*3+2];
 
 		if (rlk == 0 && ifk == 0)
 			std::cerr << "no raylists enqueued or alive!\n";
@@ -782,7 +780,7 @@ RenderingSet::_dumpState(MPI_Comm c, const char *base)
 
 		fstream of;
 		of.open(fname.str(), ios::out | ios::binary);
-		of.write((char *)rcvdata, GetTheApplication()->GetSize() * 5 * sizeof(int));
+		of.write((char *)rcvdata, GetTheApplication()->GetSize() * 3 * sizeof(int));
 		of.close();
 	}
 }

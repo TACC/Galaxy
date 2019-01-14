@@ -18,96 +18,40 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ParticlesVis.h"
-#include "ParticlesVis_ispc.h"
+/*! \file CommandLine.h
+ *  \brief CommandLine handles a simple command-line thread processing thread 
+ *  that knows about a CommandLine, across which it can pass command control.
+ */
 
-#include "Application.h"
-#include "Datasets.h"
+#pragma once
 
-using namespace rapidjson;
+#include <pthread.h>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
+#include "SocketHandler.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(ParticlesVis)
-
-void
-ParticlesVis::Register()
+class CommandLine
 {
-  RegisterClass();
+public:
+  CommandLine() {}
+
+  //! Run an asynchronous command-line manager
+  void StartCommandLineThread(SocketHandler *skt = NULL);
+
+  //! Run synchronously
+  void Run(char *filename, SocketHandler *skt = NULL);
+
+  //! process a stream of commands, may be stdin or from a file
+  static void handle_command_stream(std::istream *, SocketHandler *skt = NULL);
+
+  //! handle processes each individual command
+  static bool handle_command(std::string line, SocketHandler *skt = NULL);
+};
+
 }
-
-ParticlesVis::~ParticlesVis()
-{
-	ParticlesVis::destroy_ispc();
-}
-
-void
-ParticlesVis::initialize()
-{
-  super::initialize();
-}
-
-void
-ParticlesVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::ParticlesVis_initialize(ispc);
-} 
-    
-void
-ParticlesVis::allocate_ispc()
-{
-  ispc = ispc::ParticlesVis_allocate();
-}
-
-int 
-ParticlesVis::serialSize()
-{
-  return super::serialSize();
-}
-
-unsigned char *
-ParticlesVis::serialize(unsigned char *ptr)
-{
-  ptr = super::serialize(ptr);
-  
-  return ptr;
-}
-
-unsigned char *
-ParticlesVis::deserialize(unsigned char *ptr)
-{
-  ptr = super::deserialize(ptr);
-  return ptr;
-}
-
-void 
-ParticlesVis::LoadFromJSON(Value& v)
-{
-  super::LoadFromJSON(v);
-}
-
-void
-ParticlesVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-}
-
-void
-ParticlesVis::destroy_ispc()
-{
-  if (ispc)
-  {
-    ispc::ParticlesVis_destroy(ispc);
-  }
-}
-
-bool
-ParticlesVis::local_commit(MPI_Comm c)
-{  
-	return super::local_commit(c);
-}
-
-} // namespace gxy
-

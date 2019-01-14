@@ -114,8 +114,6 @@ Application::Application()
 	KeyedObject::Register();
 	KeyedObjectFactory::Register();
 
-  soManager = new SOManager();
-
   pthread_mutex_unlock(&lock);
 }
 
@@ -168,7 +166,6 @@ Application::~Application()
 	delete theMessageManager;
 	delete theKeyedObjectFactory;
 	delete threadManager;
-	delete soManager;
 
   theApplication = NULL;
 }
@@ -188,36 +185,6 @@ void Application::SyncApplication()
 	q->Broadcast(true, true);
 }
 
-void
-Application::LoadSO(string soname)
-{
-  return soManager->Load(soname);
-}
-   
-void
-Application::ReleaseSO(string soname)
-{
-  return soManager->Release(soname);
-}
-   
-void *
-Application::GetSOSym(string soname, string symbol)
-{
-  return soManager->GetSym(soname, symbol);
-}
-
-void
-Application::_loadSO(string soname)
-{
-  return soManager->_load(soname);
-}
-   
-void
-Application::_releaseSO(string soname)
-{
-  return soManager->_release(soname);
-}
-   
 void Application::Start(bool with_mpi)
 {
   GetTheMessageManager()->Start(with_mpi);

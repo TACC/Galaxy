@@ -20,6 +20,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -38,6 +40,8 @@
 #include "ImageWriter.h"
 #include "ClientWindow.h"
 #include "IF.h"
+
+#include "CommandLine.h"
 
 #include "trackball.hpp"
 
@@ -102,7 +106,7 @@ Render()
   if (window_ready)
   {
     string s("render");
-    if (! theClientWindow->GetSocket()->CSendRecv(s))
+    if (! theClientWindow->CSendRecv(s))
     {
       cerr << "render request send failed\n";
       exit(1);
@@ -126,13 +130,11 @@ LoadState(string sfile)
   string s = buffer.str();
   theCamera.LoadString((const char *)(s.c_str() + 4));
 
-  if (! theClientWindow->GetSocket()->CSendRecv(s))
+  if (! theClientWindow->CSendRecv(s))
   {
     cerr << "JSON send failed\n";
     exit(1);
   }
-
-  // cerr << "reply to sending JSON: " << s << "\n";
 
   Render();
 }
@@ -179,7 +181,7 @@ keyboard(unsigned char ch, int x, int y)
         {
           string s("query datasets");
 
-          if (! theClientWindow->GetSocket()->CSendRecv(s))
+          if (! theClientWindow->CSendRecv(s))
           {
             cerr << "sending query datasets failed\n";
             exit(1);
@@ -202,7 +204,7 @@ keyboard(unsigned char ch, int x, int y)
 				theCamera.set_viewpoint(p);
 				theCamera.set_viewup(u);
 				theCamera.set_viewdirection(d);
-				theCamera.Send(theClientWindow->GetSocket());
+				theCamera.Send(theClientWindow);
 				render_one = true;
 			}
 			break;
@@ -237,7 +239,7 @@ keyboard(unsigned char ch, int x, int y)
 				theCamera.set_viewpoint(p);
 				theCamera.set_viewup(u);
 				theCamera.set_viewdirection(d);
-				theCamera.Send(theClientWindow->GetSocket());
+				theCamera.Send(theClientWindow);
 				render_one = true;
 			}
 			break;
@@ -307,7 +309,7 @@ reshapefunc(int w, int h)
   buffer << "window " << w << " " << h;
 
   string s = buffer.str();
-  if (! theClientWindow->GetSocket()->CSendRecv(s))
+  if (! theClientWindow->CSendRecv(s))
   {
     cerr << "sending reshape failed\n";
     exit(0);
@@ -392,7 +394,7 @@ render_thread(void *d)
 					theCamera.set_viewdirection(d);
 					theCamera.set_viewpoint(p);
 					theCamera.set_viewup(u);
-          theCamera.Send(theClientWindow->GetSocket());
+          theCamera.Send(theClientWindow);
 				}
 				else
 				{
@@ -401,7 +403,7 @@ render_thread(void *d)
 						trackball.spin(X0, Y0, X1, Y1);
 						vec3f d = trackball.rotate_vector(orig_viewdirection);
 						theCamera.set_viewdirection(d);
-            theCamera.Send(theClientWindow->GetSocket());
+            theCamera.Send(theClientWindow);
 					}
 				}
 			}
@@ -431,7 +433,7 @@ syntax(char *a)
   cerr << "  -H host          host (localhost)" << endl;
   cerr << "  -P port          port (5001)" << endl;
   cerr << "  -D[which]        run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
-  cerr << "  -so sofile       interface SO (libviewer-if.so)\n";
+  cerr << "  -so sofile       interface SO (libgxy_module_viewer.so)\n";
   cerr << "  -A               wait for attachment" << endl;
   cerr << "  -s w h           image size (512 x 512)" << endl;
   cerr << "  -O               object-center model (default)" << endl;
@@ -441,13 +443,102 @@ syntax(char *a)
   exit(1);
 }
 
+void handle_commands(ClientWindow *, istream *);
+
+void brk() { std::cerr << "break\n"; }
+
+bool
+handle(ClientWindow *cw, std::string line)
+{
+  stringstream ss(line);
+  string cmd;
+
+  ss >> cmd;
+
+  // Remove leading whitespace
+  cmd = cmd.erase(0, cmd.find_first_not_of(" \t\n\r\f\v"));
+
+  // If its zero length ignore it
+  if (cmd.size() == 0) return false;
+
+  // If its quit, then quit
+  else if (cmd == "quit") return true;
+
+  // If its break, then break
+  else if (cmd == "break") brk();
+
+  // If its 'file', open file and process its contents
+  else if (cmd == "file")
+  {
+    string filename;
+    ss >> filename;
+
+    ifstream ifs(filename);
+    if (ifs)
+      handle_commands(cw, (istream*)&ifs);
+    else
+      std::cerr << "unable to open " << filename << "\n";
+  }
+ 
+  // Otherwise, send the line to the server
+  else
+  {
+    if (! cw->CSendRecv(line))
+    {
+      cerr << "send/receive failed\n";
+      exit(1);
+    }
+
+    if (cmd != "ok")
+      cout << "reply: " << line << "\n";
+  }
+
+  return false;
+}
+
+
+void
+handle_commands(ClientWindow *cw, istream *is)
+{
+  string cmd = "", tmp; bool done = false;
+  cerr << "? ";
+  while (!done && std::getline(*is, tmp))
+  {
+    for (size_t n = tmp.find(";"); ! done && n != string::npos; n = tmp.find(";"))
+    {
+      string prefix = tmp.substr(0, n);
+      if (cmd == "") cmd = prefix; else cmd = cmd + " " + prefix;
+      done = handle(cw, cmd);
+      cmd = "";
+      tmp = tmp.substr(n+1);
+    }
+    if (! done)
+    {
+      if (cmd == "") cmd = tmp; else cmd = cmd + " " + tmp;
+    }
+    cerr << "? ";
+  }
+  if (cmd != "")
+    handle(cw, cmd);
+}
+
+void *
+command_thread(void *d)
+{
+  ClientWindow *cw = (ClientWindow *)d;
+
+  handle_commands(cw, (istream *)&cin);
+
+  exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
   bool dbg = false, atch = false;
   string host = "localhost";
   string statefile = "";
-  string sofile = "libviewerlib.so";
+  string sofile = "libgxy_module_viewer.so";
   int port = 5001;
 
 	char *dbgarg;
@@ -481,22 +572,16 @@ main(int argc, char *argv[])
 
   Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
-  theClientWindow = new ClientWindow(width, height);
-  theClientWindow->Connect(host.c_str(), port);
-  
-  string rply;
-
-  if (! theClientWindow->GetSocket()->CSendRecv(sofile))
-  {
-    cerr << "Sending sofile failed\n";
-    exit(1);
-  }
-  // cerr << "reply from sending sofile: " << sofile << "\n";
+  theClientWindow = new ClientWindow(width, height, host, port);
+  theClientWindow->SetMaxAge(age, fadeout);
 
   LoadState(statefile);
 
-  pthread_t tid;
-  pthread_create(&tid, NULL, render_thread, (void *)theClientWindow);
+  pthread_t rtid;
+  pthread_create(&rtid, NULL, render_thread, (void *)theClientWindow);
+
+  CommandLine c;
+  c.StartCommandLineThread(theClientWindow);
 
   glut_loop();
 

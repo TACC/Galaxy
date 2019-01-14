@@ -18,73 +18,23 @@
 //                                                                            //
 // ========================================================================== //
 
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include "MultiServerHandler.h"
 
-#include "MultiServerSocket.h"
+/*! \file MultiServerObject.h
+ *  \brief Class to manage client-specific objects.  By inheriting from this in addition to whatever other Galaxuy classes, this object will retain an ownership over the DynamicLibrary from which it derives.  This prevents the DL from being unloaded before any objects that derive from it are deleted.
+ */
 
-using namespace gxy;
-using namespace std;
-
-void
-syntax(char *a)
-{
-  cerr << "syntax: " << a << " [options] statefile" << endl;
-  cerr << "options:" << endl;
-  cerr << "  -H host    host (localhost)" << endl;
-  cerr << "  -P port    port (5001)" << endl;
-  cerr << "  -so sofile       interface SO (libpinglib.so)\n";
-  exit(1);
-}
-
-int
-main(int argc, char *argv[])
+namespace gxy
 {
 
-  bool dbg = false, atch = false;
-  string host = "localhost";
-  int port = 5001;
+class MultiServerObject
+{
+public:
+  MultiServerObject();
+  ~MultiServerObject();
+private:
+  DynamicLibraryP dlp;
+};
 
-  string sofile = "libpinglib.so";
-
-	char *dbgarg;
-
-  for (int i = 1; i < argc; i++)
-  {
-    if (!strcmp(argv[i], "-H")) host = argv[++i];
-    else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
-		else if (!strncmp(argv[i], "-D", 2)) { dbg = true, dbgarg = argv[i] + 2; break; }
-    else if (!strcmp(argv[i], "-so")) { sofile = argv[++i]; }
-    else
-    { syntax(argv[0]); }
-  }
-
-  MultiServerSocket mskt(host.c_str(), port);
-
-  string rply;
-
-  if (! mskt.CSendRecv(sofile))
-  {
-    cerr << "Sending sofile failed\n";
-    exit(1);
-  }
-
-  string cmd;
-  for (cerr << "? ", cin >> cmd; !cin.eof() && cmd != "q" && cmd != "quit"; cerr << "? ", cin >> cmd)
-  {
-    if (! mskt.CSendRecv(cmd))
-    {
-      cerr << "send/receive failed\n";
-      exit(1);
-    }
-
-    cout << "reply: " << cmd << "\n";
-  }
-
-  return 0;
 }
+

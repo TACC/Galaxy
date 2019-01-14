@@ -32,6 +32,10 @@ set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
 
 set(BINS "")
 
+find_package(X11)
+find_package(OpenGL)
+find_package(GLUT)
+
 if (GXY_WRITE_IMAGES)
 
 	add_executable(vis vis.cpp)
@@ -55,10 +59,6 @@ else(GXY_WRITE_IMAGES)
 	add_executable(async-client-no-x async-client-no-x.cpp Socket.cpp)
 	target_link_libraries(async-client-no-x pthread ${PNG_LIBRARY_RELEASE})
 	set(BINS async-client-no-x ${BINS})
-
-	find_package(X11)
-	find_package(OpenGL)
-	find_package(GLUT)
 
 	if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})

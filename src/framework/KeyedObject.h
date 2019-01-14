@@ -39,7 +39,7 @@ namespace gxy
 
 #define KEYED_OBJECT_CLASS_TYPE(typ)                       \
   int typ::ClassType;                                      \
-  void Delete(typ ## P& p) { p->Drop(); p = NULL; }
+  void Delete(typ ## P& p) { if (p != nullptr) p->Drop(); else std::cerr << "Deleting deleted object\n"; p = NULL; }
 
 OBJECT_POINTER_TYPES(KeyedObject)
 

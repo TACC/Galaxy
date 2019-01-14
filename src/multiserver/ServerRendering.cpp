@@ -32,13 +32,13 @@ ServerRendering::initialize()
   Rendering::initialize();
   pthread_mutex_init(&lock, NULL);
 	max_frame = -1;
-  socket = NULL;
+  handler = NULL;
   owner = 0;
 }
 
 ServerRendering::~ServerRendering()
 {
-  socket = NULL;
+  handler = NULL;
   pthread_mutex_destroy(&lock);
 }
 
@@ -58,8 +58,8 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 		char* ptrs[] = {(char *)&n, (char *)&f, (char *)&s, (char *)p};
 		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
-    if (socket)
-      socket->DSendV(ptrs, szs);
+    if (handler)
+      handler->DSendV(ptrs, szs);
 
     // std::cerr << "after... n = " << n << " f = " << f << "\n";
 	}

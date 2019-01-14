@@ -18,96 +18,84 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ParticlesVis.h"
-#include "ParticlesVis_ispc.h"
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <regex>
+
+using namespace std;
+
+#include <string.h>
+#include <dlfcn.h>
 
 #include "Application.h"
-#include "Datasets.h"
+#include "MultiServer.h"
+#include "MultiServerHandler.h"
+#include "CommandLine.h"
 
-using namespace rapidjson;
+using namespace gxy;
 
-namespace gxy
-{
+int mpiRank, mpiSize;
 
-KEYED_OBJECT_CLASS_TYPE(ParticlesVis)
-
-void
-ParticlesVis::Register()
-{
-  RegisterClass();
-}
-
-ParticlesVis::~ParticlesVis()
-{
-	ParticlesVis::destroy_ispc();
-}
+#include "Debug.h"
 
 void
-ParticlesVis::initialize()
+syntax(char *a)
 {
-  super::initialize();
-}
-
-void
-ParticlesVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::ParticlesVis_initialize(ispc);
-} 
-    
-void
-ParticlesVis::allocate_ispc()
-{
-  ispc = ispc::ParticlesVis_allocate();
+  if (mpiRank == 0)
+  {
+    cerr << "syntax: " << a << " [options]" << endl;
+    cerr << "options:" << endl;
+    cerr << "  -D         run debugger" << endl;
+    cerr << "  -A         wait for attachment" << endl;
+    cerr << "  -P port    port to use (5001)" << endl;
+  }
+  MPI_Finalize();
+  exit(1);
 }
 
 int 
-ParticlesVis::serialSize()
+main(int argc, char *argv[])
 {
-  return super::serialSize();
-}
+  bool dbg = false, atch = false;
+  char *dbgarg;
+  int port = 5001;
 
-unsigned char *
-ParticlesVis::serialize(unsigned char *ptr)
-{
-  ptr = super::serialize(ptr);
+  Application theApplication(&argc, &argv);
   
-  return ptr;
-}
+  theApplication.Start();
 
-unsigned char *
-ParticlesVis::deserialize(unsigned char *ptr)
-{
-  ptr = super::deserialize(ptr);
-  return ptr;
-}
+  mpiRank = GetTheApplication()->GetRank();
+  mpiSize = GetTheApplication()->GetSize();
 
-void 
-ParticlesVis::LoadFromJSON(Value& v)
-{
-  super::LoadFromJSON(v);
-}
-
-void
-ParticlesVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-}
-
-void
-ParticlesVis::destroy_ispc()
-{
-  if (ispc)
+  for (int i = 1; i < argc; i++)
   {
-    ispc::ParticlesVis_destroy(ispc);
+    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
+    else if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
+    else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
+    else
+      syntax(argv[0]);
   }
+
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
+
+  GetTheApplication()->Run();
+
+  MultiServer* ms = new MultiServer;
+
+  if (mpiRank == 0)
+  {
+    MultiServer::Get()->Start(port);
+
+    CommandLine c;
+    c.Run(NULL);
+
+    GetTheApplication()->QuitApplication();
+  }
+  else
+  {
+    GetTheApplication()->Wait();
+  }
+
+  delete ms;
 }
-
-bool
-ParticlesVis::local_commit(MPI_Comm c)
-{  
-	return super::local_commit(c);
-}
-
-} // namespace gxy
-

@@ -36,7 +36,6 @@
 #include "galaxy.h"
 #include "KeyedObject.h"
 #include "MessageManager.h"
-#include "SOManager.h"
 #include "Work.h"
 
 #include "rapidjson/document.h"
@@ -128,26 +127,6 @@ public:
    * further Work processing by any process until all processes reach the sync.
    */
   void SyncApplication();
-
-  //! Load a shared object
-  /*! Issue a broadcast message to cause all processes to load a
-      shared library, When a shared object is loaded its 'init' routine
-      is called.  Note that shared objects are ref counted; when the
-      requested shard object is already loaded its ref count is bumped
-      and the so is not loaded, nor is its 'init' procedure called.
-   */
-  void LoadSO(std::string soname);
-
-  //! Get a symbol from a managed SO
-  /*! Get a symbol from a SO - like an entrypoint
-   */
-  void *GetSOSym(std::string soname, std::string symbol);
-
-  //! Release a shared object.  
-  /*! Decrement the shared object's reference count and if it goes to 0 then
-      issue a broadcast message to cause all processes to close it.
-   */
-  void ReleaseSO(std::string soname);
 
 	//! returns a pointer to the argc initialization argument
 	/*! \warning will return NULL if default constructor was used
@@ -245,38 +224,9 @@ public:
 	 */
 	void SaveOutputState(rapidjson::Document *doc, std::string s);
 
-  //! save a KeyedObject as a global
-	/*! \param name the name under which the object is saved
-	 *  \param obj the object to save
-   */
-  void SetGlobal(std::string name, KeyedObjectP obj) { globals[name] = obj; }
-
-  //! retrieve a global KeyedObject.  NULL if it isn't there
-	/*! \param name the name under which the object is saved
-	 *  \param obj the object to save
-   */
-  KeyedObjectP GetGlobal(std::string name) { return globals[name]; }
-
-  //! delete global reference to a global KeyedObject.
-	/*! \param name the name under which the object is saved
-   */
-  void DropGlobal(std::string name) { globals.erase(name); }
-
-  //! local call to load  a shared object.  Should never be called directly
-  /*! \param name the name under which the object is saved
-   */
-  void _loadSO(std::string soname);
-
-  //! local call to release a shared object.  Should never be called directly
-  /*! \param name the name under which the object is saved
-   */
-  void _releaseSO(std::string soname);
-
 private:
 
   std::map<std::string, KeyedObjectP> globals;      // Globally-known variables
-
-  SOManager *soManager;
 
 	std::vector<std::string> log;
 	MessageManager *theMessageManager;
@@ -303,15 +253,6 @@ private:
 	{
 	public:
 		WORK_CLASS(QuitMsg, true)
-
-	public:
-		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
-	};
-
-	class ManageSOMsg : public Work
-	{
-	public:
-		WORK_CLASS(ManageSOMsg, true)
 
 	public:
 		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);

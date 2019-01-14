@@ -155,6 +155,25 @@ Particles::Import(string s)
 void
 Particles::LoadFromJSON(Value& v)
 {
+  if (v.HasMember("color")  || v.HasMember("default color"))
+  {
+    Value& oa = v.HasMember("default color") ? v["default color"] : v["color"];
+    default_color.x = oa[0].GetDouble();
+    default_color.y = oa[1].GetDouble();
+    default_color.z = oa[2].GetDouble();
+    if (oa.Size() > 3)
+      default_color.w = oa[3].GetDouble();
+    else
+      default_color.w = 1.0;
+  }
+  else
+  {
+    default_color.x = 0.8;
+    default_color.y = 0.8;
+    default_color.z = 0.8;
+    default_color.w = 1.0;
+  }
+
   if (v.HasMember("radius"))
 	{
     radius = v["radius"].GetDouble();
@@ -197,6 +216,14 @@ Particles::SaveToJSON(Value& v, Document& doc)
 
 	if (radius > 0)
 		container.AddMember("radius", Value().SetDouble(radius), doc.GetAllocator());
+
+  Value c(kArrayType);
+  c.PushBack(Value().SetDouble(default_color.x), doc.GetAllocator());
+  c.PushBack(Value().SetDouble(default_color.y), doc.GetAllocator());
+  c.PushBack(Value().SetDouble(default_color.z), doc.GetAllocator());
+  c.PushBack(Value().SetDouble(default_color.w), doc.GetAllocator());
+  container.AddMember("default color", c, doc.GetAllocator());
+
 
 	v.PushBack(container, doc.GetAllocator());
 }

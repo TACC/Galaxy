@@ -1,3 +1,23 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
@@ -7,55 +27,58 @@
 #include <sys/socket.h>
 #include <dlfcn.h>
 
-#include "Application.h"
+using namespace std;
 
 #include "MultiServer.h"
-#include "MultiServerSocket.h"
+#include "MultiServerHandler.h"
 
-using namespace gxy;
-
-MultiServer::MultiServer(int p) : port(p), done(false)
+namespace gxy
 {
-  pthread_create(&watch_tid, NULL, watch, (void *)this);
+
+static MultiServer* theMultiServer = NULL;
+
+MultiServer* MultiServer::Get() { return theMultiServer; }
+
+void MultiServer::Register()
+{
+  DynamicLibrary::Register();
+  DynamicLibraryManager::Register();
+}
+
+MultiServer::MultiServer()
+{
+  Register();
+  theMultiServer = this;
+  dynamicLibraryManager = new DynamicLibraryManager;
 }
 
 MultiServer::~MultiServer()
 {
   done = 1;
+  ClearGlobals();
+  delete dynamicLibraryManager;
   pthread_join(watch_tid, NULL);
+}
+
+void
+MultiServer::Start(int p)
+{
+  port = p;
+  done = false;
+  pthread_create(&watch_tid, NULL, watch, (void *)this);
 }
 
 void *
 MultiServer::start(void *d)
 {
-  args *a = (args *)d;
+  MultiServerHandler *msh = (MultiServerHandler *)d;
 
-  MultiServerSocket skt(a->cfd, a->dfd);
+  if (! msh->RunServer())
+    cerr << "RunServer failed\n";
 
-  char *buf; int sz;
-  skt.CRecv(buf, sz);
+  delete msh;
 
-  GetTheApplication()->LoadSO(buf);
-
-  typedef bool (*server_function_t)(MultiServer *, MultiServerSocket *);
-  server_function_t server_function = (server_function_t)GetTheApplication()->GetSOSym(buf, "server");
-
-  if (! server_function)
-  {
-    std::cerr << "unable to find server in SO " << buf << ": " << dlerror() <<  "\n";
-  }
-  else
-  {
-    std::string ok("ok");
-    skt.CSend(ok.c_str(), ok.length()+1);
-    if (! server_function(a->srvr, &skt))
-      std::cerr << "server function failed\n";
-  }
-
-  GetTheApplication()->ReleaseSO(buf);
-
-  free(buf);
-  delete a;
+  MultiServer::Get()->getTheDynamicLibraryManager()->Flush();
 
   pthread_exit(NULL);
 }
@@ -79,7 +102,7 @@ MultiServer::watch(void *d)
   serv_addr.sin_addr.s_addr = INADDR_ANY;
   serv_addr.sin_port = htons(me->port);
   
-  if (bind(me->fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+  if (::bind(me->fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
   { 
     perror("ERROR on binding");
     exit(1);
@@ -108,20 +131,42 @@ MultiServer::watch(void *d)
       int n = select(me->fd+1, &fds, NULL, NULL, &tv);
       if (n <= 0)
       {
-        std::cerr << "connection failed\n";
+        cerr << "connection failed\n";
       }
       else
       {
         int dfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
 
-        args *a = new args(me, cfd, dfd);
+        MultiServerHandler *msh = new MultiServerHandler(cfd, dfd);
 
         pthread_t tid;
-        if (pthread_create(&tid, NULL, MultiServer::start, (void *)a))
+        if (pthread_create(&tid, NULL, MultiServer::start, (void *)msh))
           perror("pthread_create");
       }
     }
   }
 
   pthread_exit(NULL);
+}
+
+void
+MultiServer::DropGlobal(string name)
+{
+  KeyedObjectP kop = globals[name];
+  if (kop)
+  {
+    kop->Drop();
+    globals.erase(name);
+  }
+}
+
+string
+MultiServer::GetGlobalNames()
+{
+  string s = "";
+  for (auto i : globals)
+    s = s + i.first + ";";
+  return s;
+}
+
 }

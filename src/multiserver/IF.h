@@ -1,20 +1,53 @@
+// ========================================================================== //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #include <string>
 #include <vector>
 
-#include "MultiServerSocket.h"
+#include "SocketHandler.h"
 #include "dtypes.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 
+/*! \file IF.h
+ *  \brief Contains the definitions of the structures a viewer uses to cause 
+ *         renderer to to update
+ */
+
+//! IF is the super class that knows how to transform to and from json
 class IF
 {
 public:
+  /*! Parse a JSON input string and call a virtual method to update 
+   *  subcass class members
+   */
   void LoadString(const char *s) { rapidjson::Document doc; doc.Parse(s); Load(doc); }
-  void Send(gxy::MultiServerSocket* skt)
+
+  /*! Call a virtual member to create a JSON string from the subclass members
+   *  and ship them across the socket handler
+   */
+  void Send(gxy::SocketHandler* handler)
   {
     std::string s(Stringify());
-    if (! skt->CSendRecv(s))
+    if (! handler->CSendRecv(s))
     {
       std::cerr << "IF sendrecv failed\n";
       exit(1);
@@ -22,15 +55,23 @@ public:
     // std::cerr << "IF reply: " << s << "\n";
   }
   
+  //! Virtual method to load subclass members from JSON object
   virtual void Load(rapidjson::Value&) = 0;
+  
+  //! Virtual method to print subclass members
   virtual void Print() = 0;
+  
+  //! Virtual method to create JSON string from subclass members
   virtual char *Stringify() = 0;
 };
 
 class DatasetsIF : public IF
 {
+  //! Datasets interface : represents a set of data objects that the client would like the server to manage
+
   struct Dataset
   {
+    //! a structure to specify a dataset: its name in the Galaxy context, its type, and its file name
     Dataset(std::string n, std::string t, std::string f) : name(n), type(t), filename(f) {}
     std::string name;
     std::string type;
@@ -38,11 +79,19 @@ class DatasetsIF : public IF
   };
 
 public:
+  //! overloaded virtual function to print a Datasets IF object
   void Print();
+
+  //! overloaded virtual function to load Datasets subclass members from JSON object
   void Load(rapidjson::Value&);
-  void Send(gxy::MultiServerSocket& skt);
+
+  //! overloaded virtual function to create a JSON string from a Datasets IF object
   char *Stringify();
 
+  //! add a dataset to the list
+  //! \param n - name of data object in the Galaxy context
+  //! \param t - type of data - eg. particles, volume, mesh...
+  //! \param f - filename pointing to data
   void Add(std::string n, std::string t, std::string f);
 
 private:
@@ -51,9 +100,16 @@ private:
 
 class CameraIF : public IF
 {
+  //! Camera interface : represents a camera of data objects that the client would like to send to the server
+
 public:
+  //! overloaded virtual function to print a Camera IF object
   void Print();
+
+  //! overloaded virtual function to load Camera subclass members from JSON object
   void Load(rapidjson::Value&);
+
+  //! overloaded virtual function to create a JSON string from a Camera IF object
   char *Stringify();
 
   //! set the spatial location for this camera

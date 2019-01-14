@@ -20,13 +20,16 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "MultiServerSocket.h"
+#include "MultiServerHandler.h"
+#include "CommandLine.h"
 
 using namespace gxy;
 using namespace std;
@@ -34,11 +37,12 @@ using namespace std;
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] statefile" << endl;
+  cerr << "syntax: " << a << " [options]" << endl;
   cerr << "options:" << endl;
-  cerr << "  -H host    host (localhost)" << endl;
-  cerr << "  -P port    port (5001)" << endl;
-  cerr << "  -so sofile       interface SO (libdatalib.so)\n";
+  cerr << "  -H host          host (localhost)" << endl;
+  cerr << "  -P port          port (5001)" << endl;
+  cerr << "  -so sofile       interface SO (libgxy_module_ping.so)\n";
+  cerr << "  commands         optional file of commands\n";
   exit(1);
 }
 
@@ -49,86 +53,34 @@ main(int argc, char *argv[])
   bool dbg = false, atch = false;
   string host = "localhost";
   int port = 5001;
+  char *file = NULL;
 
-  string sofile = "libdatalib.so";
+  string sofile = "libgxy_module_ping.so";
 
-	char *dbgarg;
+  char *dbgarg;
 
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-H")) host = argv[++i];
     else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
-		else if (!strncmp(argv[i], "-D", 2)) { dbg = true, dbgarg = argv[i] + 2; break; }
+    else if (!strncmp(argv[i], "-D", 2)) { dbg = true, dbgarg = argv[i] + 2; break; }
     else if (!strcmp(argv[i], "-so")) { sofile = argv[++i]; }
-    else
-    { syntax(argv[0]); }
+    else if (!file) file = argv[i];
+    else syntax(argv[0]);
   }
 
-  MultiServerSocket mskt(host.c_str(), port);
+  MultiServerHandler *msh = new MultiServerHandler(host.c_str(), port);
 
-  string rply;
-
-  if (! mskt.CSendRecv(sofile))
+  if (! msh->CSendRecv(sofile))
   {
     cerr << "Sending sofile failed\n";
     exit(1);
   }
+  
+  CommandLine cmd;
+  cmd.Run(file, msh);
 
-  string cmd;
-  for (cerr << "? ", cin >> cmd; !cin.eof() && cmd != "q" && cmd != "quit"; cerr << "? ", cin >> cmd)
-  {
-    if (cmd == "import")
-    {
-      cerr << "enter JSON, END to end\n";
-      for (string ss(""); ss != "END"; cin >> ss)
-        cmd.append(ss);
-      if (! mskt.CSendRecv(cmd))
-      {
-        cerr << "send/receive failed\n";
-        exit(1);
-      }
-      cout << "reply: " << cmd << "\n";
-    }
-    else if (cmd == "list")
-    {
-      if (! mskt.CSendRecv(cmd))
-      {
-        cerr << "send/receive failed\n";
-        exit(1);
-      }
-      cout << "reply: " << cmd << "\n";
-    }
-    else if (cmd == "drop")
-    {
-      string d;
-      cin >> d;
-      cmd.append(" ");
-      cmd.append(d);
-
-      if (! mskt.CSendRecv(cmd))
-      {
-        cerr << "send/receive failed\n";
-        exit(1);
-      }
-      cout << "reply: " << cmd << "\n";
-    }
-    else if (cmd == "delete")
-    {
-      string d;
-      cin >> d;
-      cmd.append(" ");
-      cmd.append(d);
-
-      if (! mskt.CSendRecv(cmd))
-      {
-        cerr << "send/receive failed\n";
-        exit(1);
-      }
-      cout << "reply: " << cmd << "\n";
-    }
-    else
-      cerr << "huh?\n";
-  }
+  if (msh) delete msh;
 
   return 0;
 }
