@@ -745,13 +745,18 @@ Renderer::SendRaysMsg::Action(int sender)
 int
 Renderer::SerialSize()
 {
-	return tracer.SerialSize();
+	return tracer.SerialSize() + sizeof(bool) + sizeof(int);
 }
 
 unsigned char *
 Renderer::Serialize(unsigned char *p)
 {
 	p = tracer.Serialize(p);
+	*(bool*)p = permute_pixels;
+	p += sizeof(bool);
+	*(int*)p = max_rays_per_packet;
+	std::cerr << std::dec << "XX " << max_rays_per_packet << "\n";
+	p += sizeof(int);
 
 	return p;
 }
@@ -760,6 +765,10 @@ unsigned char *
 Renderer::Deserialize(unsigned char *p)
 {
 	p = tracer.Deserialize(p);
+	permute_pixels = *(bool*)p;
+	p += sizeof(bool);
+	max_rays_per_packet = *(int*)p;
+	p += sizeof(int);
 
 	return p;
 }

@@ -125,6 +125,9 @@ public:
   //! process the given RayList using the current Rendering, RenderingSet, and Visualization
 	void Trace(RayList *);
 
+  //! Set the maximum number of rays allowed in each RayList
+	void SetMaxRayListSize(int s) { max_rays_per_packet = s; }
+
   //! return the maximum number of rays allowed in each RayList
 	int GetMaxRayListSize() { return max_rays_per_packet; }
 
