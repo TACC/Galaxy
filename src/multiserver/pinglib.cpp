@@ -100,29 +100,34 @@ server(MultiServerHandler *handler)
   bool client_done = false;
   while (! client_done)
   {
-    char *buf; int sz;
-    if (! handler->CRecv(buf, sz))
+    std::string line;
+    if (! handler->CRecv(line))
     {
       cerr << "receive failed\n";
       break;
     }
 
-    cerr << "received " << buf << "\n";
+    cerr << "received " << line << "\n";
 
-    if (!strcmp(buf, "ping"))
+    if (line == "ping")
     {
       Ping();
     }
-    else if (!strcmp(buf, "quit"))
+    else if (line == "quit")
     {
       client_done = true;
     }
-    else handler->handle(buf);
+    else
+    {
+      std::stringstream ss(line);
+      std::string cmd, args;
+      ss >> cmd;
+      std::getline(ss, args);
+      handler->handle(cmd, args);
+    }
 
     std::string ok("ok");
     handler->CSend(ok.c_str(), ok.length()+1);
-
-    free(buf);
   }
 
   return true;

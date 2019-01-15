@@ -55,21 +55,28 @@ server(MultiServerHandler *handler)
   bool client_done = false;
   while (! client_done)
   {
-    char *buf; int sz;
-    if (! handler->CRecv(buf, sz))
+    std::string line;
+    if (! handler->CRecv(line))
       break;
 
-    cerr << "received " << buf << "\n";
+    cerr << "received " << line << "\n";
 
     std::string reply("ok");
 
-    if (!strncmp(buf, "import", strlen("import")))
+    std::stringstream ss(line);
+
+    std::string cmd;
+    ss >> cmd;
+
+    if (cmd == "import")
     {
+      std::string remaining;
+      std::getline(ss, remaining);
       Document doc;
-      doc.Parse(buf+strlen("import"));
+      doc.Parse(remaining.c_str());
       theDatasets->LoadFromJSON(doc);
     }
-    else if (!strncmp(buf, "list", strlen("list")))
+    else if (cmd == "list")
     {
       if (! theDatasets)
       {
@@ -87,16 +94,16 @@ server(MultiServerHandler *handler)
         }
       }
     }
-    else if (!strncmp(buf, "drop", strlen("drop")))
+    else if (cmd == "drop")
     {
-      char objName[256], cmd[256];
-      sscanf(buf, "%s%s", cmd, objName);
+      string objName;
+      ss >> objName;
       theDatasets->DropDataset(objName);
     }
-    else if (!strncmp(buf, "delete", strlen("delete")))
+    else if (cmd == "delete")
     {
-      char objName[256], cmd[256];
-      sscanf(buf, "%s%s", cmd, objName);
+      string objName;
+      ss >> objName;
       KeyedDataObjectP kop = theDatasets->Find(objName);
       if (kop)
       {
@@ -106,14 +113,18 @@ server(MultiServerHandler *handler)
       else
         cerr << "couldn't find it in theDatasets\n";
     }
-    else if (!strcmp(buf, "quit"))
+    else if (cmd == "quit")
     {
       client_done = true;
     }
-    else handler->handle(buf);
+    else
+    {
+      std::string args;
+      std::getline(ss, args);
+      handler->handle(cmd, args);
+    }
 
     handler->CSend(reply.c_str(), reply.length()+1);
-    free(buf);
   }
 
   return true;

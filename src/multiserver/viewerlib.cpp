@@ -164,20 +164,28 @@ server(MultiServerHandler *handler)
   bool client_done = false;
   while (! client_done)
   {
-    char *buf; int sz;
-    if (! handler->CRecv(buf, sz))
+    std::string line;
+    if (! handler->CRecv(line))
       break;
 
-    if (!strncmp(buf, "sbreak", 6))
+    std::stringstream ss(line);
+    std::string cmd;
+
+    ss >> cmd;
+
+    if (cmd == "sbreak")
       brk();
 
-    else if (!strncmp(buf, "commit", 6))
+    else if (cmd == "commit")
       renderingState.Commit();
 
-    else if (!strncmp(buf, "json", 4))
+    else if (cmd == "json")
     {
+      std::string json;
+      std::getline(ss, json);
+
       Document doc;
-      doc.Parse(buf + 5);
+      doc.Parse(json.c_str());
   
       if (doc.HasMember("Datasets"))
       {
@@ -204,9 +212,8 @@ server(MultiServerHandler *handler)
         renderingState.GetTheRenderer()->Commit();
       }
     }
-    else if (! strncmp(buf, "window", 6))
+    else if (cmd == "window")
     {
-      stringstream ss(buf+6);
       int w, h;
       ss >> w >> h;
 
@@ -214,16 +221,19 @@ server(MultiServerHandler *handler)
       renderingState.GetTheRendering()->SetHandler(handler);
       renderingState.GetTheRendering()->Commit();
     }
-    else if (! strcmp(buf, "render"))
+    else if (cmd == "render")
     {
       renderingState.render();
     }
-    else handler->handle(buf);
+    else
+    {
+      std::string args;
+      std::getline(ss, args);
+      handler->handle(cmd, args);
+    }
       
     std::string ok("ok");
     handler->CSend(ok.c_str(), ok.length()+1);
-
-    free(buf);
   }
 
   // ospShutdown();

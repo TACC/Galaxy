@@ -76,12 +76,8 @@ static void
 brk(){ std::cerr << "break\n"; }
 
 bool
-MultiServerHandler::handle(char *s)
+MultiServerHandler::handle(std::string cmd, std::string args)
 {
-  std::stringstream ss(s);
-  std::string cmd;
-
-  ss >> cmd;
   if (cmd == "sbreak") { brk(); return true; }
   else { std::cerr << "huh?"; return false; }
 }

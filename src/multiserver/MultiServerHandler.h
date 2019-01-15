@@ -69,7 +69,7 @@ public:
 
   DynamicLibraryP GetTheDynamicLibrary() { return dlp; }  //! Get the MSH's DynamicLibraryP
 
-  bool handle(char *); // Handle commands not recognized by application's server
+  bool handle(std::string, std::string); // Handle commands not recognized by application's server
   
 private:
 
