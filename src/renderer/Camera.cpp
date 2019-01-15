@@ -51,21 +51,17 @@ namespace gxy
 
 KEYED_OBJECT_CLASS_TYPE(Camera)
 
-vector<int> permutation;
-int rays_per_packet;
 bool full_window;
 bool raydebug;
 static int Xmax, Xmin, Ymax, Ymin;
-bool permute;
 
-vector<int>
-generate_permutation(int num)
+void
+generate_permutation(vector<int>& p, int num)
 {
   std::srand (unsigned(std::time(0)));
-  std::vector<int> p;
+  p.clear();
   for (int i=1; i<num; ++i) p.push_back(i);
   std::random_shuffle (p.begin(), p.end() );
-  return p;
 }
 
 void
@@ -136,8 +132,8 @@ Camera::SaveToJSON(Value&v, Document& doc)
 void 
 Camera::LoadFromJSON(Value& v)
 {
-	if (v.IsString())
-	{
+  if (v.IsString())
+  {
     ifstream ifs(v.GetString());
     stringstream ss;
     ss << ifs.rdbuf();
@@ -145,75 +141,75 @@ Camera::LoadFromJSON(Value& v)
     Document tf;
     tf.Parse(ss.str().c_str());
 
-		float center[3];
+    float center[3];
 
-		Value& properties = tf["PVCameraConfiguration"]["Proxy"]["Property"];
-		for (int i = 0; i < properties.Size(); i++)
-		{
-			Value& p = properties[i];
+    Value& properties = tf["PVCameraConfiguration"]["Proxy"]["Property"];
+    for (int i = 0; i < properties.Size(); i++)
+    {
+      Value& p = properties[i];
 
-			if (p.HasMember("@name"))
-			{
-				string name = p["@name"].GetString();
-				if (name == "CameraPosition")
-				{
-					eye[0] = atof(p["Element"][0]["@value"].GetString());
-					eye[1] = atof(p["Element"][1]["@value"].GetString());
-					eye[2] = atof(p["Element"][2]["@value"].GetString());
-				}
-				else if (name == "CameraFocalPoint")
-				{
-					center[0] = atof(p["Element"][0]["@value"].GetString());
-					center[1] = atof(p["Element"][1]["@value"].GetString());
-					center[2] = atof(p["Element"][2]["@value"].GetString());
-				}
-				else if (name == "CameraViewUp")
-				{
-					up[0] = atof(p["Element"][0]["@value"].GetString());
-					up[1] = atof(p["Element"][1]["@value"].GetString());
-					up[2] = atof(p["Element"][2]["@value"].GetString());
-				}
-				else if (name == "CameraViewAngle")
-					aov = atof(p["Element"]["@value"].GetString());
-			}
-		}
-		dir[0] = center[0] - eye[0];
-		dir[1] = center[1] - eye[1];
-		dir[2] = center[2] - eye[2];
-	}
-	else
-	{
-		if (v.HasMember("annotation"))
-			SetAnnotation(string(v["annotation"].GetString()));
+      if (p.HasMember("@name"))
+      {
+        string name = p["@name"].GetString();
+        if (name == "CameraPosition")
+        {
+          eye[0] = atof(p["Element"][0]["@value"].GetString());
+          eye[1] = atof(p["Element"][1]["@value"].GetString());
+          eye[2] = atof(p["Element"][2]["@value"].GetString());
+        }
+        else if (name == "CameraFocalPoint")
+        {
+          center[0] = atof(p["Element"][0]["@value"].GetString());
+          center[1] = atof(p["Element"][1]["@value"].GetString());
+          center[2] = atof(p["Element"][2]["@value"].GetString());
+        }
+        else if (name == "CameraViewUp")
+        {
+          up[0] = atof(p["Element"][0]["@value"].GetString());
+          up[1] = atof(p["Element"][1]["@value"].GetString());
+          up[2] = atof(p["Element"][2]["@value"].GetString());
+        }
+        else if (name == "CameraViewAngle")
+          aov = atof(p["Element"]["@value"].GetString());
+      }
+    }
+    dir[0] = center[0] - eye[0];
+    dir[1] = center[1] - eye[1];
+    dir[2] = center[2] - eye[2];
+  }
+  else
+  {
+    if (v.HasMember("annotation"))
+      SetAnnotation(string(v["annotation"].GetString()));
 
-		eye[0] = v["viewpoint"][0].GetDouble();
-		eye[1] = v["viewpoint"][1].GetDouble();
-		eye[2] = v["viewpoint"][2].GetDouble();
+    eye[0] = v["viewpoint"][0].GetDouble();
+    eye[1] = v["viewpoint"][1].GetDouble();
+    eye[2] = v["viewpoint"][2].GetDouble();
 
-		if (v.HasMember("viewdirection"))
-		{
-			dir[0] = v["viewdirection"][0].GetDouble();
-			dir[1] = v["viewdirection"][1].GetDouble();
-			dir[2] = v["viewdirection"][2].GetDouble();
-		}
-		else if (v.HasMember("viewcenter"))
-		{
-			dir[0] = v["viewcenter"][0].GetDouble() - eye[0];
-			dir[1] = v["viewcenter"][1].GetDouble() - eye[1];
-			dir[2] = v["viewcenter"][2].GetDouble() - eye[2];
-		}
-		else
-		{
-				std::cerr << "need either viewdirection or viewcenter\n";
-				exit(1);
-		}
+    if (v.HasMember("viewdirection"))
+    {
+      dir[0] = v["viewdirection"][0].GetDouble();
+      dir[1] = v["viewdirection"][1].GetDouble();
+      dir[2] = v["viewdirection"][2].GetDouble();
+    }
+    else if (v.HasMember("viewcenter"))
+    {
+      dir[0] = v["viewcenter"][0].GetDouble() - eye[0];
+      dir[1] = v["viewcenter"][1].GetDouble() - eye[1];
+      dir[2] = v["viewcenter"][2].GetDouble() - eye[2];
+    }
+    else
+    {
+        std::cerr << "need either viewdirection or viewcenter\n";
+        exit(1);
+    }
 
-		up[0] = v["viewup"][0].GetDouble();
-		up[1] = v["viewup"][1].GetDouble();
-		up[2] = v["viewup"][2].GetDouble();
+    up[0] = v["viewup"][0].GetDouble();
+    up[1] = v["viewup"][1].GetDouble();
+    up[2] = v["viewup"][2].GetDouble();
 
-		aov = v["aov"].GetDouble();
-	}
+    aov = v["aov"].GetDouble();
+  }
 }
 
 void
@@ -258,7 +254,7 @@ public:
   InitialRaysEvent(RayList *rayList)
   {
     count = rayList->GetRayCount();
-		rset = rayList->GetTheRenderingSet()->getkey();
+    rset = rayList->GetTheRenderingSet()->getkey();
   }
 
 protected:
@@ -302,23 +298,24 @@ protected:
 struct args
 {
   args(int fnum, float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy, 
-			 vec3f& vr, vec3f& vu, vec3f& veye, vec3f center, 
-			 Box *lb, Box *gb, RendererP rndr, RenderingSetP rs, RenderingP r) :
-			 fnum(fnum), iwidth(iw), ixmin(ixmin), iymin(iymin),
-			 scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
-			 vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
-			 renderer(rndr), rs(rs), r(r) {}
+       vec3f& vr, vec3f& vu, vec3f& veye, vec3f center, 
+       Box *lb, Box *gb, RendererP rndr, RenderingSetP rs, RenderingP r, Camera *c) :
+       fnum(fnum), iwidth(iw), ixmin(ixmin), iymin(iymin),
+       scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
+       vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
+       renderer(rndr), rs(rs), r(r), camera(c) {}
   ~args() {}
 
-	int fnum;
+  int fnum;
   float scaling;
-	int iwidth, ixmin, iymin;
+  int iwidth, ixmin, iymin;
   float off_x, off_y;
   vec3f vr, vu, veye, center;
   Box *lbox, *gbox;
-	RendererP renderer;
-	RenderingSetP rs;
-	RenderingP r;
+  RendererP renderer;
+  RenderingSetP rs;
+  RenderingP r;
+  Camera *camera;
 };
 
 // Given a slew of camera parameters and a range of pixels that MIGHT
@@ -327,156 +324,142 @@ struct args
 
 // NOTE: spawning rays is the highest priority task
 
-class spawn_rays_task : public ThreadPoolTask
+int
+Camera::spawn_rays_task::work()
 {
-public:
-  spawn_rays_task(int start, int count, shared_ptr<args> _a) : ThreadPoolTask(1), start(start), count(count), a(_a) {}
-  ~spawn_rays_task() {}
-
-  virtual int work()
-  {
-		if (! a->rs->IsActive(a->fnum))
-			return 0;
+  if (! a->rs->IsActive(a->fnum))
+    return 0;
 
 #if defined(GXY_EVENT_TRACKING)
-		GetTheEventTracker()->Add(new CameraTaskStartEvent());
+  GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
-		
-		RayList *rlist = NULL;
+    
+  RayList *rlist = NULL;
 
-    int dst = 0;
-    for (int i = 0; i < count; i++)
+  int dst = 0;
+  for (int i = 0; i < count; i++)
+  {
+      int pindex = i + start;
+      int x, y;
+    vec3f xy_wcs, vray;
+
+    if (a->camera->permute)
     {
-			int pindex = i + start;
-			int x, y;
-      vec3f xy_wcs, vray;
-
-			if (permute)
-			{
-		    int p = permutation[pindex];
-				x = a->ixmin + (p % a->iwidth);
-				y = a->iymin + (p / a->iwidth);
-			}
-			else
-			{
-				x = a->ixmin + (pindex % a->iwidth);
-				y = a->iymin + (pindex / a->iwidth);
-			}
-
-      float fx = (x - a->off_x) * a->scaling;
-      float fy = (y - a->off_y) * a->scaling;
-
-      xy_wcs.x = a->center.x + fx * a->vr.x + fy * a->vu.x;
-      xy_wcs.y = a->center.y + fx * a->vr.y + fy * a->vu.y;
-      xy_wcs.z = a->center.z + fx * a->vr.z + fy * a->vu.z;
-
-      vray = xy_wcs - a->veye;
-      normalize(vray);
-
-      float gmin, gmax;
-      bool hit = a->gbox->intersect(a->veye, vray, gmin, gmax);
-
-      float lmin, lmax;
-      if (hit) hit = a->lbox->intersect(a->veye, vray, lmin, lmax);
-
-      float d = fabs(lmin) - fabs(gmin);
-      if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
-      {
-				if (!rlist) rlist = new RayList(a->renderer, a->rs, a->r, count, a->fnum, RayList::PRIMARY);
-
-				rlist->set_x(dst, x);
-				rlist->set_y(dst, y);
-				rlist->set_ox(dst, a->veye.x);
-        rlist->set_oy(dst, a->veye.y);
-        rlist->set_oz(dst, a->veye.z);
-        rlist->set_dx(dst, vray.x);
-        rlist->set_dy(dst, vray.y);
-        rlist->set_dz(dst, vray.z);
-        rlist->set_r(dst, 0.0);
-        rlist->set_g(dst, 0.0);
-        rlist->set_b(dst, 0.0);
-        rlist->set_o(dst, 0);
-        rlist->set_t(dst, 0);
-        rlist->set_tMax(dst, FLT_MAX);
-        rlist->set_type(dst, RAY_PRIMARY);
-        dst++;
-      }
+      int p = a->camera->permutation[pindex];
+      x = a->ixmin + (p % a->iwidth);
+      y = a->iymin + (p / a->iwidth);
+    }
+    else
+    {
+      x = a->ixmin + (pindex % a->iwidth);
+      y = a->iymin + (pindex / a->iwidth);
     }
 
-    if (rlist)
+    float fx = (x - a->off_x) * a->scaling;
+    float fy = (y - a->off_y) * a->scaling;
+
+    xy_wcs.x = a->center.x + fx * a->vr.x + fy * a->vu.x;
+    xy_wcs.y = a->center.y + fx * a->vr.y + fy * a->vu.y;
+    xy_wcs.z = a->center.z + fx * a->vr.z + fy * a->vu.z;
+
+    vray = xy_wcs - a->veye;
+    normalize(vray);
+
+    float gmin, gmax;
+    bool hit = a->gbox->intersect(a->veye, vray, gmin, gmax);
+
+    float lmin, lmax;
+    if (hit) hit = a->lbox->intersect(a->veye, vray, lmin, lmax);
+
+    float d = fabs(lmin) - fabs(gmin);
+    if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
     {
-			if (a->rs->IsActive(a->fnum))
-		  {
-				if (dst < rlist->GetRayCount())
-					rlist->Truncate(dst);
+      if (!rlist) rlist = new RayList(a->renderer, a->rs, a->r, count, a->fnum, RayList::PRIMARY);
+
+      rlist->set_x(dst, x);
+      rlist->set_y(dst, y);
+      rlist->set_ox(dst, a->veye.x);
+      rlist->set_oy(dst, a->veye.y);
+      rlist->set_oz(dst, a->veye.z);
+      rlist->set_dx(dst, vray.x);
+      rlist->set_dy(dst, vray.y);
+      rlist->set_dz(dst, vray.z);
+      rlist->set_r(dst, 0.0);
+      rlist->set_g(dst, 0.0);
+      rlist->set_b(dst, 0.0);
+      rlist->set_o(dst, 0);
+      rlist->set_t(dst, 0);
+      rlist->set_tMax(dst, FLT_MAX);
+      rlist->set_type(dst, RAY_PRIMARY);
+      dst++;
+    }
+  }
+
+  if (rlist)
+  {
+    if (a->rs->IsActive(a->fnum))
+    {
+      if (dst < rlist->GetRayCount())
+        rlist->Truncate(dst);
 
 #ifdef GXY_EVENT_TRACKING
-				GetTheEventTracker()->Add(new InitialRaysEvent(rlist));
+      GetTheEventTracker()->Add(new InitialRaysEvent(rlist));
 #endif
 
-				a->renderer->add_originated_ray_count(rlist->GetRayCount());
-				a->rs->Enqueue(rlist, true);
-			}
-			else
-			{
-				delete rlist;
-			}
-		}
+      a->renderer->add_originated_ray_count(rlist->GetRayCount());
+      a->rs->Enqueue(rlist, true);
+    }
+    else
+    {
+      delete rlist;
+    }
+  }
 
 
 #ifdef GXY_WRITE_IMAGES
-		a->rs->DecrementActiveCameraCount(dst);				
+  a->rs->DecrementActiveCameraCount(dst);        
 #endif
 
 #ifdef GXY_EVENT_TRACKING
-		GetTheEventTracker()->Add(new CameraTaskEndEvent());
+  GetTheEventTracker()->Add(new CameraTaskEndEvent());
 #endif
 
-		return 0;
-  }
-
-private:
-int start, count;
-    shared_ptr<args> a;
-};
+  return 0;
+}
 
 void check_env(RendererP renderer, int width, int height)
 {
-	static bool first = true;
+  static bool first = true;
 
-	if (first)
-	{
-		first = false;
+  if (first)
+  {
+    first = false;
 
-		full_window =  getenv("GXY_FULLWINDOW") != NULL;
-		raydebug    =  getenv("GXY_RAYDEBUG") != NULL;
+    full_window =  getenv("GXY_FULLWINDOW") != NULL;
+    raydebug    =  getenv("GXY_RAYDEBUG") != NULL;
 
-		if (getenv("GXY_X"))
-			Xmin = Xmax = atoi(getenv("GXY_X"));
-		else
-		{
-			Xmin = getenv("GXY_XMIN") ? atoi(getenv("GXY_XMIN")) : (width / 2) - 2;
-			Xmax = getenv("GXY_XMAX") ? atoi(getenv("GXY_XMAX")) : (width / 2) + 2;
-			if (Xmin < 0) Xmin = 0;
-			if (Xmax >= (width-1)) Xmax = width-1;
-		}
-		
-		if (getenv("GXY_Y"))
-			Ymin = Ymax = atoi(getenv("GXY_Y"));
-		else
-		{
-			Ymin = getenv("GXY_YMIN") ? atoi(getenv("GXY_YMIN")) : (height / 2) - 2;
-			Ymax = getenv("GXY_YMAX") ? atoi(getenv("GXY_YMAX")) : (height / 2) + 2;
-			if (Ymin < 0) Ymin = 0;
-			if (Ymax >= (height-1)) Ymax = height-1;
-		}
-
-		permute = getenv("GXY_PERMUTE_PIXELS");
-		if (permute)
-			permutation = generate_permutation(width*height);
-	}
+    if (getenv("GXY_X"))
+      Xmin = Xmax = atoi(getenv("GXY_X"));
+    else
+    {
+      Xmin = getenv("GXY_XMIN") ? atoi(getenv("GXY_XMIN")) : (width / 2) - 2;
+      Xmax = getenv("GXY_XMAX") ? atoi(getenv("GXY_XMAX")) : (width / 2) + 2;
+      if (Xmin < 0) Xmin = 0;
+      if (Xmax >= (width-1)) Xmax = width-1;
+    }
+    
+    if (getenv("GXY_Y"))
+      Ymin = Ymax = atoi(getenv("GXY_Y"));
+    else
+    {
+      Ymin = getenv("GXY_YMIN") ? atoi(getenv("GXY_YMIN")) : (height / 2) - 2;
+      Ymax = getenv("GXY_YMAX") ? atoi(getenv("GXY_YMAX")) : (height / 2) + 2;
+      if (Ymin < 0) Ymin = 0;
+      if (Ymax >= (height-1)) Ymax = height-1;
+    }
+  }
 }
-		
+    
 void
 Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, std::vector<std::future<int>>& rvec, int fnum)
 {
@@ -485,7 +468,11 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
   int width, height;
   rendering->GetTheSize(width, height);
 
-	check_env(renderer, width, height);
+  check_env(renderer, width, height);
+
+  permute = renderer->GetPermutePixels();
+  if (permute && permutation.size() != width*height)
+    generate_permutation(permutation, width*height);
 
   vec3f veye(eye);
   vec3f vu(up);
@@ -625,14 +612,14 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
     {
       for (int x = 0; x < (Xmax-Xmin) + 1; x++)
       {
-				rayList->set_x(kk, Xmin + x);
-				rayList->set_y(kk, Ymin + y);
-				kk++;
+        rayList->set_x(kk, Xmin + x);
+        rayList->set_y(kk, Ymin + y);
+        kk++;
       }
     }
     
     kk = 0;
-		int k;
+    int k;
     for (k = 0; k < nrays; k++)
     {
       int x = rayList->get_x(k);
@@ -651,7 +638,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       bool hit = gbox->intersect(veye, vray, gmin, gmax);
 
       float lmin, lmax;
-			if (hit) hit = lbox->intersect(veye, vray, lmin, lmax);
+      if (hit) hit = lbox->intersect(veye, vray, lmin, lmax);
 
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
@@ -675,20 +662,20 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       }
     }
 
-		if (kk)
+    if (kk)
     {
       if (kk < k)
         rayList->Truncate(kk);
 
 #ifdef GXY_EVENT_TRACKING
-			GetTheEventTracker()->Add(new InitialRaysEvent(rayList));
+      GetTheEventTracker()->Add(new InitialRaysEvent(rayList));
 #endif
 
-			renderingSet->Enqueue(rayList, true);
-			renderer->add_originated_ray_count(rayList->GetRayCount());
-		}
-		else
-			delete rayList;
+      renderingSet->Enqueue(rayList, true);
+      renderer->add_originated_ray_count(rayList->GetRayCount());
+    }
+    else
+      delete rayList;
   }
   else
   {
@@ -721,27 +708,26 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       rpp = totalRays;
     }
 
-		int iwidth  = (ixmax - ixmin) + 1;
-		int iheight = (iymax - ixmin) + 1;
+    int iwidth  = (ixmax - ixmin) + 1;
+    int iheight = (iymax - ixmin) + 1;
 
     ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
     shared_ptr<args> a = shared_ptr<args>(new args(fnum, pixel_scaling, iwidth, 
-																									 ixmin, iymin,
-																									 off_x, off_y, 
-																									 vr, vu, veye, center, 
-																									 lbox, gbox, 
-                                                   renderer, renderingSet, rendering));
+                                                   ixmin, iymin,
+                                                   off_x, off_y, 
+                                                   vr, vu, veye, center, 
+                                                   lbox, gbox, 
+                                                   renderer, renderingSet, 
+                                                   rendering, this));
 
-                for (int i = 0; i < (iwidth * iheight); i += rays_per_packet)
-                {
+      for (int i = 0; i < (iwidth * iheight); i += rays_per_packet)
+      {
 #ifdef GXY_WRITE_IMAGES
-                        renderingSet->IncrementActiveCameraCount();     // Matching Decrement in thread
+        renderingSet->IncrementActiveCameraCount();     // Matching Decrement in thread
 #endif
-
-                        int kthis = (i + rays_per_packet) > (iwidth * iheight) ? (iwidth * iheight) - i : rays_per_packet;
-
-                        rvec.emplace_back(threadpool->AddTask(new spawn_rays_task(i, kthis, a)));
-                }
+        int kthis = (i + rays_per_packet) > (iwidth * iheight) ? (iwidth * iheight) - i : rays_per_packet;
+        rvec.emplace_back(threadpool->AddTask(new spawn_rays_task(i, kthis, a)));
+      }
   }
 
   return;

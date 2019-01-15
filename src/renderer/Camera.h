@@ -36,6 +36,7 @@
 #include "Box.h"
 #include "dtypes.h"
 #include "KeyedObject.h"
+#include "Threading.h"
 #include "Work.h"
 
 namespace gxy
@@ -49,12 +50,28 @@ OBJECT_POINTER_TYPES(Camera)
 class Rays;
 class Rendering;
 class RayList;
+class args;
 
 //! a viewpoint from which images are rendered
 /*! \ingroup render */
 class Camera : public KeyedObject
 {
 	KEYED_OBJECT(Camera)
+
+  class spawn_rays_task : public ThreadPoolTask
+  {
+  public:
+    spawn_rays_task(int start, int count, std::shared_ptr<args> _a) :
+              ThreadPoolTask(1), start(start), count(count), a(_a) {}
+
+    ~spawn_rays_task() {}
+
+    virtual int work();
+
+  private:
+    int start, count;
+    std::shared_ptr<args> a;
+  };
 
 public:
 
