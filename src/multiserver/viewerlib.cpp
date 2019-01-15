@@ -202,10 +202,12 @@ server(MultiServerHandler *handler)
 
     else if (cmd == "json")
     {
-      std::string json;
-      std::getline(ss, json);
-
       Document doc;
+
+      string json, tmp;
+      while (std::getline(ss, tmp))
+        json = json + tmp;
+
       doc.Parse(json.c_str());
   
       if (doc.HasMember("Datasets"))

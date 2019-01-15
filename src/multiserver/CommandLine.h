@@ -45,7 +45,8 @@ public:
   void StartCommandLineThread(SocketHandler *skt = NULL);
 
   //! Run synchronously
-  void Run(char *filename, SocketHandler *skt = NULL);
+  void Run(std::string filename, SocketHandler *skt = NULL);
+  void Run(SocketHandler *skt = NULL);
 
   //! process a stream of commands, may be stdin or from a file
   static void handle_command_stream(std::istream *, SocketHandler *skt = NULL);

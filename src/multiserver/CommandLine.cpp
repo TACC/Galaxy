@@ -138,9 +138,11 @@ CommandLine::StartCommandLineThread(SocketHandler *skt)
 }
 
 void 
-CommandLine::Run(char *filename, SocketHandler *skt)
+CommandLine::Run(std::string filename, SocketHandler *skt)
 {
-  if (filename)
+  if (filename == "-")
+    handle_command_stream((std::istream*)&std::cin, skt);
+  else
   {
     std::ifstream ifn(filename);
     if (ifn)
@@ -148,8 +150,12 @@ CommandLine::Run(char *filename, SocketHandler *skt)
     else
       std::cerr << "unable to open " << filename << "\n";
   }
-  else
-    handle_command_stream((std::istream*)&std::cin, skt);
+}
+
+void 
+CommandLine::Run(SocketHandler *skt)
+{
+  handle_command_stream((std::istream*)&std::cin, skt);
 }
 
 }

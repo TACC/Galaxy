@@ -42,7 +42,7 @@ syntax(char *a)
   cerr << "  -H host          host (localhost)" << endl;
   cerr << "  -P port          port (5001)" << endl;
   cerr << "  -so sofile       interface SO (libgxy_module_ping.so)\n";
-  cerr << "  commands         optional file of commands\n";
+  cerr << "  file ...         optional list of files of commands\n";
   exit(1);
 }
 
@@ -54,6 +54,7 @@ main(int argc, char *argv[])
   string host = "localhost";
   int port = 5001;
   char *file = NULL;
+  vector<string> files;
 
   string sofile = "libgxy_module_ping.so";
 
@@ -65,8 +66,8 @@ main(int argc, char *argv[])
     else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
     else if (!strncmp(argv[i], "-D", 2)) { dbg = true, dbgarg = argv[i] + 2; break; }
     else if (!strcmp(argv[i], "-so")) { sofile = argv[++i]; }
-    else if (!file) file = argv[i];
-    else syntax(argv[0]);
+    else if (!strcmp(argv[i], "-h")) syntax(argv[0]);
+    else files.push_back(argv[i]);
   }
 
   MultiServerHandler *msh = new MultiServerHandler(host.c_str(), port);
@@ -78,8 +79,15 @@ main(int argc, char *argv[])
   }
   
   CommandLine cmd;
-  cmd.Run(file, msh);
-
+  
+  if (files.size() > 0)
+  {
+    for (auto i : files)
+      cmd.Run(i, msh);
+  }
+  else
+    cmd.Run(msh);
+    
   if (msh) delete msh;
 
   return 0;
