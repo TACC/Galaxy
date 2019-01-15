@@ -105,7 +105,6 @@ Renderer::Initialize()
 #ifdef GXY_WRITE_IMAGES
   AckRaysMsg::Register();
 #endif // GXY_WRITE_IMAGES
-
 }
 
 void
@@ -119,6 +118,12 @@ Renderer::initialize()
 	received_from = new int[GetTheApplication()->GetSize()];
 
 	max_rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
+
+  char *permute = getenv("GXY_PERMUTE_PIXELS");
+  if (permute)
+    SetPermutePixels(atoi(permute) > 0);
+  else
+    SetPermutePixels(true);
 
   ospInit(0, NULL);
 }

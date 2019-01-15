@@ -128,6 +128,12 @@ public:
   //! return the maximum number of rays allowed in each RayList
 	int GetMaxRayListSize() { return max_rays_per_packet; }
 
+  //! turn permute_pixels on/off
+	void SetPermutePixels(bool p) { permute_pixels = p; }
+
+  //! get permute_pixels
+  bool GetPermutePixels() { return permute_pixels; }
+
   // These defines categorize rays after a pass through the tracer
   // TODO: reimplement as enum
   static int TERMINATED;  //!< mark that this ray has been terminated
@@ -144,6 +150,7 @@ private:
 	int frame;
 
 	int max_rays_per_packet;
+  bool permute_pixels;
 
 	int sent_ray_count;
 	int terminated_ray_count;

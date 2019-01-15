@@ -148,6 +148,10 @@ protected:
 	float dir[3];
 	float up[3];
 	float aov;
+
+  std::vector<int> permutation;
+  bool permute;
+  int rays_per_packet;
 };
 
 } // namespace gxy
