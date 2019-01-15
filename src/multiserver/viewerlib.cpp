@@ -168,6 +168,8 @@ server(MultiServerHandler *handler)
     if (! handler->CRecv(line))
       break;
 
+		std::cerr << "> " << line << "\n";
+
     std::stringstream ss(line);
     std::string cmd;
 
@@ -175,6 +177,25 @@ server(MultiServerHandler *handler)
 
     if (cmd == "sbreak")
       brk();
+
+		else if (cmd == "permute_pixels")
+		{
+			std::string onoff;
+			ss >> onoff;
+			if (onoff == "on")
+				renderingState.GetTheRenderer()->SetPermutePixels(true);
+			else if (onoff == "off")
+				renderingState.GetTheRenderer()->SetPermutePixels(false);
+			else
+				std::cerr << "invalid permute_pixels: arg must be on or off\n";
+		}
+
+		else if (cmd == "max_rays_per_packet")
+		{
+			int n;
+			ss >> n;
+			renderingState.GetTheRenderer()->SetMaxRayListSize(n);
+		}
 
     else if (cmd == "commit")
       renderingState.Commit();

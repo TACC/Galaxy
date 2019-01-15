@@ -79,7 +79,7 @@ bool
 MultiServerHandler::handle(std::string cmd, std::string args)
 {
   if (cmd == "sbreak") { brk(); return true; }
-  else { std::cerr << "huh?"; return false; }
+  else { std::cerr << "say what? " << cmd << " " << args << "\n"; return false; }
 }
 
 }
