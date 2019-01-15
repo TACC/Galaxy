@@ -30,12 +30,13 @@ set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
 
 set(BINS "")
 set(SERVERS "")
+set(LIBS "")
 
 include_directories(${GLUT_INCLUDE_DIR})
 
 add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerHandler.cpp MultiServerObject.cpp SocketHandler.cpp DynamicLibraryManager.cpp)
 target_link_libraries(gxy_multiserver gxy_framework)
-install(TARGETS gxy_multiserver DESTINATION lib)
+set(LIBS gxy_multiserver ${LIBS})
 
 add_executable(msserver msserver.cpp CommandLine.cpp)
 target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework)
@@ -47,7 +48,7 @@ set(BINS msviewer ${BINS})
 
 add_library(gxy_module_viewer MODULE viewerlib.cpp ServerRendering.cpp IF.cpp)
 target_link_libraries(gxy_module_viewer gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
-install(TARGETS gxy_module_viewer DESTINATION lib RENAME viewerlib.so)
+set(SERVERS gxy_module_viewer ${SERVERS})
 
 add_executable(msclient msclient.cpp CommandLine.cpp)
 target_link_libraries(msclient gxy_multiserver)
@@ -71,6 +72,7 @@ set(SERVERS gxy_module_mhsampler ${SERVERS})
 
 install(TARGETS ${BINS} DESTINATION bin)
 install(TARGETS ${SERVERS} DESTINATION lib)
+install(TARGETS ${LIBS} DESTINATION lib)
 
 install(FILES
   CommandLine.h
