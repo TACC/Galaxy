@@ -168,8 +168,6 @@ server(MultiServerHandler *handler)
     if (! handler->CRecv(line))
       break;
 
-		std::cerr << "> " << line << "\n";
-
     std::stringstream ss(line);
     std::string cmd;
 

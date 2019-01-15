@@ -755,7 +755,6 @@ Renderer::Serialize(unsigned char *p)
 	*(bool*)p = permute_pixels;
 	p += sizeof(bool);
 	*(int*)p = max_rays_per_packet;
-	std::cerr << std::dec << "XX " << max_rays_per_packet << "\n";
 	p += sizeof(int);
 
 	return p;
