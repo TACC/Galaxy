@@ -70,7 +70,7 @@ add_library(gxy_module_mhsampler MODULE mhsamplelib.cpp)
 target_link_libraries(gxy_module_mhsampler gxy_multiserver gxy_data gxy_framework)
 set(SERVERS gxy_module_mhsampler ${SERVERS})
 
-install(TARGETS ${BINS} DESTINATION ${CMAKE_INSTALL_BINDIR)
+install(TARGETS ${BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS ${LIBS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
