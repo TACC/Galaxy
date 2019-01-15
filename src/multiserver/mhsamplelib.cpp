@@ -326,13 +326,13 @@ server(MultiServerHandler *handler)
       cerr << "receive failed\n";
       break;
     }
-    free(buf);
 
     cerr << "received " << buf << "\n";
 
     stringstream ss(buf);
-    string cmd;
+    free(buf);
 
+    string cmd;
     ss >> cmd;
 
     if (cmd == "sigma")       ss >> args.sigma;
