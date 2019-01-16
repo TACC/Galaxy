@@ -111,25 +111,46 @@ SocketHandler::connect_fd(struct sockaddr* serv_addr)
   return fd;
 }
 
-bool
-SocketHandler::Send(int fd, const char *b, int n)
-{
-  if (sizeof(n) > write(fd, &n, sizeof(n)))
-  {
-    return false;
-  }
 
-  while(n)
+static bool _receive(int fd, char *b, int n)
+{
+  char *bb = b;
+  int nn = n;
+  while(nn)
   {
-    int t = write(fd, b, n);
+    int t = read(fd, bb, nn);
     if (t <= 0)
       return false;
 
-    n -= t;
-    b += t;
+    bb += t;
+    nn -= t;
   }
 
   return true;
+}
+
+static bool _send(int fd, char *b, int n)
+{
+  char *bb = b;
+  int nn = n;
+  while(nn)
+  {
+    int t = write(fd, bb, nn);
+    if (t <= 0)
+      return false;
+
+    bb += t;
+    nn -= t;
+  }
+
+  return true;
+}
+
+bool
+SocketHandler::Send(int fd, const char *b, int n)
+{
+  if (!_send(fd, (char *)&n, sizeof(n))) return false;
+  return _send(fd, (char *)b, n);
 }
 
 bool
@@ -140,22 +161,12 @@ SocketHandler::SendV(int fd, char **b, int* n)
   for (int i = 0; n[i]; i++)
     sz += n[i];
 
-  write(fd, &sz, sizeof(sz));
+  if (! _send(fd, (char *)&sz, sizeof(sz)))
+    return false;
+  
   for (int i = 0; n[i]; i++)
-  {
-    int nn = n[i];
-    char *bb = b[i];
-    while(nn)
-    {
-      int t = write(fd, bb, nn);
-      if (t <= 0)
-      {
-        return false;
-      }
-      nn -= t;
-      bb += t;
-    }
-  }
+    if (! _send(fd, b[i], n[i]))
+      return false;
 
   return true;
 }
@@ -172,21 +183,13 @@ SocketHandler::Recv(int fd, char*& b, int& n)
     exit(1);
   }
 
-  if (sizeof(n) > read(fd, &n, sizeof(n))) 
+  if (! _receive(fd, (char *)&n, sizeof(n)))
     return false;
 
   b = (char *)malloc(n);
-  char *bb = b;
-  int nn = n;
-  while (nn)
-  {
-    int t = read(fd, bb, nn);
-    if (t <= 0)
-      return false;
 
-    bb += t;
-    nn -= t;
-  }
+  if (! _receive(fd, b, n))
+    return false;
 
   return true;
 }
