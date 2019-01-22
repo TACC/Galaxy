@@ -39,7 +39,7 @@ syntax(char *a)
 {
   cerr << "syntax: " << a << " [options]" << endl;
   cerr << "options:" << endl;
-  cerr << "  -H host          host (localhost)" << endl;
+  cerr << "  -H host          host (localhost or GXY_HOST)" << endl;
   cerr << "  -P port          port (5001)" << endl;
   cerr << "  -so sofile       interface SO (libgxy_module_ping.so)\n";
   cerr << "  file ...         optional list of files of commands\n";
@@ -49,12 +49,13 @@ syntax(char *a)
 int
 main(int argc, char *argv[])
 {
-
   bool dbg = false, atch = false;
-  string host = "localhost";
+
   int port = 5001;
   char *file = NULL;
   vector<string> files;
+
+  string host = (getenv("GXY_HOST") != NULL) ? getenv("GXY_HOST") : "localhost";
 
   string sofile = "libgxy_module_ping.so";
 

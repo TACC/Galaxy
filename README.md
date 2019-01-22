@@ -1,5 +1,9 @@
-# Galaxy: an asynchronous distributed parallel visualization ray tracer
-Galaxy is an asynchronous parallel visualization ray tracer for performant rendering in distributed computing environments. Galaxy builds upon [Intel OSPRay][1] and [Intel Embree][2], including ray queueing and sending logic inspired by [TACC GraviT][3]. 
+# Galaxy: an asynchronous distributed parallel framework
+
+`master`: [![Build Status](https://travis-ci.org/TACC/Galaxy.svg?branch=master)](https://travis-ci.org/TACC/Galaxy)
+`dev`: [![Build Status](https://travis-ci.org/TACC/Galaxy.svg?branch=dev)](https://travis-ci.org/TACC/Galaxy)
+
+Galaxy is an asynchronous parallel visualization framework for ray-based operations, including ray tracing, sampling and volume integration. Galaxy has been designed for performance in distributed computing environments, including in situ use. Galaxy builds upon [Intel OSPRay][1] and [Intel Embree][2] and includes ray queueing and sending logic inspired by [TACC GraviT][3]. 
 
 Galaxy has been developed primarily by Greg Abram and Paul Navratil with funding from the US Department of Energy's Office of Science ASCR program (Drs. Lucy Nowell and Laura Biven, program managers) through sub-award from Los Alamos National Laboratory; from Intel Corporation through Intel Parallel Computing Center awards; and from the Texas Advanced Computing Center at the University of Texas at Austin.
 A full list of contributors can be found in the `CONTRIBUTORS` file.
@@ -21,6 +25,7 @@ Galaxy assumes the following are already installed on your system in an accessib
   * [zlib compression library][8]
   * [CMake cross-platform build utility][9]
   * [GLFW][14] (required by OSPRay build)
+  * [Python][18] (required for testing and using python scripts in `scripts`)
 
 Galaxy has the following components associated in the `third-party` subdirectory:
   * [Intel ISPC][10]
@@ -433,4 +438,6 @@ The following environment variables affect Galaxy behavior:
 [15]: https://www.apache.org/licenses/LICENSE-2.0
 [16]: http://rapidjson.org/
 [17]: https://cinemascience.org/
+[18]: https://www.python.org/
+[19]: 
 

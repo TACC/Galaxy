@@ -70,6 +70,8 @@ Application::Application()
 {
   theApplication = this;
 
+  quitting = false;
+
   int n_threads =  getenv("GXY_NTHREADS") ?  atoi(getenv("GXY_NTHREADS")) : 5;
   std::cerr << "Using " << n_threads << " threads in rendering thread pool." << std::endl;
 
@@ -174,8 +176,11 @@ void Application::QuitApplication()
 {
   GetTheKeyedObjectFactory()->Clear();
 
+  quitting = true;
+
 	QuitMsg q;
 	q.Broadcast(true, true);
+
 	Application::Wait();
 }
 

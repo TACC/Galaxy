@@ -78,18 +78,6 @@ Visualization::initialize_ispc()
 }
 
 void
-Visualization::Drop()
-{
-	while(! vis.empty())
-	{
-		vis.back()->Drop();
-		vis.pop_back();
-	}
-
-	KeyedObject::Drop();
-}
-
-void
 Visualization::Commit(DatasetsP datasets)
 {
 	for (auto s : vis)

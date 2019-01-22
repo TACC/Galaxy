@@ -1,0 +1,117 @@
+On branch dev
+Your branch is ahead of 'origin/dev' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes to be committed:
+  (use "git reset HEAD <file>..." to unstage)
+
+	new file:   CommandLine.cpp
+	new file:   CommandLine.h
+	renamed:    ../framework/SOManager.cpp -> DynamicLibraryManager.cpp
+	renamed:    ../framework/SOManager.h -> DynamicLibraryManager.h
+	renamed:    MultiServerSocket.cpp -> MultiServerHandler.cpp
+	renamed:    MultiServerSocket.h -> MultiServerHandler.h
+	new file:   MultiServerObject.cpp
+	new file:   MultiServerObject.h
+	new file:   SocketHandler.cpp
+	new file:   SocketHandler.h
+	renamed:    dataloaderlib.cpp -> datalib.cpp
+	new file:   globalslib.cpp
+	new file:   mhsamplelib.cpp
+	renamed:    ping.cpp -> msclient.cpp
+	renamed:    server.cpp -> msserver.cpp
+	renamed:    viewer.cpp -> msviewer.cpp
+	deleted:    ping.hpp
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+
+	modified:   ../apps/CMakeLists.txt
+	modified:   ../apps/vis.cpp
+	modified:   ../data/Datasets.h
+	modified:   ../data/Particles.cpp
+	modified:   ../data/Particles.h
+	modified:   ../framework/Application.cpp
+	modified:   ../framework/Application.h
+	modified:   ../framework/CMakeLists.txt
+	modified:   ../framework/KeyedObject.cpp
+	modified:   ../framework/KeyedObject.h
+	modified:   CMakeLists.txt
+	modified:   ClientWindow.cpp
+	modified:   ClientWindow.h
+	modified:   DynamicLibraryManager.cpp
+	modified:   DynamicLibraryManager.h
+	modified:   IF.cpp
+	modified:   IF.h
+	modified:   MultiServer.cpp
+	modified:   MultiServer.h
+	modified:   MultiServerHandler.cpp
+	modified:   MultiServerHandler.h
+	modified:   MultiServerObject.cpp
+	modified:   MultiServerObject.h
+	modified:   ServerRendering.cpp
+	modified:   ServerRendering.h
+	modified:   SocketHandler.cpp
+	modified:   SocketHandler.h
+	modified:   datalib.cpp
+	deleted:    dataloader.cpp
+	modified:   globalslib.cpp
+	modified:   mhsamplelib.cpp
+	modified:   msclient.cpp
+	modified:   msserver.cpp
+	modified:   msviewer.cpp
+	modified:   pinglib.cpp
+	deleted:    testlib.cpp
+	modified:   viewerlib.cpp
+	modified:   ../renderer/OParticles.cpp
+	modified:   ../renderer/ParticlesVis.cpp
+	modified:   ../renderer/RayQManager.cpp
+	modified:   ../renderer/Rendering.h
+	modified:   ../renderer/RenderingSet.cpp
+	modified:   ../tests/CMakeLists.txt
+	modified:   ../../third-party/embree (modified content, untracked content)
+	modified:   ../../third-party/ospray (modified content, untracked content)
+	modified:   ../../third-party/rapidjson (modified content, untracked content)
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	../d
+	../framework/save3/
+	.r.in.swp
+	.s.in.swp
+	1 r.in
+	blah
+	blah.1
+	bparticles.state
+	data.in
+	g.in
+	g.out
+	g.state
+	particles.state
+	r.in
+	r.in.1
+	r.state
+	rg.in
+	rg.state
+	rparticles.state
+	rs.in
+	s.in
+	s.state
+	save.old/
+	save1/
+	save2/
+	save3/
+	save4/
+	save5/
+	single.state
+	tt/
+	x
+	../renderer.BAD/
+	../renderer/Camera.cpp.1
+	../ro/
+	../tests/bcast_messages.cpp
+	../../third-party/ospray.clean/
+

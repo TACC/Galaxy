@@ -224,6 +224,9 @@ public:
 	 */
 	void SaveOutputState(rapidjson::Document *doc, std::string s);
 
+  //! Check whether the app is in the process of quitting
+  bool IsQuitting() { return quitting; }
+
 private:
 
   std::map<std::string, KeyedObjectP> globals;      // Globally-known variables
@@ -247,6 +250,8 @@ private:
 
   pthread_mutex_t lock;
   pthread_cond_t cond;
+
+  bool quitting;
 
 private:
 	class QuitMsg : public Work

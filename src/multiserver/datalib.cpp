@@ -108,7 +108,7 @@ server(MultiServerHandler *handler)
       if (kop)
       {
         theDatasets->DropDataset(objName);
-        Delete(kop);
+        // Delete(kop);
       }
       else
         cerr << "couldn't find it in theDatasets\n";

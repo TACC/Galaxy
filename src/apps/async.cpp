@@ -456,7 +456,7 @@ main(int argc, char *argv[])
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-a")) { age = atof(argv[++i]), fadeout = atof(argv[++i]); }
-		else if (!strcmp(argv[i], "-D")) { dbg = true, dbgarg = argv[i] + 2; break; }
+		else if (!strncmp(argv[i], "-D", 2)) { dbg = true, dbgarg = argv[i] + 2; }
     else if (!strcmp(argv[i], "-O")) { mode = OBJECT_CENTER; }
     else if (!strcmp(argv[i], "-E")) { mode = EYE_CENTER; }
     else if (!strcmp(argv[i], "-s"))
@@ -473,7 +473,6 @@ main(int argc, char *argv[])
   if (statefile == "")
     syntax(argv[0]);
 
-
   Renderer::Initialize();
   GetTheApplication()->Run();
 
@@ -488,6 +487,7 @@ main(int argc, char *argv[])
     pthread_create(&tid, NULL, render_thread, NULL);
 
     glut_loop();
+    std::cerr << "GLUT RETURNS!\n";
   }
   else
     GetTheApplication()->Wait();

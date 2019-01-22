@@ -61,6 +61,7 @@ class RenderingState
 public:
   RenderingState(MultiServerHandler *handler) : handler(handler)
   {
+std::cerr << "RenderingState ctor\n";
     first = true;
 
     datasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
@@ -92,16 +93,17 @@ public:
 
   ~RenderingState()
   {
-    Delete(datasets);
-    Delete(visualization);
-    Delete(camera);
-    Delete(rendering);
-    Delete(renderingSet);
-    Delete(renderer);
+    // Delete(datasets);
+    // Delete(visualization);
+    // Delete(camera);
+    // Delete(rendering);
+    // Delete(renderingSet);
+    // Delete(renderer);
   }
 
   void Commit()
   {
+    std::cerr << "COMMIT ================\n";
     renderer->Commit();
     visualization->Commit(datasets);
     camera->Commit();
@@ -120,6 +122,7 @@ public:
   {
     if (first)
     {
+std::cerr << "RENDER first\n";
       renderer->Commit();
       visualization->Commit(datasets);
       rendering->Commit();

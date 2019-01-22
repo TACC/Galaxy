@@ -48,7 +48,6 @@ main(int argc, char * argv[])
 		{
 			TestObjectP top = TestObject::NewP();
 			top->doit();
-			top->Drop();
 		}
 
 		sleep(4);

@@ -1,0 +1,12 @@
+import 
+{
+  "Datasets":
+  [
+    {
+      "name": "oneBall",
+      "type": "Volume",
+      "filename": "/Users/gda/galaxy/test/radial/data/radial-0-oneBall.vol"
+    }
+  ]
+};
+list;

@@ -25,8 +25,7 @@ that is, that eventually derive from GalaxyObject - has an accompanying
 type for its shared pointer - for example, the Galaxy Camera object
 (see Camera.h in renderer) defines GalaxyP - a shared pointer to a
 Camera object.  Galaxy objects are created using NewP - a static
-class method for each class, and are deleted (actually dereferenced)
-by Delete.
+class method for each class.
 
 Many Galaxy objects derive from KeyedObject, a subclass of GalaxyObject,
 that implements objects that exist on all the Galaxy processes.
@@ -40,7 +39,9 @@ methods to support this update.
 
 In addition to whatever scoped references to an object exist, the
 Application itself maintains a reference to the local object on
-each process.
+each process.  This enables *dependent* objects to be associated 
+with the primary object by key.   For more information about this
+please see the comments in KeyedObject.h
 
 In this example, a new subclass of KeyedObject is defined.  A custom
 message (PrintTestObjectMsg) is defined to pass a request to each
@@ -53,8 +54,8 @@ Initially two instances of the TestObject are created, and each'
 content is printed by issuing the PrintTestObjectMsg on each. Then
 the objects owned by each process' Application are shown by issuing
 ShowKeyedObjectsMsg.   Initially, each process owns two local 
-correspondents of the two TestObjects.  Then Delete is called on the 
-second TestObject.   One desstructor method is called on each process,
+correspondents of the two TestObjects.  Then the second TestObject is
+deleted. One destructor method is called on each process,
 and ShowKeyedObjectsMsg shows only one TestObject on each node.
 The Appliucation then exits, and each of these remaining objects is 
 destroyed, and none remain.
@@ -288,7 +289,7 @@ int main(int argc,  char *argv[])
       ShowKeyedObjectTable();
       getchar();
 
-      Delete(to2);
+      to2 = nullptr;  // should delted the object
 
       std::cerr << "After Deleting to2\n";
       ShowKeyedObjectTable();

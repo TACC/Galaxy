@@ -100,10 +100,13 @@ KeyedObjectFactory::NewMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 	return false;
 }
 
+// Remove any objects references from the key map.
 void
 KeyedObjectFactory::Clear()
 {
-  for (auto i = kmap.begin(); i != kmap.end(); i++)
+  // Delete remote dependents of local *primary* objects.
+
+  for (auto i = smap.begin(); i != smap.end(); i++)
     if (*i)
       (*i)->Drop();
 }
@@ -127,28 +130,39 @@ KeyedObjectFactory::DropMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 	return false;
 }
 
+// Get an object by key... could be in either keymap
 KeyedObjectP
 KeyedObjectFactory::get(Key k)
 {
-	if (k >= kmap.size())
-		return NULL;
+	KeyedObjectP kop = k >= smap.size() ? nullptr : smap[k];
+  if (kop == nullptr)
+		return k >= wmap.size() ? nullptr : wmap[k].lock();
 	else
-		return kmap[k];
+    return kop;
 }
 
 void
 KeyedObjectFactory::erase(Key k)
 {
-	kmap[k] = NULL;
+	if (k < smap.size()) smap[k] = nullptr;
 }
 
 void
-KeyedObjectFactory::add(KeyedObjectP& p)
+KeyedObjectFactory::add_weak(KeyedObjectP& p)
 {
-  for (int i = kmap.size(); i <= p->getkey(); i++)
-		kmap.push_back(NULL);
+  for (int i = wmap.size(); i <= p->getkey(); i++)
+		wmap.push_back(KeyedObjectW());
 
-	kmap[p->getkey()] = p;
+	wmap[p->getkey()] = p;
+}
+
+void
+KeyedObjectFactory::add_strong(KeyedObjectP& p)
+{
+  for (int i = smap.size(); i <= p->getkey(); i++)
+		smap.push_back(NULL);
+
+	smap[p->getkey()] = p;
 }
 
 void
@@ -165,7 +179,10 @@ KeyedObject::KeyedObject(KeyedObjectClass c, Key k) : keyedObjectClass(c), key(k
 
 KeyedObject::~KeyedObject()
 {  
-  
+  // If this is the *primary* object, send out message to remove dependents
+  if (!GetTheApplication()->IsQuitting() && primary)
+    Drop();
+
 	ko_count--;
 }
 
@@ -253,9 +270,18 @@ KeyedObject::CommitMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 void
 KeyedObjectFactory::Dump()
 {
-	for (int i = 0; i < kmap.size(); i++)
+  cerr << "STRONG keymap\n";
+	for (int i = 0; i < smap.size(); i++)
 	{
-		KeyedObjectP kop = kmap[i];
+		KeyedObjectP kop = smap[i];
+		if (kop != NULL)
+			cerr << "key " << i << " " << GetClassName(kop->getclass()) << " count " << kop.use_count() << endl;
+	}
+
+  cerr << "WEAK keymap\n";
+	for (int i = 0; i < wmap.size(); i++)
+	{
+		KeyedObjectP kop = wmap[i].lock();
 		if (kop != NULL)
 			cerr << "key " << i << " " << GetClassName(kop->getclass()) << " count " << kop.use_count() << endl;
 	}
@@ -263,8 +289,11 @@ KeyedObjectFactory::Dump()
 
 KeyedObjectFactory::~KeyedObjectFactory() 
 {
-	while (kmap.size() > 0)
-		kmap.pop_back();
+	while (wmap.size() > 0)
+		wmap.pop_back();
+
+	while (smap.size() > 0)
+		smap.pop_back();
 
 	if (ko_count > 0)
 		cerr << ko_count << " shared objects remain!!!" << endl;

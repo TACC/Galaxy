@@ -4,7 +4,7 @@ dist: xenial # get a semi-modern linux
 branches:
   only:
     - travis-ci
-    # - dev
+    - dev
     # - master
 
 matrix:
@@ -58,7 +58,7 @@ addons:
       - libxrandr-dev
       - libxinerama-dev
       - libxcursor-dev
-      - imagemagick
+      - perceptualdiff
       - python-numpy
   homebrew:
     packages: 
@@ -67,7 +67,7 @@ addons:
       - boost
       - open-mpi
       - freeglut
-      - imagemagick
+      - perceptualdiff
       # - gcc@7
 
 before_install:
@@ -77,6 +77,13 @@ script:
   # use this line only to rebuild VTK cache for linux
   # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
+  # - pushd third-party/embree && patch -p1 -N < ../patches/embree.patch ; popd
+  # - pushd third-party/ospray && patch -p1 -N < ../patches/ospray.patch ; popd
+  # - find third-party -name '*.rej' -exec rm -f '{}' \;
+
+  # - pushd third-party/embree && rm -rf build/* && rm -rf install/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
+  # - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
+
   # the travis-ci build script does the following:
   # 0a. if VTK not built: build, cache and exit (linux only, osx has a brew install)
   # 0b. if no VTK python wrappers: build, cache and exit (linux only)
@@ -85,6 +92,9 @@ script:
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
   - scripts/travis-ci-build.sh
-  - if [ -z ${GXY_REBUILDING_CACHE} ]; then tests/image-gold-tests.sh; fi
+  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
 
+notifications:
+  slack:
+    secure: C9Y7Aqdo+6mK3K4js+mGyMXDR2+Nf0XY4ELPChV7T3WX2bUjxHMMSrRhOJPMAg6oxGjdFXJUSkzyy+nuUjkF4xAlMmDcNTkO/tgjSO7PGhJf0s4p6WGqKDwAlhqDNJKiJp7nXE88rCLLI4jjkQx5jQGbJuymugTyZbTT9bvui8MP5F4jMGakaHflYgL6RGZc+mLmENFxBgeniQLuRVu1vZj3Kf5HTYQoBIDe9DalOJbEk1qfC12s1ycYv0M0DXLqIt2T8mt9054pu0wbsE47iXcY2ujdZELzIncsqNK46e/waqovSxkWvXNavlvKxMEkW0etKof/XPM/aFOOb0eA/HVOaOKROp59j/IHYKiC4Pwgkg0CBGJiMjrHTgDoghXtPBQ2JTC/Ng3eSPIe9crJuAt0c1RRN+fg+N1RifCDCNcQzt4Xm6ek20ozjGMHwgD1j16gdUP8pqVX7gweo1vEPUn7RMnHdIeCqTyIGVEk0g9cGunEbIzDnPE1h1BcT9RYdg8QakUNgJdfy3aS+PsVNgsuzxAxfOkN3AdiVkHMCvSnR+SH9JCh4NdfOV6x6n9fwnOrE5Wupxz65ZWL4TFso9Anb3KA/csZktFCeb44NRBo0BqROHSC3EGBK/rHfw3ni4ZEEN56lW1BdVdms4XPpVn8LMhFUOwe1qNYJYEVxqg=
 

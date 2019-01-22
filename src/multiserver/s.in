@@ -1,0 +1,6 @@
+volume oneBall;
+particles samples;
+iterations 100000;
+tf-linear  1.0 1.7;
+color 1.0 0.5 0.5 1.0;
+sample;

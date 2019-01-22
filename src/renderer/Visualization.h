@@ -65,8 +65,6 @@ public:
   virtual void Commit(DatasetsP);
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
-  //! remove this object from the global registry
-  virtual void Drop();
 
   //! Add a Vis object to this Visualization
   void AddVis(VisP g);

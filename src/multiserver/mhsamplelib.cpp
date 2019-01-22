@@ -371,7 +371,7 @@ server(MultiServerHandler *handler)
     {
       args.tf_type = TF_NONE;
     }
-    else if (cmd == "sample")
+    else if (cmd == "sample" || cmd == "commit")
     {
       if (!volume) std::cerr << "need a volume first\n";
       else if (!particles) std::cerr << "need someplace to put samples\n";

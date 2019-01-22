@@ -20,7 +20,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.9)
 
 cmake_policy(SET CMP0048 NEW)
-PROJECT(Galaxy VERSION 0.9.0)
+PROJECT(Galaxy VERSION 0.2.0)
 
 set(GALAXY_VERSION ${PROJECT_VERSION})
 set(GALAXY_SOVERSION ${PROJECT_VERSION_MAJOR})
@@ -35,7 +35,7 @@ if (COMMAND cmake_policy)
   # ignore rpath setting effects for certain vars under MacOS
   cmake_policy(SET CMP0068 NEW)
 
-  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0") 
+  if(POLICY CMP0074) # since 3.12 
     # use <PackageName>_ROOT variables as search paths
     # needed since OSPRay includes TBB_ROOT
     cmake_policy(SET CMP0074 NEW)
@@ -96,7 +96,7 @@ find_package(RapidJSON PATHS
   ${PROJECT_SOURCE_DIR}/third-party/rapidjson/build)
 include_directories(${RapidJSON_INCLUDE_DIRS})
 
-find_package(embree 3 PATHS 
+find_package(embree 3 QUIET PATHS 
   ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib64/cmake
   ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib/cmake
   ${PROJECT_SOURCE_DIR}/../third-party/embree/build
@@ -143,7 +143,7 @@ set(GALAXY_DATA_LIB "${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}gxy_d
 set(GALAXY_RENDERER_LIB "${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}gxy_renderer${CMAKE_SHARED_LIBRARY_SUFFIX}")
 set(GALAXY_SAMPLER_LIB "${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}gxy_sampler${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
-write_basic_package_version_file("${GALAXY_CONFIG_VERSION}"  COMPATIBILITY SameMajorVersion )
+write_basic_package_version_file("${GALAXY_CONFIG_VERSION}" COMPATIBILITY AnyNewerVersion)
 configure_package_config_file( "CMake/${PROJECT_NAME}Config.cmake.in" 
   "${GALAXY_CONFIG}"
   PATH_VARS GALAXY_INCLUDE_DIR GALAXY_INCLUDE_DIRS GALAXY_FRAMEWORK_LIB GALAXY_DATA_LIB GALAXY_RENDERER_LIB GALAXY_SAMPLER_LIB

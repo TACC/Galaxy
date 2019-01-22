@@ -2,4 +2,5 @@ build*
 install*
 .DS_Store
 .galaxy
+.swp
 

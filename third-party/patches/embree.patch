@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b6954fb..237617e 100644
+index b6954fb2b..b1020f432 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -14,6 +14,9 @@
@@ -37,20 +37,54 @@ index b6954fb..237617e 100644
  
  INCLUDE(test)
  
-@@ -112,7 +123,10 @@ ELSE()
+@@ -98,12 +109,16 @@ INCLUDE(test)
+ 
+ GET_PROPERTY(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
+ IF(SHARED_LIBS_SUPPORTED)
+-  OPTION(EMBREE_STATIC_LIB "Build Embree as a static library.")
++  # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++  # original code: OPTION(EMBREE_STATIC_LIB "Build Embree as a static library.")
++  OPTION(EMBREE_STATIC_LIB "Build Embree as a static library." ON)
++  # GALAXY END MODIFIED CODE - by Galaxy patch
+   MARK_AS_ADVANCED(CLEAR EMBREE_STATIC_LIB)
+ ELSE()
+   SET(EMBREE_STATIC_LIB ON CACHE BOOL "Build Embree as a static library." FORCE)
+   MARK_AS_ADVANCED(EMBREE_STATIC_LIB)
  ENDIF()
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
+ IF (EMBREE_STATIC_LIB)
+   SET(EMBREE_LIB_TYPE STATIC)
+   ADD_DEFINITIONS(-DEMBREE_STATIC_LIB)
+diff --git a/common/cmake/embree-config.cmake b/common/cmake/embree-config.cmake
+index be80bb0d7..a9ad3ae5b 100644
+--- a/common/cmake/embree-config.cmake
++++ b/common/cmake/embree-config.cmake
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
  
- OPTION(EMBREE_ISPC_SUPPORT "Build Embree with support for ISPC applications." ON)
--OPTION(EMBREE_TUTORIALS    "Enable to build Embree tutorials" ON)
-+# GALAXY BEGIN MODIFIED CODE - by Galaxy patch
-+# original code: OPTION(EMBREE_TUTORIALS    "Enable to build Embree tutorials" ON)
-+OPTION(EMBREE_TUTORIALS    "Enable to build Embree tutorials" OFF)
-+# GALAXY END MODIFIED CODE - by Galaxy patch
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ SET(EMBREE_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/@EMBREE_RELATIV_ROOT_DIR@)
+ GET_FILENAME_COMPONENT(EMBREE_ROOT_DIR "${EMBREE_ROOT_DIR}" ABSOLUTE)
  
- ##############################################################################
- # Configurations (add configurations also to common/cmake/embree-config-default.cmake)
+@@ -55,3 +58,13 @@ SET(EMBREE_GEOMETRY_CURVE @EMBREE_GEOMETRY_CURVE@)
+ SET(EMBREE_GEOMETRY_SUBDIVISION @EMBREE_GEOMETRY_SUBDIVISION@)
+ SET(EMBREE_GEOMETRY_USER @EMBREE_GEOMETRY_USER@)
+ SET(EMBREE_RAY_PACKETS @EMBREE_RAY_PACKETS@)
++
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
++IF(EMBREE_STATIC_LIB)
++  FILE(GLOB CONFIG_FILES "${EMBREE_ROOT_DIR}/@EMBREE_CMAKECONFIG_DIR@/*-targets.cmake")
++  FOREACH(f ${CONFIG_FILES})
++    INCLUDE(${f})
++  ENDFOREACH()
++  LINK_DIRECTORIES(${EMBREE_ROOT_DIR}/@CMAKE_INSTALL_LIBDIR@)
++ENDIF()
++# GALAXY END ADDED CODE - by Galaxy patch
 diff --git a/common/cmake/ispc.cmake b/common/cmake/ispc.cmake
-index 2c5757f..d13ba64 100644
+index 2c5757f6c..d13ba646e 100644
 --- a/common/cmake/ispc.cmake
 +++ b/common/cmake/ispc.cmake
 @@ -14,6 +14,9 @@
@@ -85,3 +119,283 @@ index 2c5757f..d13ba64 100644
      ENDFOREACH()
    ENDFOREACH()
  
+diff --git a/common/cmake/package.cmake b/common/cmake/package.cmake
+index f4db3c0ac..8d4d8f1f8 100644
+--- a/common/cmake/package.cmake
++++ b/common/cmake/package.cmake
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ INCLUDE(GNUInstallDirs)
+ 
+ if (NOT DEFINED EMBREE_ZIP_MODE)
+@@ -93,13 +96,28 @@ IF (APPLE AND NOT EMBREE_ZIP_MODE)
+ ENDIF()
+ 
+ # why does this have to be so complicated...
+-IF (WIN32)
+-  SET(EMBREE_LIBRARY_NAME ${CMAKE_IMPORT_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}${CMAKE_IMPORT_LIBRARY_SUFFIX})
+-ELSEIF (APPLE)
+-  SET(EMBREE_LIBRARY_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}.${EMBREE_CONFIG_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
++# GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++# original code:
++# IF (WIN32)
++#   SET(EMBREE_LIBRARY_NAME ${CMAKE_IMPORT_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}${CMAKE_IMPORT_LIBRARY_SUFFIX})
++# ELSEIF (APPLE)
++#   SET(EMBREE_LIBRARY_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}.${EMBREE_CONFIG_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
++# ELSE()
++#   SET(EMBREE_LIBRARY_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX}.${EMBREE_CONFIG_VERSION})
++# ENDIF()
++IF (EMBREE_STATIC_LIB)
++  SET(EMBREE_LIBRARY_NAME ${CMAKE_STATIC_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}${CMAKE_STATIC_LIBRARY_SUFFIX})
+ ELSE()
+-  SET(EMBREE_LIBRARY_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX}.${EMBREE_CONFIG_VERSION})
++  IF (WIN32)
++    SET(EMBREE_LIBRARY_NAME ${CMAKE_IMPORT_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}${CMAKE_IMPORT_LIBRARY_SUFFIX})
++  ELSEIF (APPLE)
++    SET(EMBREE_LIBRARY_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}.${EMBREE_CONFIG_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
++  ELSE()
++    SET(EMBREE_LIBRARY_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}embree${EMBREE_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX}.${EMBREE_CONFIG_VERSION})
++  ENDIF()
+ ENDIF()
++# GALAXY END MODIFIED CODE - by Galaxy patch
++
+ 
+ IF (WIN32 OR EMBREE_ZIP_MODE)
+   # for local "installs" and on Windows we want the cmake config files placed
+diff --git a/common/lexers/CMakeLists.txt b/common/lexers/CMakeLists.txt
+index a7b509053..e26363979 100644
+--- a/common/lexers/CMakeLists.txt
++++ b/common/lexers/CMakeLists.txt
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ ADD_LIBRARY(lexers STATIC
+  stringstream.cpp
+  tokenstream.cpp
+@@ -23,6 +26,10 @@ SET_PROPERTY(TARGET lexers PROPERTY FOLDER common)
+ SET_PROPERTY(TARGET lexers APPEND PROPERTY COMPILE_FLAGS " ${FLAGS_LOWEST}")
+ 
+ IF (EMBREE_STATIC_LIB)
+-  INSTALL(TARGETS lexers ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++  # original code: INSTALL(TARGETS lexers ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(TARGETS lexers EXPORT lexers-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(EXPORT lexers-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++  # GALAXY END MODIFIED CODE - by Galaxy patch
+   SIGN_TARGET(lexers)
+ ENDIF()
+diff --git a/common/math/CMakeLists.txt b/common/math/CMakeLists.txt
+index 804dc88ab..c1d849d63 100644
+--- a/common/math/CMakeLists.txt
++++ b/common/math/CMakeLists.txt
+@@ -14,12 +14,19 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ ADD_LIBRARY(math STATIC constants.cpp)
+ SET_PROPERTY(TARGET math PROPERTY FOLDER common)
+ SET_PROPERTY(TARGET math APPEND PROPERTY COMPILE_FLAGS " ${FLAGS_LOWEST}")
+ 
+ IF (EMBREE_STATIC_LIB)
+-  INSTALL(TARGETS math ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++  # original code: INSTALL(TARGETS math ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(TARGETS math EXPORT math-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(EXPORT math-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++  # GALAXY END MODIFIED CODE - by Galaxy patch
+   SIGN_TARGET(math)
+ ENDIF()
+ 
+diff --git a/common/simd/CMakeLists.txt b/common/simd/CMakeLists.txt
+index 63144b390..f4b3ba352 100644
+--- a/common/simd/CMakeLists.txt
++++ b/common/simd/CMakeLists.txt
+@@ -14,11 +14,18 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ ADD_LIBRARY(simd STATIC sse.cpp)
+ SET_PROPERTY(TARGET simd PROPERTY FOLDER common)
+ SET_PROPERTY(TARGET simd APPEND PROPERTY COMPILE_FLAGS " ${FLAGS_LOWEST}")
+ 
+ IF (EMBREE_STATIC_LIB)
+-  INSTALL(TARGETS simd ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++  # original code: INSTALL(TARGETS simd ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(TARGETS simd EXPORT simd-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(EXPORT simd-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++  # GALAXY END MODIFIED CODE - by Galaxy patch
+   SIGN_TARGET(simd)
+ ENDIF()
+diff --git a/common/sys/CMakeLists.txt b/common/sys/CMakeLists.txt
+index 6ef054642..6aa1a3ce3 100644
+--- a/common/sys/CMakeLists.txt
++++ b/common/sys/CMakeLists.txt
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+ FIND_PACKAGE(Threads REQUIRED)
+ 
+@@ -35,6 +38,10 @@ SET_PROPERTY(TARGET sys PROPERTY FOLDER common)
+ SET_PROPERTY(TARGET sys APPEND PROPERTY COMPILE_FLAGS " ${FLAGS_LOWEST}")
+ 
+ IF (EMBREE_STATIC_LIB)
+-  INSTALL(TARGETS sys ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++  # original code: INSTALL(TARGETS sys ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(TARGETS sys EXPORT sys-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(EXPORT sys-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++  # GALAXY END MODIFIED CODE - by Galaxy patch
+   SIGN_TARGET(sys)
+ ENDIF()
+diff --git a/common/tasking/CMakeLists.txt b/common/tasking/CMakeLists.txt
+index 71ec8f068..a3584724f 100644
+--- a/common/tasking/CMakeLists.txt
++++ b/common/tasking/CMakeLists.txt
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ IF (TASKING_INTERNAL)
+   ADD_LIBRARY(tasking STATIC taskschedulerinternal.cpp)
+ ELSEIF (TASKING_TBB)
+@@ -28,6 +31,10 @@ SET_PROPERTY(TARGET tasking PROPERTY FOLDER common)
+ SET_PROPERTY(TARGET tasking APPEND PROPERTY COMPILE_FLAGS " ${FLAGS_LOWEST}")
+ 
+ IF (EMBREE_STATIC_LIB)
+-  INSTALL(TARGETS tasking ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++  # original code: INSTALL(TARGETS tasking ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(TARGETS tasking EXPORT tasking-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++  INSTALL(EXPORT tasking-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++  # GALAXY END MODIFIED CODE - by Galaxy patch
+   SIGN_TARGET(tasking)
+ ENDIF()
+diff --git a/kernels/CMakeLists.txt b/kernels/CMakeLists.txt
+index 191799faa..a4788bde5 100644
+--- a/kernels/CMakeLists.txt
++++ b/kernels/CMakeLists.txt
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ MACRO(DISABLE_STACK_PROTECTOR_FOR_INTERSECTORS)
+   FOREACH(src ${ARGN})
+     IF (src MATCHES ".*intersector.*")
+@@ -253,7 +256,11 @@ IF (EMBREE_ISA_SSE42 AND EMBREE_LIBRARY_FILES_SSE42)
+   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} embree_sse42)
+   CheckGlobals(embree_sse42)
+   IF (EMBREE_STATIC_LIB)
+-    INSTALL(TARGETS embree_sse42 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++    # original code: INSTALL(TARGETS embree_sse42 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(TARGETS embree_sse42 EXPORT embree_sse42-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(EXPORT embree_sse42-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++    # GALAXY END MODIFIED CODE - by Galaxy patch
+   ENDIF()
+ ENDIF ()
+ 
+@@ -265,7 +272,11 @@ IF (EMBREE_ISA_AVX  AND EMBREE_LIBRARY_FILES_AVX)
+   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} embree_avx)
+   CheckGlobals(embree_avx)
+   IF (EMBREE_STATIC_LIB)
+-    INSTALL(TARGETS embree_avx ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++    # original code:     INSTALL(TARGETS embree_avx ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(TARGETS embree_avx EXPORT embree_avx-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(EXPORT embree_avx-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++    # GALAXY END MODIFIED CODE - by Galaxy patch
+   ENDIF()
+ ENDIF()
+ 
+@@ -277,7 +288,11 @@ IF (EMBREE_ISA_AVX2 AND EMBREE_LIBRARY_FILES_AVX2)
+   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} embree_avx2)
+   CheckGlobals(embree_avx2)
+   IF (EMBREE_STATIC_LIB)
+-    INSTALL(TARGETS embree_avx2 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++    # original code: INSTALL(TARGETS embree_avx2 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(TARGETS embree_avx2 EXPORT embree_avx2-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(EXPORT embree_avx2-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++    # GALAXY END MODIFIED CODE - by Galaxy patch
+   ENDIF()
+ ENDIF()
+ 
+@@ -289,7 +304,11 @@ IF (EMBREE_ISA_AVX512KNL AND EMBREE_LIBRARY_FILES_AVX512KNL)
+   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} embree_avx512knl)
+   CheckGlobals(embree_avx512knl)
+   IF (EMBREE_STATIC_LIB)
+-    INSTALL(TARGETS embree_avx512knl ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++    # original code: INSTALL(TARGETS embree_avx512knl ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(TARGETS embree_avx512knl EXPORT embree_avx512knl-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(EXPORT embree_avx512knl-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++    # GALAXY END MODIFIED CODE - by Galaxy patch
+   ENDIF()
+ ENDIF()
+ 
+@@ -301,7 +320,11 @@ IF (EMBREE_ISA_AVX512SKX AND EMBREE_LIBRARY_FILES_AVX512SKX)
+   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} embree_avx512skx)
+   CheckGlobals(embree_avx512skx)
+   IF (EMBREE_STATIC_LIB)
+-    INSTALL(TARGETS embree_avx512skx ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    # GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++    # original code: INSTALL(TARGETS embree_avx512skx ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(TARGETS embree_avx512skx EXPORT embree_avx512skx-targets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel)
++    INSTALL(EXPORT embree_avx512skx-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++    # GALAXY END MODIFIED CODE - by Galaxy patch
+   ENDIF()
+ ENDIF()
+ 
+@@ -324,7 +347,10 @@ ELSE()
+   SET_TARGET_PROPERTIES(embree PROPERTIES VERSION ${EMBREE_VERSION} SOVERSION ${EMBREE_VERSION_MAJOR})
+ ENDIF()
+ 
+-INSTALL(TARGETS embree
++# GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++# original code: INSTALL(TARGETS embree
++INSTALL(TARGETS embree EXPORT embree-targets
++# GALAXY END MODIFIED CODE - by Galaxy patch
+   LIBRARY NAMELINK_SKIP DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
+   # on Windows put the dlls into bin
+   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT examples
+@@ -332,6 +358,13 @@ INSTALL(TARGETS embree
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
+ )
+ 
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
++IF (EMBREE_STATIC_LIB)
++  INSTALL(EXPORT embree-targets DESTINATION ${EMBREE_CMAKECONFIG_DIR} COMPONENT devel)
++ENDIF()
++# GALAXY END ADDED CODE - by Galaxy patch
++
++
+ IF (NOT EMBREE_STATIC_LIB)
+   INSTALL(TARGETS embree
+     LIBRARY NAMELINK_ONLY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel

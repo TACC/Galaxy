@@ -103,8 +103,22 @@ quit()
 void
 Render()
 {
+  static bool first = true;
+
   if (window_ready)
   {
+    if (first)
+    {
+      first = false;
+    
+      string c("commit");
+      if (! theClientWindow->CSendRecv(c))
+      {
+        cerr << "render request send failed\n";
+        exit(1);
+      }
+    }
+
     string s("render");
     if (! theClientWindow->CSendRecv(s))
     {
@@ -430,7 +444,7 @@ syntax(char *a)
 {
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "options:" << endl;
-  cerr << "  -H host          host (localhost)" << endl;
+  cerr << "  -H host          host (localhost or GXY_HOST)" << endl;
   cerr << "  -P port          port (5001)" << endl;
   cerr << "  -D[which]        run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
   cerr << "  -so sofile       interface SO (libgxy_module_viewer.so)\n";
@@ -536,10 +550,12 @@ int
 main(int argc, char *argv[])
 {
   bool dbg = false, atch = false;
-  string host = "localhost";
+
   string statefile = "";
   string sofile = "libgxy_module_viewer.so";
   int port = 5001;
+
+  string host = (getenv("GXY_HOST") != NULL) ? getenv("GXY_HOST") : "localhost";
 
 	char *dbgarg;
 

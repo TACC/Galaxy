@@ -215,19 +215,20 @@ int main(int argc,  char *argv[])
     long t_done = my_time();
     cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
 
+    theDatasets = nullptr;
+
     theRenderingSets.clear();
     theVisualizations.clear();
     theCameras.clear();
 
-		Delete(theRenderer);
-
+    theRenderer = nullptr;
     theApplication.QuitApplication();
   }
 
   theApplication.Wait();
 
-  std::cerr << "? ";
-  getchar();
+  // std::cerr << "? ";
+  // getchar();
 
   std::cerr << "done\n";
 }

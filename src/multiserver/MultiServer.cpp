@@ -154,10 +154,7 @@ MultiServer::DropGlobal(string name)
 {
   KeyedObjectP kop = globals[name];
   if (kop)
-  {
-    kop->Drop();
     globals.erase(name);
-  }
 }
 
 string
