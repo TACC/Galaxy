@@ -1,0 +1,3 @@
+#! /bin/bash
+
+msclient -so libgxy_module_data.so $*
