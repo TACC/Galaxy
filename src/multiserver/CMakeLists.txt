@@ -51,7 +51,7 @@ target_link_libraries(gxy_module_viewer gxy_multiserver gxy_renderer ${GALAXY_LI
 set(SERVERS gxy_module_viewer ${SERVERS})
 
 add_executable(msclient msclient.cpp CommandLine.cpp)
-target_link_libraries(msclient gxy_multiserver)
+target_link_libraries(msclient gxy_multiserver pthread)
 set(BINS msclient ${BINS})
 
 add_library(gxy_module_ping MODULE pinglib.cpp)
