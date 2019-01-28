@@ -85,6 +85,7 @@ script:
   - rm -rf third-party/ospray/*
   - rm -rf third-party/rapidjson/*
   - git submodule init
+  - git submodule sync
   - cat .git/config
   - cat .gitmodules
   - git submodule update --checkout
