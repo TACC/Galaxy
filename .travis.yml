@@ -82,8 +82,10 @@ script:
   # - find third-party -name '*.rej' -exec rm -f '{}' \;
 
   - cat .git/config
+  - ls -l .git/modules/third-party
   - git submodule init
   - git submodule update
+  - ls -l .git/modules/third-party
 
   # - pushd third-party/embree && rm -rf build/* && rm -rf install/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
   # - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
