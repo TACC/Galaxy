@@ -86,7 +86,8 @@ script:
   - rm -rf third-party/rapidjson/*
   - git submodule init
   - cat .git/config
-  - git submodule update
+  - cat .gitmodules
+  - git submodule update --checkout
   - ls -l .git/modules/third-party
 
   # - pushd third-party/embree && rm -rf build/* && rm -rf install/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
