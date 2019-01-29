@@ -81,9 +81,12 @@ script:
   # - pushd third-party/ospray && patch -p1 -N < ../patches/ospray.patch ; popd
   # - find third-party -name '*.rej' -exec rm -f '{}' \;
 
-  - rm -rf third-party/embree/*
-  - rm -rf third-party/ospray/*
-  - rm -rf third-party/rapidjson/*
+  # - rm -rf third-party/embree/*
+  # - rm -rf third-party/ospray/*
+  # - rm -rf third-party/rapidjson/*
+  - git submodule deinit third-party/embree
+  - git submodule deinit third-party/ospray
+  - git submodule deinit third-party/rapidjson
   - git submodule update --init
   - cat .git/config
   - cat .gitmodules
