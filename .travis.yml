@@ -91,6 +91,8 @@ script:
   - cat .git/config
   - cat .gitmodules
   - ls -l .git/modules/third-party
+  - ls -l third-party/embree
+  - ls -l third-party/ospray
 
   # - pushd third-party/embree && rm -rf build/* && rm -rf install/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
   # - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
