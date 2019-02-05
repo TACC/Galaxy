@@ -21,86 +21,89 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <regex>
-
 using namespace std;
 
 #include <string.h>
-#include <dlfcn.h>
+#include <pthread.h>
 
 #include "Application.h"
-#include "DataObjects.h"
-#include "MultiServer.h"
+#include "Datasets.h"
 #include "MultiServerHandler.h"
-#include "CommandLine.h"
 
-using namespace gxy;
-
-int mpiRank, mpiSize;
-
-#include "Debug.h"
-
-void
-syntax(char *a)
+namespace gxy
 {
-  if (mpiRank == 0)
+
+OBJECT_POINTER_TYPES(TestObject)
+
+class TestObject : public KeyedDataObject
+{
+  KEYED_OBJECT_SUBCLASS(TestObject, KeyedDataObject)
+
+  void SetDynamicLibrary(DynamicLibraryP d) { dlp = d; }
+
+  void SetString(string s) { str = s; }
+  string GetString() { return str; }
+
+  virtual int serialSize()
   {
-    cerr << "syntax: " << a << " [options]" << endl;
-    cerr << "options:" << endl;
-    cerr << "  -D         run debugger" << endl;
-    cerr << "  -A         wait for attachment" << endl;
-    cerr << "  -P port    port to use (5001)" << endl;
+    return super::serialSize() + str.size() + 1;
   }
-  MPI_Finalize();
-  exit(1);
+
+  virtual unsigned char *serialize(unsigned char *p)
+  {
+    p = super::serialize(p);
+    memcpy(p, str.c_str(), str.size()+1);
+    return p + str.size() + 1;
+  }
+
+  virtual unsigned char *deserialize(unsigned char *p)
+  {
+    p = super::deserialize(p);
+    str = (char *)p;
+    return p + str.size() + 1;
+  }
+
+public: 
+  ~TestObject() { cerr << "TestObject dtor: " << str << "\n"; }
+
+private:
+  string str;
+  DynamicLibraryP dlp;
+};
+
+class ShowDatasetsMsg : public Work
+{
+public:
+  ShowDatasetsMsg(DatasetsP dsp) : ShowDatasetsMsg(sizeof(Key))
+  {
+    *(Key *)get() = dsp->getkey();
+  }
+  ~ShowDatasetsMsg() {}
+
+  WORK_CLASS(ShowDatasetsMsg, true)
+
+public:
+  bool Action(int s);
+};
+
+class ShowKeyedObjectsMsg : public Work
+{
+public:
+  ~ShowKeyedObjectsMsg() {}
+
+  WORK_CLASS(ShowKeyedObjectsMsg, true)
+
+  bool Action(int s);
+};
+
+class TestClientServer : public MultiServerHandler
+{
+public:
+  TestClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd) {}
+  static void init();
+  std::string handle(std::string line);
+};
+
+
 }
 
-extern "C" void InitializeData();
-
-int 
-main(int argc, char *argv[])
-{
-  bool dbg = false, atch = false;
-  char *dbgarg;
-  int port = 5001;
-
-  Application theApplication(&argc, &argv);
-
-  RegisterDataObjects();
-  
-  theApplication.Start();
-
-  mpiRank = GetTheApplication()->GetRank();
-  mpiSize = GetTheApplication()->GetSize();
-
-  for (int i = 1; i < argc; i++)
-  {
-    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
-    else
-      syntax(argv[0]);
-  }
-
-  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
-
-  GetTheApplication()->Run();
-
-  MultiServer* ms = new MultiServer;
-
-  if (mpiRank == 0)
-  {
-    MultiServer::Get()->Start(port);
-
-    CommandLine c;
-    c.Run(NULL);
-
-    GetTheApplication()->QuitApplication();
-  }
-  else
-  {
-    GetTheApplication()->Wait();
-  }
-
-  delete ms;
-}

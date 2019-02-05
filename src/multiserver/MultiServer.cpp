@@ -121,28 +121,118 @@ MultiServer::watch(void *d)
     int n = select(me->fd+1, &fds, NULL, NULL, &tv);
     if (n > 0)
     {
+      string reply = "ok";
+
       struct sockaddr_in cli_addr;
       unsigned int cli_len = sizeof(cli_addr);
 
-      int cfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
+      int dfd, cfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
 
       tv = {1, 0};
 
       int n = select(me->fd+1, &fds, NULL, NULL, &tv);
       if (n <= 0)
+        reply = "connection failed";
+
+      char *libname;
+
+      if (reply == "ok")
       {
-        cerr << "connection failed\n";
+        dfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
+
+        int sz;
+        char *bb = (char *)&sz;
+        int nn = sizeof(sz);
+        while(nn && reply == "ok")
+        {
+          int t = read(cfd, bb, nn);
+          if (t <= 0)
+            reply = "error reading libname";
+
+          bb += t;
+          nn -= t;
+        }
+
+        libname = (char *)malloc(sz);
+
+        bb = libname;
+        nn = sz;
+        while(nn && reply == "ok")
+        {
+          int t = read(cfd, bb, nn);
+          if (t <= 0)
+            reply = "error reading libname\n";
+
+          bb += t;
+          nn -= t;
+        }
       }
-      else
+
+      MultiServerHandler *msh = NULL;
+
+      if (reply == "ok")
       {
-        int dfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
+        DynamicLibraryP dlp = MultiServer::Get()->getTheDynamicLibraryManager()->Load(libname);
+        free(libname);
 
-        MultiServerHandler *msh = new MultiServerHandler(cfd, dfd);
+        if (! dlp)
+          reply = string("error loading ") + libname;
 
+        if (reply == "ok")
+        {
+          MultiServerHandler::new_handler nh = (MultiServerHandler::new_handler)dlp->GetSym("new_handler");
+          if (! nh)
+            reply = string("error retrieving new_handler from ") + libname;
+
+          if (reply == "ok")
+          {
+            msh = nh(dlp, cfd, dfd);
+            dlp = NULL;
+            if (! nh)
+              reply = string("error new_handler(") + libname + ") returned NULL";
+          }
+        }
+      }
+
+      int sz = reply.size() + 1;
+      char *bb = (char *)&sz;
+      int nn = sizeof(sz);
+      while(nn)
+      {
+        int t = write(cfd, bb, nn);
+        if (t <= 0)
+        {
+          std::cerr << "error sending reply\n";
+          break;
+        }
+
+        bb += t;
+        nn -= t;
+      }
+
+      bb = (char *)reply.c_str();
+      nn = reply.size() + 1;
+      while(nn)
+      {
+        int t = write(cfd, bb, nn);
+        if (t <= 0)
+        {
+          std::cerr << "error sending reply\n";
+          break;
+        }
+
+        bb += t;
+        nn -= t;
+      }
+
+      if (reply == "ok")
+      {
         pthread_t tid;
         if (pthread_create(&tid, NULL, MultiServer::start, (void *)msh))
-          perror("pthread_create");
-      }
+          reply = "error starting client handler thread";
+      };
+
+      cerr << reply << "\n";
     }
   }
 

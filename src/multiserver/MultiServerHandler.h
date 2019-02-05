@@ -56,20 +56,21 @@ class MultiServerHandler : public SocketHandler
   
   GALAXY_OBJECT(MultiServerHandler)
 
-  typedef bool (*server_func)(MultiServerHandler*); //! typedef for server function from the DL
+  typedef MultiServerHandler *(*new_handler)(DynamicLibraryP, int, int); // typedef for handler ctor from the DL
 
 public:
   static MultiServerHandler *GetTheThreadMultiServerHandler(); //! return the thread-specific handler
+  virtual ~MultiServerHandler() {}
 
   MultiServerHandler() : SocketHandler() {}
-  MultiServerHandler(int cfd, int dfd) : SocketHandler(cfd, dfd) {}
+  MultiServerHandler(DynamicLibraryP dlp, int cfd, int dfd) : dlp(dlp), SocketHandler(cfd, dfd) {}
   MultiServerHandler(std::string host, int port) : SocketHandler(host, port) {}
 
   bool RunServer(); //! Load the DL, run its server method.
 
   DynamicLibraryP GetTheDynamicLibrary() { return dlp; }  //! Get the MSH's DynamicLibraryP
 
-  bool handle(std::string, std::string); // Handle commands not recognized by application's server
+  virtual std::string handle(std::string); // Handle command strings
   
 private:
 

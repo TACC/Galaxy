@@ -21,86 +21,44 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <regex>
 
 using namespace std;
 
 #include <string.h>
-#include <dlfcn.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include "Application.h"
-#include "DataObjects.h"
 #include "MultiServer.h"
 #include "MultiServerHandler.h"
-#include "CommandLine.h"
 
 using namespace gxy;
 
-int mpiRank, mpiSize;
-
-#include "Debug.h"
-
-void
-syntax(char *a)
+namespace gxy
 {
-  if (mpiRank == 0)
-  {
-    cerr << "syntax: " << a << " [options]" << endl;
-    cerr << "options:" << endl;
-    cerr << "  -D         run debugger" << endl;
-    cerr << "  -A         wait for attachment" << endl;
-    cerr << "  -P port    port to use (5001)" << endl;
-  }
-  MPI_Finalize();
-  exit(1);
-}
 
-extern "C" void InitializeData();
-
-int 
-main(int argc, char *argv[])
+class PingMsg : public Work
 {
-  bool dbg = false, atch = false;
-  char *dbgarg;
-  int port = 5001;
+public:
+  PingMsg(std::string m) : PingMsg(m.size() + 1) { strcpy((char *)get(), m.c_str()); }
+  ~PingMsg() {}
 
-  Application theApplication(&argc, &argv);
+  WORK_CLASS(PingMsg, true)
 
-  RegisterDataObjects();
-  
-  theApplication.Start();
+public:
+  bool Action(int s);
+};
 
-  mpiRank = GetTheApplication()->GetRank();
-  mpiSize = GetTheApplication()->GetSize();
+class PingClientServer : public MultiServerHandler
+{
+public:
+  PingClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd) {}
+  static void init();
+  std::string handle(std::string line);
+};
 
-  for (int i = 1; i < argc; i++)
-  {
-    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
-    else
-      syntax(argv[0]);
-  }
 
-  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
-
-  GetTheApplication()->Run();
-
-  MultiServer* ms = new MultiServer;
-
-  if (mpiRank == 0)
-  {
-    MultiServer::Get()->Start(port);
-
-    CommandLine c;
-    c.Run(NULL);
-
-    GetTheApplication()->QuitApplication();
-  }
-  else
-  {
-    GetTheApplication()->Wait();
-  }
-
-  delete ms;
 }

@@ -85,8 +85,19 @@ CommandLine::handle_command(std::string line, SocketHandler *skt)
       exit(1);
     }
 
-    if (cmd != "ok")
-      std::cout << "reply: " << line << "\n";
+    std::stringstream ss(line);
+
+    std::string op, rest;
+    ss >> op;
+    std::getline(ss, rest);
+    if (op == "error")
+      std::cerr << "error: " << rest << "\n";
+    else if (op == "ok")
+    {
+      if (rest != "") std::cerr << rest << "\n";
+      while (std::getline(ss, rest))
+        if (rest != "") std::cerr << rest << "\n";
+    }
   }
 
   else

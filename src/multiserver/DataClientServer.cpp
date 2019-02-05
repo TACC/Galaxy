@@ -19,51 +19,40 @@
 // ========================================================================== //
 
 #include <iostream>
-#include <string>
+#include <vector>
 #include <sstream>
+using namespace std;
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <math.h>
 #include <string.h>
-#include <fcntl.h>
+#include <pthread.h>
 
-#include "MultiServer.h"
-#include "MultiServerHandler.h"
-#include "Datasets.h"
+#include "DataClientServer.h"
+
+using namespace gxy;
 
 namespace gxy
 {
 
-thread_local MultiServerHandler* thread_msh;
-
-MultiServerHandler*
-MultiServerHandler::GetTheThreadMultiServerHandler() { return gxy::thread_msh; }
-
-static void brk(){ std::cerr << "break\n"; } // for debugging
-
-std::string
-MultiServerHandler::handle(std::string line)
+extern "C" void
+init()
 {
-  if (line == "break")
-  {
-    brk();
-    return std::string("ok");
-  }
-  else
-  {
-    return std::string("error unrecognized command: ") + line;
-  }
+  DataClientServer::init();
 }
 
-bool
-MultiServerHandler::RunServer()
+extern "C" MultiServerHandler *
+new_handler(DynamicLibraryP dlp, int cfd, int dfd)
+{
+  return new DataClientServer(dlp, cfd, dfd);
+}
+
+
+void
+DataClientServer::init()
+{
+}
+
+std::string
+DataClientServer::handle(std::string line)
 {
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
@@ -72,33 +61,53 @@ MultiServerHandler::RunServer()
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 
-  bool client_done = false;
-  while (! client_done)
+  std::stringstream ss(line);
+  std::string cmd;
+  ss >> cmd;
+
+  if (cmd == "import")
   {
-    std::string line, reply;
+    std::string remaining;
+    std::getline(ss, remaining);
+    Document doc;
 
-    if (! CRecv(line))
-      break;
+    if (doc.Parse<0>(remaining.c_str()).HasParseError())
+      return std::string("error parsing import command");
 
-    cerr << "received " << line << "\n";
+    if (! theDatasets->LoadFromJSON(doc))
+      return std::string("error loading datasets");
+    
+    return std::string("ok");
+  }
+  else if (cmd == "list")
+  {
+    if (! theDatasets)
+      return std::string("unable to access global datasets");
 
-    if (line == "quit")
+    vector<string> names = theDatasets->GetDatasetNames();
+    std::string reply = "ok datasets:\n";
+    for (vector<string>::iterator it = names.begin(); it != names.end(); ++it)
     {
-      client_done = true;
-      reply = "ok";
+      reply.append(*it);
+      reply.append("\n");
     }
-    if (line == "clear")
+
+    return reply;
+  }
+  else if (cmd == "drop" || cmd == "delete")
+  {
+    string objName;
+    ss >> objName;
+    KeyedDataObjectP kop = theDatasets->Find(objName);
+    if (kop)
     {
-      MultiServer::Get()->ClearGlobals();
-      reply = "ok";
+      theDatasets->DropDataset(objName);
+      return std::string("ok");
     }
     else
-      reply = handle(line);
-
-    CSend(reply.c_str(), reply.length()+1);
+      return std::string("error no such dataset: " + objName);
   }
-
-  return true;
+  else return MultiServerHandler::handle(line);
 }
 
 }

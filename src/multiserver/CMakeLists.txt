@@ -35,7 +35,7 @@ set(LIBS "")
 include_directories(${GLUT_INCLUDE_DIR})
 
 add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerHandler.cpp MultiServerObject.cpp SocketHandler.cpp DynamicLibraryManager.cpp)
-target_link_libraries(gxy_multiserver gxy_framework)
+target_link_libraries(gxy_multiserver gxy_data gxy_framework)
 set(LIBS gxy_multiserver ${LIBS})
 
 add_executable(msserver msserver.cpp CommandLine.cpp)
@@ -46,27 +46,27 @@ add_executable(msviewer msviewer.cpp ClientWindow.cpp IF.cpp CommandLine.cpp)
 target_link_libraries(msviewer gxy_multiserver ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} ${OSPRAY_LIBRARIES} pthread)
 set(BINS msviewer ${BINS})
 
-add_library(gxy_module_viewer MODULE viewerlib.cpp ServerRendering.cpp IF.cpp)
+add_executable(msclient msclient.cpp SocketHandler.cpp CommandLine.cpp)
+target_link_libraries(msclient pthread)
+set(BINS msclient ${BINS})
+
+add_library(gxy_module_viewer MODULE ViewerClientServer.cpp ServerRendering.cpp IF.cpp)
 target_link_libraries(gxy_module_viewer gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
 set(SERVERS gxy_module_viewer ${SERVERS})
 
-add_executable(msclient msclient.cpp CommandLine.cpp)
-target_link_libraries(msclient gxy_multiserver pthread)
-set(BINS msclient ${BINS})
+add_library(gxy_module_data MODULE DataClientServer.cpp)
+target_link_libraries(gxy_module_data gxy_multiserver gxy_framework)
+set(SERVERS gxy_module_data ${SERVERS})
 
-add_library(gxy_module_ping MODULE pinglib.cpp)
+add_library(gxy_module_ping MODULE PingClientServer.cpp)
 target_link_libraries(gxy_module_ping gxy_multiserver gxy_framework)
 set(SERVERS gxy_module_ping ${SERVERS})
 
-add_library(gxy_module_globals MODULE globalslib.cpp)
-target_link_libraries(gxy_module_globals gxy_multiserver gxy_framework)
-set(SERVERS gxy_module_globals ${SERVERS})
+add_library(gxy_module_test MODULE TestClientServer.cpp)
+target_link_libraries(gxy_module_test gxy_multiserver gxy_framework)
+set(SERVERS gxy_module_test ${SERVERS})
 
-add_library(gxy_module_data MODULE datalib.cpp)
-target_link_libraries(gxy_module_data gxy_multiserver gxy_data gxy_framework)
-set(SERVERS gxy_module_data ${SERVERS})
-
-add_library(gxy_module_mhsampler MODULE mhsamplelib.cpp)
+add_library(gxy_module_mhsampler MODULE MHSampleClientServer)
 target_link_libraries(gxy_module_mhsampler gxy_multiserver gxy_data gxy_framework)
 set(SERVERS gxy_module_mhsampler ${SERVERS})
 

@@ -21,86 +21,26 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <regex>
 
 using namespace std;
 
-#include <string.h>
-#include <dlfcn.h>
-
-#include "Application.h"
-#include "DataObjects.h"
-#include "MultiServer.h"
 #include "MultiServerHandler.h"
-#include "CommandLine.h"
+#include "Datasets.h"
 
-using namespace gxy;
+#include "rapidjson/filereadstream.h"
 
-int mpiRank, mpiSize;
+using namespace rapidjson;
 
-#include "Debug.h"
-
-void
-syntax(char *a)
+namespace gxy
 {
-  if (mpiRank == 0)
-  {
-    cerr << "syntax: " << a << " [options]" << endl;
-    cerr << "options:" << endl;
-    cerr << "  -D         run debugger" << endl;
-    cerr << "  -A         wait for attachment" << endl;
-    cerr << "  -P port    port to use (5001)" << endl;
-  }
-  MPI_Finalize();
-  exit(1);
-}
 
-extern "C" void InitializeData();
-
-int 
-main(int argc, char *argv[])
+class DataClientServer : public MultiServerHandler
 {
-  bool dbg = false, atch = false;
-  char *dbgarg;
-  int port = 5001;
+public:
+  DataClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd) {}
+  static void init();
+  std::string handle(std::string line);
+};
 
-  Application theApplication(&argc, &argv);
 
-  RegisterDataObjects();
-  
-  theApplication.Start();
-
-  mpiRank = GetTheApplication()->GetRank();
-  mpiSize = GetTheApplication()->GetSize();
-
-  for (int i = 1; i < argc; i++)
-  {
-    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
-    else
-      syntax(argv[0]);
-  }
-
-  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
-
-  GetTheApplication()->Run();
-
-  MultiServer* ms = new MultiServer;
-
-  if (mpiRank == 0)
-  {
-    MultiServer::Get()->Start(port);
-
-    CommandLine c;
-    c.Run(NULL);
-
-    GetTheApplication()->QuitApplication();
-  }
-  else
-  {
-    GetTheApplication()->Wait();
-  }
-
-  delete ms;
 }

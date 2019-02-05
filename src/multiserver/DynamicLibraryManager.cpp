@@ -38,7 +38,8 @@ WORK_CLASS_TYPE(DynamicLibraryManager::FlushMsg)
 
 DynamicLibrary::~DynamicLibrary()
 {
-  std::cerr << GetTheApplication()->GetRank() << ": closing " << name << "\n";
+  if (GetTheApplication()->GetRank() == 0)
+    std::cerr << GetTheApplication()->GetRank() << ": closing " << name << "\n";
   dlclose(handle);
 }
 
@@ -94,11 +95,12 @@ DynamicLibrary::local_commit(MPI_Comm c)
   return false;
 }
 
-void
+bool
 DynamicLibrary::Commit()
 {
   CommitMsg msg(this);
   msg.Broadcast(true, true);
+  return get_error() != 0;
 }
 
 DynamicLibrary::CommitMsg::CommitMsg(DynamicLibrary* kdl) : DynamicLibrary::CommitMsg::CommitMsg(kdl->SerialSize())
@@ -121,7 +123,7 @@ DynamicLibrary::CommitMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 
   if (kdl->local_commit(c)) return true;
 
-  MultiServer::Get()->getTheDynamicLibraryManager()->post(DynamicLibrary::Cast(kdl));
+  // MultiServer::Get()->getTheDynamicLibraryManager()->post(DynamicLibrary::Cast(kdl));
 
   return false;
 }
@@ -136,15 +138,16 @@ DynamicLibraryManager::Flush()
 
   vector<Key> unloadables;
 
-  for (auto i : loadmap)
-    if (i.use_count() == 3)
-      unloadables.push_back(i->getkey());
-
-  
-  if (unloadables.size() > 0)
-  { 
-    FlushMsg msg(unloadables);
-    msg.Broadcast(true, true);
+  auto i = loadmap.begin(); 
+  while (i != loadmap.end())
+  {
+    if (i->use_count() == 1)
+    {
+      GetTheKeyedObjectFactory()->Drop((*i)->getkey());
+      loadmap.erase(i);
+      i = loadmap.begin();
+    }
+    else i++;
   }
 }
 
@@ -174,7 +177,7 @@ DynamicLibraryManager::flush(int n, Key *keys)
   for (auto i = 0; i < n; i++)
   {
     Key key = keys[i];
-    GetTheKeyedObjectFactory()->erase(key);
+    // GetTheKeyedObjectFactory()->erase(key);
     for (auto i = loadmap.begin(); i != loadmap.end(); i++)
       if ((*i)->getkey() == key)
       {
@@ -214,6 +217,8 @@ DynamicLibraryManager::Load(string name)
   DynamicLibraryP dlp = DynamicLibrary::NewP();
   dlp->SetName(name);
   dlp->Commit();
+
+  loadmap.push_back(dlp);
 
   return dlp;
 }

@@ -41,6 +41,7 @@
 #include "ClientWindow.h"
 #include "IF.h"
 
+// #include "ViewerClientServer.h"
 #include "CommandLine.h"
 
 #include "trackball.hpp"

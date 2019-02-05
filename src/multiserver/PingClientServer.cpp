@@ -21,86 +21,88 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <regex>
 
 using namespace std;
 
 #include <string.h>
-#include <dlfcn.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
 
-#include "Application.h"
-#include "DataObjects.h"
-#include "MultiServer.h"
-#include "MultiServerHandler.h"
-#include "CommandLine.h"
+#include "PingClientServer.h"
 
-using namespace gxy;
-
-int mpiRank, mpiSize;
-
-#include "Debug.h"
-
-void
-syntax(char *a)
+namespace gxy
 {
-  if (mpiRank == 0)
-  {
-    cerr << "syntax: " << a << " [options]" << endl;
-    cerr << "options:" << endl;
-    cerr << "  -D         run debugger" << endl;
-    cerr << "  -A         wait for attachment" << endl;
-    cerr << "  -P port    port to use (5001)" << endl;
-  }
-  MPI_Finalize();
-  exit(1);
+
+extern "C" void
+init()
+{
+  PingClientServer::init();
 }
 
-extern "C" void InitializeData();
-
-int 
-main(int argc, char *argv[])
+extern "C" MultiServerHandler *
+new_handler(DynamicLibraryP dlp, int cfd, int dfd)
 {
-  bool dbg = false, atch = false;
-  char *dbgarg;
-  int port = 5001;
+  return new PingClientServer(dlp, cfd, dfd);
+}
 
-  Application theApplication(&argc, &argv);
+static pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  w8 = PTHREAD_COND_INITIALIZER;
 
-  RegisterDataObjects();
-  
-  theApplication.Start();
+bool 
+PingMsg::Action(int s)
+{
+  int rank = GetTheApplication()->GetRank();
+  int size = GetTheApplication()->GetSize();
 
-  mpiRank = GetTheApplication()->GetRank();
-  mpiSize = GetTheApplication()->GetSize();
-
-  for (int i = 1; i < argc; i++)
+  if (rank != 0)
   {
-    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
-    else
-      syntax(argv[0]);
-  }
-
-  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
-
-  GetTheApplication()->Run();
-
-  MultiServer* ms = new MultiServer;
-
-  if (mpiRank == 0)
-  {
-    MultiServer::Get()->Start(port);
-
-    CommandLine c;
-    c.Run(NULL);
-
-    GetTheApplication()->QuitApplication();
+    std::cerr << ((char *)get()) << ": " << rank << "\n";
+    PingMsg m((char *)get());
+    m.Send((rank == (size-1)) ? 0 : rank + 1);
   }
   else
   {
-    GetTheApplication()->Wait();
+    std::cerr << "ping signalling\n";
+    pthread_mutex_lock(&lck);
+    pthread_cond_signal(&w8);
+    pthread_mutex_unlock(&lck);
   }
 
-  delete ms;
+  return false;
+}
+
+WORK_CLASS_TYPE(PingMsg)
+
+void
+PingClientServer::init()
+{
+  PingMsg::Register();
+}
+
+void
+Ping()
+{
+  pthread_mutex_lock(&lck);
+  PingMsg p("ping");
+  p.Send(1);
+  pthread_cond_wait(&w8, &lck);
+  pthread_mutex_unlock(&lck);
+  cerr << "ping done\n";
+}
+
+std::string
+PingClientServer::handle(std::string line)
+{
+  if (line == "ping")
+  {
+    Ping();
+    return std::string("ok");
+  }
+  else
+    return MultiServerHandler::handle(line);
+}
+
+
 }

@@ -64,7 +64,7 @@ public:
   void initialize() {}
 
   //! commit this object to the global registry across all processes
-  virtual void Commit();
+  virtual bool Commit();
 
   //! Set/Get the DL name
   void SetName(std::string s) { name = s; }

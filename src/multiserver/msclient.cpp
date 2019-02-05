@@ -21,6 +21,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,7 +29,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "MultiServerHandler.h"
+#include "SocketHandler.h"
 #include "CommandLine.h"
 
 using namespace gxy;
@@ -71,9 +72,9 @@ main(int argc, char *argv[])
     else files.push_back(argv[i]);
   }
 
-  MultiServerHandler *msh = new MultiServerHandler(host.c_str(), port);
+  SocketHandler *sh = new SocketHandler(host.c_str(), port);
 
-  if (! msh->CSendRecv(sofile))
+  if (! sh->CSendRecv(sofile))
   {
     cerr << "Sending sofile failed\n";
     exit(1);
@@ -84,12 +85,12 @@ main(int argc, char *argv[])
   if (files.size() > 0)
   {
     for (auto i : files)
-      cmd.Run(i, msh);
+      cmd.Run(i, sh);
   }
   else
-    cmd.Run(msh);
+    cmd.Run(sh);
     
-  if (msh) delete msh;
+  if (sh) delete sh;
 
   return 0;
 }
