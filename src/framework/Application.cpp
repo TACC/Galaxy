@@ -252,21 +252,35 @@ Application::PrintMsg::Action(int sender)
 }
 	
 Document *
-Application::OpenInputState(string s)
+Application::OpenJSONFile(string s)
 {
   Document *doc = new Document();
 
-  FILE *pFile = fopen (s.c_str() , "r");
-  char buf[64];
-  rapidjson::FileReadStream is(pFile,buf,64);
-  doc->ParseStream<0>(is);
-  fclose(pFile);
+  ifstream ifs(s);
+  if (ifs)
+  {
+    stringstream ss;
+    ss << ifs.rdbuf();
 
-	return doc;
+    if (doc->Parse<0>(ss.str().c_str()).HasParseError())
+    {
+      std::cerr << "Error parsing JSON file: " << s << "\n";
+      delete doc;
+      return NULL;
+    }
+  }
+  else
+  {
+    std::cerr << "Error opening JSON file: " << s << "\n";
+    delete doc;
+    return NULL;
+  }
+  
+  return doc;
 }
 
 Document *
-Application::OpenOutputState()
+Application::NewJSONDocument()
 {
 	Document *doc = new Document;
   doc->Parse("{}");

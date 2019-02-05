@@ -174,6 +174,7 @@ KeyedObject::Drop()
 KeyedObject::KeyedObject(KeyedObjectClass c, Key k) : keyedObjectClass(c), key(k)
 {  
 	ko_count++;
+  error = 0;
 	initialize();
 }
 
@@ -239,11 +240,12 @@ KeyedObject::deserialize(unsigned char *p)
 	return p;
 }
 
-void
+bool
 KeyedObject::Commit()
 {
 	CommitMsg msg(this);
 	msg.Broadcast(true, true);
+  return get_error() == 0;
 }
 
 KeyedObject::CommitMsg::CommitMsg(KeyedObject* kop) : KeyedObject::CommitMsg::CommitMsg(kop->SerialSize())
@@ -296,7 +298,13 @@ KeyedObjectFactory::~KeyedObjectFactory()
 		smap.pop_back();
 
 	if (ko_count > 0)
+  {
 		cerr << ko_count << " shared objects remain!!!" << endl;
+#ifdef GXY_OBJECT_REF_LIST
+    dol();
+#endif
+  }
+
 }
 
 } // namespace gxy

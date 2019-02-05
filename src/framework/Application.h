@@ -213,11 +213,11 @@ public:
 	pid_t get_pid() { return pid; }
 
 	//! read the specified Galaxy input file in JSON format
-	rapidjson::Document *OpenInputState(std::string s);
+	rapidjson::Document *OpenJSONFile(std::string s);
 	//! initialize the output state file using JSON format
 	/*! \returns a rapidjson::Document object pointer
 	 */
-	rapidjson::Document *OpenOutputState();
+	rapidjson::Document *NewJSONDocument();
 	//! write the output state file to the specified file
 	/*! \param doc a pointer to the output state document
 	 *  \param s the filename to create with the output state

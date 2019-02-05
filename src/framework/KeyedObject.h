@@ -25,6 +25,9 @@
  * \ingroup framework
  */
 
+// FOR OBJECT DEBUGGING
+// #define GXY_OBJECT_REF_LIST
+
 /**********
 
 Object ownership in a distributed system using keymaps
@@ -183,13 +186,14 @@ public:
   virtual unsigned char *deserialize(unsigned char *);
 
   //! commit this object to the global registry across all processes
-  virtual void Commit();
+  virtual bool Commit();
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
 
 	// only concrete subclasses have static LoadToJSON at abstract layer
   //! construct object from a Galaxy JSON specification
-  virtual void LoadFromJSON(rapidjson::Value&) { std::cerr << "abstract KeyedObject LoadFromJSON" << std::endl; }
+  virtual bool LoadFromJSON(rapidjson::Value&) { std::cerr << "abstract KeyedObject LoadFromJSON" << std::endl; return false; }
+
   //! save object to a Galaxy JSON specification
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&) { std::cerr << "abstract KeyedObject SaveToJSON" << std::endl; }
 

@@ -68,7 +68,13 @@ public:
   GalaxyObject() {}
 
   //! initialize this object (default has no action)
-  virtual void initialize() {}
+  virtual void initialize() { error = 0; }
+
+  int get_error() { return error; }
+  void set_error(int e) { error = e; }
+
+protected:
+  int error;
 };
 
 #define GALAXY_OBJECT(typ)  GALAXY_OBJECT_SUBCLASS(typ, GalaxyObject)

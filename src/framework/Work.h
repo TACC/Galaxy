@@ -66,8 +66,8 @@ public:
 	void Send(int i);
 
 	//! broadcast this work to all processes
-	/*! \param c should this be collective (i.e. synchronizing)?
-	 * \param b should the sender block until the broadcast is complete?
+	/*! \param c should this be collective (i.e. synchronizing, run in the message thread with an available MPI communicator)?
+	 *  \param b should the sender block until the broadcast is complete?
 	 */
 	void Broadcast(bool c, bool b = false);
 
