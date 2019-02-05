@@ -117,10 +117,18 @@ main(int argc, char * argv[])
 	if (mpiRank == 0)
 	{
 
-		Document *doc = GetTheApplication()->OpenInputState(statefile);
+		Document *doc = GetTheApplication()->OpenJSONFile(statefile);
+    if (! doc)
+    {
+      std::cerr << "Bad state file: " << statefile << "\n";
+      theApplication.QuitApplication();
+      theApplication.Wait();
+      exit(1);
+    }
 
 		DatasetsP theDatasets = Datasets::NewP();
 		theDatasets->LoadFromJSON(*doc);
+
 
 		std::cerr << "Application start: " << timestamp();
 
@@ -152,7 +160,6 @@ main(int argc, char * argv[])
 
     if (synchronous)
     {
-
       for (auto c : theCameras)
           for (auto v : theVisualizations)
           {
@@ -170,8 +177,6 @@ main(int argc, char * argv[])
               rs->AddRendering(theRendering);
               rs->Commit();
           }
-
-
     }
     else
     {

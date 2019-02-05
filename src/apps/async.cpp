@@ -309,10 +309,11 @@ void *
 render_thread(void *d)
 {
   RendererP theRenderer = Renderer::NewP();
-  Document *doc = GetTheApplication()->OpenInputState(statefile);
+  Document *doc = GetTheApplication()->OpenJSONFile(statefile);
   theRenderer->LoadStateFromDocument(*doc);
 
-  vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
+  vector<CameraP> theCameras;
+  Camera::LoadCamerasFromJSON(*doc, theCameras);
   theCamera = theCameras[0];
 
   theCamera->get_viewpoint(orig_viewpoint);

@@ -118,21 +118,62 @@ int main(int argc,  char *argv[])
 
     RendererP theRenderer = Renderer::NewP();
 
-    rapidjson::Document *doc = GetTheApplication()->OpenInputState(statefile);
+    rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
+    if (! doc)
+    {
+      std::cerr << "Bad state file: " << statefile << "\n";
+      theApplication.QuitApplication();
+      theApplication.Wait();
+      exit(1);
+    }
 
     theRenderer->LoadStateFromDocument(*doc);
 
-    vector<CameraP> theCameras = Camera::LoadCamerasFromJSON(*doc);
+    vector<CameraP> theCameras;
+    if (! Camera::LoadCamerasFromJSON(*doc, theCameras))
+    {
+      std::cerr << "error loading cameras\n";
+      theApplication.QuitApplication();
+      theApplication.Wait();
+      exit(1);
+    }
+
     for (auto c : theCameras)
-      c->Commit();
+        if (! c->Commit())
+        {
+          std::cerr << "error committing camera\n";
+          theApplication.QuitApplication();
+          theApplication.Wait();
+          exit(1);
+        }
+
 
     DatasetsP theDatasets = Datasets::NewP();
-    theDatasets->LoadFromJSON(*doc);
-    theDatasets->Commit();
+    if (! theDatasets->LoadFromJSON(*doc))
+    {
+      std::cerr << "error loading theDatasets\n";
+      theApplication.QuitApplication();
+      theApplication.Wait();
+      exit(1);
+    }
+    
+    if (! theDatasets->Commit())
+    {
+      std::cerr << "error committing theDatasets\n";
+      theApplication.QuitApplication();
+      theApplication.Wait();
+      exit(1);
+    }
 
     vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
     for (auto v : theVisualizations)
-      v->Commit(theDatasets);
+      if (! v->Commit(theDatasets))
+      {
+        std::cerr << "error committing a visualization\n";
+        theApplication.QuitApplication();
+        theApplication.Wait();
+        exit(1);
+      }
 
     vector<RenderingSetP> theRenderingSets;
     theRenderingSets.push_back(RenderingSet::NewP());
@@ -157,7 +198,13 @@ int main(int argc,  char *argv[])
         theRendering->SetTheCamera(c);
         theRendering->SetTheDatasets(theDatasets);
         theRendering->SetTheVisualization(v);
-        theRendering->Commit();
+        if (! theRendering->Commit())
+        {
+          std::cerr << "error committing theRendering\n";
+          theApplication.QuitApplication();
+          theApplication.Wait();
+          exit(1);
+        }
 
         theRenderingSets.back()->AddRendering(theRendering);
 
@@ -165,9 +212,6 @@ int main(int argc,  char *argv[])
       }
 
     cout << "index = " << index << endl;
-
-    for (auto& rs : theRenderingSets)
-      rs->Commit();
 
     theApplication.SyncApplication();
 
@@ -178,7 +222,13 @@ int main(int argc,  char *argv[])
       long t0 = my_time();
       cout << "render start" << endl;
 
-      rs->Commit();
+      if (! rs->Commit())
+      {
+        std::cerr << "error committing a RenderingSet\n";
+        theApplication.QuitApplication();
+        theApplication.Wait();
+        exit(1);
+      }
       theRenderer->Render(rs);
 
 #if 1
