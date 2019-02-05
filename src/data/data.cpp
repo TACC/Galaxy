@@ -12,8 +12,8 @@ using namespace std;
 
 using namespace gxy;
 
-extern "C" void
-InitializeData()
+extern void
+RegisterDataObjects()
 {
   KeyedDataObject::Register();
 }

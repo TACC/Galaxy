@@ -57,7 +57,7 @@ public:
 	virtual	~Datasets(); //!< default destructor
 
 	//! commit this object to the global registry across all processes
-	virtual void Commit();
+	virtual bool Commit();
 
 	//! add the given KeyedDataObject to this Datasets object
 	/* \param name the name for the KeyedDataObject
@@ -106,26 +106,32 @@ public:
   //! delete a data object
   /*! \param name the name of the dataset to drop
    */
-  void DropDataset(std::string name)
+  bool DropDataset(std::string name)
   {
     if (datasets.find(name) == datasets.end())
+    {
       std::cerr  << "no dataset named " << name << "\n";
+      return false;
+    }
     else
+    {
       datasets.erase(name);
+      return true;
+    }
   }
 
   //! load from a Galaxy JSON specification
-  virtual void  LoadFromJSON(rapidjson::Value&);
+  virtual bool LoadFromJSON(rapidjson::Value&);
 
   //! save this Datasets to a Galaxy JSON specification 
-  virtual void  SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   //! load from a file containing a JSON spec
-  virtual void LoadFromJSONFile(std::string);
+  virtual bool LoadFromJSONFile(std::string);
 
 	bool IsTimeVarying(); //!< are the data in this Datasets time-varying?
   bool WaitForTimestep(); //!< wait for receipt of next timestep for all attached data sources (e.g. a running simulation for in situ analysis)
-  void LoadTimestep(); //!< broadcast a LoadTimestepMsg to all Galaxy processes for all attached data sources (e.g. a running simulation for in situ analysis)
+  bool LoadTimestep(); //!< broadcast a LoadTimestepMsg to all Galaxy processes for all attached data sources (e.g. a running simulation for in situ analysis)
 
 	using iterator = datasets_t::iterator;
 	//! return an iterator positioned at the beginning of the data list for this Datasets
@@ -135,13 +141,19 @@ public:
   //! return the number of data objects in this Datasets
   size_t size() { return datasets.size(); }
 
+  //! return the number of keys in this Datasets (non-primary)
+  size_t get_number_of_keys() { return nkeys; }
+
+  //! return the i'th in this Datasets (non-primary)
+  Key get_key(int i) { return keys[i]; }
+
 protected:
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *ptr);
   virtual unsigned char *deserialize(unsigned char *ptr);
 
-	void loadTyped(rapidjson::Value& v);
+	bool loadTyped(rapidjson::Value& v);
 
   datasets_t datasets;
 

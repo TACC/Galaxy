@@ -95,10 +95,10 @@ public:
 	void set_attached(bool t = true) { attached = t; }
 
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file
-	virtual void Import(std::string);
+	virtual bool Import(std::string);
 
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file using the given arguments
-	virtual void Import(std::string, void *args, int argsSize);
+	virtual bool Import(std::string, void *args, int argsSize);
 
   //! broadcat an AttachMsg to all Galaxy processes to attach to a data source at the given address and port
   virtual bool Attach(std::string);
@@ -106,7 +106,7 @@ public:
   virtual bool Attach(std::string, void *args, int argsSize);
 
   //! broadcast a LoadTimestepMsg to all Galaxy processes for all attached data sources (e.g. a running simulation for in situ analysis)
-	virtual void LoadTimestep(); 
+	virtual bool LoadTimestep(); 
   //! wait for receipt of next timestep for all attached data sources (e.g. a running simulation for in situ analysis)
 	virtual bool WaitForTimestep();
 
@@ -119,7 +119,7 @@ protected:
 	
 	bool time_varying, attached;
 
-  virtual void local_import(char *, MPI_Comm c);
+  virtual bool local_import(char *, MPI_Comm c);
   virtual bool local_load_timestep(MPI_Comm c);
 
 	Box global_box, local_box;
@@ -155,7 +155,8 @@ protected:
 
 			KeyedDataObjectP o = KeyedDataObject::GetByKey(k);
 
-			o->local_import(p, c);
+			if (!o->local_import(p, c))
+        o->set_error(1);
 
 			return false;
 		}
@@ -194,6 +195,9 @@ protected:
 			Key k = *(Key *)contents->get();
 			KeyedDataObjectP o = KeyedDataObject::GetByKey(k);
 			o->local_load_timestep(c);
+      int ge, le = o->get_error();
+      MPI_Allreduce(&le, &ge, 1, MPI_INT, MPI_MAX, c);
+      o->set_error(ge);
 			return false;
 		}
   };

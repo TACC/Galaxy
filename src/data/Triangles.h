@@ -54,10 +54,10 @@ public:
 	virtual ~Triangles(); //!< default destructor 
 
   /*! This action is performed in response to a ImportMsg */
-  virtual void local_import(char *, MPI_Comm);
+  virtual bool local_import(char *, MPI_Comm);
 
   //! construct a Triangles from a Galaxy JSON specification
-  virtual void LoadFromJSON(rapidjson::Value&);
+  virtual bool LoadFromJSON(rapidjson::Value&);
   //! save this Triangles to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 

@@ -77,11 +77,12 @@ public:
 	virtual ~Particles(); //!< default destructor
 
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file
-	virtual void Import(std::string);
+	virtual bool Import(std::string);
 
   //! import the given data file into local memory
   /*! This action is performed in response to a ImportMsg */
-  virtual void local_import(char *, MPI_Comm);
+  virtual bool local_import(char *, MPI_Comm);
+
   //! load a timestep into local memory
   /*! This action is performed in response to a LoadTimestepMsg */
   virtual bool local_load_timestep(MPI_Comm);
@@ -102,7 +103,7 @@ public:
   bool has_neighbor(unsigned int face) { return neighbors[face] >= 0; }
 
   //! broadcast a LoadPartitioningMsg to all Galaxy processes to import the given data partition description file
-	void LoadPartitioning(std::string partitioning);
+	bool LoadPartitioning(std::string partitioning);
 
   //! return the Particle elements of this object in the given vtkPolyData object
   /*! If the Particle elements are already stored as a vtk object, the pointer to this object is returned.
@@ -122,7 +123,7 @@ public:
 	void set_filename(std::string s)     { filename = s; }
 
   //! construct a Particles from a Galaxy JSON specification
-	virtual void LoadFromJSON(rapidjson::Value&);
+	virtual bool LoadFromJSON(rapidjson::Value&);
   //! save this Particles to a Galaxy JSON specification 
 	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
@@ -177,8 +178,8 @@ protected:
 
 	vtkPolyData *vtkobj;
 
-  void get_partitioning(rapidjson::Value&);
-  void get_partitioning_from_file(char *);
+  bool get_partitioning(rapidjson::Value&);
+  bool get_partitioning_from_file(char *);
 
   std::vector<Particle> samples;
   std::vector<Particle> ghosts;

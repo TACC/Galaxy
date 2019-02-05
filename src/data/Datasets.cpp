@@ -18,6 +18,11 @@
 //                                                                            //
 // ========================================================================== //
 
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+
 #include "Datasets.h"
 
 #include "Application.h"
@@ -27,8 +32,6 @@
 #include "Triangles.h"
 
 #include "rapidjson/rapidjson.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/stringbuffer.h"
 
 using namespace rapidjson;
 using namespace std;
@@ -56,13 +59,17 @@ Datasets::~Datasets()
 	if (keys) delete[] keys;
 }
 
-void
+bool
 Datasets::Commit()
 {
 	for (auto it : datasets)
-		it.second->Commit();
+		if (! it.second->Commit())
+    {
+      set_error(1);
+      return false;
+    }
 
-	KeyedObject::Commit();
+	return KeyedObject::Commit();
 }
 
 void 
@@ -79,13 +86,14 @@ Datasets::SaveToJSON(Value& v, Document& doc)
 	v.AddMember("Datasets", d, doc.GetAllocator());
 }
 
-void
+bool
 Datasets::loadTyped(Value& v)
 {
 	if (! v.HasMember("filename") || ! v.HasMember("type"))
 	{
 		std::cerr << "Dataset must have name and type\n";
-		exit(0);
+    set_error(1);
+    return false;
 	}
 
 	string name(v["filename"].GetString());
@@ -101,25 +109,28 @@ Datasets::loadTyped(Value& v)
 	else
 	{
 		std::cerr << "invalid Dataset type: " << type << "\n";
-		exit(0);
+		set_error(1);
+    return false;
 	}
 
-	kop->LoadFromJSON(v);
+	if (! kop->LoadFromJSON(v))
+    return false;
 		
 	if (v.HasMember("name"))
 		name = v["name"].GetString();
 
 	Insert(name.c_str(), kop);
+  return true;
 }
 
-
-void
+bool
 Datasets::LoadFromJSON(Value& v)
 {
 	if (! v.HasMember("Datasets"))
 	{
 		std::cerr << "JSON has no Datasets clause\n";
-		exit(0);
+    set_error(1);
+		return false;
 	}
 
 	Value& ds = v["Datasets"];
@@ -127,42 +138,54 @@ Datasets::LoadFromJSON(Value& v)
 	if (ds.IsArray())
 	{
 		for (int i = 0; i < ds.Size(); i++)
-			loadTyped(ds[i]);
+			if (! loadTyped(ds[i])) return false;
+    return true;
 	}
 	else
-		loadTyped(ds);
+		return loadTyped(ds);
 }
 
-void
+bool
 Datasets::LoadFromJSONFile(std::string fname)
 {
-  Document doc;
-
-  FILE *pFile = fopen (fname.c_str() , "r");
-  if (! pFile)
+  ifstream ifs(fname);
+  if (! ifs)
   {
     std::cerr << "Unable to open " << fname << "\n";
+    set_error(1);
+    return false;
   }
   else
   {
-    char buf[64];
-    rapidjson::FileReadStream is(pFile,buf,64);
-    doc.ParseStream<0>(is);
-    fclose(pFile);
+    stringstream ss;
+    ss << ifs.rdbuf();
 
-    LoadFromJSON(doc);
+    Document doc;
+    if (doc.Parse<0>(ss.str().c_str()).HasParseError())
+    {
+      std::cerr << "JSON parse error in " << fname << "\n";
+      set_error(1);
+      return false;
+    }
+
+    return LoadFromJSON(doc);
   }
 }
 
-void
+bool
 Datasets::LoadTimestep()
 {
 	for (auto it : datasets)
 	{
 		KeyedDataObjectP kdop = it.second;
 		if (kdop->is_attached())
-			kdop->LoadTimestep();
+			if (! kdop->LoadTimestep())
+      {
+        set_error(1);
+        return false;
+      }
 	}
+  return false;
 }
 
 bool

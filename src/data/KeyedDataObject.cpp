@@ -106,14 +106,15 @@ KeyedDataObject::Attach(string layout, void *args, int argsSize)
   return skt != NULL;
 }
 
-void
-KeyedDataObject::Import(string filename) { Import(filename, NULL, 0); }
+bool
+KeyedDataObject::Import(string filename) { return Import(filename, NULL, 0); }
 
-void
+bool
 KeyedDataObject::Import(string filename, void *args, int argsSize)
 {
   ImportMsg msg(getkey(), filename, args, argsSize);
   msg.Broadcast(true, true);
+  return get_error() == 0;
 }
 
 bool
@@ -134,25 +135,27 @@ KeyedDataObject::WaitForTimestep()
     return true;
 }
 
-void
+bool
 KeyedDataObject::LoadTimestep()
 {
   LoadTimestepMsg msg(getkey());
   msg.Broadcast(true, true);
+  return get_error() != 0;
 }
 
-void
+bool
 KeyedDataObject::local_import(char *s, MPI_Comm c)
 {
   std::cerr << "ERROR: generic KeyedDataObject::local_import called?" << std::endl;
-  exit(1);
+  return false;
 }
 
 bool
 KeyedDataObject::local_load_timestep(MPI_Comm c)
 {
   std::cerr << "ERROR: generic KeyedDataObject::local_load_timestep called?" << std::endl;
-  exit(1);
+  set_error(1);
+  return false;
 }
 
 bool

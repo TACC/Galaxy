@@ -59,23 +59,25 @@ Volume::~Volume()
 	if (samples) free(samples);
 }
 
-void
+bool
 Volume::LoadFromJSON(Value& v)
 {
+  int r = GetTheApplication()->GetRank();
+
  	if (v.HasMember("filename"))
 	{
     set_attached(false);
-    Import(string(v["filename"].GetString()), NULL, 0);
+    return Import(string(v["filename"].GetString()), NULL, 0);
 	}
  	else if (v.HasMember("layout"))
 	{
 		set_attached(true);
- 		Attach(string(v["layout"].GetString()));
+ 		return Attach(string(v["layout"].GetString()));
 	}
  	else
  	{
- 		cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
- 		exit(1);
+ 		if (r == 0) cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
+ 		return false;
  	}
 }
 
@@ -180,7 +182,7 @@ partition(int ijk, vec3i factors, vec3i grid)
   return parts;
 }
 
-void
+bool
 Volume::local_import(char *fname, MPI_Comm c)
 {
 	string type_string, data_fname;
@@ -196,8 +198,8 @@ Volume::local_import(char *fname, MPI_Comm c)
 	in.open(filename.c_str());
 	if (in.fail())
 	{
-		cerr << "ERROR: unable to open volfile: " << filename << endl;;
-		exit(1);
+		if (rank == 0) cerr << "ERROR: unable to open volfile: " << filename << endl;;
+		return false;
 	}
 
 	in >> type_string;
@@ -216,25 +218,19 @@ Volume::local_import(char *fname, MPI_Comm c)
   {
     if (3 != sscanf(getenv("PARTITIONING"), "%d,%d,%d", &global_partitions.x, &global_partitions.y, &global_partitions.z))
     {
-      cerr << "ERROR: Illegal PARTITIONING environment variable in json" << endl;
-      exit(1);
+      if (rank == 0) cerr << "ERROR: Illegal PARTITIONING environment variable" << endl;
+      return false;
     }
     if ((global_partitions.x*global_partitions.y*global_partitions.z) != size)
     {
-      cerr << "ERROR: json PARTITIONING does not multiply to current MPI size" << endl;
-      exit(1);
+      if (rank == 0) cerr << "ERROR: json PARTITIONING does not multiply to current MPI size" << endl;
+      return false;
     }
   }
   else
     factor(size, global_partitions);
 
-#if 0
-  if (rank == 0)
-			APP_PRINT(<< "GLOBAL PARTITIONS: " << global_partitions.x << " " << global_partitions.y << " " << global_partitions.z);
-#endif
-
   part *partitions = partition(size, global_partitions, global_counts);
-
   part *my_partition = partitions + rank;
 
   local_offset = my_partition->offsets;
@@ -244,16 +240,6 @@ Volume::local_import(char *fname, MPI_Comm c)
 
 	in.open(data_fname[0] == '/' ? data_fname.c_str() : (dir + data_fname).c_str(), ios::binary | ios::in);
 	size_t sample_sz = ((type == FLOAT) ? 4 : 1);
-
-#if 0
-  if ((GetTheApplication()->GetSize()-1) == GetTheApplication()->GetRank())
-  {
-    cerr << "local_count:  " << local_counts.x << " " << local_counts.y << " " << local_counts.z << endl;
-    cerr << "ghosted_local_count:  " << ghosted_local_counts.x << " " << ghosted_local_counts.y << " " << ghosted_local_counts.z << endl;
-    cerr << "local_offset:  " << local_offset.x << " " << local_offset.y << " " << local_offset.z << endl;
-    cerr << "ghosted_local_offset:  " << ghosted_local_offset.x << " " << ghosted_local_offset.y << " " << ghosted_local_offset.z << endl;
-  }
-#endif
 
 	size_t row_sz = ghosted_local_counts.x * sample_sz;
 	size_t tot_sz = row_sz * ghosted_local_counts.y * ghosted_local_counts.z;
@@ -349,77 +335,96 @@ Volume::local_import(char *fname, MPI_Comm c)
   };
 
   local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
-
-#ifdef GXY_LOGGING
-	APP_LOG(<< "neighbors " << neighbors[0] << " " << neighbors[1] << " " << neighbors[2] << " " << neighbors[3] << " " << neighbors[4] << " " << neighbors[5]);
-#endif
+  return true;
 }
 
 bool
 Volume::local_load_timestep(MPI_Comm c)
 {
+  int err = 0;
+  int rank = GetTheApplication()->GetRank();
+  int size = GetTheApplication()->GetSize();
+
   int sz;
   char *str;
   skt->Receive((void *)&sz, sizeof(sz));
-  if (sz < 0) 
-  	return true;
 
-  vtkNew<vtkCharArray> bufArray;
-  bufArray->Allocate(sz);
-  bufArray->SetNumberOfTuples(sz);
-  void *ptr = bufArray->GetVoidPointer(0);
+  // Returns <0 if socket has closed indicating sim has gone away
 
-  skt->Receive(ptr, sz);
+  int gerr;
+  MPI_Allreduce(&gerr, &sz, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
-  vtkNew<vtkDataSetReader> reader;
-  reader->ReadFromInputStringOn();
-  reader->SetInputArray(bufArray.GetPointer());
-  reader->Update();
+  // If all are closed...  No error
+  if (gerr <= 0)
+    return true;
 
-  vtkobj = vtkImageData::New();
-	vtkobj->ShallowCopy(vtkImageData::SafeDownCast(reader->GetOutput()));
-  if (! vtkobj) 
+  if (sz > 0)
   {
-    cerr << "ERROR: received something other than a vtkImageData object" << endl;
-    exit(1);
+    vtkNew<vtkCharArray> bufArray;
+    bufArray->Allocate(sz);
+    bufArray->SetNumberOfTuples(sz);
+    void *ptr = bufArray->GetVoidPointer(0);
+
+    skt->Receive(ptr, sz);
+
+    vtkNew<vtkDataSetReader> reader;
+    reader->ReadFromInputStringOn();
+    reader->SetInputArray(bufArray.GetPointer());
+    reader->Update();
+
+    vtkobj = vtkImageData::New();
+    vtkobj->ShallowCopy(vtkImageData::SafeDownCast(reader->GetOutput()));
+    if (! vtkobj) 
+    {
+      if (rank == 0) cerr << "ERROR: received something other than a vtkImageData object" << endl;
+      err = 1;
+    }
+    else if (! vtkobj->GetPointData())
+    {
+      if (rank == 0) cerr << "ERROR: vtkImageData object has no point dependent data" << endl;
+      err = 2;
+    }
+    else
+    {
+      vtkDataArray *array = vtkobj->GetPointData()->GetScalars();
+      if (! array)
+      {
+        for (auto i = 0; i < vtkobj->GetPointData()->GetNumberOfArrays(); i++)
+        {
+          array = vtkobj->GetPointData()->GetArray(i);
+          if (array->GetNumberOfComponents() == 1)
+            break;
+          array = NULL;
+        }
+      }
+
+      if (array == NULL)
+      {
+        if (rank == 0) cerr << "ERROR: Currently can only handle point-dependent scalar data" << endl;
+        err = 3;
+      }
+      else
+      {
+        vtkobj->GetPointData()->SetScalars(array);
+
+        if (array->IsA("vtkFloatArray"))
+          type = FLOAT;
+        else if (array->IsA("vtkUnsignedCharArray"))
+          type = UCHAR;
+        else
+        {
+          if (rank == 0) cerr << "ERROR: Currently can only handle ubyte and floay data" << endl;
+          err = 3;
+        }
+      }
+
+      samples = (unsigned char *)array->GetVoidPointer(0);
+    }
+
   }
 
-	if (! vtkobj->GetPointData())
-  {
-    cerr << "ERROR: vtkImageData object has no point dependent data" << endl;
-    exit(1);
-  }
-
-	vtkDataArray *array = vtkobj->GetPointData()->GetScalars();
-	if (! array)
-	{
-		if (vtkobj->GetPointData()->GetNumberOfArrays() == 0)
-		{
-			cerr << "ERROR: vtkImageData object has no point dependent data" << endl;
-			exit(1);
-		}
-		array = vtkobj->GetPointData()->GetArray(0);
-
-		if (array->GetNumberOfComponents() != 1)
-		{
-			cerr << "ERROR: Currently can only handle scalar data" << endl;
-			exit(1);
-		}
-		
-		vtkobj->GetPointData()->SetScalars(array);
-	}
-
-	if (array->IsA("vtkFloatArray"))
-		type = FLOAT;
-  else if (array->IsA("vtkUnsignedCharArray"))
-    type = UCHAR;
-	else
-  {
-    cerr << "ERROR: vtkImageData object has no point dependent data" << endl;
-    exit(1);
-  }
-
-	samples = (unsigned char *)array->GetVoidPointer(0);
+  MPI_Allreduce(&gerr, &err, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  if (gerr) return false;
 
   double lminmax[2], gmin, gmax;
   vtkobj->GetScalarRange(lminmax);
@@ -441,8 +446,6 @@ Volume::local_load_timestep(MPI_Comm c)
   {
 		initialize_grid = false;
 
-    int rank = GetTheApplication()->GetRank();
-    int size = GetTheApplication()->GetSize();
 
     double lo[3], go[3];
     vtkobj->GetOrigin(lo);
@@ -537,7 +540,7 @@ Volume::local_load_timestep(MPI_Comm c)
 
   local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
 
-	return false;
+	return true;
 }
 
 } // namespace gxy

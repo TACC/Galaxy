@@ -30,7 +30,9 @@
 #include "Application.h"
 #include "Particles.h"
 
+
 #include <vtkNew.h>
+#include <vtkerror.h>
 #include <vtkSmartPointer.h>
 #include <vtkDataSetReader.h>
 #include <vtkFloatArray.h>
@@ -103,14 +105,15 @@ Particles::deserialize(unsigned char *ptr)
 	return ptr;
 }
 
-void
+bool
 Particles::LoadPartitioning(string p)
 {
 	LoadPartitioningMsg msg(getkey(), p);
   msg.Broadcast(true, true);
+  return get_error() == 0;
 }
 
-void
+bool
 Particles::Import(string s)
 {
 	filename = s;
@@ -119,7 +122,8 @@ Particles::Import(string s)
 	if (stat(s.c_str(), &info))
 	{
 		cerr << "ERROR: Cannot open file " << s << endl;
-		exit(1);
+		set_error(1);
+    return false;
 	} 
 
 	int fd = open(s.c_str(), O_RDONLY);
@@ -147,12 +151,13 @@ Particles::Import(string s)
 	args->r[0] = radius;
 	strcpy(args->s, s.c_str());
 
-	Geometry::Import(buf, (void *)tmp, sz);
+	bool r = Geometry::Import(buf, (void *)tmp, sz);
 
 	delete[] tmp;
+  return r;
 }
 
-void
+bool
 Particles::LoadFromJSON(Value& v)
 {
   if (v.HasMember("color")  || v.HasMember("default color"))
@@ -181,7 +186,7 @@ Particles::LoadFromJSON(Value& v)
 
   if (v.HasMember("filename"))
   {
-		Import(v["filename"].GetString());
+		return Import(v["filename"].GetString());
   }
   else if (v.HasMember("attach"))
   {
@@ -192,14 +197,19 @@ Particles::LoadFromJSON(Value& v)
 			exit(1);
 		}
     set_attached(true);
-    LoadPartitioning(string(attach["partitions"].GetString()));
-    Attach(string(attach["layout"].GetString()));
+    if (! LoadPartitioning(string(attach["partitions"].GetString())))
+      return false;
+    
+    if (! Attach(string(attach["layout"].GetString())))
+      return false;
   }
   else
   {
     cerr << "ERROR: json Particles block has neither a filename nor a layout spec" << endl;
     exit(1);
   }
+
+  return true;
 }
 
 void
@@ -238,7 +248,7 @@ Particles::local_load_timestep(MPI_Comm c)
   char *str;
   skt->Receive((void *)&sz, sizeof(sz));
   if (sz < 0)
-    return true;
+    return false;
 
   vtkNew<vtkCharArray> bufArray;
   bufArray->Allocate(sz);
@@ -257,32 +267,59 @@ Particles::local_load_timestep(MPI_Comm c)
   if (! vtkobj)
   {
     cerr << "ERROR: load_local_timestep received something other than a vtkPolyData object" << endl;
-    exit(1);
+    set_error(1);
+    return false;
   }
 
-  return false;
+  return true;
 }
 
-void
+bool
 Particles::get_partitioning_from_file(char *s)
 {
-	Document *doc = new Document();
+  ifstream ifs(s);
+  if (! ifs)
+  {
+    std::cerr << "Unable to open " << s << "\n";
+    set_error(1);
+    return false;
+  }
+  else
+  {
+    stringstream ss;
+    ss << ifs.rdbuf();
 
-  FILE *pFile = fopen (s, "r");
-  char buf[64];
-  rapidjson::FileReadStream is(pFile, buf, 64);
-  doc->ParseStream<0>(is);
-  fclose(pFile);
+    Document doc;
+    if (doc.Parse<0>(ss.str().c_str()).HasParseError())
+    {
+      std::cerr << "JSON parse error in " << s << "\n";
+      set_error(1);
+      return false;
+    }
 
-	get_partitioning(*doc);
-
-	delete doc;
+    return get_partitioning(doc);
+  }
 }
 
-void
+bool
 Particles::get_partitioning(Value& doc)
 {
+  if (!doc.HasMember("parts"))
+  {
+    cerr << "partition document does not have parts\n";
+    set_error(1);
+    return false;
+  }
+
   Value& parts = doc["parts"];
+
+  if (!parts.IsArray() || parts.Size() != GetTheApplication()->GetSize())
+  {
+    cerr << "invalid partition document\n";
+    set_error(1);
+    return false;
+  }
+
   float extents[6*parts.Size()];
 
   for (int i = 0; i < parts.Size(); i++)
@@ -333,11 +370,15 @@ Particles::get_partitioning(Value& doc)
 
 	global_box = Box(vec3f(gminmax[0], gminmax[2], gminmax[4]), vec3f(gminmax[1], gminmax[3], gminmax[5]));
 	local_box = Box(vec3f(lminmax[0], lminmax[2], lminmax[4]), vec3f(lminmax[1], lminmax[3], lminmax[5]));
+
+  return true;
 }
 
-void
+bool
 Particles::local_import(char *p, MPI_Comm c)
 {
+  int rank = GetTheApplication()->GetRank();
+
   string json(p);
 
   struct foo
@@ -358,11 +399,23 @@ Particles::local_import(char *p, MPI_Comm c)
 
 	samples.clear();
 
+  ifstream ifs(json);
+  if (! ifs)
+  {
+    if (rank == 0) std::cerr << "unable to open partition document: " << json << "\n";
+    set_error(1);
+    return false;
+  }
+ 
   Document doc;
-  doc.Parse(json.c_str());
+  if (doc.Parse<0>(json.c_str()).HasParseError() || !get_partitioning(doc))
+  {
+    if (rank == 0) std::cerr << "parse error in partition document: " << json << "\n";
+    set_error(1);
+    return false;
+  }
 
-  get_partitioning(doc);
-
+  // Checks in get_partitioning ensures this is OK
   const char *fname = doc["parts"][GetTheApplication()->GetRank()]["filename"].GetString();
 
 	if (! strcmp(fname + (strlen(fname)-3), "sph"))
@@ -372,8 +425,8 @@ Particles::local_import(char *p, MPI_Comm c)
 		struct stat info;
 		if (stat(f.c_str(), &info))
 		{
-			cerr << "ERROR: Cannot open file " << f << endl;
-			exit(1);
+			cerr << "ERROR " << rank << ": Cannot open file " << f << endl;
+			return false;
 		}
 
 		int n_samples = info.st_size / sizeof(Particle);
@@ -389,8 +442,8 @@ Particles::local_import(char *p, MPI_Comm c)
 			m = read(fd, p, n);
 			if (m < 0)
 			{
-				cerr << "Error reading file " << f.c_str() << endl;
-				exit(1);
+				cerr << "ERROR " << rank << ": Error reading file " << f.c_str() << endl;
+				return false;
 			}
 		}
 
@@ -400,18 +453,30 @@ Particles::local_import(char *p, MPI_Comm c)
 	{
 		string f = dir + string(fname);
 
+    VTKError *ve = VTKError::New();
 		vtkXMLPolyDataReader *reader = vtkXMLPolyDataReader::New();
-		reader->SetFileName(f.c_str());
-		reader->Update();
+    ve->watch(reader);
+
+    reader->SetFileName(f.c_str());
+    reader->Update();
+
+    if (ve->GetError())
+    {
+      cerr << "ERROR " << rank << ": error reading vtu Triangle partition" << endl;
+      return false;
+    }
+
 		vtkobj = vtkPolyData::New();
 		vtkobj->ShallowCopy(reader->GetOutput());
 		reader->Delete();
 	}
 	else
 	{
-		cerr << "ERROR: Particles have to be in .sph or .vtp format" << endl;
-		exit(1);
+		cerr << "ERROR " << rank << ": Particles have to be in .sph or .vtp format" << endl;
+		return false;
 	}
+
+  return true;
 }
 
 void

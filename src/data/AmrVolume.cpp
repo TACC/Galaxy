@@ -139,7 +139,7 @@ partition(int ijk, vec3i factors, vec3i grid)
 extern part*
 partition(int ijk, vec3i factors, vec3i grid);
 
-void
+bool
 AmrVolume::local_import(char *fname, MPI_Comm c)
 {
     std::string type_string,data_fname;
@@ -303,7 +303,7 @@ AmrVolume::local_import(char *fname, MPI_Comm c)
     // global box same as local box in this one d example... bad juju. 
     global_box = Box(lowerbound,upperbound);
 
-
+    return true;
 }
 int
 AmrVolume::get_grid_index(int level, int grid)
@@ -412,6 +412,7 @@ AmrVolume::ReadGxyAmrHeader()
         gridfilenames.push_back(gfn);
     }
 }
+
 bool
 AmrVolume::local_load_timestep(MPI_Comm c) 
 {

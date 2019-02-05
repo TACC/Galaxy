@@ -62,9 +62,11 @@ Triangles::initialize()
   triangles = NULL;
 };
 
-void
+bool
 Triangles::local_import(char *f, MPI_Comm c)
 {
+  int rank = GetTheApplication()->GetRank();
+
   string filename(f);
   float *dboxes = new float[6 * GetTheApplication()->GetSize()];
 
@@ -82,7 +84,14 @@ Triangles::local_import(char *f, MPI_Comm c)
     ptree tree;
 
     ifstream ifs(filename);
-    read_xml(ifs, tree);
+    if (! ifs)
+    {
+      if (rank == 0) cerr << "unable to open " << filename << "\n";
+      return false;
+    }
+
+    try { read_xml(ifs, tree); }
+    catch(...) { if (rank == 0) cerr << "bad XML: " << filename << "\n"; return false; }
     ifs.close();
 
     const char *section = (ext == "pvtu") ? "VTKFile.PUnstructuredGrid" : (ext == "pvtp") ? "VTKFile.PPolyData" : "VTKFile.Collection";
@@ -104,16 +113,20 @@ Triangles::local_import(char *f, MPI_Comm c)
 
     if (k != GetTheApplication()->GetRank())
     {
-      cerr << "ERROR: Not enough partitions for Triangles" << endl;
-      exit(1);
+      if (rank == 0) cerr << "ERROR: Not enough partitions for Triangles" << endl;
+      return false;
     }
 
   }
   else if (ext == "ptri")
   {
-    ifstream ifs;
-    ifs.open(filename);
-
+    ifstream ifs(filename);
+    if (! ifs)
+    {
+      if (rank == 0) cerr << "unable to open " << filename << "\n";
+      return false;
+    }
+  
     string s;
     while (getline(ifs, s))
     {
@@ -131,14 +144,14 @@ Triangles::local_import(char *f, MPI_Comm c)
 
     if (k != (GetTheApplication()->GetSize() - 1))
     {
-      cerr << "ERROR: wrong number of Triangle partitions" << k << endl;
-      exit(1);
+      if (rank == 0) cerr << "ERROR: wrong number of Triangle partitions" << k << endl;
+      return false;
     }
   }
   else 
   {
-    cerr << "ERROR: unknown Triangle extension: " << ext << endl;
-    exit(1);
+    if (rank == 0) cerr << "ERROR: unknown Triangle extension: " << ext << endl;
+    return false;
   }
 
   vtkPointSet *pset = NULL;
@@ -159,8 +172,8 @@ Triangles::local_import(char *f, MPI_Comm c)
 
     if (ve->GetError())
     {
-      cerr << "ERROR: error reading vtu Triangle partition" << endl;
-      exit(1);
+      cerr << "ERROR " << rank << ": error reading vtu Triangle partition" << endl;
+      return false;
     }
 
     vtkUnstructuredGrid *ug = rdr->GetOutput();
@@ -181,8 +194,8 @@ Triangles::local_import(char *f, MPI_Comm c)
 
     if (ve->GetError())
     {
-      cerr << "ERROR: error reading vtp Triangle partition" << endl;
-      exit(1);
+      cerr << "ERROR " << rank << ": error reading vtu Triangle partition" << endl;
+      return false;
     }
 
     vtkPolyData *pd = rdr->GetOutput();
@@ -193,8 +206,8 @@ Triangles::local_import(char *f, MPI_Comm c)
   }
   else 
   {
-    cerr << "ERROR: unknown Triangle partition extension: " << pext << endl;
-    exit(1);
+    cerr << "ERROR " << rank << ": unknown Triangle partition extension: " << pext << endl;
+    return false;
   }
 
 	if (pset->GetNumberOfPoints() == 0)
@@ -209,10 +222,10 @@ Triangles::local_import(char *f, MPI_Comm c)
 			narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals_"));
 
 		if (!narray)
-		{
-			cerr << "ERROR: Triangle partition has no normals" << endl;
-			exit(1);
-		}
+    {
+      cerr << "ERROR " << rank << ": Triangle partition has no normals: " << pext << endl;
+      return false;
+    }
 
 		int n_original_vertices = pset->GetNumberOfPoints();
 		n_triangles = pset->GetNumberOfCells();
@@ -304,8 +317,8 @@ Triangles::local_import(char *f, MPI_Comm c)
   }
   else if (n_vertices == 0)
 	{
-		cerr << "ERROR: Can't figure out bounding box" << endl;
-		exit(1);
+		cerr << "ERROR " << rank << ": Can't figure out bounding box" << endl;
+		return false;
 	}
 	else
   {
@@ -371,24 +384,28 @@ Triangles::local_import(char *f, MPI_Comm c)
       
     }
   }
+
+  return true;
 }
 
-void
+bool
 Triangles::LoadFromJSON(Value& v)
 { 
   if (v.HasMember("filename"))
   { 
-    Import(v["filename"].GetString());
+    return Import(v["filename"].GetString());
   }
   else if (v.HasMember("attach"))
   { 
     cerr << "ERROR: attaching triangles source is not implemented" << endl;
-    exit(1);
+    set_error(1);
+    return false;
   }
   else
   { 
     cerr << "ERROR: json triangles has neither filename or layout spec" << endl;
-    exit(1);
+    set_error(1);
+    return false;
   }
 }
 
