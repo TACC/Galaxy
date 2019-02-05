@@ -242,13 +242,19 @@ Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
 	
 }
 
-void
+bool
 Renderer::LoadStateFromDocument(Document& doc)
 {
-	Value& v = doc["Renderer"];
-
-	if (v.HasMember("Tracer"))
-		tracer.LoadStateFromValue(v["Tracer"]);
+  if (doc.HasMember("Renderer"))
+  {
+    Value& v = doc["Renderer"];
+    if (v.HasMember("Tracer"))
+      return tracer.LoadStateFromValue(v["Tracer"]);
+    else
+      return true;
+  }
+  else
+    return true;
 }
 
 void

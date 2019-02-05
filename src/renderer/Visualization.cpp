@@ -77,13 +77,17 @@ Visualization::initialize_ispc()
   ispc::Visualization_initialize(GetISPC());
 }
 
-void
+bool
 Visualization::Commit(DatasetsP datasets)
 {
 	for (auto s : vis)
-		s->Commit(datasets);
+    if (! s->Commit(datasets))
+    {
+      set_error(1);
+      return false;
+    }
 
-	KeyedObject::Commit();
+	return KeyedObject::Commit();
 }
 
 vector<VisualizationP>
@@ -99,19 +103,21 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
       for (int i = 0; i < c.Size(); i++)
 			{
 				VisualizationP v = Visualization::NewP();
-        v->LoadFromJSON(c[i]);
-        visualizations.push_back(v);
+        if (v->LoadFromJSON(c[i]))
+          visualizations.push_back(v);
+        else
+          std::cerr << "error loading visualization " << i << "\n";
 			}
     }
     else
 		{
 			VisualizationP v = Visualization::NewP();
-			v->LoadFromJSON(c);
-			visualizations.push_back(v);
+      if (v->LoadFromJSON(c))
+        visualizations.push_back(v);
+      else
+        std::cerr << "error loading visualization\n";
 		}
   }
-  else
-    std::cerr << "No visualizations found\n";
 
   return visualizations;
 }
@@ -257,7 +263,7 @@ Visualization::SaveToJSON(Value& v, Document&  doc)
 	v.AddMember("Visualization", varray, doc.GetAllocator());
 }
 
-void 
+bool 
 Visualization::LoadFromJSON(Value& v)
 {
   Value ops;
@@ -287,27 +293,41 @@ Visualization::LoadFromJSON(Value& v)
 		if (t == "Volume")
 		{
 			VisP vp = VolumeVis::NewP();
-			vp->LoadFromJSON(vv);
+			if (! vp->LoadFromJSON(vv))
+      {
+        set_error(1);
+        return false;
+      }
 			AddVis(vp);
 		}
 		else if (t == "Particles")
 		{
 			VisP p = ParticlesVis::NewP();
-			p->LoadFromJSON(vv);
+			if (! p->LoadFromJSON(vv))
+      {
+        set_error(1);
+        return false;
+      }
 			AddVis(p);
 		}
 		else if (t == "Triangles")
 		{
 			VisP p = TrianglesVis::NewP();
-			p->LoadFromJSON(vv);
+			if (! p->LoadFromJSON(vv))
+      {
+        set_error(1);
+        return false;
+      }
 			AddVis(p);
 		}
 		else
 		{
 			cerr << "ERROR: unknown type: " << t << " in json Visualization element" << endl;
-			exit(1);
+      set_error(1);
+      return false;
 		}
 	}
+  return true;
 }
 
 int 

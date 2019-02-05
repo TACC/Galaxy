@@ -71,29 +71,31 @@ Vis::destroy_ispc()
   ispc::Vis_destroy(GetISPC());
 }
 
-void 
+bool 
 Vis::Commit(DatasetsP datasets)
 {
 	datakey = datasets->FindKey(name);
 	if (datakey == -1)
 	{
 		std::cerr << "ERROR: Unable to find data using name: " << name << endl;
-		exit(1);
+		set_error(1);
+    return false;
 	}
-	KeyedObject::Commit();
+	return KeyedObject::Commit();
 }
 
-void 
+bool
 Vis::LoadFromJSON(Value& v)
 {
   if (v.HasMember("dataset"))
   {
 		name = string(v["dataset"].GetString());
+    return true;
   }
 	else
 	{
-		cerr << "ERROR: json Vis blcok has no dataset" << endl;
-		exit(1);
+		cerr << "ERROR: json Vis block has no dataset" << endl;
+		return false;
 	}
 }
 

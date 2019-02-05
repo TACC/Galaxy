@@ -106,7 +106,7 @@ protected:
 	virtual void allocate_ispc();
 	virtual void destroy_ispc();
 
-  virtual void LoadFromJSON(rapidjson::Value&);
+  virtual bool LoadFromJSON(rapidjson::Value&);
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   virtual int serialSize();

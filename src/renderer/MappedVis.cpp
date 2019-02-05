@@ -77,31 +77,47 @@ MappedVis::allocate_ispc()
   ispc = ispc::MappedVis_allocate();
 }
 
-void 
+bool 
 MappedVis::Commit(DatasetsP datasets)
 {
-	Vis::Commit(datasets);
+	return Vis::Commit(datasets);
 }
 
-void 
+bool
 MappedVis::LoadFromJSON(Value& v)
 {
 	Vis::LoadFromJSON(v);
 
 	if (v.HasMember("transfer function"))
 	{
-	  ifstream ifs(v["transfer function"].GetString());
+    string fname = v["transfer function"].GetString();
+
+	  ifstream ifs(fname);
+    if (! ifs)
+    {
+      std::cerr << "unable to open transfer function file: " << fname << "\n";
+      set_error(1);
+      return false;
+    }
+    
 		stringstream ss;
 		ss << ifs.rdbuf();
 
 		string s(ss.str().substr(ss.str().find('[')+1, ss.str().rfind(']') - 2));
 
-		Document tf;
-		tf.Parse(s.c_str());
+		Document doc;
+    if (doc.Parse<0>(ss.str().c_str()).HasParseError())
+    {
+      std::cerr << "JSON parse error in " << fname << "\n";
+      set_error(1);
+      return false;
+    }
+
+		doc.Parse(s.c_str());
 
 		opacitymap.clear();
 
-		Value& oa = tf["Points"];
+		Value& oa = doc["Points"];
 		for (int i = 0; i < oa.Size(); i += 4)
 		{
 			vec2f xo;
@@ -112,7 +128,7 @@ MappedVis::LoadFromJSON(Value& v)
 
 		colormap.clear();
 
-		Value& rgba = tf["RGBPoints"];
+		Value& rgba = doc["RGBPoints"];
 		for (int i = 0; i < rgba.Size(); i += 4)
 		{
       vec4f xrgb;
@@ -155,6 +171,8 @@ MappedVis::LoadFromJSON(Value& v)
 			}
 		}
   }
+
+  return true;
 }
 
 void 

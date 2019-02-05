@@ -73,7 +73,7 @@ public:
   RayQManager *GetTheRayQManager() { return rayQmanager; }
 
   //! load a Renderer object from a Galaxy JSON document
-  virtual void LoadStateFromDocument(rapidjson::Document&);
+  virtual bool LoadStateFromDocument(rapidjson::Document&);
   //! save this Renderer object to a Galaxy JSON document
   virtual void SaveStateToDocument(rapidjson::Document&);
 

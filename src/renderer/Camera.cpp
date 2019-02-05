@@ -43,8 +43,14 @@
 #include "RenderingSet.h"
 #include "Threading.h"
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+
 using namespace rapidjson;
 using namespace std;
+
+namespace pt = boost::property_tree;
 
 namespace gxy
 {
@@ -70,11 +76,9 @@ Camera::Register()
   RegisterClass();
 }
 
-vector<CameraP>
-Camera::LoadCamerasFromJSON(Value& v)
+bool
+Camera::LoadCamerasFromJSON(Value& v, vector<CameraP>& cameras)
 {
-  vector<CameraP> cameras;
-
   if (v.HasMember("Camera") || v.HasMember("Cameras"))
   {
     Value& c = v.HasMember("Camera") ? v["Camera"] : v["Cameras"];
@@ -83,22 +87,31 @@ Camera::LoadCamerasFromJSON(Value& v)
       for (int i = 0; i < c.Size(); i++)
       {
         CameraP cam = Camera::NewP();
-        cam->LoadFromJSON(c[i]);
-
-        cameras.push_back(cam);
+        if (! cam->LoadFromJSON(c[i]))
+        {
+          std::cerr << "unable to load " << i << "th camera from JSON\n";
+          return false;
+        }
+        else
+          cameras.push_back(cam);
       }
     }
     else
     {
       CameraP cam = Camera::NewP();
-      cam->LoadFromJSON(c);
-      cameras.push_back(cam);
+      if (! cam->LoadFromJSON(c))
+      {
+        std::cerr << "unable to load camera from JSON\n";
+        return false;
+      }
+      else
+        cameras.push_back(cam);
     }
   }
   else
     std::cerr << "No cameras found\n";
 
-  return cameras;
+  return true;
 }
 
 void
@@ -129,21 +142,93 @@ Camera::SaveToJSON(Value&v, Document& doc)
   v.AddMember("Camera", c, doc.GetAllocator());
 }
 
-void 
+bool 
+Camera::LoadFromPVCC(const char *filename)
+{
+  float center[3];
+  pt::ptree tree;
+
+  try {
+    read_xml(filename, tree);
+
+    pt::ptree proxy = tree.get_child("PVCameraConfiguration.Proxy");
+    BOOST_FOREACH(pt::ptree::value_type& v, proxy)
+    {
+      if (v.first == "Property")
+      {
+        float values[] = { -1e32, -1e32, -1e32 };
+        std::string propertyName = v.second.get<std::string>("<xmlattr>.name");
+        BOOST_FOREACH(pt::ptree::value_type& vv, v.second)
+        {
+          if (vv.first == "Element")
+          {
+            int indx = vv.second.get<int>("<xmlattr>.index");
+            float val = vv.second.get<float>("<xmlattr>.value");
+            values[indx] = val;
+          }
+        }
+        if (propertyName == "CameraPosition")
+          for (int i = 0; i < 3; i++)
+            eye[i] = values[i];
+        else if (propertyName == "CameraFocalPoint")
+          for (int i = 0; i < 3; i++)
+            center[i] = values[i];
+        else if (propertyName == "CameraViewUp")
+          for (int i = 0; i < 3; i++)
+            up[i] = values[i];
+        else if (propertyName == "CameraViewAngle")
+          aov = values[0];
+      }
+    }
+  }
+  catch(...) { return false; }
+
+  dir[0] = center[0] - eye[0];
+  dir[1] = center[1] - eye[1];
+  dir[2] = center[2] - eye[2];
+    
+  return true;
+}
+
+bool 
 Camera::LoadFromJSON(Value& v)
 {
   if (v.IsString())
   {
     ifstream ifs(v.GetString());
+    if (!ifs)
+    {
+      std::cerr << "unable to open " << v.GetString() << "\n";
+      set_error(1);
+      return false;
+    }
+
     stringstream ss;
     ss << ifs.rdbuf();
 
-    Document tf;
-    tf.Parse(ss.str().c_str());
+    Document doc;
+    if (doc.Parse<0>(ss.str().c_str()).HasParseError())
+    {
+      if (! LoadFromPVCC(v.GetString()))
+      {
+        std::cerr << "error loading camera from " << v.GetString() << "\n";
+        set_error(1);
+        return false;
+      }
+      else return true;
+    }
 
     float center[3];
 
-    Value& properties = tf["PVCameraConfiguration"]["Proxy"]["Property"];
+    if (! doc.HasMember("PVCameraConfiguration") || 
+        !doc["PVCameraConfiguration"].HasMember("Proxy") || 
+        !doc["PVCameraConfiguration"]["Proxy"].HasMember("Property"))
+    {
+      std::cerr << "invalid Paraview camera file: " << v.GetString() << "\n";
+      return false;
+    }
+    
+    Value& properties = doc["PVCameraConfiguration"]["Proxy"]["Property"];
     for (int i = 0; i < properties.Size(); i++)
     {
       Value& p = properties[i];
@@ -200,8 +285,9 @@ Camera::LoadFromJSON(Value& v)
     }
     else
     {
-        std::cerr << "need either viewdirection or viewcenter\n";
-        exit(1);
+      std::cerr << "need either viewdirection or viewcenter\n";
+      set_error(1);
+      return false;
     }
 
     up[0] = v["viewup"][0].GetDouble();
@@ -210,6 +296,8 @@ Camera::LoadFromJSON(Value& v)
 
     aov = v["aov"].GetDouble();
   }
+
+  return true;
 }
 
 void

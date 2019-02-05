@@ -51,7 +51,7 @@ public:
   ~TraceRays(); //!< default destructor
 
   //! populate state into this TraceRays object from a Galaxy JSON object
-  virtual void LoadStateFromValue(rapidjson::Value&);
+  virtual bool LoadStateFromValue(rapidjson::Value&);
   //!< save the state of this TraceRays object to a Galaxy JSON object
   virtual void SaveStateToValue(rapidjson::Value&, rapidjson::Document&); 
 

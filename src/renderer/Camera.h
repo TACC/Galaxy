@@ -76,10 +76,14 @@ class Camera : public KeyedObject
 public:
 
 	//! construct a set of Cameras from a Galaxy JSON specification
-	static std::vector<CameraP> LoadCamerasFromJSON(rapidjson::Value&);
+	static bool LoadCamerasFromJSON(rapidjson::Value&, std::vector<CameraP>&);
 	
 	//! construct a Camera from a Galaxy JSON specification
-	virtual void LoadFromJSON(rapidjson::Value&);
+	virtual bool LoadFromJSON(rapidjson::Value&);
+
+	//! construct a Camera from a Paraview PVCC
+	bool LoadFromPVCC(const char *filename);
+
 	//! save this Camera to a Galaxy JSON specification 
 	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 

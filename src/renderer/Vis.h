@@ -57,7 +57,7 @@ public:
     virtual ~Vis(); //!< default destructor
 
     //! commit this object to the global registry across all processes
-    virtual void Commit(DatasetsP);
+    virtual bool Commit(DatasetsP);
 
     //! return a pointer to the KeyedDataObject data that this Vis targets
     KeyedDataObjectP GetTheData() { return data; }
@@ -70,7 +70,7 @@ public:
     void SetTheOSPRayDataObject(OSPRayObjectP o);
 
     //! construct a Vis from a Galaxy JSON specification
-    virtual void LoadFromJSON(rapidjson::Value&);
+    virtual bool LoadFromJSON(rapidjson::Value&);
     //! save this Vis to a Galaxy JSON specification 
     virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 

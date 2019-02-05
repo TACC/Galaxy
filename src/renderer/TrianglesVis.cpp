@@ -88,10 +88,10 @@ TrianglesVis::deserialize(unsigned char *ptr)
   return ptr;
 }
 
-void 
+bool
 TrianglesVis::LoadFromJSON(Value& v)
 {
-  super::LoadFromJSON(v);
+  return super::LoadFromJSON(v);
 }
 
 void

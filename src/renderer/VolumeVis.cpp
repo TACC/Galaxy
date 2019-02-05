@@ -114,7 +114,7 @@ VolumeVis::deserialize(unsigned char *ptr)
   return ptr;
 }
 
-void 
+bool 
 VolumeVis::LoadFromJSON(Value& v)
 {
   MappedVis::LoadFromJSON(v);
@@ -156,6 +156,8 @@ VolumeVis::LoadFromJSON(Value& v)
     SetVolumeRendering(v["volume rendering"].GetBool());
   else
     SetVolumeRendering(false);
+
+  return true;
 }
 
 void

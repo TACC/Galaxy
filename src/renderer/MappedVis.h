@@ -59,7 +59,7 @@ public:
   virtual void initialize(); //!< initialize this MappedVis object
 
   //! commit this object to the global registry across all processes
-  virtual void Commit(DatasetsP);
+  virtual bool Commit(DatasetsP);
 
   //! set the colormap for this MappedVis as an array of XRGB values
   void SetColorMap(int, vec4f *);
@@ -67,7 +67,7 @@ public:
   void SetOpacityMap(int, vec2f *);
 
   //! construct a MappedVis from a Galaxy JSON specification
-  virtual void LoadFromJSON(rapidjson::Value&);
+  virtual bool LoadFromJSON(rapidjson::Value&);
   //! save this MappedVis to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 

@@ -138,10 +138,14 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
 
 }
 
-void TraceRays::LoadStateFromValue(Value& v)
+bool TraceRays::LoadStateFromValue(Value& v)
 {
-  float e = v["epsilon"].GetDouble();
-  SetEpsilon(e);
+  if (v.HasMember("epsilon"))
+  {
+    float e = v["epsilon"].GetDouble();
+    SetEpsilon(e);
+  }
+  return true;
 }
 
 void TraceRays::SaveStateToValue(Value& v, Document& doc)

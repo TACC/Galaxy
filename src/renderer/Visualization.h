@@ -62,7 +62,7 @@ public:
   static std::vector<VisualizationP> LoadVisualizationsFromJSON(rapidjson::Value&);
 
   //! commit this object to the global registry across all processes
-  virtual void Commit(DatasetsP);
+  virtual bool Commit(DatasetsP);
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
 
@@ -72,7 +72,7 @@ public:
   //! save this Vis to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
   //! construct a Visualization from a Galaxy JSON specification
-  void LoadFromJSON(rapidjson::Value&);
+  virtual bool LoadFromJSON(rapidjson::Value&);
 
   //! set the annotation string for this Visualization
   void  SetAnnotation(std::string a) { annotation = a; }
