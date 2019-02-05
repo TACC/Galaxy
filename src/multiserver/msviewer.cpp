@@ -113,17 +113,17 @@ Render()
       first = false;
     
       string c("commit");
-      if (! theClientWindow->CSendRecv(c))
+      if (! theClientWindow->CSendRecv(c) || c != "ok")
       {
-        cerr << "render request send failed\n";
+        cerr << "render request send failed: " << c << "\n";
         exit(1);
       }
     }
 
     string s("render");
-    if (! theClientWindow->CSendRecv(s))
+    if (! theClientWindow->CSendRecv(s) || s != "ok")
     {
-      cerr << "render request send failed\n";
+      cerr << "render request send failed: " << s << "\n";
       exit(1);
     }
   }
@@ -145,9 +145,9 @@ LoadState(string sfile)
   string s = buffer.str();
   theCamera.LoadString((const char *)(s.c_str() + 4));
 
-  if (! theClientWindow->CSendRecv(s))
+  if (! theClientWindow->CSendRecv(s) || s != "ok")
   {
-    cerr << "JSON send failed\n";
+    cerr << "JSON send failed: " << s << "\n";
     exit(1);
   }
 
@@ -196,7 +196,7 @@ keyboard(unsigned char ch, int x, int y)
         {
           string s("query datasets");
 
-          if (! theClientWindow->CSendRecv(s))
+          if (! theClientWindow->CSendRecv(s) || s.substr(0, 2) != "ok")
           {
             cerr << "sending query datasets failed\n";
             exit(1);
@@ -324,9 +324,9 @@ reshapefunc(int w, int h)
   buffer << "window " << w << " " << h;
 
   string s = buffer.str();
-  if (! theClientWindow->CSendRecv(s))
+  if (! theClientWindow->CSendRecv(s) || s != "ok")
   {
-    cerr << "sending reshape failed\n";
+    cerr << "sending reshape failed: " << s << "\n";
     exit(0);
   }
 
@@ -498,9 +498,9 @@ handle(ClientWindow *cw, std::string line)
   // Otherwise, send the line to the server
   else
   {
-    if (! cw->CSendRecv(line))
+    if (! cw->CSendRecv(line) || line.substr(0, 2) != "ok")
     {
-      cerr << "send/receive failed\n";
+      cerr << "send/receive failed: " << line << "\n";
       exit(1);
     }
 

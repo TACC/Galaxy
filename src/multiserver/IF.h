@@ -47,12 +47,11 @@ public:
   void Send(gxy::SocketHandler* handler)
   {
     std::string s(Stringify());
-    if (! handler->CSendRecv(s))
+    if (! handler->CSendRecv(s) || s.substr(0, 2) != "ok")
     {
-      std::cerr << "IF sendrecv failed\n";
+      std::cerr << "IF sendrecv failed: " << s << "\n";
       exit(1);
     }
-    // std::cerr << "IF reply: " << s << "\n";
   }
   
   //! Virtual method to load subclass members from JSON object

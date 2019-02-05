@@ -51,9 +51,9 @@ ClientWindow::ClientWindow(int width, int height, std::string host, int port) : 
   this_frame_pixel_count   = 0;
 
   std::string so("libgxy_module_viewer.so");
-  if (! CSendRecv(so))
+  if (! CSendRecv(so) || so != "ok")
   {
-    std::cerr << "Server-side library load failed\n";
+    std::cerr << "Server-side library load failed: " << so << "\n";
     exit(1);
   }
 
@@ -134,7 +134,13 @@ ClientWindow::Resize(int w, int h)
 
   std::stringstream wndw;
   wndw << "window " << width << " " << height;
-  CSend(wndw.str().c_str(), wndw.str().size()+1);
+
+  std::string so = wndw.str();
+  if (! CSendRecv(so) || so != "ok")
+  {
+    std::cerr << "error setting window size: " << so << "\n";
+    exit(1);
+  }
 
   pthread_mutex_unlock(&lock);
 
