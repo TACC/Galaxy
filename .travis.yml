@@ -96,6 +96,7 @@ script:
   # 3. run gold image tests
   - scripts/travis-ci-build.sh
   - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
+  - echo $(date) > .galaxy/last_build
 
 notifications:
   slack:
