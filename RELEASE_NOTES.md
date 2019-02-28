@@ -1,6 +1,8 @@
 # Galaxy Release Notes
 
-## version 0.2.0 - pending
+## version 0.3.0 - pending
+
+## version 0.2.0 - 20190208
 
 Refactorization of Galaxy core to cleanly partition framework, data, and renderer layers. Initial release of multiserver modularization of Galaxy framework.
 

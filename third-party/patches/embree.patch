@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b6954fb2b..b1020f432 100644
+index b6954fb2b..9690f840b 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -14,6 +14,9 @@
@@ -55,6 +55,18 @@ index b6954fb2b..b1020f432 100644
  IF (EMBREE_STATIC_LIB)
    SET(EMBREE_LIB_TYPE STATIC)
    ADD_DEFINITIONS(-DEMBREE_STATIC_LIB)
+@@ -112,7 +127,10 @@ ELSE()
+ ENDIF()
+ 
+ OPTION(EMBREE_ISPC_SUPPORT "Build Embree with support for ISPC applications." ON)
+-OPTION(EMBREE_TUTORIALS    "Enable to build Embree tutorials" ON)
++# GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++# original code: OPTION(EMBREE_TUTORIALS    "Enable to build Embree tutorials" ON)
++OPTION(EMBREE_TUTORIALS    "Enable to build Embree tutorials" OFF)
++# GALAXY END MODIFIED CODE - by Galaxy patch
+ 
+ ##############################################################################
+ # Configurations (add configurations also to common/cmake/embree-config-default.cmake)
 diff --git a/common/cmake/embree-config.cmake b/common/cmake/embree-config.cmake
 index be80bb0d7..a9ad3ae5b 100644
 --- a/common/cmake/embree-config.cmake

@@ -5,7 +5,7 @@ branches:
   only:
     - travis-ci
     - dev
-    # - master
+    - master
 
 matrix:
   include:
@@ -21,15 +21,15 @@ matrix:
     #   env:
     #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - MATRIX_EVAL=""
+    - os: linux
+      compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - os: linux
+      compiler: gcc
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
@@ -78,17 +78,12 @@ script:
   # use this line only to rebuild VTK cache for linux
   # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
+  # use this to (re-)patch embree and ospray
   # - pushd third-party/embree && patch -p1 -N < ../patches/embree.patch ; popd
   # - pushd third-party/ospray && patch -p1 -N < ../patches/ospray.patch ; popd
   # - find third-party -name '*.rej' -exec rm -f '{}' \;
 
-  - git submodule update --init
-  - cat .git/config
-  - cat .gitmodules
-  - ls -l .git/modules/third-party
-  - ls -l third-party/embree
-  - ls -l third-party/ospray
-
+  # use this to rebuild embree and ospray
   # - pushd third-party/embree && rm -rf build/* && rm -rf install/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
   # - pushd third-party/ospray && rm -rf build/* && rm -rf install/* && cd build && cmake .. && make -j 4 install; popd
 
@@ -99,8 +94,9 @@ script:
   # 1. build Galaxy interactive interface
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
-  # - scripts/travis-ci-build.sh
-  # - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
+  - scripts/travis-ci-build.sh
+  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
+  - echo $(date) > .galaxy/last_build
 
 notifications:
   slack:
