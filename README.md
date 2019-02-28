@@ -385,8 +385,28 @@ The following shows an example cinema.json:
 In this example, we see a single “Visualization” element, rather than the array of visualizations given in a state file.   This, though, parametrically defines a set of 100
 visualizations, consisting of the cross product of 10 isovalues and 10 offsets of a slicing plane (which varies from -1 to 1 based on the range of the intersection of the normal ray with the object bounding box.   Similarly, a single parametric camera is given as a base view defined by a viewpoint and view center, but varying the azimuth and elevation in a range (in radians).    This defines 4 cameras, and, with 100 visualizations, will create a Cinema database of 400 images.
 
-Note, also, that the colormaps and opacity maps can be given as file names. 
+Note, also, that the colormaps and opacity maps can be included indirectly from JSON files.   Color maps are arrays of four-tuples that specify color at particular points along the data axis, scaled to [0, 1].  Similarly, opacity maps are arrays of two-tuples specifying an opacity value along the same axis.  Note that there may be an arbitrary number of control points in each.   For the above example, the files named 'oneBall_cmap.json' and 'eightBalls_cmap.json' might contain:
 
+```json
+[
+  [0.00,1.0,0.5,1.0],
+  [0.25,1.0,1.0,0.5],
+  [0.50,0.5,0.5,1.0],
+  [0.75,0.5,1.0,0.5],
+  [1.00,1.0,0.5,0.5]
+]
+```
+
+'oneBall_omap.json' and 'eightBalls_omap.json' might be:
+
+```json
+[
+  [ 0.00, 0.00],
+  [ 0.20, 0.00],
+  [ 0.21, 0.05],
+  [ 1.00, 0.05]
+]
+```
 Given such a cinema.json file, the included Python script cinema2state will expand the parametric cinema specification to an explicit batch file, and prepare a Cinema database.   If the above is in cinema.json, the corresponding Cinema database can be created by:
 
 `cinema2state cinema.json`
