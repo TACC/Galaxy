@@ -407,13 +407,13 @@ Note, also, that the colormaps and opacity maps can be included indirectly from 
   [ 1.00, 0.05]
 ]
 ```
-Given such a cinema.json file, the included Python script cinema2state will expand the parametric cinema specification to an explicit batch file, and prepare a Cinema database.   If the above is in cinema.json, the corresponding Cinema database can be created by:
+Given such a specification of a Cinema visualization, the included Python script cinema2state will expand the parametric cinema specification to an explicit batch file, and prepare a Cinema database.   If the above is in cinema.json, the corresponding Cinema database can be created by:
 
 `cinema2state cinema.json`
 
 which will create state.json and initialize cinema.cdb.  Following this, 
 
-`[mpirun mpiargs] state [-s width height] -C cinema.cdb state.json`
+`[mpirun mpiargs] vis [-s width height] -C cinema.cdb state.json`
 
 will render the necessary images and deposit them into cinema.cdb.
 
