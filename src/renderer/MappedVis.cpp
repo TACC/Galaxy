@@ -303,7 +303,7 @@ MappedVis::local_commit(MPI_Comm c)
   ospSetData(transferFunction, "opacities", oAlphas);
   ospRelease(oAlphas);
 
-  ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_opacities-1].x);
+  ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
 
   ospCommit(transferFunction);
   

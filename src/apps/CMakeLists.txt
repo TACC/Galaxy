@@ -97,13 +97,6 @@ if (WITH_CINEMA)
 	set(BINS ${BINS} cinema)
 endif (WITH_CINEMA)
 
-option(GXY_APP_STATE "Build simple Galaxy renderer" OFF)
-if (GXY_APP_STATE)
-	add_executable(state state.cpp)
-	target_link_libraries(state ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-	set(BINS ${BINS} state)
-endif (GXY_APP_STATE)
-
 option(GXY_APP_PISO "Build the Galaxy piso app (requires VTK 8.x)" OFF)
 if(GXY_APP_PISO)
 	add_executable(piso piso.cpp)

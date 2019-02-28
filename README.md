@@ -327,12 +327,12 @@ The following shows an example cinema.json:
       {
         "name": "oneBall",
         "type": "Volume",
-        "filename": "oneBall-0.vol"
+        "filename": "radial-0-oneBall.vol"
       },
       {
         "name": "eightBalls",
         "type": "Volume",
-        "filename": "eightBalls-0.vol"
+        "filename": "radial-0-eightBalls.vol"
       }
     ],
     "Renderer": {
@@ -393,7 +393,7 @@ Given such a cinema.json file, the included Python script cinema2state will expa
 
 which will create state.json and initialize cinema.cdb.  Following this, 
 
-`[mpirun mpiargs] state [-s width height] -C state.json`
+`[mpirun mpiargs] state [-s width height] -C cinema.cdb state.json`
 
 will render the necessary images and deposit them into cinema.cdb.
 
