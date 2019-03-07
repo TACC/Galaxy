@@ -18,132 +18,62 @@
 //                                                                            //
 // ========================================================================== //
 
-#define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
+//#define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
+#include <sched.h>
+
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <vector>
+#include <math.h>
+
+#include <ospray/ospray.h>
+
+#include "galaxy.h"
 
 #include "Sampler.h"
-#include "Particles.h"
-#include "Rays.h"
+#include "Renderer.h"
+// #include "Application.h"
+// #include "Camera.h"
+// #include "DataObjects.h"
+// #include "Pixel.h"
+// #include "RayFlags.h"
+// #include "RayQManager.h"
+// #include "Renderer.h"
+// #include "TraceRays.h"
+// #include "Work.h"
+// #include "Threading.h"
 
-namespace gxy 
+// #include "Rays_ispc.h"
+// #include "TraceRays_ispc.h"
+// #include "Visualization_ispc.h"
+
+// #include "OVolume.h"
+// #include "OTriangles.h"
+// #include "OParticles.h"
+
+// #include "rapidjson/document.h"
+// #include "rapidjson/stringbuffer.h"
+
+#ifdef GXY_TIMING
+#include "Timer.h"
+static gxy::Timer timer("ray_processing");
+#endif
+
+using namespace rapidjson;
+using namespace std;
+
+namespace gxy
 {
-WORK_CLASS_TYPE(Sampler::SampleMsg);
+KEYED_OBJECT_CLASS_TYPE(Sampler)
 
-KEYED_OBJECT_TYPE(Sampler)
-
-void
-Sampler::Initialize()
-{ 
-  RegisterClass();
-  SampleMsg::Register();
-}
-
-void
-Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
+Sampler::~Sampler()
 {
-  int terminated_count = 0;
-
-  for (int i = 0; i < raylist->GetRayCount(); i++)
-    if (classification[i] == Renderer::TERMINATED) terminated_count++;
-
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-  RenderingP rendering = raylist->GetTheRendering();
-
-  if (terminated_count == 0) return;
-
-  Renderer::SendPixelsMsg *spmsg = (!rendering->IsLocal()) ? 
-    new Renderer::SendPixelsMsg(rendering, renderingSet,
-    raylist->GetFrame(), terminated_count) : NULL;
-
-  Particle newsample;
-  for (int i = 0; i < raylist->GetRayCount(); i++)
-  {
-    if (classification[i] == Renderer::TERMINATED)
-    {
-      if (rendering->IsLocal())
-      {
-        // add a particle, setting position from ray
-        newsample.xyz.x = raylist->get_ox(i);
-        newsample.xyz.y = raylist->get_oy(i);
-        newsample.xyz.z = raylist->get_oz(i);
-        this->GetSamples()->push_back(newsample);
-      }
-      else
-      {
-        spmsg->StashPixel(raylist, i);
-      }
-    }
-  }
-
-  if (spmsg)
-  {
-    if (renderingSet->IsActive(raylist->GetFrame()))
-    {
-      spmsg->Send(rendering->GetTheOwner());
-    }
-    else
-    {
-      delete spmsg;
-    }
-  }
-}
-
-int
-Sampler::SerialSize()
-{
-  return super::SerialSize() + sizeof(Key);
-}
-
-unsigned char *
-Sampler::Serialize(unsigned char *p)
-{
-  p = super::Serialize(p);
-  *(Key *)p = mSamples->getkey();
-  p = p + sizeof(Key);
-  return p;
-}
-
-unsigned char *
-Sampler::Deserialize(unsigned char *p)
-{
-  p = super::Deserialize(p);
-  mSamples = Particles::GetByKey(*(Key *)p);
-  p = p + sizeof(Key);
-  return p;
 }
 
 void
-Sampler::Sample(RenderingSetP rs)
-{   
-  SampleMsg msg(this, rs);
-  msg.Broadcast(false, true);
-}
-
-Sampler::SampleMsg::SampleMsg(Sampler* r, RenderingSetP rs) :
-  Sampler::SampleMsg(sizeof(Key) + r->SerialSize() + sizeof(Key))
+Renderer::HandleTerminatedRays(RayList *raylist, int *classification)
 {
-  unsigned char *p = contents->get();
-  *(Key *)p = r->getkey();
-  p = p + sizeof(Key);
-  p = r->Serialize(p);
-  *(Key *)p = rs->getkey();
 }
-
-bool
-Sampler::SampleMsg::Action(int sender)
-{
-  unsigned char *p = (unsigned char *)get();
-  Key sampler_key = *(Key *)p;
-  p += sizeof(Key);
-
-  SamplerP sampler = Sampler::GetByKey(sampler_key);
-  p = sampler->Deserialize(p);
-
-  RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
-
-  sampler->localRendering(sampler, rs);
-
-  return false;
-}
-
 
 } // namespace gxy
