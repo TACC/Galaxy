@@ -18,18 +18,18 @@
 //                                                                            //
 // ========================================================================== //
 
-//#define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
-#include <sched.h>
+#define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 
 #include "Sampler.h"
 #include "Particles.h"
 #include "Rays.h"
 
 namespace gxy 
+
 {
 WORK_CLASS_TYPE(Sampler::SampleMsg);
 
-KEYED_OBJECT_CLASS_TYPE(Sampler)
+KEYED_OBJECT_TYPE(Sampler)
 
 void
 Sampler::Initialize()
@@ -74,4 +74,77 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
       }
     }
   }
+
+  if (spmsg)
+  {
+    if (renderingSet->IsActive(raylist->GetFrame()))
+    {
+      spmsg->Send(rendering->GetTheOwner());
+    }
+    else
+    {
+      delete spmsg;
+    }
+  }
+}
+
+int
+Sampler::SerialSize()
+{
+  return super::SerialSize() + sizeof(Key);
+}
+
+unsigned char *
+Sampler::Serialize(unsigned char *p)
+{
+  p = super::Serialize(p);
+  *(Key *)p = mSamples->getkey();
+  p = p + sizeof(Key);
+  return p;
+}
+
+unsigned char *
+Sampler::Deserialize(unsigned char *p)
+{
+  p = super::Deserialize(p);
+  mSamples = Particles::GetByKey(*(Key *)p);
+  p = p + sizeof(Key);
+  return p;
+}
+
+void
+Sampler::Sample(RenderingSetP rs)
+{   
+  SampleMsg msg(this, rs);
+  msg.Broadcast(false, true);
+}
+
+Sampler::SampleMsg::SampleMsg(Sampler* r, RenderingSetP rs) :
+  Sampler::SampleMsg(sizeof(Key) + r->SerialSize() + sizeof(Key))
+{
+  unsigned char *p = contents->get();
+  *(Key *)p = r->getkey();
+  p = p + sizeof(Key);
+  p = r->Serialize(p);
+  *(Key *)p = rs->getkey();
+}
+
+bool
+Sampler::SampleMsg::Action(int sender)
+{
+  unsigned char *p = (unsigned char *)get();
+  Key sampler_key = *(Key *)p;
+  p += sizeof(Key);
+
+  SamplerP sampler = Sampler::GetByKey(sampler_key);
+  p = sampler->Deserialize(p);
+
+  RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
+
+  sampler->localRendering(sampler, rs);
+
+  return false;
+}
+
+
 } // namespace gxy
