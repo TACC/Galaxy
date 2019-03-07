@@ -191,11 +191,6 @@ syntax(char *a)
 void
 execute_sampler(SamplerP sampler)
 {
-    float light[] = {1.0, 2.0, 3.0}; int t = 1;
-    sampler->GetTheLighting()->SetLights(1, light, &t);
-    sampler->GetTheLighting()->SetK(0.4, 0.6);
-    sampler->GetTheLighting()->SetShadowFlag(false);
-    sampler->GetTheLighting()->SetAO(0, 0.0);
     sampler->Commit();
 
     ParticlesP samples = sampler->GetSamples();
@@ -296,11 +291,6 @@ main(int argc, char * argv[])
     // execute_sampler(theSampler);
 // SAMPLE
 
-    float light[] = {1.0, 2.0, 3.0}; int t = 1;
-    theRenderer->GetTheLighting()->SetLights(1, light, &t);
-    theRenderer->GetTheLighting()->SetK(0.4, 0.6);
-    theRenderer->GetTheLighting()->SetShadowFlag(false);
-    theRenderer->GetTheLighting()->SetAO(0, 0.0);
     theRenderer->Commit();
 
     DatasetsP theDatasets = Datasets::NewP();
@@ -351,8 +341,16 @@ main(int argc, char * argv[])
     pvis1->Commit(theDatasets);
 
     VisualizationP v = Visualization::NewP();
-    v->AddOsprayGeometryVis(pvis);
-    v->AddOsprayGeometryVis(pvis1);
+
+    float light[] = {1.0, 2.0, 3.0}; int t = 1;
+    Lighting *l = v->get_the_lights();
+    l->SetLights(1, light, &t);
+    l->SetK(0.4, 0.6);
+    l->SetShadowFlag(false);
+    l->SetAO(0, 0.0);
+
+    v->AddVis(pvis);
+    v->AddVis(pvis1);
     v->Commit(theDatasets);
 
     RenderingSetP theRenderingSet = RenderingSet::NewP();
