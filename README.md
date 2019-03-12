@@ -36,10 +36,19 @@ Galaxy has the following components associated in the `third-party` subdirectory
 *NOTE:* the third-party component locations are intended for development builds of Galaxy. If you intend to install Galaxy for general use, you should install Embree, OSPRay and rapidjson into a generally-accessible location and use those locations in the Galaxy build.
 
 ## Installing Galaxy associated dependencies
-Prior to building Galaxy itself, you should ensure that all the general dependencies are installed (we recommend your humble OS package manager). Once those are in place, you're ready to install the dependencies in `third-party`. 
+Prior to building Galaxy itself, you should ensure that all the general dependencies are installed (we recommend your humble OS package manager). Once those are in place, you're ready to install the dependencies in `third-party`. There are two steps to this process: 1) downloading and patching the submodules, and 2) building and installing the submodules.
 
-From the root directory of your local Galaxy repository, run the script `prep-third-party.sh`, which will init and update the git submodules, download ispc to where Galaxy expects to find it, and apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. 
+To **download and patch** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/prep-third-party.sh`, which will 1) init and update the git submodules, 2) download ispc to where Galaxy expects to find it, and 3) apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. 
 
+To **build and install** the submodules, do the following in `third-party/embree`, then `third-part/ospray`, then `third-party/rapidjson` (`third-party/ispc is already installed via the script`):
+
+```bash
+mkdir build
+cd build
+cmake .. && make && make install
+```
+
+### NOTE on patches:
 All patch updates insert the prominent header: 
 ```
 NOTE: This file has been modified by a Galaxy patch.
@@ -52,13 +61,14 @@ GALAXY BEGIN ADDED CODE - by Galaxy patch
 GALAXY END ADDED CODE - by Galaxy patch
 ```
 
+### Local installs of Galaxy associated dependencies
 If you prefer to use local installs of any of the dependencies, you can follow instructions below. Make sure to issue `git submodule init <path>` and `git submodule update <path>` for the third-party dependencies you do *NOT* have locally installed. For example, to use the rapidjson submodule, type:
 ```bash
 git submodule init third-party/rapidjson
 git submodule update third-party/rapidjson
 ```
 
-### Installing ISPC
+### ISPC
 The `third-party/ispc` directory contains a script to download a recent ISPC binary for MacOS or Linux. ISPC installed using this script should be detected automatically by the Galaxy CMake configuration. If you already have a recent ISPC installed (at least version 1.9.1) you are free to use it, though you might need to specify its location by hand in the CMake configurations for Embree, OSPRay, and Galaxy.
 
 From the root directory of your Galaxy repository, issue the following commands:
@@ -69,7 +79,7 @@ cd third-party/ispc
 
 This will download ISPC (currently version 1.9.2) into `third-party/ispc/ispc-v<version>-<OS type>` (e.g., ispc-v1.9.2-osx). If this binary does not work for you, you will need to build ISPC by hand following the directions at the [ISPC website][10]. 
 
-### Installing Embree
+### Embree
 After updating the git submodules as described above, the `third-party/embree` directory should contain the Embree source tree. We recommend building in `third-party/embree/build` and installing to `third-party/embree/install`, as doing so should enable OSPRay and Galaxy to find Embree automatically. The recommended install directory is configured as part of the Galaxy Embree patch.
 
 First, apply the Galaxy Embree patch to the Embree repository. From the root directory of your Galaxy repository, issue the following commands:
@@ -86,7 +96,7 @@ cmake .. && make && make install
 ```
 If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
-### Installing OSPRay
+### OSPRay
 Before installing OSPRay, make sure you have updated the Galaxy git submodules and successfully built Embree, as described above. Once the git submodules have been updated, the `third-party/ospray` directory should contain the OSPRay source tree. We recommend building in `third-party/ospray/build` and installing to `third-party/ospray/install`, as doing so should enable Galaxy to find OSPRay automatically. The recommended install directory is configured as part of the Galaxy OSPRay patch.
 
 First, apply the Galaxy OSPRay patch to the OSPRay repository. From the root directory of your Galaxy repository, issue the following commands:
@@ -103,7 +113,7 @@ cmake .. && make && make install
 ```
 If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
-### Installing rapidjson
+### rapidjson
 Before installing rapidjson, make sure you have updated the Galaxy git submodules as described above. Once the git submodules have been updated, the `third-party/rapidjson` directory should contain the rapidjson source tree. We recommend building in `third-party/rapidjson/build` and installing to `third-party/rapidjson/install`, as doing so should enable Galaxy to find rapidjson automatically. The recommended install directory is configured as part of the Galaxy rapidjson patch.
 
 First, apply the Galaxy rapidjson patch to the rapidjson repository. From the root directory of your Galaxy repository, issue the following commands:
@@ -327,12 +337,12 @@ The following shows an example cinema.json:
       {
         "name": "oneBall",
         "type": "Volume",
-        "filename": "radial-0-oneBall.vol"
+        "filename": "oneBall-0.vol"
       },
       {
         "name": "eightBalls",
         "type": "Volume",
-        "filename": "radial-0-eightBalls.vol"
+        "filename": "eightBalls-0.vol"
       }
     ],
     "Renderer": {
@@ -385,35 +395,15 @@ The following shows an example cinema.json:
 In this example, we see a single “Visualization” element, rather than the array of visualizations given in a state file.   This, though, parametrically defines a set of 100
 visualizations, consisting of the cross product of 10 isovalues and 10 offsets of a slicing plane (which varies from -1 to 1 based on the range of the intersection of the normal ray with the object bounding box.   Similarly, a single parametric camera is given as a base view defined by a viewpoint and view center, but varying the azimuth and elevation in a range (in radians).    This defines 4 cameras, and, with 100 visualizations, will create a Cinema database of 400 images.
 
-Note, also, that the colormaps and opacity maps can be included indirectly from JSON files.   Color maps are arrays of four-tuples that specify color at particular points along the data axis, scaled to [0, 1].  Similarly, opacity maps are arrays of two-tuples specifying an opacity value along the same axis.  Note that there may be an arbitrary number of control points in each.   For the above example, the files named 'oneBall_cmap.json' and 'eightBalls_cmap.json' might contain:
+Note, also, that the colormaps and opacity maps can be given as file names. 
 
-```json
-[
-  [0.00,1.0,0.5,1.0],
-  [0.25,1.0,1.0,0.5],
-  [0.50,0.5,0.5,1.0],
-  [0.75,0.5,1.0,0.5],
-  [1.00,1.0,0.5,0.5]
-]
-```
-
-'oneBall_omap.json' and 'eightBalls_omap.json' might be:
-
-```json
-[
-  [ 0.00, 0.00],
-  [ 0.20, 0.00],
-  [ 0.21, 0.05],
-  [ 1.00, 0.05]
-]
-```
-Given such a specification of a Cinema visualization, the included Python script cinema2state will expand the parametric cinema specification to an explicit batch file, and prepare a Cinema database.   If the above is in cinema.json, the corresponding Cinema database can be created by:
+Given such a cinema.json file, the included Python script cinema2state will expand the parametric cinema specification to an explicit batch file, and prepare a Cinema database.   If the above is in cinema.json, the corresponding Cinema database can be created by:
 
 `cinema2state cinema.json`
 
 which will create state.json and initialize cinema.cdb.  Following this, 
 
-`[mpirun mpiargs] vis [-s width height] -C cinema.cdb state.json`
+`[mpirun mpiargs] state [-s width height] -C state.json`
 
 will render the necessary images and deposit them into cinema.cdb.
 
