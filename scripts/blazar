@@ -7,7 +7,6 @@ import os
 # global variables
 APP_name = "blazar"
 APP_version = "1.0"
-APP_executable = "samray"
 
 # ----------------------------------------------------------------------------
 #
@@ -45,5 +44,5 @@ required_args.add_argument(  "-s", "--sampler",
 args = parser.parse_args()
 
 
-command = "{} {} -r 0.025".format( args.sampler, args.input )
+command = "sam{} -n 100 -s 1920 1080 -r 0.025 {}".format( args.sampler, args.input )
 os.system( command )
