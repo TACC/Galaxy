@@ -1,5 +1,5 @@
 // ========================================================================== //
-// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
+// Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
@@ -41,7 +41,7 @@ namespace gxy
 
 class RayList;
 
-KEYED_OBJECT_POINTER(Sampler)
+OBJECT_POINTER_TYPES(Sampler)
 
 class Sampler : public Renderer
 {

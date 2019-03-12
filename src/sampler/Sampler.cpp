@@ -28,7 +28,7 @@ namespace gxy
 {
 WORK_CLASS_TYPE(Sampler::SampleMsg);
 
-KEYED_OBJECT_TYPE(Sampler)
+KEYED_OBJECT_CLASS_TYPE(Sampler)
 
 void
 Sampler::Initialize()
@@ -140,7 +140,7 @@ Sampler::SampleMsg::Action(int sender)
 
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
-  sampler->localRendering(sampler, rs);
+  sampler->local_render(sampler, rs);
 
   return false;
 }
