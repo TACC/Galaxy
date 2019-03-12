@@ -1,5 +1,5 @@
 // ========================================================================== //
-// Copyright (c) 2014-2019 The University of Texas at Austin.                 //
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
@@ -20,38 +20,61 @@
 
 #pragma once 
 
-/*! \file Sampler.h 
- * \brief a class that takes a ray-based approach to sampling 
- * \ingroup render
- */
+/*! \file Sampler.h
+    \brief Initial class for ray-based sampling
+    \ingroup applications
+  
+    This is the initial class that abstracts the operation of galaxy from
+    ray-based renderer to ray-based sampler.
+  
+    At the moment the design is simply to take over some of the operations 
+    of the renderer and create samples instead of pixels. A more thorough
+    discussion will follow as the design is worked out.
+*/
 
 #include <vector>
 
-#include "KeyedObject.h"
 #include "Renderer.h"
-// #include "Datasets.h"
-// #include "pthread.h"
-// #include "Rays.h"
-// #include "Visualization.h"
-// #include "Rendering.h"
-// #include "RenderingEvents.h"
-// #include "RenderingSet.h"
-// #include "TraceRays.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Sampler)
+class RayList;
 
-OBJECT_POINTER_TYPES(Sampler)
+KEYED_OBJECT_POINTER(Sampler)
 
 class Sampler : public Renderer
 {
-  KEYED_OBJECT(Sampler)
+  KEYED_OBJECT_SUBCLASS(Sampler, Renderer)
     
 public:
-  virtual ~Sampler(); //!< default destructor
+  static void Initialize();
   virtual void HandleTerminatedRays(RayList *raylist, int *classification);
+  void SetSamples(ParticlesP p) {mSamples = p;}
+  ParticlesP GetSamples() {return mSamples;}
+
+  virtual int SerialSize();
+  virtual unsigned char *Serialize(unsigned char *);
+  virtual unsigned char *Deserialize(unsigned char *);
+
+  virtual void Sample(RenderingSetP);
+
+private:
+  ParticlesP mSamples = NULL;
+
+  class SampleMsg : public Work
+  {
+  public:
+    SampleMsg(Sampler *, RenderingSetP);
+    ~SampleMsg() {}
+
+    WORK_CLASS(SampleMsg, true);
+
+    bool Action(int s);
+
+    private:
+        int frame;
+  };
 
 };
 
