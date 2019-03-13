@@ -138,6 +138,4 @@ add_executable(partition partition.cpp)
 target_link_libraries(partition ${MPI_LIBRARIES})
 set(BINS partition ${BINS})
 
-install(PROGRAMS blazar DESTINATION python)
-
 install(TARGETS ${BINS} DESTINATION bin)

@@ -1,5 +1,5 @@
 // ========================================================================== //
-// Copyright (c) 2014-2019 The University of Texas at Austin.                 k/
+// Copyright (c) 2014-2018 The University of Texas at Austin.                 k/
 // All rights reserved.                                                       //
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
@@ -20,16 +20,16 @@
 
 #define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 
+#include <stdlib.h>
 #include "Sampler.h"
 #include "Particles.h"
 #include "Rays.h"
 
 namespace gxy 
-
 {
 WORK_CLASS_TYPE(Sampler::SampleMsg);
 
-KEYED_OBJECT_TYPE(Sampler)
+KEYED_OBJECT_CLASS_TYPE(Sampler)
 
 void
 Sampler::Initialize()
@@ -56,6 +56,8 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
     raylist->GetFrame(), terminated_count) : NULL;
 
   Particle newsample;
+  int count = 0;
+  int numparticles = 11937;
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {
     if (classification[i] == Renderer::TERMINATED)
@@ -63,9 +65,13 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
       if (rendering->IsLocal())
       {
         // add a particle, setting position from ray
-        newsample.xyz.x = raylist->get_ox(i);
-        newsample.xyz.y = raylist->get_oy(i);
-        newsample.xyz.z = raylist->get_oz(i);
+        // newsample.xyz.x = raylist->get_ox(i);
+        // newsample.xyz.y = raylist->get_oy(i);
+        // newsample.xyz.z = raylist->get_oz(i);
+        count++;
+        newsample.xyz.x = (float)(rand() % 100)/100.0; 
+        newsample.xyz.y = (float)(rand() % 100)/100.0; 
+        newsample.xyz.z = (float)(rand() % 100)/100.0; 
         this->GetSamples()->push_back(newsample);
       }
       else
@@ -141,7 +147,7 @@ Sampler::SampleMsg::Action(int sender)
 
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
-  sampler->localRendering(sampler, rs);
+  sampler->local_render(sampler, rs);
 
   return false;
 }

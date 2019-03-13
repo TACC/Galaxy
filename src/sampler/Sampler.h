@@ -41,7 +41,7 @@ namespace gxy
 
 class RayList;
 
-KEYED_OBJECT_POINTER(Sampler)
+OBJECT_POINTER_TYPES(Sampler)
 
 class Sampler : public Renderer
 {
