@@ -20,6 +20,7 @@
 
 #define _GNU_SOURCE // XXX TODO: what needs this? remove if possible
 
+#include <stdlib.h>
 #include "Sampler.h"
 #include "Particles.h"
 #include "Rays.h"
@@ -55,6 +56,8 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
     raylist->GetFrame(), terminated_count) : NULL;
 
   Particle newsample;
+  int count = 0;
+  int numparticles = 11937;
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {
     if (classification[i] == Renderer::TERMINATED)
@@ -62,9 +65,13 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
       if (rendering->IsLocal())
       {
         // add a particle, setting position from ray
-        newsample.xyz.x = raylist->get_ox(i);
-        newsample.xyz.y = raylist->get_oy(i);
-        newsample.xyz.z = raylist->get_oz(i);
+        // newsample.xyz.x = raylist->get_ox(i);
+        // newsample.xyz.y = raylist->get_oy(i);
+        // newsample.xyz.z = raylist->get_oz(i);
+        count++;
+        newsample.xyz.x = (float)(rand() % 100)/100.0; 
+        newsample.xyz.y = (float)(rand() % 100)/100.0; 
+        newsample.xyz.z = (float)(rand() % 100)/100.0; 
         this->GetSamples()->push_back(newsample);
       }
       else
