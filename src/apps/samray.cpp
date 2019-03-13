@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#define SAMPLE 1
+
 #include <iostream>
 
 #include <unistd.h>
@@ -86,12 +88,7 @@ public:
 
     float *fsamples = (float *)v->get_samples();
 
-#if 0
-    p->allocate(samples_per_partition);
-    Particle *particle = p->get_samples();
-#else
     Particle particle;
-#endif
 
     for (int i = 0; i < samples_per_partition; i++)
     {
@@ -136,22 +133,6 @@ public:
       float b110 = (dx) * (dy) * (1.0 - dz);
       float b111 = (dx) * (dy) * (dz);
 
-#if 0
-      particle->u.value = fsamples[v000]*b000 +
-                          fsamples[v001]*b001 +
-                          fsamples[v010]*b010 +
-                          fsamples[v011]*b011 +
-                          fsamples[v100]*b100 +
-                          fsamples[v101]*b101 +
-                          fsamples[v110]*b110 +
-                          fsamples[v111]*b111;
-
-      particle->xyz.x = ox + x*deltaX;
-      particle->xyz.y = oy + y*deltaY;
-      particle->xyz.z = oz + z*deltaZ;
-
-      particle ++;
-#else
       particle.u.value = fsamples[v000]*b000 +
                           fsamples[v001]*b001 +
                           fsamples[v010]*b010 +
@@ -166,7 +147,6 @@ public:
       particle.xyz.z = oz + z*deltaZ;
 
       p->push_back(particle);
-#endif
     }
 
     return false;
@@ -187,7 +167,7 @@ syntax(char *a)
   exit(1);
 }
 
-// SAMPLE 
+#ifdef SAMPLE 
 void
 execute_sampler(SamplerP sampler)
 {
@@ -206,7 +186,7 @@ execute_sampler(SamplerP sampler)
 
     samples->Commit();
 }
-
+#endif // SAMPLE
 
 int
 main(int argc, char * argv[])
@@ -236,16 +216,18 @@ main(int argc, char * argv[])
     else syntax(argv[0]);
   }
 
-// SAMPLE
+#ifdef SAMPLE
   Sampler::Initialize();
-// SAMPLE
+#endif // SAMPLE
+
   Renderer::Initialize();
   theApplication.Run();
 
-// SAMPLE
+#ifdef SAMPLE
   // order matters here
   SamplerP   theSampler  = Sampler::NewP();
-// SAMPLE
+#endif // SAMPLE
+
   RendererP theRenderer = Renderer::NewP();
 
   mpiRank = theApplication.GetRank();
@@ -270,11 +252,13 @@ main(int argc, char * argv[])
     // particle partitioning will match volume partition
     ParticlesP samples = Particles::NewP();
     samples->SetRadius(radius);
-// SAMPLE
+    samples->SetDefaultColor(1.0, 0.5, 0.5, 1.0);
+#ifdef SAMPLE
     ParticlesP samrays = Particles::NewP();
     samrays->SetRadius(4*radius);
     samrays->CopyPartitioning(volume);
-// SAMPLE
+    samrays->SetDefaultColor(0.5, 1.0, 0.5, 1.0);
+#endif // SAMPLE
     std::cerr << "radius is " << radius << "\n";
 
     // define action to perform on volume (see SampleMsg above)
@@ -283,22 +267,21 @@ main(int argc, char * argv[])
 
     samples->Commit();
 
-// SAMPLE
+#ifdef SAMPLE
     // this creates samples in the Particles data structure above 
     theSampler->SetSamples(samrays);
     theSampler->Commit();
-
-    // execute_sampler(theSampler);
-// SAMPLE
+    execute_sampler(theSampler);
+#endif // SAMPLE
 
     theRenderer->Commit();
 
     DatasetsP theDatasets = Datasets::NewP();
     theDatasets->Insert("samples", samples);
-// SAMPLE
+#ifdef SAMPLE
     // add the new samples 
     theDatasets->Insert("samrays", samrays);
-// SAMPLE
+#endif // SAMPLE
     theDatasets->Commit();
 
     vector<CameraP> theCameras;
@@ -336,10 +319,6 @@ main(int argc, char * argv[])
     pvis->SetName("samples");
     pvis->Commit(theDatasets);
 
-    ParticlesVisP pvis1 = ParticlesVis::NewP();
-    pvis1->SetName("samrays");
-    pvis1->Commit(theDatasets);
-
     VisualizationP v = Visualization::NewP();
 
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
@@ -350,7 +329,14 @@ main(int argc, char * argv[])
     l->SetAO(0, 0.0);
 
     v->AddVis(pvis);
+
+#ifdef SAMPLE
+    ParticlesVisP pvis1 = ParticlesVis::NewP();
+    pvis1->SetName("samrays");
+    pvis1->Commit(theDatasets);
     v->AddVis(pvis1);
+#endif // SAMPLE
+
     v->Commit(theDatasets);
 
     RenderingSetP theRenderingSet = RenderingSet::NewP();
@@ -370,11 +356,33 @@ main(int argc, char * argv[])
 
     theRenderingSet->Commit();
 
-std::cerr << "RENDER\n";
+#ifdef SAMPLE
+std::cerr << "SAMPLE\n";
     theSampler->Sample(theRenderingSet);
     theRenderingSet->WaitForDone();
+#endif // SAMPLE
+
+
+    theRenderingSet = RenderingSet::NewP();
+
+    indx = 0;
+    for (auto c : theCameras)
+    {
+      RenderingP theRendering = Rendering::NewP();
+      theRendering->SetTheOwner((indx++) % mpiSize);
+      theRendering->SetTheSize(width, height);
+      theRendering->SetTheCamera(c);
+      theRendering->SetTheDatasets(theDatasets);
+      theRendering->SetTheVisualization(v);
+      theRendering->Commit();
+      theRenderingSet->AddRendering(theRendering);
+    }
+
+    theRenderingSet->Commit();
 
     theRenderer->Render(theRenderingSet);
+std::cerr << "RENDER\n";
+
 // #ifdef GXY_WRITE_IMAGES
 std::cerr << "WAIT\n";
     theRenderingSet->WaitForDone();
