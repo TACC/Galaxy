@@ -20,6 +20,7 @@
 
 #include "ClientWindow.h"
 #include "ImageWriter.h"
+#include <cstring>
 #include <string>
 #include <sstream>
 #include <pthread.h>
