@@ -30,7 +30,6 @@ add_subdirectory(sampler)
 add_subdirectory(multiserver)
 add_subdirectory(apps)
 add_subdirectory(cinema)
-add_subdirectory(tests)
 
 
 

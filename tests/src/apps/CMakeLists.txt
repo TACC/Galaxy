@@ -18,7 +18,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.9)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
@@ -61,4 +61,4 @@ if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 
 endif(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 
-install(TARGETS ${BINS} DESTINATION bin)
+install(TARGETS ${BINS} DESTINATION tests/apps)

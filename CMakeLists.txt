@@ -67,6 +67,7 @@ set(GXY_PRODUCE_STATUS_MESSAGES OFF CACHE BOOL "produce periodic status massages
 set(GXY_REVERSE_LIGHTING ON CACHE BOOL "Use subtractive lighting model?")
 set(GXY_WRITE_IMAGES OFF CACHE BOOL "write image files rather than interactive display?")
 set(GXY_TIMING OFF CACHE BOOL "Generate timing statistics for the Galaxy Renderer")
+set(GXY_UNIT_TESTING OFF CACHE BOOL "Generate Galaxy unit testing framework")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -154,5 +155,8 @@ install(FILES "${CMAKE_BINARY_DIR}/${GALAXY_CONFIG}" "${CMAKE_BINARY_DIR}/${GALA
 
 add_subdirectory(scripts)
 add_subdirectory(src)
+if (GXY_UNIT_TESTING)
+  add_subdirectory(tests/src)
+endif(GXY_UNIT_TESTING)
 
 
