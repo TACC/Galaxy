@@ -56,8 +56,6 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
     raylist->GetFrame(), terminated_count) : NULL;
 
   Particle newsample;
-  int count = 0;
-  int numparticles = 11937;
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {
     if (classification[i] == Renderer::TERMINATED)
@@ -65,13 +63,12 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
       if (rendering->IsLocal())
       {
         // add a particle, setting position from ray
-        // newsample.xyz.x = raylist->get_ox(i);
-        // newsample.xyz.y = raylist->get_oy(i);
-        // newsample.xyz.z = raylist->get_oz(i);
-        count++;
-        newsample.xyz.x = (float)(rand() % 100)/100.0; 
-        newsample.xyz.y = (float)(rand() % 100)/100.0; 
-        newsample.xyz.z = (float)(rand() % 100)/100.0; 
+        newsample.xyz.x = raylist->get_ox(i) + raylist->get_t(i)*raylist->get_dx(i);
+        newsample.xyz.y = raylist->get_oy(i) + raylist->get_t(i)*raylist->get_dy(i);
+        newsample.xyz.z = raylist->get_oz(i) + raylist->get_t(i)*raylist->get_dz(i);
+        // newsample.xyz.x = (float)(rand() % 100)/100.0; 
+        // newsample.xyz.y = (float)(rand() % 100)/100.0; 
+        // newsample.xyz.z = (float)(rand() % 100)/100.0; 
         this->GetSamples()->push_back(newsample);
       }
       else
