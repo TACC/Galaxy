@@ -119,11 +119,18 @@ Renderer::initialize()
 
 	max_rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
 
+// If writing images, DO NOT set permute pixels sinnce this will reset the permutation table 
+// for each generate_pixels that share a camera
+
+#ifdef GXY_WRITE_IMAGES
+  SetPermutePixels(false);
+#else
   char *permute = getenv("GXY_PERMUTE_PIXELS");
   if (permute)
     SetPermutePixels(atoi(permute) > 0);
   else
     SetPermutePixels(true);
+#endif
 
   ospInit(0, NULL);
 }

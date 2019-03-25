@@ -108,6 +108,7 @@ Vis::SaveToJSON(Value& v, Document& doc)
 void
 Vis::SetTheOSPRayDataObject(OSPRayObjectP o)
 {
+  odata = o;
 	ispc::Vis_set_data(GetISPC(), o->GetOSP_IE());
 }
 

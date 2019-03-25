@@ -6,7 +6,12 @@ OParticles::OParticles(ParticlesP p)
 {
   particles = p;
 
-  OSPGeometry ospg = ospNewGeometry("spheres");
+  OSPGeometry ospg = ospNewGeometry("ddspheres");
+  if (! ospg) 
+  {
+    std::cerr << "Could not create ddspheres geometry!\n";
+    exit(1);
+  }
 
   int n_samples;
   Particle *samples;
@@ -18,7 +23,7 @@ OParticles::OParticles(ParticlesP p)
   ospSetData(ospg, "spheres", data);
   ospSet1f(ospg, "radius_scale", particles->GetRadiusScale());
   ospSet1f(ospg, "radius", particles->GetRadius());
-  ospSet1i(ospg, "offset_value", 12);
+  ospSet1i(ospg, "offset_datavalue", 12);
 
 #if 0
   srand(GetTheApplication()->GetRank());
@@ -31,12 +36,11 @@ OParticles::OParticles(ParticlesP p)
 
   float r, g, b, a;
   particles->GetDefaultColor(r, g, b, a);
-std::cerr << r <<  " " << g << " " << b << " " << a << " ";
+
   unsigned int color = ((unsigned char)(a * 255) << 24) | 
                        ((unsigned char)(b * 255) << 16) | 
                        ((unsigned char)(g * 255) <<  8) | 
                         (unsigned char)(r * 255);
-std::cerr << std::hex << color << "\n";
 
   unsigned int *colors = new unsigned int[n_samples];
   for (int i = 0; i < n_samples; i++)

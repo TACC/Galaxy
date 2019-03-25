@@ -56,6 +56,14 @@ public:
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
+  virtual void SetTheOSPRayDataObject(OSPRayObjectP o);
+
+  //! Set the transformation from data values to radius - linear between (v0,r0) and (v1,r1)
+  void SetRadiusTransform(float _v0, float _r0, float _v1, float _r1) { v0 = _v0; r0 = _r0; v1 = _v1; r1 = _r1;}
+
+  //! Get the transformation from data values to radius - linear between (v0,r0) and (v1,r1)
+  void GetRadiusTransform(float& _v0, float& _r0, float& _v1, float& _r1) { _v0 = v0; _r0 = r0; _v1 = v1; _r1 = r1;}
+
 protected:
 
 	virtual void initialize_ispc();
@@ -68,6 +76,8 @@ protected:
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
+
+  float v0, r0, v1, r1; // Map radius linearly between (v0,r0) and (v1,r1)
 };
 
 } // namespace gxy

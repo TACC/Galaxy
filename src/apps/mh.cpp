@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <cstdlib>
 #include <math.h>
+#include <dlfcn.h>
 
 #include <dtypes.h>
 #include <Application.h>
@@ -322,6 +323,12 @@ syntax(char *a)
   exit(1);
 }
 
+#if 0
+namespace gxy
+{
+extern void DDSpheres_Hello();
+};
+#endif
 
 int
 main(int argc, char * argv[])
@@ -330,7 +337,27 @@ main(int argc, char * argv[])
   char *dbgarg;
   bool dbg = false;
 
+#if 0
+  dbg = true;
+  std::cerr << getpid() << "\n";
+  while (dbg)
+    sleep(1);
+#endif
+
   ospInit(&argc, (const char **)argv);
+
+#if 0
+  DDSpheres_Hello();
+
+  {
+    void *foo = dlopen(NULL, RTLD_NOW | RTLD_GLOBAL);
+    void *s = dlsym(foo, "ospray_init_module_ispc");
+    if (s) std::cerr << "ospray_init_module_ispc OK\n"; else std::cerr << "ospray_init_module_ispc NOT FOUND\n";
+
+    s = dlsym(foo, "ospray_create_geometry__dspheres");
+    if (s) std::cerr << "ospray_create_geometry__dspheres OK\n"; else std::cerr << "ospray_create_geometry__dspheres NOT FOUND\n";
+  }
+#endif
 
   Application theApplication(&argc, &argv);
   theApplication.Start();

@@ -32,6 +32,8 @@ include_directories(${gxy_framework_SOURCE_DIR}
 link_directories(${Galaxy_BINARY_DIR}/src/data 
                  ${Galaxy_BINARY_DIR}/src/framework)
 
+include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+
 set (ISPC_SOURCES 
 )
 

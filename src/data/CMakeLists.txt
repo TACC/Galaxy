@@ -33,7 +33,7 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
-include_directories(${gxy_framework_SOURCE_DIR} ${gxy_data_SOURCE_DIR} ${Galaxy_BINARY_DIR}/src)
+include_directories(${GALAXY_INCLUDES} ${gxy_framework_SOURCE_DIR} ${gxy_data_SOURCE_DIR} ${Galaxy_BINARY_DIR}/src)
 
 set (CPP_SOURCES     
   Box.cpp

@@ -199,6 +199,7 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
 
     Key key = kdop->getkey();
 
+#if 0
     auto it = ospray_object_map.find(key);
     if (it == ospray_object_map.end())
     {
@@ -218,6 +219,19 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
     }
     else
       op = it->second;
+#else
+    if (Volume::IsA(kdop))
+      op = OSPRayObject::Cast(OVolume::NewP(Volume::Cast(kdop)));
+    else if (Particles::IsA(kdop))
+      op = OSPRayObject::Cast(OParticles::NewP(Particles::Cast(kdop)));
+    else if (Triangles::IsA(kdop))
+      op = OSPRayObject::Cast(OTriangles::NewP(Triangles::Cast(kdop)));
+    else
+    {
+      cerr << "huh?";
+      exit(1);
+    }
+#endif
 
     v->SetTheOSPRayDataObject(op);
     

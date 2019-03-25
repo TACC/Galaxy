@@ -24,7 +24,7 @@
 
 using namespace std;
 
-#include <ospray/ospray.h>
+// #include <ospray/ospray.h>
 
 #include <string.h>
 

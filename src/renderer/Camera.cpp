@@ -64,6 +64,7 @@ static int Xmax, Xmin, Ymax, Ymin;
 void
 generate_permutation(vector<int>& p, int num)
 {
+  std::cerr << "generate_permutation!\n";
   std::srand (unsigned(std::time(0)));
   p.clear();
   for (int i=1; i<num; ++i) p.push_back(i);
@@ -557,6 +558,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
   rendering->GetTheSize(width, height);
 
   check_env(renderer, width, height);
+
 
   permute = renderer->GetPermutePixels();
   if (permute && permutation.size() != width*height)
