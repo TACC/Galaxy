@@ -20,17 +20,17 @@
 
 #pragma once 
 
-/*! \file Sampler.h
-    \brief Initial class for ray-based sampling
-    \ingroup applications
-  
-    This is the initial class that abstracts the operation of galaxy from
-    ray-based renderer to ray-based sampler.
-  
-    At the moment the design is simply to take over some of the operations 
-    of the renderer and create samples instead of pixels. A more thorough
-    discussion will follow as the design is worked out.
-*/
+/*! 
+ *  This is the initial class that abstracts the operation of galaxy from
+ *  ray-based renderer to ray-based sampler.
+ *
+ *  At the moment the design is simply to take over some of the operations 
+ *  of the renderer and create samples instead of pixels. A more thorough
+ *  discussion will follow as the design is worked out.
+ *  \file Sampler.h
+ *  \brief Initial class for ray-based sampling
+ *  \ingroup applications
+ */
 
 #include <vector>
 
