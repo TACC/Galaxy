@@ -255,11 +255,10 @@ main(int argc, char * argv[])
     samples->SetDefaultColor(1.0, 0.5, 0.5, 1.0);
 #ifdef SAMPLE
     ParticlesP samrays = Particles::NewP();
-    samrays->SetRadius(4*radius);
+    samrays->SetRadius(0.1*radius);
     samrays->CopyPartitioning(volume);
-    samrays->SetDefaultColor(0.5, 1.0, 0.5, 1.0);
+    samrays->SetDefaultColor(0.5, 0.5, 0.5, 1.0);
 #endif // SAMPLE
-    std::cerr << "radius is " << radius << "\n";
 
     // define action to perform on volume (see SampleMsg above)
     SampleMsg *smsg = new SampleMsg(volume, samples);
@@ -271,7 +270,7 @@ main(int argc, char * argv[])
     // this creates samples in the Particles data structure above 
     theSampler->SetSamples(samrays);
     theSampler->Commit();
-    execute_sampler(theSampler);
+    // execute_sampler(theSampler);
 #endif // SAMPLE
 
     theRenderer->Commit();
@@ -357,7 +356,6 @@ main(int argc, char * argv[])
     theRenderingSet->Commit();
 
 #ifdef SAMPLE
-std::cerr << "SAMPLE\n";
     theSampler->Sample(theRenderingSet);
     theRenderingSet->WaitForDone();
 #endif // SAMPLE
@@ -381,14 +379,14 @@ std::cerr << "SAMPLE\n";
     theRenderingSet->Commit();
 
     theRenderer->Render(theRenderingSet);
-std::cerr << "RENDER\n";
 
 // #ifdef GXY_WRITE_IMAGES
-std::cerr << "WAIT\n";
     theRenderingSet->WaitForDone();
-std::cerr << "WAIT DONE\n";
     
 // #endif 
+    // print
+    int numsamples = theSampler->GetSamples()->get_n_samples();
+    std::cout << "num samples: " << numsamples << "\n";
 
     theRenderingSet->SaveImages(string("samples"));
 
