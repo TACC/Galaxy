@@ -169,11 +169,9 @@ will create a .VTI dataset (radial-0.vti - note that radial will create timestep
 
 will create radial-0-oneBall.vol, radial-0-eightBalls.vol and corresponding …raw files that actually contain the data as bricks of floats.
 
-### Batch Mode
+### Sample Galaxy State File
 
-Batch mode relies on a state file to define one or more visualizations and one or more cameras. 
-A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc.   
-The result of the state file is the cross product of the sets of visualizations and cameras: a rendering of each visualization from every camera will be produced.
+Galaxy uses a JSON state file format to describe data and visualization operations. We discuss a sample Galaxy configuraiton file below. For more details about Galaxy state files, see `docs/state_files.md`.
 
 The following is a state file that should work with the datasets we created above, and will result in six renderings: two visualizations rendered from each of the three cameras.
 
@@ -220,7 +218,7 @@ The following is a state file that should work with the datasets we created abov
                 [0.75,1.0,1.0,0.5],
                 [1.00,1.0,0.5,1.0]
                ],
-							"slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
+              "slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
               "opacitymap": [
                 [ 0.00, 0.05],
                 [ 0.20, 0.05],
@@ -237,7 +235,7 @@ The following is a state file that should work with the datasets we created abov
             {
               "type": "Volume",
               "dataset": "eightBalls",
-							"slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
+              "slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
               "volume rendering": true,
               "colormap": [
                 [0.00,1.0,0.5,0.5],
@@ -316,10 +314,29 @@ The Visualizations section is an array, where each element (a visualization) con
 ```
 
 Finally, the Cameras section is also an array, consisting of the cameras to be used.   Cameras are very simply specified.
+ 
+
+### Interactive Viewing
+
+Interactive mode, where images are displayed in a client viewer, is the default Galaxy CMake configuration (i.e. `GXY_WRITE_IMAGES` is off).
+
+A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc. The Galaxy viewer will use the first camera and visualization specified in the configuratin file. The Galaxy writer will produce images for the complete cross-product of cameras and visualizations (see below).
 
 If you cut’n’paste the complete state file above into a text file named radial.json in the test directory, you can run:
 
-`[mpirun mpiargs] vis [-s width height] radial.json`
+`[mpirun mpiargs] gxyviewer [-s width height] radial.json`
+
+
+### Batch Mode Image Writing
+
+Batch mode, where images are written to file without an interactive viewer, relies on a state file to define one or more visualizations and one or more cameras. Batch mode is activated by turning on `GXY_WRITE_IMAGES` in the Galaxy CMake configuration.
+
+A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc.   
+The result of the state file is the cross product of the sets of visualizations and cameras: a rendering of each visualization from every camera will be produced.
+
+If you cut’n’paste the complete state file above into a text file named radial.json in the test directory, you can run:
+
+`[mpirun mpiargs] gxywriter [-s width height] radial.json`
 
 You will produce three output .png files.   
 
@@ -403,7 +420,7 @@ Given such a cinema.json file, the included Python script cinema2state will expa
 
 which will create state.json and initialize cinema.cdb.  Following this, 
 
-`[mpirun mpiargs] state [-s width height] -C state.json`
+`[mpirun mpiargs] cinema [-s width height] -C state.json`
 
 will render the necessary images and deposit them into cinema.cdb.
 

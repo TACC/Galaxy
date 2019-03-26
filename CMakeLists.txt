@@ -65,7 +65,7 @@ set(GXY_EVENT_TRACKING OFF CACHE BOOL "Generate event log during render?")
 set(GXY_LOGGING OFF CACHE BOOL "Generate log messages in the Galaxy Renderer")
 set(GXY_PRODUCE_STATUS_MESSAGES OFF CACHE BOOL "produce periodic status massages?")
 set(GXY_REVERSE_LIGHTING ON CACHE BOOL "Use subtractive lighting model?")
-set(GXY_WRITE_IMAGES OFF CACHE BOOL "write image files rather than interactive display?")
+set(GXY_WRITE_IMAGES OFF CACHE BOOL "write image files rather than interactive display (\"batch mode\")?")
 set(GXY_TIMING OFF CACHE BOOL "Generate timing statistics for the Galaxy Renderer")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
