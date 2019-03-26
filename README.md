@@ -449,5 +449,5 @@ The following environment variables affect Galaxy behavior:
 [16]: http://rapidjson.org/
 [17]: https://cinemascience.org/
 [18]: https://www.python.org/
-[19]: 
+
 

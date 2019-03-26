@@ -31,7 +31,7 @@
 #include <pthread.h>
 
 #include "Socket.h"
-#include "async.h"
+#include "gxyviewer.h"
 #include "Pixel.h"
 #include "ImageWriter.h"
 
@@ -46,7 +46,7 @@ int mpiRank = 0, mpiSize = 1;
 #define HEIGHT 500
 int width = WIDTH, height = HEIGHT;
 
-ImageWriter image_writer("async_client");
+ImageWriter image_writer("gxyviewer-client");
 
 static pthread_mutex_t buffer_lock = PTHREAD_MUTEX_INITIALIZER;
 

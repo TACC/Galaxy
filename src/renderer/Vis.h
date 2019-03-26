@@ -62,12 +62,12 @@ public:
     //! return a pointer to the KeyedDataObject data that this Vis targets
     KeyedDataObjectP GetTheData() { return data; }
 
-    //! set the KeyedDataObject data that this Vis should target
+    //! set the KeyedDataObject data that this Vis should target.
     void SetTheData( KeyedDataObjectP d ) { data = d; }
 
-    //! set the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.
+    //! set the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.   This is the opportunity to set any Vis options on the OSPRay object itself.
     //! 
-    void SetTheOSPRayDataObject(OSPRayObjectP o);
+    virtual void SetTheOSPRayDataObject(OSPRayObjectP o);
 
     //! construct a Vis from a Galaxy JSON specification
     virtual bool LoadFromJSON(rapidjson::Value&);
@@ -92,6 +92,7 @@ protected:
     std::string name;
     Key datakey;
     KeyedDataObjectP data;
+    OSPRayObjectP    odata;
 };
 
 } // namespace gxy

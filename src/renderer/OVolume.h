@@ -13,6 +13,7 @@ class OVolume : public OSPRayObject
 
 public:
   static OVolumeP NewP(VolumeP p) { return OVolume::Cast(std::shared_ptr<OVolume>(new OVolume(p))); }
+  ~OVolume() { std::cerr << "OVolume dtor\n"; }
 
 private:
   OVolume(VolumeP);

@@ -26,12 +26,13 @@ include_directories(${gxy_framework_SOURCE_DIR}
 									  ${gxy_data_SOURCE_DIR}
 									  ${Galaxy_BINARY_DIR}/src)
 
-set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
+set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${MPI_C_LIBRARIES})
 
 set(BINS "")
 set(SERVERS "")
 set(LIBS "")
 
+include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 include_directories(${GLUT_INCLUDE_DIR})
 
 add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerHandler.cpp MultiServerObject.cpp SocketHandler.cpp DynamicLibraryManager.cpp)

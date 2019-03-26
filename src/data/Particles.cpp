@@ -399,6 +399,7 @@ Particles::local_import(char *p, MPI_Comm c)
 
 	samples.clear();
 
+#if 0
   ifstream ifs(json);
   if (! ifs)
   {
@@ -406,6 +407,7 @@ Particles::local_import(char *p, MPI_Comm c)
     set_error(1);
     return false;
   }
+#endif
  
   Document doc;
   if (doc.Parse<0>(json.c_str()).HasParseError() || !get_partitioning(doc))

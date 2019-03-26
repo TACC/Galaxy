@@ -87,7 +87,6 @@ public:
 	//! save this Camera to a Galaxy JSON specification 
 	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
-	// virtual bool local_commit(MPI_Comm);
 	//! set the spatial location for this camera
 	void set_viewpoint(float x, float y, float z) { eye[0] = x; eye[1] = y; eye[2] = z; }
 	//! set the spatial location for this camera

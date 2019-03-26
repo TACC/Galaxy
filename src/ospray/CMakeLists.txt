@@ -20,7 +20,7 @@
 
 cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
-project (gxy_renderer VERSION ${GALAXY_VERSION})
+project (gxy_ospray VERSION ${GALAXY_VERSION})
 
 if (COMMAND cmake_policy)
   # use rpath on MacOS
@@ -33,77 +33,24 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
-find_library(PNG_LIBRARY_RELEASE png)
 
-include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
-include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
+set(OSPRAY_SOURCEDIR ${Galaxy_SOURCE_DIR}/third-party/ospray CACHE STRING "root of OSPRAY source tree")
+include_directories_ispc(${EMBREE_INCLUDE_DIRS} 
+                         ${OSPRAY_INCLUDE_DIR}/ospray
+                         ${OSPRAY_SOURCEDIR}
+                         ${OSPRAY_SOURCEDIR}/ospray
+                         ${OSPRAY_SOURCEDIR}/ospray/include)
 
-include_directories(${gxy_framework_SOURCE_DIR}
-										${gxy_renderer_SOURCE_DIR}
-										${gxy_data_SOURCE_DIR}
-										${gxy_data_BINARY_DIR}
-                    ${Galaxy_BINARY_DIR}/src)
+include_directories(${OSPRAY_INCLUDE_DIRS}
+                    ${EMBREE_INCLUDE_DIRS}
+                    ${OSPRAY_SOURCEDIR}/install/include/ospray/SDK/geometry)
 
-link_directories(${Galaxy_BINARY_DIR}/src/ospray
-                 ${Galaxy_BINARY_DIR}/src/data 
-                 ${Galaxy_BINARY_DIR}/src/framework)
-
-set (ISPC_SOURCES 
-  ISPCObject.ispc
- 	MappedVis.ispc
-	Rays.ispc
-	TrianglesVis.ispc
-  Visualization.ispc
-  Lighting.ispc
-	ParticlesVis.ispc
-  TraceRays.ispc
-	Vis.ispc
-	VolumeVis.ispc
-  Rays.ispc
-  TraceRays.ispc)
-
-set (CPP_SOURCES 
-  mypng.cpp
-  Camera.cpp 
-  ISPCObject.cpp
-  Lighting.cpp
-  MappedVis.cpp
-  OSPRayObject.cpp
-  OTriangles.cpp
-  OParticles.cpp
-  OVolume.cpp
-  OSPUtil.cpp
-  ParticlesVis.cpp
-  RayQManager.cpp
-  Rays.cpp 
-  Renderer.cpp
-  Rendering.cpp 
-  RenderingEvents.cpp
-  RenderingSet.cpp 
-  TraceRays.cpp
-  TrianglesVis.cpp
-  Vis.cpp
-  Visualization.cpp
-  VolumeVis.cpp)
+set (ISPC_SOURCES DataDrivenSpheres.ispc)
+set (CPP_SOURCES DataDrivenSpheres.cpp)
 
 if (ospray_DIR)
-  ospray_create_library(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} COMPONENT lib)
-  set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  # install(TARGETS gxy_renderer DESTINATION lib)
+  ospray_create_library(gxy_ospray ${CPP_SOURCES} ${ISPC_SOURCES} 
+    LINK ${OSPRAY_LIBRARIES} COMPONENT lib)
+  set_target_properties(gxy_ospray PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 endif()
 
-install(FILES 
-  Camera.h 
-  ImageWriter.h 
-  Lighting.h
-  Pixel.h 
-  RayQManager.h 
-  Rays.h 
-  render.h
-  Renderer.h
-  Rendering.h 
-  RenderingSet.h 
-  TraceRays.h 
-  DESTINATION include/gxy)
- 

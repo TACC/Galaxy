@@ -36,7 +36,7 @@ int mpiRank, mpiSize;
 
 #include "Debug.h"
 
-#include "async.h"
+#include "gxyviewer.h"
 #include "trackball.hpp"
 
 using namespace gxy;

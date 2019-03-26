@@ -27,7 +27,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <ospray/ospray.h>
+// #include <ospray/ospray.h>
 
 #include "galaxy.h"
 

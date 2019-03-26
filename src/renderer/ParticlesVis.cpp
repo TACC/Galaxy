@@ -46,6 +46,11 @@ void
 ParticlesVis::initialize()
 {
   super::initialize();
+
+  r0 = -1.0;
+  r1 =  1.0;
+  v0 =  0.0;
+  v1 =  1.0;
 }
 
 void
@@ -85,6 +90,11 @@ ParticlesVis::deserialize(unsigned char *ptr)
 bool 
 ParticlesVis::LoadFromJSON(Value& v)
 {
+  if (v.HasMember("radius0")) r0 = v["radius0"].GetDouble();
+  if (v.HasMember("radius1")) r1 = v["radius1"].GetDouble();
+  if (v.HasMember("value0"))  v0 = v["value0"].GetDouble();
+  if (v.HasMember("value1"))  v1 = v["value1"].GetDouble();
+
   return super::LoadFromJSON(v);
 }
 
@@ -109,5 +119,17 @@ ParticlesVis::local_commit(MPI_Comm c)
 	return super::local_commit(c);
 }
 
+void
+ParticlesVis::SetTheOSPRayDataObject(OSPRayObjectP o)
+{
+  super::SetTheOSPRayDataObject(o);
+
+  ospSet1f(o->GetOSP(), "value0", v0);
+  ospSet1f(o->GetOSP(), "radius0", r0);
+
+  ospSet1f(o->GetOSP(), "value1", v1);
+  ospSet1f(o->GetOSP(), "radius1", r1);
+}
+ 
 } // namespace gxy
 

@@ -46,7 +46,7 @@
 
 #include "trackball.hpp"
 
-#include <ospray/ospray.h>
+// #include <ospray/ospray.h>
 
 using namespace gxy;
 using namespace std;
