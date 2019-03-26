@@ -27,7 +27,7 @@
 #include <pthread.h>
 
 #include "Socket.h"
-#include "async.h"
+#include "gxyviewer.h"
 
 #include "Pixel.h"
 #include "ImageWriter.h"
@@ -50,7 +50,7 @@ pthread_t 	 receiver_tid;
 
 Socket *skt;
 
-ImageWriter image_writer("async-client-no-x");
+ImageWriter image_writer("gxyviewer-client-no-x");
 void save_image();
 
 void SendDebug()

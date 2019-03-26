@@ -305,6 +305,7 @@ WORK_CLASS_TYPE(SampleMsg)
 void
 syntax(char *a)
 {
+  cerr << "image writer for Metropolis-Hastings sampling" << endl;
   cerr << "syntax: " << a << " [options] data" << endl;
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;

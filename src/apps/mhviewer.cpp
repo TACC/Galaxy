@@ -37,7 +37,7 @@
 #include "AsyncRendering.h"
 #include "MHSampleMsg.h"
 #include "trackball.hpp"
-#include "async.h"
+#include "gxyviewer.h"
 
 #include <ospray/ospray.h>
 
@@ -80,7 +80,7 @@ char **pargv;
 string statefile("");
 string volfile("");
 
-ImageWriter image_writer("async");
+ImageWriter image_writer("gyxviewer");
 
 AsyncRenderingP	theRendering = NULL;
 RenderingSetP 	theRenderingSet = NULL;
@@ -499,6 +499,7 @@ render_thread(void *d)
 void
 syntax(char *a)
 {
+  cerr << "asynchronous viewer for Metropolis-Hastings sampling" << endl;
   cerr << "syntax: " << a << endl;
   cerr << "options:" << endl;
 	cerr << "  -J json          state file to get renderer and camera info (required)" << endl;

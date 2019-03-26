@@ -88,7 +88,7 @@ fi
 GXY_BIN=${GXY_ROOT}/install/bin
 GXY_RADIAL=${GXY_BIN}/radial
 GXY_VTI2VOL=${GXY_BIN}/vti2vol
-GXY_IMAGE_WRITER=${GXY_BIN}/vis
+GXY_IMAGE_WRITER=${GXY_BIN}/gxywriter
 GXY_ENV=${GXY_ROOT}/install/galaxy.env
 PERCEPTUAL_DIFF=`which perceptualdiff`
 

@@ -7,6 +7,10 @@
 * Added `ospray` modules for ...
 * Separated data-generation and data-management tools into `data` from `apps`
 * Added unit testing framework
+* Renamed `async` app and associated source to `gxyviewer`
+* Renamed `vis` app and associated source to `gxywriter`
+* Renamed `mh` app and associated source to `mhwriter` 
+* Renamed `amh` app and associated source to `mhviewer`
 
 ## version 0.2.1 - 20190325
 

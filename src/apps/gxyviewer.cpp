@@ -36,7 +36,7 @@
 #include "Renderer.h"
 #include "AsyncRendering.h"
 #include "trackball.hpp"
-#include "async.h"
+#include "gxyviewer.h"
 
 #include <ospray/ospray.h>
 
@@ -68,7 +68,7 @@ char **pargv;
 
 string statefile("");
 
-ImageWriter image_writer("async");
+ImageWriter image_writer("gxyviewer");
 
 AsyncRenderingP	theRendering = NULL;
 RenderingSetP 	theRenderingSet = NULL;
@@ -288,7 +288,7 @@ glut_loop()
   glutInit(pargc, pargv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
   glutInitWindowSize(width, height);
-  glutCreateWindow("render");
+  glutCreateWindow("gxyviewer");
   glutIdleFunc(draw);
   glutDisplayFunc(draw);
   glutMotionFunc(motionfunc);
