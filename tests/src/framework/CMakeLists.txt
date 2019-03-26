@@ -18,18 +18,17 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
+cmake_minimum_required (VERSION 3.9)
 
-project(gxy_unit_tests VERSION ${GALAXY_VERSION})
+include_directories(${gxy_framework_SOURCE_DIR}
+										${gxy_unit_tests_SOURCE_DIR}/framework
+										)
 
-include_directories(${gxy_unit_tests_SOURCE_DIR})
+set(GALAXY_LIBRARIES gxy_framework ${MPI_C_LIBRARIES})
+set(BINS "")
 
-add_subdirectory(framework)
-# add_subdirectory(data)
-# add_subdirectory(renderer)
-# add_subdirectory(sampler)
-# add_subdirectory(multiserver)
-add_subdirectory(apps)
-# add_subdirectory(cinema)
+add_executable(testApplication Application.cpp)
+target_link_libraries(testApplication ${GALAXY_LIBRARIES})
+set(BINS testApplication ${BINS})
 
-
+install(TARGETS ${BINS} DESTINATION tests/framework)
