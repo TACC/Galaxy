@@ -44,10 +44,10 @@ namespace gxy
 	class UnitTest {
 	public:
 		UnitTest() //!< default constructor
-			: warnings(0), errors(0), name(std::string(""))
+			: warnings_(0), errors_(0), name_(std::string(""))
 		{}
 		UnitTest(std::string testname) //!< named constructor
-			: warnings(0), errors(0), name(testname)
+			: warnings_(0), errors_(0), name_(testname)
 		{}
 		~UnitTest() //!< default destructor
 		{}
@@ -56,8 +56,8 @@ namespace gxy
 		/*! 
 		 * \param s output stream target for message (default stdout)
 		 */
-		void start(std::ostream s = std::cout)
-		{ s << "GXY:  starting unit test " << name << "\n"; }
+		void start(std::ostream& s = std::cout)
+		{ s << "GXY:  starting unit test " << name_ << "\n"; }
 
 		//! write a test update message to the specified output stream
 		/*! 
@@ -65,12 +65,12 @@ namespace gxy
 		 * \param doneness optional progress percentage for unit test (range [0,1])
 		 * \param s output stream target for message (default stdout)
 		 */
-		void update(std::string message = std::string(""), float doneness = 0.f,  std::ostream s = std::cout)
+		void update(std::string message = std::string(""), float doneness = 0.f,  std::ostream& s = std::cout)
 		{ 
 			s << "GXY:      "; 
-			s << "<" << name << "> "; 
+			s << "<" << name_ << "> "; 
 			s << message;
-			if (doneness > 0.f) { int d=doneness/100; s << " (" << d << "%)"}
+			if (doneness > 0.f) { int d=doneness/100; s << " (" << d << "%)"; }
 			s << "\n";
 		}
 
@@ -78,19 +78,19 @@ namespace gxy
 		/*! The message includes the number of warnings and errors written
 		 * \param s output stream target for message (default stdout)
 		 */
-		void finish(std::ostream s = std::cout)
-		{ s << "GXY:  finished unit test " << name << "( " << warnings << " W / " << errors << " E )\n"; }
+		void finish(std::ostream& s = std::cout)
+		{ s << "GXY:  finished unit test " << name_ << "( " << warnings_ << " W / " << errors_ << " E )\n"; }
 
 		//! write a test warning message to the specified output stream
 		/*! 
 		 * \param message optional message text
 		 * \param s output stream target for message (default stdout)
 		 */
-		void warning(std::string message = std::string(""), std::ostream s = std::cout)
+		void warning(std::string message = std::string(""), std::ostream& s = std::cout)
 		{
-			warnings++;
+			warnings_++;
 			s << "GXY: ~~~~ WARNING "; 
-			s << "<" << name << "> ";   
+			s << "<" << name_ << "> ";   
 			s << message;
 			s << "\n";
 		}
@@ -100,34 +100,34 @@ namespace gxy
 		 * \param message optional message text
 		 * \param s output stream target for message (default stdout)
 		 */
-		void error(std::string message = std::string(""), std::ostream s = std::cout)
+		void error(std::string message = std::string(""), std::ostream& s = std::cout)
 		{
-			errors++;
+			errors_++;
 			s << "GXY: **** ERROR "; 
-			s << "<" << name << "> ";  
+			s << "<" << name_ << "> ";  
 			s << message;
 			s << "\n"; 
 		}
 
 		//! reset the warning and error counts for this UnitTest
 		void reset()
-		{ warnings = 0; errors = 0; }
+		{ warnings_ = 0; errors_ = 0; }
 
 		//! returns the number of warnings written
 		int warnings()
-		{ return warnings; }
+		{ return warnings_; }
 
 		//! returns the number of errors written
 		int errors()
-		{ return errors; }
+		{ return errors_; }
 
 		//! returns the name of this UnitTest
 		std::string name()
-		{ return name; }
+		{ return name_; }
 
 	protected:
-		int warnings;
-		int errors;
-		std::string name;
-	}
+		int warnings_;
+		int errors_;
+		std::string name_;
+	};
 }

@@ -22,13 +22,14 @@ cmake_minimum_required (VERSION 3.9)
 
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_unit_tests_SOURCE_DIR}/framework
+										${Galaxy_BINARY_DIR}/src
 										)
 
 set(GALAXY_LIBRARIES gxy_framework ${MPI_C_LIBRARIES})
 set(BINS "")
 
-add_executable(testApplication Application.cpp)
-target_link_libraries(testApplication ${GALAXY_LIBRARIES})
-set(BINS testApplication ${BINS})
+add_executable(gxytest-framework-Application Application.cpp)
+target_link_libraries(gxytest-framework-Application  ${GALAXY_LIBRARIES})
+set(BINS gxytest-framework-Application ${BINS})
 
 install(TARGETS ${BINS} DESTINATION tests/framework)

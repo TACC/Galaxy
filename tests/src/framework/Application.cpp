@@ -74,4 +74,6 @@ int main(int argc, char * argv[])
 	theApplication.Wait();
 
 	test.finish();
+
+	return test.errors();
 }
