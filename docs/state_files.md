@@ -1,6 +1,6 @@
-# Galaxy Configuration Files
+# Galaxy  State Files
 
-Galaxy uses JSON files to represent its configuration state. State files are currently used to initialize Galaxy when rendering, both for the interactive viewer and for creating [Cinema][1] image databases. Galaxy also supports a special `.cinema` JSON specification for creating a state file for Cinema use.
+Galaxy uses JSON files to serialize its state. State files are currently used to initialize Galaxy when rendering, both for the interactive viewer and for creating [Cinema][1] image databases. Galaxy also supports a special `.cinema` JSON specification for creating a state file for Cinema use.
 
 ## Galaxy State Files
 ### Supported Data Types
