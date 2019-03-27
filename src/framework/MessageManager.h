@@ -30,7 +30,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 
-#include "Application.h"
+// #include "Application.h"
 #include "Message.h"
 #include "MessageQ.h"
 
