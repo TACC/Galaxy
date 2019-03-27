@@ -18,13 +18,13 @@
 //                                                                            //
 // ========================================================================== //
 
-/*! \file Application.cpp 
- * \brief unit tests for framework Application class
+/*! \file Timer.cpp 
+ * \brief unit tests for framework Timer class
  * \ingroup unittest
  */
 
 
-#include "Application.h"
+#include "Timer.h"
 #include "UnitTest.h"
 
 #include <cstring>
@@ -37,7 +37,7 @@ using namespace std;
 void
 syntax(char *a)
 {
-  cerr << "unit tests for framework/Application" << endl;
+  cerr << "unit tests for framework/Timer" << endl;
   cerr << "syntax: " << a << " [options] " << endl;
   cerr << "options:" << endl;
   cerr << "  -h, --help       this message" << endl;
@@ -45,7 +45,7 @@ syntax(char *a)
   exit(1);
 }
 
-/*! unit tests for src/framework/Application */
+/*! unit tests for src/framework/Timer */
 int main(int argc, char * argv[])
 {
 	bool warn_as_errors = false;
@@ -55,41 +55,10 @@ int main(int argc, char * argv[])
 		if (!strcmp(argv[i], "-w")) { warn_as_errors = true; }
 	}
 
-	UnitTest test("framework/Application");
+	UnitTest test("framework/Timer");
 	test.start();
 
-	Application theApplication(&argc, &argv);
-	test.update("allocated Application object");
-
-	theApplication.Start();
-	test.update("started Application");
-
-	int mpiRank = -1;
-	int mpiSize = -1;
-	stringstream message;
-	mpiRank = theApplication.GetRank();
-	mpiSize = theApplication.GetSize();
-	message << "received MPI rank " << mpiRank << " and MPI size " << mpiSize;
-	if (mpiRank < 0 || mpiSize < 0 || mpiRank >= mpiSize) 
-	{
-		test.error(message.str());
-	}
-	else 
-	{
-		test.update(message.str());
-	}
-
-	test.update("running Application");
-	theApplication.Run();
-
-	if (mpiRank == 0)
-	{
-		test.update("rank 0 quitting Application");
-		theApplication.QuitApplication();
-	}
-
-	test.update("waiting for quit acks");
-	theApplication.Wait();
+	// TODO: add unit tests
 
 	test.finish();
 
