@@ -79,7 +79,7 @@ namespace gxy
 		 * \param s output stream target for message (default stdout)
 		 */
 		void finish(std::ostream& s = std::cout)
-		{ s << "GXY:  finished unit test " << name_ << "( " << warnings_ << " W / " << errors_ << " E )\n"; }
+		{ s << "GXY:  finished unit test " << name_ << " ( " << warnings_ << " W / " << errors_ << " E )\n"; }
 
 		//! write a test warning message to the specified output stream
 		/*! 
