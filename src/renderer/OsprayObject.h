@@ -18,23 +18,45 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ISPCObject.ih"
+#pragma once
 
-export void *uniform ISPCObject_allocate()
+/*! \file OsprayObject.h 
+ * \brief base class for data objects that will be passed to OSPRay
+ * \ingroup renderer
+ */
+
+#include <ospray/ospray.h>
+
+#include "GalaxyObject.h"
+#include "OsprayUtil.h"
+
+namespace gxy
 {
-  ISPCObject_ispc *uniform o = uniform new uniform ISPCObject_ispc;
-  return (void *)o;
-}
-
-export void* uniform ISPCObject_initialize(void *uniform _self)
-{
-  ISPCObject_ispc *uniform self = (uniform ISPCObject_ispc *)_self;
-  self->foo = 0;
- }
-
-export void ISPCObject_destroy(void *uniform self)
-{
-  delete self;
-}
-
 	
+OBJECT_POINTER_TYPES(OsprayObject)
+
+//! base class for data objects that will be passed to OSPRay 
+/*! Galaxy utilizes the Intel OSPRay ray tracing engine. 
+ * This class serves as a base for Galaxy data objects to ease OSPRay integration.
+ * \ingroup data
+ * \sa GalaxyObject
+ */
+class OsprayObject : public GalaxyObject
+{
+  GALAXY_OBJECT(OsprayObject)
+
+public:
+  OsprayObject();
+	virtual ~OsprayObject(); //!< default destructor
+
+	//! get the OSPRay representation of this object
+	OSPObject GetOSP() { return theOSPRayObject; }
+
+	//! get the ISPC-based OSPRay representation of this object
+	void      *GetOSP_IE() { return ospray_util::GetIE((void *)theOSPRayObject); }
+
+protected:
+	OSPObject theOSPRayObject;
+};
+
+} // namespace gxy

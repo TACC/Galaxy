@@ -22,7 +22,7 @@
 
 /*! \file TrianglesVis.h 
  * \brief a visualization element operating on a triangle (tessellated) dataset within Galaxy
- * \ingroup data
+ * \ingroup render
  */
 
 #include "Application.h"
@@ -38,8 +38,8 @@ namespace gxy
 OBJECT_POINTER_TYPES(TrianglesVis)
 
 //! a visualization element operating on a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
+/* \ingroup render 
+ * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
 class TrianglesVis : public Vis
 {

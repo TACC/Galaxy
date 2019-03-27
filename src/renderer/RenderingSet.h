@@ -31,7 +31,7 @@
 #include <map>
 
 #include "KeyedObject.h"
-#include "OSPRayObject.h"
+#include "OsprayObject.h"
 #include "Datasets.h"
 #include "Rays.h"
 #include "Work.h"
@@ -265,7 +265,7 @@ public:
 private:
 
   DatasetsP datasets;
-  std::map<Key, OSPRayObjectP> ospray_object_map;
+  std::map<Key, OsprayObjectP> ospray_object_map;
 
 	int current_frame;
 	int next_frame;

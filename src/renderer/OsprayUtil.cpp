@@ -18,25 +18,20 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "OsprayUtil.h"
 
-/*! \file data.h
- *  \brief A convenience header to include all Galaxy data headers.
- */
+#include <ospray/SDK/common/Managed.h>
+#include <ospray/SDK/api/Device.h>
 
-/*! \defgroup data Data 
- * \brief all classes for Galaxy's supported data types and data operations (filters)
- */
-
-#include "AmrVolume.h"
-#include "Box.h"
-#include "DataObjects.h"
-#include "Datasets.h"
-#include "Geometry.h"
-#include "ImageWriter.h"
-#include "KeyedDataObject.h"
-#include "Particles.h"
-#include "Triangles.h"
-#include "Volume.h"
-#include "vtkerror.h"
-
+namespace gxy
+{
+namespace ospray_util
+{
+	void *
+	GetIE(void *a)
+	{
+		ospray::ManagedObject *b = (ospray::ManagedObject *)a;
+		return (void *)b->getIE();
+	}
+} // namespace ospray_util
+} // namespace gxy

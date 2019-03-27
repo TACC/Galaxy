@@ -18,25 +18,24 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
-
-/*! \file data.h
- *  \brief A convenience header to include all Galaxy data headers.
- */
-
-/*! \defgroup data Data 
- * \brief all classes for Galaxy's supported data types and data operations (filters)
- */
-
-#include "AmrVolume.h"
-#include "Box.h"
-#include "DataObjects.h"
-#include "Datasets.h"
+#include "OsprayObject.h"
 #include "Geometry.h"
-#include "ImageWriter.h"
-#include "KeyedDataObject.h"
-#include "Particles.h"
-#include "Triangles.h"
 #include "Volume.h"
-#include "vtkerror.h"
 
+namespace gxy
+{
+
+OBJECT_CLASS_TYPE(OsprayObject)
+
+OsprayObject::OsprayObject()
+{
+	theOSPRayObject = NULL;
+}
+
+OsprayObject::~OsprayObject()
+{
+	if (theOSPRayObject)
+		ospRelease((OSPObject)theOSPRayObject);
+}
+
+} // namespace gxy

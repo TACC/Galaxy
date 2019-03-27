@@ -28,10 +28,10 @@
 
 #include <ospray/ospray.h>
 
-#include "OVolume.h"
-#include "OParticles.h"
-#include "OTriangles.h"
-#include "OSPUtil.h"
+#include "OsprayVolume.h"
+#include "OsprayParticles.h"
+#include "OsprayTriangles.h"
+#include "OsprayUtil.h"
 
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
@@ -74,7 +74,7 @@ Visualization::allocate_ispc()
 void 
 Visualization::initialize_ispc()
 {
-  ispc::Visualization_initialize(GetISPC());
+  ispc::Visualization_initialize(GetIspc());
 }
 
 bool
@@ -174,7 +174,7 @@ Visualization::local_commit(MPI_Comm c)
 }
 
 void
-Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
+Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 {
   if (! ispc)
 	{
@@ -194,7 +194,7 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
 
   for (auto v : vis)
   {
-    OSPRayObjectP op;
+    OsprayObjectP op;
     KeyedDataObjectP kdop = v->GetTheData();
 
     Key key = kdop->getkey();
@@ -204,11 +204,11 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
     if (it == ospray_object_map.end())
     {
       if (Volume::IsA(kdop))
-        op = OSPRayObject::Cast(OVolume::NewP(Volume::Cast(kdop)));
+        op = OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
       else if (Particles::IsA(kdop))
-        op = OSPRayObject::Cast(OParticles::NewP(Particles::Cast(kdop)));
+        op = OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
       else if (Triangles::IsA(kdop))
-        op = OSPRayObject::Cast(OTriangles::NewP(Triangles::Cast(kdop)));
+        op = OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
       else
       {
         cerr << "huh?";
@@ -221,22 +221,22 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
       op = it->second;
 #else
     if (Volume::IsA(kdop))
-      op = OSPRayObject::Cast(OVolume::NewP(Volume::Cast(kdop)));
+      op = OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
     else if (Particles::IsA(kdop))
-      op = OSPRayObject::Cast(OParticles::NewP(Particles::Cast(kdop)));
+      op = OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
     else if (Triangles::IsA(kdop))
-      op = OSPRayObject::Cast(OTriangles::NewP(Triangles::Cast(kdop)));
+      op = OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
     else
     {
-      cerr << "huh?";
+      cerr << "unknown OsprayObject detected in Visualization";
       exit(1);
     }
 #endif
 
-    v->SetTheOSPRayDataObject(op);
+    v->SetTheOsprayDataObject(op);
     
-    if (OVolume::IsA(op))
-      vispc[nvispc++] = v->GetISPC();
+    if (OsprayVolume::IsA(op))
+      vispc[nvispc++] = v->GetIspc();
     else if (ParticlesVis::IsA(v))
     {
       if (! ospModel)
@@ -244,14 +244,14 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
     }
     else
-      mispc[nmispc++] = v->GetISPC();
+      mispc[nmispc++] = v->GetIspc();
   }
 
   if (ospModel)
     ospCommit(ospModel);
    
   ispc::Visualization_commit(ispc, 
-          ospModel ? osp_util::GetIE(ospModel) : NULL,
+          ospModel ? ospray_util::GetIE(ospModel) : NULL,
           nvispc, vispc,
           nmispc, mispc,
           global_box.get_min(), global_box.get_max(),

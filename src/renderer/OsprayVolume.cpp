@@ -18,45 +18,36 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "OsprayVolume.h"
 
-/*! \file OSPRayObject.h 
- * \brief base class for data objects that will be passed to OSPRay
- * \ingroup data
- */
+using namespace gxy;
 
-#include <ospray/ospray.h>
-
-#include "GalaxyObject.h"
-#include "OSPUtil.h"
-
-namespace gxy
+OsprayVolume::OsprayVolume(VolumeP v)
 {
-	
-OBJECT_POINTER_TYPES(OSPRayObject)
+  volume = v;
 
-//! base class for data objects that will be passed to OSPRay 
-/*! Galaxy utilizes the Intel OSPRay ray tracing engine. 
- * This class serves as a base for Galaxy data objects to ease OSPRay integration.
- * \ingroup data
- * \sa GalaxyObject
- */
-class OSPRayObject : public GalaxyObject
-{
-  GALAXY_OBJECT(OSPRayObject)
+  OSPVolume ospv = ospNewVolume("shared_structured_volume");
+  
+  osp::vec3i counts;
+  volume->get_ghosted_local_counts(counts.x, counts.y, counts.z);
 
-public:
-  OSPRayObject();
-	virtual ~OSPRayObject(); //!< default destructor
-
-	//! get the OSPRay representation of this object
-	OSPObject GetOSP() { return theOSPRayObject; }
-
-	//! get the ISPC-based OSPRay representation of this object
-	void      *GetOSP_IE() { return osp_util::GetIE((void *)theOSPRayObject); }
-
-protected:
-	OSPObject theOSPRayObject;
-};
-
-} // namespace gxy
+  osp::vec3f origin, spacing;
+  volume->get_ghosted_local_origin(origin.x, origin.y, origin.z);
+  volume->get_deltas(spacing.x, spacing.y, spacing.z);
+  
+  OSPData data = ospNewData(counts.x*counts.y*counts.z, 
+    volume->isFloat() ? OSP_FLOAT : OSP_UCHAR, (void *)volume->get_samples(), OSP_DATA_SHARED_BUFFER);
+  ospCommit(data);
+  
+  ospSetObject(ospv, "voxelData", data);
+  ospSetVec3i(ospv, "dimensions", counts);
+  ospSetVec3f(ospv, "gridOrigin", origin);
+  ospSetVec3f(ospv, "gridSpacing", spacing);
+  ospSetString(ospv, "voxelType", volume->isFloat() ? "float" : "uchar");
+  ospSetObject(ospv, "transferFunction", ospNewTransferFunction("piecewise_linear"));
+  ospSetf(ospv, "samplingRate", 1.0);
+  
+  ospCommit(ospv);
+  
+  theOSPRayObject = ospv;
+}

@@ -21,8 +21,8 @@
 #pragma once
 
 /*! \file dtypes.h 
- * \brief useful datatypes used by Galaxy rendering components
- * \ingroup render
+ * \brief useful datatypes used by Galaxy components
+ * \ingroup data
  */
 
 #include <math.h>
@@ -31,7 +31,7 @@ namespace gxy
 {
 
 //! a vector of two floats
-/*! \ingroup render */
+/*! \ingroup data */
 struct vec2f { 
 	vec2f() {};
 	vec2f(float X, float Y) : x(X), y(Y) {};
@@ -42,7 +42,7 @@ struct vec2f {
 };
 
 //! a vector of two integers
-/*! \ingroup render */
+/*! \ingroup data */
 struct vec2i { 
 	vec2i() {};
 	vec2i(int X, int Y) : x(X), y(Y) {};
@@ -53,7 +53,7 @@ struct vec2i {
 };
 
 //! a vector of three floats
-/*! \ingroup render */
+/*! \ingroup data */
 struct vec3f { 
 	vec3f() {};
 	vec3f(float X, float Y, float Z) : x(X), y(Y), z(Z) {};
@@ -68,7 +68,7 @@ struct vec3f {
 };
 
 //! a vector of three integers
-/*! \ingroup render */
+/*! \ingroup data */
 struct vec3i {
 	vec3i() {};
 	vec3i(int X, int Y, int Z) : x(X), y(Y), z(Z) {};
@@ -79,7 +79,7 @@ struct vec3i {
 };
 
 //! a vector of four floats
-/*! \ingroup render */
+/*! \ingroup data */
 struct vec4f {
 	vec4f() {};
 	vec4f(float X, float Y, float Z, float W) : x(X), y(Y), z(Z), w(W) {};
@@ -90,7 +90,7 @@ struct vec4f {
 };
 
 //! a vector of four integers
-/*! \ingroup render */
+/*! \ingroup data */
 struct vec4i {
 	vec4i() {};
 	vec4i(int X, int Y, int Z, int W) : x(X), y(Y), z(Z), w(W) {};
@@ -100,7 +100,7 @@ struct vec4i {
 	int x, y, z, w;
 };
 
-/*! \ingroup render
+/*! \ingroup data
  * @{
  */
 //! set all vector elements to zero
@@ -176,13 +176,13 @@ inline void  normalize(vec2f& a) { float d = len(a); if (d != 0) { d = 1.0 / d; 
 //! calculate A x B = R, where R is a 3-element vector.
 /*! Note that for 4 element vector types, only the first three elements are used.
  * \warning For vec4f types, R.w is undefined.
- * \ingroup render
+ * \ingroup data
  */
 #define CROSS(T0, T1, T2) inline void cross(T0 & a, T1 & b, T2 & r) { r.x = a.y*b.z - a.z*b.y; r.y = a.z*b.x - a.x*b.z; r.z = a.x*b.y - a.y*b.x; } 
 //! calculate A x B = R, where R is a 3-element vector.
 /*! Note that for 4 element vector types, only the first three elements are used.
  * \warning For vec4f types, R.w is undefined.
- * \ingroup render
+ * \ingroup data
  */
 #define CROSS1(T0, T1, T2) inline T2 cross(T0 & a, T1 & b) { T2 r; cross(a, b, r); return r; } 
 
@@ -201,7 +201,7 @@ CROSS1(vec4f, vec4f, vec4f)
 //! calculate A * B = R, where R is a 3-element vector.
 /*! Note that for 4 element vector types, only the first three elements are used.
  * \warning For vec4f types, R.w is undefined.
- * \ingroup render
+ * \ingroup data
  */
 #define DOT(T0, T1) inline float dot(T0 & a, T1 & b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
 DOT(vec3f, vec3f)

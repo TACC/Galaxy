@@ -22,7 +22,7 @@
 
 /*! \file MappedVis.h 
  * \brief a visualization element that uses a color map and opacity map to define its rendering behavior
- * \ingroup data
+ * \ingroup render
  */
 
 #include <string>
@@ -45,7 +45,7 @@ namespace gxy
 OBJECT_POINTER_TYPES(MappedVis)
 
 //! a visualization element that uses a color map and opacity map to define its rendering behavior
-/*! \ingroup data
+/*! \ingroup render
  * \sa KeyedObject, KeyedDataObject, Vis
  */
 class MappedVis : public Vis

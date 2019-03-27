@@ -20,45 +20,38 @@
 
 #pragma once
 
-/*! \file ODatasets.h 
- * \brief container for local OSPRay data objects within the Galaxy Renderer
- * \ingroup data
+/*! \file OsprayParticles.h 
+ * \brief translation class for Galaxy Particles to OSPRay particle data
+ * \ingroup render
  */
 
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
-#include <memory>
+#include "Application.h"
+#include "Particles.h"
+#include "OsprayObject.h"
 
-// Note: the source object is a distributed keyed data object
-
-#include "KeyedObject.h"
-#include "Box.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(ODatasets)
+OBJECT_POINTER_TYPES(OsprayParticles)
 
-//! container for local OSPRay equivalents for datasets within the Galaxy OSPRay renderer
-/*! \ingroup data 
- * \sa OSPRayObject
+//! translation class for Galaxy Particles to OSPRay particle data
+/*! \ingroup render 
+ * \sa OsprayObject
  */
-class Datasets : public OSPRayObject
+class OsprayParticles : public OsprayObject
 {
-  GALAXY_OBJECT(ODatasets)
+  GALAXY_OBJECT(OsprayParticles) 
 
 public:
-  static ODatasetsP NewP(DatasetsP p) { return ODatasets::Cast(std::shared_ptr<ODatasets>(new ODatasets(p))); }
-
-  OSPRayObject GetByKey(Key);
-  void Add(Key k, OSPRayObject);
+  static OsprayParticlesP NewP(ParticlesP p) { return OsprayParticles::Cast(std::shared_ptr<OsprayParticles>(new OsprayParticles(p))); }
+  
+private:
+  OsprayParticles(ParticlesP);
 
 private:
-  ODatseta(DatasetsP);
-
-  std::map<Key, OSPRayObject> ospray_data;
+  ParticlesP particles;
 };
 
 }
+

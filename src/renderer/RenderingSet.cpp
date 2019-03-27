@@ -122,7 +122,7 @@ RenderingSet::local_commit(MPI_Comm c)
   ospray_object_map.clear();
 
   for (auto r : renderings)
-    r->GetTheVisualization()->SetOSPRayObjects(this->ospray_object_map);
+    r->GetTheVisualization()->SetOsprayObjects(this->ospray_object_map);
 
   return false;
 }

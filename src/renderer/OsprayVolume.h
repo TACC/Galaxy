@@ -20,23 +20,38 @@
 
 #pragma once
 
-/*! \file data.h
- *  \brief A convenience header to include all Galaxy data headers.
+/*! \file OsprayVolume.h 
+ * \brief translation class for Galaxy Volume to OSPRay Volume
+ * \ingroup render
  */
 
-/*! \defgroup data Data 
- * \brief all classes for Galaxy's supported data types and data operations (filters)
- */
-
-#include "AmrVolume.h"
-#include "Box.h"
-#include "DataObjects.h"
-#include "Datasets.h"
-#include "Geometry.h"
-#include "ImageWriter.h"
-#include "KeyedDataObject.h"
-#include "Particles.h"
-#include "Triangles.h"
+#include "Application.h"
 #include "Volume.h"
-#include "vtkerror.h"
+#include "OsprayObject.h"
+
+namespace gxy
+{
+
+OBJECT_POINTER_TYPES(OsprayVolume)
+
+//! translation class for Galaxy Volume to OSPRay Volume
+/*! \ingroup render 
+ * \sa OsprayObject
+ */
+class OsprayVolume : public OsprayObject
+{
+  GALAXY_OBJECT(OsprayVolume)
+
+public:
+  static OsprayVolumeP NewP(VolumeP p) { return OsprayVolume::Cast(std::shared_ptr<OsprayVolume>(new OsprayVolume(p))); }
+  ~OsprayVolume() { }
+
+private:
+  OsprayVolume(VolumeP);
+
+private:
+  VolumeP volume;
+};
+
+}
 

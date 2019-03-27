@@ -22,7 +22,7 @@
 
 /*! \file VolumeVis.h 
  * \brief a visualization element operating on a regular-grid volumetric dataset within Galaxy
- * \ingroup data
+ * \ingroup render
  */
 
 #include "Application.h"
@@ -38,8 +38,8 @@ namespace gxy
 OBJECT_POINTER_TYPES(VolumeVis)
 
 //! a visualization element operating on a regular-grid volumetric dataset within Galaxy
-/*! \ingroup data 
- * \sa MappedVis, Vis, KeyedObject, ISPCObject, OSPRayObject
+/*! \ingroup render 
+ * \sa MappedVis, Vis, KeyedObject, IspcObject, OsprayObject
  */
 class VolumeVis : public MappedVis
 {

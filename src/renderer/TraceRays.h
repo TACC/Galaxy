@@ -31,7 +31,7 @@
 #include <vector>
 
 #include "dtypes.h"
-#include "ISPCObject.h"
+#include "IspcObject.h"
 #include "Lighting.h"
 #include "Rays.h"
 #include "Visualization.h"
@@ -41,10 +41,10 @@ namespace gxy
 OBJECT_POINTER_TYPES(TraceRays)
 
 //! controls the ray tracing loop within Galaxy
-/*! \sa KeyedObject, ISPCObject
+/*! \sa KeyedObject, IspcObject
  * \ingroup render
  */
-class TraceRays : public ISPCObject
+class TraceRays : public IspcObject
 {
 public:
   TraceRays(); //!< default constructor

@@ -20,23 +20,42 @@
 
 #pragma once
 
-/*! \file data.h
- *  \brief A convenience header to include all Galaxy data headers.
+/*! \file IspcObject.h 
+ * \brief base class for data objects that will be passed to OSPRay for processing within ISPC routines
+ * \ingroup render
  */
 
-/*! \defgroup data Data 
- * \brief all classes for Galaxy's supported data types and data operations (filters)
+#include <string>
+#include <string.h>
+#include <vector>
+#include <memory>
+
+namespace gxy
+{
+
+
+//! base class for data objects that will be passed to OSPRay for processing within ISPC routines
+/*! Galaxy utilizes the Intel OSPRay and Embree ray tracing engines, 
+ * both of which use the Intel ISPC parallel language for instruction-level parallelism.
+ * This class serves as a base for Galaxy data objects to ease ISPC integration.
+ * \ingroup data
  */
+class IspcObject 
+{
+public:
+	//! default constructor
+  IspcObject() { ispc = NULL; }
+  virtual ~IspcObject() { destroy_ispc(); } //!< default destructor
 
-#include "AmrVolume.h"
-#include "Box.h"
-#include "DataObjects.h"
-#include "Datasets.h"
-#include "Geometry.h"
-#include "ImageWriter.h"
-#include "KeyedDataObject.h"
-#include "Particles.h"
-#include "Triangles.h"
-#include "Volume.h"
-#include "vtkerror.h"
+  //! return a pointer to the ISPC environment
+  void *GetIspc() { return ispc; }
 
+protected:
+  virtual void allocate_ispc();
+  virtual void initialize_ispc();
+  virtual void destroy_ispc();
+
+  void *ispc;
+};
+
+} // namespace gxy

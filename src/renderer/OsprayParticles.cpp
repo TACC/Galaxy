@@ -18,38 +18,61 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
-
-/*! \file render.h
- *  \brief A convenience header to include all Galaxy render headers.
- */
-
-/*! \defgroup render Render 
- * \brief all classes for Galaxy's supported render types and operations
- */
-
-#include "Camera.h"
-#include "hits.h"
-#include "ImageWriter.h"
-#include "IspcObject.h"
-#include "Lighting.h"
-#include "MappedVis.h"
-#include "mypng.h"
-#include "OsprayDatasets.h"
 #include "OsprayParticles.h"
-#include "OsprayObject.h"
-#include "OsprayTriangles.h"
-#include "OsprayUtil.h"
-#include "OsprayVolume.h"
-#include "ParticlesVis.h"
-#include "Pixel.h"
-#include "RayFlags.h"
-#include "RayQManager.h"
-#include "Rays.h"
-#include "Renderer.h"
-#include "Rendering.h"
-#include "RenderingEvents.h"
-#include "RenderingSet.h"
-#include "TraceRays.h"
-#include "TrianglesVis.h"
 
+using namespace gxy;
+
+OsprayParticles::OsprayParticles(ParticlesP p)
+{
+  particles = p;
+
+  OSPGeometry ospg = ospNewGeometry("ddspheres");
+  if (! ospg) 
+  {
+    std::cerr << "Could not create ddspheres geometry!\n";
+    exit(1);
+  }
+
+  int n_samples;
+  Particle *samples;
+  particles->GetSamples(samples, n_samples);
+
+  OSPData data = ospNewData(n_samples * sizeof(Particle), OSP_UCHAR, samples, OSP_DATA_SHARED_BUFFER);
+  ospCommit(data);
+
+  ospSetData(ospg, "spheres", data);
+  ospSet1f(ospg, "radius_scale", particles->GetRadiusScale());
+  ospSet1f(ospg, "radius", particles->GetRadius());
+  ospSet1i(ospg, "offset_datavalue", 12);
+
+#if 0
+  srand(GetTheApplication()->GetRank());
+  int r = random();
+  unsigned int color = (r & 0x1 ? 0x000000ff : 0x000000A6) |
+                       (r & 0x2 ? 0x0000ff00 : 0x0000A600) |
+                       (r & 0x4 ? 0x00ff0000 : 0x00A60000) |
+                       0xff000000;
+#endif
+
+  float r, g, b, a;
+  particles->GetDefaultColor(r, g, b, a);
+
+  unsigned int color = ((unsigned char)(a * 255) << 24) | 
+                       ((unsigned char)(b * 255) << 16) | 
+                       ((unsigned char)(g * 255) <<  8) | 
+                        (unsigned char)(r * 255);
+
+  unsigned int *colors = new unsigned int[n_samples];
+  for (int i = 0; i < n_samples; i++)
+    colors[i] = color;
+
+  OSPData clr = ospNewData(n_samples, OSP_UCHAR4, colors);
+  delete[] colors;
+  ospCommit(clr);
+  ospSetObject(ospg, "color", clr);
+  ospRelease(clr);
+
+  ospCommit(ospg);
+
+  theOSPRayObject = (OSPObject)ospg;
+}

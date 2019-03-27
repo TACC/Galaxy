@@ -55,13 +55,13 @@ TraceRays::allocate_ispc()
 void 
 TraceRays::initialize_ispc()
 {
-   ispc::TraceRays_initialize(GetISPC());
+   ispc::TraceRays_initialize(GetIspc());
 }
 
 RayList *
 TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
 {
-  ispc::TraceRays_TraceRays(GetISPC(), visualization->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC());
+  ispc::TraceRays_TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 	RayList *raysOut = NULL;
 
 	int nl, *t; float *l;
@@ -115,23 +115,23 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
   }
   
 #ifdef GXY_REVERSE_LIGHTING
-	ispc::TraceRays_ambientLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(),  raysIn->GetISPC());
+	ispc::TraceRays_ambientLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(),  raysIn->GetIspc());
 	if (ao_ray_knt)
-		ispc::TraceRays_generateAORays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), ao_offsets, raysOut->GetISPC());
+		ispc::TraceRays_generateAORays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), ao_offsets, raysOut->GetIspc());
 	
-	ispc::TraceRays_diffuseLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC());
+	ispc::TraceRays_diffuseLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 	if (shadow_ray_knt)
-		ispc::TraceRays_generateShadowRays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), shadow_offsets, raysOut->GetISPC());
+		ispc::TraceRays_generateShadowRays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), shadow_offsets, raysOut->GetIspc());
 #else
 	if (ao_ray_knt)
-		ispc::TraceRays_generateAORays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), ao_offsets, raysOut->GetISPC());
+		ispc::TraceRays_generateAORays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), ao_offsets, raysOut->GetIspc());
 	else
-		ispc::TraceRays_ambientLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(),  raysIn->GetISPC());
+		ispc::TraceRays_ambientLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(),  raysIn->GetIspc());
 	
 	if (shadow_ray_knt)
-		ispc::TraceRays_generateShadowRays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), shadow_offsets, raysOut->GetISPC());
+		ispc::TraceRays_generateShadowRays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), shadow_offsets, raysOut->GetIspc());
 	else
-		ispc::TraceRays_diffuseLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC());
+		ispc::TraceRays_diffuseLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 #endif
 
 	return raysOut;
@@ -157,12 +157,12 @@ void TraceRays::SaveStateToValue(Value& v, Document& doc)
 
 void TraceRays::SetEpsilon(float e)
 {
-  ispc::TraceRays_SetEpsilon(GetISPC(), e);
+  ispc::TraceRays_SetEpsilon(GetIspc(), e);
 }
 
 float TraceRays::GetEpsilon()
 {
-  return ispc::TraceRays_GetEpsilon(GetISPC());
+  return ispc::TraceRays_GetEpsilon(GetIspc());
 }
 
 int TraceRays::SerialSize() { return sizeof(float); }

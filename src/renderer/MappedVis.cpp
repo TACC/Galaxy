@@ -307,7 +307,7 @@ MappedVis::local_commit(MPI_Comm c)
 
   ospCommit(transferFunction);
   
-  ispc::MappedVis_set_transferFunction(ispc, osp_util::GetIE(transferFunction));
+  ispc::MappedVis_set_transferFunction(ispc, ospray_util::GetIE(transferFunction));
   return false;
 }
 

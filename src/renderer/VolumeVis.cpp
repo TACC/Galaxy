@@ -206,9 +206,9 @@ VolumeVis::local_commit(MPI_Comm c)
 	if (super::local_commit(c))
     return true;
 
-	ispc::VolumeVis_SetSlices(GetISPC(), slices.size(), ((float *)slices.data()));
-	ispc::VolumeVis_SetIsovalues(GetISPC(), isovalues.size(), ((float *)isovalues.data()));
-	ispc::VolumeVis_SetVolumeRenderFlag(GetISPC(), volume_rendering);
+	ispc::VolumeVis_SetSlices(GetIspc(), slices.size(), ((float *)slices.data()));
+	ispc::VolumeVis_SetIsovalues(GetIspc(), isovalues.size(), ((float *)isovalues.data()));
+	ispc::VolumeVis_SetVolumeRenderFlag(GetIspc(), volume_rendering);
 
 	return false;
 }

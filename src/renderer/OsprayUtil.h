@@ -18,20 +18,18 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "OSPUtil.h"
+#pragma once
 
-#include <ospray/SDK/common/Managed.h>
-#include <ospray/SDK/api/Device.h>
+/*! \file OsprayUtil.h 
+ * \brief helpers for data exchange to and from OSPRay
+ * \ingroup data
+ */
 
 namespace gxy
 {
-namespace osp_util
+namespace ospray_util
 {
-	void *
-	GetIE(void *a)
-	{
-		ospray::ManagedObject *b = (ospray::ManagedObject *)a;
-		return (void *)b->getIE();
-	}
-} // namespace osp_util
+	//! return the ISPC-based OSPRay version of this object
+	void * GetIE(void *a);
+} // namespace ospray_util
 } // namespace gxy

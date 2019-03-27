@@ -22,7 +22,7 @@
 
 /*! \file Visualization.h 
  * \brief a visualization of one or more visualization elements (Vis objects) in Galaxy
- * \ingroup data
+ * \ingroup render
  */
 
 #include "Box.h"
@@ -45,10 +45,10 @@ OBJECT_POINTER_TYPES(Visualization)
 //! a visualization of one or more visualization elements (Vis objects) in Galaxy
 /* This object represents a combination of one or more visualization elements (Vis objects)
  * combined with lighting information for use in rendering
- * \ingroup data 
- * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
+ * \ingroup render 
+ * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
-class Visualization : public KeyedObject, public ISPCObject
+class Visualization : public KeyedObject, public IspcObject
 {
   KEYED_OBJECT(Visualization);
 
@@ -79,7 +79,7 @@ public:
   //! get the current annotation string for this Visualization
   const char *GetAnnotation() { return annotation.c_str(); }
 
-  //! get the OSPRay OSPModel for this Visualization
+  //! get the Ospray OSPModel for this Visualization
   OSPModel GetTheModel() { return ospModel; }
 
   //! get the Box that represents the global data extent for this Visualization
@@ -108,8 +108,8 @@ public:
   int GetNumberOfVis() { return vis.size(); }
   VisP GetVis(int i) { return vis[i]; }
 
-  //! Set OSPRay-side data for each attached Vis
-  void SetOSPRayObjects(std::map<Key, OSPRayObjectP>&);
+  //! Set Ospray-side data for each attached Vis
+  void SetOsprayObjects(std::map<Key, OsprayObjectP>&);
 
 protected:
 	Lighting lighting;

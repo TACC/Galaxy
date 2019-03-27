@@ -18,41 +18,39 @@
 //                                                                            //
 // ========================================================================== //
 
-#include <iostream>
-#include <math.h>
-#include <stdlib.h>
-#include <string>
-#include <sstream>
-#include <fstream>
-#include "Application.h"
+#pragma once
 
-#include "ISPCObject.h"
-#include "ISPCObject_ispc.h"
+/*! \file OsprayTriangles.h 
+ * \brief translation class for Galaxy Triangles to OSPRay Geometry
+ * \ingroup render
+ */
+
+#include "Application.h"
+#include "Triangles.h"
+#include "OsprayObject.h"
 
 namespace gxy
 {
 
-void 
-ISPCObject::allocate_ispc()
+OBJECT_POINTER_TYPES(OsprayTriangles)
+
+//! translation class for Galaxy Triangles to OSPRay Geometry
+/*! \ingroup render 
+ * \sa OsprayObject
+ */
+class OsprayTriangles : public OsprayObject
 {
-	if (! ispc)
-		ispc = ispc::ISPCObject_allocate();
+  GALAXY_OBJECT(OsprayTriangles)
+
+public:
+  static OsprayTrianglesP NewP(TrianglesP p) { return OsprayTriangles::Cast(std::shared_ptr<OsprayTriangles>(new OsprayTriangles(p))); }
+
+private:
+  OsprayTriangles(TrianglesP);
+
+private:
+  TrianglesP triangles;
+};
+
 }
 
-void 
-ISPCObject::initialize_ispc()
-{
-	ispc::ISPCObject_initialize(ispc);
-}
-
-void 
-ISPCObject::destroy_ispc()
-{
-	if (ispc)
-	{
-		ispc::ISPCObject_destroy(ispc);
-		ispc = NULL;
-	}
-}
-
-} // namespace gxy

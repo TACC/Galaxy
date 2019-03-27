@@ -120,9 +120,9 @@ ParticlesVis::local_commit(MPI_Comm c)
 }
 
 void
-ParticlesVis::SetTheOSPRayDataObject(OSPRayObjectP o)
+ParticlesVis::SetTheOSPRayDataObject(OsprayObjectP o)
 {
-  super::SetTheOSPRayDataObject(o);
+  super::SetTheOsprayDataObject(o);
 
   ospSet1f(o->GetOSP(), "value0", v0);
   ospSet1f(o->GetOSP(), "radius0", r0);

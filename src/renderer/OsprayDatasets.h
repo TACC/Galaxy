@@ -18,24 +18,47 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "OSPRayObject.h"
-#include "Geometry.h"
-#include "Volume.h"
+#pragma once
+
+/*! \file OsprayDatasets.h 
+ * \brief container for local OSPRay data objects within the Galaxy Renderer
+ * \ingroup render
+ */
+
+#include <iostream>
+#include <map>
+#include <string>
+#include <vector>
+#include <memory>
+
+// Note: the source object is a distributed keyed data object
+
+#include "KeyedObject.h"
+#include "Box.h"
 
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(OSPRayObject)
+OBJECT_POINTER_TYPES(OsprayDatasets)
 
-OSPRayObject::OSPRayObject()
+//! container for local OSPRay equivalents for datasets within the Galaxy OSPRay renderer
+/*! \ingroup render 
+ * \sa OsprayObject
+ */
+class OsprayDatasets : public OsprayObject
 {
-	theOSPRayObject = NULL;
-}
+  GALAXY_OBJECT(OsprayDatasets)
 
-OSPRayObject::~OSPRayObject()
-{
-	if (theOSPRayObject)
-		ospRelease((OSPObject)theOSPRayObject);
-}
+public:
+  static OsprayDatasetsP NewP(DatasetsP p) { return OsprayDatasets::Cast(std::shared_ptr<OsprayDatasets>(new OsprayDatasets(p))); }
 
-} // namespace gxy
+  OsprayObject GetByKey(Key);
+  void Add(Key k, OsprayObject);
+
+private:
+  OsprayDatasets(DatasetsP);
+
+  std::map<Key, OsprayObject> ospray_data;
+};
+
+}

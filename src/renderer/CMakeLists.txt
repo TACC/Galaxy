@@ -49,7 +49,7 @@ link_directories(${Galaxy_BINARY_DIR}/src/ospray
                  ${Galaxy_BINARY_DIR}/src/framework)
 
 set (ISPC_SOURCES 
-  ISPCObject.ispc
+  IspcObject.ispc
  	MappedVis.ispc
 	Rays.ispc
 	TrianglesVis.ispc
@@ -65,14 +65,14 @@ set (ISPC_SOURCES
 set (CPP_SOURCES 
   mypng.cpp
   Camera.cpp 
-  ISPCObject.cpp
+  IspcObject.cpp
   Lighting.cpp
   MappedVis.cpp
-  OSPRayObject.cpp
-  OTriangles.cpp
-  OParticles.cpp
-  OVolume.cpp
-  OSPUtil.cpp
+  OsprayObject.cpp
+  OsprayTriangles.cpp
+  OsprayParticles.cpp
+  OsprayVolume.cpp
+  OsprayUtil.cpp
   ParticlesVis.cpp
   RayQManager.cpp
   Rays.cpp 

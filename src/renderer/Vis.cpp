@@ -23,7 +23,7 @@
 #include "Application.h"
 #include "KeyedDataObject.h"
 #include "MappedVis.h"
-#include "OSPUtil.h"
+#include "OsprayUtil.h"
 #include "ParticlesVis.h"
 #include "TrianglesVis.h"
 #include "Vis_ispc.h"
@@ -62,13 +62,13 @@ Vis::allocate_ispc()
 void 
 Vis::initialize_ispc()
 {
-  ispc::Vis_initialize(GetISPC());
+  ispc::Vis_initialize(GetIspc());
 }
 
 void 
 Vis::destroy_ispc()
 {
-  ispc::Vis_destroy(GetISPC());
+  ispc::Vis_destroy(GetIspc());
 }
 
 bool 
@@ -106,10 +106,10 @@ Vis::SaveToJSON(Value& v, Document& doc)
 }
 
 void
-Vis::SetTheOSPRayDataObject(OSPRayObjectP o)
+Vis::SetTheOsprayDataObject(OsprayObjectP o)
 {
   odata = o;
-	ispc::Vis_set_data(GetISPC(), o->GetOSP_IE());
+	ispc::Vis_set_data(GetIspc(), o->GetOSP_IE());
 }
 
 int

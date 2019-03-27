@@ -18,44 +18,41 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
-
-/*! \file ISPCObject.h 
- * \brief base class for data objects that will be passed to OSPRay for processing within ISPC routines
- * \ingroup data
- */
-
+#include <iostream>
+#include <math.h>
+#include <stdlib.h>
 #include <string>
-#include <string.h>
-#include <vector>
-#include <memory>
+#include <sstream>
+#include <fstream>
+#include "Application.h"
+
+#include "IspcObject.h"
+#include "IspcObject_ispc.h"
 
 namespace gxy
 {
 
-
-//! base class for data objects that will be passed to OSPRay for processing within ISPC routines
-/*! Galaxy utilizes the Intel OSPRay and Embree ray tracing engines, 
- * both of which use the Intel ISPC parallel language for instruction-level parallelism.
- * This class serves as a base for Galaxy data objects to ease ISPC integration.
- * \ingroup data
- */
-class ISPCObject 
+void 
+IspcObject::allocate_ispc()
 {
-public:
-	//! default constructor
-  ISPCObject() { ispc = NULL; }
-  virtual ~ISPCObject() { destroy_ispc(); } //!< default destructor
+	if (! ispc)
+		ispc = ispc::IspcObject_allocate();
+}
 
-  //! return a pointer to the ISPC environment
-  void *GetISPC() { return ispc; }
+void 
+IspcObject::initialize_ispc()
+{
+	ispc::IspcObject_initialize(ispc);
+}
 
-protected:
-  virtual void allocate_ispc();
-  virtual void initialize_ispc();
-  virtual void destroy_ispc();
-
-  void *ispc;
-};
+void 
+IspcObject::destroy_ispc()
+{
+	if (ispc)
+	{
+		ispc::IspcObject_destroy(ispc);
+		ispc = NULL;
+	}
+}
 
 } // namespace gxy

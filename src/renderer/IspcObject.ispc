@@ -18,7 +18,23 @@
 //                                                                            //
 // ========================================================================== //
 
-struct ISPCObject_ispc
+#include "IspcObject.ih"
+
+export void *uniform IspcObject_allocate()
 {
-	int foo;
-};
+  IspcObject_ispc *uniform o = uniform new uniform IspcObject_ispc;
+  return (void *)o;
+}
+
+export void* uniform IspcObject_initialize(void *uniform _self)
+{
+  IspcObject_ispc *uniform self = (uniform IspcObject_ispc *)_self;
+  self->foo = 0;
+ }
+
+export void IspcObject_destroy(void *uniform self)
+{
+  delete self;
+}
+
+	

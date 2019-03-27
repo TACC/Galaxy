@@ -125,7 +125,7 @@ public:
 	void setup_ispc_pointers();
 
 	//! return a pointer to the ISPC context for this RayList
-	void *GetISPC() { return ispc; }
+	void *GetIspc() { return ispc; }
 
 	//! print a certain ray or the entire RayList
 	/* by default, this method prints the entire RayList. 

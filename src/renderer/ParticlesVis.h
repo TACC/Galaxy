@@ -22,7 +22,7 @@
 
 /*! \file ParticlesVis.h 
  * \brief a visualization element operating on a particle dataset within Galaxy
- * \ingroup data
+ * \ingroup render
  */
 
 #include "dtypes.h"
@@ -41,8 +41,8 @@ namespace gxy
 OBJECT_POINTER_TYPES(ParticlesVis)
 
 //!  a visualization element operating on a particle dataset within Galaxy
-/* \ingroup data 
- * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
+/* \ingroup render 
+ * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
 class ParticlesVis : public Vis
 {
@@ -56,7 +56,7 @@ public:
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
-  virtual void SetTheOSPRayDataObject(OSPRayObjectP o);
+  virtual void SetTheOSPRayDataObject(OsprayObjectP o);
 
   //! Set the transformation from data values to radius - linear between (v0,r0) and (v1,r1)
   void SetRadiusTransform(float _v0, float _r0, float _v1, float _r1) { v0 = _v0; r0 = _r0; v1 = _v1; r1 = _r1;}

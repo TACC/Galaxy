@@ -22,7 +22,7 @@
 
 /*! \file mypng.h 
  * \brief writes PNG format images 
- * \ingroup data
+ * \ingroup render
  */
 
 namespace gxy 
@@ -30,7 +30,7 @@ namespace gxy
 
 //! writes PNG format images
 /*! \sa gxy::ImageWriter
- * \ingroup data
+ * \ingroup render
  */
 int write_png(const char *filename, int w, int h, unsigned int *rgba);
 

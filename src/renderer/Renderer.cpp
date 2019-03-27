@@ -46,9 +46,9 @@
 #include "TraceRays_ispc.h"
 #include "Visualization_ispc.h"
 
-#include "OVolume.h"
-#include "OTriangles.h"
-#include "OParticles.h"
+#include "OsprayVolume.h"
+#include "OsprayTriangles.h"
+#include "OsprayParticles.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
