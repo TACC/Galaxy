@@ -28,7 +28,7 @@ add_subdirectory(framework)
 add_subdirectory(data)
 add_subdirectory(renderer)
 # add_subdirectory(sampler)
-# add_subdirectory(multiserver)
+add_subdirectory(multiserver)
 add_subdirectory(apps)
 # add_subdirectory(cinema)
 
