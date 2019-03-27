@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
 #include <string>
 #include <vector>
 
@@ -27,13 +29,13 @@
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 
-/*! \file IF.h
+/*! \file JsonInterface.h
  *  \brief Contains the definitions of the structures a viewer uses to cause 
  *         renderer to to update
  */
 
-//! IF is the super class that knows how to transform to and from json
-class IF
+//! JsonInterface is the super class that knows how to transform to and from json
+class JsonInterface
 {
 public:
   /*! Parse a JSON input string and call a virtual method to update 
@@ -49,7 +51,7 @@ public:
     std::string s(Stringify());
     if (! handler->CSendRecv(s) || s.substr(0, 2) != "ok")
     {
-      std::cerr << "IF sendrecv failed: " << s << "\n";
+      std::cerr << "JsonInterface sendrecv failed: " << s << "\n";
       exit(1);
     }
   }
@@ -64,7 +66,7 @@ public:
   virtual char *Stringify() = 0;
 };
 
-class DatasetsIF : public IF
+class DatasetsInterface : public JsonInterface
 {
   //! Datasets interface : represents a set of data objects that the client would like the server to manage
 
@@ -97,7 +99,7 @@ private:
   std::vector<Dataset> datasets;
 };
 
-class CameraIF : public IF
+class CameraInterface : public JsonInterface
 {
   //! Camera interface : represents a camera of data objects that the client would like to send to the server
 

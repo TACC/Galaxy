@@ -21,7 +21,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-using namespace std;
+
 
 #include <string.h>
 #include <pthread.h>
@@ -29,6 +29,8 @@ using namespace std;
 #include "DataClientServer.h"
 
 using namespace gxy;
+using namespace rapidjson; 
+using namespace std;
 
 namespace gxy
 {

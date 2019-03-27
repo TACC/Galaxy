@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma onces
+
 #include "Application.h"
 #include "Rendering.h"
 #include "MultiServerHandler.h"

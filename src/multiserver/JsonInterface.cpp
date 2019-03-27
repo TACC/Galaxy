@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-#include "IF.h"
+#include "JsonInterface.h"
 using namespace gxy;
 
 #include "rapidjson/document.h"
@@ -32,13 +32,13 @@ using namespace rapidjson;
 //========= Datasets
 
 void
-DatasetsIF::Add(std::string n, std::string t, std::string filename)
+DatasetsInterface::Add(std::string n, std::string t, std::string filename)
 {
   datasets.push_back(Dataset(n, t, filename));
 }
 
 void
-DatasetsIF::Load(Value& v)
+DatasetsInterface::Load(Value& v)
 {
   if (v.HasMember("Datasets"))
   {
@@ -49,7 +49,7 @@ DatasetsIF::Load(Value& v)
 }
 
 char *
-DatasetsIF::Stringify()
+DatasetsInterface::Stringify()
 {
   Document doc;
   doc.Parse("{}");
@@ -78,7 +78,7 @@ DatasetsIF::Stringify()
 }
 
 void
-DatasetsIF::Print()
+DatasetsInterface::Print()
 {
   for (std::vector<Dataset>::iterator it = datasets.begin(); it != datasets.end(); ++it)
     std::cerr << it->name << " " << it->type << " " << it->filename << "\n";
@@ -87,7 +87,7 @@ DatasetsIF::Print()
 //========= Camera
     
 void
-CameraIF::Load(Value& v)
+CameraInterface::Load(Value& v)
 {
   if (v.HasMember("Camera") || v.HasMember("Cameras"))
   {
@@ -126,7 +126,7 @@ CameraIF::Load(Value& v)
 }
 
 char *
-CameraIF::Stringify()
+CameraInterface::Stringify()
 {
   Document doc;
   doc.Parse("{}");
@@ -167,7 +167,7 @@ CameraIF::Stringify()
 }
 
 void
-CameraIF::Print()
+CameraInterface::Print()
 {
   std::cerr << "eye: " << eye[0] << " " << eye[1] << " " << eye[2] << "\n";
   std::cerr << "dir: " << dir[0] << " " << dir[1] << " " << dir[2] << "\n";

@@ -18,11 +18,11 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <sstream>
-
-using namespace std;
 
 #include <string.h>
 #include <pthread.h>
@@ -34,8 +34,6 @@ using namespace std;
 #include "Application.h"
 #include "MultiServer.h"
 #include "MultiServerHandler.h"
-
-using namespace gxy;
 
 namespace gxy
 {
