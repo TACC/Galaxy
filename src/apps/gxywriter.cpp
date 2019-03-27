@@ -37,7 +37,8 @@ int mpiRank = 0, mpiSize = 1;
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] json" << endl;
+  cerr << "use Galaxy to write an image library for the given state file" << endl;
+  cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "optons:" << endl;
   cerr << "  -C cdb     put output in Cinema DB (no)" << endl;
   cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
@@ -73,11 +74,6 @@ int main(int argc,  char *argv[])
   ClientServer cs;
   int maxConcurrentRenderings = 99999999;
 
-  // ospInit(&argc, (const char **)argv);
-
-  Application theApplication(&argc, &argv);
-  theApplication.Start();
-
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
@@ -93,6 +89,11 @@ int main(int argc,  char *argv[])
 
   if (statefile == "")
     syntax(argv[0]);
+
+  // ospInit(&argc, (const char **)argv);
+
+  Application theApplication(&argc, &argv);
+  theApplication.Start();
 
   Renderer::Initialize();
 

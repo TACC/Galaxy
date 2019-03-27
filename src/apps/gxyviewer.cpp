@@ -429,6 +429,7 @@ render_thread(void *d)
 void
 syntax(char *a)
 {
+  cerr << "use Galaxy to interactively render data in a given state file" << endl;
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "options:" << endl;
   cerr << "  -D               run debugger" << endl;
@@ -449,11 +450,6 @@ main(int argc, char *argv[])
   pargc = &argc;
   pargv = argv;
 
-  Application theApplication(&argc, &argv);
-  theApplication.Start();
-
-  AsyncRendering::RegisterClass();
-
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-a")) { age = atof(argv[++i]), fadeout = atof(argv[++i]); }
@@ -473,6 +469,11 @@ main(int argc, char *argv[])
 
   if (statefile == "")
     syntax(argv[0]);
+
+  Application theApplication(&argc, &argv);
+  theApplication.Start();
+
+  AsyncRendering::RegisterClass();
 
   Renderer::Initialize();
   GetTheApplication()->Run();
