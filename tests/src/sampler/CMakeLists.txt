@@ -18,18 +18,22 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
+cmake_minimum_required (VERSION 3.9)
 
-project(gxy_unit_tests VERSION ${GALAXY_VERSION})
+include_directories(${gxy_framework_SOURCE_DIR}
+										${gxy_data_SOURCE_DIR}
+										${gxy_renderer_SOURCE_DIR}
+										${gxy_sampler_SOURCE_DIR}
+										${OSPRAY_INCLUDE_DIRS}
+										${gxy_unit_tests_SOURCE_DIR}/sampler
+										${Galaxy_BINARY_DIR}/src
+										)
 
-include_directories(${gxy_unit_tests_SOURCE_DIR})
+set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer ${MPI_C_LIBRARIES})
+set(BINS "")
 
-add_subdirectory(framework)
-add_subdirectory(data)
-add_subdirectory(renderer)
-add_subdirectory(sampler)
-add_subdirectory(multiserver)
-add_subdirectory(apps)
-# add_subdirectory(cinema)
+add_executable(gxytest-sampler-Sampler Sampler.cpp)
+target_link_libraries(gxytest-sampler-Sampler  ${GALAXY_LIBRARIES})
+set(BINS gxytest-sampler-Sampler ${BINS})
 
-
+install(TARGETS ${BINS} DESTINATION tests/sampler)
