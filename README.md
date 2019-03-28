@@ -57,7 +57,7 @@ cd build
 cmake .. && make && make install
 ```
 
-### NOTE on patches:
+#### NOTE on patches:
 All patch updates insert the prominent header: 
 ```
 NOTE: This file has been modified by a Galaxy patch.
@@ -70,14 +70,14 @@ GALAXY BEGIN ADDED CODE - by Galaxy patch
 GALAXY END ADDED CODE - by Galaxy patch
 ```
 
-### Local installs of Galaxy associated dependencies
+#### Local installs of Galaxy associated dependencies
 If you prefer to use local installs of any of the dependencies, you can follow instructions below. Make sure to issue `git submodule init <path>` and `git submodule update <path>` for the third-party dependencies you do *NOT* have locally installed. For example, to use the rapidjson submodule, type:
 ```bash
 git submodule init third-party/rapidjson
 git submodule update third-party/rapidjson
 ```
 
-### ISPC
+#### ISPC
 The `third-party/ispc` directory contains a script to download a recent ISPC binary for MacOS or Linux. ISPC installed using this script should be detected automatically by the Galaxy CMake configuration. If you already have a recent ISPC installed (at least version 1.9.1) you are free to use it, though you might need to specify its location by hand in the CMake configurations for Embree, OSPRay, and Galaxy.
 
 From the root directory of your Galaxy repository, issue the following commands:
@@ -88,7 +88,7 @@ cd third-party/ispc
 
 This will download ISPC (currently version 1.9.2) into `third-party/ispc/ispc-v<version>-<OS type>` (e.g., ispc-v1.9.2-osx). If this binary does not work for you, you will need to build ISPC by hand following the directions at the [ISPC website][10]. 
 
-### Embree
+#### Embree
 After updating the git submodules as described above, the `third-party/embree` directory should contain the Embree source tree. We recommend building in `third-party/embree/build` and installing to `third-party/embree/install`, as doing so should enable OSPRay and Galaxy to find Embree automatically. The recommended install directory is configured as part of the Galaxy Embree patch.
 
 First, apply the Galaxy Embree patch to the Embree repository. From the root directory of your Galaxy repository, issue the following commands:
@@ -105,7 +105,7 @@ cmake .. && make && make install
 ```
 If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
-### OSPRay
+#### OSPRay
 Before installing OSPRay, make sure you have updated the Galaxy git submodules and successfully built Embree, as described above. Once the git submodules have been updated, the `third-party/ospray` directory should contain the OSPRay source tree. We recommend building in `third-party/ospray/build` and installing to `third-party/ospray/install`, as doing so should enable Galaxy to find OSPRay automatically. The recommended install directory is configured as part of the Galaxy OSPRay patch.
 
 First, apply the Galaxy OSPRay patch to the OSPRay repository. From the root directory of your Galaxy repository, issue the following commands:
@@ -122,7 +122,7 @@ cmake .. && make && make install
 ```
 If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
-### rapidjson
+#### rapidjson
 Before installing rapidjson, make sure you have updated the Galaxy git submodules as described above. Once the git submodules have been updated, the `third-party/rapidjson` directory should contain the rapidjson source tree. We recommend building in `third-party/rapidjson/build` and installing to `third-party/rapidjson/install`, as doing so should enable Galaxy to find rapidjson automatically. The recommended install directory is configured as part of the Galaxy rapidjson patch.
 
 First, apply the Galaxy rapidjson patch to the rapidjson repository. From the root directory of your Galaxy repository, issue the following commands:
