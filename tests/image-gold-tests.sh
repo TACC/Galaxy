@@ -145,7 +145,7 @@ fi
 if [ ${FAILS} == 0 ]; then
   report "${TESTS}/${TESTS} image comparison tests passed"
 else
-  fail "${FAILS}/${TESTS} image comparisons failed"
+  fail "${FAILS}/${TESTS} image comparisons FAILED"
 fi
 
 report "done!"
