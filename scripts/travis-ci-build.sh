@@ -107,6 +107,13 @@ if [ -z ${GXY_BUILT_VTK} ]; then
 	if [ $? != 0 ]; then
 		fail "image-writing interface build failed!"
 	fi
+
+	report "building unit tests..."
+	# this should work for both osx and linux, since cmake was configured above
+	cmake -D GXY_UNIT_TESTING:BOOL=ON . && make install 
+	if [ $? != 0 ]; then
+		fail "unit testing build failed!"
+	fi	
 fi
 
 report "done!"
