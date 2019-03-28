@@ -18,19 +18,23 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
+cmake_minimum_required (VERSION 3.9)
 
-project(gxy_unit_tests VERSION ${GALAXY_VERSION})
-
-include_directories(${gxy_unit_tests_SOURCE_DIR})
-
-add_subdirectory(framework)
-add_subdirectory(data)
-add_subdirectory(renderer)
-add_subdirectory(sampler)
-# add_subdirectory(ospray)
-add_subdirectory(multiserver)
-add_subdirectory(apps)
-# add_subdirectory(cinema)
+include_directories(${gxy_framework_SOURCE_DIR}
+										${gxy_data_SOURCE_DIR}
+										${gxy_renderer_SOURCE_DIR}
+										${gxy_ospray_SOURCE_DIR}
+										${OSPRAY_INCLUDE_DIRS}
+										${gxy_unit_tests_SOURCE_DIR}/ospray
+										${Galaxy_BINARY_DIR}/src
+										)
 
 
+set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_ospray ${MPI_C_LIBRARIES})
+set(BINS "")
+
+add_executable(gxytest-ospray-DataDrivenSpheres DataDrivenSpheres.cpp)
+target_link_libraries(gxytest-ospray-DataDrivenSpheres  ${GALAXY_LIBRARIES})
+set(BINS gxytest-ospray-DataDrivenSpheres ${BINS})
+
+install(TARGETS ${BINS} DESTINATION tests/ospray)
