@@ -38,7 +38,16 @@ Galaxy has the following components associated in the `third-party` subdirectory
 ## Installing Galaxy associated dependencies
 Prior to building Galaxy itself, you should ensure that all the general dependencies are installed (we recommend your humble OS package manager). Once those are in place, you're ready to install the dependencies in `third-party`. There are two steps to this process: 1) downloading and patching the submodules, and 2) building and installing the submodules.
 
-To **download and patch** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/prep-third-party.sh`, which will 1) init and update the git submodules, 2) download ispc to where Galaxy expects to find it, and 3) apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. 
+### Scripted build
+We recommend using the Galaxy-provided build script `scripts/install-third-party.sh`, which will configure and build all submodules with a single command (if this script does not work for your configuration, please open a [GitHub issue][19]). If you need to customize your build, please see the next section.
+
+To **download, patch, and build** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/install-third-party.sh`, which will (1) init and update the git submodules, (2) download ispc to where Galaxy expects to find it, (3) apply patches to the third-party CMake files to make them easier for Galaxy to find, and (4) build each in a `build` subdirectory and install into an `install` subdirectory. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. For example, the OSPRay install will be located in `third-party/ospray/install`.
+
+### Custom build
+The third-party dependency build can also be done by hand, for example, to 
+specify custom software locations or to change the configuration of Embree or OSPRay. Note that even with a custom build, the submodules still should be patched as described below.
+
+To **download and patch** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/prep-third-party.sh`, which will (1) init and update the git submodules, (2) download ispc to where Galaxy expects to find it, and (3) apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. 
 
 To **build and install** the submodules, do the following in `third-party/embree`, then `third-part/ospray`, then `third-party/rapidjson` (`third-party/ispc is already installed via the script`):
 
@@ -466,5 +475,6 @@ The following environment variables affect Galaxy behavior:
 [16]: http://rapidjson.org/
 [17]: https://cinemascience.org/
 [18]: https://www.python.org/
+[19]: https://github.com/TACC/Galaxy/issues
 
 
