@@ -293,14 +293,14 @@ int main(int argc,  char *argv[])
 
       std::cerr << "After Deleting to2\n";
       ShowKeyedObjectTable();
-      getchar();
+      // getchar();
     }
 
     theApplication.QuitApplication();
     theApplication.Wait();
 
     std::cerr << "at exit... ? ";
-    getchar();
+    // getchar();
   }
   else
     theApplication.Wait();
