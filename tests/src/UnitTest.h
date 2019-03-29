@@ -57,7 +57,7 @@ namespace gxy
 		 * \param s output stream target for message (default stdout)
 		 */
 		void start(std::ostream& s = std::cout)
-		{ s << "GXY:  starting unit test " << name_ << "\n"; }
+		{ s << "   GXY:  starting unit test " << name_ << "\n"; }
 
 		//! write a test update message to the specified output stream
 		/*! 
@@ -67,7 +67,7 @@ namespace gxy
 		 */
 		void update(std::string message = std::string(""), float doneness = 0.f,  std::ostream& s = std::cout)
 		{ 
-			s << "GXY:      "; 
+			s << "   GXY:      "; 
 			s << "<" << name_ << "> "; 
 			s << message;
 			if (doneness > 0.f) { int d=doneness/100; s << " (" << d << "%)"; }
@@ -79,7 +79,7 @@ namespace gxy
 		 * \param s output stream target for message (default stdout)
 		 */
 		void finish(std::ostream& s = std::cout)
-		{ s << "GXY:  finished unit test " << name_ << " ( " << warnings_ << " W / " << errors_ << " E )\n"; }
+		{ s << "   GXY:  finished unit test " << name_ << " ( " << warnings_ << " W / " << errors_ << " E )\n"; }
 
 		//! write a test warning message to the specified output stream
 		/*! 
@@ -89,7 +89,7 @@ namespace gxy
 		void warning(std::string message = std::string(""), std::ostream& s = std::cout)
 		{
 			warnings_++;
-			s << "GXY: ~~~~ WARNING "; 
+			s << "   GXY: ~~~~ WARNING "; 
 			s << "<" << name_ << "> ";   
 			s << message;
 			s << "\n";
@@ -103,7 +103,7 @@ namespace gxy
 		void error(std::string message = std::string(""), std::ostream& s = std::cout)
 		{
 			errors_++;
-			s << "GXY: **** ERROR "; 
+			s << "   GXY: **** ERROR "; 
 			s << "<" << name_ << "> ";  
 			s << message;
 			s << "\n"; 
