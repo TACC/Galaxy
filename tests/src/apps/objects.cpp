@@ -299,7 +299,7 @@ int main(int argc,  char *argv[])
     theApplication.QuitApplication();
     theApplication.Wait();
 
-    std::cerr << "at exit... ? ";
+    std::cerr << "at exit... ? \n";
     // getchar();
   }
   else
