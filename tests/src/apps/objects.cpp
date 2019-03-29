@@ -287,7 +287,7 @@ int main(int argc,  char *argv[])
 
       std::cerr << "Object tables:\n";
       ShowKeyedObjectTable();
-      getchar();
+      // getchar();
 
       to2 = nullptr;  // should delted the object
 
