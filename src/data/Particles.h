@@ -127,14 +127,6 @@ public:
   //! save this Particles to a Galaxy JSON specification 
 	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
-  //! set the sphere radius to use when rendering these Particles
-	void SetRadius(float r) { radius = r; }
-  void SetRadiusScale(float s) { radius_scale = s; }
-
-  //! get the sphere radius to use when rendering these Particles
-	float GetRadius() { return radius; }
-  float GetRadiusScale() { return radius_scale; }
-
   //! set the default color to use when rendering these Particles
 	void SetDefaultColor(vec4f dc) { default_color = dc; }
 	void SetDefaultColor(float r, float g, float b, float a)
@@ -173,17 +165,10 @@ protected:
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
 
-  float radius;
-  float radius_scale;
-
 	vtkPolyData *vtkobj;
-
-  bool get_partitioning(rapidjson::Value&);
-  bool get_partitioning_from_file(char *);
 
   std::vector<Particle> samples;
   std::vector<Particle> ghosts;
-
 
 	class LoadPartitioningMsg : public Work
 	{

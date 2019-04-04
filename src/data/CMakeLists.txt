@@ -43,6 +43,7 @@ set (CPP_SOURCES
   Geometry.cpp 
   KeyedDataObject.cpp
   Particles.cpp 
+  Pathlines.cpp 
   Triangles.cpp 
   Volume.cpp 
   AmrVolume.cpp)
@@ -61,6 +62,7 @@ install(FILES
   Geometry.h
   KeyedDataObject.h
   Particles.h
+  PathLines.h
   Triangles.h
   Volume.h
   AmrVolume.h

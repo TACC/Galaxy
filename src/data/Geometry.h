@@ -44,6 +44,14 @@ OBJECT_POINTER_TYPES(Geometry)
 class Geometry : public KeyedDataObject
 {
   KEYED_OBJECT_SUBCLASS(Geometry, KeyedDataObject)
+
+protected:
+
+  //! Get partitioning info from JSON object
+  bool get_partitioning(rapidjson::Value&);
+
+  //! Load partitioning info from JSON file
+  bool get_partitioning_from_file(char *);
 };
 
 } // namespace gxy

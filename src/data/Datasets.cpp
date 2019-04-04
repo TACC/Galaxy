@@ -30,6 +30,7 @@
 #include "Volume.h"
 #include "Particles.h"
 #include "Triangles.h"
+#include "PathLines.h"
 
 #include "rapidjson/rapidjson.h"
 
@@ -106,6 +107,8 @@ Datasets::loadTyped(Value& v)
     kop = Volume::NewP();
 	else if (type == "Triangles")
     kop = Triangles::NewP();
+	else if (type == "PathLines")
+    kop = PathLines::NewP();
 	else
 	{
 		std::cerr << "invalid Dataset type: " << type << "\n";
