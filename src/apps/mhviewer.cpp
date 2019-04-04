@@ -127,7 +127,6 @@ void SetupVolume()
 void SetupParticles()
 {
 	theParticles = Particles::NewP();
-	theParticles->SetRadius(radius);
 }
 
 void 

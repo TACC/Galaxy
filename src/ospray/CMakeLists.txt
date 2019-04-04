@@ -45,8 +45,8 @@ include_directories(${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS}
                     ${OSPRAY_SOURCEDIR}/install/include/ospray/SDK/geometry)
 
-set (ISPC_SOURCES DataDrivenSpheres.ispc)
-set (CPP_SOURCES DataDrivenSpheres.cpp)
+set (ISPC_SOURCES DataDrivenPathLines.ispc DataDrivenSpheres.ispc)
+set (CPP_SOURCES DataDrivenPathLines.cpp DataDrivenSpheres.cpp)
 
 if (ospray_DIR)
   ospray_create_library(gxy_ospray ${CPP_SOURCES} ${ISPC_SOURCES} 

@@ -32,6 +32,7 @@
 #include "Lighting.h"
 #include "MappedVis.h"
 #include "ParticlesVis.h"
+#include "PathLinesVis.h"
 #include "TrianglesVis.h"
 #include "VolumeVis.h"
 

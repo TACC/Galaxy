@@ -417,7 +417,6 @@ main(int argc, char * argv[])
       volume->get_global_minmax(tf0, tf1), tf_type = TF_LINEAR;
 
     ParticlesP samples = Particles::NewP();
-    samples->SetRadius(radius);
 
     SampleMsg *smsg = new SampleMsg(volume, samples, tf_type, tf0, tf1, scaling, iteration_limit, hot_start, skip, max_consecutive_misses);
     smsg->Broadcast(true, true);

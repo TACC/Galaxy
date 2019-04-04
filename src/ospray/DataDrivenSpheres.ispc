@@ -38,7 +38,6 @@ struct DataDrivenSpheres {
   int        offset_materialID;
   int        offset_colorID;
 
-  float      radius;
   float      epsilon;
   int        materialID;
 
@@ -146,7 +145,7 @@ unmasked void DataDrivenSpheres_bounds(const RTCBoundsFunctionArguments *uniform
   uniform DataDrivenSpheres *uniform self = (uniform DataDrivenSpheres *uniform)args->geometryUserPtr;
   uniform int primID = args->primID;
   uniform uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
-  uniform float radius = self->mappedRadius ? self->mappedRadius[primID] : self->radius;
+  uniform float radius = self->mappedRadius ? self->mappedRadius[primID] : self->radius0;
   uniform vec3f center = *((uniform vec3f*uniform)(spherePtr+self->offset_center));
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(center - radius, center + radius);
@@ -168,7 +167,7 @@ void DataDrivenSpheres_intersect_kernel(const RTCIntersectFunctionNArguments *un
   // from here on it's the original intersection code from ospray/embree2
   uniform uint8 *uniform spherePtr =
     self->data + self->stride*((uniform int64)primID);
-  uniform float radius = self->mappedRadius ? self->mappedRadius[primID] : self->radius;
+  uniform float radius = self->mappedRadius ? self->mappedRadius[primID] : self->radius0;
   uniform vec3f center = *((uniform vec3f*uniform)(spherePtr+self->offset_center));
   const float approxDist = dot(center - ray->org, ray->dir);
   const vec3f closeOrg = ray->org + approxDist * ray->dir;
@@ -237,7 +236,7 @@ SampleAreaRes DataDrivenSpheres_sampleArea(
                                  )
 {
   const DataDrivenSpheres *const uniform self = (const DataDrivenSpheres *uniform)_self;
-  float radius = (self->mappedRadius) ? self->mappedRadius[primID] : self->radius;
+  float radius = (self->mappedRadius) ? self->mappedRadius[primID] : self->radius0;
   vec3f center;
 
   const uniform int32 primsPerPage = (1024*1024*64);
@@ -291,7 +290,7 @@ void DataDrivenSpheres_getAreas(
   const uniform float scaling = reduce_add(scaling3)/3.f;
 
   if (self->offset_datavalue < 0) {
-    const uniform float sphereArea = four_pi * sqr(self->radius * scaling);
+    const uniform float sphereArea = four_pi * sqr(self->radius0 * scaling);
     foreach (i = 0 ... numPrims)
       areas[i] = sphereArea;
   } else {
@@ -341,7 +340,6 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
                                 , uniform int color_format
                                 , uniform int numDataDrivenSpheres
                                 , uniform int bytesPerSphere
-                                , uniform float radius
                                 , uniform int materialID
                                 , uniform int offset_center
                                 , uniform int offset_datavalue
@@ -371,7 +369,6 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
   self->color_stride = color_stride;
   self->color_offset = color_offset;
   self->color_format = color_format;
-  self->radius = radius;
   self->data = (uint8 *uniform)data;
   self->materialID = materialID;
   self->stride = bytesPerSphere;
@@ -389,14 +386,14 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
   self->huge_mesh = huge_mesh;
 
   // Why a log function?
-  self->epsilon = log(self->radius);
+  self->epsilon = log(self->radius0);
   if (self->epsilon < 0.f)
     self->epsilon = -1.f/self->epsilon;
 
   // This can occur if the radius is < 1 in some cases, so make sure
   // epsilon is not too big
-  if (self->epsilon > self->radius / 100.0) {
-    self->epsilon = self->radius / 100.0;
+  if (self->epsilon > self->radius0 / 100.0) {
+    self->epsilon = self->radius0 / 100.0;
   }
 
   if (self->mappedRadius)
@@ -427,6 +424,8 @@ export void DataDrivenSpheresGeometry_computeRadius(void  *uniform _self, void *
   uniform float value0 = self->value0;
   uniform float value1 = self->value1;
 
+print("DataDrivenSpheresGeometry_computeRadius % %\n", radius0, radius1);
+
   uniform int   numDataDrivenSpheres = self->super.numPrimitives;
 
   if (self->mappedRadius)
@@ -435,7 +434,7 @@ export void DataDrivenSpheresGeometry_computeRadius(void  *uniform _self, void *
     self->mappedRadius = NULL;
   }
 
-  if (self->offset_datavalue >= 0 && self->radius0 >= 0.0)
+  if (self->offset_datavalue >= 0 && (self->value0 != self->value1))
   {
     self->mappedRadius = uniform new float[numDataDrivenSpheres];
 
@@ -448,6 +447,16 @@ export void DataDrivenSpheresGeometry_computeRadius(void  *uniform _self, void *
       else if (d < 0) self->mappedRadius[i] = radius0;
       else self->mappedRadius[i] = radius0 + d*(radius1 - radius0);
     }
+
+    float minr = self->mappedRadius[0];
+    float maxr = minr;
+    for (int i = 0; i < numDataDrivenSpheres; i++)
+    {
+      if (self->mappedRadius[i] > maxr) maxr = self->mappedRadius[i];
+      if (self->mappedRadius[i] < minr) minr = self->mappedRadius[i];
+    }
+
+    print ("mapped R range: % %\n", minr, maxr);
   }
 
   uniform uint8 *uniform base = (uniform uint8 *uniform)(self->data + self->offset_center);
@@ -464,7 +473,7 @@ export void DataDrivenSpheresGeometry_computeRadius(void  *uniform _self, void *
 
   foreach (i = 0 ... numDataDrivenSpheres)
   {
-    float radius = self->mappedRadius ? self->mappedRadius[i] : self->radius;
+    float radius = self->mappedRadius ? self->mappedRadius[i] : self->radius0;
     vec3f *ptr = (vec3f *)(base + i * self->stride);
     vec3f center = *ptr;
 

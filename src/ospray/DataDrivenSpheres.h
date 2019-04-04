@@ -35,7 +35,6 @@ namespace ospray {
 
     Parameters:
     <dl>
-    <dt><code>float        radius = 0.01f</code></dt><dd>Base radius common to all spheres if 'offset_datavalue' is not used</dd>
     <dt><code>int32        materialID = 0</code></dt><dd>Material ID common to all spheres if 'offset_materialID' is not used</dd>
     <dt><code>int32        bytes_per_sphere = 4*sizeof(float)</code></dt><dd>Size (in bytes) of each sphere in the data array.</dd>
     <dt><code>int32        offset_center = 0</code></dt><dd>Offset (in bytes) of each sphere's 'vec3f center' value within the sphere</dd>
@@ -69,8 +68,6 @@ namespace ospray {
 
     // Data members //
 
-    /*! default radius, if no per-sphere radius was specified. */
-    float radius;
     int32 materialID;
 
     size_t numDataDrivenSpheres;

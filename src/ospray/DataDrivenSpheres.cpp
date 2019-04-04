@@ -47,7 +47,6 @@ namespace ospray {
   {
     Geometry::finalize(model);
 
-    radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
     bytesPerSphere    = getParam1i("bytes_per_sphere",4*sizeof(float));
     texcoordData      = getParamData("texcoord");
@@ -59,7 +58,7 @@ namespace ospray {
     colorData         = getParamData("color");
     colorOffset       = getParam1i("color_offset",0);
 
-    radius0 = getParam1f("radius0", -1.0);
+    radius0 = getParam1f("radius0", 0.1);
     radius1 = getParam1f("radius1", 0.0);
 
     value0 = getParam1f("value0", 0.0);
@@ -128,7 +127,6 @@ namespace ospray {
                               colorFormat,
                               numDataDrivenSpheres,
                               bytesPerSphere,
-                              radius,
                               materialID,
                               offset_center,
                               offset_datavalue,
@@ -141,7 +139,7 @@ namespace ospray {
                               value1);
 
 
-    // std::cerr << "About to compute radius\n";
+    // std::cerr << "About to compute radii\n";
     ispc::DataDrivenSpheresGeometry_computeRadius(getIE(), &bounds);
   }
 

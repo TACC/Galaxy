@@ -18,8 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ParticlesVis.h"
-#include "ParticlesVis_ispc.h"
+#include "PathLinesVis.h"
+#include "PathLinesVis_ispc.h"
 
 #include "Application.h"
 #include "Datasets.h"
@@ -29,51 +29,51 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(ParticlesVis)
+KEYED_OBJECT_CLASS_TYPE(PathLinesVis)
 
 void
-ParticlesVis::Register()
+PathLinesVis::Register()
 {
   RegisterClass();
 }
 
-ParticlesVis::~ParticlesVis()
+PathLinesVis::~PathLinesVis()
 {
-	ParticlesVis::destroy_ispc();
+	PathLinesVis::destroy_ispc();
 }
 
 void
-ParticlesVis::initialize()
+PathLinesVis::initialize()
 {
   super::initialize();
 
-  r0 =  1.0;
-  r1 =  0.0;
+  r0 = -1.0;
+  r1 =  1.0;
   v0 =  0.0;
-  v1 =  0.0;
+  v1 =  1.0;
 }
 
 void
-ParticlesVis::initialize_ispc()
+PathLinesVis::initialize_ispc()
 {
   super::initialize_ispc();
-  ispc::ParticlesVis_initialize(ispc);
+  ispc::PathLinesVis_initialize(ispc);
 } 
     
 void
-ParticlesVis::allocate_ispc()
+PathLinesVis::allocate_ispc()
 {
-  ispc = ispc::ParticlesVis_allocate();
+  ispc = ispc::PathLinesVis_allocate();
 }
 
 int 
-ParticlesVis::serialSize()
+PathLinesVis::serialSize()
 {
   return super::serialSize();
 }
 
 unsigned char *
-ParticlesVis::serialize(unsigned char *ptr)
+PathLinesVis::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
   
@@ -81,51 +81,46 @@ ParticlesVis::serialize(unsigned char *ptr)
 }
 
 unsigned char *
-ParticlesVis::deserialize(unsigned char *ptr)
+PathLinesVis::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
   return ptr;
 }
 
 bool 
-ParticlesVis::LoadFromJSON(Value& v)
+PathLinesVis::LoadFromJSON(Value& v)
 {
   if (v.HasMember("radius0")) r0 = v["radius0"].GetDouble();
   if (v.HasMember("radius1")) r1 = v["radius1"].GetDouble();
   if (v.HasMember("value0"))  v0 = v["value0"].GetDouble();
   if (v.HasMember("value1"))  v1 = v["value1"].GetDouble();
-  if (v.HasMember("radius"))
-  {
-    r0 = v["radius"].GetDouble();
-    v0 = v1 = r1 = 0.0;
-  }
 
   return super::LoadFromJSON(v);
 }
 
 void
-ParticlesVis::SaveToJSON(Value& v, Document&  doc)
+PathLinesVis::SaveToJSON(Value& v, Document&  doc)
 {
   Vis::SaveToJSON(v, doc);
 }
 
 void
-ParticlesVis::destroy_ispc()
+PathLinesVis::destroy_ispc()
 {
   if (ispc)
   {
-    ispc::ParticlesVis_destroy(ispc);
+    ispc::PathLinesVis_destroy(ispc);
   }
 }
 
 bool
-ParticlesVis::local_commit(MPI_Comm c)
+PathLinesVis::local_commit(MPI_Comm c)
 {  
 	return super::local_commit(c);
 }
 
 void
-ParticlesVis::SetTheOsprayDataObject(OsprayObjectP o)
+PathLinesVis::SetTheOsprayDataObject(OsprayObjectP o)
 {
   super::SetTheOsprayDataObject(o);
 
@@ -134,6 +129,8 @@ ParticlesVis::SetTheOsprayDataObject(OsprayObjectP o)
 
   ospSet1f(o->GetOSP(), "value1", v1);
   ospSet1f(o->GetOSP(), "radius1", r1);
+
+  std::cerr << "PathLinesVis::SetTheOSPRayDataObject:" << o->GetOSP() << "\n";
 }
  
 } // namespace gxy

@@ -41,18 +41,7 @@ OsprayParticles::OsprayParticles(ParticlesP p)
   ospCommit(data);
 
   ospSetData(ospg, "spheres", data);
-  ospSet1f(ospg, "radius_scale", particles->GetRadiusScale());
-  ospSet1f(ospg, "radius", particles->GetRadius());
   ospSet1i(ospg, "offset_datavalue", 12);
-
-#if 0
-  srand(GetTheApplication()->GetRank());
-  int r = random();
-  unsigned int color = (r & 0x1 ? 0x000000ff : 0x000000A6) |
-                       (r & 0x2 ? 0x0000ff00 : 0x0000A600) |
-                       (r & 0x4 ? 0x00ff0000 : 0x00A60000) |
-                       0xff000000;
-#endif
 
   float r, g, b, a;
   particles->GetDefaultColor(r, g, b, a);

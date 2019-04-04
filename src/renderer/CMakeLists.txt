@@ -56,6 +56,7 @@ set (ISPC_SOURCES
   Visualization.ispc
   Lighting.ispc
 	ParticlesVis.ispc
+	PathLinesVis.ispc
   TraceRays.ispc
 	Vis.ispc
 	VolumeVis.ispc
@@ -71,9 +72,11 @@ set (CPP_SOURCES
   OsprayObject.cpp
   OsprayTriangles.cpp
   OsprayParticles.cpp
+  OsprayPathLines.cpp
   OsprayVolume.cpp
   OsprayUtil.cpp
   ParticlesVis.cpp
+  PathLinesVis.cpp
   RayQManager.cpp
   Rays.cpp 
   Renderer.cpp

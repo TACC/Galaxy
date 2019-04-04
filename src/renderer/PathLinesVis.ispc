@@ -18,15 +18,19 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "PathLinesVis.ih"
 
-#include "MappedVis.ih"
-
-#include "ospray/SDK/math/vec.ih"
-
-struct ParticlesVis_ispc
+export void *uniform PathLinesVis_allocate()
 {
-  struct MappedVis_ispc vis;
-};  
+	PathLinesVis_ispc *uniform v = uniform new uniform PathLinesVis_ispc;
+	return (void *)v;
+}
 
-typedef uniform ParticlesVis_ispc *uniform pParticlesVis_ispc;
+export void PathLinesVis_initialize(void *uniform _self)
+{
+	PathLinesVis_ispc *uniform self = (uniform PathLinesVis_ispc *)_self;
+}
+
+export void PathLinesVis_destroy(void *uniform _self)
+{
+}

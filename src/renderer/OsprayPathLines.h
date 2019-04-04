@@ -20,13 +20,38 @@
 
 #pragma once
 
-#include "MappedVis.ih"
+/*! \file OsprayPathLines.h 
+ * \brief translation class for Galaxy PathLines to OSPRay pathline data
+ * \ingroup render
+ */
 
-#include "ospray/SDK/math/vec.ih"
+#include "Application.h"
+#include "PathLines.h"
+#include "OsprayObject.h"
 
-struct ParticlesVis_ispc
+
+namespace gxy
 {
-  struct MappedVis_ispc vis;
-};  
 
-typedef uniform ParticlesVis_ispc *uniform pParticlesVis_ispc;
+OBJECT_POINTER_TYPES(OsprayPathLines)
+
+//! translation class for Galaxy PathLines to OSPRay pathline data
+/*! \ingroup render 
+ * \sa OsprayObject
+ */
+class OsprayPathLines : public OsprayObject
+{
+  GALAXY_OBJECT(OsprayPathLines) 
+
+public:
+  static OsprayPathLinesP NewP(PathLinesP p) { return OsprayPathLines::Cast(std::shared_ptr<OsprayPathLines>(new OsprayPathLines(p))); }
+  
+private:
+  OsprayPathLines(PathLinesP);
+
+private:
+  PathLinesP pathlines;
+};
+
+}
+

@@ -20,15 +20,15 @@
 
 #pragma once
 
-/*! \file ParticlesVis.h 
- * \brief a visualization element operating on a particle dataset within Galaxy
+/*! \file PathLinesVis.h 
+ * \brief a visualization element operating on a PathLine dataset within Galaxy
  * \ingroup render
  */
 
 #include "dtypes.h"
 #include "Application.h"
 #include "MappedVis.h"
-#include "Particles.h"
+#include "PathLines.h"
 #include "Datasets.h"
 
 #include "KeyedObject.h"
@@ -38,20 +38,20 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(ParticlesVis)
+OBJECT_POINTER_TYPES(PathLinesVis)
 
-//!  a visualization element operating on a particle dataset within Galaxy
+//!  a visualization element operating on a PathLine dataset within Galaxy
 /* \ingroup render 
  * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
-class ParticlesVis : public MappedVis
+class PathLinesVis : public MappedVis
 {
-  KEYED_OBJECT_SUBCLASS(ParticlesVis, MappedVis) 
+  KEYED_OBJECT_SUBCLASS(PathLinesVis, MappedVis) 
 
 public:
-	~ParticlesVis(); //!< destructor
+	~PathLinesVis(); //!< destructor
   
-  virtual void initialize(); //!< initialize this ParticlesVis object
+  virtual void initialize(); //!< initialize this PathLinesVis object
   //! commit this object to the local registry
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);

@@ -251,11 +251,9 @@ main(int argc, char * argv[])
     // create empty distributed container for particles
     // particle partitioning will match volume partition
     ParticlesP samples = Particles::NewP();
-    samples->SetRadius(radius);
     samples->SetDefaultColor(1.0, 0.5, 0.5, 1.0);
 #ifdef SAMPLE
     ParticlesP samrays = Particles::NewP();
-    samrays->SetRadius(0.1*radius);
     samrays->CopyPartitioning(volume);
     samrays->SetDefaultColor(0.5, 0.5, 0.5, 1.0);
 #endif // SAMPLE

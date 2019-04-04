@@ -24,9 +24,9 @@
 
 #include "ospray/SDK/math/vec.ih"
 
-struct ParticlesVis_ispc
+struct PathLinesVis_ispc
 {
   struct MappedVis_ispc vis;
 };  
 
-typedef uniform ParticlesVis_ispc *uniform pParticlesVis_ispc;
+typedef uniform PathLinesVis_ispc *uniform pPathLinesVis_ispc;

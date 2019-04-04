@@ -348,6 +348,9 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
+// print ("TraceRays_TraceRays\n");
+
+
   step = -1;
   for (uniform int major = 0; major < vis->nVolumeVis; major++)
   {
@@ -409,6 +412,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     float tEntry, tExitVolume;
     MyIntersectBox(ray, box, tEntry, tExitVolume);
 
+// print("Box: (% % %) (% % %)\n", box.lower.x, box.lower.y, box.lower.z, box.upper.x, box.upper.y, box.upper.z);
+
     // If the volume entrypoint is beyong the current ray point, move the ray point up to
     // the entry point
 
@@ -436,6 +441,9 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     if (model)
       surface_hit |= LookForGeometryHit(shadeFlag, model, ray, vis, hit);
+
+//if (surface_hit)
+  //print("Z %\n", ray.org.z + ray.t*ray.dir.z);
 
     float tOpaque, tTermination = ray.t;
 

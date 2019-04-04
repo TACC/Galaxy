@@ -25,6 +25,7 @@
 #include "MappedVis.h"
 #include "OsprayUtil.h"
 #include "ParticlesVis.h"
+#include "PathLinesVis.h"
 #include "TrianglesVis.h"
 #include "Vis_ispc.h"
 #include "VolumeVis.h"
@@ -46,6 +47,7 @@ Vis::Register()
 	MappedVis::Register();
 	VolumeVis::Register();
 	ParticlesVis::Register();
+	PathLinesVis::Register();
 	TrianglesVis::Register();
 }
 

@@ -419,8 +419,6 @@ MHSampleClientServer::handle(std::string line)
       args.vk = volume->getkey();
       args.pk = particles->getkey();
 
-      particles->SetRadius(args.radius);
-
       if (args.tf_type == TF_NONE)
         volume->get_global_minmax(args.tf0, args.tf1);
 

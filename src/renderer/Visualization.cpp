@@ -22,7 +22,6 @@
 #include "Renderer.h"
 
 #include "Rendering.h"
-#include "Rendering.h"
 #include "Visualization.h"
 #include "Visualization_ispc.h"
 
@@ -30,6 +29,7 @@
 
 #include "OsprayVolume.h"
 #include "OsprayParticles.h"
+#include "OsprayPathLines.h"
 #include "OsprayTriangles.h"
 #include "OsprayUtil.h"
 
@@ -199,31 +199,12 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 
     Key key = kdop->getkey();
 
-#if 0
-    auto it = ospray_object_map.find(key);
-    if (it == ospray_object_map.end())
-    {
-      if (Volume::IsA(kdop))
-        op = OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
-      else if (Particles::IsA(kdop))
-        op = OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
-      else if (Triangles::IsA(kdop))
-        op = OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
-      else
-      {
-        cerr << "huh?";
-        exit(1);
-      }
-
-      ospray_object_map[key] = op;
-    }
-    else
-      op = it->second;
-#else
     if (Volume::IsA(kdop))
       op = OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
     else if (Particles::IsA(kdop))
       op = OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
+    else if (PathLines::IsA(kdop))
+      op = OsprayObject::Cast(OsprayPathLines::NewP(PathLines::Cast(kdop)));
     else if (Triangles::IsA(kdop))
       op = OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
     else
@@ -231,13 +212,14 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
       cerr << "unknown OsprayObject detected in Visualization";
       exit(1);
     }
-#endif
+
+    // Here we set the per-visualization values onto the OSPRay object
 
     v->SetTheOsprayDataObject(op);
     
     if (OsprayVolume::IsA(op))
       vispc[nvispc++] = v->GetIspc();
-    else if (ParticlesVis::IsA(v))
+    else if (ParticlesVis::IsA(v) || PathLinesVis::IsA(v))
     {
       if (! ospModel)
         ospModel = ospNewModel();
@@ -248,7 +230,10 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   }
 
   if (ospModel)
+  {
     ospCommit(ospModel);
+    std::cerr << "SetOSPRayObjects " << std::hex << ospModel << " " << ospray_util::GetIE(ospModel) << "\n";
+  }
    
   ispc::Visualization_commit(ispc, 
           ospModel ? ospray_util::GetIE(ospModel) : NULL,
@@ -317,6 +302,16 @@ Visualization::LoadFromJSON(Value& v)
 		else if (t == "Particles")
 		{
 			VisP p = ParticlesVis::NewP();
+			if (! p->LoadFromJSON(vv))
+      {
+        set_error(1);
+        return false;
+      }
+			AddVis(p);
+		}
+		else if (t == "PathLines")
+		{
+			VisP p = PathLinesVis::NewP();
 			if (! p->LoadFromJSON(vv))
       {
         set_error(1);
