@@ -43,7 +43,7 @@ set (CPP_SOURCES
   Geometry.cpp 
   KeyedDataObject.cpp
   Particles.cpp 
-  Pathlines.cpp 
+  PathLines.cpp 
   Triangles.cpp 
   Volume.cpp 
   AmrVolume.cpp)
