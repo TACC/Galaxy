@@ -507,12 +507,10 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
             if (vvis->volume_render)
             {
               uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)vvis)->data;
-
               uniform TransferFunction *uniform tf = (uniform TransferFunction *uniform )vol->transferFunction;
 
               float sVolume = (sLast[major] + sThis[major]) / 2;
               float sampleOpacity = tf->getOpacityForValue(tf, sVolume);
-
 
               if (sampleOpacity > 0)
               {

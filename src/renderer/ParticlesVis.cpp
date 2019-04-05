@@ -47,7 +47,7 @@ ParticlesVis::initialize()
 {
   super::initialize();
 
-  r0 =  1.0;
+  r0 =  0.025;
   r1 =  0.0;
   v0 =  0.0;
   v1 =  0.0;
