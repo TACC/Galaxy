@@ -51,7 +51,10 @@ public:
   static void Initialize();
   virtual void HandleTerminatedRays(RayList *raylist, int *classification);
   void SetSamples(ParticlesP p) {mSamples = p;}
-  ParticlesP GetSamples() {return mSamples;}
+  ParticlesP GetSamples()
+  {
+    return mSamples;
+  }
 
   virtual int SerialSize();
   virtual unsigned char *Serialize(unsigned char *);

@@ -41,10 +41,14 @@ Sampler::Initialize()
 void
 Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
 {
+ 
   int terminated_count = 0;
 
   for (int i = 0; i < raylist->GetRayCount(); i++)
     if (classification[i] == Renderer::TERMINATED) terminated_count++;
+
+  std::cerr << std::dec;
+  std::cerr << "Sampler::HandleTerminatedRays entry - " << raylist->GetRayCount() << " in, " << terminated_count << " terminated\n";
 
   RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
   RenderingP rendering = raylist->GetTheRendering();
@@ -55,7 +59,8 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
     new Renderer::SendPixelsMsg(rendering, renderingSet,
     raylist->GetFrame(), terminated_count) : NULL;
 
-  Particle newsample;
+  ParticlesP samples = this->GetSamples();
+
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {
     if (classification[i] == Renderer::TERMINATED)
@@ -63,13 +68,15 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
       if (rendering->IsLocal())
       {
         // add a particle, setting position from ray
+        Particle newsample;
         newsample.xyz.x = raylist->get_ox(i) + raylist->get_t(i)*raylist->get_dx(i);
         newsample.xyz.y = raylist->get_oy(i) + raylist->get_t(i)*raylist->get_dy(i);
         newsample.xyz.z = raylist->get_oz(i) + raylist->get_t(i)*raylist->get_dz(i);
         // newsample.xyz.x = (float)(rand() % 100)/100.0; 
         // newsample.xyz.y = (float)(rand() % 100)/100.0; 
         // newsample.xyz.z = (float)(rand() % 100)/100.0; 
-        this->GetSamples()->push_back(newsample);
+
+        samples->push_back(newsample);
       }
       else
       {
@@ -77,6 +84,8 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
       }
     }
   }
+
+  std::cerr << "Sampler::HandleTerminatedRays: " << samples->get_n_samples() << " samples stashed\n";
 
   if (spmsg)
   {

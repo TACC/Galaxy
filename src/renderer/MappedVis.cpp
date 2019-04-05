@@ -203,6 +203,15 @@ MappedVis::SaveToJSON(Value& v, Document& doc)
   v.AddMember("opacitymap", omap, doc.GetAllocator());
 }
 
+void
+MappedVis::SetTheOsprayDataObject(OsprayObjectP o)
+{
+  super::SetTheOsprayDataObject(o);
+
+  ospSetObject(o->GetOSP(), "transferFunction", transferFunction);
+  ospCommit(o->GetOSP());
+}
+
 int
 MappedVis::serialSize() 
 {

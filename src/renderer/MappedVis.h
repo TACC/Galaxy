@@ -71,6 +71,9 @@ public:
   //! save this MappedVis to a Galaxy JSON specification 
   virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
+  //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
+  virtual void SetTheOsprayDataObject(OsprayObjectP o);
+
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
 

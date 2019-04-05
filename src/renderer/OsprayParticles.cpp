@@ -26,7 +26,8 @@ OsprayParticles::OsprayParticles(ParticlesP p)
 {
   particles = p;
 
-  OSPGeometry ospg = ospNewGeometry("ddspheres");
+  // OSPGeometry ospg = ospNewGeometry("ddspheres");
+  OSPGeometry ospg = ospNewGeometry("spheres");
   if (! ospg) 
   {
     std::cerr << "Could not create ddspheres geometry!\n";

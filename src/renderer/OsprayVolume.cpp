@@ -44,9 +44,10 @@ OsprayVolume::OsprayVolume(VolumeP v)
   ospSetVec3f(ospv, "gridOrigin", origin);
   ospSetVec3f(ospv, "gridSpacing", spacing);
   ospSetString(ospv, "voxelType", volume->isFloat() ? "float" : "uchar");
-  ospSetObject(ospv, "transferFunction", ospNewTransferFunction("piecewise_linear"));
   ospSetf(ospv, "samplingRate", 1.0);
   
+  ospSetObject(ospv, "transferFunction", ospNewTransferFunction("piecewise_linear"));
+
   ospCommit(ospv);
   
   theOSPRayObject = ospv;

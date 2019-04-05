@@ -230,10 +230,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   }
 
   if (ospModel)
-  {
     ospCommit(ospModel);
-    std::cerr << "SetOSPRayObjects " << std::hex << ospModel << " " << ospray_util::GetIE(ospModel) << "\n";
-  }
    
   ispc::Visualization_commit(ispc, 
           ospModel ? ospray_util::GetIE(ospModel) : NULL,

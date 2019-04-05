@@ -22,11 +22,15 @@
 #include "common/safe_gather.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
+#include "transferFunction/TransferFunction.ih"
+
 #include "ospray/OSPDataType.h"
 
 struct DataDrivenSpheres {
   /*! inherit from "Geometry" class: */
   Geometry   super;
+
+  int deadbeef;
 
   /*! data array that contains the sphere data (possibly but not
     necessarily including the color, which could be in color);
@@ -51,8 +55,11 @@ struct DataDrivenSpheres {
   float     value0;
   float     value1;
 
-  vec2f     *texcoord;
 
+  //! Color and opacity transfer function.
+  TransferFunction *uniform transferFunction;
+
+  vec2f     *texcoord;
   float     *mappedRadius;
 
   bool huge_mesh;
@@ -350,6 +357,7 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
                                 , uniform float radius1
                                 , uniform float value0
                                 , uniform float value1
+                                , void *uniform tf
                                 )
 {
   uniform DataDrivenSpheres *uniform self = (uniform DataDrivenSpheres *uniform)_self;
@@ -382,6 +390,8 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
   self->radius1 = radius1;
   self->value0 = value0;
   self->value1 = value1;
+
+  self->transferFunction = (TransferFunction *uniform)tf;
 
   self->huge_mesh = huge_mesh;
 
@@ -418,6 +428,38 @@ export void DataDrivenSpheresGeometry_computeRadius(void  *uniform _self, void *
 {
   uniform DataDrivenSpheres *uniform self = (uniform DataDrivenSpheres *uniform)_self;
   uniform box3f *uniform box = (uniform box3f *uniform)_box;
+
+  self->deadbeef = 0xdeadbeef;
+  print("DeadBeef: %\n", ((int32)&(self->deadbeef)) - ((int32)self));
+
+print("data = %\n", self->data);
+print("stride = %\n", self->stride);
+print("offset_center = %\n", self->offset_center);
+print("offset_datavalue = %\n", self->offset_datavalue);
+print("offset_materialID = %\n", self->offset_materialID);
+print("offset_colorID = %\n", self->offset_colorID);
+print("epsilon = %\n", self->epsilon);
+print("materialID = %\n", self->materialID);
+print("color = %\n", self->color);
+print("color_stride = %\n", self->color_stride);
+print("color_offset = %\n", self->color_offset);
+print("color_format = %\n", self->color_format);
+print("radius0 = %\n", self->radius0);
+print("radius1 = %\n", self->radius1);
+print("value0 = %\n", self->value0);
+print("value1 = %\n", self->value1);
+print("transferFunction = %\n", self->transferFunction);
+print("texcoord = %\n", self->texcoord);
+print("mappedRadius = %\n", self->mappedRadius);
+
+
+  //! Color and opacity transfer function.
+  TransferFunction *uniform transferFunction;
+
+  vec2f     *texcoord;
+  float     *mappedRadius;
+
+
 
   uniform float radius0 = self->radius0;
   uniform float radius1 = self->radius1;

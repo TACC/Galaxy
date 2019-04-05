@@ -21,6 +21,8 @@
 #include "common/Data.h"
 #include "common/Model.h"
 #include "common/OSPCommon.h"
+#include "transferFunction/TransferFunction.h"
+
 // ispc-generated files
 #include "DataDrivenSpheres_ispc.h"
 
@@ -115,6 +117,8 @@ namespace ospray {
 
     // std::cerr << "About to call _set\n";
 
+    auto transferFunction = (TransferFunction *)getParamData("transferFunction", nullptr);
+
     ispc::DataDrivenSpheresGeometry_set(getIE(),
                               model->getIE(),
                               sphereData->data,
@@ -136,11 +140,13 @@ namespace ospray {
                               radius0,
                               radius1,
                               value0,
-                              value1);
+                              value1,
+                              transferFunction->getIE());
 
 
     // std::cerr << "About to compute radii\n";
-    ispc::DataDrivenSpheresGeometry_computeRadius(getIE(), &bounds);
+    if (value0 != value1)
+      ispc::DataDrivenSpheresGeometry_computeRadius(getIE(), &bounds);
   }
 
   OSP_REGISTER_GEOMETRY(DataDrivenSpheres,ddspheres);

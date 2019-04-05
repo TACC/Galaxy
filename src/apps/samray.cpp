@@ -261,14 +261,15 @@ main(int argc, char * argv[])
     // define action to perform on volume (see SampleMsg above)
     SampleMsg *smsg = new SampleMsg(volume, samples);
     smsg->Broadcast(true, true);
-
-    samples->Commit();
+ 
 
 #ifdef SAMPLE
     // this creates samples in the Particles data structure above 
     theSampler->SetSamples(samrays);
     theSampler->Commit();
     // execute_sampler(theSampler);
+
+    samples->Commit();
 #endif // SAMPLE
 
     theRenderer->Commit();
@@ -321,7 +322,7 @@ main(int argc, char * argv[])
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
     Lighting *l = v->get_the_lights();
     l->SetLights(1, light, &t);
-    l->SetK(0.4, 0.6);
+    l->SetK(0.8, 0.2);
     l->SetShadowFlag(false);
     l->SetAO(0, 0.0);
 
@@ -357,7 +358,6 @@ main(int argc, char * argv[])
     theSampler->Sample(theRenderingSet);
     theRenderingSet->WaitForDone();
 #endif // SAMPLE
-
 
     theRenderingSet = RenderingSet::NewP();
 

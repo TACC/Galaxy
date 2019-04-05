@@ -131,7 +131,6 @@ ParticlesVis::SetTheOsprayDataObject(OsprayObjectP o)
 
   ospSet1f(o->GetOSP(), "value0", v0);
   ospSet1f(o->GetOSP(), "radius0", r0);
-
   ospSet1f(o->GetOSP(), "value1", v1);
   ospSet1f(o->GetOSP(), "radius1", r1);
 }
