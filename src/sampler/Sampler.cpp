@@ -69,12 +69,18 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
       {
         // add a particle, setting position from ray
         Particle newsample;
-        newsample.xyz.x = raylist->get_ox(i) + raylist->get_t(i)*raylist->get_dx(i);
-        newsample.xyz.y = raylist->get_oy(i) + raylist->get_t(i)*raylist->get_dy(i);
-        newsample.xyz.z = raylist->get_oz(i) + raylist->get_t(i)*raylist->get_dz(i);
-        // newsample.xyz.x = (float)(rand() % 100)/100.0; 
-        // newsample.xyz.y = (float)(rand() % 100)/100.0; 
-        // newsample.xyz.z = (float)(rand() % 100)/100.0; 
+        bool doOffset = false;
+        if (doOffset) {
+            // position the points correctly, using the offsets in the raylist
+            newsample.xyz.x = raylist->get_ox(i) + raylist->get_t(i)*raylist->get_dx(i);
+            newsample.xyz.y = raylist->get_oy(i) + raylist->get_t(i)*raylist->get_dy(i);
+            newsample.xyz.z = raylist->get_oz(i) + raylist->get_t(i)*raylist->get_dz(i);
+        } else {
+            // position the points randomly, for testing
+            newsample.xyz.x = (float)(rand() % 100)/100.0; 
+            newsample.xyz.y = (float)(rand() % 100)/100.0; 
+            newsample.xyz.z = (float)(rand() % 100)/100.0; 
+        }
 
         samples->push_back(newsample);
       }
