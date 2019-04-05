@@ -241,152 +241,146 @@ main(int argc, char * argv[])
 
   if (mpiRank == 0)
   {
+    DatasetsP theDatasets = Datasets::NewP();
+
     // create empty distributed container for volume data
     VolumeP volume = Volume::NewP();
+
     // import data to all processes, smartly distributes volume across processses
     // this import defines the partitioning of the data across processses
     // if subsequent Import commands have a different partition, an error will be thrown
     volume->Import(data);
+    volume->Commit();
 
-    // create empty distributed container for particles
-    // particle partitioning will match volume partition
-    ParticlesP samples = Particles::NewP();
-    samples->SetDefaultColor(1.0, 0.5, 0.5, 1.0);
-#ifdef SAMPLE
+    // add it to Datasets
+    theDatasets->Insert("volume", volume);
+    theDatasets->Commit();
+    
+    // Create a Visualization that specifies how the volume is to be sampled...
+    // No need to futz with lights, we aren't lighting
+
+    VisualizationP vis0 = Visualization::NewP();
+  
+    // Create a VolumeVis with an isovalue to sample the volume at 
+    // that isolevel and add it to the sampling 'Visualization'
+
+    VolumeVisP vvis = VolumeVis::NewP();
+    vvis->SetName("volume");
+    vvis->AddIsovalue(0.5);
+    vvis->Commit(theDatasets);
+    vis0->AddVis(vvis);
+
+    vis0->Commit(theDatasets);
+    
+
+    // Create a camera for the sampling pass...
+
+    CameraP cam0 = Camera::NewP();
+    cam0->set_viewup(0.0, 1.0, 0.0);
+    cam0->set_angle_of_view(45.0);
+    cam0->set_viewpoint(4.0, 0.0, 0.0);
+    cam0->set_viewdirection(-2.0, 0.0, 0.0);
+    cam0->Commit();
+
+    // Create a rendering set for the sampling pass...
+
+    RenderingSetP theRenderingSet0 = RenderingSet::NewP();
+
+    // Create a Rendering combining the sampling 'visualization' and the camera..
+
+    RenderingP theRendering0 = Rendering::NewP();
+
+    theRendering0->SetTheOwner(0);
+    theRendering0->SetTheSize(width, height);
+    theRendering0->SetTheDatasets(theDatasets);
+    theRendering0->SetTheCamera(cam0);
+    theRendering0->SetTheVisualization(vis0);
+    theRendering0->Commit();
+
+    theRenderingSet0->AddRendering(theRendering0);
+    theRenderingSet0->Commit();
+
+    // Creates a Particles dataset to sample into and attach it to the 
+    // 'Sampler' renderer.   
+
     ParticlesP samrays = Particles::NewP();
     samrays->CopyPartitioning(volume);
     samrays->SetDefaultColor(0.5, 0.5, 0.5, 1.0);
-#endif // SAMPLE
-
-    // define action to perform on volume (see SampleMsg above)
-    SampleMsg *smsg = new SampleMsg(volume, samples);
-    smsg->Broadcast(true, true);
- 
-
-#ifdef SAMPLE
-    // this creates samples in the Particles data structure above 
     theSampler->SetSamples(samrays);
+
+    // Commit the Sampler, initiate sampling, and wait for it to be done
+    
     theSampler->Commit();
-    // execute_sampler(theSampler);
+    theSampler->Sample(theRenderingSet0);
+    theRenderingSet0->WaitForDone();
 
-    samples->Commit();
-#endif // SAMPLE
+    // Now the 'samrays' particle set contains the samples.  Commit it and
+    // add it to the known dataset
 
-    theRenderer->Commit();
-
-    DatasetsP theDatasets = Datasets::NewP();
-    theDatasets->Insert("samples", samples);
-#ifdef SAMPLE
-    // add the new samples 
+    samrays->Commit();
     theDatasets->Insert("samrays", samrays);
-#endif // SAMPLE
     theDatasets->Commit();
 
-    vector<CameraP> theCameras;
+    // Now we set up a Visualization to visualize the samples.  
+    // This time we'll be lighting...
 
-#if 0
-    for (int i = 0; i < 20; i++)
-    {
-      CameraP cam = Camera::NewP();
-
-      cam->set_viewup(0.0, 1.0, 0.0);
-      cam->set_angle_of_view(45.0);
-
-      float angle = 2*3.1415926*(i / 20.0);
-
-      float vpx = 8.0 * cos(angle);
-      float vpy = 8.0 * sin(angle);
-
-      cam->set_viewpoint(vpx, vpy, 0.0);
-      cam->set_viewdirection(-vpx, -vpy, 0.0);
-
-      cam->Commit();
-      theCameras.push_back(cam);
-    }
-#else
-    CameraP cam = Camera::NewP();
-    cam->set_viewup(0.0, 1.0, 0.0);
-    cam->set_angle_of_view(45.0);
-    cam->set_viewpoint(4.0, 0.0, 0.0);
-    cam->set_viewdirection(-2.0, 0.0, 0.0);
-    cam->Commit();
-    theCameras.push_back(cam);
-#endif
-
-    ParticlesVisP pvis = ParticlesVis::NewP();
-    pvis->SetName("samples");
-    pvis->Commit(theDatasets);
-
-    VisualizationP v = Visualization::NewP();
+    VisualizationP vis1 = Visualization::NewP();
 
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
-    Lighting *l = v->get_the_lights();
+    Lighting *l = vis1->get_the_lights();
     l->SetLights(1, light, &t);
     l->SetK(0.8, 0.2);
     l->SetShadowFlag(false);
     l->SetAO(0, 0.0);
+  
+    // A ParticlesVis to render the samples
 
-    v->AddVis(pvis);
+    ParticlesVisP pvis = ParticlesVis::NewP();
+    pvis->SetName("samrays");
+    pvis->Commit(theDatasets);
+    vis1->AddVis(pvis);
 
-#ifdef SAMPLE
-    ParticlesVisP pvis1 = ParticlesVis::NewP();
-    pvis1->SetName("samrays");
-    pvis1->Commit(theDatasets);
-    v->AddVis(pvis1);
-#endif // SAMPLE
+    vis1->Commit(theDatasets);
 
-    v->Commit(theDatasets);
+    // Now we set up a RenderingSet for the visualization of the particles.
+    // We'll use two cameras - one the same as in the first pass, and one
+    // off-angle
 
-    RenderingSetP theRenderingSet = RenderingSet::NewP();
+    CameraP cam1 = Camera::NewP();
+    cam1->set_viewup(0.0, 1.0, 0.0);
+    cam1->set_angle_of_view(45.0);
+    cam1->set_viewpoint(1.0, 2.0, 3.0);
+    cam1->set_viewdirection(-1.0, -2.0, -3.0);
+    cam1->Commit();
 
-    int indx = 0;
-    for (auto c : theCameras)
-    {
-      RenderingP theRendering = Rendering::NewP();
-      theRendering->SetTheOwner((indx++) % mpiSize);
-      theRendering->SetTheSize(width, height);
-      theRendering->SetTheCamera(c);
-      theRendering->SetTheDatasets(theDatasets);
-      theRendering->SetTheVisualization(v);
-      theRendering->Commit();
-      theRenderingSet->AddRendering(theRendering);
-    }
+    RenderingSetP theRenderingSet1 = RenderingSet::NewP();
 
-    theRenderingSet->Commit();
+    RenderingP theRendering1 = Rendering::NewP();
+    theRendering1->SetTheOwner(0);
+    theRendering1->SetTheSize(width, height);
+    theRendering1->SetTheDatasets(theDatasets);
+    theRendering1->SetTheCamera(cam0);          // the original camera
+    theRendering1->SetTheVisualization(vis1);   // the Particles-based vis
+    theRendering1->Commit();
 
-#ifdef SAMPLE
-    theSampler->Sample(theRenderingSet);
-    theRenderingSet->WaitForDone();
-#endif // SAMPLE
+    theRenderingSet1->AddRendering(theRendering1);
 
-    theRenderingSet = RenderingSet::NewP();
+    RenderingP theRendering2 = Rendering::NewP();
+    theRendering2->SetTheOwner(0);
+    theRendering2->SetTheSize(width, height);
+    theRendering2->SetTheDatasets(theDatasets);
+    theRendering2->SetTheCamera(cam1);          // the original camera
+    theRendering2->SetTheVisualization(vis1);   // the Particles-based vis
+    theRendering2->Commit();
 
-    indx = 0;
-    for (auto c : theCameras)
-    {
-      RenderingP theRendering = Rendering::NewP();
-      theRendering->SetTheOwner((indx++) % mpiSize);
-      theRendering->SetTheSize(width, height);
-      theRendering->SetTheCamera(c);
-      theRendering->SetTheDatasets(theDatasets);
-      theRendering->SetTheVisualization(v);
-      theRendering->Commit();
-      theRenderingSet->AddRendering(theRendering);
-    }
+    theRenderingSet1->AddRendering(theRendering2);
+    theRenderingSet1->Commit();
 
-    theRenderingSet->Commit();
+    // Render, wait, and write results
 
-    theRenderer->Render(theRenderingSet);
-
-// #ifdef GXY_WRITE_IMAGES
-    theRenderingSet->WaitForDone();
-    
-// #endif 
-    // print
-    int numsamples = theSampler->GetSamples()->get_n_samples();
-    std::cout << "num samples: " << numsamples << "\n";
-
-    theRenderingSet->SaveImages(string("samples"));
+    theRenderer->Render(theRenderingSet1);
+    theRenderingSet1->WaitForDone();
+    theRenderingSet1->SaveImages(string("samples"));
 
     theApplication.QuitApplication();
   }
