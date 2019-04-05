@@ -291,7 +291,7 @@ main(int argc, char * argv[])
     RenderingP theRendering0 = Rendering::NewP();
 
     theRendering0->SetTheOwner(0);
-    theRendering0->SetTheSize(width, height);
+    theRendering0->SetTheSize(width/4, height/4);  // sampling pass at lower res
     theRendering0->SetTheDatasets(theDatasets);
     theRendering0->SetTheCamera(cam0);
     theRendering0->SetTheVisualization(vis0);
@@ -338,6 +338,7 @@ main(int argc, char * argv[])
     ParticlesVisP pvis = ParticlesVis::NewP();
     pvis->SetName("samrays");
     pvis->Commit(theDatasets);
+    pvis->SetRadius(radius);
     vis1->AddVis(pvis);
 
     vis1->Commit(theDatasets);
@@ -349,8 +350,8 @@ main(int argc, char * argv[])
     CameraP cam1 = Camera::NewP();
     cam1->set_viewup(0.0, 1.0, 0.0);
     cam1->set_angle_of_view(45.0);
-    cam1->set_viewpoint(1.0, 2.0, 3.0);
-    cam1->set_viewdirection(-1.0, -2.0, -3.0);
+    cam1->set_viewpoint(1.0, 1.0, 1.0);
+    cam1->set_viewdirection(-1.0, -1.0, -1.0);
     cam1->Commit();
 
     RenderingSetP theRenderingSet1 = RenderingSet::NewP();

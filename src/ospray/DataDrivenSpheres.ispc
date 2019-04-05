@@ -56,11 +56,10 @@ struct DataDrivenSpheres {
   float     value1;
 
 
-  //! Color and opacity transfer function.
-  TransferFunction *uniform transferFunction;
+  TransferFunction *uniform transferFunction;          //! Color and opacity transfer function.
+  float     *mappedRadius;
 
   vec2f     *texcoord;
-  float     *mappedRadius;
 
   bool huge_mesh;
 };
