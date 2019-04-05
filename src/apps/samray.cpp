@@ -273,32 +273,51 @@ main(int argc, char * argv[])
     vis0->Commit(theDatasets);
     
 
-    // Create a camera for the sampling pass...
-
-    CameraP cam0 = Camera::NewP();
-    cam0->set_viewup(0.0, 1.0, 0.0);
-    cam0->set_angle_of_view(45.0);
-    cam0->set_viewpoint(4.0, 0.0, 0.0);
-    cam0->set_viewdirection(-2.0, 0.0, 0.0);
-    cam0->Commit();
 
     // Create a rendering set for the sampling pass...
 
+    // one rendering set
     RenderingSetP theRenderingSet0 = RenderingSet::NewP();
 
     // Create a Rendering combining the sampling 'visualization' and the camera..
 
-    RenderingP theRendering0 = Rendering::NewP();
+    // in loop
+    // create camera
+    // create rendering
+    // add rendering to the rendering set
+    // everything gets the same visualization
 
-    theRendering0->SetTheOwner(0);
-    theRendering0->SetTheSize(width/4, height/4);  // sampling pass at lower res
-    theRendering0->SetTheDatasets(theDatasets);
-    theRendering0->SetTheCamera(cam0);
-    theRendering0->SetTheVisualization(vis0);
-    theRendering0->Commit();
+    // multi-sample loop
 
-    theRenderingSet0->AddRendering(theRendering0);
-    theRenderingSet0->Commit();
+    CameraP cam0;
+    RenderingP theRendering0;
+    float angle[2]   = {10.0, 10.0};
+    float vPoint[2]  = {4.0, -4.0};
+    float vDir[2]    = {-1.0, 1.0};
+    int   sWidth[2]  = {width/8, width/8};
+    int   sHeight[2] = {height/8, height/8};
+    static int numCameras = 2;
+    for (int i=0;i<numCameras;i++) 
+    {
+        cam0 = Camera::NewP();
+        cam0->set_viewup(0.0, 1.0, 0.0);
+        cam0->set_angle_of_view(angle[i]);
+        cam0->set_viewpoint(vPoint[i], 0.0, 0.0);
+        cam0->set_viewdirection(vDir[i], 0.0, 0.0);
+        cam0->Commit();
+
+        theRendering0 = Rendering::NewP();
+
+        theRendering0->SetTheOwner(0);
+        theRendering0->SetTheSize(sWidth[i], sHeight[i]);
+        theRendering0->SetTheDatasets(theDatasets);
+        theRendering0->SetTheCamera(cam0);
+        theRendering0->SetTheVisualization(vis0);
+        theRendering0->Commit();
+
+        theRenderingSet0->AddRendering(theRendering0);
+        theRenderingSet0->Commit();
+    }
 
     // Creates a Particles dataset to sample into and attach it to the 
     // 'Sampler' renderer.   
