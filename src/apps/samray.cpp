@@ -50,7 +50,7 @@ int samples_per_partition = 100;
 int width  = WIDTH;
 int height = HEIGHT;
 
-float radius = 0.02;
+float radius = 0.001;
 
 class SampleMsg : public Work
 {
@@ -281,22 +281,19 @@ main(int argc, char * argv[])
 
     // Create a Rendering combining the sampling 'visualization' and the camera..
 
-    // in loop
-    // create camera
-    // create rendering
-    // add rendering to the rendering set
-    // everything gets the same visualization
-
     // multi-sample loop
-
+    //   create camera
+    //   create rendering
+    //   add rendering to the rendering set
+    //     everything gets the same visualization
     CameraP cam0;
     RenderingP theRendering0;
-    float angle[2]   = {10.0, 10.0};
-    float vPoint[2]  = {4.0, -4.0};
-    float vDir[2]    = {-1.0, 1.0};
-    int   sWidth[2]  = {width/8, width/8};
-    int   sHeight[2] = {height/8, height/8};
-    static int numCameras = 2;
+    float angle[2]   = {45.0, 10.0};
+    float vPoint[2]  = {-4.0, 4.0};
+    float vDir[2]    = {1.0, -1.0};
+    int   sWidth[2]  = {width/4, width/4};
+    int   sHeight[2] = {height/4, height/4};
+    static int numCameras = 3;
     for (int i=0;i<numCameras;i++) 
     {
         cam0 = Camera::NewP();
@@ -375,22 +372,22 @@ main(int argc, char * argv[])
 
     RenderingSetP theRenderingSet1 = RenderingSet::NewP();
 
-    RenderingP theRendering1 = Rendering::NewP();
-    theRendering1->SetTheOwner(0);
-    theRendering1->SetTheSize(width, height);
-    theRendering1->SetTheDatasets(theDatasets);
-    theRendering1->SetTheCamera(cam0);          // the original camera
-    theRendering1->SetTheVisualization(vis1);   // the Particles-based vis
-    theRendering1->Commit();
+    // RenderingP theRendering1 = Rendering::NewP();
+    // theRendering1->SetTheOwner(0);
+    // theRendering1->SetTheSize(width, height);
+    // theRendering1->SetTheDatasets(theDatasets);
+    // theRendering1->SetTheCamera(cam0);          // the original camera
+    // theRendering1->SetTheVisualization(vis1);   // the Particles-based vis
+    // theRendering1->Commit();
 
-    theRenderingSet1->AddRendering(theRendering1);
+    // theRenderingSet1->AddRendering(theRendering1);
 
     RenderingP theRendering2 = Rendering::NewP();
     theRendering2->SetTheOwner(0);
     theRendering2->SetTheSize(width, height);
     theRendering2->SetTheDatasets(theDatasets);
-    theRendering2->SetTheCamera(cam1);          // the original camera
-    theRendering2->SetTheVisualization(vis1);   // the Particles-based vis
+    theRendering2->SetTheCamera(cam1);          
+    theRendering2->SetTheVisualization(vis1);
     theRendering2->Commit();
 
     theRenderingSet1->AddRendering(theRendering2);
