@@ -149,15 +149,10 @@ main(int argc, char * argv[])
     // one rendering set
     RenderingSetP theRenderingSet0 = RenderingSet::NewP();
 
-    // Sample the data
-    // multi-sample loop
-    //   create camera
-    //   create rendering
-    //   add rendering to the rendering set
-    //     everything gets the same visualization
+
+    // read in a set of cameras which are used to sample the data
     vector<CameraP> theCameras;
     Camera::LoadCamerasFromJSON(*doc, theCameras);
-
     RenderingP theRendering0;
     for (vector<CameraP>::iterator iCam = theCameras.begin(); iCam != theCameras.end(); iCam++)
     {
