@@ -2,9 +2,9 @@
     "Datasets":
     [
       {
-        "name": "oneBall",
+        "name": "eightBall",
         "type": "Volume",
-        "filename": "radial-0-oneBall.vol"
+        "filename": "radial-0-eightBalls.vol"
       }
     ],
     "Visualizations":
@@ -15,7 +15,7 @@
           [
             {
               "type": "Volume",
-              "dataset": "oneBall",
+              "dataset": "eightBall",
               "isovalues": [ 0.5 ],
               "volume rendering": false
             }
