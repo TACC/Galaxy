@@ -43,16 +43,14 @@ using namespace gxy;
 using namespace std;
 using namespace rapidjson;
 
-int samples_per_partition = 100;
-
 #define WIDTH  1920
 #define HEIGHT 1080
 
-int width  = WIDTH;
-int height = HEIGHT;
-
+// default values
+int   width  = WIDTH;
+int   height = HEIGHT;
 float radius = 0.001;
-
+int   samples_per_partition = 100;
 
 void
 syntax(char *a)
@@ -60,7 +58,7 @@ syntax(char *a)
   cerr << "syntax: " << a << " [options] data" << endl;
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;
-  cerr << "  -n nsamples   number of samples in each partition (100)" << endl;
+  cerr << "  -n nsamples   number of samples in each partition (" << samples_per_partition << ")" << endl;
   cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -r radius     radius of samples (" << radius << ")" << endl;
   cerr << "  -c json file  file with camera definitions." << endl;
@@ -80,6 +78,7 @@ main(int argc, char * argv[])
   Application theApplication(&argc, &argv);
   theApplication.Start();
 
+  // process command line args
   for (int i = 1; i < argc; i++)
   {
     if (argv[i][0] == '-')
@@ -99,13 +98,14 @@ main(int argc, char * argv[])
 
   Document *doc = theApplication.OpenJSONFile( camFile ); 
 
-  Sampler::Initialize();
-  Renderer::Initialize();
   theApplication.Run();
-  SamplerP   theSampler  = Sampler::NewP();
-  RendererP theRenderer = Renderer::NewP();
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
+
+  Sampler::Initialize();
+  Renderer::Initialize();
+  SamplerP  theSampler  = Sampler::NewP();
+  RendererP theRenderer = Renderer::NewP();
 
   srand(mpiRank);
 
@@ -113,24 +113,23 @@ main(int argc, char * argv[])
 
   if (mpiRank == 0)
   {
-    DatasetsP theDatasets = Datasets::NewP();
+    // BEGIN SAMPLING
 
-    // create empty distributed container for volume data
-    VolumeP volume = Volume::NewP();
-
+    // create empty distributed container for volume data, then
     // import data to all processes, smartly distributes volume across processses
     // this import defines the partitioning of the data across processses
     // if subsequent Import commands have a different partition, an error will be thrown
+    VolumeP volume = Volume::NewP();
     volume->Import(data);
     volume->Commit();
 
     // add it to Datasets
+    DatasetsP theDatasets = Datasets::NewP();
     theDatasets->Insert("volume", volume);
     theDatasets->Commit();
-    
+
     // Create a Visualization that specifies how the volume is to be sampled...
     // No need to futz with lights, we aren't lighting
-
     VisualizationP vis0 = Visualization::NewP();
   
     // Create a VolumeVis with an isovalue to sample the volume at 
@@ -141,14 +140,10 @@ main(int argc, char * argv[])
     vvis->AddIsovalue(0.5);
     vvis->Commit(theDatasets);
     vis0->AddVis(vvis);
-
     vis0->Commit(theDatasets);
 
     // Create a rendering set for the sampling pass...
-
-    // one rendering set
     RenderingSetP theRenderingSet0 = RenderingSet::NewP();
-
 
     // read in a set of cameras which are used to sample the data
     vector<CameraP> theCameras;
@@ -177,19 +172,16 @@ main(int argc, char * argv[])
     theSampler->SetSamples(samrays);
 
     // Commit the Sampler, initiate sampling, and wait for it to be done
-    
     theSampler->Commit();
     theSampler->Sample(theRenderingSet0);
     theRenderingSet0->WaitForDone();
 
-    // Now the 'samrays' particle set contains the samples.  Commit it and
-    // add it to the known dataset
-
+    // Now the 'samrays' particle set contains the samples. Save it to the datasets
     samrays->Commit();
     theDatasets->Insert("samrays", samrays);
     theDatasets->Commit();
 
-    // end sampling code
+    // END SAMPLING
 
 
     // Now we set up a Visualization to visualize the samples.  
@@ -215,9 +207,6 @@ main(int argc, char * argv[])
     vis1->Commit(theDatasets);
 
     // Now we set up a RenderingSet for the visualization of the particles.
-    // We'll use two cameras - one the same as in the first pass, and one
-    // off-angle
-
     CameraP cam1 = Camera::NewP();
     cam1->set_viewup(0.0, 1.0, 0.0);
     cam1->set_angle_of_view(45.0);
