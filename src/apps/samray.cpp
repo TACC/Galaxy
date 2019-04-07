@@ -61,7 +61,6 @@ syntax(char *a)
   cerr << "  -n nsamples   number of samples in each partition (" << samples_per_partition << ")" << endl;
   cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -r radius     radius of samples (" << radius << ")" << endl;
-  cerr << "  -c json file  file with camera definitions." << endl;
   exit(1);
 }
 
@@ -69,7 +68,6 @@ int
 main(int argc, char * argv[])
 {
   string data = "";
-  string camFile = "input.json";
   char *dbgarg;
   bool dbg = false;
 
@@ -88,7 +86,6 @@ main(int argc, char * argv[])
         case 'n': samples_per_partition = atoi(argv[++i]); break;
         case 'r': radius = atof(argv[++i]); break;
         case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
-        case 'c': camFile = argv[++i]; break; 
         default:
           syntax(argv[0]);
       }
@@ -106,7 +103,7 @@ main(int argc, char * argv[])
   SamplerP  theSampler  = Sampler::NewP();
   RendererP theRenderer = Renderer::NewP();
 
-  Document *doc = theApplication.OpenJSONFile( camFile ); 
+  Document *doc = theApplication.OpenJSONFile( data ); 
   theRenderer->LoadStateFromDocument(*doc);
 
   srand(mpiRank);
