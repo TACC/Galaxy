@@ -96,7 +96,6 @@ main(int argc, char * argv[])
     else syntax(argv[0]);
   }
 
-  Document *doc = theApplication.OpenJSONFile( camFile ); 
 
   theApplication.Run();
   mpiRank = theApplication.GetRank();
@@ -107,6 +106,9 @@ main(int argc, char * argv[])
   SamplerP  theSampler  = Sampler::NewP();
   RendererP theRenderer = Renderer::NewP();
 
+  Document *doc = theApplication.OpenJSONFile( camFile ); 
+  theRenderer->LoadStateFromDocument(*doc);
+
   srand(mpiRank);
 
   Debug *d = dbg ? new Debug(argv[0], false, dbgarg) : NULL;
@@ -114,34 +116,18 @@ main(int argc, char * argv[])
   if (mpiRank == 0)
   {
     // BEGIN SAMPLING
-
-    // create empty distributed container for volume data, then
-    // import data to all processes, smartly distributes volume across processses
-    // this import defines the partitioning of the data across processses
-    // if subsequent Import commands have a different partition, an error will be thrown
-    VolumeP volume = Volume::NewP();
-    volume->Import(data);
-    volume->Commit();
-
-    // add it to Datasets
+    // sampling state is loaded from an external file
     DatasetsP theDatasets = Datasets::NewP();
-    theDatasets->Insert("volume", volume);
+    theDatasets->LoadFromJSON(*doc);
     theDatasets->Commit();
-
+    
     // Create a Visualization that specifies how the volume is to be sampled...
     // No need to futz with lights, we aren't lighting
     VisualizationP vis0 = Visualization::NewP();
-  
-    // Create a VolumeVis with an isovalue to sample the volume at 
-    // that isolevel and add it to the sampling 'Visualization'
-
-    VolumeVisP vvis = VolumeVis::NewP();
-    vvis->SetName("volume");
-    vvis->AddIsovalue(0.5);
-    vvis->Commit(theDatasets);
-    vis0->AddVis(vvis);
+    vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
+    vis0 = theVisualizations[0];
     vis0->Commit(theDatasets);
-
+  
     // Create a rendering set for the sampling pass...
     RenderingSetP theRenderingSet0 = RenderingSet::NewP();
 
@@ -165,6 +151,10 @@ main(int argc, char * argv[])
 
     // Creates a Particles dataset to sample into and attach it to the 
     // 'Sampler' renderer.   
+
+    vector<string> datasets = theDatasets->GetDatasetNames(); 
+    cerr << "First name " << datasets[0] << endl;
+    VolumeP volume = Volume::Cast(theDatasets->Find(datasets[0]));
 
     ParticlesP samrays = Particles::NewP();
     samrays->CopyPartitioning(volume);

@@ -1,0 +1,39 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "oneBall",
+        "type": "Volume",
+        "filename": "radial-0-oneBall.vol"
+      }
+    ],
+    "Visualizations":
+    [
+      {
+        "annotation": "",
+        "operators":
+          [
+            {
+              "type": "Volume",
+              "dataset": "oneBall",
+              "isovalues": [ 0.5 ],
+              "volume rendering": false
+            }
+          ]
+      }
+    ],
+    "Cameras": [
+      {
+        "aov"           : 45.0,
+        "viewpoint"     : [-20.0, 0.0, 0.0],
+        "viewdirection" : [1.0, 0.0, 0.0],
+        "viewup"        : [0.0, 1.0, 0.0]
+      },
+      {
+        "aov"           : 10.0,
+        "viewpoint"     : [20.0, 0.0, 0.0],
+        "viewdirection" : [-1.0, 0.0, 0.0],
+        "viewup"        : [0.0, 1.0, 0.0]
+      }
+    ]
+}
