@@ -119,7 +119,6 @@ main(int argc, char * argv[])
     theDatasets->Commit();
     
     // Create a Visualization that specifies how the volume is to be sampled...
-    // No need to futz with lights, we aren't lighting
     VisualizationP vis0 = Visualization::NewP();
     vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
     vis0 = theVisualizations[0];
@@ -150,7 +149,6 @@ main(int argc, char * argv[])
     // 'Sampler' renderer.   
 
     vector<string> datasets = theDatasets->GetDatasetNames(); 
-    cerr << "First name " << datasets[0] << endl;
     VolumeP volume = Volume::Cast(theDatasets->Find(datasets[0]));
 
     ParticlesP samrays = Particles::NewP();
