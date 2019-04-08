@@ -42,10 +42,10 @@ namespace ospray {
     <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset (in bytes) of each sphere's 'int materialID' value within each sphere. Setting this value to -1 means that there is no per-sphere material ID, and that all spheres share the same per-geometry 'materialID'</dd>
     <dt><code>Data<float>  spheres</code></dt><dd> Array of data elements.</dd>
 
-    <dt><code>Radius0<float>  R0</code></dt><dd> Radius 0.</dd>
-    <dt><code>Radius1<float>  R1</code></dt><dd> Radius 1.</dd>
-    <dt><code>Value0<float>    V0</code></dt><dd> Data value 0.</dd>
-    <dt><code>Value1<float>    V1</code></dt><dd> Data value 1.</dd>
+    <dt><code>float radius0 = 0.1 </code></dt><dd> Radius at data value 0.</dd>
+    <dt><code>float radius1 = 0.0 </code></dt><dd> Radius at data value 1.</dd>
+    <dt><code>float value0  = 0.0 </code></dt><dd> Data value 0.</dd>
+    <dt><code>float value1  = 0.0 </code></dt><dd> Data value 1.</dd>
     </dl>
 
     The functionality for this geometry is implemented via the

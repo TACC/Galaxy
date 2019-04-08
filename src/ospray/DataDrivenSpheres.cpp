@@ -37,7 +37,6 @@ namespace ospray {
 
   DataDrivenSpheres::~DataDrivenSpheres()
   {
-    if (getIE()) ispc::DataDrivenSpheres_freeMappedRadius(getIE());
   }
 
   std::string DataDrivenSpheres::toString() const
@@ -119,6 +118,7 @@ namespace ospray {
 
     auto transferFunction = (TransferFunction *)getParamData("transferFunction", nullptr);
 
+    float box[6];
     ispc::DataDrivenSpheresGeometry_set(getIE(),
                               model->getIE(),
                               sphereData->data,
@@ -141,12 +141,16 @@ namespace ospray {
                               radius1,
                               value0,
                               value1,
-                              transferFunction->getIE());
+                              transferFunction->getIE(),
+                              box);
 
+    bounds.lower.x = box[0];
+    bounds.lower.y = box[1];
+    bounds.lower.z = box[2];
 
-    // std::cerr << "About to compute radii\n";
-    if (value0 != value1)
-      ispc::DataDrivenSpheresGeometry_computeRadius(getIE(), &bounds);
+    bounds.upper.x = box[3];
+    bounds.upper.y = box[4];
+    bounds.upper.z = box[5];
   }
 
   OSP_REGISTER_GEOMETRY(DataDrivenSpheres,ddspheres);
