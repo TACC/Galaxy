@@ -103,38 +103,17 @@ static void DataDrivenSpheres_postIntersect(uniform Geometry *uniform geometry,
 
   dg.Ng = dg.Ns = ray.Ng;
 
-  if ((flags & DG_COLOR) && self->color) {
-    uint32 colorID = 0;
-    if (self->offset_colorID >= 0) {
-      uniform uint8 *varying spherePtr =
-        self->data + self->stride*ray.primID;
-      colorID = *((uniform uint32 *varying)(spherePtr+self->offset_colorID));
-    } else
-      colorID = ray.primID;
-    if (self->color_format == OSP_FLOAT4) {
-      dg.color = gather_byte_stride_vec4f(self->huge_mesh,
-                                          self->color + self->color_offset,
-                                          self->color_stride,
-                                          colorID);
-    } else if (self->color_format == OSP_FLOAT3
-        || self->color_format == OSP_FLOAT3A)
-    {
-      vec3f c = gather_byte_stride_vec3f(self->huge_mesh,
-                                         self->color + self->color_offset,
-                                         self->color_stride,
-                                         colorID);
-      dg.color = make_vec4f(c.x, c.y, c.z, 1.f);
-    } else if (self->color_format == OSP_UCHAR4) {
-      const uint32 c = gather_stride_uint32(self->huge_mesh,
-                                            self->color + self->color_offset,
-                                            self->color_stride,
-                                            colorID);
-      dg.color.x = (c & 0x000000ff) / 255.0;
-      dg.color.y = ((c & 0x0000ff00) >> 8) / 255.0;
-      dg.color.z = ((c & 0x00ff0000) >> 16) / 255.0;
-      dg.color.w = ((c & 0xff000000) >> 24) / 255.0;
-    }
-  }
+  uniform uint8 *base = self->data + self->offset_datavalue;
+  varying float dataval = *((uniform float *varying)(base + ray.primID*self->stride));
+
+
+  vec3f color = self->transferFunction->getColorForValue(self->transferFunction, dataval);
+  dg.color.x = color.x;
+  dg.color.y = color.y;
+  dg.color.z = color.z;
+  dg.color.w = 1.0;
+
+// print("D %\nR %\nG %\nB %\n", dataval, dg.color.x, dg.color.y, dg.color.z);
 
   if (flags & DG_TEXCOORD && self->texcoord)
     dg.st = self->texcoord[ray.primID];
@@ -429,6 +408,7 @@ export void DataDrivenSpheresGeometry_computeRadius(void  *uniform _self, void *
   uniform box3f *uniform box = (uniform box3f *uniform)_box;
 
   self->deadbeef = 0xdeadbeef;
+#if 0
   print("DeadBeef: %\n", ((int32)&(self->deadbeef)) - ((int32)self));
 
 print("data = %\n", self->data);
@@ -450,7 +430,7 @@ print("value1 = %\n", self->value1);
 print("transferFunction = %\n", self->transferFunction);
 print("texcoord = %\n", self->texcoord);
 print("mappedRadius = %\n", self->mappedRadius);
-
+#endif
 
   //! Color and opacity transfer function.
   TransferFunction *uniform transferFunction;
@@ -458,14 +438,10 @@ print("mappedRadius = %\n", self->mappedRadius);
   vec2f     *texcoord;
   float     *mappedRadius;
 
-
-
   uniform float radius0 = self->radius0;
   uniform float radius1 = self->radius1;
   uniform float value0 = self->value0;
   uniform float value1 = self->value1;
-
-print("DataDrivenSpheresGeometry_computeRadius % %\n", radius0, radius1);
 
   uniform int   numDataDrivenSpheres = self->super.numPrimitives;
 
@@ -496,8 +472,6 @@ print("DataDrivenSpheresGeometry_computeRadius % %\n", radius0, radius1);
       if (self->mappedRadius[i] > maxr) maxr = self->mappedRadius[i];
       if (self->mappedRadius[i] < minr) minr = self->mappedRadius[i];
     }
-
-    print ("mapped R range: % %\n", minr, maxr);
   }
 
   uniform uint8 *uniform base = (uniform uint8 *uniform)(self->data + self->offset_center);
