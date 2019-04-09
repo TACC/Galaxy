@@ -25,6 +25,16 @@
 // ispc-generated files
 #include "DataDrivenPathLines_ispc.h"
 
+#define MAP_RADIUS(d, r)                                                                  \
+{                                                                                         \
+  if (value0 == value1) r = radius1;                                                      \
+  else                                                                                    \
+  {                                                                                       \
+    float i = (d - value0) / (value1 - value0);                                           \
+    r = (i <= 0.0) ? radius0 : (i >= 1.0) ? radius1 : radius0 + i*(radius1 - radius0);    \
+  }                                                                                       \
+}
+
 namespace ospray {
 
   DataDrivenPathLines::DataDrivenPathLines()
@@ -42,35 +52,56 @@ namespace ospray {
     Geometry::finalize(model);
 
     const float globalRadius = getParam1f("radius",0.01f);
+
     utility::DataView<const float> radius(&globalRadius, 0);
+
     bool useCurve = getParam1i("smooth", 0);
+
+
+    with_data = getParam1i("with_data", 1);
+    
+    radius0 = getParam1f("radius0", globalRadius);
+    radius1 = getParam1f("radius1", 0.0);
+    value0 = getParam1f("value0", 0.0);
+    value1 = getParam1f("value1", 0.0);
 
     vertexData = getParamData("vertex",nullptr);
     if (!vertexData)
       throw std::runtime_error("DataDrivenPathLines must have 'vertex' array");
+
     if (vertexData->type != OSP_FLOAT4 && vertexData->type != OSP_FLOAT3A)
       throw std::runtime_error("ddpathlines 'vertex' must be type OSP_FLOAT4 or OSP_FLOAT3A");
+
     vertex = (vec3fa*)vertexData->data;
     numVertices = vertexData->numItems;
-    if (vertexData->type == OSP_FLOAT4) {
-      radius.reset((const float*)vertex + 3, 4);
+
+    float *data_base = NULL;
+
+    if (vertexData->type == OSP_FLOAT4)
+    {
       useCurve = true;
+
+      // then the w slot contains either the radius or a data value
+
+      if (with_data)
+        data_base = ((float *)vertexData->data) + 3;
+      else
+        radius.reset((const float*)vertex + 3, 4);
     }
 
     indexData  = getParamData("index",nullptr);
     if (!indexData)
       throw std::runtime_error("ddpathlines must have 'index' array");
+
     if (indexData->type != OSP_INT)
       throw std::runtime_error("ddpathlines 'index' array must be type OSP_INT");
+
     index = (uint32*)indexData->data;
     numSegments = indexData->numItems;
 
     colorData = getParamData("vertex.color",getParamData("color"));
     if (colorData && colorData->type != OSP_FLOAT4)
-    {
-std::cerr << "throw 5\n";
       throw std::runtime_error("'vertex.color' must have data type OSP_FLOAT4");
-    }
     const ispc::vec4f* color = colorData ? (ispc::vec4f*)colorData->data : nullptr;
 
     radiusData = getParamData("vertex.radius");
@@ -86,13 +117,33 @@ std::cerr << "throw 5\n";
                      << "as curve: " << useCurve;
 
     bounds = empty;
+
     // XXX curves may actually have a larger bounding box due to swinging
-    for (uint32_t i = 0; i < numSegments; i++) {
-      const uint32 idx = index[i];
-      bounds.extend(vertex[idx] - radius[idx]);
-      bounds.extend(vertex[idx] + radius[idx]);
-      bounds.extend(vertex[idx+1] - radius[idx+1]);
-      bounds.extend(vertex[idx+1] + radius[idx+1]);
+
+    // If the w slot contains data, we need to map it to get per-vertex radius
+
+    if (with_data)
+    {
+      float *base = ((float*)vertexData->data) + 3;
+
+      for (uint32_t i = 0; i < numVertices; i++, base += 4)
+      {
+        float radius, datavalue = *base;
+        MAP_RADIUS (datavalue, radius);
+        bounds.extend(vertex[i] - radius);
+        bounds.extend(vertex[i] + radius);
+      }
+    }
+    else
+    {
+      for (uint32_t i = 0; i < numSegments; i++)
+      {
+        const uint32 idx = index[i];
+        bounds.extend(vertex[idx] - radius[idx]);
+        bounds.extend(vertex[idx] + radius[idx]);
+        bounds.extend(vertex[idx+1] - radius[idx+1]);
+        bounds.extend(vertex[idx+1] + radius[idx+1]);
+      }
     }
 
     if (useCurve) {
@@ -105,8 +156,20 @@ std::cerr << "throw 5\n";
         const vec3f start = vertex[idx];
         const vec3f end = vertex[idx+1];
         const float lengthSegment = length(start - end);
-        const float startRadius = radius[idx];
-        const float endRadius = radius[idx+1];
+
+        float startRadius, endRadius;
+
+        if (with_data)
+        {
+          float d0 = data_base[4*idx], d1 = data_base[4*(idx+1)];
+          MAP_RADIUS (d0, startRadius);
+          MAP_RADIUS (d1, endRadius);
+        }
+        else
+        {
+          startRadius = radius[idx];
+          endRadius = radius[idx+1];
+        }
 
         indexCurve[i] = vertexCurve.size();
         if (middleSegment) {

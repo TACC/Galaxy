@@ -24,6 +24,7 @@ project (gxy_sampler VERSION ${GALAXY_VERSION})
 
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
+										${gxy_multiserver_SOURCE_DIR}
 										${gxy_sampler_SOURCE_DIR}
 										${gxy_data_SOURCE_DIR}
 										${gxy_data_BINARY_DIR}
@@ -40,6 +41,8 @@ set (ISPC_SOURCES
 set (CPP_SOURCES 
   Sampler.cpp)
 
+set(SERVERS "")
+
 if (ospray_DIR)
   ospray_create_library(gxy_sampler ${CPP_SOURCES} ${ISPC_SOURCES} 
     LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_renderer gxy_framework COMPONENT lib)
@@ -47,7 +50,20 @@ if (ospray_DIR)
   install(TARGETS gxy_sampler DESTINATION lib)
 endif()
 
+add_library(gxy_module_mhsampler MODULE MHSampleClientServer)
+target_link_libraries(gxy_module_mhsampler gxy_multiserver gxy_data gxy_framework)
+set(SERVERS gxy_module_mhsampler ${SERVERS})
+
+add_library(gxy_module_interpolator MODULE InterpolatorClientServer)
+target_link_libraries(gxy_module_interpolator gxy_multiserver gxy_data gxy_framework)
+set(SERVERS gxy_module_interpolator ${SERVERS})
+
+install(TARGETS ${BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 install(FILES 
   Sampler.h 
   DESTINATION include)
+
+install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
  

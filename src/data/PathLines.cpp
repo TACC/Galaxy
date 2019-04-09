@@ -33,6 +33,7 @@
 
 #include <vtkCell.h>
 #include <vtkFloatArray.h>
+#include <vtkDoubleArray.h>
 #include <vtkPointData.h>
 #include <vtkPointSet.h>
 #include <vtkPolyData.h>
@@ -168,39 +169,61 @@ PathLines::local_import(char *p, MPI_Comm c)
       vtkFloatArray *parray = vtkFloatArray::SafeDownCast(vtkug->GetPoints()->GetData());
       float *vertexData = new float[4*nrefs];
 
-      vtkFloatArray *darray = vtkFloatArray::SafeDownCast(vtkug->GetPointData()->GetScalars());
-      if (!darray) darray = vtkFloatArray::SafeDownCast(vtkug->GetPointData()->GetArray("Data"));
-      if (darray && darray->GetNumberOfComponents() > 1) darray = NULL;
+      vtkDataArray *array = vtkug->GetPointData()->GetScalars();
+      if (!array) array = vtkug->GetPointData()->GetArray("Data");
+      if (array && array->GetNumberOfComponents() > 1) array = NULL;
 
-#if 0
-      std::cerr << "before\n";
-      for (int i = 0; i < parray->GetNumberOfTuples(); i++)
+      vtkFloatArray *farray = vtkFloatArray::SafeDownCast(array);
+      if (farray)
       {
-        double *v = parray->GetTuple(i);
-        std::cerr << i << " " << v[0] << " " << v[1] << " " << v[2] << "\n";
+         float *data = (float *)farray->GetVoidPointer(0);
+
+         int refs[nrefs];
+         for (int k = 0, i = 0; i < npl; i++)
+         {
+           vtkCell *c = vtkug->GetCell(i);
+           for (int j = 0; j < c->GetNumberOfPoints(); j++, k++)
+           {
+             int id = c->GetPointId(j);
+             parray->GetTypedTuple(id, vertexData + k*4);
+             vertexData[k*4 + 3] = data[k];
+           }
+         }
       }
-#endif
-
-      int refs[nrefs];
-      for (int k = 0, i = 0; i < npl; i++)
+      else 
       {
-        vtkCell *c = vtkug->GetCell(i);
-        for (int j = 0; j < c->GetNumberOfPoints(); j++, k++)
+        vtkDoubleArray *darray = vtkDoubleArray::SafeDownCast(array);
+        if (darray)
         {
-          int id = c->GetPointId(j);
-          parray->GetTypedTuple(id, vertexData + k*4);
-          vertexData[k*4 + 3] = (darray) ? darray->GetValue(id) : 0.0;
+          double *data = (double *)darray->GetVoidPointer(0);
+
+          int refs[nrefs];
+          for (int k = 0, i = 0; i < npl; i++)
+          {
+            vtkCell *c = vtkug->GetCell(i);
+            for (int j = 0; j < c->GetNumberOfPoints(); j++, k++)
+            {
+              int id = c->GetPointId(j);
+              parray->GetTypedTuple(id, vertexData + k*4);
+              vertexData[k*4 + 3] = (float)data[k];
+            }
+          }
+        }
+        else
+        {
+          int refs[nrefs];
+          for (int k = 0, i = 0; i < npl; i++)
+          {
+            vtkCell *c = vtkug->GetCell(i);
+            for (int j = 0; j < c->GetNumberOfPoints(); j++, k++)
+            {
+              int id = c->GetPointId(j);
+              parray->GetTypedTuple(id, vertexData + k*4);
+              vertexData[k*4 + 3] = 0;
+            }
+          }
         }
       }
-
-#if 0
-      std::cerr << "after\n";
-      for (int i = 0; i < nrefs; i++)
-      {
-        float *v = vertexData + 4*i;
-        std::cerr << i << " " << v[0] << " " << v[1] << " " << v[2] << " " << v[3] << "\n";
-      }
-#endif
 
       // nrefs is the total number of vertices in all the pathlines.   The number of *segments*
       // is that minus one for each pathline

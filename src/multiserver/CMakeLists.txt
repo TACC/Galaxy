@@ -68,10 +68,6 @@ add_library(gxy_module_test MODULE TestClientServer.cpp)
 target_link_libraries(gxy_module_test gxy_multiserver gxy_framework)
 set(SERVERS gxy_module_test ${SERVERS})
 
-add_library(gxy_module_mhsampler MODULE MHSampleClientServer)
-target_link_libraries(gxy_module_mhsampler gxy_multiserver gxy_data gxy_framework)
-set(SERVERS gxy_module_mhsampler ${SERVERS})
-
 install(TARGETS ${BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS ${LIBS} DESTINATION ${CMAKE_INSTALL_LIBDIR})

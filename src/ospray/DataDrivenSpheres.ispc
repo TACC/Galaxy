@@ -104,7 +104,6 @@ static void DataDrivenSpheres_postIntersect(uniform Geometry *uniform geometry,
   uniform uint8 *base = self->data + self->offset_datavalue;
   varying float dataval = *((uniform float *varying)(base + ray.primID*self->stride));
 
-
   vec3f color = self->transferFunction->getColorForValue(self->transferFunction, dataval);
   dg.color.x = color.x;
   dg.color.y = color.y;
