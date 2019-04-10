@@ -23,6 +23,7 @@ cmake_minimum_required (VERSION 3.9)
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_data_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
+										${gxy_multiserver_SOURCE_DIR}
 										${gxy_sampler_SOURCE_DIR}
 										${OSPRAY_INCLUDE_DIRS}
 										${gxy_unit_tests_SOURCE_DIR}/sampler
