@@ -52,10 +52,6 @@ add_executable(gxytest-multiserver-JsonInterface JsonInterface.cpp)
 target_link_libraries(gxytest-multiserver-JsonInterface  ${GALAXY_LIBRARIES})
 set(BINS gxytest-multiserver-JsonInterface ${BINS})
 
-add_executable(gxytest-multiserver-MHSampleClientServer MHSampleClientServer.cpp)
-target_link_libraries(gxytest-multiserver-MHSampleClientServer  ${GALAXY_LIBRARIES})
-set(BINS gxytest-multiserver-MHSampleClientServer ${BINS})
-
 add_executable(gxytest-multiserver-MultiServer MultiServer.cpp)
 target_link_libraries(gxytest-multiserver-MultiServer  ${GALAXY_LIBRARIES})
 set(BINS gxytest-multiserver-MultiServer ${BINS})

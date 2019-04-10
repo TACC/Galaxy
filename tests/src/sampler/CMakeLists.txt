@@ -36,4 +36,12 @@ add_executable(gxytest-sampler-Sampler Sampler.cpp)
 target_link_libraries(gxytest-sampler-Sampler  ${GALAXY_LIBRARIES})
 set(BINS gxytest-sampler-Sampler ${BINS})
 
+add_executable(gxytest-sampler-MHSampleClientServer MHSampleClientServer.cpp)
+target_link_libraries(gxytest-sampler-MHSampleClientServer  ${GALAXY_LIBRARIES})
+set(BINS gxytest-sampler-MHSampleClientServer ${BINS})
+
+add_executable(gxytest-sampler-InterpolatorClientServer InterpolatorClientServer.cpp)
+target_link_libraries(gxytest-sampler-InterpolatorClientServer  ${GALAXY_LIBRARIES})
+set(BINS gxytest-sampler-InterpolatorClientServer ${BINS})
+
 install(TARGETS ${BINS} DESTINATION tests/sampler)

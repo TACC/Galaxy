@@ -19,7 +19,7 @@
 // ========================================================================== //
 
 /*! \file MHSampleClientServer.cpp 
- * \brief unit tests for multiserver MHSampleClientServer class
+ * \brief unit tests for sampler MHSampleClientServer class
  * \ingroup unittest
  */
 
@@ -37,7 +37,7 @@ using namespace std;
 void
 syntax(char *a)
 {
-  cerr << "unit tests for multiserver/MHSampleClientServer" << endl;
+  cerr << "unit tests for sampler/MHSampleClientServer" << endl;
   cerr << "syntax: " << a << " [options] " << endl;
   cerr << "options:" << endl;
   cerr << "  -h, --help       this message" << endl;
@@ -45,7 +45,7 @@ syntax(char *a)
   exit(1);
 }
 
-/*! unit tests for src/multiserver/MHSampleClientServer */
+/*! unit tests for src/sampler/MHSampleClientServer */
 int main(int argc, char * argv[])
 {
 	bool warn_as_errors = false;
@@ -55,7 +55,7 @@ int main(int argc, char * argv[])
 		if (!strcmp(argv[i], "-w")) { warn_as_errors = true; }
 	}
 
-	UnitTest test("multiserver/MHSampleClientServer");
+	UnitTest test("sampler/MHSampleClientServer");
 	test.start();
 
 	// TODO: add unit tests
