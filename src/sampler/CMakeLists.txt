@@ -22,15 +22,10 @@ cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
 project (gxy_sampler VERSION ${GALAXY_VERSION})
 
-message("XXXXXXXX ${gxy_multiserver_SOURCE_DIR} YYYYYYYYYYYY")
-
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
-XXXXXXX
 										${gxy_multiserver_SOURCE_DIR}
-YYYYYYY
 										${gxy_sampler_SOURCE_DIR}
-ZZZZZZZ
 										${gxy_data_SOURCE_DIR}
 										${gxy_data_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src)
