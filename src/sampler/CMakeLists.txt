@@ -18,7 +18,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
 project (gxy_sampler VERSION ${GALAXY_VERSION})
 

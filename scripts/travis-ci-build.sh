@@ -88,12 +88,14 @@ if [ -z ${GXY_BUILT_VTK} ]; then
   if [ $TRAVIS_OS_NAME == "osx" ]; then 
   	cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib \
+          -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           .. \
   		&& make install
   elif [ $TRAVIS_OS_NAME == "linux" ]; then 
   	cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
           -D GLUT_INCLUDE_DIR:PATH=/usr/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
+          -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           .. \
       && make install
 	fi
