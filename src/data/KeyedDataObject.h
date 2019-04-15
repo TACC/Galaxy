@@ -113,6 +113,15 @@ public:
   //! copy the data partitioning of the given KeyedDataObject
 	void CopyPartitioning(KeyedDataObjectP o);
 
+  float local_min, local_max;
+  float global_min, global_max;
+
+  void set_global_minmax(float min, float max)   { global_min = min; global_max = max; }
+  void set_local_minmax(float min, float max)   { local_min = min; local_max = max; }
+
+  void get_global_minmax(float& min, float& max)   { min = global_min; max = global_max; }
+  void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
+
 protected:
 	vtkClientSocket *skt;
 	std::string filename;

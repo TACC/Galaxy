@@ -223,12 +223,6 @@ protected:
 	vec3i ghosted_local_counts;
 
 	unsigned char *samples;
-
-	float local_min, local_max;
-	float global_min, global_max;
-
-	void set_global_minmax(float min, float max)   { global_min = min; global_max = max; }
-	void set_local_minmax(float min, float max)   { local_min = min; local_max = max; }
 };
 
 } // namespace gxy

@@ -99,13 +99,12 @@ namespace ospray {
     size_t        numSegments {0};
     std::vector<vec4f> vertexCurve;
     std::vector<uint32> indexCurve;
+    std::vector<float> dataCurve;
 
     float radius0;
     float radius1;
     float value0;
     float value1;
-
-    bool  with_data;
   };
 
   /*! @} */

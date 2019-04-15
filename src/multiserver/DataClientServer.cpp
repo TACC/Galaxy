@@ -78,8 +78,38 @@ DataClientServer::handle(std::string line)
 
     if (! theDatasets->LoadFromJSON(doc))
       return std::string("error loading datasets");
-    
+
     return std::string("ok");
+  }
+  else if (cmd == "range")
+  {
+    string objName;
+    ss >> objName;
+    KeyedDataObjectP kop = theDatasets->Find(objName);
+    if (kop)
+    {
+      float gmin, gmax;
+      kop->get_global_minmax(gmin, gmax);
+
+      std::stringstream rtn;
+      rtn << "ok dataset " << objName << " range: " << gmin << " to " << gmax;
+      return rtn.str();
+    }
+    else
+      return std::string("error dataset") + objName + " not found";
+  }
+  else if (cmd == "commit")
+  {
+    string objName;
+    ss >> objName;
+    KeyedDataObjectP kop = theDatasets->Find(objName);
+    if (kop)
+    {
+      kop->Commit();
+      return std::string("ok ") + objName + " committed";
+    }
+    else
+      return std::string("error dataset") + objName + " not found";
   }
   else if (cmd == "list")
   {

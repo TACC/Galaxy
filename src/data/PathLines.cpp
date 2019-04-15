@@ -117,7 +117,6 @@ PathLines::local_import(char *p, MPI_Comm c)
   // Checks in get_partitioning ensures this is OK
   string fname(doc["parts"][GetTheApplication()->GetRank()]["filename"].GetString());
   string ext(fname.substr(fname.size() - 3));
-  std::cerr << "FILENAME: " << fname << " EXT: " << ext << "\n";
 
   if (fname.c_str()[0] != '/')
     fname = dir + fname;
@@ -186,7 +185,7 @@ PathLines::local_import(char *p, MPI_Comm c)
            {
              int id = c->GetPointId(j);
              parray->GetTypedTuple(id, vertexData + k*4);
-             vertexData[k*4 + 3] = data[k];
+             vertexData[k*4 + 3] = data[id];
            }
          }
       }
@@ -205,7 +204,7 @@ PathLines::local_import(char *p, MPI_Comm c)
             {
               int id = c->GetPointId(j);
               parray->GetTypedTuple(id, vertexData + k*4);
-              vertexData[k*4 + 3] = (float)data[k];
+              vertexData[k*4 + 3] = (float)data[id];
             }
           }
         }

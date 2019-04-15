@@ -556,8 +556,6 @@ main(int argc, char *argv[])
   string sofile = "libgxy_module_viewer.so";
   int port = 5001;
 
-std::cerr << "XXXXYYYYYYZZZZZZ\n";
-
   string host = (getenv("GXY_HOST") != NULL) ? getenv("GXY_HOST") : "localhost";
 
 	char *dbgarg;

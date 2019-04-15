@@ -129,8 +129,6 @@ PathLinesVis::SetTheOsprayDataObject(OsprayObjectP o)
 
   ospSet1f(o->GetOSP(), "value1", v1);
   ospSet1f(o->GetOSP(), "radius1", r1);
-
-  std::cerr << "PathLinesVis::SetTheOSPRayDataObject:" << o->GetOSP() << "\n";
 }
  
 } // namespace gxy

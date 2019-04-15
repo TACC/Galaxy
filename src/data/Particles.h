@@ -156,6 +156,9 @@ public:
 	//! clear the particles list
 	void clear() { samples.clear(); }
 
+  //! internal call on Commit
+  virtual bool local_commit(MPI_Comm);
+
 protected:
   vtkClientSocket *skt;
   std::string filename;

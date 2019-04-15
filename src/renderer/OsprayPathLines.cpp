@@ -38,7 +38,7 @@ OsprayPathLines::OsprayPathLines(PathLinesP p)
   if (nv == 0 || ns == 0) return;
 
   float *vertices = p->GetVertices();
-  OSPData vdata = ospNewData(nv, OSP_FLOAT3A, vertices, OSP_DATA_SHARED_BUFFER);
+  OSPData vdata = ospNewData(nv, OSP_FLOAT4, vertices, OSP_DATA_SHARED_BUFFER);
   ospCommit(vdata);
   ospSetData(ospg, "vertex", vdata);
 

@@ -380,6 +380,51 @@ Particles::GetPolyData(vtkPolyData*& v)
 	v = vtkobj;
 }
 
+bool
+Particles::local_commit(MPI_Comm c)
+{
+  int n;
+  Particle *d;
+
+  GetSamples(d, n);
+
+  float lmin;
+  float lmax;
+
+  if (n == 0)
+  {
+    lmin = 0;
+    lmax = 0;
+  }
+  else
+  {
+    lmin = d->u.value;
+    lmax = d->u.value;
+    d++;
+    for (int i = 1; i < n; i++, d++)
+    {
+      float v = d->u.value;
+      if (v > lmax) lmax = v;
+      if (v < lmin) lmin = v;
+    }
+  }
+    
+  float gmin, gmax;
+  if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+  {
+    MPI_Allreduce(&lmax, &gmax, 1, MPI_FLOAT, MPI_MAX, c);
+    MPI_Allreduce(&lmin, &gmin, 1, MPI_FLOAT, MPI_MIN, c);
+  }
+  else
+  {
+    gmin = lmin;
+    gmax = lmax;
+  }
+
+  set_local_minmax(gmin, gmax);
+  set_global_minmax(gmin, gmax);
+}
+
 void
 Particles::GetSamples(Particle*& s, int& n)
 {

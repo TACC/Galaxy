@@ -21,13 +21,14 @@
 #include "common/Data.h"
 #include "common/Model.h"
 #include "ospcommon/utility/DataView.h"
+#include "transferFunction/TransferFunction.h"
 
 // ispc-generated files
 #include "DataDrivenPathLines_ispc.h"
 
 #define MAP_RADIUS(d, r)                                                                  \
 {                                                                                         \
-  if (value0 == value1) r = radius1;                                                      \
+  if (value0 == value1) r = radius0;                                                      \
   else                                                                                    \
   {                                                                                       \
     float i = (d - value0) / (value1 - value0);                                           \
@@ -57,9 +58,6 @@ namespace ospray {
 
     bool useCurve = getParam1i("smooth", 0);
 
-
-    with_data = getParam1i("with_data", 1);
-    
     radius0 = getParam1f("radius0", globalRadius);
     radius1 = getParam1f("radius1", 0.0);
     value0 = getParam1f("value0", 0.0);
@@ -83,10 +81,14 @@ namespace ospray {
 
       // then the w slot contains either the radius or a data value
 
-      if (with_data)
+      if (value0 != value1)
         data_base = ((float *)vertexData->data) + 3;
       else
         radius.reset((const float*)vertex + 3, 4);
+
+      dataCurve.clear();
+      for (int i = 0; i < vertexData->numItems; i++)
+        dataCurve.push_back(data_base[i*4]);
     }
 
     indexData  = getParamData("index",nullptr);
@@ -110,8 +112,7 @@ namespace ospray {
       useCurve = true;
     }
 
-    // postStatusMsg(2) << "#osp: creating ddpathlines geometry, "
-    std::cerr << "#osp: creating ddpathlines geometry, "
+    postStatusMsg(2) << "#osp: creating ddpathlines geometry, "
                      << "#verts=" << numVertices << ", "
                      << "#segments=" << numSegments << ", "
                      << "as curve: " << useCurve;
@@ -122,13 +123,13 @@ namespace ospray {
 
     // If the w slot contains data, we need to map it to get per-vertex radius
 
-    if (with_data)
+    if (value0 != value1)
     {
-      float *base = ((float*)vertexData->data) + 3;
+      float *dptr = data_base;
 
-      for (uint32_t i = 0; i < numVertices; i++, base += 4)
+      for (uint32_t i = 0; i < numVertices; i++, dptr += 4)
       {
-        float radius, datavalue = *base;
+        float radius, datavalue = *dptr;
         MAP_RADIUS (datavalue, radius);
         bounds.extend(vertex[i] - radius);
         bounds.extend(vertex[i] + radius);
@@ -148,20 +149,27 @@ namespace ospray {
 
     if (useCurve) {
       vertexCurve.clear();
-      indexCurve.resize(numSegments);
+      indexCurve.clear();
+      // dataCurve.clear();
+
       bool middleSegment = false;
       vec3f tangent;
+      int pline = 0;
+
       for (uint32_t i = 0; i < numSegments; i++) {
         const uint32 idx = index[i];
         const vec3f start = vertex[idx];
         const vec3f end = vertex[idx+1];
+
         const float lengthSegment = length(start - end);
 
         float startRadius, endRadius;
 
-        if (with_data)
+        float d0 = data_base[4*idx];
+        float d1 = data_base[4*(idx+1)];
+
+        if (value0 != value1)
         {
-          float d0 = data_base[4*idx], d1 = data_base[4*(idx+1)];
           MAP_RADIUS (d0, startRadius);
           MAP_RADIUS (d1, endRadius);
         }
@@ -171,35 +179,48 @@ namespace ospray {
           endRadius = radius[idx+1];
         }
 
-        indexCurve[i] = vertexCurve.size();
-        if (middleSegment) {
+        indexCurve.push_back(vertexCurve.size());
+
+        if (middleSegment)
+        {
           vertexCurve.push_back(vec4f(start, startRadius));
-          vertexCurve.push_back(vec4f(start + tangent,
-                lerp(1.f/3, startRadius, endRadius)));
-        } else { // start new curve
-          const vec3f cap =  lerp(1.f+startRadius/lengthSegment, end, start);
-          vertexCurve.push_back(vec4f(cap, 0.f));
+
+          vertexCurve.push_back(vec4f(start + tangent, lerp(1.f/3, startRadius, endRadius)));
+
+        }
+        else
+        { // start new curve
+
+          vertexCurve.push_back(vec4f(start, startRadius));
           vertexCurve.push_back(vec4f(start, startRadius));
         }
 
         middleSegment = i+1 < numSegments && index[i+1] == idx+1;
-        if (middleSegment) {
+
+        if (middleSegment)
+        {
           const vec3f next = vertex[idx+2];
           const vec3f delta = (1.f/3)*(next - start);
           const float b = length(next - end);
           const float r = lengthSegment/(lengthSegment + b);
-          vertexCurve.push_back(vec4f(end - r*delta,
-                lerp(2.f/3, startRadius, endRadius)));
+
+          vertexCurve.push_back(vec4f(end - r*delta, lerp(2.f/3, startRadius, endRadius)));
+
           tangent = (1.f-r)*delta;
-        } else { // end curve
+        }
+        else { // end curve
           vertexCurve.push_back(vec4f(end, endRadius));
-          const vec3f cap = lerp(1.f+endRadius/lengthSegment, start, end);
-          vertexCurve.push_back(vec4f(cap, 0.f));
+          vertexCurve.push_back(vec4f(end, endRadius));
         }
       }
+
+      auto transferFunction = (TransferFunction *)getParamData("transferFunction", nullptr);
+      if (! transferFunction) std::cerr << "no TF\n";
+  
       ispc::DataDrivenPathLines_setCurve(getIE(),model->getIE(),
           (const ispc::vec3fa*)vertexCurve.data(), vertexCurve.size(),
-          indexCurve.data(), numSegments, index, color);
+          indexCurve.data(), indexCurve.size(), index, color, (const float *)dataCurve.data(), 
+          transferFunction->getIE(), radius0, radius1, value0, value1);
     } else
       ispc::DataDrivenPathLines_set(getIE(),model->getIE(), globalRadius,
           (const ispc::vec3fa*)vertex, numVertices, index, numSegments, color);
