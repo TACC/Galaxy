@@ -68,8 +68,6 @@ public:
 
   //! construct a MappedVis from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-  //! save this MappedVis to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
   virtual void SetTheOsprayDataObject(OsprayObjectP o);

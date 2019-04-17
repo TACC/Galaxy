@@ -69,31 +69,18 @@ Volume::LoadFromJSON(Value& v)
     set_attached(false);
     return Import(string(v["filename"].GetString()), NULL, 0);
 	}
+#if 0
  	else if (v.HasMember("layout"))
 	{
 		set_attached(true);
  		return Attach(string(v["layout"].GetString()));
 	}
+#endif
  	else
  	{
  		if (r == 0) cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
  		return false;
  	}
-}
-
-void
-Volume::SaveToJSON(Value& dsets, Document&  doc)
-{
-	Value container = Value(kObjectType);
-
-	if (attached)
-		container.AddMember("layout", Value().SetString(filename.c_str(), doc.GetAllocator()), doc.GetAllocator());
-	else
-		container.AddMember("filename", Value().SetString(filename.c_str(), doc.GetAllocator()), doc.GetAllocator());
-
-	container.AddMember("type", Value().SetString("Volume", doc.GetAllocator()), doc.GetAllocator());
-
-	dsets.PushBack(container, doc.GetAllocator());
 }
 
 static void
@@ -336,211 +323,6 @@ Volume::local_import(char *fname, MPI_Comm c)
 
   local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
   return true;
-}
-
-bool
-Volume::local_load_timestep(MPI_Comm c)
-{
-  int err = 0;
-  int rank = GetTheApplication()->GetRank();
-  int size = GetTheApplication()->GetSize();
-
-  int sz;
-  char *str;
-  skt->Receive((void *)&sz, sizeof(sz));
-
-  // Returns <0 if socket has closed indicating sim has gone away
-
-  int gerr;
-  MPI_Allreduce(&gerr, &sz, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-  // If all are closed...  No error
-  if (gerr <= 0)
-    return true;
-
-  if (sz > 0)
-  {
-    vtkNew<vtkCharArray> bufArray;
-    bufArray->Allocate(sz);
-    bufArray->SetNumberOfTuples(sz);
-    void *ptr = bufArray->GetVoidPointer(0);
-
-    skt->Receive(ptr, sz);
-
-    vtkNew<vtkDataSetReader> reader;
-    reader->ReadFromInputStringOn();
-    reader->SetInputArray(bufArray.GetPointer());
-    reader->Update();
-
-    vtkobj = vtkImageData::New();
-    vtkobj->ShallowCopy(vtkImageData::SafeDownCast(reader->GetOutput()));
-    if (! vtkobj) 
-    {
-      if (rank == 0) cerr << "ERROR: received something other than a vtkImageData object" << endl;
-      err = 1;
-    }
-    else if (! vtkobj->GetPointData())
-    {
-      if (rank == 0) cerr << "ERROR: vtkImageData object has no point dependent data" << endl;
-      err = 2;
-    }
-    else
-    {
-      vtkDataArray *array = vtkobj->GetPointData()->GetScalars();
-      if (! array)
-      {
-        for (auto i = 0; i < vtkobj->GetPointData()->GetNumberOfArrays(); i++)
-        {
-          array = vtkobj->GetPointData()->GetArray(i);
-          if (array->GetNumberOfComponents() == 1)
-            break;
-          array = NULL;
-        }
-      }
-
-      if (array == NULL)
-      {
-        if (rank == 0) cerr << "ERROR: Currently can only handle point-dependent scalar data" << endl;
-        err = 3;
-      }
-      else
-      {
-        vtkobj->GetPointData()->SetScalars(array);
-
-        if (array->IsA("vtkFloatArray"))
-          type = FLOAT;
-        else if (array->IsA("vtkUnsignedCharArray"))
-          type = UCHAR;
-        else
-        {
-          if (rank == 0) cerr << "ERROR: Currently can only handle ubyte and floay data" << endl;
-          err = 3;
-        }
-      }
-
-      samples = (unsigned char *)array->GetVoidPointer(0);
-    }
-
-  }
-
-  MPI_Allreduce(&gerr, &err, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  if (gerr) return false;
-
-  double lminmax[2], gmin, gmax;
-  vtkobj->GetScalarRange(lminmax);
-
-	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
-	{
-		MPI_Allreduce(lminmax+0, &gmin, 1, MPI_DOUBLE, MPI_MIN, c);
-		MPI_Allreduce(lminmax+1, &gmax, 1, MPI_DOUBLE, MPI_MAX, c);
-	}
-	else
-	{
-		gmin = lminmax[0];
-		gmax = lminmax[1];
-	}
-
-  set_global_minmax((float)gmin, (float)gmax);
-
-  if (initialize_grid)
-  {
-		initialize_grid = false;
-
-
-    double lo[3], go[3];
-    vtkobj->GetOrigin(lo);
-
-		if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
-			MPI_Allreduce((const void *)lo, (void *)go, 3, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-		else
-			for (int i = 0; i < 3; i++) go[i] = lo[i];
-
-    global_origin.x = go[0];
-    global_origin.y = go[1];
-    global_origin.z = go[2];
-
-		double spacing[3];
-    vtkobj->GetSpacing(spacing);
-    deltas.x = spacing[0];
-    deltas.y = spacing[1];
-    deltas.z = spacing[2];
-
-    int extent[6];
-    vtkobj->GetExtent(extent);
-
-		int offset[3];
-
-		offset[0] = (int)(((lo[0] - go[0]) / spacing[0]) + 0.5);
-		offset[1] = (int)(((lo[1] - go[1]) / spacing[1]) + 0.5);
-		offset[2] = (int)(((lo[2] - go[2]) / spacing[2]) + 0.5);
-
-		extent[0] += offset[0];
-		extent[1] += offset[0];
-		extent[2] += offset[1];
-		extent[3] += offset[1];
-		extent[4] += offset[2];
-		extent[5] += offset[2];
-
-		local_offset.x = extent[0];
-		local_counts.x = (extent[1] - extent[0]) + 1;
-
-		local_offset.y = extent[2];
-		local_counts.y = (extent[3] - extent[2]) + 1;
-
-		local_offset.z = extent[4];
-		local_counts.z = (extent[5] - extent[4]) + 1;
-
-		if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
-		{
-			int extents[6*size];
-			MPI_Allgather((const void *)extent, 6, MPI_INT, (void *)extents, 6, MPI_INT, MPI_COMM_WORLD);
-			
-			for (int i = 0; i < 6; i++) neighbors[i] = -1;
-
-#define LAST(axis) (extents[i*6 + 2*axis + 1] == extent[2*axis + 0])
-#define NEXT(axis) (extents[i*6 + 2*axis + 0] == extent[2*axis + 1])
-#define EQ(axis)   (extents[i*6 + 2*axis + 0] == extent[2*axis + 0])
-
-			global_counts.x = global_counts.y = global_counts.z = 0;
-
-			for (int i = 0; i < size; i++)
-			{
-				if ((extents[i*6 + 2*0 + 1] + 1) > global_counts.x) global_counts.x = extents[i*6 + 2*0 + 1] + 1;
-				if ((extents[i*6 + 2*1 + 1] + 1) > global_counts.y) global_counts.y = extents[i*6 + 2*1 + 1] + 1;
-				if ((extents[i*6 + 2*2 + 1] + 1) > global_counts.z) global_counts.z = extents[i*6 + 2*2 + 1] + 1;
-
-				if (LAST(0) && EQ(1) && EQ(2)) neighbors[0] = i;
-				if (NEXT(0) && EQ(1) && EQ(2)) neighbors[1] = i;
-
-				if (EQ(0) && LAST(1) && EQ(2)) neighbors[2] = i;
-				if (EQ(0) && NEXT(1) && EQ(2)) neighbors[3] = i;
-
-				if (EQ(0) && EQ(1) && LAST(2)) neighbors[4] = i;
-				if (EQ(0) && EQ(1) && NEXT(2)) neighbors[5] = i;
-			}
-		}
-		else
-		{
-			for (int i = 0; i < 6; i++) neighbors[i] = -1;
-			global_counts = local_counts;
-		}
-  }
-
-	ghosted_local_offset = local_offset;
-	ghosted_local_counts = local_counts;
-
-	global_box = Box((float *)&global_origin, (int *)&global_counts, (float *)&deltas);
-	
-  float lo[3] =
-	{
-    global_origin.x + (local_offset.x * deltas.x),
-    global_origin.y + (local_offset.y * deltas.y),
-    global_origin.z + (local_offset.z * deltas.z)
-  };
-
-  local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
-
-	return true;
 }
 
 } // namespace gxy

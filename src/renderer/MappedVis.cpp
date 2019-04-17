@@ -175,34 +175,6 @@ MappedVis::LoadFromJSON(Value& v)
   return true;
 }
 
-void 
-MappedVis::SaveToJSON(Value& v, Document& doc)
-{
-	Vis::SaveToJSON(v, doc);
-
-  Value cmap(kArrayType);
-  for (auto xrgb : colormap)
-  {
-    Value v(kArrayType);
-    v.PushBack(Value().SetDouble(xrgb.x), doc.GetAllocator());
-    v.PushBack(Value().SetDouble(xrgb.y), doc.GetAllocator());
-    v.PushBack(Value().SetDouble(xrgb.z), doc.GetAllocator());
-    v.PushBack(Value().SetDouble(xrgb.w), doc.GetAllocator());
-    cmap.PushBack(v, doc.GetAllocator());
-  }
-  v.AddMember("colormap", cmap, doc.GetAllocator());
-
-  Value omap(kArrayType);
-  for (auto xo : opacitymap)
-  {
-    Value v(kArrayType);
-    v.PushBack(Value().SetDouble(xo.x), doc.GetAllocator());
-    v.PushBack(Value().SetDouble(xo.y), doc.GetAllocator());
-    omap.PushBack(v, doc.GetAllocator());
-  }
-  v.AddMember("opacitymap", omap, doc.GetAllocator());
-}
-
 void
 MappedVis::SetTheOsprayDataObject(OsprayObjectP o)
 {

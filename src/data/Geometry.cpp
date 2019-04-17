@@ -22,6 +22,8 @@
 #include <string.h>
 #include <memory.h>
 #include <vector>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "Geometry.h"
 #include "Particles.h"
@@ -32,6 +34,20 @@
 
 using namespace std;
 using namespace rapidjson;
+
+#include <vtkerror.h>
+#include <vtkSmartPointer.h>
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkUnstructuredGridReader.h>
+#include <vtkDataSetReader.h>
+#include <vtkPointSet.h>
+#include <vtkCellType.h>
+#include <vtkCellIterator.h>
+#include <vtkFloatArray.h>
+#include <vtkDoubleArray.h>
+#include <vtkPointData.h>
+#include <vtkCharArray.h>
+#include <vtkClientSocket.h>
 
 
 namespace gxy
@@ -45,6 +61,26 @@ Geometry::Register()
 	Particles::Register();
 	Triangles::Register();
 	PathLines::Register();
+}
+
+void
+Geometry::initialize()
+{
+  vtkobj = nullptr;
+  super::initialize();
+}
+
+void
+Geometry::allocate_vertices(int nv)
+{
+  vertices.resize(nv);
+  data.resize(nv);
+}
+
+void
+Geometry::allocate_connectivity(int nc)
+{
+  connectivity.resize(nc);
 }
 
 bool
@@ -72,6 +108,171 @@ Geometry::get_partitioning_from_file(char *s)
 
     return get_partitioning(doc);
   }
+}
+
+bool
+Geometry::Import(string s)
+{
+  struct stat info;
+  if (stat(s.c_str(), &info))
+  {
+    cerr << "ERROR: Cannot open file " << s << endl;
+    set_error(1);
+    return false;
+  }
+
+  int fd = open(s.c_str(), O_RDONLY);
+
+  char *buf = new char[info.st_size + 1];
+
+  char *p = buf;
+  for (int m, n = info.st_size; n > 0; n -= m, p += m) m = read(fd, p, n);
+  *p = 0;
+
+  close(fd);
+
+  set_attached(false);
+
+  bool r = KeyedDataObject::Import(buf, (void *)s.c_str(), s.size()+1);
+
+  return r;
+}
+
+bool
+Geometry::local_import(char *p, MPI_Comm c)
+{
+  vtkSmartPointer<vtkPointSet> pset;
+
+  int rank = GetTheApplication()->GetRank();
+
+  string json(p);
+  string filename(p + strlen(p) + 1);
+  string dir = (filename.find_last_of("/") == filename.npos) ? "./" : filename.substr(0, filename.find_last_of("/") + 1);
+      
+  Document doc;
+  if (doc.Parse<0>(json.c_str()).HasParseError() || !get_partitioning(doc))
+  {   
+    if (rank == 0) std::cerr << "parse error in partition document: " << json << "\n";
+    set_error(1);
+    return false;
+  }   
+    
+  // Checks in get_partitioning ensures this is OK
+  Value& v = doc["parts"][GetTheApplication()->GetRank()];
+  
+  if (v.HasMember("filename"))
+  {
+    string fname(doc["parts"][GetTheApplication()->GetRank()]["filename"].GetString());
+    string ext(fname.substr(fname.size() - 3));
+
+    if (fname.c_str()[0] != '/')
+      fname = dir + fname;
+
+    vtkNew<VTKError> e;
+    vtkNew<vtkXMLUnstructuredGridReader> rdr;
+    e->watch(rdr);
+
+    rdr->SetFileName(fname.c_str());
+    rdr->Update();
+
+    if (e->GetError())
+    {
+      cerr << "error reading " << fname << "\n";
+      exit(1);
+    }
+
+    pset = (vtkPointSet *)(rdr->GetOutputAsDataSet());
+
+  }
+  else if (v.HasMember("port") && v.HasMember("host"))
+  {
+    vtkNew<vtkClientSocket> skt;
+
+    string host(v["host"].GetString());
+    int    port = v["port"].GetInt();
+
+    if (skt->ConnectToServer(host.c_str(), port))
+    {
+      cerr << "error connecting to " << host << ":" << port << "\n";
+      exit(1);
+    }
+
+    int sz;
+    char *str;
+    skt->Receive((void *)&sz, sizeof(sz));
+
+    vtkNew<vtkCharArray> bufArray;
+    bufArray->Allocate(sz);
+    bufArray->SetNumberOfTuples(sz);
+    void *ptr = bufArray->GetVoidPointer(0);
+
+    skt->Receive(ptr, sz);
+
+    vtkNew<vtkUnstructuredGridReader> rdr;
+    rdr->ReadFromInputStringOn();
+    rdr->SetInputArray(bufArray.GetPointer());
+    rdr->Update();
+
+    pset = (vtkPointSet *)(rdr->GetOutput());
+  }
+
+  bool r = load_from_vtkPointSet(pset);
+
+  return r;
+}
+
+int
+Geometry::serialSize()
+{
+  return super::serialSize() + 2*sizeof(int) + 4*vertices.size()*sizeof(float) + connectivity.size()*sizeof(int);
+}
+
+unsigned char*
+Geometry::serialize(unsigned char *ptr)
+{
+  ptr = super::serialize(ptr);
+
+  *(int *)ptr = vertices.size();
+  ptr += sizeof(int);
+
+  *(int *)ptr = connectivity.size();
+  ptr += sizeof(int);
+
+  memcpy(ptr, vertices.data(), 3*vertices.size()*sizeof(float));
+  ptr += 3*vertices.size()*sizeof(float);
+
+  memcpy(ptr, data.data(), data.size()*sizeof(float));
+  ptr += data.size()*sizeof(float);
+
+  memcpy(ptr, connectivity.data(), connectivity.size()*sizeof(float));
+  ptr += connectivity.size()*sizeof(float);
+
+  return ptr;
+}
+
+unsigned char*
+Geometry::deserialize(unsigned char *ptr)
+{
+  ptr = super::deserialize(ptr);
+
+  int nv = *(int *)ptr;
+  ptr += sizeof(int);
+
+  int nc = *(int *)ptr;
+  ptr += sizeof(int);
+
+  allocate(nv, nc);
+  
+  memcpy(vertices.data(), ptr, 3*nv*sizeof(float));
+  ptr += 3*nv*sizeof(float);
+
+  memcpy(data.data(), ptr, nv*sizeof(float));
+  ptr += nv*sizeof(float);
+
+  memcpy(connectivity.data(), ptr, nc*sizeof(int));
+  ptr += nc*sizeof(int);
+
+  return ptr;
 }
 
 bool
@@ -146,6 +347,43 @@ Geometry::get_partitioning(Value& doc)
 
   return true;
 }
+
+bool
+Geometry::LoadFromJSON(Value& v)
+{
+  if (v.HasMember("color")  || v.HasMember("default color"))
+  {
+    Value& oa = v.HasMember("default color") ? v["default color"] : v["color"];
+    default_color.x = oa[0].GetDouble();
+    default_color.y = oa[1].GetDouble();
+    default_color.z = oa[2].GetDouble();
+    if (oa.Size() > 3)
+      default_color.w = oa[3].GetDouble();
+    else
+      default_color.w = 1.0;
+  }
+  else
+  {
+    default_color.x = 0.8;
+    default_color.y = 0.8;
+    default_color.z = 0.8;
+    default_color.w = 1.0;
+  }
+
+  if (v.HasMember("filename"))
+  {
+    return Import(v["filename"].GetString());
+  }
+  else
+  {
+    cerr << "ERROR: json Particles block has neither a filename nor a layout spec" << endl;
+    exit(1);
+  }
+
+  return true;
+}
+
+
 
 
 } // namespace gxy

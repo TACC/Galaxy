@@ -32,6 +32,9 @@
 #include <fcntl.h>
 
 #include <vtkCell.h>
+#include <vtkCellType.h>
+#include <vtkCellIterator.h>
+#include <vtkDataArray.h>
 #include <vtkFloatArray.h>
 #include <vtkDoubleArray.h>
 #include <vtkPointData.h>
@@ -60,195 +63,8 @@ void
 PathLines::initialize()
 {
   super::initialize();
-  vertices_shared = false;
-  segments_shared = false;
-
-  vertices = NULL;
-  segments = NULL;
-
-  vtkug = NULL;
 };
 
-bool
-PathLines::Import(string s)
-{
-  struct stat info;
-  if (stat(s.c_str(), &info))
-  { 
-    cerr << "ERROR: Cannot open file " << s << endl;
-    set_error(1);
-    return false;
-  }
-  
-  int fd = open(s.c_str(), O_RDONLY);
-  
-  char *buf = new char[info.st_size + 1];
-    
-  char *p = buf;
-  for (int m, n = info.st_size; n > 0; n -= m, p += m) m = read(fd, p, n);
-  *p = 0;
-  
-  close(fd);
-  
-  set_attached(false);
-  
-  bool r = Geometry::Import(buf, (void *)s.c_str(), s.size()+1);
-
-  return r;
-}
-
-bool
-PathLines::local_import(char *p, MPI_Comm c)
-{
-  int rank = GetTheApplication()->GetRank();
-
-  string json(p);
-  string filename(p + strlen(p) + 1);
-  string dir = (filename.find_last_of("/") == filename.npos) ? "./" : filename.substr(0, filename.find_last_of("/") + 1);
-      
-  Document doc;
-  if (doc.Parse<0>(json.c_str()).HasParseError() || !get_partitioning(doc))
-  {   
-    if (rank == 0) std::cerr << "parse error in partition document: " << json << "\n";
-    set_error(1);
-    return false;
-  }   
-    
-  // Checks in get_partitioning ensures this is OK
-  string fname(doc["parts"][GetTheApplication()->GetRank()]["filename"].GetString());
-  string ext(fname.substr(fname.size() - 3));
-
-  if (fname.c_str()[0] != '/')
-    fname = dir + fname;
-
-  if (ext == "vtu")
-  {
-    VTKError *ve = VTKError::New();
-    vtkXMLUnstructuredGridReader* rdr = vtkXMLUnstructuredGridReader::New();
-    ve->watch(rdr);
-
-    rdr->SetFileName(fname.c_str());
-    rdr->Update();
-
-    if (ve->GetError())
-    {
-      cerr << "ERROR " << rank << ": error reading vtu PathLine partition" << endl;
-      return false;
-    }
-
-    vtkug = rdr->GetOutput();
-    vtkug->RemoveGhostCells();
-    vtkug->Register(vtkug);
-
-    if (vtkug->GetNumberOfPoints() == 0)
-    {
-      n_vertices = 0;
-      InstallVertexData(false, 0, NULL);
-      InstallSegments(false, 0, NULL);
-    }
-    else
-    {
-      int nv = vtkug->GetNumberOfPoints();
-      int npl = vtkug->GetNumberOfCells();
-
-      // This sucks, but we need to rearrange the vertices so that they are
-      // sequential along each pathline.   VTK avoids this by using a level 
-      // of indirection, but OSPRay doesn't.   First, get the list of vertex
-      // references...
-
-      int nrefs = 0;
-      for (int i = 0; i < npl; i++)
-      {
-        vtkCell *c = vtkug->GetCell(i);
-        nrefs += c->GetNumberOfPoints();
-      }
-
-      // Now get the points and (if present) the point-dependent scalar data array
-
-      vtkFloatArray *parray = vtkFloatArray::SafeDownCast(vtkug->GetPoints()->GetData());
-      float *vertexData = new float[4*nrefs];
-
-      vtkDataArray *array = vtkug->GetPointData()->GetScalars();
-      if (!array) array = vtkug->GetPointData()->GetArray("Data");
-      if (array && array->GetNumberOfComponents() > 1) array = NULL;
-
-      vtkFloatArray *farray = vtkFloatArray::SafeDownCast(array);
-      if (farray)
-      {
-         float *data = (float *)farray->GetVoidPointer(0);
-
-         int refs[nrefs];
-         for (int k = 0, i = 0; i < npl; i++)
-         {
-           vtkCell *c = vtkug->GetCell(i);
-           for (int j = 0; j < c->GetNumberOfPoints(); j++, k++)
-           {
-             int id = c->GetPointId(j);
-             parray->GetTypedTuple(id, vertexData + k*4);
-             vertexData[k*4 + 3] = data[id];
-           }
-         }
-      }
-      else 
-      {
-        vtkDoubleArray *darray = vtkDoubleArray::SafeDownCast(array);
-        if (darray)
-        {
-          double *data = (double *)darray->GetVoidPointer(0);
-
-          int refs[nrefs];
-          for (int k = 0, i = 0; i < npl; i++)
-          {
-            vtkCell *c = vtkug->GetCell(i);
-            for (int j = 0; j < c->GetNumberOfPoints(); j++, k++)
-            {
-              int id = c->GetPointId(j);
-              parray->GetTypedTuple(id, vertexData + k*4);
-              vertexData[k*4 + 3] = (float)data[id];
-            }
-          }
-        }
-        else
-        {
-          int refs[nrefs];
-          for (int k = 0, i = 0; i < npl; i++)
-          {
-            vtkCell *c = vtkug->GetCell(i);
-            for (int j = 0; j < c->GetNumberOfPoints(); j++, k++)
-            {
-              int id = c->GetPointId(j);
-              parray->GetTypedTuple(id, vertexData + k*4);
-              vertexData[k*4 + 3] = 0;
-            }
-          }
-        }
-      }
-
-      // nrefs is the total number of vertices in all the pathlines.   The number of *segments*
-      // is that minus one for each pathline
-
-      int nseg = nrefs - npl;
-      int *segs = new int[nseg];
-
-      for (int s = 0, v = 0, i = 0; i < npl; i++)
-      {
-        vtkCell *c = vtkug->GetCell(i);
-        for (int j = 0; j < c->GetNumberOfPoints(); j++, v++)
-          if (j != (c->GetNumberOfPoints()-1)) segs[s++] = v;
-      }
-
-      InstallVertexData(false, nrefs, vertexData);
-      InstallSegments(false, nseg, segs);
-    }
-  }
-  else 
-  {
-    std::cerr << "bad file extension for pathline data\n";
-    exit(1);
-  }
-
-  return true;
-}
 
 bool
 PathLines::LoadFromJSON(Value& v)
@@ -271,45 +87,75 @@ PathLines::LoadFromJSON(Value& v)
   }
 }
 
-void
-PathLines::SaveToJSON(Value& v, Document& doc)
-{
-  Value container(kObjectType);
-
-  container.AddMember("filename", Value().SetString(filename.c_str(), doc.GetAllocator()), doc.GetAllocator());
-  v.PushBack(container, doc.GetAllocator());
-}
-
 PathLines::~PathLines()
 {
-  if (vertices_shared && vertices) delete[] vertices;
-  if (segments_shared && segments) delete[] segments;
-  if (vtkug) vtkug->Delete();
 }
 
-void
-PathLines::InstallSegments(bool shared, int ns, int *s)
+bool
+PathLines::load_from_vtkPointSet(vtkPointSet *pset)
 {
-  if (segments_shared && segments) delete[] segments;
-
-  segments = s;
-  n_segments = ns;
-
-  segments_shared = shared;
-}
-
-void
-PathLines::InstallVertexData(bool shared, int nv, float *v)
-{
-  if (vertices_shared)
+  if (pset->GetNumberOfPoints() == 0)
   {
-    if (vertices) delete[] vertices;
+    allocate(0, 0);
+  }
+  else
+  {
+    int nv = pset->GetNumberOfPoints();
+    int npl = pset->GetNumberOfCells();
+
+    int k = 0;
+    for (vtkCellIterator *it = pset->NewCellIterator(); !it->IsDoneWithTraversal(); it->GoToNextCell())
+      k = k + it->GetNumberOfPoints();
+
+    allocate(k, k - pset->GetNumberOfCells());
+
+    vtkFloatArray *parray = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
+    if (! parray) 
+    {
+      std::cerr << "can only handle float points\n";
+      exit(1);
+    }
+
+    vec3f *points = (vec3f *)parray->GetVoidPointer(0);
+
+    vtkDataArray *array = pset->GetPointData()->GetScalars();
+    if (! array) array = pset->GetPointData()->GetArray("data");
+
+    vtkFloatArray *farray = vtkFloatArray::SafeDownCast(array);
+    float *fdata = (farray) ? (float *)farray->GetVoidPointer(0) : NULL;
+
+    vtkDoubleArray *darray = vtkDoubleArray::SafeDownCast(array);
+    double *ddata = (darray) ? (double *)darray->GetVoidPointer(0) : NULL;
+
+    int i = 0, j = 0; k = 0;
+    for (vtkCellIterator *it = pset->NewCellIterator(); !it->IsDoneWithTraversal(); it->GoToNextCell(), i++)
+    {
+      vtkIdList *ids = it->GetPointIds();
+      for (int l = 0; l < ids->GetNumberOfIds(); l++, k++)
+      {
+        int id = ids->GetId(l);
+        vertices[k] = points[id];
+        data[k] = (fdata) ? fdata[id] : (ddata) ? ((float)ddata[id]) : 0.0;
+        if (l < (ids->GetNumberOfIds() - 1))
+          connectivity[j++] = k;
+      }
+    }
   }
 
-  vertices = v;
-
-  n_vertices = nv;
-  vertices_shared = shared;
+  return true;
 }
+
+void
+PathLines::GetPLVertices(PLVertex*& p, int& n)
+{
+  n = vertices.size();
+  p = new PLVertex[n];
+  for (int i = 0; i < n; i++)
+  {
+    p[i].xyz = vertices[i];
+    p[i].value = data[i];
+  }
+}
+
 
 } // namespace gxy

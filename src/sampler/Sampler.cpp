@@ -85,7 +85,7 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
     }
   }
 
-  std::cerr << "Sampler::HandleTerminatedRays: " << samples->get_n_samples() << " samples stashed\n";
+  std::cerr << "Sampler::HandleTerminatedRays: " << samples->GetNumberOfVertices() << " samples stashed\n";
 
   if (spmsg)
   {

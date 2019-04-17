@@ -70,8 +70,6 @@ public:
   //! Add a Vis object to this Visualization
   void AddVis(VisP g);
 
-  //! save this Vis to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
   //! construct a Visualization from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
 

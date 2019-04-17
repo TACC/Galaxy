@@ -63,111 +63,44 @@ Triangles::initialize()
 };
 
 bool
-Triangles::local_import(char *f, MPI_Comm c)
+Triangles::local_import(char *p, MPI_Comm c)
 {
   int rank = GetTheApplication()->GetRank();
 
-  string filename(f);
-  float *dboxes = new float[6 * GetTheApplication()->GetSize()];
+  string json(p);
+  string filename(p + strlen(p) + 1);
+  string dir = (filename.find_last_of("/") == filename.npos) ? "./" : filename.substr(0, filename.find_last_of("/") + 1);
 
-  size_t i = filename.find_last_of('/') + 1;
-  string spath(i == string::npos ? "./" : filename.substr(0, i));
+  if (vtkobj) vtkobj->Delete();
+  vtkobj = NULL;
 
-  i = filename.find_last_of('.');
-  string ext(filename.substr(i+1));
+  if (triangles) { delete[] triangles; triangles = nullptr; }
+  if (normals) { delete[] normals; normals = nullptr; }
+  if (vertices) { delete[] vertices; vertices = nullptr; }
 
-  string part = "";
-
-  int k = -1;
-  if (ext == "pvtu" || ext == "pvtp" || ext == "pvd")
+  Document doc;
+  if (doc.Parse<0>(json.c_str()).HasParseError() || !get_partitioning(doc))
   {
-    ptree tree;
-
-    ifstream ifs(filename);
-    if (! ifs)
-    {
-      if (rank == 0) cerr << "unable to open " << filename << "\n";
-      return false;
-    }
-
-    try { read_xml(ifs, tree); }
-    catch(...) { if (rank == 0) cerr << "bad XML: " << filename << "\n"; return false; }
-    ifs.close();
-
-    const char *section = (ext == "pvtu") ? "VTKFile.PUnstructuredGrid" : (ext == "pvtp") ? "VTKFile.PPolyData" : "VTKFile.Collection";
-    const char *tag     = (ext == "pvtu" || ext == "pvtp") ? "Piece" : "DataSet";
-    const char *attr    = (ext == "pvtu" || ext == "pvtp") ? "<xmlattr>.Source" : "<xmlattr>.file";
-
-    BOOST_FOREACH(ptree::value_type const& it, tree.get_child(section))
-    {
-      if (it.first == tag)
-      {
-        k++;
-        if (k == GetTheApplication()->GetRank())
-        {
-          part = it.second.get(attr, "none");
-          break;
-        }
-      }
-    }
-
-    if (k != GetTheApplication()->GetRank())
-    {
-      if (rank == 0) cerr << "ERROR: Not enough partitions for Triangles" << endl;
-      return false;
-    }
-
-  }
-  else if (ext == "ptri")
-  {
-    ifstream ifs(filename);
-    if (! ifs)
-    {
-      if (rank == 0) cerr << "unable to open " << filename << "\n";
-      return false;
-    }
-  
-    string s;
-    while (getline(ifs, s))
-    {
-      k++;
-      stringstream ss(s);
-      ss >> dboxes[6*k + 0] >> dboxes[6*k + 1] 
-         >> dboxes[6*k + 2] >> dboxes[6*k + 3] 
-         >> dboxes[6*k + 4] >> dboxes[6*k + 5] 
-         >> s;
-      if (k == GetTheApplication()->GetRank())
-        part = s;
-    }
-
-    ifs.close();
-
-    if (k != (GetTheApplication()->GetSize() - 1))
-    {
-      if (rank == 0) cerr << "ERROR: wrong number of Triangle partitions" << k << endl;
-      return false;
-    }
-  }
-  else 
-  {
-    if (rank == 0) cerr << "ERROR: unknown Triangle extension: " << ext << endl;
+    if (rank == 0) std::cerr << "parse error in partition document: " << json << "\n";
+    set_error(1);
     return false;
   }
 
+  // Checks in get_partitioning ensures this is OK
+  string fname = doc["parts"][GetTheApplication()->GetRank()]["filename"].GetString();
+  if (fname[0] != '/')
+    fname = dir + fname;
+
   vtkPointSet *pset = NULL;
 
-	part = spath + part;
-
-  i = part.find_last_of('.');
-  string pext = part.substr(i+1);
-
+  string pext = fname.substr(fname.find_last_of('.') + 1);
   if (pext == "vtu")
   {
     VTKError *ve = VTKError::New();
     vtkXMLUnstructuredGridReader* rdr = vtkXMLUnstructuredGridReader::New();
     ve->watch(rdr);
 
-    rdr->SetFileName(part.c_str());
+    rdr->SetFileName(fname.c_str());
     rdr->Update();
 
     if (ve->GetError())
@@ -189,7 +122,7 @@ Triangles::local_import(char *f, MPI_Comm c)
     vtkXMLPolyDataReader* rdr = vtkXMLPolyDataReader::New();
     ve->watch(rdr);
 
-    rdr->SetFileName(part.c_str());
+    rdr->SetFileName(fname.c_str());
     rdr->Update();
 
     if (ve->GetError())
@@ -271,6 +204,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 		{
 			if (vmap[i] != -1)
 			{
+#if 0
 				if (first)
 				{
 					first = false;
@@ -287,6 +221,7 @@ Triangles::local_import(char *f, MPI_Comm c)
 					if (po[2] < local_box.xyz_min.z) local_box.xyz_min.z = po[2];
 					if (po[2] > local_box.xyz_max.z) local_box.xyz_max.z = po[2];
 				}
+#endif
 
 				float *pn = vertices + 3*vmap[i];
 				*pn++ = *po++;
@@ -307,83 +242,6 @@ Triangles::local_import(char *f, MPI_Comm c)
 
 		delete[] vmap;
 	}
-
-		// Now the opartition is loaded.   If this ISN'T a ptri file containing
-		// BB's, we compute the BB based on the vertices.
-		
-	if (ext == "ptri")
-  {
-    local_box = Box(dboxes + 6*GetTheApplication()->GetRank());
-  }
-  else if (n_vertices == 0)
-	{
-		cerr << "ERROR " << rank << ": Can't figure out bounding box" << endl;
-		return false;
-	}
-	else
-  {
-    bool first = true;
-    float *v = vertices;
-    for (int i = 0; i < n_vertices; i++)
-      if (first)
-      {
-        first = false;
-        local_box.xyz_min.x = local_box.xyz_max.x = v[0];
-        local_box.xyz_min.y = local_box.xyz_max.y = v[1];
-        local_box.xyz_min.z = local_box.xyz_max.z = v[2];
-      }
-      else
-      {
-        if (v[0] < local_box.xyz_min.x) local_box.xyz_min.x = v[0];
-        if (v[0] > local_box.xyz_max.x) local_box.xyz_max.x = v[0];
-        if (v[1] < local_box.xyz_min.y) local_box.xyz_min.y = v[1];
-        if (v[1] > local_box.xyz_max.y) local_box.xyz_max.y = v[1];
-        if (v[2] < local_box.xyz_min.z) local_box.xyz_min.z = v[2];
-        if (v[2] > local_box.xyz_max.z) local_box.xyz_max.z = v[2];
-      }
-
-		float box[] = {
-			local_box.xyz_min.x, local_box.xyz_min.y, local_box.xyz_min.z,
-			local_box.xyz_max.x, local_box.xyz_max.y, local_box.xyz_max.z
-			};
-
-			MPI_Allgather((const void *)&box, sizeof(box), MPI_CHAR, (void *)dboxes, sizeof(box), MPI_CHAR, c);
-  }
-
-  for (int i = 0; i < 6; i++) neighbors[i] = -1;
-
-#define FUZZ 0.001
-#define LAST(AXIS) (fabs(b.xyz_max.AXIS - local_box.xyz_min.AXIS) < FUZZ)
-#define NEXT(AXIS) (fabs(b.xyz_min.AXIS - local_box.xyz_max.AXIS) < FUZZ)
-#define EQ(AXIS)   (fabs(b.xyz_min.AXIS - local_box.xyz_min.AXIS) < FUZZ)
-
-  global_box = local_box;
-
-  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-  {
-    if (i != GetTheApplication()->GetRank())
-    {
-      Box b(dboxes + i*6);
-
-      if (global_box.xyz_min.x > b.xyz_min.x) global_box.xyz_min.x = b.xyz_min.x;
-      if (global_box.xyz_max.x < b.xyz_max.x) global_box.xyz_max.x = b.xyz_max.x;
-      if (global_box.xyz_min.y > b.xyz_min.y) global_box.xyz_min.y = b.xyz_min.y;
-      if (global_box.xyz_max.y < b.xyz_max.y) global_box.xyz_max.y = b.xyz_max.y;
-      if (global_box.xyz_min.z > b.xyz_min.z) global_box.xyz_min.z = b.xyz_min.z;
-      if (global_box.xyz_max.z < b.xyz_max.z) global_box.xyz_max.z = b.xyz_max.z;
-
-
-      if (LAST(x) && EQ(y) && EQ(z)) neighbors[0] = i;
-      if (NEXT(x) && EQ(y) && EQ(z)) neighbors[1] = i;
-
-      if (EQ(x) && LAST(y) && EQ(z)) neighbors[2] = i;
-      if (EQ(x) && NEXT(y) && EQ(z)) neighbors[3] = i;
-
-      if (EQ(x) && EQ(y) && LAST(z)) neighbors[4] = i;
-      if (EQ(x) && EQ(y) && NEXT(z)) neighbors[5] = i;
-      
-    }
-  }
 
   return true;
 }
@@ -407,15 +265,6 @@ Triangles::LoadFromJSON(Value& v)
     set_error(1);
     return false;
   }
-}
-
-void
-Triangles::SaveToJSON(Value& v, Document& doc)
-{
-  Value container(kObjectType);
-
-  container.AddMember("filename", Value().SetString(filename.c_str(), doc.GetAllocator()), doc.GetAllocator());
-  v.PushBack(container, doc.GetAllocator());
 }
 
 Triangles::~Triangles()

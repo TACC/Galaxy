@@ -99,12 +99,6 @@ PathLinesVis::LoadFromJSON(Value& v)
 }
 
 void
-PathLinesVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-}
-
-void
 PathLinesVis::destroy_ispc()
 {
   if (ispc)

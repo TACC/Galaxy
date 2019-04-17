@@ -36,9 +36,12 @@ OsprayParticles::OsprayParticles(ParticlesP p)
 
   int n_samples;
   Particle *samples;
-  particles->GetSamples(samples, n_samples);
 
-  OSPData data = ospNewData(n_samples * sizeof(Particle), OSP_UCHAR, samples, OSP_DATA_SHARED_BUFFER);
+  // GetParticles allocates new buffer
+
+  particles->GetParticles(samples, n_samples);
+
+  OSPData data = ospNewData(n_samples * sizeof(Particle), OSP_UCHAR, samples);
   ospCommit(data);
 
   ospSetData(ospg, "spheres", data);

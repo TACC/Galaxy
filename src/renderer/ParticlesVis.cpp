@@ -104,12 +104,6 @@ ParticlesVis::LoadFromJSON(Value& v)
 }
 
 void
-ParticlesVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-}
-
-void
 ParticlesVis::destroy_ispc()
 {
   if (ispc)

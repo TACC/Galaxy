@@ -95,6 +95,7 @@ static float interpolate(InterpolatorClientServer::Args *a, VolumeP v, float x, 
 
 float interpolate(InterpolatorClientServer::Args *args, VolumeP v, Particle& p) { return interpolate(args, v, p.xyz.x, p.xyz.y, p.xyz.z); }
 float interpolate(InterpolatorClientServer::Args *args, VolumeP v, vec3f xyz) { return interpolate(args, v, xyz.x, xyz.y, xyz.z); }
+float interpolate(InterpolatorClientServer::Args *args, VolumeP v, vec3f *xyz) { return interpolate(args, v, xyz->x, xyz->y, xyz->z); }
 
 static void
 Interpolate(InterpolatorClientServer::Args *a)
@@ -115,12 +116,12 @@ Interpolate(InterpolatorClientServer::Args *a)
   a->jstride = ik;
   a->kstride = ik * jk;
 
-  Particle *srcp = s->get_samples();
-  for (int i = 0; i < s->get_n_samples(); i++, srcp++)
+  vec3f *srcp = s->GetVertices();
+  for (int i = 0; i < s->GetNumberOfVertices(); i++, srcp++)
   {
     Particle p;
-    p.xyz = srcp->xyz;
-    p.u.value = interpolate(a, v, p);
+    p.xyz = *srcp;
+    p.u.value = interpolate(a, v, srcp);
     d->push_back(p);
   }
 }

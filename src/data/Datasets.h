@@ -123,15 +123,8 @@ public:
   //! load from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
 
-  //! save this Datasets to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
-
   //! load from a file containing a JSON spec
   virtual bool LoadFromJSONFile(std::string);
-
-	bool IsTimeVarying(); //!< are the data in this Datasets time-varying?
-  bool WaitForTimestep(); //!< wait for receipt of next timestep for all attached data sources (e.g. a running simulation for in situ analysis)
-  bool LoadTimestep(); //!< broadcast a LoadTimestepMsg to all Galaxy processes for all attached data sources (e.g. a running simulation for in situ analysis)
 
 	using iterator = datasets_t::iterator;
 	//! return an iterator positioned at the beginning of the data list for this Datasets

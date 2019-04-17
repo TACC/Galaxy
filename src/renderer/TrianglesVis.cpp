@@ -95,12 +95,6 @@ TrianglesVis::LoadFromJSON(Value& v)
 }
 
 void
-TrianglesVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-}
-
-void
 TrianglesVis::destroy_ispc()
 {
   if (ispc)

@@ -73,20 +73,6 @@ Datasets::Commit()
 	return KeyedObject::Commit();
 }
 
-void 
-Datasets::SaveToJSON(Value& v, Document& doc)
-{
-  Value d(kArrayType);
-
-	for (auto it : datasets)
-	{
-		KeyedDataObjectP kdop = it.second;
-    kdop->SaveToJSON(d, doc);
-	}
-
-	v.AddMember("Datasets", d, doc.GetAllocator());
-}
-
 bool
 Datasets::loadTyped(Value& v)
 {
@@ -173,46 +159,6 @@ Datasets::LoadFromJSONFile(std::string fname)
 
     return LoadFromJSON(doc);
   }
-}
-
-bool
-Datasets::LoadTimestep()
-{
-	for (auto it : datasets)
-	{
-		KeyedDataObjectP kdop = it.second;
-		if (kdop->is_attached())
-			if (! kdop->LoadTimestep())
-      {
-        set_error(1);
-        return false;
-      }
-	}
-  return false;
-}
-
-bool
-Datasets::WaitForTimestep()
-{
-	for (auto it : datasets)
-	{
-		KeyedDataObjectP kdop = it.second;
-    if (kdop->is_attached())
-    {
-      if (! kdop->WaitForTimestep())
-        return false;
-    }
-	}
-
-  return true;
-}
-
-bool 
-Datasets::IsTimeVarying()
-{
-	for (auto it : datasets)
-		if (it.second->is_time_varying()) return true;
-	return false;
 }
 
 int

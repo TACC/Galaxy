@@ -254,7 +254,7 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
     }
   }
 
-  std::cerr << "created " << p->get_n_samples() << " samples\n";
+  std::cerr << "created " << p->GetNumberOfVertices() << " samples\n";
 }
 
 class MHSampleMsg : public Work

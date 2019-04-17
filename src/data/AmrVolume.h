@@ -50,9 +50,7 @@ public:
         //! commit this object to the local registry
         /*! This action is performed in response to a ImportMsg */
         virtual bool local_import(char *fname, MPI_Comm c);
-        //! load a timestep into local memory
-        /*! This action is performed in response to LoadTimestepMsg */
-        virtual bool local_load_timestep(MPI_Comm c);
+
         //! method to read gxyamr data
         /*! an internal method used to load gxyamr metadata */
 

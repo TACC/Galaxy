@@ -189,10 +189,6 @@ public:
   /*! This action is performed in response to a ImportMsg */
 	virtual bool local_import(char *fname, MPI_Comm c);
 
-  //! load a timestep into local memory
-  /*! This action is performed in response to a LoadTimestepMsg */
-	virtual bool local_load_timestep(MPI_Comm c);
-
 	//! get the global min and max data values for this Volume
 	void get_global_minmax(float &min, float &max) { min = global_min; max = global_max; }
 
@@ -201,8 +197,6 @@ public:
 
   //! construct a Volume from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-  //! save this Volume to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
 protected:
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep

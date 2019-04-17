@@ -295,7 +295,7 @@ public:
       }
     }
 
-    std::cerr << "created " << p->get_n_samples() << " samples\n";
+    std::cerr << "created " << p->GetNumberOfVertices() << " samples\n";
     return false;
   }
 };

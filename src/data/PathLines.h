@@ -42,6 +42,19 @@ namespace gxy
 
 OBJECT_POINTER_TYPES(PathLines)
 
+//! a pathline vertex within Galaxy
+/*! \ingroup data */
+
+struct PLVertex
+{
+  PLVertex(float x, float y, float z, float v) { xyz.x = x, xyz.y = y, xyz.z = z, value = v; };
+  PLVertex(const  PLVertex& a) {xyz.x = a.xyz.x, xyz.y = a.xyz.y, xyz.z = a.xyz.z, value = a.value; }
+  PLVertex() {xyz.x = 0, xyz.y = 0, xyz.z = 0, value = 0; }
+  vec3f xyz;
+  float value;
+};
+
+
 //! a pathline dataset within Galaxy consists of three parts: a set of vertices, a set of indices and a set or pointers into that set of indices indicating where the individual pathlines begin.  Data is per-vertex.
 /* \ingroup data 
  * \sa KeyedObject, KeyedDataObject
@@ -54,46 +67,15 @@ public:
 	void initialize(); //!< initialize this PathLines object
 	virtual ~PathLines(); //!< default destructor 
 
-  //! broadcast an ImportMsg to all Galaxy processes to import the given data file
-  virtual bool Import(std::string);
-
-  /*! This action is performed in response to a ImportMsg */
-  virtual bool local_import(char *, MPI_Comm);
-
   //! construct a PathLines from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-  //! save this PathLines to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
-  //! Install vertices and data in 4-tuples, which are [x, y, z, data]
-  void InstallVertexData(bool shared, int nv, float *v);
+  void GetPLVertices(PLVertex*& p, int& n);
 
-  //! Install segment indices.  These may be shared with an application; the 'shared' boolean parameter indicates this.
-  void InstallSegments(bool shared, int ns, int *s);
-
-  //! Get the number of vertices
-  int GetNumberOfVertices() { return n_vertices; }
-
-  //! Get the number of segments
-  int GetNumberOfSegments() { return n_segments; }
-
-  //! Get the vertices
-  float *GetVertices() { return vertices; }
-
-  //! Get the pathline segments
-  int *GetSegments() { return segments; }
+protected:
+  virtual bool load_from_vtkPointSet(vtkPointSet *);
 
 private:
-  bool vertices_shared;
-  bool segments_shared;
-
-	int n_segments;
-	int n_vertices;
-
-	float *vertices;
-	int   *segments;
-
-  vtkUnstructuredGrid *vtkug;
 };
 
 } // namespace gxy

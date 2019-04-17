@@ -115,34 +115,6 @@ Camera::LoadCamerasFromJSON(Value& v, vector<CameraP>& cameras)
   return true;
 }
 
-void
-Camera::SaveToJSON(Value&v, Document& doc)
-{
-  Value c(kObjectType);
-
-  Value e(kArrayType);
-  e.PushBack(Value().SetDouble(eye[0]), doc.GetAllocator());
-  e.PushBack(Value().SetDouble(eye[1]), doc.GetAllocator());
-  e.PushBack(Value().SetDouble(eye[2]), doc.GetAllocator());
-  c.AddMember("viewpoint", e, doc.GetAllocator());
-
-  Value d(kArrayType);
-  d.PushBack(Value().SetDouble(dir[0]), doc.GetAllocator());
-  d.PushBack(Value().SetDouble(dir[1]), doc.GetAllocator());
-  d.PushBack(Value().SetDouble(dir[2]), doc.GetAllocator());
-  c.AddMember("viewdirection", d, doc.GetAllocator());
-
-  Value u(kArrayType);
-  u.PushBack(Value().SetDouble(up[0]), doc.GetAllocator());
-  u.PushBack(Value().SetDouble(up[1]), doc.GetAllocator());
-  u.PushBack(Value().SetDouble(up[2]), doc.GetAllocator());
-  c.AddMember("viewup", u, doc.GetAllocator());
-
-  c.AddMember("aov", Value().SetDouble(aov), doc.GetAllocator());
-
-  v.AddMember("Camera", c, doc.GetAllocator());
-}
-
 bool 
 Camera::LoadFromPVCC(const char *filename)
 {

@@ -161,37 +161,6 @@ VolumeVis::LoadFromJSON(Value& v)
 }
 
 void
-VolumeVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-
-  v.AddMember("volume rendering", Value().SetBool(volume_rendering), doc.GetAllocator());
-  
-  if (isovalues.size() > 0)
-  {
-    Value i(kArrayType);
-    for (auto a : isovalues)
-      i.PushBack(Value().SetDouble(a), doc.GetAllocator());
-    v.AddMember("isovalues", i, doc.GetAllocator());
-  }
-
-  if (slices.size() > 0)
-  {
-    Value i(kArrayType);
-    for (auto a : slices)
-    {
-      Value j(kArrayType);
-      j.PushBack(Value().SetDouble(a.x), doc.GetAllocator());
-      j.PushBack(Value().SetDouble(a.y), doc.GetAllocator());
-      j.PushBack(Value().SetDouble(a.z), doc.GetAllocator());
-      j.PushBack(Value().SetDouble(a.w), doc.GetAllocator());
-      i.PushBack(j, doc.GetAllocator());
-    }
-    v.AddMember("slices", i, doc.GetAllocator());
-  }
-}
-
-void
 VolumeVis::destroy_ispc()
 {
   if (ispc)

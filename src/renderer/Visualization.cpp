@@ -219,7 +219,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
     
     if (OsprayVolume::IsA(op))
       vispc[nvispc++] = v->GetIspc();
-    else if (ParticlesVis::IsA(v) || PathLinesVis::IsA(v))
+    else if (ParticlesVis::IsA(v) || PathLinesVis::IsA(v) || TrianglesVis::IsA(v))
     {
       if (! ospModel)
         ospModel = ospNewModel();
@@ -244,19 +244,6 @@ void
 Visualization::AddVis(VisP o)
 {
 	vis.push_back(o);
-}
-
-void 
-Visualization::SaveToJSON(Value& v, Document&  doc)
-{
-	Value varray(kArrayType);
-	for (auto it : vis)
-	{
-		Value v(kObjectType);
-		it->SaveToJSON(v, doc);
-		varray.PushBack(v, doc.GetAllocator());
-	}
-	v.AddMember("Visualization", varray, doc.GetAllocator());
 }
 
 bool 

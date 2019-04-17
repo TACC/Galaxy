@@ -194,9 +194,6 @@ public:
   //! construct object from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&) { std::cerr << "abstract KeyedObject LoadFromJSON" << std::endl; return false; }
 
-  //! save object to a Galaxy JSON specification
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&) { std::cerr << "abstract KeyedObject SaveToJSON" << std::endl; }
-
   //! a helper class for global messages to deserialize and commit the KeyedObject to each process local registry
   class CommitMsg : public Work
   {

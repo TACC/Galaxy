@@ -101,12 +101,6 @@ Vis::LoadFromJSON(Value& v)
 	}
 }
 
-void 
-Vis::SaveToJSON(Value& v, Document& doc)
-{
-	v.AddMember("dataset", Value().SetString(name.c_str(), doc.GetAllocator()), doc.GetAllocator());
-}
-
 void
 Vis::SetTheOsprayDataObject(OsprayObjectP o)
 {

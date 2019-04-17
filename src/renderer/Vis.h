@@ -71,8 +71,6 @@ public:
 
     //! construct a Vis from a Galaxy JSON specification
     virtual bool LoadFromJSON(rapidjson::Value&);
-    //! save this Vis to a Galaxy JSON specification 
-    virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
     //! set the name of this Vis
     void SetName(std::string n) { name = n; }

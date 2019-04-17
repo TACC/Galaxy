@@ -54,8 +54,6 @@ class KeyedDataObject : public KeyedObject
 	KEYED_OBJECT_SUBCLASS(KeyedDataObject, KeyedObject)
 
 	friend class ImportMsg;
-	friend class AttachMsg;
-	friend class LoadTimestepMsg;
 
 public:
 	virtual ~KeyedDataObject(); //!< destructor
@@ -69,13 +67,14 @@ public:
   //! returns a pointer to a Box that represents the local data extent at this process
 	Box *get_local_box() { return &local_box; }
 
-  //! return the data key that is the `i^th` neighbor of this proces
+  //! return the data key that is the `i^th` neighbor of this process
   /*! This method uses the Box face orientation indices for neighbor indexing
    *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
    *          - xz-face neighbors - `2` for the lower (left) `y`, `3` for the higher (right) `y`
    *          - xy-face neighbors - `4` for the lower (left) `z`, `5` for the higher (right) `z`
    */
 	int get_neighbor(int i) { return neighbors[i]; }
+
   //! return true if the requested neighbor exists
   /*! This method uses the Box face orientation indices for neighbor indexing
    *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
@@ -86,6 +85,7 @@ public:
 
   //! is this KeyedDataObject time varying?
 	bool is_time_varying() { return time_varying; }
+
   //! set whether this KeyedDataObject is time varying
 	void set_time_varying(bool t = true) { time_varying = t; }
 
@@ -99,16 +99,6 @@ public:
 
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file using the given arguments
 	virtual bool Import(std::string, void *args, int argsSize);
-
-  //! broadcat an AttachMsg to all Galaxy processes to attach to a data source at the given address and port
-  virtual bool Attach(std::string);
-  //! broadcat an AttachMsg to all Galaxy processes to attach to a data source at the given address and port using the given arguments
-  virtual bool Attach(std::string, void *args, int argsSize);
-
-  //! broadcast a LoadTimestepMsg to all Galaxy processes for all attached data sources (e.g. a running simulation for in situ analysis)
-	virtual bool LoadTimestep(); 
-  //! wait for receipt of next timestep for all attached data sources (e.g. a running simulation for in situ analysis)
-	virtual bool WaitForTimestep();
 
   //! copy the data partitioning of the given KeyedDataObject
 	void CopyPartitioning(KeyedDataObjectP o);
@@ -129,7 +119,6 @@ protected:
 	bool time_varying, attached;
 
   virtual bool local_import(char *, MPI_Comm c);
-  virtual bool local_load_timestep(MPI_Comm c);
 
 	Box global_box, local_box;
 	int neighbors[6];
@@ -167,46 +156,6 @@ protected:
 			if (!o->local_import(p, c))
         o->set_error(1);
 
-			return false;
-		}
-  };
-
-  //! tell a Galaxy process to attach to a dynamic data source
-  class AttachMsg : public Work
-  {
-  public:
-    AttachMsg(Key k, std::string vname) : AttachMsg(sizeof(Key) + vname.length() + 1)
-    {
-      *(Key *)contents->get() = k;
-      memcpy(((char *)contents->get()) + sizeof(Key), vname.c_str(), vname.length()+1);
-    }
-
-    WORK_CLASS(AttachMsg, true);
-
-  public:
-    bool CollectiveAction(MPI_Comm c, bool isRoot);
-  };
-
-  //! tell a Galaxy process to load a timestep from a dynamic data source
-  class LoadTimestepMsg : public Work
-  {
-  public:
-    LoadTimestepMsg(Key k) : LoadTimestepMsg(sizeof(Key))
-    {
-      *(Key *)contents->get() = k;
-    }
-
-    WORK_CLASS(LoadTimestepMsg, true);
-
-  public:
-    bool CollectiveAction(MPI_Comm c, bool isRoot)
-		{
-			Key k = *(Key *)contents->get();
-			KeyedDataObjectP o = KeyedDataObject::GetByKey(k);
-			o->local_load_timestep(c);
-      int ge, le = o->get_error();
-      MPI_Allreduce(&le, &ge, 1, MPI_INT, MPI_MAX, c);
-      o->set_error(ge);
 			return false;
 		}
   };

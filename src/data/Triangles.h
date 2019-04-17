@@ -58,8 +58,6 @@ public:
 
   //! construct a Triangles from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-  //! save this Triangles to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   //! Get the number of vertices
   int GetNumberOfVertices() { return n_vertices; }

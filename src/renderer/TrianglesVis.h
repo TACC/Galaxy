@@ -60,7 +60,6 @@ protected:
 	virtual void destroy_ispc();
 
   virtual bool LoadFromJSON(rapidjson::Value&);
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
