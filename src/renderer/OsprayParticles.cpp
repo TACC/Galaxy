@@ -27,44 +27,20 @@ OsprayParticles::OsprayParticles(ParticlesP p)
   particles = p;
 
   OSPGeometry ospg = ospNewGeometry("ddspheres");
-  // OSPGeometry ospg = ospNewGeometry("spheres");
   if (! ospg) 
   {
     std::cerr << "Could not create ddspheres geometry!\n";
     exit(1);
   }
 
-  int n_samples;
-  Particle *samples;
+  OSPData centers = ospNewData(p->GetNumberOfVertices(), OSP_FLOAT3, p->GetVertices(), OSP_DATA_SHARED_BUFFER);
+  ospCommit(centers);
+  ospSetData(ospg, "centers", centers);
 
-  // GetParticles allocates new buffer
-
-  particles->GetParticles(samples, n_samples);
-
-  OSPData data = ospNewData(n_samples * sizeof(Particle), OSP_UCHAR, samples);
+  OSPData data = ospNewData(p->GetNumberOfVertices(), OSP_FLOAT, p->GetVertices(), OSP_DATA_SHARED_BUFFER);
   ospCommit(data);
-
-  ospSetData(ospg, "spheres", data);
-  ospSet1i(ospg, "offset_datavalue", 12);
-
-  float r, g, b, a;
-  particles->GetDefaultColor(r, g, b, a);
-
-  unsigned int color = ((unsigned char)(a * 255) << 24) | 
-                       ((unsigned char)(b * 255) << 16) | 
-                       ((unsigned char)(g * 255) <<  8) | 
-                        (unsigned char)(r * 255);
-
-  unsigned int *colors = new unsigned int[n_samples];
-  for (int i = 0; i < n_samples; i++)
-    colors[i] = color;
-
-  OSPData clr = ospNewData(n_samples, OSP_UCHAR4, colors);
-  delete[] colors;
-  ospCommit(clr);
-  ospSetObject(ospg, "color", clr);
-  ospRelease(clr);
-
+  ospSetData(ospg, "data", data);
+  
   ospCommit(ospg);
 
   theOSPRayObject = (OSPObject)ospg;

@@ -33,19 +33,25 @@ OsprayPathLines::OsprayPathLines(PathLinesP p)
     exit(1);
   }
 
-  PLVertex *plvertices; int nv;
-  p->GetPLVertices(plvertices, nv);
+  // PLVertex *plvertices; int nv;
+  // p->GetPLVertices(plvertices, nv);
+
+  int nv = p->GetNumberOfVertices();
 
   // This array was allocated in the above call - hand it over to OSPRay ownership
 
-  OSPData vdata = ospNewData(nv, OSP_FLOAT4, (float *)plvertices);
+  OSPData vdata = ospNewData(nv, OSP_FLOAT3, p->GetVertices(), OSP_DATA_SHARED_BUFFER);
   ospCommit(vdata);
-  ospSetData(ospg, "vertex", vdata);
+  ospSetData(ospg, "vertices", vdata);
+
+  OSPData ddata = ospNewData(nv, OSP_FLOAT, p->GetData(), OSP_DATA_SHARED_BUFFER);
+  ospCommit(ddata);
+  ospSetData(ospg, "data", ddata);
 
   int *segments = p->GetConnectivity();
   OSPData sdata = ospNewData(p->GetConnectivitySize(), OSP_INT, segments, OSP_DATA_SHARED_BUFFER);
   ospCommit(sdata);
-  ospSetData(ospg, "index", sdata);
+  ospSetData(ospg, "indices", sdata);
 
   float colors[nv*4];
   for (int i = 0; i < nv; i++)

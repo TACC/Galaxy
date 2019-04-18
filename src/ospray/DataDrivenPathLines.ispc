@@ -25,12 +25,11 @@
 struct DataDrivenPathLines
 {
   uniform Geometry super; //!< inherited geometry fields
-  const uniform vec3fa *vertex;
-  int32           numVertices;
-  const uniform uint32 *index;
-  const uniform vec4f  *color;
 
-  const uniform float *data;
+  const uniform vec4f  *vertices;
+  const uniform uint32 *indices;
+  int32           numVertices;
+
   uniform float  radius0, radius1, value0, value1;
   TransferFunction *uniform transferFunction;          //! Color and opacity transfer function.
 };
@@ -39,10 +38,10 @@ unmasked void DataDrivenPathLines_bounds(const RTCBoundsFunctionArguments *unifo
 {
   uniform DataDrivenPathLines *uniform self = (uniform DataDrivenPathLines *uniform)args->geometryUserPtr;
   uniform int primID = args->primID;
-  const uniform uint32 index  = self->index[primID];
+  const uniform uint32 index  = self->indices[primID];
 
-  const uniform vec3f A = make_vec3f(self->vertex[index]);
-  const uniform vec3f B = make_vec3f(self->vertex[index+1]);
+  const uniform vec3f A = make_vec3f(self->vertices[index]);
+  const uniform vec3f B = make_vec3f(self->vertices[index+1]);
 
   float dA, dB;
   float rA, rB;
@@ -51,11 +50,11 @@ unmasked void DataDrivenPathLines_bounds(const RTCBoundsFunctionArguments *unifo
   {
     float d;
 
-    dA = ((float *)(&self->vertex[index]))[3];
+    dA = ((float *)(&self->vertices[index]))[3];
     d = (d - self->value0) / (self->value1 - self->value1);
     rA = (dA < 0) ? self->radius0 : (d > 1.0) ? self->radius1 : (self->radius0 + d*(self->radius1 - self->radius0));
 
-    dB = ((float *)(&self->vertex[index+1]))[3];
+    dB = ((float *)(&self->vertices[index+1]))[3];
     d = (dB - self->value0) / (self->value1 - self->value1);
     rB = (d < 0) ? self->radius0 : (d > 1.0) ? self->radius1 : (self->radius0 + d*(self->radius1 - self->radius0));
   }
@@ -67,8 +66,6 @@ unmasked void DataDrivenPathLines_bounds(const RTCBoundsFunctionArguments *unifo
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(min(A,B) - self->radius0,
                      max(A,B) + self->radius0);
-
-  if (index == -1) print("bounds!\n");
 }
 
 /*! do a ray-sphere intersection, with the numerical fix of first
@@ -170,14 +167,14 @@ unmasked void DataDrivenPathLines_intersect_kernel(
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
-  const uniform uint32 idx = self->index[primID];
-  const vec3f A = make_vec3f(self->vertex[idx]);
-  const vec3f B = make_vec3f(self->vertex[idx+1]);
+  const uniform uint32 idx = self->indices[primID];
+  const vec3f A = make_vec3f(self->vertices[idx]);
+  const vec3f B = make_vec3f(self->vertices[idx+1]);
 
   if (self->value0 != self->value1)
   {
-    float d0 = ((float *)(&self->vertex[idx]))[3];
-    float d1 = ((float *)(&self->vertex[idx+1]))[3];
+    float d0 = ((float *)(&self->vertices[idx]))[3];
+    float d1 = ((float *)(&self->vertices[idx+1]))[3];
   }
 
   float t_in=inf, t_out=-inf;
@@ -236,114 +233,36 @@ static void DataDrivenPathLines_postIntersect(uniform Geometry *uniform self,
 
     if (self->transferFunction)
     {
-      vec4f *v4 = (vec4f *)self->vertex;
+      vec4f *v4 = (vec4f *)self->vertices;
 
-      const varying uint32 index  = self->index[ray.primID];
+      const varying uint32 index  = self->indices[ray.primID];
 
       float Z = ((1.f-ray.u) * v4[index].z) + (ray.u * v4[index+1].z);
-      float dataval = ((1.f-ray.u) * self->data[index]) + (ray.u * self->data[index+1]);
+      float radius = ((1.f-ray.u) * self->vertices[index].w) + (ray.u * self->vertices[index+1].w);
+
+      float dataval;
+      if (self->radius0 < self->radius1 && radius < self->radius0)      dataval = self->value0; 
+      else if (self->radius0 < self->radius1 && radius > self->radius1) dataval = self->value1; 
+      else if (self->radius0 > self->radius1 && radius < self->radius1) dataval = self->value1; 
+      else if (self->radius0 > self->radius1 && radius > self->radius0) dataval = self->value0; 
+      else dataval = self->value0 + ((radius - self->radius0) / (self->radius1 - self->radius0))*(self->value1 - self->value0); 
+
       vec3f color = self->transferFunction->getColorForValue(self->transferFunction, dataval);
 
-      // print("I %\nZ %\nD %\nR %\nG %\nB %\n", index, Z, dataval, color.x, color.y, color.z);
+      // print("I %\nU %\nR %\nZ %\nD %\nR %\nG %\nB %\n", index, ray.u, radius, Z, dataval, color.x, color.y, color.z);
+      // print("r0 %\nv0 %\nr1 %\nv1 %\nR %\nD %\n", self->radius0, self->value0, self->radius1, self->value1, radius, dataval);
 
-      dg.color.x = 1.0; // color.x;
+      dg.color.x = color.x;
       dg.color.y = color.y;
       dg.color.z = color.z;
       dg.color.w = 1.0;
     }
     else
     {
-      const uniform vec4f *uniform color = self->color;
-      if (color) {
-        const varying uint32 index  = self->index[ray.primID];
-        dg.color = (1.f-ray.u) * color[index] + ray.u * color[index+1];
-      }
-    }
-  }
-}
-
-// For simplicity pathlines are modelled of segments, each consisting of one
-// cylinder and two spheres. Sampling would put (too much) effort towards the
-// vertices, where often two spheres and two cylinders overlap. Furthermore,
-// sampling such a mixed "primitive" is more complex. Thus, choose a different
-// representation for area sampling, i.e. one cylinder per segment and one
-// sphere per vertex.
-SampleAreaRes DataDrivenPathLines_sampleArea(
-    const Geometry *uniform const _self
-    , const int32 areaPrimID
-    , const uniform affine3f &xfm
-    , const uniform affine3f &rcp_xfm
-    , const vec2f& s
-    )
-{
-  const DataDrivenPathLines *const uniform self = (const DataDrivenPathLines *uniform)_self;
-  const uniform float radius = self->radius0;
-
-  vec3f localNormal;
-  vec3f localPos;
-  if (areaPrimID < self->numVertices) { // sphere
-    localNormal = uniformSampleSphere(radius, s);
-    const vec3f center = make_vec3f(self->vertex[areaPrimID]);
-    localPos = center + localNormal;
-  } else { // cylinder
-    const uint32 idx = self->index[areaPrimID - self->numVertices];
-    const vec3f v0 = make_vec3f(self->vertex[idx]);
-    const vec3f v1 = make_vec3f(self->vertex[idx+1]);
-
-    linear3f frame = frame(v1-v0);
-    frame.vy = normalize(frame.vy);
-    const float phi = two_pi * s.x;
-    float sinPhi, cosPhi;
-    sincos(phi, &sinPhi, &cosPhi);
-    localNormal = (cosPhi*radius)*frame.vx + (sinPhi*radius)*frame.vy;
-    localPos = v0 + localNormal + s.y*frame.vz;
-  }
-
-  SampleAreaRes res;
-  res.pos = xfmPoint(xfm, localPos);
-  res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
-
-  return res;
-}
-
-void DataDrivenPathLines_getAreas(
-    const Geometry *const uniform _self
-    , const int32 *const uniform primIDs
-    , const uniform int32 numPrims
-    , const uniform affine3f &xfm
-    , float *const uniform areas
-    )
-{
-  DataDrivenPathLines *uniform self = (DataDrivenPathLines *uniform)_self;
-
-  // detect (non-uniform) scaling; get length of transformed unit-vectors
-  const uniform vec3f scaling3 =
-    make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
-  const uniform float min_scaling = reduce_min(scaling3);
-  const uniform float max_scaling = reduce_max(scaling3);
-  if ((max_scaling - min_scaling) > 1e-4f*min_scaling)
-    print("#osp:DataDrivenPathLines_getAreas: Non-uniform scaling in instance "
-        "transformation detected! Importance sampling for emissive "
-        "materials and thus resulting image may be wrong.\n");
-  // use average as approximation to closest uniform scaling
-  const uniform float scaling = reduce_add(scaling3)/3.f;
-
-  // spheres at vertices
-  const uniform float sphereArea = four_pi * sqr(self->radius0 * scaling);
-  const uniform int32 spheres = self->numVertices;
-
-  // cylinders for segments; area of a cylinder with unit-length
-  const uniform float cyl1Area = two_pi * self->radius0 * sqr(scaling);
-  // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-  for (uniform int32 i = 0; i < numPrims; i++) {
-    const uniform int32 primID = primIDs[i];
-    if (primID < spheres) { // sphere
-      areas[i] = sphereArea;
-    } else { // cylinder
-      const uniform uint32 idx = self->index[primID - spheres];
-      const uniform vec3f v0 = make_vec3f(self->vertex[idx]);
-      const uniform vec3f v1 = make_vec3f(self->vertex[idx+1]);
-      areas[i] = cyl1Area * length(v0 - v1);
+      dg.color.x = 1.0;
+      dg.color.y = 1.0;
+      dg.color.z = 1.0;
+      dg.color.w = 1.0;
     }
   }
 }
@@ -359,58 +278,14 @@ export void *uniform DataDrivenPathLines_create(void *uniform cppEquivalent)
   return geom;
 }
 
-export void *uniform
-DataDrivenPathLines_set(       void *uniform _self,
-                       void           *uniform _model,
-                       float           uniform radius,
-                const  uniform vec3fa *uniform vertex,
-                       int32           uniform numVertices,
-                const  uniform uint32 *uniform index,
-                       int32           uniform numSegments,
-                const  uniform vec4f  *uniform color)
-{
-  DataDrivenPathLines *uniform self = (DataDrivenPathLines *uniform)_self;
-  Model *uniform model = (Model *uniform)_model;
-
-  self->transferFunction = NULL;
-
-  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
-
-  self->super.geomID = geomID;
-  self->super.model  = model;
-  self->vertex = vertex;
-  self->index = index;
-  // XXX different representation for area sampling, see above
-  self->super.numPrimitives = numVertices + numSegments;
-  self->super.getAreas = DataDrivenPathLines_getAreas;
-  self->super.sampleArea = DataDrivenPathLines_sampleArea;
-  self->numVertices = numVertices;
-  self->color = color;
-
-  rtcSetGeometryUserData(geom, self);
-  rtcSetGeometryUserPrimitiveCount(geom,numSegments);
-  rtcSetGeometryBoundsFunction
-    (geom,(uniform RTCBoundsFunction)&DataDrivenPathLines_bounds, self);
-  rtcSetGeometryIntersectFunction
-    (geom,(uniform RTCIntersectFunctionN)&DataDrivenPathLines_intersect);
-  rtcSetGeometryOccludedFunction
-    (geom,(uniform RTCOccludedFunctionN)&DataDrivenPathLines_occluded);
-  rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
-}
 
 export void *uniform
-DataDrivenPathLines_setCurve(      void           *uniform _self,
+DataDrivenPathLines_setCurve(void           *uniform _self,
                            void           *uniform _model,
-                     const uniform vec3fa *uniform vertexCurve,
+                     const uniform float  *uniform vertices,
                            int32           uniform numVertices,
-                     const uniform uint32 *uniform indexCurve,
+                     const uniform uint32 *uniform indices,
                            int32           uniform numSegments,
-                     const uniform uint32 *uniform index,
-                     const uniform vec4f  *uniform color,
-
-                     const uniform float *uniform data,
                      void *uniform tf,
                      const uniform float  r0,
                      const uniform float  r1,
@@ -423,21 +298,17 @@ DataDrivenPathLines_setCurve(      void           *uniform _self,
 
   self->transferFunction = (TransferFunction *uniform)tf;
 
-  self->data = data;
-  self->vertex = vertexCurve;
+  self->vertices = (vec4f *)vertices;
+  self->indices  = indices;
 
   self->radius0 = r0;
   self->radius1 = r1;
   self->value0 = v0;
   self->value1 = v1;
 
-  uniform RTCGeometry geom
-    = rtcNewGeometry(ispc_embreeDevice(),
-                     RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
-  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT4,
-                             vertexCurve,0,sizeof(uniform vec3fa),numVertices);
-  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT,
-                             indexCurve,0,sizeof(uniform int),numSegments);
+  uniform RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
+  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT4, vertices,0,sizeof(uniform vec3fa),numVertices);
+  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT, indices,0,sizeof(uniform int),numSegments);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
   rtcCommitGeometry(geom);
   rtcReleaseGeometry(geom);
@@ -450,9 +321,5 @@ DataDrivenPathLines_setCurve(      void           *uniform _self,
   self->super.postIntersect = DataDrivenPathLines_postIntersect;
 
   // TODO implement area sampling of curves for geometry lights
-  self->super.getAreas = NULL;
-  self->super.sampleArea = NULL;
   self->numVertices = 0; // not used by curve
-  self->index = index;
-  self->color = color;
 }

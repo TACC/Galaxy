@@ -30,66 +30,18 @@ struct DataDrivenSpheres {
   /*! inherit from "Geometry" class: */
   Geometry   super;
 
-  int deadbeef;
+  vec3f     *centers; /*! data array that contains the sphere locations */
+  float     *data;    /*! data array containing the per-sphere data */
 
-  /*! data array that contains the sphere data (possibly but not
-    necessarily including the color, which could be in color);
-    most offset and stride values point into here.  */
-  uint8     *data;
-  int32      stride;
-  int        offset_center;
-  int        offset_datavalue;
-  int        offset_materialID;
-  int        offset_colorID;
-
-  float      epsilon;
-  int        materialID;
-
-  uint8      *color;
-  int         color_stride;
-  int         color_offset;
-  int         color_format; 
+  float     epsilon;
 
   float     radius0;
   float     radius1;
   float     value0;
   float     value1;
 
-
   TransferFunction *uniform transferFunction;          //! Color and opacity transfer function.
-  vec2f     *texcoord;
-
-  bool huge_mesh;
 };
-
-inline int32 DataDrivenSpheres_getMaterialID(const uniform DataDrivenSpheres *uniform self,
-                                   int32 primID)
-{
-  int32 materialID = -1;
-  if (self->offset_materialID >= 0) {
-    const uniform int32 primsPerPage = (1024*1024*64);
-    if (any(primID >= primsPerPage )) {
-      const int primPageID  = primID / primsPerPage;
-      const int localPrimID = primID % primsPerPage;
-      foreach_unique (primPage in primPageID) {
-        uniform uint8 *uniform pagePtr = self->data
-          + (((int64)primPage)
-             * primsPerPage
-             * self->stride);
-        uniform uint8 *varying spherePtr = pagePtr
-          + self->stride*localPrimID;
-        materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-      }
-    } else {
-      uniform uint8 *varying spherePtr = self->data
-        + self->stride*primID;
-      materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-    }
-  } else {
-    materialID = self->materialID;
-  }
-  return materialID;
-}
 
 static void DataDrivenSpheres_postIntersect(uniform Geometry *uniform geometry,
                                   uniform Model *uniform model,
@@ -101,54 +53,35 @@ static void DataDrivenSpheres_postIntersect(uniform Geometry *uniform geometry,
 
   dg.Ng = dg.Ns = ray.Ng;
 
-  uniform uint8 *base = self->data + self->offset_datavalue;
-  varying float dataval = *((uniform float *varying)(base + ray.primID*self->stride));
-
+  float dataval = self->data[ray.primID];
   vec3f color = self->transferFunction->getColorForValue(self->transferFunction, dataval);
+
   dg.color.x = color.x;
   dg.color.y = color.y;
   dg.color.z = color.z;
   dg.color.w = 1.0;
-
-// print("D %\nR %\nG %\nB %\n", dataval, dg.color.x, dg.color.y, dg.color.z);
-
-  if (flags & DG_TEXCOORD && self->texcoord)
-    dg.st = self->texcoord[ray.primID];
-  else
-    dg.st = make_vec2f(0.0f);
-
-  if (flags & DG_MATERIALID) {
-    dg.materialID = DataDrivenSpheres_getMaterialID(self, ray.primID);
-  }
 }
 
 unmasked void DataDrivenSpheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   uniform DataDrivenSpheres *uniform self = (uniform DataDrivenSpheres *uniform)args->geometryUserPtr;
   uniform int primID = args->primID;
-  uniform uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
+
+  uniform vec3f center = self->centers[primID];
+  
   uniform float radius;
-
-// print("B\n");
-
-  if (self->offset_datavalue >= 0 && self->value0 != self->value1)
+  if (self->data >= 0 && self->value0 != self->value1)
   {
-    uniform float dataval = *((uniform float *uniform)(spherePtr + self->offset_datavalue));
-
+    uniform float dataval = self->data[primID];
     uniform float d = (dataval - self->value0) / (self->value1 - self->value0);
     if (d > 1) radius = self->radius1;
     else if (d < 0) radius = self->radius0;
     else radius = self->radius0 + d*(self->radius1 - self->radius0);
-// print ("B1 % % %\n", dataval, d, radius);
   }
   else
   {
     radius = self->radius0;
-// print ("B2 %\n", radius);
   }
-
-  uniform vec3f center = *((uniform vec3f*uniform)(spherePtr+self->offset_center));
-// print("CX %\nCY %\nCZ %\n", center.x, center.y, center.z);
 
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(center - radius, center + radius);
@@ -166,21 +99,21 @@ void DataDrivenSpheres_intersect_kernel(const RTCIntersectFunctionNArguments *un
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
-  uniform uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
+  uniform vec3f center = self->centers[primID];
+  
   uniform float radius;
-
-  if (self->offset_datavalue >= 0 && self->value0 != self->value1)
+  if (self->data >= 0 && self->value0 != self->value1)
   {
-    uniform float dataval = *((uniform float *)(spherePtr + self->offset_datavalue));
+    uniform float dataval = self->data[primID];
     uniform float d = (dataval - self->value0) / (self->value1 - self->value0);
     if (d > 1) radius = self->radius1;
     else if (d < 0) radius = self->radius0;
     else radius = self->radius0 + d*(self->radius1 - self->radius0);
   }
   else
+  {
     radius = self->radius0;
-
-  uniform vec3f center = *((uniform vec3f*uniform)(spherePtr+self->offset_center));
+  }
 
   const float approxDist = dot(center - ray->org, ray->dir);
   const vec3f closeOrg = ray->org + approxDist * ray->dir;
@@ -231,120 +164,6 @@ unmasked void DataDrivenSpheres_occluded(const struct RTCIntersectFunctionNArgum
   DataDrivenSpheres_intersect_kernel(args,true);
 }
 
-int32 DataDrivenSpheres_getMaterialID(
-                            const Geometry *uniform const _self
-                            , const int32 primID
-                            )
-{
-  const DataDrivenSpheres *const uniform self = (const DataDrivenSpheres *uniform)_self;
-  return DataDrivenSpheres_getMaterialID(self, primID);
-}
-
-SampleAreaRes DataDrivenSpheres_sampleArea(
-                                 const Geometry *uniform const _self
-                                 , const int32 primID
-                                 , const uniform affine3f &xfm
-                                 , const uniform affine3f &rcp_xfm
-                                 , const vec2f& s
-                                 )
-{
-  const DataDrivenSpheres *const uniform self = (const DataDrivenSpheres *uniform)_self;
-
-  float radius;
-  uint8 *spherePtr;
-  vec3f center;
-
-  const uniform int32 primsPerPage = (1024*1024*64);
-  if (any(primID >= primsPerPage ))
-  {
-    const int primPageID  = primID / primsPerPage;
-    const int localPrimID = primID % primsPerPage;
-
-    foreach_unique(primPage in primPageID) {
-      uint8 *uniform pagePtr = self->data + (((int64)primPage) * primsPerPage * self->stride);
-      spherePtr = pagePtr + self->stride*localPrimID;
-    }
-  }
-  else
-  {
-    spherePtr = self->data + self->stride*primID;
-  }
-
-  center = *((vec3f*)(spherePtr+self->offset_center));
-  if (self->offset_datavalue >= 0)
-  {
-    float dataval = *((float *)(spherePtr + self->offset_datavalue));
-    float d = (dataval - self->value0) / (self->value1 - self->value0);
-    if (d > 1) radius = self->radius1;
-    else if (d < 0) radius = self->radius0;
-    else radius = self->radius0 + d*(self->radius1 - self->radius0);
-  }
-  else
-    radius = self->radius0;
-
-  const vec3f localNormal = uniformSampleSphere(radius, s);
-  const vec3f localPos = center + localNormal;
-
-  SampleAreaRes res;
-  res.pos = xfmPoint(xfm, localPos);
-  res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
-
-  return res;
-}
-
-void DataDrivenSpheres_getAreas(
-                      const Geometry *const uniform _self
-                      , const int32 *const uniform primIDs
-                      , const uniform int32 numPrims
-                      , const uniform affine3f &xfm
-                      , float *const uniform areas
-                      )
-{
-  DataDrivenSpheres *uniform self = (DataDrivenSpheres *uniform)_self;
-
-  // detect (non-uniform) scaling; get length of transformed unit-vectors
-  const uniform vec3f scaling3 =
-    make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
-  const uniform float min_scaling = reduce_min(scaling3);
-  const uniform float max_scaling = reduce_max(scaling3);
-  if ((max_scaling - min_scaling) > 1e-4f*min_scaling)
-    print("#osp:DataDrivenSpheres_getAreas: Non-uniform scaling in instance "
-          "transformation detected! Importance sampling for emissive "
-          "materials and thus resulting image may be wrong.\n");
-  // use average as approximation to closest uniform scaling
-  const uniform float scaling = reduce_add(scaling3)/3.f;
-
-  if (self->offset_datavalue < 0)
-  {
-    const uniform float sphereArea = four_pi * sqr(self->radius0 * scaling);
-    foreach (i = 0 ... numPrims)
-      areas[i] = sphereArea;
-  }
-  else
-  {
-    const uniform int64 stride = self->stride;
-    uniform float radius;
-
-    // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-    for (uniform int32 i = 0; i < numPrims; i++)
-    {
-      if (self->offset_datavalue >= 0)
-      {
-        uniform uint8 *uniform spherePtr = self->data + self->stride*primIDs[i];
-        uniform float dataval = *((uniform float *uniform )(spherePtr + self->offset_datavalue));
-        uniform float d = (dataval - self->value0) / (self->value1 - self->value0);
-        if (d > 1) radius = self->radius1;
-        else if (d < 0) radius = self->radius0;
-        else radius = self->radius0 + d*(self->radius1 - self->radius0);
-      }
-      else
-        radius = self->radius0;
-        
-      areas[i] = four_pi * sqr(radius * scaling);
-    }
-  }
-}
-
 export void *uniform DataDrivenSpheres_create(void *uniform cppEquivalent)
 {
   uniform DataDrivenSpheres *uniform self = uniform new uniform DataDrivenSpheres;
@@ -358,21 +177,9 @@ export void *uniform DataDrivenSpheres_create(void *uniform cppEquivalent)
 
 export void DataDrivenSpheresGeometry_set(void  *uniform _self
                                 , void *uniform _model
+                                , void *uniform centers
                                 , void *uniform data
-                                , void *uniform materialList
-                                , vec2f *uniform texcoord
-                                , void *uniform color
-                                , uniform int color_offset
-                                , uniform int color_stride
-                                , uniform int color_format
                                 , uniform int numDataDrivenSpheres
-                                , uniform int bytesPerSphere
-                                , uniform int materialID
-                                , uniform int offset_center
-                                , uniform int offset_datavalue
-                                , uniform int offset_materialID
-                                , uniform int offset_colorID
-                                , uniform bool huge_mesh
                                 , uniform float radius0
                                 , uniform float radius1
                                 , uniform float value0
@@ -390,22 +197,9 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
   self->super.model = model;
   self->super.geomID = geomID;
   self->super.numPrimitives = numDataDrivenSpheres;
-  self->super.getAreas = DataDrivenSpheres_getAreas;
-  self->super.sampleArea = DataDrivenSpheres_sampleArea;
-  self->super.materialList = (Material **)materialList;
-  self->texcoord = texcoord;
-  self->color = (uint8 *uniform)color;
-  self->color_stride = color_stride;
-  self->color_offset = color_offset;
-  self->color_format = color_format;
-  self->data = (uint8 *uniform)data;
-  self->materialID = materialID;
-  self->stride = bytesPerSphere;
 
-  self->offset_center     = offset_center;
-  self->offset_datavalue  = offset_datavalue;
-  self->offset_materialID = offset_materialID;
-  self->offset_colorID    = offset_colorID;
+  self->centers = (vec3f *uniform)centers;
+  self->data = (float *uniform)data;
 
   self->radius0 = radius0;
   self->radius1 = radius1;
@@ -413,8 +207,6 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
   self->value1 = value1;
 
   self->transferFunction = (TransferFunction *uniform)tf;
-
-  self->huge_mesh = huge_mesh;
 
   // Why a log function?
   self->epsilon = log(self->radius0);
@@ -431,73 +223,41 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
   vec3f minb, maxb;
   uniform int isFirst = 1;
 
-  if (self->offset_datavalue >= 0 && (self->value0 != self->value1))
+  foreach (i = 0 ... numDataDrivenSpheres)
   {
-    foreach (i = 0 ... numDataDrivenSpheres)
+    vec3f center = self->centers[i];
+    float radius;
+
+    if (self->value0 != self->value1)
     {
-      uint8 *spherePtr = self->data + self->stride * i;
-      vec3f center = *((vec3f*)(spherePtr + self->offset_center));
-      float dataval = *((float*)(spherePtr + self->offset_datavalue));
-
+      float dataval = self->data[i];
       float d = (dataval - value0) / (value1 - value0);
-
-      float radius;
-
       if (d > 1) radius = radius1;
       else if (d < 0) radius = radius0;
       else radius = self->radius0 + d*(self->radius1 - self->radius0);
+    }
+    else
+      radius = self->radius0;
   
-      if (isFirst)
-      {
-        isFirst = 0;
-        minb = center - radius;
-        maxb = center + radius;
-      }
-      else
-      {
-        vec3f p = center - radius;
-        if (minb.x > p.x) minb.x = p.x;
-        if (minb.y > p.y) minb.y = p.y;
-        if (minb.z > p.z) minb.z = p.z;
-
-        p = center + radius;
-        if (maxb.x < p.x) maxb.x = p.x;
-        if (maxb.y < p.y) maxb.y = p.y;
-        if (maxb.z < p.z) maxb.z = p.z;
-      }
-    }
-  }
-  else
-  {
-    uniform uint8 *base = self->data + self->offset_datavalue;
-    uniform float radius = self->radius0;
-
-    foreach (i = 0 ... numDataDrivenSpheres)
+    if (isFirst)
     {
-      uint8 *spherePtr = self->data + self->stride * i;
-      vec3f center = *((vec3f*)(spherePtr + self->offset_center));
-    
-      if (isFirst)
-      {
-        isFirst = 0;
-        minb = center - radius;
-        maxb = center + radius;
-      }
-      else
-      {
-        vec3f p = center - radius;
-        if (minb.x > p.x) minb.x = p.x;
-        if (minb.y > p.y) minb.y = p.y;
-        if (minb.z > p.z) minb.z = p.z;
+      isFirst = 0;
+      minb = center - radius;
+      maxb = center + radius;
+    }
+    else
+    {
+      vec3f p = center - radius;
+      if (minb.x > p.x) minb.x = p.x;
+      if (minb.y > p.y) minb.y = p.y;
+      if (minb.z > p.z) minb.z = p.z;
 
-        p = center + radius;
-        if (maxb.x < p.x) maxb.x = p.x;
-        if (maxb.y < p.y) maxb.y = p.y;
-        if (maxb.z < p.z) maxb.z = p.z;
-      }
+      p = center + radius;
+      if (maxb.x < p.x) maxb.x = p.x;
+      if (maxb.y < p.y) maxb.y = p.y;
+      if (maxb.z < p.z) maxb.z = p.z;
     }
   }
-
   box[0] = reduce_min(minb.x);
   box[1] = reduce_min(minb.y);
   box[2] = reduce_min(minb.z);

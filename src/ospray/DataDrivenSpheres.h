@@ -35,12 +35,8 @@ namespace ospray {
 
     Parameters:
     <dl>
-    <dt><code>int32        materialID = 0</code></dt><dd>Material ID common to all spheres if 'offset_materialID' is not used</dd>
-    <dt><code>int32        bytes_per_sphere = 4*sizeof(float)</code></dt><dd>Size (in bytes) of each sphere in the data array.</dd>
-    <dt><code>int32        offset_center = 0</code></dt><dd>Offset (in bytes) of each sphere's 'vec3f center' value within the sphere</dd>
-    <dt><code>int32        offset_datavalue = -1</code></dt><dd>Offset (in bytes) of each sphere's 'float data' value within each sphere. Setting this value to -1 means that there is no per-sphere data value, and that all spheres should use the (shared) 'radius' value instead</dd>
-    <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset (in bytes) of each sphere's 'int materialID' value within each sphere. Setting this value to -1 means that there is no per-sphere material ID, and that all spheres share the same per-geometry 'materialID'</dd>
-    <dt><code>Data<float>  spheres</code></dt><dd> Array of data elements.</dd>
+    <dt><code>Data<vec3f>  centers</code></dt><dd> Array of sphere centers.</dd>
+    <dt><code>Data<float>  data</code></dt><dd> Array of per-sphere data values.</dd>
 
     <dt><code>float radius0 = 0.1 </code></dt><dd> Radius at data value 0.</dd>
     <dt><code>float radius1 = 0.0 </code></dt><dd> Radius at data value 1.</dd>
@@ -68,41 +64,15 @@ namespace ospray {
 
     // Data members //
 
-    int32 materialID;
-
     size_t numDataDrivenSpheres;
-    size_t bytesPerSphere; //!< num bytes per sphere
-    int64 offset_center;
-    int64 offset_datavalue;
-    int64 offset_materialID;
-    int64 offset_colorID;
 
     float radius0;
     float radius1;
     float value0;
     float value1;
 
-    Ref<Data> sphereData;
-
-    /*! data array from which we read the per-sphere color data; if
-      NULL we do not have per-sphere data */
-    Ref<Data> colorData;
-
-    Ref<Data> texcoordData;
-
-    /*! The color format of the colorData array, one of:
-        OSP_FLOAT3, OSP_FLOAT3A, OSP_FLOAT4 or OSP_UCHAR4 */
-    OSPDataType colorFormat;
-
-    /*! stride in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as colorFormat color from
-      'colorOffset+i*colorStride */
-    size_t colorStride;
-
-    /*! offset in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as colorFormat color from
-      'colorOffset+i*colorStride */
-    size_t colorOffset;
+    Ref<Data> centers;
+    Ref<Data> data;
 
     float epsilon;  //epsilon for intersections
   };
