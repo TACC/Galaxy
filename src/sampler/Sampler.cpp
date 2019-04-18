@@ -72,6 +72,8 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
         newsample.xyz.x = raylist->get_ox(i) + raylist->get_t(i)*raylist->get_dx(i);
         newsample.xyz.y = raylist->get_oy(i) + raylist->get_t(i)*raylist->get_dy(i);
         newsample.xyz.z = raylist->get_oz(i) + raylist->get_t(i)*raylist->get_dz(i);
+        newsample.u.value = 0.0;
+
         // newsample.xyz.x = (float)(rand() % 100)/100.0; 
         // newsample.xyz.y = (float)(rand() % 100)/100.0; 
         // newsample.xyz.z = (float)(rand() % 100)/100.0; 

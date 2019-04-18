@@ -187,6 +187,12 @@ main(int argc, char * argv[])
     pvis->SetName("samrays");
     pvis->Commit(theDatasets);
     pvis->SetRadius(radius);
+
+    vec4f colormap[2] = { {0.0, 1.0, 1.0, 0.0}, {1.0, 0.0, 1.0, 1.0} };
+    pvis->SetColorMap(2, colormap);
+
+    pvis->SetRadiusTransform(0.0, 0.02, 1.0, 0.02);
+
     vis1->AddVis(pvis);
 
     vis1->Commit(theDatasets);

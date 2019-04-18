@@ -37,7 +37,7 @@ OsprayParticles::OsprayParticles(ParticlesP p)
   ospCommit(centers);
   ospSetData(ospg, "centers", centers);
 
-  OSPData data = ospNewData(p->GetNumberOfVertices(), OSP_FLOAT, p->GetVertices(), OSP_DATA_SHARED_BUFFER);
+  OSPData data = ospNewData(p->GetNumberOfVertices(), OSP_FLOAT, p->GetData(), OSP_DATA_SHARED_BUFFER);
   ospCommit(data);
   ospSetData(ospg, "data", data);
   
