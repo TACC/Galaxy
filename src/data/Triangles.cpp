@@ -30,7 +30,10 @@
 #include <string.h>
 
 #include <vtkCell.h>
+#include <vtkCellType.h>
+#include <vtkCellIterator.h>
 #include <vtkFloatArray.h>
+#include <vtkDoubleArray.h>
 #include <vtkPointData.h>
 #include <vtkPointSet.h>
 #include <vtkPolyData.h>
@@ -57,221 +60,90 @@ void
 Triangles::initialize()
 {
   super::initialize();
-  vertices = NULL;
-  normals = NULL;
-  triangles = NULL;
 };
 
-bool
-Triangles::local_import(char *p, MPI_Comm c)
+Triangles::~Triangles()
 {
-  int rank = GetTheApplication()->GetRank();
+}
 
-  string json(p);
-  string filename(p + strlen(p) + 1);
-  string dir = (filename.find_last_of("/") == filename.npos) ? "./" : filename.substr(0, filename.find_last_of("/") + 1);
+void
+Triangles::allocate_vertices(int nv)
+{
+  Geometry::allocate_vertices(nv);
+  normals.resize(nv);
+}
 
-  if (vtkobj) vtkobj->Delete();
-  vtkobj = NULL;
 
-  if (triangles) { delete[] triangles; triangles = nullptr; }
-  if (normals) { delete[] normals; normals = nullptr; }
-  if (vertices) { delete[] vertices; vertices = nullptr; }
-
-  Document doc;
-  if (doc.Parse<0>(json.c_str()).HasParseError() || !get_partitioning(doc))
+bool
+Triangles::load_from_vtkPointSet(vtkPointSet *pset)
+{
+  if (pset->GetNumberOfPoints() == 0)
   {
-    if (rank == 0) std::cerr << "parse error in partition document: " << json << "\n";
-    set_error(1);
-    return false;
+    allocate(0, 0);
   }
-
-  // Checks in get_partitioning ensures this is OK
-  string fname = doc["parts"][GetTheApplication()->GetRank()]["filename"].GetString();
-  if (fname[0] != '/')
-    fname = dir + fname;
-
-  vtkPointSet *pset = NULL;
-
-  string pext = fname.substr(fname.find_last_of('.') + 1);
-  if (pext == "vtu")
+  else
   {
-    VTKError *ve = VTKError::New();
-    vtkXMLUnstructuredGridReader* rdr = vtkXMLUnstructuredGridReader::New();
-    ve->watch(rdr);
+    int nv = pset->GetNumberOfPoints();
+    int npl = pset->GetNumberOfCells();
 
-    rdr->SetFileName(fname.c_str());
-    rdr->Update();
+    allocate(nv, 3*npl);
 
-    if (ve->GetError())
+    vtkFloatArray *parray = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
+    if (! parray)
     {
-      cerr << "ERROR " << rank << ": error reading vtu Triangle partition" << endl;
-      return false;
+      std::cerr << "can only handle float points\n";
+      exit(1);
     }
 
-    vtkUnstructuredGrid *ug = rdr->GetOutput();
-    ug->RemoveGhostCells();
+    memcpy(vertices.data(), parray->GetVoidPointer(0), 3*nv*sizeof(float));
 
-    pset = (vtkPointSet *)ug;
-    pset->Register(pset);
-  }
-  else if (pext == "vtp")
-  {
-    VTKError *ve = VTKError::New();
+    vtkFloatArray *narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals"));
+    if (! narray)
+      narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals_"));
 
-    vtkXMLPolyDataReader* rdr = vtkXMLPolyDataReader::New();
-    ve->watch(rdr);
-
-    rdr->SetFileName(fname.c_str());
-    rdr->Update();
-
-    if (ve->GetError())
+    if (narray)
+      memcpy(normals.data(), narray->GetVoidPointer(0), 3*nv*sizeof(float));
+    else
     {
-      cerr << "ERROR " << rank << ": error reading vtu Triangle partition" << endl;
-      return false;
+      std::cerr << "triangle set has no normals\n";
+
+      float *nptr = (float *)normals.data();
+      for (int i = 0; i < nv; i++)
+      {
+        *nptr++ = 1.0;
+        *nptr++ = 0.0;
+        *nptr++ = 0.0;
+      }
+    }
+    vtkDataArray *array = pset->GetPointData()->GetScalars();
+    if (! array) array = pset->GetPointData()->GetArray("data");
+
+    vtkFloatArray *farray = vtkFloatArray::SafeDownCast(array);
+    if (farray)
+      memcpy(data.data(), farray->GetVoidPointer(0), nv*sizeof(float));
+    else
+    {
+      vtkDoubleArray *darray = vtkDoubleArray::SafeDownCast(array);
+      double *ddata = (darray) ? (double *)darray->GetVoidPointer(0) : NULL;
+
+      for (int i = 0; i < nv; i++)
+        data[i] = (float)(ddata ? ddata[i] : 0.0);
     }
 
-    vtkPolyData *pd = rdr->GetOutput();
-    pd->RemoveGhostCells();
-
-    pset = (vtkPointSet *)pd;
-    pset->Register(pset);
-  }
-  else 
-  {
-    cerr << "ERROR " << rank << ": unknown Triangle partition extension: " << pext << endl;
-    return false;
-  }
-
-	if (pset->GetNumberOfPoints() == 0)
-		n_vertices = 0;
-	else
-	{
-		vtkPoints* pts = pset->GetPoints();
-
-		vtkFloatArray *parray = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
-		vtkFloatArray *narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals"));
-		if (! narray)
-			narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals_"));
-
-		if (!narray)
+    int i = 0;
+    for (vtkCellIterator *it = pset->NewCellIterator(); !it->IsDoneWithTraversal(); it->GoToNextCell())
     {
-      cerr << "ERROR " << rank << ": Triangle partition has no normals: " << pext << endl;
-      return false;
+      vtkIdList *ids = it->GetPointIds();
+      for (int j = 0; j < ids->GetNumberOfIds(); j++)
+      {
+        int id = ids->GetId(j);
+        connectivity[i++] = id;
+      }
     }
-
-		int n_original_vertices = pset->GetNumberOfPoints();
-		n_triangles = pset->GetNumberOfCells();
-
-		int *vmap = new int[n_original_vertices];
-		for (int i = 0; i < n_original_vertices; i++)
-			vmap[i] = -1;
-
-		// NOTE: we're going to make sure here that there aren't any unreferenced vertices
-		
-		triangles = new int[3*n_triangles];
-		n_vertices = 0;
-
-		for (int i = 0; i < n_triangles; i++)
-		{
-			if (pset->GetCellType(i) != VTK_TRIANGLE)
-			 cerr << "WARNING: cell " << i << "is not type VTK_TRIANGLE" << endl;
-			else
-			{
-				vtkCell *c = pset->GetCell(i);
-				for (int j = 0; j < 3; j++)
-				{
-					int t = c->GetPointId(j);
-					if (vmap[t] == -1)
-						vmap[t] = n_vertices++;
-
-					t = vmap[t];
-					triangles[i*3+j] = t;
-				}
-			}
-		}
-
-		float *orig_vertices = (float *)parray->GetVoidPointer(0);
-		float *orig_normals  = (float *)narray->GetVoidPointer(0);
-
-		vertices = new float[3*n_vertices];
-		normals = new float[3*n_vertices];
-
-		bool first = true;
-		float *po = orig_vertices;
-		float *no = orig_normals;
-		for (int i = 0; i < n_original_vertices; i++)
-		{
-			if (vmap[i] != -1)
-			{
-#if 0
-				if (first)
-				{
-					first = false;
-					local_box.xyz_min.x = local_box.xyz_max.x = po[0];
-					local_box.xyz_min.y = local_box.xyz_max.y = po[1];
-					local_box.xyz_min.z = local_box.xyz_max.z = po[2];
-				}
-				else
-				{
-					if (po[0] < local_box.xyz_min.x) local_box.xyz_min.x = po[0];
-					if (po[0] > local_box.xyz_max.x) local_box.xyz_max.x = po[0];
-					if (po[1] < local_box.xyz_min.y) local_box.xyz_min.y = po[1];
-					if (po[1] > local_box.xyz_max.y) local_box.xyz_max.y = po[1];
-					if (po[2] < local_box.xyz_min.z) local_box.xyz_min.z = po[2];
-					if (po[2] > local_box.xyz_max.z) local_box.xyz_max.z = po[2];
-				}
-#endif
-
-				float *pn = vertices + 3*vmap[i];
-				*pn++ = *po++;
-				*pn++ = *po++;
-				*pn++ = *po++;
-
-				float *nn = normals + 3*vmap[i];
-				*nn++ = *no++;
-				*nn++ = *no++;
-				*nn++ = *no++;
-			}
-			else
-			{
-				po += 3;
-				no += 3;
-			}
-		}
-
-		delete[] vmap;
-	}
+  }
 
   return true;
 }
 
-bool
-Triangles::LoadFromJSON(Value& v)
-{ 
-  if (v.HasMember("filename"))
-  { 
-    return Import(v["filename"].GetString());
-  }
-  else if (v.HasMember("attach"))
-  { 
-    cerr << "ERROR: attaching triangles source is not implemented" << endl;
-    set_error(1);
-    return false;
-  }
-  else
-  { 
-    cerr << "ERROR: json triangles has neither filename or layout spec" << endl;
-    set_error(1);
-    return false;
-  }
-}
-
-Triangles::~Triangles()
-{
-  if (triangles) delete[] triangles;
-  if (vertices) delete[] vertices;
-  if (normals) delete[] normals;
-}
 
 } // namespace gxy

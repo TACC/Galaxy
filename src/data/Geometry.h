@@ -51,8 +51,8 @@ class Geometry : public KeyedDataObject
   virtual bool Import(std::string);
 
   //! Allocate space for vertices(data) and connectivity
-  void allocate_vertices(int nv);
-  void allocate_connectivity(int nc);
+  virtual void allocate_vertices(int nv);
+  virtual void allocate_connectivity(int nc);
   void allocate(int nv, int nc) { allocate_vertices(nv); allocate_connectivity(nc); }
 
   /*! This action is performed in response to a ImportMsg */

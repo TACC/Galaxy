@@ -30,7 +30,7 @@
 #include "dtypes.h"
 #include "KeyedObject.h"
 #include "Triangles.h"
-#include "Vis.h"
+#include "MappedVis.h"
 
 namespace gxy
 {
@@ -41,9 +41,9 @@ OBJECT_POINTER_TYPES(TrianglesVis)
 /* \ingroup render 
  * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
-class TrianglesVis : public Vis
+class TrianglesVis : public MappedVis
 {
-  KEYED_OBJECT_SUBCLASS(TrianglesVis, Vis) 
+  KEYED_OBJECT_SUBCLASS(TrianglesVis, MappedVis) 
 
 public:
 	~TrianglesVis(); //!< default destructor

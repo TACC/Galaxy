@@ -24,41 +24,30 @@ using namespace gxy;
 
 OsprayTriangles::OsprayTriangles(TrianglesP t)
 {
-  triangles = t;
+  int nv = t->GetNumberOfVertices();
+  int nc = t->GetConnectivitySize();
 
-  int n_triangles = triangles->GetNumberOfTriangles();
-  int n_vertices = triangles->GetNumberOfVertices();
-  if (n_triangles > 0)
+  if (nv > 0 && nc > 0)
   {
-    float *cptr, *colors = new float[n_vertices * 4];
-    cptr = colors;
-    for (int i = 0; i < n_vertices; i++)
-    {
-      *cptr++ = 173.0 / 255.0;
-      *cptr++ = 224.0 / 255.0;
-      *cptr++ = 255.0 / 255.0;
-      *cptr++ = 1.0;
-    }
     
-    OSPData pdata = ospNewData(n_vertices, OSP_FLOAT3, triangles->GetVertices(), OSP_DATA_SHARED_BUFFER);
+    OSPData pdata = ospNewData(nv, OSP_FLOAT3, t->GetVertices(), OSP_DATA_SHARED_BUFFER);
     ospCommit(pdata);
 
-    OSPData ndata = ospNewData(n_vertices, OSP_FLOAT3, triangles->GetNormals(), OSP_DATA_SHARED_BUFFER);
+    OSPData ndata = ospNewData(nv, OSP_FLOAT3, t->GetNormals(), OSP_DATA_SHARED_BUFFER);
     ospCommit(ndata);
    
-    OSPData tdata = ospNewData(n_triangles, OSP_INT3, triangles->GetTriangles(), OSP_DATA_SHARED_BUFFER);
+    OSPData ddata = ospNewData(nv, OSP_FLOAT4, t->GetData(), OSP_DATA_SHARED_BUFFER);
+    ospCommit(ddata);
+
+    OSPData tdata = ospNewData(nc/3, OSP_INT3, t->GetConnectivity(), OSP_DATA_SHARED_BUFFER);
     ospCommit(tdata);
  
-    OSPData cdata = ospNewData(n_vertices, OSP_FLOAT4, colors);
-    ospCommit(cdata);
-    delete[] colors;
-
-    OSPGeometry ospg = ospNewGeometry("triangles");
+    OSPGeometry ospg = ospNewGeometry("ddtriangles");
 
     ospSetData(ospg, "vertex", pdata);
     ospSetData(ospg, "vertex.normal", ndata);
     ospSetData(ospg, "index", tdata);
-    ospSetData(ospg, "color", cdata);
+    ospSetData(ospg, "data", ddata);
 
     ospCommit(ospg);
 
