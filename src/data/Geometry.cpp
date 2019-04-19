@@ -224,7 +224,11 @@ Geometry::local_import(char *p, MPI_Comm c)
 int
 Geometry::serialSize()
 {
+#if 0
   return super::serialSize() + 2*sizeof(int) + 4*vertices.size()*sizeof(float) + connectivity.size()*sizeof(int);
+#else
+  return super::serialSize();
+#endif
 }
 
 unsigned char*
@@ -232,6 +236,7 @@ Geometry::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
 
+#if 0
   *(int *)ptr = vertices.size();
   ptr += sizeof(int);
 
@@ -246,6 +251,7 @@ Geometry::serialize(unsigned char *ptr)
 
   memcpy(ptr, connectivity.data(), connectivity.size()*sizeof(float));
   ptr += connectivity.size()*sizeof(float);
+#endif
 
   return ptr;
 }
@@ -254,7 +260,7 @@ unsigned char*
 Geometry::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
-
+#if 0
   int nv = *(int *)ptr;
   ptr += sizeof(int);
 
@@ -271,7 +277,7 @@ Geometry::deserialize(unsigned char *ptr)
 
   memcpy(connectivity.data(), ptr, nc*sizeof(int));
   ptr += nc*sizeof(int);
-
+#endif
   return ptr;
 }
 
