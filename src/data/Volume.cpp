@@ -322,6 +322,21 @@ Volume::local_import(char *fname, MPI_Comm c)
   };
 
   local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
+
+#if 0
+  if (rank == 0)
+    for (int i = 0; i < size; i++)
+    {
+      part *p = partitions + i;
+      std::cerr << i << ":\n"
+                << "  ijk: " << p->ijk.x << " " << p->ijk.y << " " << p->ijk.z << "\n"
+                << "  counts: " << p->counts.x << " " << p->counts.y << " " << p->counts.z << "\n"
+                << "  gcounts: " << p->gcounts.x << " " << p->gcounts.y << " " << p->gcounts.z << "\n"
+                << "  offsets: " << p->offsets.x << " " << p->offsets.y << " " << p->offsets.z << "\n"
+                << "  goffsets: " << p->goffsets.x << " " << p->goffsets.y << " " << p->goffsets.z << "\n";
+    }
+#endif
+
   return true;
 }
 

@@ -65,28 +65,6 @@ PathLines::initialize()
   super::initialize();
 };
 
-
-bool
-PathLines::LoadFromJSON(Value& v)
-{ 
-  if (v.HasMember("filename"))
-  { 
-    return Import(v["filename"].GetString());
-  }
-  else if (v.HasMember("attach"))
-  { 
-    cerr << "ERROR: attaching pathline source is not implemented" << endl;
-    set_error(1);
-    return false;
-  }
-  else
-  { 
-    cerr << "ERROR: json pathline has neither filename or layout spec" << endl;
-    set_error(1);
-    return false;
-  }
-}
-
 PathLines::~PathLines()
 {
 }

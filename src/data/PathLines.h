@@ -67,9 +67,6 @@ public:
 	void initialize(); //!< initialize this PathLines object
 	virtual ~PathLines(); //!< default destructor 
 
-  //! construct a PathLines from a Galaxy JSON specification
-  virtual bool LoadFromJSON(rapidjson::Value&);
-
   void GetPLVertices(PLVertex*& p, int& n);
 
 protected:

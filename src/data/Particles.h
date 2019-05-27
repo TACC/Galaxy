@@ -82,9 +82,6 @@ public:
     data.push_back(p.u.value);
   }
 
-  //! internal call on Commit
-  virtual bool local_commit(MPI_Comm);
-
   //! Allocates and stuffs a buffer full of particle structures.   Hope to remove the necessity for this by further extending OSPRay's spheres to take separate data array
   
   void GetParticles(Particle*& p, int& n);
