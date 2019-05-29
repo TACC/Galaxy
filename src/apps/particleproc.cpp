@@ -42,7 +42,7 @@ int mpiRank, mpiSize;
 using namespace gxy;
 using namespace std;
 
-int samples_per_partition = 100;
+int samples_per_partition = 10;
 
 #define WIDTH  1024
 #define HEIGHT 768
@@ -65,7 +65,50 @@ syntax(char *a)
   exit(1);
 }
 
+class ParticleMsg : public Work
+{
+public:
+  ParticleMsg(ParticlesP p) : ParticleMsg(sizeof(Key))
+  {
+    ((Key *)contents->get())[0] = p->getkey();
+  }
+  ~ParticleMsg() {}
+  WORK_CLASS(ParticleMsg,true)
+public:
+  bool CollectiveAction(MPI_Comm c, bool s)
+   {
+    Key* keys = (Key *)contents->get();
+    ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(*keys));
+    // this method creates some particles and sets the value to the
+    // local rank. The particles are randomly placed inside a
+    // unit cube centered at the origin. 
+    vec3f lo = {-.5,-.5,-.5};
+    vec3f hi = {.5,.5,.5};
+    p->set_local_box(lo,hi);
+    p->set_global_box(lo,hi);
+    int neighbors[6];
+    neighbors[0] = -1;
+    neighbors[1] = -1;
+    neighbors[2] = -1;
+    neighbors[3] = -1;
+    neighbors[4] = -1;
+    neighbors[5] = -1;
+    p->set_neighbors(neighbors);
+    Particle part;
+    srand(mpiRank+1);
+    for(int i=0;i<samples_per_partition; i++)
+    {
+        part.xyz.x = lo.x + ((float)rand()/RAND_MAX);
+        part.xyz.y = lo.y + ((float)rand()/RAND_MAX);
+        part.xyz.z = lo.z + ((float)rand()/RAND_MAX);
+        part.u.value = mpiRank;
+        p->push_back(part);
+    }
 
+    return false;
+   }
+};
+WORK_CLASS_TYPE(ParticleMsg)
 int
 main(int argc, char * argv[])
 {
@@ -102,23 +145,13 @@ main(int argc, char * argv[])
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
 
-  srand(mpiRank);
-
   Debug *d = dbg ? new Debug(argv[0], false, dbgarg) : NULL;
 
-  //SampleMsg::Register();
+  ParticleMsg::Register();
 
   if (mpiRank == 0)
   {
     theRenderer->Commit();
-
-    // create empty distributed container for volume data
-    // not sampling dont need volume
-    //VolumeP volume = Volume::NewP();
-    // import data to all processes, smartly distributes volume across processses
-    // this import defines the partitioning of the data across processses
-    // if subsequent Import commands have a different partition, an error will be thrown
-    //volume->Import(data);
 
     // create empty distributed container for particles
     // particle partitioning will match volume partition
@@ -126,28 +159,9 @@ main(int argc, char * argv[])
 
     // define action to perform on volume (see SampleMsg above)
     // not sampleing so comment this bit out
-    //SampleMsg *smsg = new SampleMsg(volume, samples);
-    //smsg->Broadcast(true, true);
+    ParticleMsg *pmsg = new ParticleMsg(samples);
+    pmsg->Broadcast(true, true);
     //
-    // hard code some particles here.
-    vec3f lo = {-.5,-.5,-.5};
-    vec3f hi = {.5,.5,.5};
-    Particle part; 
-    part.u.value = 1.0;
-    part.xyz.x = 0.0;
-    part.xyz.y = 0.0;
-    part.xyz.z = 0.0;
-    samples->set_local_box(lo,hi);
-    samples->set_global_box(lo,hi);
-    samples->push_back(part);
-    int neighbors[6];
-    neighbors[0] = -1;
-    neighbors[1] = -1;
-    neighbors[2] = -1;
-    neighbors[3] = -1;
-    neighbors[4] = -1;
-    neighbors[5] = -1;
-    samples->set_neighbors(neighbors);
     samples->Commit();
 
     DatasetsP theDatasets = Datasets::NewP();
