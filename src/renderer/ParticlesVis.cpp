@@ -66,17 +66,23 @@ ParticlesVis::allocate_ispc()
   ispc = ispc::ParticlesVis_allocate();
 }
 
-int 
+
+int
 ParticlesVis::serialSize()
 {
-  return super::serialSize();
+  return super::serialSize() + 4 * sizeof(float);
 }
 
 unsigned char *
 ParticlesVis::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
-  
+
+  *(float *)ptr = v0; ptr += sizeof(float);
+  *(float *)ptr = r0; ptr += sizeof(float);
+  *(float *)ptr = v1; ptr += sizeof(float);
+  *(float *)ptr = r1; ptr += sizeof(float);
+ 
   return ptr;
 }
 
@@ -84,8 +90,16 @@ unsigned char *
 ParticlesVis::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
+
+  v0 = *(float *)ptr; ptr += sizeof(float);
+  r0 = *(float *)ptr; ptr += sizeof(float);
+  v1 = *(float *)ptr; ptr += sizeof(float);
+  r1 = *(float *)ptr; ptr += sizeof(float);
+
+
   return ptr;
 }
+
 
 bool 
 ParticlesVis::LoadFromJSON(Value& v)
