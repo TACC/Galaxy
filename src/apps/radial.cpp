@@ -216,9 +216,9 @@ int main(int argc, char *argv[])
 							float dz = ((Z < 0) ? -Z : Z) - 0.5;
 							m = sqrt(dx*dx + dy*dy + dz*dz);
 							*e++ = T * m;
-							*g++ = X / m;
-							*g++ = Y / m;
-							*g++ = Z / m;
+							*g++ = -Y;
+							*g++ = X;
+							*g++ = 0.1;
 						}
 					}
 				}
