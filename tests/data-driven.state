@@ -1,0 +1,92 @@
+{
+    "Cameras": [
+        {
+            "annotation": "",
+            "aov": 35,
+            "viewcenter": [ 0, 0, 0 ],
+            "viewpoint": [ 3.0, 4.0, 3.0 ],
+            "viewup": [ 0.0, 0.0, 1.0 ]
+        }
+    ], 
+    "Datasets": [
+        {
+            "filename": "radial-0-eightBalls.vol",
+            "name": "volume", 
+            "type": "Volume"
+        },
+        {
+            "filename": "streamlines.part",
+            "name": "pathlines",
+            "type": "PathLines"
+        },
+        {
+            "filename": "eightBalls-points.part",
+            "name": "particles",
+            "type": "Particles"
+        },
+        {
+            "filename": "oneBall-mesh.part",
+            "name": "tmesh",
+            "type": "Triangles"
+        }
+    ], 
+    "Renderer": {
+    }, 
+    "Visualizations": [
+        {
+            "annotation": "",
+            "Lighting": {
+                "Ka": 0.5,
+                "Kd": 0.5,
+                "Sources": [ [ -1, -2, -4 ] ],
+                "ao count": 0,
+                "ao radius": 1.0,
+                "shadows": true
+            },
+            "operators": [
+                {
+                    "colormap": [
+                        [ 0.0, 1.0, 0.5, 0.5 ],
+                        [ 0.2, 0.5, 1.0, 0.5 ],
+                        [ 0.4, 0.5, 0.5, 1.0 ],
+                        [ 0.6, 1.0, 1.0, 0.5 ],
+                        [ 0.9, 1.0, 0.5, 1.0 ]
+                    ],
+                    "dataset": "volume",
+                    "opacitymap": [
+                        [ 0.0, 0.20 ],
+                        [ 0.5, 0.03 ],
+                        [ 0.51, 0.0 ],
+                        [ 1.0, 0.0 ]
+                    ],
+                    "slices": [ [ 1.0, 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0, 0.0 ] ],
+                    "type": "Volume",
+                    "volume rendering": true
+                },
+                {
+                    "dataset": "pathlines",
+                    "colormap": [ [0.0, 0.0, 1.0, 0.0], [2.0, 1.0, 0.0, 1.0]],
+                    "type": "PathLines",
+                    "radius0": 0.002,
+                    "radius1": 0.05,
+                    "value0": 0.0,
+                    "value1": 1.7
+                },
+                {
+                  "dataset": "particles", 
+                  "type": "Particles",
+                  "colormap": [ [0.55, 1.0, 1.0, 0.5], [1.17, 0.5, 0.5, 1.0]],
+                  "radius0": 0.0005,
+                  "radius1": 0.04,
+                  "value0": 0.55,
+                  "value1": 1.17
+                },
+                {
+                    "dataset": "tmesh",
+                    "colormap": [ [0.53, 0.0, 0.0, 1.0], [0.60, 1.0, 1.0, 0.0]],
+                    "type": "Triangles"
+                }
+            ]
+        }
+    ]
+}
