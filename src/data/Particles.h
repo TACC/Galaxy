@@ -81,6 +81,13 @@ public:
     vertices.push_back(p.xyz);
     data.push_back(p.u.value);
   }
+    void set_local_box(vec3f lo, vec3f hi) {local_box = Box(lo,hi);}
+    void set_global_box(vec3f lo, vec3f hi) {global_box = Box(lo,hi);}
+    void set_neighbors(int *nei) { 
+        for (int i=0; i<6; i++) {
+            neighbors[i] = nei[i];
+        }
+    }
 
   //! Allocates and stuffs a buffer full of particle structures.   Hope to remove the necessity for this by further extending OSPRay's spheres to take separate data array
   

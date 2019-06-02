@@ -51,6 +51,10 @@ if (GXY_WRITE_IMAGES)
   target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
   set(BINS sample ${BINS})
 
+  add_executable(particleproc particleproc.cpp)
+  target_link_libraries(particleproc ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  set(BINS particleproc ${BINS})
+
   add_executable(mhwriter mhwriter.cpp)
 	target_link_libraries(mhwriter ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 	set(BINS mhwriter ${BINS})
