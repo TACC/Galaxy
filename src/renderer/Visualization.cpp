@@ -147,14 +147,34 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
     {																																					  \
       if (local_box != *l || global_box != *g)																  \
       {																																				  \
-        APP_PRINT(<< "ERROR: Datasets partitioning mismatch between participants");	  \
+        APP_PRINT(<< "ERROR: XXDatasets partitioning mismatch between participants:\n"	  \
+            << "\n" << "local xyz_min: " << local_box.xyz_min.x << " " << local_box.xyz_min.y << " " << local_box.xyz_min.z \
+            << "\n" << "local xyz_max: " << local_box.xyz_max.x << " " << local_box.xyz_max.y << " " << local_box.xyz_max.z \
+            << "\n" << "*l xyz_min: " << l->xyz_min.x << " " << l->xyz_min.y << " " << l->xyz_min.z \
+            << "\n" << "*l xyz_max: " << l->xyz_max.x << " " << l->xyz_max.y << " " << l->xyz_max.z \
+            << "\n" << "global xyz_min: " << global_box.xyz_min.x << " " << global_box.xyz_min.y << " " << global_box.xyz_min.z \
+            << "\n" << "global xyz_max: " << global_box.xyz_max.x << " " << global_box.xyz_max.y << " " << global_box.xyz_max.z \
+            << "\n" << "*g xyz_min: " << g->xyz_min.x << " " << g->xyz_min.y << " " << g->xyz_min.z \
+            << "\n" << "*g xyz_max: " << g->xyz_max.x << " " << g->xyz_max.y << " " << g->xyz_max.z); \
         exit(1);																															  \
       }																																				  \
       for (int i = 0; i < 6; i++)																							  \
       {																																				  \
         if (neighbors[i] != kdop->get_neighbor(i))														  \
-        {																																			  \
-          APP_PRINT(<< "ERROR: Datasets partitioning mismatch between participants");	\
+       	{																																		  \
+          APP_PRINT(<< "ERROR: Datasets partitioning mismatch between participants:\n" 	\
+                    << "N: " << neighbors[0] << " " \
+                             << neighbors[1] << " " \
+                             << neighbors[2] << " " \
+                             << neighbors[3] << " " \
+                             << neighbors[4] << " " \
+                             << neighbors[5] << "\n"  \
+                    << "K: " << kdop->get_neighbor(0) << " "  \
+                             << kdop->get_neighbor(1) << " "  \
+                             << kdop->get_neighbor(2) << " "  \
+                             << kdop->get_neighbor(3) << " "  \
+                             << kdop->get_neighbor(4) << " "  \
+                             << kdop->get_neighbor(5) << "\n"); \
           exit(1);																															\
         }																																				\
       }																																					\
