@@ -118,7 +118,8 @@ if [ $? != 0 ]; then
 fi
 
 report "Generating datasets for data-driven geometry tests..."
-create_data_driven_datasets.vpy
+${GXY_ROOT}/tests/create_data_driven_datasets.vpy
+
 
 GXY_VOLS="oneBall eightBalls xramp yramp zramp"
 report "Converting vti to vol with ${GXY_VTI2VOL}"
