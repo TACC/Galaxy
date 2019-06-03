@@ -89,6 +89,8 @@ GXY_BIN=${GXY_ROOT}/install/bin
 GXY_RADIAL=${GXY_BIN}/radial
 GXY_VTI2VOL=${GXY_BIN}/vti2vol
 GXY_IMAGE_WRITER=${GXY_BIN}/gxywriter
+GXY_CREATE_PARTITION_DOC=${GXY_BIN}/createPartitionDoc.py
+GXY_PARTITION_VTUS=${GXY_BIN}/partitionVTUs.vpy
 GXY_ENV=${GXY_ROOT}/install/galaxy.env
 PERCEPTUAL_DIFF=`which perceptualdiff`
 
@@ -100,6 +102,12 @@ if [ ! -x ${GXY_VTI2VOL} ]; then
 fi
 if [ ! -x ${GXY_IMAGE_WRITER} ]; then
   fail "Could not find or execute the Galaxy image writer '${GXY_IMAGE_WRITER}'. Ensure Galaxy was configured with -D GXY_WRITE_IMAGES=ON"
+fi
+if [ ! -x ${GXY_CREATE_PARTITION_DOC} ]; then
+  fail "Could not find or execute the Galaxy partition document writer '${GXY_CREATE_PARTITION_DOC}'."
+fi
+if [ ! -x ${GXY_PARTITION_VTUS} ]; then
+  fail "Could not find or execute the Galaxy VTU partitioner '${GXY_PARTITION_VTUS}'."
 fi
 if [ ! -f ${GXY_ENV} ]; then
   fail "Could not find Galaxy environment file at '${GXY_ENV}'"
@@ -138,11 +146,15 @@ FAILS=0
 
 MPI_COMMAND=""
 report "Running single process tests..."
+${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 1 > partition.json
+${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
 run_tests
 
 if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
   MPI_COMMAND="mpirun -np 2"
   report "Running MPI tests with command '${MPI_COMMAND}'..."
+  ${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 2 > partition.json
+  ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
   run_tests
 fi
 
