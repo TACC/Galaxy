@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env vtkpython
 ## ========================================================================== ##
 ## Copyright (c) 2014-2019 The University of Texas at Austin.                 ##
 ## All rights reserved.                                                       ##
@@ -25,18 +25,6 @@ from vtk import *
 from vtk.numpy_interface import dataset_adapter as dsa
 from math import sqrt
 import numpy as np
-
-rdr = vtkXMLImageDataReader()
-
-rdr.SetFileName('radial-0.vti')
-rdr.Update()
-id = rdr.GetOutput()
-
-o = id.GetOrigin()
-d = id.GetDimensions()
-s = id.GetSpacing()
-
-extent = [o[0]+s[0], o[0] + (d[0]-2)*s[0], o[1]+s[1], o[1] + (d[1]-2)*s[1], o[2]+s[2], o[2] + (d[2]-2)*s[2]]
 
 def SetScalars(d, name):
   pd = d.GetPointData()
@@ -75,103 +63,142 @@ def Names(d):
   for i in range(pd.GetNumberOfArrays()):
     print i, ": ", pd.GetArray(i).GetName()
 
-SetScalars(id, 'eightBalls')
+def do_particles(id):
+  SetScalars(id, 'eightBalls')
 
-ct = vtkContourFilter()
-ct.SetInputData(id)
-ct.SetValue(0, 0.3)
-af = vtkAppendFilter()
-af.SetInputConnection(ct.GetOutputPort())
-af.Update()
+  ct = vtkContourFilter()
+  ct.SetInputData(id)
+  ct.SetValue(0, 0.3)
+  af = vtkAppendFilter()
+  af.SetInputConnection(ct.GetOutputPort())
+  af.Update()
 
-contour1 = af.GetOutput()
+  contour1 = af.GetOutput()
 
-nPoints = 2000
-pSkip = int(contour1.GetNumberOfPoints() / nPoints)
-if pSkip < 1:
-   pSkip = 1
-   nPoints = contour1.GetNumberOfPoints()
+  w = vtkXMLUnstructuredGridWriter()
+  w.SetFileName('eightBalls-points-contour.vtu')
+  w.SetInputData(contour1)
+  w.Write()
 
-vtx = vtkVertex()
-vtx.GetPointIds().SetNumberOfIds(1)
+  nPoints = 2000
+  print "nIn", float(contour1.GetNumberOfPoints())
 
-ca = vtkCellArray()
-for i in range(nPoints):
-  vtx.GetPointIds().SetId(0, i*pSkip)
-  ca.InsertNextCell(vtx)
+  pSkip = int(float(contour1.GetNumberOfPoints()) / nPoints)
+  print "pSkip", pSkip
+  if pSkip < 1:
+     pSkip = 1
+     nPoints = contour1.GetNumberOfPoints()
 
-contour1.SetCells(VTK_VERTEX, ca)
-contour1.GetCellData().Initialize()
+  vtx = vtkVertex()
+  vtx.GetPointIds().SetNumberOfIds(1)
 
-gf = vtkGeometryFilter()
-gf.SetInputData(contour1)
-cpd = vtkCleanPolyData()
-cpd.SetInputConnection(gf.GetOutputPort())
-af = vtkAppendFilter()
-af.SetInputConnection(cpd.GetOutputPort())
-af.Update()
+  ca = vtkCellArray()
+  for i in range(nPoints):
+    vtx.GetPointIds().SetId(0, i*pSkip)
+    ca.InsertNextCell(vtx)
 
-points = af.GetOutput()
-SetScalars(points, 'oneBall')
+  contour1.SetCells(VTK_VERTEX, ca)
+  contour1.GetCellData().Initialize()
 
-wrtr = vtkXMLUnstructuredGridWriter()
-wrtr.SetInputData(points)
-wrtr.SetFileName('eightBalls-points.vtu')
-wrtr.Write()
+  gf = vtkGeometryFilter()
+  gf.SetInputData(contour1)
+  cpd = vtkCleanPolyData()
+  cpd.SetInputConnection(gf.GetOutputPort())
+  af = vtkAppendFilter()
+  af.SetInputConnection(cpd.GetOutputPort())
+  af.Update()
 
-f = open('eightBalls-points.part', 'w')
-f.write(json.dumps({'parts': [{'extent': extent, 'filename': 'eightBalls-points.vtu'}]}))
-f.close()
+  points = af.GetOutput()
+  SetScalars(points, 'oneBall')
 
-SetScalars(id, 'oneBall')
+  wrtr = vtkXMLUnstructuredGridWriter()
+  wrtr.SetInputData(points)
+  wrtr.SetFileName('eightBalls-points.vtu')
+  wrtr.Write()
 
-ct = vtkContourFilter()
-ct.SetInputData(id)
-ct.SetValue(0, 1.4)
-af = vtkAppendFilter()
-af.SetInputConnection(ct.GetOutputPort())
-af.Update()
+def do_mesh(id):
+  SetScalars(id, 'oneBall')
 
-contour2 = af.GetOutput()
-SetScalars(contour2, 'eightBalls')
+  ct = vtkContourFilter()
+  ct.SetInputData(id)
+  ct.SetValue(0, 1.4)
+  af = vtkAppendFilter()
+  af.SetInputConnection(ct.GetOutputPort())
+  af.Update()
 
-wrtr = vtkXMLUnstructuredGridWriter()
-wrtr.SetInputData(contour2)
-wrtr.SetFileName('oneBall-mesh.vtu')
-wrtr.Write()
+  contour2 = af.GetOutput()
+  SetScalars(contour2, 'eightBalls')
 
-f = open('oneBall-mesh.part', 'w')
-f.write(json.dumps({'parts': [{'extent': extent, 'filename': 'oneBall-mesh.vtu'}]}))
-f.close()
+  wrtr = vtkXMLUnstructuredGridWriter()
+  wrtr.SetInputData(contour2)
+  wrtr.SetFileName('oneBall-mesh.vtu')
+  wrtr.Write()
 
-ls = vtkLineSource()
-ls.SetPoint1([-0.7, -0.7, -0.99])
-ls.SetPoint2([ 0.7,  0.7, -0.99])
-ls.SetResolution(4)
-ls.Update()
+def do_streamlines(id):
+  ls = vtkLineSource()
+  ls.SetPoint1([-0.7, -0.7, -0.90])
+  ls.SetPoint2([ 0.7,  0.7, -0.90])
+  ls.SetResolution(4)
+  ls.Update()
 
-seeds = ls.GetOutput()
+  seeds = ls.GetOutput()
 
-SetVectors(id, 'vector')
+  SetVectors(id, 'vector')
 
-sl = vtkStreamTracer()
-sl.SetInputData(id)
-sl.SetSourceData(seeds)
-sl.SetMaximumNumberOfSteps(1000000)
-sl.SetMaximumPropagation(1000000)
+  sl = vtkStreamTracer()
+  sl.SetInputData(id)
+  sl.SetSourceData(seeds)
+  sl.SetMaximumNumberOfSteps(1000000)
+  sl.SetMaximumPropagation(1000000)
 
-af = vtkAppendFilter()
-af.SetInputConnection(sl.GetOutputPort())
-af.Update()
+  af = vtkAppendFilter()
+  af.SetInputConnection(sl.GetOutputPort())
+  af.Update()
 
-streamlines = af.GetOutput()
-SetScalars(streamlines, 'oneBall')
+  streamlines = af.GetOutput()
+  SetScalars(streamlines, 'oneBall')
 
-wrtr = vtkXMLUnstructuredGridWriter()
-wrtr.SetFileName('streamlines.vtu')
-wrtr.SetInputData(streamlines)
-wrtr.Write()
+  wrtr = vtkXMLUnstructuredGridWriter()
+  wrtr.SetFileName('streamlines.vtu')
+  wrtr.SetInputData(streamlines)
+  wrtr.Write()
 
-f = open('streamlines.part', 'w')
-f.write(json.dumps({'parts': [{'extent': extent, 'filename': 'streamlines.vtu'}]}))
-f.close()
+
+rdr = vtkXMLImageDataReader()
+rdr.SetFileName('radial-0.vti')
+rdr.Update()
+id = rdr.GetOutput()
+
+do_streamlines(id)
+
+n = 65
+d = 2.0 / (n - 1)
+xyz = [[-1 + d*x,-1 + d*y,-1 + d*z] for z in range(n) for y in range(n) for x in range(n)]
+
+id = vtkImageData()
+id.SetOrigin((-1, -1, -1))
+id.SetDimensions([n]*3)
+id.SetSpacing([d]*3)
+
+oneBall    = np.array([sqrt(sum([i*i for i in a])) for a in xyz]).astype('f4')
+eightBalls = np.array([sqrt(sum([(abs(i)-0.5) * (abs(i)-0.5) for i in a])) for a in xyz]).astype('f4')
+vectors    = np.array([[-a[1], a[0], 0.1] for a in xyz]).astype('f4')
+
+oneBall    = dsa.numpyTovtkDataArray(oneBall)
+eightBalls = dsa.numpyTovtkDataArray(eightBalls)
+vectors    = dsa.numpyTovtkDataArray(vectors)
+
+oneBall.SetName('oneBall')
+id.GetPointData().AddArray(oneBall)
+
+eightBalls.SetName('eightBalls')
+id.GetPointData().AddArray(eightBalls)
+
+vectors.SetName('vectors')
+id.GetPointData().AddArray(vectors)
+
+do_mesh(id)
+do_particles(id)
+
+
+
