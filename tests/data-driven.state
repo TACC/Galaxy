@@ -68,7 +68,7 @@
                     "colormap": [ [0.0, 0.0, 1.0, 0.0], [2.0, 1.0, 0.0, 1.0]],
                     "type": "PathLines",
                     "radius0": 0.002,
-                    "radius1": 0.05,
+                    "radius1": 0.02,
                     "value0": 0.0,
                     "value1": 1.7
                 },
