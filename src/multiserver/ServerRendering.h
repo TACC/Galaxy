@@ -18,7 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma onces
+#pragma once
 
 #include "Application.h"
 #include "Rendering.h"
