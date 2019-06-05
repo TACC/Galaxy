@@ -42,7 +42,8 @@ function run_tests()
   for state in *.state; do
     test=$(echo ${state} | sed s/\.state//)
     report "  Generating ${test} images"
-    ${MPI_COMMAND} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
+    # ${MPI_COMMAND} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
+    ${MPI_COMMAND} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} 2>&1
     if [ $? != 0 ]; then
       fail "$GXY_IMAGE_WRITER exited with code $?"
     fi
