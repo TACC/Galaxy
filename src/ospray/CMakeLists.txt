@@ -46,7 +46,7 @@ include_directories(${OSPRAY_INCLUDE_DIRS}
                     ${OSPRAY_SOURCEDIR}/install/include/ospray/SDK/geometry)
 
 set (ISPC_SOURCES DataDrivenPathLines.ispc DataDrivenSpheres.ispc DataDrivenTriangleMesh.ispc)
-set (CPP_SOURCES DataDrivenPathLines.cpp DataDrivenSpheres.cpp DataDrivenTriangleMesh.cpp)
+set (CPP_SOURCES force_ospray_library_load.cpp DataDrivenPathLines.cpp DataDrivenSpheres.cpp DataDrivenTriangleMesh.cpp)
 
 if (ospray_DIR)
   ospray_create_library(gxy_ospray ${CPP_SOURCES} ${ISPC_SOURCES} 
