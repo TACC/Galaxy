@@ -39,6 +39,8 @@ function fail
 
 function run_tests()
 {
+  export OSPRAY_LOG_LEVEL=2
+  export GXY_SHOW_OSPRAY_MESSAGES=1
   for state in *.state; do
     test=$(echo ${state} | sed s/\.state//)
     report "  Generating ${test} images"
@@ -121,7 +123,7 @@ report "Sourcing Galaxy environment"
 . ${GXY_ENV}
 
 report "Generating radial-0.vti with ${GXY_RADIAL}"
-${GXY_RADIAL} -r 256 256 256 > /dev/null 2>&1
+${GXY_RADIAL} -r 256 256 256
 if [ $? != 0 ]; then
   fail "$GXY_RADIAL exited with code $?"
 fi

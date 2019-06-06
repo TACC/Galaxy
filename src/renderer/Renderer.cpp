@@ -107,6 +107,13 @@ Renderer::Initialize()
 #endif // GXY_WRITE_IMAGES
 }
 
+static  void
+print_ospray_error_messages(const char *m)
+{
+  // APP_LOG(<< m);
+  std::cerr << m;
+}
+
 void
 Renderer::initialize()
 {
@@ -133,6 +140,9 @@ Renderer::initialize()
 #endif
 
   ospInit(0, NULL);
+  char *ospMsgs = getenv("GXY_SHOW_OSPRAY_MESSAGES");
+  if (ospMsgs && atoi(ospMsgs) > 0)
+    ospDeviceSetStatusFunc(ospGetCurrentDevice(), print_ospray_error_messages);
 }
 
 Renderer::~Renderer()
