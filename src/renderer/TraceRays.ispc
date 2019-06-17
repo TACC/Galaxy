@@ -118,8 +118,6 @@ MyIntersectBox(const Ray& ray,
                max(mins.z,maxs.z)));
 }
 
-#if 1
-
 inline bool
 LookForGeometryHit(varying bool shadeFlag,
                    uniform Model *uniform model,
@@ -141,28 +139,6 @@ LookForGeometryHit(varying bool shadeFlag,
 
       postIntersect(model, dg, ray, DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID|DG_TEXCOORD);
 
-#if 0
-      GOING TO HAVE TO MESS AROUND WITH DG TO MAKE GET PER-SPHERE VALUE TO WORK
-
-      hit.color   = make_vec3f(0.6, 0.6, 0.6);
-      if (ray.geomID & 1) hit.color.x = 1.0;
-      if (ray.geomID & 2) hit.color.y = 1.0;
-      if (ray.geomID & 4) hit.color.z = 1.0;
-
-      uniform GeometryVisualization *varying gvis = vis->geometryVisualizations[ray.geomID];
-
-      for (uniform int gid = 0; gid < vis->nGeometryVisualizations; gid++)
-        if (ray.geomID == gid)
-        {
-          uniform GeometryVisualization *uniform gvis = vis->geometryVisualizations[gid];
-          uniform TransferFunction *uniform tf = gvis->transferFunction;
-          if (tf)
-            hit.color = tf->getColorForValue(tf, dg.value);
-          else
-            print("NO TF\n");
-        }
-#endif
-
       hit.color   = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
 
       hit.opacity = dg.color.w;
@@ -174,8 +150,6 @@ LookForGeometryHit(varying bool shadeFlag,
     return true;
   }
 }
-
-#endif
 
 inline bool
 LookForSliceHit(varying bool shadeFlag,
@@ -308,7 +282,6 @@ LookForIsoHit(varying bool shadeFlag,
           if (dot(ray.dir, hit.normal) > 0) 
             hit.normal = neg(hit.normal);
 
-// print("S %\nR %\nG %\nB %\n", hit.sample, hit.color.x, hit.color.y, hit.color.z);
           hit.color = tf->getColorForValue(tf, hit.sample);
           hit.opacity = 1.0;
         }
@@ -374,8 +347,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
   foreach (i = 0 ... nRaysIn)
   {
-    enum { NONE, TIMEOUT, OPAQUE, SURFACE, BOUNDARY } term = NONE;
-
     bool shadeFlag = raysIn->type[i] == RAY_PRIMARY;
 
     Ray ray;
@@ -396,7 +367,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     float tTimeout = ray.t;
 
-    vec4f color = make_vec4f(raysIn->r[i], raysIn->g[i], raysIn->b[i], raysIn->o[i]);
+    vec4f color  = make_vec4f(raysIn->r[i], raysIn->g[i], raysIn->b[i], raysIn->o[i]);
     
     // tExit is the initial termination of the ray - infinity, or the AO radius
     // Its used to determine if loop termination was due to timeout
@@ -412,8 +383,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     float tEntry, tExitVolume;
     MyIntersectBox(ray, box, tEntry, tExitVolume);
 
-// print("Box: (% % %) (% % %)\n", box.lower.x, box.lower.y, box.lower.z, box.upper.x, box.upper.y, box.upper.z);
-
     // If the volume entrypoint is beyong the current ray point, move the ray point up to
     // the entry point
 
@@ -428,31 +397,26 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // The Hit information is used to retain info if and when we hit a surface (slice, 
     // iso or geometry)
 
-// print("X %\nY %\n", raysIn->x[i], raysIn->y[i]);
-// print("tEn %\ntEx %\n", tEntry, tExitVolume);
-
     Hit hit;          
 
     // Look for slice or geometry that stops the ray inside this block.  May continue
     // if its not opaque; but that'll be in a later call to this routine after we've
-    // cast the secondary rays
+    // cast the secondary rays  These two routines update the ray's t if something is
+    // found.
 
     bool surface_hit = LookForSliceHit(shadeFlag, ray, vis, hit);
 
     if (model)
       surface_hit |= LookForGeometryHit(shadeFlag, model, ray, vis, hit);
 
-//if (surface_hit)
-  //print("Z %\n", ray.org.z + ray.t*ray.dir.z);
-
-    float tOpaque, tTermination = ray.t;
+    float tTermination = ray.t;   // May be partition exit point or point at which slice/geometry is encountered
 
     if (integrate)
     {
       // Now iterate up the interval from tEntry to tTermination, accruing volume contributions and looking for
       // isosurfaces
 
-      varying float tLast, tThis; varying bool opaque = false;
+      varying float tLast, tThis;
       float sLast[100], sThis[100];   // last and current samples for up to 100 volumes (should be dynamic)
 
       // Note complicated step - last step to boundary must be included, but step AFTER
@@ -464,18 +428,17 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
       int iterations = 0;
 
+      bool opaque = (min(min(color.x, color.y), color.z) >= 1.0f || color.w > 0.999f);
+
       for (tThis = tEntry;
-           tThis <= tTermination && term != OPAQUE && !hit_isosurface; 
+           tThis <= tTermination && !opaque && !hit_isosurface; 
            tThis = (tThis == tEntry) ? (tEntry + epsilon) : (((tThis + step) > tTermination) && (tThis < tTermination)) ? tTermination : tThis + step)
       {
         iterations = iterations + 1;
 
-//print("tThis: %\ntLast: %\n", tThis, tLast);
-//print("t %\n", tThis);
         vec3f coord = ray.org + tThis * ray.dir;
 
         SampleVolumes(coord, vis, sThis);
-
 
         // Need to adjust interval for any iso hit before integrating for volume rendering so
         // we search interval for iso hit first.
@@ -499,7 +462,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
           }
 
           // Go through volumes accumulating opacity
-//print("opacity acc loop\n");
+
           for (uniform int major = 0; major < vis->nVolumeVis; major++)      // which volume?
           {
             uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
@@ -521,10 +484,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 									float wo = clamp(sampleOpacity / vol->samplingRate);
                   vec4f weightedColor = wo * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
                   color = color + (1.0f - color.w) * weightedColor;
-
-// print("x %\ny %\nz %\ns %\nso %\nwo %\nac %\n", coord.x, coord.y, coord.z, sVolume * 1e11, sampleOpacity, wo, color.w);
-// color.x = 0.99, color.y = 0.99; color.z = 0.99;
-
                 }
                 else
                 {
@@ -533,31 +492,20 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
                 }
               }
             }
-            if (min(min(color.x, color.y), color.z) >= 1.0f || color.w > 0.999f)
-            {
-              tOpaque = tThis;
-              term = OPAQUE;
-            } 
-
-//print("acc: %\n", color.w);
-
             sLast[major] = sThis[major];
           }
-//print("opacity acc loop exit\n");
-
         }
 
         for (uniform int major = 0; major < vis->nVolumeVis; major++)  
           sLast[major] = sThis[major];
 
+        opaque = (min(min(color.x, color.y), color.z) >= 1.0f || color.w > 0.999f);
+        if (opaque) 
+          tTermination = tThis;
+        
         tLast = tThis;
       }
 
-// print("%\n", iterations);
-//if (tThis <= tTermination) print("exit loop T\n");
-//if (term == OPAQUE) print("exit loop OPAQUE\n");
-//if (hit_isosurface) print("exit loop ISO\n"); 
-    
       // To get the above loop to terminate correctly at the termination T, the last valid step is ending T
       // is clamped to the termination T and the subsequent step goes PAST there, though its invalid.
       // So if tThis is beyond the termination T we back it up.
@@ -565,32 +513,27 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       if (tThis > tTermination) 
         tThis = tTermination;
 
-      raysIn->t[i] = tThis;
-      ray.t = tThis;
-    }
+      // The above loop may have terminated early due to a) hitting isosurface or b) accumulating opacity, in
+      // in which case the tTermination is bumped up.   So we reset ray's t
 
-//print("integration loop exit\n");
+      ray.t = tTermination;
+    }
 
     raysIn->r[i] = color.x;
     raysIn->g[i] = color.y;
     raysIn->b[i] = color.z;
     raysIn->o[i] = color.w;
 
-    raysIn->term[i] = 0;
-    if (term == OPAQUE)
-    {
-      // If ray terminated due to VOLUME opacity, set ray current to integration termination
+    // Does the ray terminate with full opacity?
 
-      raysIn->t[i]     = tOpaque;
-      raysIn->term[i] |= RAY_OPAQUE;
-    }
-    else if (surface_hit)
-    {
-     // Otherwise if it terminated due to a surface hit, set ray current to hit point
+    raysIn->term[i] = (min(min(color.x, color.y), color.z) >= 1.0f || color.w > 0.999f) ? RAY_OPAQUE : 0;
+    raysIn->t[i]    = ray.t;
 
-      raysIn->t[i]     = hit.t;
+    // Is there a reason the ray terminated OTHER THAN OR IN ADDITION TO opacity?
+
+    if (surface_hit)
+    {
       raysIn->term[i] |= RAY_SURFACE;
-
       if (hit.opacity > 0.999)
         raysIn->term[i] |= RAY_OPAQUE;
 
@@ -601,30 +544,16 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       raysIn->sb[i] = hit.color.z;
       raysIn->so[i] = 1.0;
 
-      // print("SH\n%\n%\n%\n%\n", hit.color.x, hit.color.y, hit.color.z, 1);
-
       raysIn->nx[i] = hit.normal.x;
       raysIn->ny[i] = hit.normal.y;
       raysIn->nz[i] = hit.normal.z;
-
-      // print("Surface: Vrgbo\n%\n%\n%\n%\nSrgbo\n%\n%\n%\n%\n", 
-          // raysIn->r[i], raysIn->g[i], raysIn->b[i], raysIn->o[i],
-          // raysIn->sr[i], raysIn->sg[i], raysIn->sb[i], raysIn->so[i]);
-
     }
     else if (tTermination == tExitVolume)
     {
-      // print("BBBBB\n");
-      // May have exitted volume... might have volume rendered, might not...
-
-      raysIn->t[i]     = tExitVolume;
       raysIn->term[i] |= RAY_BOUNDARY;
     }
     else if (tTermination == tTimeout)
     {
-      // May have timed out...  
-
-      raysIn->t[i]     = tTimeout;
       raysIn->term[i] |= RAY_TIMEOUT;
     }
     else 

@@ -418,8 +418,6 @@ public:
 
 					if ((term & RAY_OPAQUE) | (term & RAY_TIMEOUT))
 					{
-                        // DHR sample here
-                        // renderer->do_your_stuff()
 						classification[i] = Renderer::TERMINATED;
 					}
 					else if ((term & RAY_BOUNDARY) && (exit_face == Renderer::NO_NEIGHBOR))
