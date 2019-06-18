@@ -235,8 +235,6 @@ LookForIsoHit(varying bool shadeFlag,
   bool h = false;
   int vid;
 
-  //print("Iso: nvol %\n", vis->nVolumeVis);
-
   for (uniform int major = 0; major < vis->nVolumeVis; major++)      // which volume?
   {
     uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
@@ -250,18 +248,13 @@ LookForIsoHit(varying bool shadeFlag,
     for (uniform int minor = 0; minor < vvis->nIsovalues; minor++) 
     {
       uniform float isoval = vvis->isovalues[minor];
-      //print("% ", isoval);
       if (((isoval >= sl) && (isoval < st)) || ((isoval <= sl) && (isoval > st)))
       {
-       // print(" hit\n");
-
         h          = true;
         vid        = major;
         hit.t      = tLast + ((isoval - sl) / (st - sl)) * (tThis - tLast);
         hit.sample = isoval;
       }
-      //else
-        //print("miss\n");
     }
   }
   
@@ -453,8 +446,10 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
         {
           if (LookForIsoHit(shadeFlag, ray, sLast, sThis, tLast, tThis, vis, hit))
           {
+            tTermination = hit.t;     // Terminate both the ray and the interval at the hit point 
+            tThis = hit.t;            
+
             surface_hit = true;
-            tTermination = tThis;
             hit_isosurface = true;
 
             vec3f coord = ray.org + tThis * ray.dir;
@@ -556,8 +551,10 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     {
       raysIn->term[i] |= RAY_TIMEOUT;
     }
-    else 
+    else if (raysIn->term[i] != RAY_OPAQUE)
     {
+      print("TE term %\nX %\nY %\n", 
+        raysIn->term[i], raysIn->x[i], raysIn->y[i]);
       print("TERMINATION ERROR\n");
     }
   }

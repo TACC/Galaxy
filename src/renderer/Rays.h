@@ -88,6 +88,7 @@ public:
     dstRayList->set_y(dstRayIndex, srcRayList->get_y(srcRayIndex));
     dstRayList->set_type(dstRayIndex, srcRayList->get_type(srcRayIndex));
     dstRayList->set_term(dstRayIndex, srcRayList->get_term(srcRayIndex));
+    dstRayList->set_classification(dstRayIndex, srcRayList->get_classification(srcRayIndex));
 	}
 
 	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type); //!< constructur
@@ -158,6 +159,7 @@ public:
 	int   get_y(int i); //!< return the y index of the pixel for the ith ray in the RayList
 	int   get_type(int i); //!< return the ray type for the ith ray in the RayList
 	int   get_term(int i); //!< return whether the ray has terminated for the ith ray in the RayList
+	int   get_classification(int i); //!< return the classification of the ith ray in the RayList
 
 	float* get_ox_base(); //!< get a pointer to the head of the origin x array for this RayList
 	float* get_oy_base(); //!< get a pointer to the head of the origin y array for this RayList
@@ -183,6 +185,7 @@ public:
 	int*   get_y_base(); //!< get a pointer to the head of the pixel y array for this RayList
 	int*   get_type_base(); //!< get a pointer to the head of the type array for this RayList
 	int*   get_term_base(); //!< get a pointer to the head of the termination array for this RayList
+	int*   get_classification_base(); //!< get a pointer to the head of the classification array for this RayList
 
 	void set_ox(int i, float v); //!< set the x component of the ray origin for the ith ray in the RayList
 	void set_oy(int i, float v); //!< set the y component of the ray origin for the ith ray in the RayList
@@ -208,6 +211,7 @@ public:
 	void set_y(int i, int v); //!< set the y index of the pixel for the ith ray in the RayList
 	void set_type(int i, int v); //!< set the ray type for the ith ray in the RayList
 	void set_term(int i, int v); //!< set whether the ray has terminated for the ith ray in the RayList
+	void set_classification(int i, int c); //!< set the classification of the ray
 
 	RendererP     GetTheRenderer() { return theRenderer; } //!< get a pointer to the Renderer for this RayList
 	RenderingSetP GetTheRenderingSet() { return theRenderingSet; } //!< get a pointer to the RenderingSet for this RayList

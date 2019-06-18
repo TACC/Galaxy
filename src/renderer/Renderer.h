@@ -80,12 +80,6 @@ public:
   //! render the given RenderingSet at this process, in response to a received RenderMsg
   virtual void local_render(RendererP, RenderingSetP);
 
-  //! extract and retire any terminated rays in the given RayList
-  /*! \param raylist the RayList to process
-   * \param classification an array of ray states corresponding to the rays in the RayList
-   */
-  virtual void HandleTerminatedRays(RayList *raylist, int *classification);
-
   virtual int SerialSize(); //!< return the size in bytes for the serialization of this Renderer
   virtual unsigned char *Serialize(unsigned char *); //!< serialize this Renderer to the given byte array
   virtual unsigned char *Deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
@@ -122,9 +116,6 @@ public:
 		pthread_mutex_unlock(&lock);
 	}
 
-  //! process the given RayList using the current Rendering, RenderingSet, and Visualization
-	void Trace(RayList *);
-
   //! Set the maximum number of rays allowed in each RayList
 	void SetMaxRayListSize(int s) { max_rays_per_packet = s; }
 
@@ -146,6 +137,34 @@ public:
   static int NO_NEIGHBOR; //!< mark that this ray has no neighbor to be sent to and has left the global volume
     // This define indicates that a ray exiting a partition face 
     // exits everything
+
+  //! process the given RayList using the current Rendering, RenderingSet, and Visualization.   This assigns
+  //  the ray 'term' field with a application-specific termination type
+
+	void Trace(RayList *);
+
+  //! classify traced rays based on what happened when they were traced.  Possibile results are DROP_ON_FLOOR
+  // (eg. AO ray that timed out for subtractive shading or hit something for additive shading); BOUNDARY - that 
+  // is, hit a boundary without terminating and thus should be sent elsewhere (if its not an external boundary,
+  // but thats a question for the partitioning manager); KEEP_HERE - for example, terminated having hit
+  // translucent surface and therefore requiring further tracing in the local partition past the translucent
+  // surface; or TERMINATED - producing a result ready to update the image buffer. NOTE: these flags are 
+  // ALL NEGATIVE, and are placed in the ray's 'class' field
+
+  virtual void Classify(RayList *);
+
+  //! sort rays that were classified as BOUNDARY based on partitioning.  Possibilities are to store the number
+  // of the next partition in the 'class' field or reclassified as TERMINATED if the boundary encountered was
+  // an external boundary.
+
+  virtual void AssignDestinations(RayList *);
+
+  //! extract and retire any terminated rays in the given RayList
+  /*! \param raylist the RayList to process
+   * \param classification an array of ray states corresponding to the rays in the RayList
+   */
+
+  virtual void HandleTerminatedRays(RayList *raylist);
 
 private:
 	std::vector<std::future<void>> rvec;

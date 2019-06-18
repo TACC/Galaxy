@@ -285,51 +285,191 @@ Renderer::SaveStateToDocument(Document& doc)
 }
 
 void
-Renderer::HandleTerminatedRays(RayList *raylist, int *classification)
+Renderer::Classify(RayList *raylist)
 {
-    int terminated_count = 0;
+  // Tracing the input rays classifies them by an application-specific
+  // flag.   Classify classifies these into 4 categories known by the 
+  // superclass:  DROP_ON_FLOOR - that is, ignored in further processing;
+  // BOUNDARY - that is, hit a boundary without terminating for any 
+  // application-specific and thus is a candidate for sending elsewhere 
+  // (if its not an external boundary, but thats a question for the
+  // partitioning manager); KEEP_HERE - for example, having encountered an
+  // application event that caused the ray tracing to break but after which
+  // the ray will continue, and TERMINATED, if the ray has reached a
+  // terminal state and is ready to update the final result.
+
+  for (int i = 0; i < raylist->GetRayCount(); i++)
+  {
+    int typ  = raylist->get_type(i);
+    int term = raylist->get_term(i);
+
+    if (typ == RAY_PRIMARY)
+    {
+      raylist->set_classification(i, 0);
+
+      // A primary ray expires and is added to the FB if it terminated opaque OR if 
+      // it has timed out OR if it exitted the global box. 
+      //
+      // If its opaque it has a non-zero color component.  If it times out, it has a 
+      // non-zero lighting component.  In either case, we send it to the FB
+      //
+      // If it exits the global box, we only send it if it has a non-zero color component
+      //
+      // Otherwise, if it hit a *partition* boundary then it'll go to the neighbor.
+      //
+      // Otherwise, it better have hit a TRANSLUCENT  surface and will remain in the
+      // current partition.
+
+      if (term & RAY_BOUNDARY)
+      {
+        raylist->set_classification(i, RAY_BOUNDARY);
+      }
+      else if ((term & RAY_OPAQUE) | (term & RAY_TIMEOUT))
+      {
+        raylist->set_classification(i, TERMINATED);
+      }
+      else		// Translucent surface
+      {
+        raylist->set_classification(i, KEEP_HERE);
+      }
+    }
+    
+    // If its a shadow ray it gets added into the FB if it terminated at the 
+    // external boundary.   If it exitted at a internal boundary it keeps 
+    // going.   If it hit a surface it dies.
+
+    else if (typ == RAY_SHADOW)
+    {
+      if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
+      {
+        // We don't need to add in the light's contribution
+        // OR, if reverse lighting, send to FB to ADD the (negative) shadow
+
+#ifdef GXY_REVERSE_LIGHTING
+        raylist->set_classification(i, TERMINATED);
+#else
+        raylist->set_classification(i, DROP_ON_FLOOR);
+#endif
+      }
+      else if (term & RAY_BOUNDARY)
+      {
+#ifdef GXY_REVERSE_LIGHTING
+        raylist->set_classification(i, DROP_ON_FLOOR);
+#else
+        raylist->set_classification(i, TERMINATED);
+#endif
+      }
+      else 
+      {
+        std::cerr << "Shadow ray died for an unknown reason\n";
+        raylist->set_classification(i, DROP_ON_FLOOR);
+      }
+    }
+
+    // If its an AO ray, same thing - except it CAN time out.
+    
+    else if (typ == RAY_AO)
+    {
+      if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
+      {
+        // We don't need to add in the light's contribution
+        // OR, if reverse lighting, send to FB to ADD the (negative)
+        // ambient contribution
+
+#ifdef GXY_REVERSE_LIGHTING
+        raylist->set_classification(i, TERMINATED);
+#else
+        raylist->set_classification(i, DROP_ON_FLOOR);
+#endif
+      }
+      else if (term == RAY_TIMEOUT || term == RAY_BOUNDARY)
+      {
+        // Timed-out - drop on floor in REVERSE case so
+        // we don't add the (negative) ambient contribution;
+        // otherwise, send  to FB to add in (positive) ambient
+        // contribution
+#ifdef GXY_REVERSE_LIGHTING
+        raylist->set_classification(i, DROP_ON_FLOOR);
+#else
+        raylist->set_classification(i, TERMINATED);
+#endif
+      }
+      else
+      {
+        std::cerr << "AO ray died for an unknown reason\n";
+        raylist->set_classification(i, DROP_ON_FLOOR);
+      }
+    }
+  }
+}
+
+void
+Renderer::AssignDestinations(RayList *raylist)
+{
+  VisualizationP visualization = raylist->GetTheRendering()->GetTheVisualization();
+  Box *box = visualization->get_local_box();
+
+  for (int i = 0; i < raylist->GetRayCount(); i++)
+  {
+    if (raylist->get_classification(i) == RAY_BOUNDARY)
+    {
+      int exit_face = box->exit_face(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
+                                   raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
+
+      if (visualization->has_neighbor(exit_face)) 
+        raylist->set_classification(i, visualization->get_neighbor(exit_face));
+      else
+        raylist->set_classification(i, TERMINATED);
+    }
+  }
+}
+
+void
+Renderer::HandleTerminatedRays(RayList *raylist)
+{
+  int terminated_count = 0;
+
+  for (int i = 0; i < raylist->GetRayCount(); i++)
+    if (raylist->get_classification(i) == Renderer::TERMINATED) terminated_count++;
+
+  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingP rendering = raylist->GetTheRendering();
+
+  if (terminated_count == 0) return;
+
+  if (rendering->IsLocal())
+  {
+    Pixel *local_pixels = new Pixel[terminated_count];
+
+    Pixel *p = local_pixels;
+    for (int i = 0; i < raylist->GetRayCount(); i++)
+    if (raylist->get_classification(i) == Renderer::TERMINATED)
+    {
+      p->x = raylist->get_x(i);
+      p->y = raylist->get_y(i);
+      p->r = raylist->get_r(i);
+      p->g = raylist->get_g(i);
+      p->b = raylist->get_b(i);
+      p->o = raylist->get_o(i);
+      p++;
+    }
+
+    rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
+    delete[] local_pixels;
+  }
+  else
+  {
+    Renderer::SendPixelsMsg *spmsg = new Renderer::SendPixelsMsg(rendering, renderingSet, raylist->GetFrame(), terminated_count);
 
     for (int i = 0; i < raylist->GetRayCount(); i++)
-        if (classification[i] == Renderer::TERMINATED) terminated_count++;
+      if (raylist->get_classification(i) == Renderer::TERMINATED)
+        spmsg->StashPixel(raylist, i);
 
-    RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-    RenderingP rendering = raylist->GetTheRendering();
+    if (renderingSet->IsActive(raylist->GetFrame()))
+      spmsg->Send(rendering->GetTheOwner());
 
-    if (terminated_count == 0) return;
-
-    if (rendering->IsLocal())
-    {
-      Pixel *local_pixels = new Pixel[terminated_count];
-
-      Pixel *p = local_pixels;
-      for (int i = 0; i < raylist->GetRayCount(); i++)
-        if (classification[i] == Renderer::TERMINATED)
-        {
-          p->x = raylist->get_x(i);
-          p->y = raylist->get_y(i);
-          p->r = raylist->get_r(i);
-          p->g = raylist->get_g(i);
-          p->b = raylist->get_b(i);
-          p->o = raylist->get_o(i);
-          p++;
-        }
-
-      rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
-      delete[] local_pixels;
-    }
-    else
-    {
-      Renderer::SendPixelsMsg *spmsg = new Renderer::SendPixelsMsg(rendering, renderingSet, raylist->GetFrame(), terminated_count);
-
-      for (int i = 0; i < raylist->GetRayCount(); i++)
-        if (classification[i] == Renderer::TERMINATED)
-          spmsg->StashPixel(raylist, i);
-
-			if (renderingSet->IsActive(raylist->GetFrame()))
-        spmsg->Send(rendering->GetTheOwner());
-
-      delete spmsg;
-    }
+    delete spmsg;
+  }
 }
 
 class processRays_task : public ThreadPoolTask
@@ -366,188 +506,36 @@ public:
 			// This may put secondary lists on the ray queue
 			renderer->Trace(raylist);
 
-			// Tracing the input rays classifies them by termination class.
-			// If a ray is terminated by a boundary, it needs to get moved
-			// to the corresponding neighbor (unless there is none, in which 
-			// case it is just plain terminated).   If it is just plain
-			// terminated, add its contribution to the FB
+      // Classify annotated rays
+      renderer->Classify(raylist);
 
-			Box *box = visualization->get_local_box();
+      // Assign destinations to rays that need to go elsewhere
+      renderer->AssignDestinations(raylist);
 
-			// Where does each ray go next?  Either nowhere (DROP_ON_FLOOR), into one of
-			// the 0->5 neighbors, to the FB (TERMINATED) or remain here (KEEP_HERE)
-
-			int *classification = new int[raylist->GetRayCount()];
-
-			for (int i = 0; i < raylist->GetRayCount(); i++)
-			{
-				int typ  = raylist->get_type(i);
-				int term = raylist->get_term(i);
-
-				int exit_face; // Which face a ray that terminated at a boundary
-											 // exits. NO_NEIGHBOR if the boundary is an external 
-											 // boundary.   Only matters if ray hit boundaty
-
-				if (term & RAY_BOUNDARY)
-				{
-					// then its an internal boundary between 
-					// blocks or an external boundary. Figure out
-					// which
-
-					exit_face = box->exit_face(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
-																		 raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
-
-					if (! visualization->has_neighbor(exit_face)) 
-						exit_face = Renderer::NO_NEIGHBOR;
-				}
-
-				if (typ == RAY_PRIMARY)
-				{
-					// A primary ray expires and is added to the FB if it terminated opaque OR if 
-					// it has timed out OR if it exitted the global box. 
-					//
-					// If its opaque it has a non-zero color component.  If it times out, it has a 
-					// non-zero lighting component.  In either case, we send it to the FB
-					//
-					// If it exits the global box, we only send it if it has a non-zero color component
-					//
-					// Otherwise, if it hit a *partition* boundary then it'll go to the neighbor.
-					//
-					// Otherwise, it better have hit a TRANSLUCENT  surface and will remain in the
-					// current partition.
-
-					if ((term & RAY_OPAQUE) | (term & RAY_TIMEOUT))
-					{
-						classification[i] = Renderer::TERMINATED;
-					}
-					else if ((term & RAY_BOUNDARY) && (exit_face == Renderer::NO_NEIGHBOR))
-					{
-						if ((raylist->get_r(i) != 0) || (raylist->get_g(i) != 0) || (raylist->get_b(i) != 0))
-							classification[i] = Renderer::TERMINATED;
-						else
-							classification[i] = Renderer::DROP_ON_FLOOR;
-					}
-					else if (term & RAY_BOUNDARY)  // then exit_face is not NO_NEIGHBOR -- see previous condition
-					{
-						classification[i] = exit_face;  // 0 ... 5
-					}
-					else		// Translucent surface
-					{
-						classification[i] = Renderer::KEEP_HERE;
-					}
-				}
-    
-				// If its a shadow ray it gets added into the FB if it terminated at the 
-				// external boundary.   If it exitted at a internal boundary it keeps 
-				// going.   If it hit a surface it dies.
-
-				else if (typ == RAY_SHADOW)
-				{
-					if (term & RAY_BOUNDARY)
-					{
-						// If an EXTERNAL boundary....
-						if (exit_face == Renderer::NO_NEIGHBOR)
-						{
-							// Then send the rays to the FB to add in the directed-light contribution
-							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
-							// to ADD the (negative) shadow
-
-#ifdef GXY_REVERSE_LIGHTING
-							classification[i] = Renderer::DROP_ON_FLOOR;
-#else
-							classification[i] = Renderer::TERMINATED;
-#endif
-						}
-						else
-							classification[i] = exit_face;  // 0 ... 5
-					}
-					else if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
-					{
-						// We don't need to add in the light's contribution
-						// OR, if reverse lighting, send to FB to ADD the (negative) shadow
-#ifdef GXY_REVERSE_LIGHTING
-					classification[i] = Renderer::TERMINATED;
-#else
-          classification[i] = Renderer::DROP_ON_FLOOR;
-#endif
-					}
-					else 
-					{
-						std::cerr << "Shadow ray died for an unknown reason\n";
-						classification[i] = Renderer::DROP_ON_FLOOR;
-					}
-				}
-
-				// If its an AO ray, same thing - except it CAN time out.
-      
-				else if (typ == RAY_AO)
-				{
-					if (term & RAY_BOUNDARY)
-					{
-						if (exit_face == Renderer::NO_NEIGHBOR)
-						{
-							// Then send the rays to the FB to add in the ambient-light contribution
-							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
-							// to ADD the (negative) shadow
-
-#ifdef GXY_REVERSE_LIGHTING
-							classification[i] = Renderer::DROP_ON_FLOOR;
-#else
-							classification[i] = Renderer::TERMINATED;
-#endif
-						}
-						else
-							classification[i] = exit_face;	// 0 ... 5
-					}
-					else if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
-					{
-						// We don't need to add in the light's contribution
-						// OR, if reverse lighting, send to FB to ADD the (negative)
-						// ambient contribution
-#ifdef GXY_REVERSE_LIGHTING
-						classification[i] = Renderer::TERMINATED;
-#else
-						classification[i] = Renderer::DROP_ON_FLOOR;
-#endif
-					}
-					else if (term == RAY_TIMEOUT)
-					{
-						// Timed-out - drop on floor in REVERSE case so
-						// we don't add the (negative) ambient contribution;
-						// otherwise, send  to FB to add in (positive) ambient
-						// contribution
-#ifdef GXY_REVERSE_LIGHTING
-						classification[i] = Renderer::DROP_ON_FLOOR;
-#else
-						classification[i] = Renderer::TERMINATED;
-#endif
-					}
-					else
-					{
-						std::cerr << "AO ray died for an unknown reason\n";
-						classification[i] = -1;
-					}
-				}
-			}
+      // And handle the ones that terminate
+      renderer->HandleTerminatedRays(raylist);
 
 			// OK, now we know the fate of the input rays.   Partition them accordingly
 			// counts going to each destination - six exit faces and stay right here.
 
-			int knts[7] = {0, 0, 0, 0, 0, 0, 0};
+      int *knts = new int[GetTheApplication()->GetSize()];
+      for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+        knts[i] = 0;
 
-			int fbknt = 0;
+      int nKeepers = 0;
 			for (int i = 0; i < raylist->GetRayCount(); i++)
 			{
-        int clss = classification[i];
+        int dst = raylist->get_classification(i);
 
-				if (clss == Renderer::TERMINATED)
-					fbknt++;
-				else if (clss == Renderer::KEEP_HERE)
-					knts[6] ++;
-				else if (clss >= 0 && clss < 6)
-					knts[clss] ++;
-				else if (clss != Renderer::DROP_ON_FLOOR)
-					std::cerr << "CLASSIFICATION ERROR 1\n";
+				if (dst == Renderer::KEEP_HERE)
+					nKeepers++;
+				else if (dst >= 0)
+					knts[dst] ++;
+				else if (dst != Renderer::DROP_ON_FLOOR && dst != Renderer::TERMINATED)
+        {
+					std::cerr << "CLASSIFICATION ERROR 1 - " << dst << "\n";
+          raylist->print(i);
+        }
 			}
 
 			// Allocate a RayList for each remote destination's rays and the keepers.
@@ -559,8 +547,10 @@ public:
 			// They'll bound up in a SendRays message later, without a copy. 7 lists, for
 			// each of 6 faces and stay here
 
-			RayList *ray_lists[7];
-			for (int i = 0; i < 7; i++)
+			RayList **ray_lists = new RayList*[GetTheApplication()->GetSize()];
+      RayList *keepers = (nKeepers > 0) ? new RayList(renderer, renderingSet, rendering, nKeepers, raylist->GetFrame(), raylist->GetType()) : (RayList *)NULL;
+        
+			for (int i = 0; i < GetTheApplication()->GetSize(); i++)
 			{
 				if (knts[i])
 					ray_lists[i]   = new RayList(renderer, renderingSet, rendering, knts[i], raylist->GetFrame(), raylist->GetType());
@@ -571,16 +561,11 @@ public:
 											 // the output ray list
 			}
 
-
-			// Now we sort the rays based on the classification.   If TERMINATED
-			// and the FB is local,  just do it.  Otherwise, set up a message buffer.
-
-      renderer->HandleTerminatedRays(raylist, classification);
-
+      nKeepers = 0;
 			for (int i = 0; i < raylist->GetRayCount(); i++)
 			{
-				int clss = classification[i];
-				if (clss >= 0 && clss <= 6)
+        int clss = raylist->get_classification(i);
+				if (clss >= 0)
 				{
 					if (knts[clss] >= ray_lists[clss]->GetRayCount())
 						std::cerr << "CLASSIFICATION ERROR 2\n";
@@ -588,31 +573,33 @@ public:
 					RayList::CopyRay(raylist, i, ray_lists[clss], knts[clss]);
 					knts[clss]++;
 				}
-            }
+        else if (clss == Renderer::KEEP_HERE)
+					RayList::CopyRay(raylist, i, keepers, nKeepers++);
+      }
 
-			for (int i = 0; i < 6; i++)
+			for (int i = 0; i < GetTheApplication()->GetSize(); i++)
 				if (knts[i])
 				{
 #ifdef GXY_WRITE_IMAGES
 					// This process gets "ownership" of the new ray list until its recipient acknowleges 
 					renderingSet->IncrementRayListCount();
-					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
+					renderer->SendRays(ray_lists[i], i);
 #else
 					if (renderingSet->IsActive(ray_lists[i]->GetFrame()))
 					{
-						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
+						renderer->SendRays(ray_lists[i], i);
 					}
 #endif
 					delete ray_lists[i];
 				}
 
-			if (classification) delete[] classification;
-
-			delete raylist;
+      delete raylist;
+      delete[] knts;
+			delete[] ray_lists;
 
 			// Just loop on the keepers.
 
-			raylist = ray_lists[6];
+			raylist = keepers;
 		}
 
 #ifdef GXY_WRITE_IMAGES
