@@ -40,9 +40,7 @@ namespace ospray {
 
   DataDrivenPathLines::DataDrivenPathLines()
   {
-    std::cerr << "DataDrivenPathLines::DataDrivenPathLines entry... calling create\n";
     this->ispcEquivalent = ispc::DataDrivenPathLines_create(this);
-    std::cerr << "DataDrivenPathLines::DataDrivenPathLines entry... create return\n";
   }
 
   std::string DataDrivenPathLines::toString() const
