@@ -81,10 +81,7 @@ def do_particles(id):
   w.Write()
 
   nPoints = 2000
-  print "nIn", float(contour1.GetNumberOfPoints())
-
   pSkip = int(float(contour1.GetNumberOfPoints()) / nPoints)
-  print "pSkip", pSkip
   if pSkip < 1:
      pSkip = 1
      nPoints = contour1.GetNumberOfPoints()

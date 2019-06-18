@@ -84,6 +84,9 @@ int Renderer::NO_NEIGHBOR   = -1;
 void
 Renderer::Initialize()
 {
+  extern void force_ospray_library_load();
+  force_ospray_library_load();
+
   RegisterClass();
   
   RegisterDataObjects();
@@ -111,20 +114,20 @@ static  void
 print_ospray_error_messages(const char *m)
 {
   // APP_LOG(<< m);
-  std::cerr << m;
+  std::cerr << "XXXX" << m;
 }
 
 void
 Renderer::initialize()
 {
-	frame = 0;
+  frame = 0;
   rayQmanager = new RayQManager(this);
-	pthread_mutex_init(&lock, NULL);
+  pthread_mutex_init(&lock, NULL);
 
-	sent_to = new int[GetTheApplication()->GetSize()];
-	received_from = new int[GetTheApplication()->GetSize()];
+  sent_to = new int[GetTheApplication()->GetSize()];
+  received_from = new int[GetTheApplication()->GetSize()];
 
-	max_rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
+  max_rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
 
 // If writing images, DO NOT set permute pixels sinnce this will reset the permutation table 
 // for each generate_pixels that share a camera
@@ -140,6 +143,7 @@ Renderer::initialize()
 #endif
 
   ospInit(0, NULL);
+
   char *ospMsgs = getenv("GXY_SHOW_OSPRAY_MESSAGES");
   if (ospMsgs && atoi(ospMsgs) > 0)
     ospDeviceSetStatusFunc(ospGetCurrentDevice(), print_ospray_error_messages);
@@ -147,7 +151,7 @@ Renderer::initialize()
 
 Renderer::~Renderer()
 {
-  	rayQmanager->Kill();
+    rayQmanager->Kill();
     delete rayQmanager;
 
     ospShutdown();
@@ -170,93 +174,93 @@ void
 Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
 {
 #ifdef GXY_EVENT_TRACKING
-	GetTheEventTracker()->Add(new StartRenderingEvent);
+  GetTheEventTracker()->Add(new StartRenderingEvent);
 #endif
 
 #ifdef GXY_LOGGING
-	APP_LOG(<< "Renderer::localRendering start");
+  APP_LOG(<< "Renderer::localRendering start");
 #endif
 
-	originated_ray_count = 0;
-	sent_ray_count = 0;
-	sent_pixels_count = 0;
-	terminated_ray_count = 0;
-	secondary_ray_count = 0;
+  originated_ray_count = 0;
+  sent_ray_count = 0;
+  sent_pixels_count = 0;
+  terminated_ray_count = 0;
+  secondary_ray_count = 0;
   ProcessRays_input_count = 0;
   ProcessRays_continued_count = 0;
 
-	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		sent_to[i] = 0, received_from[i] = 0;
+  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+    sent_to[i] = 0, received_from[i] = 0;
 
-	// NeedInitialRays tells us whether we need to generate initial rays
-	// for the current frame.  It is possible that this RenderingSet has
-	// already seen a raylist from a later frame, in which case we won't
-	// bother generating rays for this one.
-	
-	int fnum = renderingSet->NeedInitialRays();
+  // NeedInitialRays tells us whether we need to generate initial rays
+  // for the current frame.  It is possible that this RenderingSet has
+  // already seen a raylist from a later frame, in which case we won't
+  // bother generating rays for this one.
+  
+  int fnum = renderingSet->NeedInitialRays();
   if (fnum != -1)
-	{
-	  // std::cerr << GetTheApplication()->GetRank() << " starting " << frame << "\n";
+  {
+    // std::cerr << GetTheApplication()->GetRank() << " starting " << frame << "\n";
 #ifdef GXY_LOGGING
-	if (GetTheApplication()->GetRank() == 0)
-		std:cerr << "starting ray processing\n";
+  if (GetTheApplication()->GetRank() == 0)
+    std:cerr << "starting ray processing\n";
 #endif
 
 #ifdef GXY_WRITE_IMAGES
-		GetTheRayQManager()->Pause();
+    GetTheRayQManager()->Pause();
 
-		if (renderingSet->CameraIsActive())
-		{
-			std::cerr << "RenderingSet: Cannot InitializeState when camera is already active\n";
-			exit(0);
-		}
-	
-		// Bump to keep from seeming finished until all camera rays have been spawned
+    if (renderingSet->CameraIsActive())
+    {
+      std::cerr << "RenderingSet: Cannot InitializeState when camera is already active\n";
+      exit(0);
+    }
+  
+    // Bump to keep from seeming finished until all camera rays have been spawned
 
-		renderingSet->IncrementActiveCameraCount();
+    renderingSet->IncrementActiveCameraCount();
 
-		GetTheRayQManager()->Resume();
+    GetTheRayQManager()->Resume();
 #endif
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
-		renderingSet->_initStateTimer();
+    renderingSet->_initStateTimer();
 #endif
 
 #ifdef GXY_WRITE_IMAGES
-		renderingSet->initializeSpawnedRayCount();
+    renderingSet->initializeSpawnedRayCount();
 #endif
 
-		vector<future<int>> rvec;
-		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
-		{
-			RenderingP rendering = renderingSet->GetRendering(i);
-			rendering->resolve_lights(renderer);
+    vector<future<int>> rvec;
+    for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
+    {
+      RenderingP rendering = renderingSet->GetRendering(i);
+      rendering->resolve_lights(renderer);
 
-			CameraP camera = rendering->GetTheCamera();
-			VisualizationP visualization = rendering->GetTheVisualization();
+      CameraP camera = rendering->GetTheCamera();
+      VisualizationP visualization = rendering->GetTheVisualization();
 
-			Box *gBox = visualization->get_global_box();
-			Box *lBox = visualization->get_local_box();
+      Box *gBox = visualization->get_global_box();
+      Box *lBox = visualization->get_local_box();
 
-			camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
-		}
+      camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
+    }
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
-		renderingSet->_dumpState(c, "status"); // Note this will sync after cameras, I think
+    renderingSet->_dumpState(c, "status"); // Note this will sync after cameras, I think
 #endif
 
 #ifdef GXY_EVENT_TRACKING
-		GetTheEventTracker()->Add(new CameraLoopEndEvent);
+    GetTheEventTracker()->Add(new CameraLoopEndEvent);
 #endif
 
 #ifdef GXY_WRITE_IMAGES
-		for (auto& r : rvec)
-			r.get();
+    for (auto& r : rvec)
+      r.get();
 
-		renderingSet->DecrementActiveCameraCount(0);
+    renderingSet->DecrementActiveCameraCount(0);
 #endif // GXY_WRITE_IMAGES
-	}
-	
+  }
+  
 }
 
 bool
@@ -281,7 +285,7 @@ Renderer::SaveStateToDocument(Document& doc)
 
   tracer.SaveStateToValue(r, doc);
 
-	doc.AddMember("Renderer", r, doc.GetAllocator());
+  doc.AddMember("Renderer", r, doc.GetAllocator());
 }
 
 void
@@ -475,8 +479,8 @@ Renderer::HandleTerminatedRays(RayList *raylist)
 class processRays_task : public ThreadPoolTask
 {
 public:
-	processRays_task(RayList *raylist, Renderer *renderer) : 
-		ThreadPoolTask(raylist->GetType() == RayList::PRIMARY ? 3 : 2), raylist(raylist), renderer(renderer) {}
+  processRays_task(RayList *raylist, Renderer *renderer) : 
+    ThreadPoolTask(raylist->GetType() == RayList::PRIMARY ? 3 : 2), raylist(raylist), renderer(renderer) {}
   ~processRays_task() {}
 
 	int work() { 
@@ -590,100 +594,100 @@ public:
 						renderer->SendRays(ray_lists[i], i);
 					}
 #endif
-					delete ray_lists[i];
-				}
+          delete ray_lists[i];
+        }
 
       delete raylist;
       delete[] knts;
 			delete[] ray_lists;
 
-			// Just loop on the keepers.
+      // Just loop on the keepers.
 
 			raylist = keepers;
 		}
 
 #ifdef GXY_WRITE_IMAGES
-		// Finished processing this ray list.  
-		renderingSet->DecrementRayListCount();
+    // Finished processing this ray list.  
+    renderingSet->DecrementRayListCount();
 #endif //  GXY_WRITE_IMAGES
 
-		return 0;
-	}
+    return 0;
+  }
 
 private:
-	RayList *raylist;
-	Renderer *renderer;
+  RayList *raylist;
+  Renderer *renderer;
 };
 
 void
 Renderer::Trace(RayList *raylist)
 {
-	RendererP      renderer  = raylist->GetTheRenderer();
-	RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-	RenderingP     rendering     = raylist->GetTheRendering();
-	VisualizationP visualization = rendering->GetTheVisualization();
+  RendererP      renderer  = raylist->GetTheRenderer();
+  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingP     rendering     = raylist->GetTheRendering();
+  VisualizationP visualization = rendering->GetTheVisualization();
 
-	// This is called when a list of rays is pulled off the
-	// RayQ.  When we are done with it we decrement the 
-	// ray list count (rather than when it was pulled off the
-	// RayQ) so we don't send a message upstream saying we are idle
-	// until we actually are.
+  // This is called when a list of rays is pulled off the
+  // RayQ.  When we are done with it we decrement the 
+  // ray list count (rather than when it was pulled off the
+  // RayQ) so we don't send a message upstream saying we are idle
+  // until we actually are.
 
-	RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
-	if (out)
-	{
-		if (out->GetRayCount() > renderer->GetMaxRayListSize())
-		{
-			vector<RayList*> rayLists;
-			out->Split(rayLists);
-			for (vector<RayList*>::iterator it = rayLists.begin(); it != rayLists.end(); it++)
-			{
-				RayList *s = *it;
-				renderingSet->Enqueue(*it);
-			}
-			delete out;
-		}
-		else
-			renderingSet->Enqueue(out);
-	}
+  RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
+  if (out)
+  {
+    if (out->GetRayCount() > renderer->GetMaxRayListSize())
+    {
+      vector<RayList*> rayLists;
+      out->Split(rayLists);
+      for (vector<RayList*>::iterator it = rayLists.begin(); it != rayLists.end(); it++)
+      {
+        RayList *s = *it;
+        renderingSet->Enqueue(*it);
+      }
+      delete out;
+    }
+    else
+      renderingSet->Enqueue(out);
+  }
 }
 
 void
 Renderer::ProcessRays(RayList *in)
 {
-	GetTheApplication()->GetTheThreadPool()->AddTask(new processRays_task(in, this));
+  GetTheApplication()->GetTheThreadPool()->AddTask(new processRays_task(in, this));
 }
 
 void
 Renderer::_dumpStats()
 {
-	stringstream s;
-	s << endl << "originated ray count " << originated_ray_count << " rays" << endl;
-	s << "sent ray count " << sent_ray_count << " rays" << endl;
-	s << "terminated ray count " << terminated_ray_count << " rays" << endl;
-	s << "secondary ray count " << secondary_ray_count << " rays" << endl;
-	s << "ProcessRays saw " << ProcessRays_input_count << " rays" << endl;
-	s << "ProcessRays continued " << ProcessRays_continued_count << " rays" << endl;
-	s << "ProcessRays sent " << sent_pixels_count << " pixels" << endl;
-	s << "sent to neighbors:";
+  stringstream s;
+  s << endl << "originated ray count " << originated_ray_count << " rays" << endl;
+  s << "sent ray count " << sent_ray_count << " rays" << endl;
+  s << "terminated ray count " << terminated_ray_count << " rays" << endl;
+  s << "secondary ray count " << secondary_ray_count << " rays" << endl;
+  s << "ProcessRays saw " << ProcessRays_input_count << " rays" << endl;
+  s << "ProcessRays continued " << ProcessRays_continued_count << " rays" << endl;
+  s << "ProcessRays sent " << sent_pixels_count << " pixels" << endl;
+  s << "sent to neighbors:";
 
-	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
+  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+    s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
 
-	s << "received from neighbors:";
-	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
-	
-	APP_LOG(<< s.str());
+  s << "received from neighbors:";
+  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+    s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
+  
+  APP_LOG(<< s.str());
 }
 
 bool
 Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
 {
-	char *ptr = (char *)contents->get();
+  char *ptr = (char *)contents->get();
   Key key = *(Key *)ptr;
   RendererP r = GetByKey(key);
-	r->_dumpStats();
+  r->_dumpStats();
   return false;
 }
 
@@ -691,134 +695,134 @@ void
 Renderer::SendRays(RayList *rays, int destination)
 {
 #ifdef GXY_WRITE_IMAGES
-	rays->GetTheRenderingSet()->IncrementInFlightCount();
+  rays->GetTheRenderingSet()->IncrementInFlightCount();
 #endif
 
-	int nReceived = rays->GetRayCount();
-	_sent_to(destination, nReceived);
+  int nReceived = rays->GetRayCount();
+  _sent_to(destination, nReceived);
 
-	SendRaysMsg msg(rays);
-	msg.Send(destination);
+  SendRaysMsg msg(rays);
+  msg.Send(destination);
 }
 
 bool
 Renderer::SendRaysMsg::Action(int sender)
 {
-	RayList *rayList = new RayList(this->contents);
+  RayList *rayList = new RayList(this->contents);
 
-	int nReceived = rayList->GetRayCount();
-	rayList->GetTheRenderer()->_received_from(sender, nReceived);
+  int nReceived = rayList->GetRayCount();
+  rayList->GetTheRenderer()->_received_from(sender, nReceived);
 
-	RenderingP rendering = rayList->GetTheRendering();
-	RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
-	if (! renderingSet)
-	{
-		cerr << "WARNING: ray list arrived before rendering/renderingSet" << endl;
-		delete rayList;
-		return false;
-	}
+  RenderingP rendering = rayList->GetTheRendering();
+  RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
+  if (! renderingSet)
+  {
+    cerr << "WARNING: ray list arrived before rendering/renderingSet" << endl;
+    delete rayList;
+    return false;
+  }
 
 #ifdef GXY_EVENT_TRACKING
-	class ReceiveRaysEvent : public Event
-	{
-	public:
-		ReceiveRaysEvent(int s, int c, Key r) : sender(s), count(c), rset(r) {};
+  class ReceiveRaysEvent : public Event
+  {
+  public:
+    ReceiveRaysEvent(int s, int c, Key r) : sender(s), count(c), rset(r) {};
 
-	protected:
-		void print(ostream& o)
-		{
-			Event::print(o);
-			o << "received " << count << " rays from " << sender << " for rset " << rset;
-		}
+  protected:
+    void print(ostream& o)
+    {
+      Event::print(o);
+      o << "received " << count << " rays from " << sender << " for rset " << rset;
+    }
 
-	private:
-		int sender;
-		int count;
-		Key rset;
-	};
+  private:
+    int sender;
+    int count;
+    Key rset;
+  };
 
-	GetTheEventTracker()->Add(new ReceiveRaysEvent(sender, rayList->GetRayCount(), rayList->GetTheRenderingSet()->getkey()));
+  GetTheEventTracker()->Add(new ReceiveRaysEvent(sender, rayList->GetRayCount(), rayList->GetTheRenderingSet()->getkey()));
 #endif
 
-	renderingSet->Enqueue(rayList);
+  renderingSet->Enqueue(rayList);
 
 #ifdef GXY_WRITE_IMAGES
-	Renderer::AckRaysMsg ack(renderingSet);
-	ack.Send(sender);
+  Renderer::AckRaysMsg ack(renderingSet);
+  ack.Send(sender);
 #endif // GXY_WRITE_IMAGES
-	
-	return false;
+  
+  return false;
 }
 
 int
 Renderer::SerialSize()
 {
-	return tracer.SerialSize() + sizeof(bool) + sizeof(int);
+  return tracer.SerialSize() + sizeof(bool) + sizeof(int);
 }
 
 unsigned char *
 Renderer::Serialize(unsigned char *p)
 {
-	p = tracer.Serialize(p);
-	*(bool*)p = permute_pixels;
-	p += sizeof(bool);
-	*(int*)p = max_rays_per_packet;
-	p += sizeof(int);
+  p = tracer.Serialize(p);
+  *(bool*)p = permute_pixels;
+  p += sizeof(bool);
+  *(int*)p = max_rays_per_packet;
+  p += sizeof(int);
 
-	return p;
+  return p;
 }
 
 unsigned char *
 Renderer::Deserialize(unsigned char *p)
 {
-	p = tracer.Deserialize(p);
-	permute_pixels = *(bool*)p;
-	p += sizeof(bool);
-	max_rays_per_packet = *(int*)p;
-	p += sizeof(int);
+  p = tracer.Deserialize(p);
+  permute_pixels = *(bool*)p;
+  p += sizeof(bool);
+  max_rays_per_packet = *(int*)p;
+  p += sizeof(int);
 
-	return p;
+  return p;
 }
 
 #ifdef GXY_WRITE_IMAGES
 Renderer::AckRaysMsg::AckRaysMsg(RenderingSetP rs) : AckRaysMsg(sizeof(Key))
 {
-	*(Key *)contents->get() = rs->getkey();
+  *(Key *)contents->get() = rs->getkey();
 }
 
 bool
 Renderer::AckRaysMsg::Action(int sender)
 {
-	RenderingSetP rs = RenderingSet::GetByKey(*(Key *)contents->get());
-	rs->DecrementInFlightCount();
-	rs->DecrementRayListCount();
-	return false;
+  RenderingSetP rs = RenderingSet::GetByKey(*(Key *)contents->get());
+  rs->DecrementInFlightCount();
+  rs->DecrementRayListCount();
+  return false;
 }
 #endif // GXY_WRITE_IMAGES
 
 void
 Renderer::Render(RenderingSetP rs)
 {
-	static int render_frame = 0;
+  static int render_frame = 0;
 #ifdef GXY_EVENT_TRACKING
 
-	class StartRenderingEvent : public Event
-	{
-	public:
-		StartRenderingEvent(Key r) : rset(r) {};
+  class StartRenderingEvent : public Event
+  {
+  public:
+    StartRenderingEvent(Key r) : rset(r) {};
 
-	protected:
-		void print(ostream& o)
-		{
-			Event::print(o);
-			o << "start rendering rset " << rset;
-		}
+  protected:
+    void print(ostream& o)
+    {
+      Event::print(o);
+      o << "start rendering rset " << rset;
+    }
 
-	private:
-		Key rset;
-	};
+  private:
+    Key rset;
+  };
 
-	GetTheEventTracker()->Add(new StartRenderingEvent(rs->getkey()));
+  GetTheEventTracker()->Add(new StartRenderingEvent(rs->getkey()));
 #endif
 
   RenderMsg msg(this, rs);

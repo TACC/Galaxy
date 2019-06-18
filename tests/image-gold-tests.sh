@@ -39,8 +39,6 @@ function fail
 
 function run_tests()
 {
-  export OSPRAY_LOG_LEVEL=2
-  export GXY_SHOW_OSPRAY_MESSAGES=1
   for state in *.state; do
     test=$(echo ${state} | sed s/\.state//)
     report "  Generating ${test} images"
