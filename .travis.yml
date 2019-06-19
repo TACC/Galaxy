@@ -63,7 +63,7 @@ addons:
       - python-numpy
   homebrew:
     packages: 
-      - vtk
+      - vtk --with-python
       - tbb
       - boost
       - open-mpi
