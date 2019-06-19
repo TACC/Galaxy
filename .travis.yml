@@ -10,8 +10,8 @@ branches:
 matrix:
   include:
     - os: osx
-     osx_image: xcode10.2 # get a modern-enough mac environment
-     compiler: clang
+      osx_image: xcode10.2 # get a modern-enough mac environment
+      compiler: clang
       env:
         - MATRIX_EVAL=""
 
