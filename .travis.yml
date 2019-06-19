@@ -1,5 +1,6 @@
 language: cpp
 dist: xenial # get a semi-modern linux
+osx_image: xcode10.2 # get a modern-enough mac environment
 
 branches:
   only:
