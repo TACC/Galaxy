@@ -423,7 +423,19 @@ Renderer::AssignDestinations(RayList *raylist)
       if (visualization->has_neighbor(exit_face)) 
         raylist->set_classification(i, visualization->get_neighbor(exit_face));
       else
-        raylist->set_classification(i, TERMINATED);
+      {
+        int t = raylist->get_type(i);
+        if (t == RAY_SHADOW || t == RAY_AO)
+        {
+#ifdef GXY_REVERSE_LIGHTING
+          raylist->set_classification(i, DROP_ON_FLOOR);
+#else
+          raylist->set_classification(i, TERMINATED);
+#endif
+        } 
+        else
+          raylist->set_classification(i, TERMINATED);
+      }
     }
   }
 }
