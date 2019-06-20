@@ -357,11 +357,7 @@ Renderer::Classify(RayList *raylist)
       }
       else if (term & RAY_BOUNDARY)
       {
-#ifdef GXY_REVERSE_LIGHTING
-        raylist->set_classification(i, DROP_ON_FLOOR);
-#else
-        raylist->set_classification(i, TERMINATED);
-#endif
+        raylist->set_classification(i, RAY_BOUNDARY);
       }
       else 
       {
@@ -386,7 +382,11 @@ Renderer::Classify(RayList *raylist)
         raylist->set_classification(i, DROP_ON_FLOOR);
 #endif
       }
-      else if (term == RAY_TIMEOUT || term == RAY_BOUNDARY)
+      else if (term & RAY_BOUNDARY)
+      {
+        raylist->set_classification(i, RAY_BOUNDARY);
+      }
+      else if (term & RAY_TIMEOUT)
       {
         // Timed-out - drop on floor in REVERSE case so
         // we don't add the (negative) ambient contribution;
