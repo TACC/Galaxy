@@ -10,7 +10,7 @@ branches:
 matrix:
   include:
     - os: osx
-      osx_image: xcode10.2 # get a modern-enough mac environment
+      #osx_image: xcode10.2 # get a modern-enough mac environment
       compiler: clang
       env:
         - MATRIX_EVAL=""
@@ -62,8 +62,9 @@ addons:
       - perceptualdiff
       - python-numpy
   homebrew:
+    update: true
     packages: 
-      - vtk --with-python
+      - vtk
       - tbb
       - boost
       - open-mpi
