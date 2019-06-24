@@ -87,6 +87,7 @@ Renderer::Initialize()
   extern void force_ospray_library_load();
   force_ospray_library_load();
 
+
   RegisterClass();
   
   RegisterDataObjects();
@@ -120,6 +121,8 @@ print_ospray_error_messages(const char *m)
 void
 Renderer::initialize()
 {
+  epsilon = 0.001;
+
   frame = 0;
   rayQmanager = new RayQManager(this);
   pthread_mutex_init(&lock, NULL);
@@ -160,7 +163,13 @@ Renderer::~Renderer()
 void 
 Renderer::SetEpsilon(float e)
 { 
-  tracer.SetEpsilon(e); 
+  epsilon = e;
+}
+
+float
+Renderer::GetEpsilon()
+{ 
+  return epsilon;
 }
 
 bool
@@ -267,25 +276,33 @@ bool
 Renderer::LoadStateFromDocument(Document& doc)
 {
   if (doc.HasMember("Renderer"))
-  {
-    Value& v = doc["Renderer"];
-    if (v.HasMember("Tracer"))
-      return tracer.LoadStateFromValue(v["Tracer"]);
-    else
-      return true;
-  }
-  else
-    return true;
+    LoadStateFromValue(doc["Renderer"]);
+
+  return true;
 }
 
 void
 Renderer::SaveStateToDocument(Document& doc)
 {
-  Value r(kObjectType);
+  Value v(kObjectType);
+  SaveStateToValue(v, doc);
+  doc.AddMember("Renderer", v, doc.GetAllocator());
+}
 
-  tracer.SaveStateToValue(r, doc);
 
-  doc.AddMember("Renderer", r, doc.GetAllocator());
+bool
+Renderer::LoadStateFromValue(Value& v)
+{
+  if (v.HasMember("epsilon"))
+    SetEpsilon(v["epsilon"].GetDouble());
+
+  return true;
+}
+
+void
+Renderer::SaveStateToValue(Value& v, Document& doc)
+{
+  v.AddMember("epsilon", Value().SetDouble(GetEpsilon()), doc.GetAllocator());
 }
 
 void
@@ -357,11 +374,7 @@ Renderer::Classify(RayList *raylist)
       }
       else if (term & RAY_BOUNDARY)
       {
-#ifdef GXY_REVERSE_LIGHTING
-        raylist->set_classification(i, DROP_ON_FLOOR);
-#else
-        raylist->set_classification(i, TERMINATED);
-#endif
+        raylist->set_classification(i, RAY_BOUNDARY);
       }
       else 
       {
@@ -386,7 +399,11 @@ Renderer::Classify(RayList *raylist)
         raylist->set_classification(i, DROP_ON_FLOOR);
 #endif
       }
-      else if (term == RAY_TIMEOUT || term == RAY_BOUNDARY)
+      else if (term & RAY_BOUNDARY)
+      {
+        raylist->set_classification(i, RAY_BOUNDARY);
+      }
+      else if (term & RAY_TIMEOUT)
       {
         // Timed-out - drop on floor in REVERSE case so
         // we don't add the (negative) ambient contribution;
@@ -423,7 +440,19 @@ Renderer::AssignDestinations(RayList *raylist)
       if (visualization->has_neighbor(exit_face)) 
         raylist->set_classification(i, visualization->get_neighbor(exit_face));
       else
-        raylist->set_classification(i, TERMINATED);
+      {
+        int t = raylist->get_type(i);
+        if (t == RAY_SHADOW || t == RAY_AO)
+        {
+#ifdef GXY_REVERSE_LIGHTING
+          raylist->set_classification(i, DROP_ON_FLOOR);
+#else
+          raylist->set_classification(i, TERMINATED);
+#endif
+        }
+        else
+          raylist->set_classification(i, TERMINATED);
+      }
     }
   }
 }
@@ -633,6 +662,8 @@ Renderer::Trace(RayList *raylist)
   // RayQ) so we don't send a message upstream saying we are idle
   // until we actually are.
 
+  TraceRays tracer(GetEpsilon());
+
   RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
   if (out)
   {
@@ -757,13 +788,12 @@ Renderer::SendRaysMsg::Action(int sender)
 int
 Renderer::SerialSize()
 {
-  return tracer.SerialSize() + sizeof(bool) + sizeof(int);
+  return sizeof(bool) + sizeof(int);
 }
 
 unsigned char *
 Renderer::Serialize(unsigned char *p)
 {
-  p = tracer.Serialize(p);
   *(bool*)p = permute_pixels;
   p += sizeof(bool);
   *(int*)p = max_rays_per_packet;
@@ -775,7 +805,6 @@ Renderer::Serialize(unsigned char *p)
 unsigned char *
 Renderer::Deserialize(unsigned char *p)
 {
-  p = tracer.Deserialize(p);
   permute_pixels = *(bool*)p;
   p += sizeof(bool);
   max_rays_per_packet = *(int*)p;

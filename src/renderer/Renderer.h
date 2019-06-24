@@ -36,7 +36,6 @@
 #include "Rendering.h"
 #include "RenderingEvents.h"
 #include "RenderingSet.h"
-#include "TraceRays.h"
 
 namespace gxy
 {
@@ -69,13 +68,21 @@ public:
   void SendRays(RayList *, int); //!< send the given RayList to the specified process rank
 
   void SetEpsilon(float e); //!< set the epsilon distance for the Renderer to avoid exact comparison in certain tests
+  float GetEpsilon(); //!< get the epsilon distance for the Renderer to avoid exact comparison in certain tests
 
   RayQManager *GetTheRayQManager() { return rayQmanager; }
 
   //! load a Renderer object from a Galaxy JSON document
   virtual bool LoadStateFromDocument(rapidjson::Document&);
+
   //! save this Renderer object to a Galaxy JSON document
   virtual void SaveStateToDocument(rapidjson::Document&);
+
+  //! load a Renderer object from a Galaxy JSON value
+  virtual bool LoadStateFromValue(rapidjson::Value&);
+
+  //! save this Renderer object to a Galaxy JSON value
+  virtual void SaveStateToValue(rapidjson::Value&, rapidjson::Document&);
 
   //! render the given RenderingSet at this process, in response to a received RenderMsg
   virtual void local_render(RendererP, RenderingSetP);
@@ -141,7 +148,7 @@ public:
   //! process the given RayList using the current Rendering, RenderingSet, and Visualization.   This assigns
   //  the ray 'term' field with a application-specific termination type
 
-	void Trace(RayList *);
+	virtual void Trace(RayList *);
 
   //! classify traced rays based on what happened when they were traced.  Possibile results are DROP_ON_FLOOR
   // (eg. AO ray that timed out for subtractive shading or hit something for additive shading); BOUNDARY - that 
@@ -184,7 +191,7 @@ private:
 	int *sent_to;
 	int *received_from;
 
-  TraceRays tracer;
+  float epsilon;
   RayQManager *rayQmanager;
 
   pthread_mutex_t lock;

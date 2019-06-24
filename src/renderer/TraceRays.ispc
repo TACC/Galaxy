@@ -55,33 +55,12 @@
 
 #include "UV.ih"
 
-export void *uniform TraceRays_allocate()
-{
-  TraceRays_ispc *uniform t = uniform new uniform TraceRays_ispc;
-  return (void *)t;
-}
-
-export void TraceRays_SetEpsilon(void *uniform _self, uniform float e)
-{
-  TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
-  self->epsilon = e;
-}
-
-export uniform float TraceRays_GetEpsilon(void *uniform _self)
-{
-  TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
-  return self->epsilon;
-}
-
 export void TraceRays_initialize(void *uniform _self)
 {
-  TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
-  self->epsilon = 0.001;
 }
 
 export void TraceRays_destroy(void *uniform ispc)
 {
-    delete ispc;
 }
 
 struct Hit
@@ -101,11 +80,6 @@ MyIntersectBox(const Ray& ray,
                float& t0,
                float& t1)
 {
-  //print("MIB: l\nX %\nY %\nZ %\n", box.lower.x, box.lower.y, box.lower.z); 
-  //print("MIB: u\nX %\nY %\nZ %\n", box.upper.x, box.upper.y, box.upper.z); 
-  //print("Ray org:\n%\n%\n%\n", ray.org.x, ray.org.y, ray.org.z);
-  //print("Ray dir:\n%\n%\n%\n", ray.dir.x, ray.dir.y, ray.dir.z);
-
   const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
   const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
 
@@ -303,7 +277,7 @@ SampleVolumes(const varying vec3f& coord,
 export void *uniform TraceRays_TraceRays(void *uniform _self,
                                void *uniform _vis,
                                const uniform int nRaysIn,
-                               void *uniform _raysIn)
+                               void *uniform _raysIn, uniform float global_epsilon)
 { 
   uniform TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
   uniform Visualization_ispc *uniform vis = (uniform Visualization_ispc *)_vis;
@@ -334,7 +308,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     if (step < 0 || step > s)
     {
       step = s;
-      epsilon = self->epsilon * s;
+      epsilon = global_epsilon * s;
     }
   }
 
@@ -565,14 +539,14 @@ export void TraceRays_generateAORays(void *uniform _self,
                                 const uniform int nRaysIn,
                                 void *uniform _raysIn,
                                 uniform int *uniform offsets,
-                                void *uniform _raysOut)
+                                void *uniform _raysOut, uniform float global_epsilon)
                                 
 {
   TraceRays_ispc *uniform self = (TraceRays_ispc *uniform)_self;
   Lighting_ispc *uniform lights = (Lighting_ispc *uniform)_lights;
   uniform RayList_ispc *uniform raysIn  = (RayList_ispc *uniform)_raysIn;
   uniform RayList_ispc *uniform raysOut = (RayList_ispc *uniform)_raysOut;
-  uniform float epsilon = self->epsilon;
+  uniform float epsilon = global_epsilon;
 
 #ifdef GXY_REVERSE_LIGHTING
   uniform float Ka = -lights->Ka / lights->n_ao_rays;
@@ -707,7 +681,7 @@ export void TraceRays_generateShadowRays(void *uniform _self,
                                 const uniform int nRaysIn,
                                 void *uniform uniform _raysIn,
                                 uniform int *uniform offsets,
-                                void *uniform uniform _raysOut)
+                                void *uniform uniform _raysOut, uniform float global_epsilon)
                                 
 {
   TraceRays_ispc *uniform self = (TraceRays_ispc *uniform)_self;
@@ -715,7 +689,7 @@ export void TraceRays_generateShadowRays(void *uniform _self,
   uniform RayList_ispc *uniform raysIn  = (RayList_ispc *uniform)_raysIn;
   uniform RayList_ispc *uniform raysOut = (RayList_ispc *uniform)_raysOut;
 
-  uniform float epsilon = self->epsilon;
+  uniform float epsilon = global_epsilon;
 
 #ifdef GXY_REVERSE_LIGHTING
   uniform float Kd = -lights->Kd / lights->nLights;

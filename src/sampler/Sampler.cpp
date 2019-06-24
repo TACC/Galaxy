@@ -39,13 +39,12 @@ Sampler::Initialize()
 }
 
 void
-Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
+Sampler::HandleTerminatedRays(RayList *raylist)
 {
- 
   int terminated_count = 0;
 
   for (int i = 0; i < raylist->GetRayCount(); i++)
-    if (classification[i] == Renderer::TERMINATED) terminated_count++;
+    if (raylist->get_classification(i) == Renderer::TERMINATED) terminated_count++;
 
   std::cerr << std::dec;
   std::cerr << "Sampler::HandleTerminatedRays entry - " << raylist->GetRayCount() << " in, " << terminated_count << " terminated\n";
@@ -63,7 +62,7 @@ Sampler::HandleTerminatedRays(RayList *raylist, int *classification)
 
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {
-    if (classification[i] == Renderer::TERMINATED)
+    if (raylist->get_classification(i) == Renderer::TERMINATED)
     {
       if (rendering->IsLocal())
       {

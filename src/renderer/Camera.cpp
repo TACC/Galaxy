@@ -356,29 +356,6 @@ protected:
   }
 };
 
-struct args
-{
-  args(int fnum, float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy, 
-       vec3f& vr, vec3f& vu, vec3f& veye, vec3f center, 
-       Box *lb, Box *gb, RendererP rndr, RenderingSetP rs, RenderingP r, Camera *c) :
-       fnum(fnum), iwidth(iw), ixmin(ixmin), iymin(iymin),
-       scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
-       vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
-       renderer(rndr), rs(rs), r(r), camera(c) {}
-  ~args() {}
-
-  int fnum;
-  float scaling;
-  int iwidth, ixmin, iymin;
-  float off_x, off_y;
-  vec3f vr, vu, veye, center;
-  Box *lbox, *gbox;
-  RendererP renderer;
-  RenderingSetP rs;
-  RenderingP r;
-  Camera *camera;
-};
-
 // Given a slew of camera parameters and a range of pixels that MIGHT
 // be first-hit, figure out which actually are, create a raylist for them,
 // and queue them for processing
@@ -391,6 +368,12 @@ Camera::spawn_rays_task::work()
   if (! a->rs->IsActive(a->fnum))
     return 0;
 
+  return a->camera->SpawnRays(a, start, count);
+}
+
+bool 
+Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
+{
 #if defined(GXY_EVENT_TRACKING)
   GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
@@ -400,24 +383,23 @@ Camera::spawn_rays_task::work()
   int dst = 0;
   for (int i = 0; i < count; i++)
   {
-      int pindex = i + start;
-      int x, y;
+    int pindex = i + start;
+    int x, y;
     vec3f xy_wcs, vray;
 
-    if (a->camera->permute)
-    {
-      int p = a->camera->permutation[pindex];
-      x = a->ixmin + (p % a->iwidth);
-      y = a->iymin + (p / a->iwidth);
-    }
-    else
-    {
-      x = a->ixmin + (pindex % a->iwidth);
-      y = a->iymin + (pindex / a->iwidth);
-    }
+    // Figure out the pixel (x,y) for the pindex'th pixel
+
+    int p = a->camera->permute ? a->camera->permutation[pindex] : pindex;
+
+    x = a->ixmin + (p % a->iwidth);
+    y = a->iymin + (p / a->iwidth);
+
+    // Get pixel location in (-1,1) space
 
     float fx = (x - a->off_x) * a->scaling;
     float fy = (y - a->off_y) * a->scaling;
+
+    // Get the pixel location in 3D camera space 
 
     xy_wcs.x = a->center.x + fx * a->vr.x + fy * a->vu.x;
     xy_wcs.y = a->center.y + fx * a->vr.y + fy * a->vu.y;
@@ -475,7 +457,6 @@ Camera::spawn_rays_task::work()
       delete rlist;
     }
   }
-
 
 #ifdef GXY_WRITE_IMAGES
   a->rs->DecrementActiveCameraCount(dst);        
@@ -774,13 +755,14 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
     int iheight = (iymax - ixmin) + 1;
 
     ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
-    shared_ptr<args> a = shared_ptr<args>(new args(fnum, pixel_scaling, iwidth, 
-                                                   ixmin, iymin,
-                                                   off_x, off_y, 
-                                                   vr, vu, veye, center, 
-                                                   lbox, gbox, 
-                                                   renderer, renderingSet, 
-                                                   rendering, this));
+    shared_ptr<spawn_rays_args> a = shared_ptr<spawn_rays_args>(new spawn_rays_args(
+      fnum, pixel_scaling, iwidth, 
+      ixmin, iymin,
+      off_x, off_y, 
+      vr, vu, veye, center, 
+      lbox, gbox, 
+      renderer, renderingSet, 
+      rendering, this));
 
       for (int i = 0; i < (iwidth * iheight); i += rays_per_packet)
       {
