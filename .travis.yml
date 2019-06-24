@@ -10,9 +10,10 @@ branches:
 matrix:
   include:
     - os: osx
+      osx_image: xcode10.2 # get a modern-enough mac environment
       compiler: clang
       env:
-        - MATRIX_EVAL=""
+        - MATRIX_EVAL="brew install vtk --with-python3"
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
     #       since cmake detects mac/clang and gcc barfs rather than ignores
@@ -61,8 +62,9 @@ addons:
       - perceptualdiff
       - python-numpy
   homebrew:
+    update: true
     packages: 
-      - vtk
+      #- vtk
       - tbb
       - boost
       - open-mpi
