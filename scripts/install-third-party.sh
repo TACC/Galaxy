@@ -89,7 +89,7 @@ done
 report "done!"
 cd ${GXY_ROOT}
 mkdir -p ${GXY_ROOT}/.galaxy
-touch ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
+date > ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
 exit 0
 
 
