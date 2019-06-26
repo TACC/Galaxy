@@ -292,21 +292,19 @@ Camera::set_viewup(float x, float y, float z)
 }
 
 static bool
-intersect_line_plane(vec3f& p0, vec3f& p1, vec3f& plane_xyz, float plane_w, vec3f& x)
+intersect_line_plane(vec3f& point_on_line, vec3f& line, vec3f& plane_abc, float plane_d, vec3f& intersection_point)
 {
-  float W = (p0 * plane_xyz) + plane_w;
-  vec3f V = (p0 - plane_xyz * W);
+  //  ((point_on_line + t*line) * plane_abc) + plane_d = 0    solve for t
+  //  
+  //  t = -((point_on_line * plane_abc) + plane_d) / (plane_abc * L)
+  //  intersection_point = point_on_line + t*line
 
-  vec3f w = p0 - V;
-  vec3f u = p1 - p0;
-  float N = -(plane_xyz * w);
-  float D = plane_xyz * u;
-  if (fabs(D) < 1e-6) return false;
-  else
-  {
-    x = p0 + (u * (N / D));
-    return true;
-  }
+  float denom = plane_abc * line;     // is the line perpendicular to the plane normal?  If so, it'll never hit
+  if (denom < 1e-6) 
+    return false;
+
+  intersection_point = point_on_line - (line * (((point_on_line  * plane_abc) + plane_d) / denom));
+  return true;
 }
 
 class InitialRaysEvent : public Event
@@ -380,12 +378,18 @@ Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
     
   RayList *rlist = NULL;
 
+  bool is_ortho = a->camera->get_angle_of_view() == 0.0;
+
+  vec3f vdir, veye;
+  a->camera->get_viewdirection(vdir);
+  a->camera->get_viewpoint(veye);
+
   int dst = 0;
   for (int i = 0; i < count; i++)
   {
     int pindex = i + start;
     int x, y;
-    vec3f xy_wcs, vray;
+    vec3f xy_wcs, vray, vorigin;
 
     // Figure out the pixel (x,y) for the pindex'th pixel
 
@@ -405,11 +409,20 @@ Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
     xy_wcs.y = a->center.y + fx * a->vr.y + fy * a->vu.y;
     xy_wcs.z = a->center.z + fx * a->vr.z + fy * a->vu.z;
 
-    vray = xy_wcs - a->veye;
-    normalize(vray);
+    if (is_ortho)
+    {
+      vorigin = xy_wcs;
+      vray = vdir;
+    }
+    else
+    {
+      vorigin = a->veye;
+      vray = xy_wcs - a->veye;
+      normalize(vray);
+    }
 
     float gmin, gmax;
-    bool hit = a->gbox->intersect(a->veye, vray, gmin, gmax);
+    bool hit = a->gbox->intersect(veye, vray, gmin, gmax);
 
     float lmin, lmax;
     if (hit) hit = a->lbox->intersect(a->veye, vray, lmin, lmax);
@@ -421,9 +434,9 @@ Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
 
       rlist->set_x(dst, x);
       rlist->set_y(dst, y);
-      rlist->set_ox(dst, a->veye.x);
-      rlist->set_oy(dst, a->veye.y);
-      rlist->set_oz(dst, a->veye.z);
+      rlist->set_ox(dst, vorigin.x);
+      rlist->set_oy(dst, vorigin.y);
+      rlist->set_oz(dst, vorigin.z);
       rlist->set_dx(dst, vray.x);
       rlist->set_dy(dst, vray.y);
       rlist->set_dz(dst, vray.z);
@@ -520,12 +533,21 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
   vec3f veye(eye);
   vec3f vu(up);
   vec3f vdir(dir);
-  normalize(vdir);
 
   // Center is the center of the image plane in WCS
 
-  float d = 1.0 / tan(2*3.1415926*(aov/2.0)/360.0);
-  vec3f center = vec3f(eye) + (vdir * d);
+  vec3f center;
+  if (aov == 0.0) // that is, orthographic...
+  {
+    center = veye + vdir;
+    normalize(vdir);
+  }
+  else
+  {
+    float d = 1.0 / tan(2*3.1415926*(aov/2.0)/360.0);
+    normalize(vdir);
+    center = veye + (vdir * d);
+  }
 
   // Right is the normalized cross product of the camera view direction
   // and the up direction (which better not be colinear)
@@ -575,7 +597,14 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       vec3f proj, corner = lbox->corner(i);
   
       // This gives the projection of the corner onto the image plane in WCS
-      intersect_line_plane(veye, corner, vdir, w, proj);
+
+      if (aov == 0.0) // orthographic
+        intersect_line_plane(corner, vdir, vdir, w, proj);
+      else
+      {
+        vec3f line = corner - veye;
+        intersect_line_plane(corner, line, vdir, w, proj);
+      }
     
       // This gives the vector from the projection to the center of the image in WCS
       proj = proj - center;
@@ -585,6 +614,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       // Rotate the projection point around the Z axis - now in coordinates of
       // (vr, vu, vdir) but we don't care about Z - the points all lie in the image
       // plane Z=vdist
+
       float x = proj * vr;
       float y = proj * vu;
 
@@ -668,14 +698,24 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       int x = rayList->get_x(k);
       int y = rayList->get_y(k);
 
-      vec3f xy_wcs, vray;
+      vec3f xy_wcs, vray, vorigin = veye;
       float fx = (x - off_x) / pixel_scaling;
       float fy = (y - off_y) / pixel_scaling;
+
       xy_wcs.x = center.x + fx * vr.x + fy * vu.x;
       xy_wcs.y = center.y + fx * vr.y + fy * vu.y;
       xy_wcs.z = center.z + fx * vr.z + fy * vu.z;
-      vray = xy_wcs - veye;
-      normalize(vray);
+
+      if (aov == 0) // orthographic...
+      { 
+        vorigin = xy_wcs;
+        vray = vdir;
+      }
+      else
+      {
+        vray = xy_wcs - veye;
+        normalize(vray);
+      }
 
       float gmin, gmax;
       bool hit = gbox->intersect(veye, vray, gmin, gmax);
@@ -688,9 +728,9 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       {
         rayList->set_x(kk, rayList->get_x(k));
         rayList->set_y(kk, rayList->get_y(k));
-        rayList->set_ox(kk, veye.x);
-        rayList->set_oy(kk, veye.y);
-        rayList->set_oz(kk, veye.z);
+        rayList->set_ox(kk, vorigin.x);
+        rayList->set_oy(kk, vorigin.y);
+        rayList->set_oz(kk, vorigin.z);
         rayList->set_dx(kk, vray.x);
         rayList->set_dy(kk, vray.y);
         rayList->set_dz(kk, vray.z);

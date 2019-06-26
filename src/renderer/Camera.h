@@ -152,6 +152,8 @@ public:
 	void set_angle_of_view(float a) { aov = a; }
 	//! get the view angle for the camera
 	void get_angle_of_view(float &a) { a = aov; }
+	//! get the view angle for the camera
+	float get_angle_of_view() { return aov; }
 
 	//! print the details of this camera
 	void print();
