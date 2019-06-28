@@ -62,9 +62,13 @@ endif()
 
 install(FILES Schlieren.h DESTINATION include)
 
-add_executable(gxyschlieren gxyschlieren.cpp)
-target_link_libraries(gxyschlieren gxy_schlieren ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-set(BINS gxyschlieren ${BINS})
+if (GXY_WRITE_IMAGES)
 
-install(TARGETS ${BINS} DESTINATION bin)
+  add_executable(gxyschlieren gxyschlieren.cpp)
+  target_link_libraries(gxyschlieren gxy_schlieren ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  set(BINS gxyschlieren ${BINS})
+
+  install(TARGETS ${BINS} DESTINATION bin)
+
+endif (GXY_WRITE_IMAGES)
 

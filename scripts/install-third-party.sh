@@ -41,6 +41,7 @@ GXY_ROOT=$PWD
 GXY_PREP_SCRIPT=prep-third-party.sh
 GXY_DONE_TAG="gxy_third_party_installed"
 CMAKE_BIN=`which cmake`
+CMAKE_FLAGS="-D CMAKE_C_FLAGS:STRING=\"-Wno-undef -Wno-deprecated-declarations\" -D CMAKE_CXX_FLAGS:STRING=\"-Wno-undef -Wno-deprecated-declarations\""
 
 if [ -f ${GXY_ROOT}/install-third-party.sh ]; then
 	# running from script dir, help a user out
@@ -78,7 +79,7 @@ for tp_lib_dir in embree ospray rapidjson; do
 	pushd $tp_lib_dir
 	mkdir build
 	cd build
-	${CMAKE_BIN} .. && make -j 4 install
+	${CMAKE_BIN} ${CMAKE_FLAGS} .. && make -j 4 install
 	if [ $? != 0 ]; then
 		fail "Build failed for ${tp_lib_dir}."
 	fi
@@ -88,7 +89,7 @@ done
 report "done!"
 cd ${GXY_ROOT}
 mkdir -p ${GXY_ROOT}/.galaxy
-touch ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
+date > ${GXY_ROOT}/.galaxy/${GXY_DONE_TAG}
 exit 0
 
 
