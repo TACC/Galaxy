@@ -37,12 +37,15 @@ using namespace std;
 
 namespace gxy 
 {
+WORK_CLASS_TYPE(Schlieren::NormalizeSchlierenImagesMsg);
+
 KEYED_OBJECT_CLASS_TYPE(Schlieren)
 
 void
 Schlieren::Initialize()
 { 
   RegisterClass();
+  NormalizeSchlierenImagesMsg::Register();
   super::Initialize();
 }
 
@@ -60,19 +63,32 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
   camera->get_viewup(vu);
   camera->get_angle_of_view(aov);
 
+  bool is_ortho = aov == 0.0;
+
+  // Center of image plane
+
+  vec3f center;
+  if (is_ortho)
+  {
+    normalize(vd);
+    center = vp + vd * GetFar();
+  }
+  else
+  {
+    float d = 1.0 / tan(2*3.1415926*(aov/2.0)/360.0);
+    center = vp + (vd * d);
+    normalize(vd);
+  }
+
   vec3f vr = cross(vd, vu);
   normalize(vr);
 
   vu = cross(vr, vd);
   normalize(vu);
 
-  normalize(vd);
-  vec3f C = vp + vd*GetFar();   // Center of image plane in 3D - choose far to put the plane *beyond* the data
-
   // Get planar equation of projection plane: {vd.x, vd.y, vd.z, d} where d is:
 
-  vec4f projection_plane(vd.x, vd.y, vd.z, -dot(vd, C));
-  std::cerr << "p_plane: " << projection_plane.x << " " << projection_plane.y << " " << projection_plane.z << " " << projection_plane.w << "\n";
+  vec4f projection_plane(vd.x, vd.y, vd.z, -dot(vd, center));
 
   // Need to be able to transform screen x,y to WCS point
 
@@ -86,10 +102,11 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
   float off_x = ((width - 1) / 2.0);
   float off_y = ((height - 1) / 2.0);
   float pixel_scaling = (((width < height) ? width : height) - 1.0) / 2.0;
-  float d = 1.0 / tan(2*3.1415926*(aov/2.0)/360.0);
-  vec3f center = vec3f(vp) + (vd * d);
 
   // for each ray...
+
+  int mx, my;
+  float dmax = 0;
 
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {
@@ -109,28 +126,13 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
       // We want the intersection of the ray starting at the exit point in
       // the exit direction with the projection plane.  The projection distance
       // is the hyp - the perpendicular distance divided by the cosine of the
-      // angle between the perpendicular direction and the 
-      // point projected along the exitting direction to the projection plane.
-      // The length of projection will be the perpendicular distance
-      // 
-
-      
-
-      // distance of p_term from plane perpendicular to the plane...
+      // angle between the perpendicular direction and the exit vector.
 
       float d_perp = -(dot(projection_plane, p_term) + projection_plane.w);
-
-      // theta is the angle between the *exitting* ray and the perpendicular
-
       float cos_theta = dot(projection_plane, d_term);
+      float d_exit_vector = d_perp / cos_theta;
       
-      std::cerr << "p_term: " << p_term.x << " " << p_term.y << " " << p_term.z << "\n";
-      std::cerr << "d_term: " << d_term.x << " " << d_term.y << " " << d_term.z << "\n";
-      std::cerr << "d_perp: " << d_perp << "\n";
-
-      vec3f p_proj = p_term + d_term*d_perp;
-
-      std::cerr << "p_proj: " << p_proj.x << " " << p_proj.y << " " << p_proj.z << "\n";
+      vec3f p_proj = p_term + d_term * d_exit_vector;
 
       // Now p_proj is the point the bent ray extends to in the projection plane.   
       // Where would the original ray have hit?
@@ -147,13 +149,41 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
 
       d_perp = -(dot(projection_plane, pixel_wcs) + projection_plane.w);
 
-      // original direction
+      vec3f p_proj_orig;
+      if (is_ortho)
+      {
+        // Then project perpendicular to projection plane
+        p_proj_orig = pixel_wcs + (vd * d_perp);
+      }
+      else
+      {
+        // original ray direction from eye through pixel
 
-      vec3f d_orig = pixel_wcs - vp;
-      normalize(d_orig);
+        vec3f d_orig = pixel_wcs - vp;
+        normalize(d_orig);
 
-      vec3f p_proj_orig = pixel_wcs + d_orig * d_perp;
-      std::cerr << "orig p_proj: " << p_proj_orig.x << " " << p_proj_orig.y << " " << p_proj_orig.z << "\n";
+        // Distance along original direction depends on angle between original dir and 
+        // normal of projection plane
+
+        cos_theta = dot(projection_plane, d_orig);
+        float d_orig_vector = d_perp / cos_theta;
+
+        p_proj_orig = pixel_wcs + d_orig * d_orig_vector;
+      }
+
+      vec3f delta = p_proj - p_proj_orig;
+      
+      float dd = sqrt(delta.x*delta.x + delta.y*delta.y);
+      if (dd > dmax)
+      {
+        mx = pixel_ix;
+        my = pixel_iy;
+        dmax = dd;
+      }
+
+      raylist->set_r(i, delta.x);
+      raylist->set_g(i, delta.y);
+      raylist->set_b(i, dd);
     }
   }
 
@@ -232,6 +262,54 @@ void
 Schlieren::SaveStateToValue(Value& v, Document& doc)
 {
   v.AddMember("far", Value().SetDouble(GetFar()), doc.GetAllocator());
+}
+
+bool
+Schlieren::NormalizeSchlierenImagesMsg::CollectiveAction(MPI_Comm c, bool is_root)
+{
+  char *ptr = (char *)contents->get();
+  Key key = *(Key *)ptr;
+  RenderingSetP rs = RenderingSet::GetByKey(key);
+
+  for (int i = 0; i < rs->GetNumberOfRenderings(); i++)
+  {
+    RenderingP r = rs->GetRendering(i);
+    if (r->IsLocal())
+    {
+      int width, height;
+      r->GetTheSize(width, height);
+
+      int n = width * height;
+
+      float *p = r->GetPixels();
+
+      float mm[3] = {p[0], p[1], p[2]};
+      float MM[3] = {p[0], p[1], p[2]};
+      for (int i = 0; i < n; i++, p += 4)
+      {
+        for (int j = 0; j < 3; j++)
+        {
+          if (p[j] < mm[j]) mm[j] = p[j];
+          if (p[j] > MM[j]) MM[j] = p[j];
+        }
+      }
+
+      p = r->GetPixels();
+      for (int i = 0; i < n; i++, p += 4)
+        for (int j = 0; j < 3; j++)
+          if (MM[j] != mm[j])
+            p[j] = (p[j] - mm[j])/(MM[j] - mm[j]);
+    }
+  }
+
+  return false;
+}
+
+void
+Schlieren::NormalizeImages(RenderingSetP rs)
+{
+  NormalizeSchlierenImagesMsg msg(rs);
+  msg.Broadcast(true, true);
 }
 
 } // namespace gxy

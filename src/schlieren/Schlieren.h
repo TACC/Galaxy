@@ -61,12 +61,35 @@ public:
 
   virtual void Trace(RayList *);
 
+  void NormalizeImages(RenderingSetP);
+
 protected:
   float GetFar() { return far; }
   void  SetFar(float f) { far = f; }
 
 private:
   float far;
+
+  //! a Work unit to instruct Galaxy processes to begin rendering
+  class NormalizeSchlierenImagesMsg : public Work
+  {
+  public:
+    NormalizeSchlierenImagesMsg(RenderingSetP rs) : NormalizeSchlierenImagesMsg(sizeof(Key))
+    {
+      unsigned char *p = (unsigned char *)contents->get();
+      *(Key *)p = rs->getkey();
+    }
+
+    ~NormalizeSchlierenImagesMsg() {}
+
+    WORK_CLASS(NormalizeSchlierenImagesMsg, true);
+
+    bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+
+  private:
+    int frame;
+  };
+
 };
 
 } // namespace gxy

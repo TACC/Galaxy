@@ -117,7 +117,7 @@ int main(int argc,  char *argv[])
       cerr << "connection ok" << endl;
     }
 
-    SchlierenP theRenderer = Schlieren::NewP();
+    SchlierenP theSchlierenRenderer = Schlieren::NewP();
 
     rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
     if (! doc)
@@ -128,7 +128,7 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    theRenderer->LoadStateFromDocument(*doc);
+    theSchlierenRenderer->LoadStateFromDocument(*doc);
 
     vector<CameraP> theCameras;
     if (! Camera::LoadCamerasFromJSON(*doc, theCameras))
@@ -230,7 +230,7 @@ int main(int argc,  char *argv[])
         theApplication.Wait();
         exit(1);
       }
-      theRenderer->Render(rs);
+      theSchlierenRenderer->Render(rs);
 
 #if 1
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
@@ -257,6 +257,9 @@ int main(int argc,  char *argv[])
 #endif
       rs->WaitForDone();
 
+      theSchlierenRenderer->NormalizeImages(rs);
+      sleep(4);
+
       rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image");
 
       long t1 = my_time();
@@ -272,7 +275,7 @@ int main(int argc,  char *argv[])
     theVisualizations.clear();
     theCameras.clear();
 
-    theRenderer = nullptr;
+    theSchlierenRenderer = nullptr;
     theApplication.QuitApplication();
   }
 

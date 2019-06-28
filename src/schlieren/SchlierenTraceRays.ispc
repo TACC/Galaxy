@@ -1,4 +1,4 @@
-#define PRINT_BEND  if (1 == 0)
+#define PRINT_BEND if (1 == 0)
 
 // ========================================================================== //
 // Copyright (c) 2016-2018 The University of Texas at Austin.                 //
@@ -78,10 +78,8 @@ ExitT(const Ray& ray, const uniform box3f& box)
   const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
   const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
 
-   PRINT_BEND print("BuZ: %\n", box.upper.x);
-
-  // print("mins.x %\nmins.y %\nmins.z %\n", mins.x, mins.y, mins.z);
-  // print("maxs.x %\nmaxs.y %\nmaxs.z %\n", maxs.x, maxs.y, maxs.z);
+  PRINT_BEND print("mins.x %\nmins.y %\nmins.z %\n", mins.x, mins.y, mins.z);
+  PRINT_BEND print("maxs.x %\nmaxs.y %\nmaxs.z %\n", maxs.x, maxs.y, maxs.z);
 
   return min(max(mins.x,maxs.x),
            min(max(mins.y,maxs.y),
@@ -98,7 +96,8 @@ Step(Ray& ray, const uniform float step, const uniform box3f& box)
 {
   vec3f coord = ray.org + step*ray.dir;
 
-  PRINT_BEND print("box\nl % % %\nu % % %\nOX %\nOY %\nOZ %\n", 
+#if 0
+  print("box\nl % % %\nu % % %\nOX %\nOY %\nOZ %\n", 
     box.lower.x,
     box.lower.y,
     box.lower.z,
@@ -106,17 +105,20 @@ Step(Ray& ray, const uniform float step, const uniform box3f& box)
     box.upper.y,
     box.upper.z,
     coord.x, coord.y, coord.z);
+#endif
 
   if (box.lower.x > coord.x || box.lower.y > coord.y || box.lower.z > coord.z ||
       box.upper.x < coord.x || box.upper.y < coord.y || box.upper.z < coord.z) 
   {
     float tExit = ExitT(ray, box);
+    PRINT_BEND print("step outside tExit %\n", tExit);
+
     if (tExit < 0 || tExit > step)
        PRINT_BEND print("invalid tExit\n");
 
-     PRINT_BEND print("XX: org.z = %\ndir.z = %\ntExit = %\n", ray.org.z, ray.dir.z, tExit);
     ray.org  = ray.org + tExit*ray.dir;
-     PRINT_BEND print("Exit: ", ray.org.z);
+    PRINT_BEND print("Exit: ", ray.org.z);
+
     return true;
   }
   else
@@ -137,6 +139,16 @@ export void* uniform SchlierenTraceRays_SchlierenTraceRays(void *uniform _self,
   uniform box3f box = vis->local_bb;
   uniform float step;
 
+  // print("AT TOP: mask %\n", __mask);
+
+  PRINT_BEND print("box\nl % % %\nu % % %\n",
+    box.lower.x,
+    box.lower.y,
+    box.lower.z,
+    box.upper.x,
+    box.upper.y,
+    box.upper.z);
+
   if (vis->nVolumeVis == 1)
   {
     uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[0];
@@ -147,9 +159,16 @@ export void* uniform SchlierenTraceRays_SchlierenTraceRays(void *uniform _self,
     foreach (i = 0 ... nRaysIn)
     {
       Ray ray;
+      
+      // print("##############################################################################\n");
+      // print("X %\nmask %\n", raysIn->x[i], __mask);
 
       ray.org = make_vec3f(raysIn->ox[i], raysIn->oy[i], raysIn->oz[i]);
       ray.dir = make_vec3f(raysIn->dx[i], raysIn->dy[i], raysIn->dz[i]);
+
+      PRINT_BEND print("IOX %\nIOY %\nIOZ %\n", ray.org.x, ray.org.y, ray.org.z);
+      PRINT_BEND print("IDX %\nIDY %\nIDZ %\n", ray.dir.x, ray.dir.y, ray.dir.z);
+
       if (ray.dir.x == 0.f) ray.dir.x = 1e-6f;
       if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
       if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
@@ -159,92 +178,76 @@ export void* uniform SchlierenTraceRays_SchlierenTraceRays(void *uniform _self,
       // since the ray bends.
 
       float tEntry = EntryT(ray, box);
+      // print("tE: %\n", tEntry);
 
       // move the ray origin to the entry point (if its not already inside the volume)
 
-      if (tEntry > ray.t0) ray.org = ray.org + tEntry * ray.dir;
+      if (tEntry > 0.0) ray.org = ray.org + tEntry * ray.dir;
 
       float sLast = vol->sample(vol, ray.org);
-      PRINT_BEND print("sL %\n", sLast);
 
       bool done = false;
       do
       {
-        vec3f odir = normalize(ray.dir);
-
         done = Step(ray, step, box);
-        PRINT_BEND print("sN % %\n", sLast, done);
 
         float sThis = vol->sample(vol, ray.org);
+        // print("X %\nY %\nZ %\nS %\n", ray.org.x, ray.org.y, ray.org.z, sThis);
 
         if (sThis != sLast)
         {
           vec3f grad = vol->computeGradient(vol, ray.org);
-          PRINT_BEND print("GX %\nGY %\nGZ %\n", grad.x, grad.y, grad.z);
 
-          // Better not be zero!
-
-          float magd = length(ray.dir);
           float magg = length(grad);
 
-          if (magd > 0.0001 && magg > 0.0001)
+          if (magg > 0.0001)
           {
-            PRINT_BEND print("OX %\nOY %\nOZ %\n", ray.org.x, ray.org.y, ray.org.z);
-
-            vec3f nD = (1/magd) * ray.dir;
-            PRINT_BEND print("DIX %\nDIY %\nDIZ %\n", nD.x, nD.y, nD.z);
-
-            vec3f nG = (1/magg) * grad;
-            PRINT_BEND print("nGX %\nnGY %\nnGZ %\n", nG.x, nG.y, nG.z);
+            grad = normalize(grad);
+            PRINT_BEND print("GX %\nGY %\nGZ %\n", grad.x, grad.y, grad.z);
+            PRINT_BEND print("DX %\nDY %\nDZ %\n", ray.dir.x, ray.dir.y, ray.dir.z);
+            PRINT_BEND print("SL %\nST %\n", sLast, sThis);
 
             // Axis of rotation
-
-            vec3f u = make_vec3f(nD.y*nG.z - nD.z*nG.y, nD.z*nG.x - nD.x*nG.z, nD.x*nG.y - nD.y*nG.x);
-            PRINT_BEND print("UX %\nUY %\nUZ %\n", u.x, u.y, u.z);
+            vec3f u = make_vec3f(ray.dir.y*grad.z - ray.dir.z*grad.y, ray.dir.z*grad.x - ray.dir.x*grad.z, ray.dir.x*grad.y - ray.dir.y*grad.x);
 
             float dcu = length(u);
-            if (dcu < 0.000001)
+            if (dcu < 0.001)
               continue;
-       
-            u = u / dcu;
+
+            u = normalize(u);
+
+            PRINT_BEND print("UX %\nUY %\nUZ %\n", u.x, u.y, u.z);
 
             // Alpha is the angle between the incoming direction and the gradient, beta the angle between the
             // new outgoing direction and the gradient
 
-            float cosAlpha = dot(nG, nD);
-            if (cosAlpha > -0.000001 && cosAlpha < 0.000001)
-              continue;
+            float cos_theta1 = dot(grad, ray.dir);
+            if (cos_theta1 < 0.0) cos_theta1 = -cos_theta1;
 
-            float sinAlpha = cos2sin(cosAlpha);
+            PRINT_BEND print("CT1 %\n", cos_theta1);
+
+            float theta1 = acos(cos_theta1);
+            PRINT_BEND print("T1 %\n", theta1);
 
             float bend = sLast / sThis;
-            float sinBeta = bend * sinAlpha;
-            float cosBeta = sin2cos(sinBeta);
+            PRINT_BEND print("SL %\nST %\nB %\n", sLast, sThis, bend);
 
-            if (cosAlpha < 0)
-              cosBeta = -cosBeta;
+            float theta2 = bend*theta1;
+            float R = theta1 - theta2;
 
-            PRINT_BEND print("BEND %\nSA %\nCA %\n", bend, sinAlpha, cosAlpha);
-            PRINT_BEND print("SB %\nCB %\nUX %\nUY %\nUZ %\n", sinBeta, cosBeta, u.x, u.y, u.z);
+            PRINT_BEND print("R %\n", R);
 
-            vec3f vx = make_vec3f(cosBeta + u.x*u.x*(1 - cosBeta),     u.x*u.y*(1 - cosBeta) - u.z*sinBeta, u.x*u.z*(1 - cosBeta) + u.y*sinBeta);
-            vec3f vy = make_vec3f(u.y*u.x*(1 - cosBeta) + u.z*sinBeta, cosBeta + u.y*u.y*(1 - cosBeta),     u.y*u.z*(1 - cosBeta) - u.x*sinBeta);
-            vec3f vz = make_vec3f(u.z*u.x*(1 - cosBeta) - u.y*sinBeta, u.z*u.y*(1 - cosBeta) + u.x*sinBeta, cosBeta + u.z*u.z*(1 - cosBeta));
+            float cosR = cos(R);
+            float sinR = sin(R);
+          
+            vec3f vx = make_vec3f(cosR + u.x*u.x*(1 - cosR),     u.x*u.y*(1 - cosR) - u.z*sinR, u.x*u.z*(1 - cosR) + u.y*sinR);
+            vec3f vy = make_vec3f(u.y*u.x*(1 - cosR) + u.z*sinR, cosR + u.y*u.y*(1 - cosR),     u.y*u.z*(1 - cosR) - u.x*sinR);
+            vec3f vz = make_vec3f(u.z*u.x*(1 - cosR) - u.y*sinR, u.z*u.y*(1 - cosR) + u.x*sinR, cosR + u.z*u.z*(1 - cosR));
 
-            PRINT_BEND print("VXX %\nVXY %\nVXZ %\n", vx.x, vx.y, vx.z);
-            PRINT_BEND print("VYX %\nVYY %\nVYZ %\n", vy.x, vy.y, vy.z);
-            PRINT_BEND print("VZX %\nVZY %\nVZZ %\n", vz.x, vz.y, vz.z);
-
-            vec3f rdir = (nG.x * vx) + (nG.y * vy) + (nG.z * vz);
+            vec3f rdir = (ray.dir.x * vx) + (ray.dir.y * vy) + (ray.dir.z * vz);
             
-            // DO NOT BEND   ...   DEBUGGING ray.dir = magd*rdir;
-
-            vec3f ndir = normalize(ray.dir);
-            float dirdot = dot(odir, ndir);
-
-            PRINT_BEND print("DOX %\nDOY %\nDOZ %\nDD %\n", rdir.x, rdir.y, rdir.z, dirdot);
-            PRINT_BEND print("done\n");
-
+            rdir = normalize(rdir);
+            ray.dir = rdir;
           }
         }
         sLast = sThis;
@@ -258,6 +261,9 @@ export void* uniform SchlierenTraceRays_SchlierenTraceRays(void *uniform _self,
       raysIn->dx[i] = ray.dir.x;
       raysIn->dy[i] = ray.dir.y;
       raysIn->dz[i] = ray.dir.z;
+            
+      PRINT_BEND print("FOX %\nFOY %\nFOZ %\n", ray.org.x, ray.org.y, ray.org.z);
+      PRINT_BEND print("FDX %\nFDY %\nFDZ %\n", ray.dir.x, ray.dir.y, ray.dir.z);
     }
   }
   else
