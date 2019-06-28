@@ -422,10 +422,10 @@ Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
     }
 
     float gmin, gmax;
-    bool hit = a->gbox->intersect(veye, vray, gmin, gmax);
+    bool hit = a->gbox->intersect(vorigin, vray, gmin, gmax);
 
     float lmin, lmax;
-    if (hit) hit = a->lbox->intersect(a->veye, vray, lmin, lmax);
+    if (hit) hit = a->lbox->intersect(vorigin, vray, lmin, lmax);
 
     float d = fabs(lmin) - fabs(gmin);
     if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
@@ -713,15 +713,16 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       }
       else
       {
+        vorigin = veye;
         vray = xy_wcs - veye;
         normalize(vray);
       }
 
       float gmin, gmax;
-      bool hit = gbox->intersect(veye, vray, gmin, gmax);
+      bool hit = gbox->intersect(vorigin, vray, gmin, gmax);
 
       float lmin, lmax;
-      if (hit) hit = lbox->intersect(veye, vray, lmin, lmax);
+      if (hit) hit = lbox->intersect(vorigin, vray, lmin, lmax);
 
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
