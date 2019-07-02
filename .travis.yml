@@ -13,7 +13,7 @@ matrix:
       osx_image: xcode10.2 # get a modern-enough mac environment
       compiler: clang
       env:
-        - MATRIX_EVAL="PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH}"
+        - MATRIX_EVAL="PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH} && alias python='python3'"
         # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
