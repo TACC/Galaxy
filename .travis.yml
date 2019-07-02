@@ -15,7 +15,8 @@ matrix:
       env:
         - MATRIX_EVAL=""
         # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
-        - PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH}
+        # - PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH}
+        - PYTHONPATH=/usr/local/Cellar/vtk/8.1.2_3/lib/python3.7/site-packages:${PYTHONPATH}
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
     #       since cmake detects mac/clang and gcc barfs rather than ignores
@@ -64,7 +65,7 @@ addons:
       - perceptualdiff
       - python-numpy
   homebrew:
-    update: true
+    # update: true
     packages: 
       - vtk
       - tbb
