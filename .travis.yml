@@ -9,14 +9,14 @@ branches:
 
 matrix:
   include:
-    - os: osx
-      osx_image: xcode10.2 # get a modern-enough mac environment
-      compiler: clang
-      env:
-        - MATRIX_EVAL=""
-        # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
-        # - PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH}
-        - PYTHONPATH=/usr/local/Cellar/vtk/8.1.2_3/lib/python3.7/site-packages:${PYTHONPATH}
+    # - os: osx
+    #   osx_image: xcode10.2 # get a modern-enough mac environment
+    #   compiler: clang
+    #   env:
+    #     - MATRIX_EVAL=""
+    #     # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
+    #     # - PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH}
+    #     - PYTHONPATH=/usr/local/Cellar/vtk/8.1.2_3/lib/python3.7/site-packages:${PYTHONPATH}
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
     #       since cmake detects mac/clang and gcc barfs rather than ignores
