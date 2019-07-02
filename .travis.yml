@@ -9,10 +9,14 @@ branches:
 
 matrix:
   include:
-    - os: osx
-      compiler: clang
-      env:
-        - MATRIX_EVAL=""
+    # - os: osx
+    #   osx_image: xcode10.2 # get a modern-enough mac environment
+    #   compiler: clang
+    #   env:
+    #     - MATRIX_EVAL=""
+    #     # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
+    #     # - PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH}
+    #     - PYTHONPATH=/usr/local/Cellar/vtk/8.1.2_3/lib/python3.7/site-packages:${PYTHONPATH}
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
     #       since cmake detects mac/clang and gcc barfs rather than ignores
@@ -61,6 +65,7 @@ addons:
       - perceptualdiff
       - python-numpy
   homebrew:
+    # update: true
     packages: 
       - vtk
       - tbb
@@ -95,7 +100,8 @@ script:
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
   - scripts/travis-ci-build.sh
-  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/vis ]; then tests/image-gold-tests.sh; fi
+  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/gxywriter ]; then tests/image-gold-tests.sh; fi
+  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -d install/tests ]; then tests/unit-tests.sh; fi
   - echo $(date) > .galaxy/last_build
 
 notifications:
