@@ -1,0 +1,10 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "vectors",
+        "type": "Volume",
+        "filename": "vectors-vectors.json"
+      }
+    ]
+}
