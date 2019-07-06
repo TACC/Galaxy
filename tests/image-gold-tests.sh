@@ -95,6 +95,10 @@ GXY_PARTITION_VTUS=${GXY_BIN}/partitionVTUs.vpy
 GXY_ENV=${GXY_ROOT}/install/galaxy.env
 PERCEPTUAL_DIFF=`which perceptualdiff`
 
+if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+  GXY_VTI2VOL="python3 ${GXY_BIN}/vti2vol"
+fi
+
 if [ ! -x ${GXY_RADIAL} ]; then
   fail "Could not find or execute the Galaxy radial generator '${GXY_RADIAL}'"
 fi
