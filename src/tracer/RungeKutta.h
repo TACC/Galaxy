@@ -1,5 +1,7 @@
 #include "vector"
 #include "map"
+#include "vector"
+#include "memory"
 #include "gxy/KeyedDataObject.h"
 #include "gxy/Volume.h"
 
@@ -8,13 +10,20 @@ namespace gxy
 
 OBJECT_POINTER_TYPES(RungeKutta)
 
-struct trajectory
+
+struct _segment
 {
+  _segment() {}
+  ~_segment() {}
+
   std::vector<vec3f> points;
   std::vector<vec3f> ups;
   std::vector<vec3f> tangents;
   std::vector<float> times;
 };
+
+typedef std::shared_ptr<_segment> segment;
+typedef std::shared_ptr<std::vector<segment>> trajectory;
 
 class RungeKutta: public KeyedDataObject
 {
@@ -30,19 +39,33 @@ public:
   virtual void initialize();
 
   void Trace(int id, vec3f& pt, VolumeP v);
-  void _Trace(int id, int n, vec3f& pt, vec3f& up, float time, VolumeP v);
+  void _Trace(int where, int id, int n, vec3f& pt, vec3f& up, float time, VolumeP v);
 
   virtual void local_trace(int id, int n, vec3f& pt, vec3f& up, float time, VolumeP v);
 
   int  get_max_steps() { return max_steps; }
   void set_max_steps(int n) { max_steps = n; }
 
+  int get_number_of_local_trajectories() { return trajectories.size(); }
+
+  void get_keys(std::vector<int>& v)
+  {
+    v.clear();
+    for (auto it = trajectories.begin(); it != trajectories.end(); it++)
+      v.push_back(it->first);
+  }
+
+  trajectory get_trajectory(int id) { return trajectories[id]; }
+    
+
 protected:
+  pthread_mutex_t lock;
+
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
 
-  std::map<int, std::vector<trajectory> > traces;
+  std::map<int, trajectory> trajectories;
 
   int max_steps;
 
@@ -75,7 +98,6 @@ protected:
   public:
     bool Action(int s)
     {
-      std::cerr << "ACTION\n";
       unsigned char *g = (unsigned char *)get();
       RungeKuttaP rkp = RungeKutta::GetByKey(*(Key *)g);
       g += sizeof(Key);
