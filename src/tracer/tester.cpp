@@ -27,9 +27,16 @@
 #include "gxy/KeyedDataObject.h"
 #include "gxy/DataObjects.h"
 #include "gxy/Datasets.h"
+#include "gxy/PathLines.h"
+#include "gxy/Camera.h"
+#include "gxy/PathLinesVis.h"
 #include "gxy/Volume.h"
+#include "gxy/Rendering.h"
+#include "gxy/RenderingSet.h"
+#include "gxy/Renderer.h"
 
 #include "RungeKutta.h"
+#include "TraceToPathLines.h"
 
 using namespace gxy;
 using namespace std;
@@ -46,62 +53,6 @@ syntax(char *a)
   exit(1);
 }
 
-class TestInterpolateMsg : public Work
-{
-public:
-  TestInterpolateMsg(Key k, vec3f p) : TestInterpolateMsg(sizeof(Key) + sizeof(p)) 
-  {
-    unsigned char *g = (unsigned char *)get();
-    *(Key *)g = k;
-    g += sizeof(Key);
-    memcpy(g, &p, sizeof(p));
-  }
-  ~TestInterpolateMsg() {}
-  WORK_CLASS(TestInterpolateMsg, true)
-
-public:
-  bool Action(int s)
-  {
-    std::cerr << "ACTION\n";
-    unsigned char *g = (unsigned char *)get();
-    VolumeP v = Volume::GetByKey(*(Key *)g);
-    g += sizeof(Key);
-    vec3f p;
-    memcpy(&p, g, sizeof(p));
-    float r[3];
-
-    int me = GetTheApplication()->GetRank();
-    cerr << "(" << me << ") ";
-
-    int whose = v->PointOwner(p);
-    if (whose == me)
-      std::cerr << "mine ";
-    else
-      std::cerr << "NOT mine ";
-
-    if (v->Sample(p, r))
-    {
-      if (whose == me)
-        std::cerr << r[0] << " " << r[1] << " " << r[2] << "\n";
-      else
-        std::cerr << " ghost " << r[0] << " " << r[1] << " " << r[2] << " ";
-    }
-
-    if (whose != me && whose != -1)
-    {
-      std::cerr << "sending to " << whose << "\n";
-      TestInterpolateMsg msg(v->getkey(), p);
-      msg.Send(whose);
-    }
-    else if (whose == -1)
-      std::cerr << "unowned\n";
-
-    return false;
-  }
-};
-
-WORK_CLASS_TYPE(TestInterpolateMsg)
-
 #include "gxy/Debug.h"
 
 int main(int argc,  char *argv[])
@@ -110,12 +61,19 @@ int main(int argc,  char *argv[])
   char *dbgarg;
   bool dbg = false;
   bool atch = false;
+  int width = 512, height = 512;
   int nsteps = 100;
+
+  ospInit(&argc, (const char **)argv);
+
+  Application theApplication(&argc, &argv);
+  theApplication.Start();
 
   for (int i = 1; i < argc; i++)
   {
     if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i],"-n")) nsteps = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
     else if (statefile == "")   statefile = argv[i];
     else syntax(argv[0]);
   }
@@ -123,23 +81,22 @@ int main(int argc,  char *argv[])
   if (statefile == "")
     syntax(argv[0]);
 
-  Application theApplication(&argc, &argv);
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
+  Renderer::Initialize();
   RegisterDataObjects();
   RungeKutta::RegisterRK();
-  TestInterpolateMsg::Register();
-
-  theApplication.Start();
-
+  RegisterTraceToPathLines();
+ 
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
-
-  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
   theApplication.Run();
 
   if (mpiRank == 0)
   {
+    RendererP theRenderer = Renderer::NewP();
+
     rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
     if (! doc)
     {
@@ -172,7 +129,11 @@ int main(int argc,  char *argv[])
     rkp->set_max_steps(nsteps);
     rkp->Commit();
 
+    sleep(1);
+
+#if 0
     bool done = false;
+    int id = 0;
     while (! done)
     {
       vec3f p;
@@ -181,16 +142,72 @@ int main(int argc,  char *argv[])
       done = cin.eof();
       if (!done)
       {
-        std::cerr << "me,X,Y,Z,VX,VY,VZ,t\n";
-#if 0
-        TestInterpolateMsg msg(theDatasets->FindKey("vectors"), p);
-        msg.Send(0);
-#else
-        rkp->Trace(0, p, vp);
-#endif
-
+        std::cerr << "me,X,Y,Z,VX,VY,VZ,UX,UY,UZ,t,twist\n";
+        rkp->Trace(id++, p, vp);
       }
     }
+#else
+    for (int i = 0; i < 10; i++)
+    {
+      float d = -0.5 + (i / 9.0);
+      vec3f p(d, d, -0.9);
+      rkp->Trace(i, p, vp);
+    }
+
+    sleep(1);
+#endif
+
+    PathLinesP plp = PathLines::NewP();
+    plp->CopyPartitioning(vp);
+    plp->Commit();
+
+    TraceToPathLines(vp, rkp, plp);
+    plp->Commit();
+
+    theDatasets->Insert("pathlines", plp);
+    theDatasets->Commit();
+
+    CameraP camera = Camera::NewP();
+    camera->set_viewup(0.0, 1.0, 0.0);
+    camera->set_angle_of_view(45.0);
+    camera->set_viewpoint(1.0, 2.0, 3.0);
+    camera->set_viewdirection(-1.0, -2.0, -3.0);
+    camera->Commit();
+
+    vec4f cmap[2];
+    cmap[0] = {0.0, 1.0, 0.0, 0.0};
+    cmap[1] = {10.5984, 1.0, 1.0, 1.0};
+
+    vec2f omap[2];
+    omap[0] = {0.0,  0.1};
+    omap[1] = {10.5984, 0.2};
+
+    PathLinesVisP plvis = PathLinesVis::NewP();
+    plvis->SetName("pathlines");
+    plvis->SetRadiusTransform(0.0, 0.01, 10.5984, 0.02);
+    plvis->SetColorMap(2, cmap);
+    plvis->SetOpacityMap(2, omap);
+    plvis->Commit(theDatasets);
+
+    VisualizationP visualization = Visualization::NewP();
+    visualization->AddVis(plvis);
+    visualization->Commit(theDatasets);
+
+    RenderingP theRendering = Rendering::NewP();
+    theRendering->SetTheOwner(0);
+    theRendering->SetTheSize(width, height);
+    theRendering->SetTheDatasets(theDatasets);
+    theRendering->SetTheCamera(camera);
+    theRendering->SetTheVisualization(visualization);
+    theRendering->Commit();
+
+    RenderingSetP renderingSet = RenderingSet::NewP();
+    renderingSet->AddRendering(theRendering);
+    renderingSet->Commit();
+
+    theRenderer->Render(renderingSet);
+    renderingSet->WaitForDone();
+    renderingSet->SaveImages(string("plines"));
 
     theApplication.QuitApplication();
   }
