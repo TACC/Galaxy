@@ -249,9 +249,6 @@ static void DataDrivenPathLines_postIntersect(uniform Geometry *uniform self,
 
       vec3f color = self->transferFunction->getColorForValue(self->transferFunction, dataval);
 
-      // print("I %\nU %\nR %\nZ %\nD %\nR %\nG %\nB %\n", index, ray.u, radius, Z, dataval, color.x, color.y, color.z);
-      // print("r0 %\nv0 %\nr1 %\nv1 %\nR %\nD %\n", self->radius0, self->value0, self->radius1, self->value1, radius, dataval);
-
       dg.color.x = color.x;
       dg.color.y = color.y;
       dg.color.z = color.z;
@@ -305,6 +302,7 @@ DataDrivenPathLines_setCurve(void           *uniform _self,
   self->radius1 = r1;
   self->value0 = v0;
   self->value1 = v1;
+
 
   uniform RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
   rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT4, vertices,0,sizeof(uniform vec3fa),numVertices);

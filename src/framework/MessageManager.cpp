@@ -430,7 +430,6 @@ MessageManager::check_mpi(MessageManager *mm)
 		}
 	}
 
-
 	return kill_app;
 }
 

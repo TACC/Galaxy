@@ -224,35 +224,13 @@ Geometry::local_import(char *p, MPI_Comm c)
 int
 Geometry::serialSize()
 {
-#if 0
-  return super::serialSize() + 2*sizeof(int) + 4*vertices.size()*sizeof(float) + connectivity.size()*sizeof(int);
-#else
   return super::serialSize();
-#endif
 }
 
 unsigned char*
 Geometry::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
-
-#if 0
-  *(int *)ptr = vertices.size();
-  ptr += sizeof(int);
-
-  *(int *)ptr = connectivity.size();
-  ptr += sizeof(int);
-
-  memcpy(ptr, vertices.data(), 3*vertices.size()*sizeof(float));
-  ptr += 3*vertices.size()*sizeof(float);
-
-  memcpy(ptr, data.data(), data.size()*sizeof(float));
-  ptr += data.size()*sizeof(float);
-
-  memcpy(ptr, connectivity.data(), connectivity.size()*sizeof(float));
-  ptr += connectivity.size()*sizeof(float);
-#endif
-
   return ptr;
 }
 
@@ -260,24 +238,6 @@ unsigned char*
 Geometry::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
-#if 0
-  int nv = *(int *)ptr;
-  ptr += sizeof(int);
-
-  int nc = *(int *)ptr;
-  ptr += sizeof(int);
-
-  allocate(nv, nc);
-  
-  memcpy(vertices.data(), ptr, 3*nv*sizeof(float));
-  ptr += 3*nv*sizeof(float);
-
-  memcpy(data.data(), ptr, nv*sizeof(float));
-  ptr += nv*sizeof(float);
-
-  memcpy(connectivity.data(), ptr, nc*sizeof(int));
-  ptr += nc*sizeof(int);
-#endif
   return ptr;
 }
 

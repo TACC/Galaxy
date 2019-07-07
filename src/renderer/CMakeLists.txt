@@ -108,5 +108,16 @@ install(FILES
   Rendering.h 
   RenderingSet.h 
   TraceRays.h 
+  MappedVis.h
+  ParticlesVis.h
+  PathLinesVis.h
+  TrianglesVis.h
+  Vis.h
+  VolumeVis.h
+  IspcObject.h
+  OsprayObject.h
+  OsprayUtil.h
+  Visualization.h
+  RenderingEvents.h
   DESTINATION include/gxy)
  

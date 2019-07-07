@@ -11,12 +11,20 @@ Run it:
 
   mpirun -np k tester -n N 
 
+you type:
+0.1 0.1 -0.9(cr)
+(control-D)
+
 That'll start up k processes and generate streamlines up to N points long.
 It'll automatically load tester.state.   It will then wait for you to 
 type a starting point (no commas etc).  It will then trace the particle through the partitioned vector 
 field.  It'll spit out the trace as it generates it; if you run:
 
 mpirun -np k `pwd`/tester -n N 2>&1 | grep -v ACT | grep -v got | grep -v Us | grep -v outs > tester.csv
+you type:
+0.1 0.1 -0.9(cr)
+(control-D)
+
 
 it will generate a CSV that you can load into PV.  The columns include the partition in which each point is
 traced, the point, the tangent, and the integration time.
