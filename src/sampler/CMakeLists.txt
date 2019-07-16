@@ -34,12 +34,18 @@ link_directories(${Galaxy_BINARY_DIR}/src/data
                  ${Galaxy_BINARY_DIR}/src/framework)
 
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
 
 set (ISPC_SOURCES 
+ SamplerTraceRays.ispc
+ SamplerVis.ispc
 )
 
 set (CPP_SOURCES 
-  Sampler.cpp)
+  Sampler.cpp
+  SamplerTraceRays.cpp
+  SamplerVis.cpp
+  )
 
 set(SERVERS "")
 
@@ -63,6 +69,7 @@ install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
   Sampler.h 
+  SamplerTraceRays.h 
   DESTINATION include)
 
 install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
