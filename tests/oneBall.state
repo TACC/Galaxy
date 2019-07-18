@@ -14,10 +14,10 @@
       {
         "Lighting": {
           "Sources": [[1, 1, 0, 1]],
-          "shadows": false,
+          "shadows": true,
           "Ka": 0.4,
           "Kd": 0.6,
-          "ao count": 0,
+          "ao count": 32,
           "ao radius": 1.0
         },
         "operators":
