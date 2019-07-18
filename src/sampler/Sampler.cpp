@@ -24,6 +24,7 @@
 #include "Sampler.h"
 #include "Particles.h"
 #include "Rays.h"
+#include "RayFlags.h"
 
 namespace gxy 
 {
@@ -37,6 +38,14 @@ Sampler::Initialize()
   RegisterClass();
   SampleMsg::Register();
 }
+
+#if 0
+void
+Sampler::initialize()
+{
+  pthread_mutex_init(&lock, NULL);
+}
+#endif
 
 void
 Sampler::HandleTerminatedRays(RayList *raylist)
@@ -60,9 +69,11 @@ Sampler::HandleTerminatedRays(RayList *raylist)
 
   ParticlesP samples = this->GetSamples();
 
+  samples->Lock();
+
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {
-    if (raylist->get_classification(i) == Renderer::TERMINATED)
+    if (raylist->get_term(i) & RAY_SURFACE)
     {
       if (rendering->IsLocal())
       {
@@ -85,6 +96,8 @@ Sampler::HandleTerminatedRays(RayList *raylist)
       }
     }
   }
+
+  samples->Unlock();
 
   std::cerr << "Sampler::HandleTerminatedRays: " << samples->GetNumberOfVertices() << " samples stashed\n";
 

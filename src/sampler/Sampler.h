@@ -33,6 +33,7 @@
  */
 
 #include <vector>
+#include <pthread.h>
 
 #include "Renderer.h"
 
@@ -49,6 +50,7 @@ class Sampler : public Renderer
     
 public:
   static void Initialize();
+  // virtual void initialize(); //!< initialize this object
   virtual void HandleTerminatedRays(RayList *raylist);
   void SetSamples(ParticlesP p) {mSamples = p;}
   ParticlesP GetSamples()
@@ -64,6 +66,7 @@ public:
 
 private:
   ParticlesP mSamples = NULL;
+  pthread_mutex_t lock;
 
   class SampleMsg : public Work
   {

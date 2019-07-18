@@ -10,6 +10,9 @@ namespace gxy
 {
 
 WORK_CLASS_TYPE(RungeKutta::RKTraceMsg)
+WORK_CLASS_TYPE(RungeKutta::RKTraceCompleteMsg)
+WORK_CLASS_TYPE(RungeKutta::RKTraceCountMsg)
+WORK_CLASS_TYPE(RungeKutta::RKTraceFromParticleSetMsg)
 KEYED_OBJECT_CLASS_TYPE(RungeKutta)
 
 void
@@ -17,16 +20,30 @@ RungeKutta::initialize()
 {
   super::initialize();
   max_steps = 1000;
+  pthread_cond_init(&signal, NULL);
   pthread_mutex_init(&lock, NULL);
 }
 
 int 
-RungeKutta::serialSize() { return super::serialSize() + sizeof(int); }
+RungeKutta::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int); }
+
+bool
+RungeKutta::SetVectorField(VolumeP v)
+{
+  if (!v || v->get_number_of_components() != 3 || v->get_type() != Volume::FLOAT)
+  {
+    std::cerr << "RungeKutta::SetVectorField:  bad vector field\n";
+    return false;
+  }
+  vectorField = v;
+  return true;
+}
 
 unsigned char *
 RungeKutta::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
+  *(Key *)ptr = vectorField->getkey(); ptr += sizeof(Key);
   *(int *)ptr = max_steps; ptr += sizeof(int);
   return ptr;
 }
@@ -35,34 +52,93 @@ unsigned char *
 RungeKutta::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
+  vectorField = Volume::GetByKey(*(Key *)ptr); ptr += sizeof(Key);
   max_steps = *(int *)ptr; ptr += sizeof(int);
   return ptr;
 }
 
 void
-RungeKutta::Trace(int id, vec3f& p, VolumeP v)
+RungeKutta::Trace(vec3f& p, int id)
 {
+  Lock();
+
+  in_flight = 1;
+  
   vec3f u(0.0, 1.0, 0.0);
-  _Trace(v->PointOwner(p), id, 0, p, u, 0.0, v);
+  _Trace(GetVectorField()->PointOwner(p), id, 0, p, u, 0.0);
+
+  while (in_flight) 
+    Wait();
+
+  Unlock();
 }
 
 void
-RungeKutta::_Trace(int where, int id, int n, vec3f& p, vec3f& u, float t, VolumeP vp)
+RungeKutta::Trace(int n, vec3f* p)
+{
+  Lock();
+
+  in_flight = n;
+
+  vec3f u(0.0, 1.0, 0.0);
+  
+  for (int i = 0; i < n; i++)
+    _Trace(GetVectorField()->PointOwner(p[i]), i, 0, p[i], u, 0.0);
+
+  while (in_flight) 
+    Wait();
+
+  Unlock();
+}
+
+void
+RungeKutta::Trace(ParticlesP p)
+{
+  Lock();
+
+  // Offset by a huge number so that the completion of 
+  // traces before the actual number is known don't
+  // make it think its done.   The message from the 
+  // last process will remove this offset. 
+
+  in_flight = RUNGEKUTTA_INFLIGHT_OFFSET;
+
+  RKTraceFromParticleSetMsg msg(getkey(), p, 0);
+  msg.Send(0);
+
+  while (in_flight) 
+    Wait();
+
+  Unlock();
+}
+
+void
+RungeKutta::_Trace(int where, int id, int n, vec3f& p, vec3f& u, float t)
 {
   if (where != -1)
   {
-    RKTraceMsg msg(getkey(), vp, id, n, t, u, p);
+    RKTraceMsg msg(getkey(), id, n, t, u, p);
     msg.Send(where);
   }
 }
 
+bool
+RungeKutta::local_commit(MPI_Comm c)
+{
+  super::local_commit(c);
+  CopyPartitioning(vectorField);
+  return false;
+}
+
 void
-RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t, VolumeP v)
+RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
 {
   segment seg(new _segment);
   vec3f pLast, uLast;
   float tLast;
   int me = GetTheApplication()->GetRank();
+
+  VolumeP v = GetVectorField();
 
   // h will be the step size
 
@@ -96,6 +172,8 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t, VolumeP v)
   pLast = p;
   uLast = u;
   tLast = t;
+  
+  int next = me;
 
   bool terminated = false; vec3f last_tangent;
   while (! terminated)
@@ -134,11 +212,17 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t, VolumeP v)
     seg->ups.push_back(u);
     seg->times.push_back(t);
 
-    last_tangent = normalized_velocity;
-
     n ++;
     if (n > max_steps)
+    {
       terminated = true;
+      break;
+    }
+
+    if (len(velocity) == 0.0)
+      break;
+
+    last_tangent = normalized_velocity;
 
     // Now take a Runge Kutta step...
 
@@ -248,24 +332,16 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t, VolumeP v)
     cross(r, normalized_velocity, u);
     normalize(u);
 
-    int where = v->PointOwner(p);
-    if (where != me)
-    {
-      // Then this point is not strictly in this partition and is in the 
-      // ghost zone.  If there is a neighbor, send the last actually owned
-      // point... it will be in ghost region of the neighbor
-
-      if (where != -1)
-        _Trace(where, id, n, pLast, uLast, tLast, v);
+    next = v->PointOwner(p);
+    if (next !=  me)
       break;
-    }
 
     uLast = u;
     pLast = p;
     tLast = t;
   }
 
-  pthread_mutex_lock(&lock);
+  Lock();
 
   std::map<int, trajectory>::iterator ti = trajectories.find(id);
   if (ti == trajectories.end())
@@ -279,7 +355,15 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t, VolumeP v)
     ti->second->push_back(seg);
   }
 
-  pthread_mutex_unlock(&lock);
+  Unlock();
+
+  if (terminated || next == -1)
+  {
+    RKTraceCompleteMsg msg(getkey(), id);
+    msg.Send(0);
+  }
+  else
+    _Trace(next, id, n, pLast, uLast, tLast);
 }
 
 }

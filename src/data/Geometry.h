@@ -27,6 +27,7 @@
 
 #include <string>
 #include <string.h>
+#include <pthread.h>
 #include <memory.h>
 #include <vector>
 
@@ -95,7 +96,12 @@ class Geometry : public KeyedDataObject
     connectivity.clear();
   }
 
+  void Lock() { pthread_mutex_lock(&lock); }
+  void Unlock() { pthread_mutex_unlock(&lock); }
+
 protected:
+  pthread_mutex_t lock;
+
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);

@@ -68,6 +68,7 @@ Geometry::initialize()
 {
   vtkobj = nullptr;
   super::initialize();
+  pthread_mutex_init(&lock, NULL);
 }
 
 void

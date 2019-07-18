@@ -28,4 +28,7 @@ set(Galaxy_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${OSPRAY_LIB
 add_executable(tester tester.cpp RungeKutta.cpp TraceToPathLines.cpp)
 target_link_libraries(tester ${VTK_LIBRARIES} ${Galaxy_LIBRARIES} ${MPI_C_LIBRARIES})
 
+add_executable(sampletrace sampletrace.cpp RungeKutta.cpp TraceToPathLines.cpp)
+target_link_libraries(sampletrace gxy_sampler ${VTK_LIBRARIES} ${Galaxy_LIBRARIES} ${MPI_C_LIBRARIES})
+
 

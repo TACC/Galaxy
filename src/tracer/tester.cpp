@@ -123,10 +123,10 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    VolumeP vp = Volume::Cast(theDatasets->Find("vectors"));
-
     RungeKuttaP rkp = RungeKutta::NewP();
     rkp->set_max_steps(nsteps);
+    if (! rkp->SetVectorField(Volume::Cast(theDatasets->Find("vectors"))))
+      exit(1);
     rkp->Commit();
 
     sleep(1);
@@ -143,28 +143,39 @@ int main(int argc,  char *argv[])
       if (!done)
       {
         std::cerr << "me,X,Y,Z,VX,VY,VZ,UX,UY,UZ,t,twist\n";
-        rkp->Trace(id++, p, vp);
+        rkp->Trace(id++, p);
       }
     }
-#else
+#elif 0
+    // This will wait for each
+
     for (int i = 0; i < 10; i++)
     {
       float d = -0.5 + (i / 9.0);
       vec3f p(d, d, -0.9);
-      rkp->Trace(i, p, vp);
+      rkp->Trace(p, i);
+    }
+#else
+    // this will wait for them all
+    vec3f pts[10];
+
+    for (int i = 0; i < 10; i++)
+    {
+      float d = -0.5 + (i / 9.0);
+      pts[i] = vec3f(d, d, -0.9);
     }
 
-    sleep(1);
+    rkp->Trace(10, pts);
 #endif
 
-    PathLinesP plp = PathLines::NewP();
-    plp->CopyPartitioning(vp);
-    plp->Commit();
+  sleep(1);
 
-    TraceToPathLines(vp, rkp, plp);
-    plp->Commit();
+  PathLinesP plp = PathLines::NewP();
 
-    theDatasets->Insert("pathlines", plp);
+  TraceToPathLines(rkp, plp);
+  plp->Commit();
+
+  theDatasets->Insert("pathlines", plp);
     theDatasets->Commit();
 
     CameraP camera = Camera::NewP();

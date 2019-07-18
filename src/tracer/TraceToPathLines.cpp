@@ -13,12 +13,10 @@ class TraceToPathLinesMsg : public Work
 {
 public:
 
-  TraceToPathLinesMsg(VolumeP vp, RungeKuttaP rkp, PathLinesP plp) 
-    : TraceToPathLinesMsg(3*sizeof(Key))
+  TraceToPathLinesMsg(RungeKuttaP rkp, PathLinesP plp) 
+    : TraceToPathLinesMsg(2*sizeof(Key))
   {
     unsigned char *g = (unsigned char *)get();
-    *(Key *)g = vp->getkey();
-    g += sizeof(Key);
     *(Key *)g = rkp->getkey();
     g += sizeof(Key);
     *(Key *)g = plp->getkey();
@@ -33,14 +31,12 @@ public:
   bool CollectiveAction(MPI_Comm c, bool is_root)
   {
     unsigned char *g = (unsigned char *)get();
-    VolumeP vp = Volume::GetByKey(*(Key *)g);
-    g += sizeof(Key);
     RungeKuttaP rkp = RungeKutta::GetByKey(*(Key *)g);
     g += sizeof(Key);
     PathLinesP plp = PathLines::GetByKey(*(Key *)g);
     g += sizeof(Key);
 
-    plp->CopyPartitioning(vp);
+    plp->CopyPartitioning(rkp);
 
     std::vector<int> keys;
     rkp->get_keys(keys);
@@ -95,9 +91,9 @@ RegisterTraceToPathLines()
 }
 
 void
-TraceToPathLines(VolumeP vp, RungeKuttaP rkp, PathLinesP plp)
+TraceToPathLines(RungeKuttaP rkp, PathLinesP plp)
 {
-  TraceToPathLinesMsg msg(vp, rkp, plp);
+  TraceToPathLinesMsg msg(rkp, plp);
   msg.Broadcast(true, true);
 }
 
