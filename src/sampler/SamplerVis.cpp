@@ -25,8 +25,8 @@
 #include <sstream>
 #include <fstream>
 #include "Application.h"
-#include "SampleVis.h"
-#include "SampleVis_ispc.h"
+#include "SamplerVis.h"
+#include "SamplerVis_ispc.h"
 
 #include "rapidjson/document.h"
 
@@ -36,45 +36,45 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(SampleVis)
+KEYED_OBJECT_CLASS_TYPE(SamplerVis)
 
 void
-SampleVis::Register()
+SamplerVis::Register()
 {
 	RegisterClass();
 }
 
-SampleVis::~SampleVis()
+SamplerVis::~SamplerVis()
 {
 }
 
 void
-SampleVis::initialize()
+SamplerVis::initialize()
 {
   super::initialize();
 }
 
 void 
-SampleVis::initialize_ispc()
+SamplerVis::initialize_ispc()
 {
   super::initialize_ispc();
-  ispc::SampleVis_initialize(ispc);
+  ispc::SamplerVis_initialize(ispc);
 }
 
 void
-SampleVis::allocate_ispc()
+SamplerVis::allocate_ispc()
 {
-  ispc = ispc::SampleVis_allocate();
+  ispc = ispc::SamplerVis_allocate();
 }
 
 bool 
-SampleVis::Commit(DatasetsP datasets)
+SamplerVis::Commit(DatasetsP datasets)
 {
 	return Vis::Commit(datasets);
 }
 
 bool
-SampleVis::LoadFromJSON(Value& v)
+SamplerVis::LoadFromJSON(Value& v)
 {
   Vis::LoadFromJSON(v);
 
@@ -85,19 +85,19 @@ SampleVis::LoadFromJSON(Value& v)
 }
 
 void
-SampleVis::SetTheOsprayDataObject(OsprayObjectP o)
+SamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
 {
   super::SetTheOsprayDataObject(o);
 }
 
 int
-SampleVis::serialSize() 
+SamplerVis::serialSize() 
 {
 	return super::serialSize() + sizeof(float);
 }
 
 unsigned char *
-SampleVis::deserialize(unsigned char *ptr) 
+SamplerVis::deserialize(unsigned char *ptr) 
 {
   ptr = super::deserialize(ptr);
 
@@ -108,7 +108,7 @@ SampleVis::deserialize(unsigned char *ptr)
 }
 
 unsigned char *
-SampleVis::serialize(unsigned char *ptr)
+SamplerVis::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
 
@@ -119,19 +119,19 @@ SampleVis::serialize(unsigned char *ptr)
 }
 
 bool 
-SampleVis::local_commit(MPI_Comm c)
+SamplerVis::local_commit(MPI_Comm c)
 {
   if(super::local_commit(c))  
     return true;
   
-  ispc::SampleVis_set_tolerance(ispc, tolerance);
+  ispc::SamplerVis_set_tolerance(ispc, tolerance);
   return false;
 }
 
 void 
-SampleVis::SetTolerance(float t) { tolerance = t; }
+SamplerVis::SetTolerance(float t) { tolerance = t; }
 
 float 
-SampleVis::GetTolerance() { return tolerance; }
+SamplerVis::GetTolerance() { return tolerance; }
 
 } // namespace gxy

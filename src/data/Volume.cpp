@@ -22,6 +22,7 @@
 
 #include "Application.h"
 #include "Volume.h"
+#include "OsprayVolume.h"
 
 #include <vtkNew.h>
 #include <vtkDataSetReader.h>
@@ -596,6 +597,12 @@ Volume::PointOwner(vec3f& p)
   int K = (ll.z - 1) / nz; if (K >= global_partitions.z) K = global_partitions.z - 1;
 
   return K*(global_partitions.x * global_partitions.y) + (J * global_partitions.x) + I;
+}
+
+OsprayObjectP 
+Volume::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+{
+  return OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
 }
    
 } // namespace gxy

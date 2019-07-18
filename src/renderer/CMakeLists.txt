@@ -41,6 +41,7 @@ include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCL
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
 										${gxy_data_SOURCE_DIR}
+										${gxy_ospray_SOURCE_DIR}
 										${gxy_data_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src)
 
@@ -69,12 +70,6 @@ set (CPP_SOURCES
   IspcObject.cpp
   Lighting.cpp
   MappedVis.cpp
-  OsprayObject.cpp
-  OsprayTriangles.cpp
-  OsprayParticles.cpp
-  OsprayPathLines.cpp
-  OsprayVolume.cpp
-  OsprayUtil.cpp
   ParticlesVis.cpp
   PathLinesVis.cpp
   RayQManager.cpp
@@ -115,8 +110,6 @@ install(FILES
   Vis.h
   VolumeVis.h
   IspcObject.h
-  OsprayObject.h
-  OsprayUtil.h
   Visualization.h
   RenderingEvents.h
   DESTINATION include/gxy)

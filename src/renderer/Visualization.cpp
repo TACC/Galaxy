@@ -222,47 +222,21 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
     if (! ospModel)
       ospModel = ospNewModel();
 
-    if (Volume::IsA(kdop))
-      op = OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
-    else
+    op = kdop->GetTheOSPRayEquivalent(kdop);
+    if (! op)
     {
-      if (!Geometry::IsA(kdop))
-      {
-        cerr << "data object is neither Geometry nor Volume in Visualization::SetOsprayObjects\n";
-        exit(1);
-      }
-
-      if (Geometry::Cast(kdop)->GetNumberOfVertices() == 0)
-        op = NULL;
-      else
-      {
-        if (Particles::IsA(kdop))
-          op = OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
-        else if (PathLines::IsA(kdop))
-          op = OsprayObject::Cast(OsprayPathLines::NewP(PathLines::Cast(kdop)));
-        else if (Triangles::IsA(kdop))
-          op = OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
-        else
-        {
-          cerr << "unknown Geometry type detected in Visualization::SetOsprayObjects\n";
-          exit(1);
-        }
-      }
+      cerr << "no OSPRay equivalent for this data object\n";
+      exit(1);
     }
   
-    if (op)
-    {
-      // Here we set the per-visualization values onto the OSPRay object
-
-      v->SetTheOsprayDataObject(op);
+    v->SetTheOsprayDataObject(op);
     
-      if (OsprayVolume::IsA(op))
-        vispc[nvispc++] = v->GetIspc();
-      else if (ParticlesVis::IsA(v) || PathLinesVis::IsA(v) || TrianglesVis::IsA(v))
-        ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
-      else
-        mispc[nmispc++] = v->GetIspc();
-    }
+    if (OsprayVolume::IsA(op))
+      vispc[nvispc++] = v->GetIspc();
+    else if (ParticlesVis::IsA(v) || PathLinesVis::IsA(v) || TrianglesVis::IsA(v))
+      ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
+    else
+      mispc[nmispc++] = v->GetIspc();
   }
 
   if (ospModel)
@@ -307,11 +281,12 @@ Visualization::LoadFromJSON(Value& v)
     }
 
     string t = string(vv["type"].GetString());
+    if (t.substr(t.size() - 3) != "Vis")
+      t = t + "Vis";
 
-    VisP vp;
-    if (t == "Volume")
+    VisP vp = Vis::Cast(GetTheKeyedObjectFactory()->NewP(t));
+    if (vp)
     {
-      VisP vp = VolumeVis::NewP();
       if (! vp->LoadFromJSON(vv))
       {
         set_error(1);
@@ -319,39 +294,9 @@ Visualization::LoadFromJSON(Value& v)
       }
       AddVis(vp);
     }
-    else if (t == "Particles")
-    {
-      VisP p = ParticlesVis::NewP();
-      if (! p->LoadFromJSON(vv))
-      {
-        set_error(1);
-        return false;
-      }
-      AddVis(p);
-    }
-    else if (t == "PathLines")
-    {
-      VisP p = PathLinesVis::NewP();
-      if (! p->LoadFromJSON(vv))
-      {
-        set_error(1);
-        return false;
-      }
-      AddVis(p);
-    }
-    else if (t == "Triangles")
-    {
-      VisP p = TrianglesVis::NewP();
-      if (! p->LoadFromJSON(vv))
-      {
-        set_error(1);
-        return false;
-      }
-      AddVis(p);
-    }
     else
     {
-      cerr << "ERROR: unknown type: " << t << " in json Visualization element" << endl;
+      cerr << "ERROR: unknown type: " << " in json Visualization element (" << t << ")" << endl;
       set_error(1);
       return false;
     }

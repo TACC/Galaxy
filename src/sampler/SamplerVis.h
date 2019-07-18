@@ -20,7 +20,7 @@
 
 #pragma once
 
-/*! \file SampleVis.h 
+/*! \file SamplerVis.h 
  * \brief a visualization element that uses a color map and opacity map to define its rendering behavior
  * \ingroup render
  */
@@ -40,32 +40,32 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(SampleVis)
+OBJECT_POINTER_TYPES(SamplerVis)
 
 //! a visualization element that uses a color map and opacity map to define its rendering behavior
 /*! \ingroup render
  * \sa KeyedObject, KeyedDataObject, Vis
  */
-class SampleVis : public Vis
+class SamplerVis : public Vis
 {
-  KEYED_OBJECT_SUBCLASS(SampleVis, Vis)
+  KEYED_OBJECT_SUBCLASS(SamplerVis, Vis)
 
 public:
 
-  virtual ~SampleVis(); //!< default destructor
+  virtual ~SamplerVis(); //!< default destructor
 
-  virtual void initialize(); //!< initialize this SampleVis object
+  virtual void initialize(); //!< initialize this SamplerVis object
 
   //! commit this object to the global registry across all processes
   virtual bool Commit(DatasetsP);
 
-  //! set the tolerance for this SampleVis
+  //! set the tolerance for this SamplerVis
   void SetTolerance(float t);
 
-  //! get the tolerance for this SampleVis
+  //! get the tolerance for this SamplerVis
   float GetTolerance();
 
-  //! construct a SampleVis from a Galaxy JSON specification
+  //! construct a SamplerVis from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
 
   //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it

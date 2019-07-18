@@ -60,6 +60,8 @@ public:
 
   vec3f* GetNormals() { return (vec3f *)normals.data(); }
 
+  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
+
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);
   std::vector<vec3f> normals;

@@ -27,6 +27,7 @@ include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_multiserver_SOURCE_DIR}
 										${gxy_sampler_SOURCE_DIR}
 										${gxy_data_SOURCE_DIR}
+										${gxy_ospray_SOURCE_DIR}
 										${gxy_data_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src)
 

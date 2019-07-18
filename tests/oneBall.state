@@ -14,16 +14,16 @@
       {
         "Lighting": {
           "Sources": [[1, 1, 0, 1]],
-          "shadows": true,
+          "shadows": false,
           "Ka": 0.4,
           "Kd": 0.6,
-          "ao count": 32,
+          "ao count": 0,
           "ao radius": 1.0
         },
         "operators":
           [
             {
-              "type": "Volume",
+              "type": "VolumeVis",
               "dataset": "oneBall",
               "isovalues": [ 0.25 ],
               "volume rendering": false,

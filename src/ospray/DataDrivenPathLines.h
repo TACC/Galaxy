@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "Geometry.h"
+#include "ospray/SDK/geometry/Geometry.h"
 
 namespace ospray {
 

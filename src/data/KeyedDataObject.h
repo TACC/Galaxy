@@ -34,6 +34,7 @@
 
 #include "Box.h"
 #include "KeyedObject.h"
+#include "OsprayObject.h"
 
 namespace gxy
 {
@@ -112,10 +113,12 @@ public:
   void get_global_minmax(float& min, float& max)   { min = global_min; max = global_max; }
   void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
 
+  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP kdop);
+
 protected:
 	vtkClientSocket *skt;
 	std::string filename;
-	
+
 	bool time_varying, attached;
 
   virtual bool local_import(char *, MPI_Comm c);

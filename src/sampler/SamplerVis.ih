@@ -23,12 +23,12 @@
 #include "Vis.ih"
 struct TransferFunction;
 
-struct SampleVis_ispc
+struct SamplerVis_ispc
 {
   struct Vis_ispc vis;
   float tolerance;
 };  
 
-typedef uniform SampleVis_ispc *uniform pSampleVis_ispc;
+typedef uniform SamplerVis_ispc *uniform pSamplerVis_ispc;
 
 

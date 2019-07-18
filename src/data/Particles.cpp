@@ -29,6 +29,7 @@
 
 #include "Application.h"
 #include "Particles.h"
+#include "OsprayParticles.h"
 
 
 #include <vtkNew.h>
@@ -126,6 +127,13 @@ Particles::load_from_vtkPointSet(vtkPointSet *pset)
 
   return true;
 }
+
+OsprayObjectP 
+Particles::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+{ 
+  return OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
+} 
+
 
 
 } // namespace gxy

@@ -31,9 +31,16 @@ if (COMMAND cmake_policy)
 
   # ignore rpath setting effects for certain vars under MacOS
   cmake_policy(SET CMP0068 NEW)
+
 endif(COMMAND cmake_policy)
 
-include_directories(${GALAXY_INCLUDES} ${gxy_framework_SOURCE_DIR} ${gxy_data_SOURCE_DIR} ${Galaxy_BINARY_DIR}/src)
+include_directories(${GALAXY_INCLUDES}
+                    ${gxy_framework_SOURCE_DIR}
+                    ${gxy_ospray_SOURCE_DIR}
+                    ${gxy_data_SOURCE_DIR}
+                    ${Galaxy_BINARY_DIR}/src
+                    ${OSPRAY_INCLUDE_DIRS}
+                    ${EMBREE_INCLUDE_DIRS})
 
 set (CPP_SOURCES     
   Box.cpp
@@ -49,7 +56,7 @@ set (CPP_SOURCES
   AmrVolume.cpp)
 
 add_library(gxy_data SHARED ${CPP_SOURCES})
-target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework)
+target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework gxy_ospray)
 set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 install(TARGETS gxy_data DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

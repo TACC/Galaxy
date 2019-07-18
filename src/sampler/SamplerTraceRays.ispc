@@ -47,11 +47,11 @@
 #include "ospray/SDK/volume/Volume.ih"
 
 #include "Rays.ih"
-#include "SamplerTraceRays.ih"
 #include "Lighting.ih"
 #include "RayFlags.h"
 #include "Visualization.ih"
-#include "VolumeVis.ih"
+#include "SamplerVis.ih"
+#include "SamplerTraceRays.ih"
 
 export void SamplerTraceRays_initialize(void *uniform _self)
 {
@@ -140,10 +140,10 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
 
   // For the moment, assume that the visualization contains only one vis and its a SampleVis
 
-  uniform SampleVis_ispc *uniform vvis = vis->volumeVis[0];
+  uniform SamplerVis_ispc *uniform svis = (uniform SamplerVis_ispc *uniform)vis->volumeVis[0];
   if (vis->nVolumeVis == 1)
   {
-    uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)vvis)->data;
+    uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)svis)->data;
 
     step = vol->samplingStep * vol->samplingRate;
 

@@ -57,6 +57,12 @@ KeyedDataObject::~KeyedDataObject()
   }
 }
 
+OsprayObjectP
+KeyedDataObject::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+{
+  return NULL;
+}
+
 void 
 KeyedDataObject::CopyPartitioning(KeyedDataObjectP o)
 {

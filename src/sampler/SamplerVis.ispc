@@ -18,23 +18,23 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "SampleVis.ih"
+#include "SamplerVis.ih"
 
-export void *uniform SampleVis_allocate()
+export void *uniform SamplerVis_allocate()
 {
-    SampleVis_ispc *uniform v = uniform new uniform SampleVis_ispc;
+    SamplerVis_ispc *uniform v = uniform new uniform SamplerVis_ispc;
     return (void *)v;
 }
 
-export void SampleVis_initialize(void *uniform _self)
+export void SamplerVis_initialize(void *uniform _self)
 {
-    SampleVis_ispc *uniform self = (uniform SampleVis_ispc *)_self;
+    SamplerVis_ispc *uniform self = (uniform SamplerVis_ispc *)_self;
     self->tolerance = 0;
 }
 
-export void SampleVis_set_transferFunction(void *uniform _self, float *uniform t)
+export void SamplerVis_set_tolerance(void *uniform _self, uniform float t)
 {
-    SampleVis_ispc *uniform self = (uniform SampleVis_ispc *)_self;
+    SamplerVis_ispc *uniform self = (uniform SamplerVis_ispc *)_self;
     self->tolerance = t;
 }                                                                                                                            
 

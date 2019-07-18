@@ -21,6 +21,7 @@
 #include <iostream>
 #include "vtkerror.h"
 #include "Triangles.h"
+#include "OsprayTriangles.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -143,6 +144,12 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
   }
 
   return true;
+}
+
+OsprayObjectP
+Triangles::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+{
+  return OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
 }
 
 

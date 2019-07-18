@@ -41,16 +41,35 @@ include_directories_ispc(${EMBREE_INCLUDE_DIRS}
                          ${OSPRAY_SOURCEDIR}/ospray
                          ${OSPRAY_SOURCEDIR}/ospray/include)
 
-include_directories(${OSPRAY_INCLUDE_DIRS}
-                    ${EMBREE_INCLUDE_DIRS}
-                    ${OSPRAY_SOURCEDIR}/install/include/ospray/SDK/geometry)
+include_directories(${Galaxy_BINARY_DIR}/src
+                    ${gxy_framework_SOURCE_DIR}
+                    ${gxy_data_SOURCE_DIR}
+                    ${gxy_ospray_SOURCE_DIR}
+                    ${OSPRAY_INCLUDE_DIRS}
+                    ${EMBREE_INCLUDE_DIRS})
 
 set (ISPC_SOURCES DataDrivenPathLines.ispc DataDrivenSpheres.ispc DataDrivenTriangleMesh.ispc)
-set (CPP_SOURCES force_ospray_library_load.cpp DataDrivenPathLines.cpp DataDrivenSpheres.cpp DataDrivenTriangleMesh.cpp)
+set (CPP_SOURCES 
+  force_ospray_library_load.cpp
+  DataDrivenPathLines.cpp
+  DataDrivenSpheres.cpp
+  DataDrivenTriangleMesh.cpp
+  OsprayObject.cpp
+  OsprayTriangles.cpp
+  OsprayParticles.cpp
+  OsprayPathLines.cpp
+  OsprayVolume.cpp
+  OsprayUtil.cpp
+)
+
+install(FILES
+  OsprayObject.h
+  OsprayUtil.h
+  DESTINATION include/gxy)
 
 if (ospray_DIR)
   ospray_create_library(gxy_ospray ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} COMPONENT lib)
+    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} COMPONENT lib)
   set_target_properties(gxy_ospray PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 endif()
 

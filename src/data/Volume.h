@@ -209,10 +209,11 @@ public:
   bool Sample(vec3f& p, float* i);
   bool Sample(vec3f& p, vec3f& v);
   bool Sample(vec3f& p, float& v);
-  
 
   //! Which process owns an arbitrary point in this global volume? -1 for outside
   int PointOwner(vec3f& p);
+
+  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
 
 protected:
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep
