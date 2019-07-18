@@ -22,9 +22,10 @@ cmake_minimum_required (VERSION 3.9)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
-include_directories(${gxy_framework_SOURCE_DIR} 
-									  ${gxy_renderer_SOURCE_DIR}
-									  ${gxy_data_SOURCE_DIR}
+include_directories(${Galaxy_SOURCE_DIR}/src/framework
+                    ${Galaxy_SOURCE_DIR}/src/data
+                    ${Galaxy_SOURCE_DIR}/src/ospray
+                    ${Galaxy_SOURCE_DIR}/src/renderer
 									  ${Galaxy_BINARY_DIR}/src)
 
 set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})

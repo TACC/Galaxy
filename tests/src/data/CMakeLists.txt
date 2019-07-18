@@ -24,6 +24,7 @@ include_directories(${Galaxy_SOURCE_DIR}/src/framework
                     ${Galaxy_SOURCE_DIR}/src/data
                     ${Galaxy_SOURCE_DIR}/src/ospray
                     ${Galaxy_SOURCE_DIR}/src/renderer
+                    ${OSPRAY_INCLUDE_DIRS}
 										${gxy_unit_tests_SOURCE_DIR}/data
 										${Galaxy_BINARY_DIR}/src
 										)

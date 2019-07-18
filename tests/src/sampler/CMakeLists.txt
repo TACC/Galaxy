@@ -20,11 +20,12 @@
 
 cmake_minimum_required (VERSION 3.9)
 
-include_directories(${gxy_framework_SOURCE_DIR}
-										${gxy_data_SOURCE_DIR}
-										${gxy_renderer_SOURCE_DIR}
-										${gxy_multiserver_SOURCE_DIR}
-										${gxy_sampler_SOURCE_DIR}
+include_directories(${Galaxy_SOURCE_DIR}/src/framework
+                    ${Galaxy_SOURCE_DIR}/src/data
+                    ${Galaxy_SOURCE_DIR}/src/ospray
+                    ${Galaxy_SOURCE_DIR}/src/renderer
+                    ${Galaxy_SOURCE_DIR}/src/sampler
+                    ${Galaxy_SOURCE_DIR}/src/multiserver
 										${OSPRAY_INCLUDE_DIRS}
 										${gxy_unit_tests_SOURCE_DIR}/sampler
 										${Galaxy_BINARY_DIR}/src
