@@ -42,9 +42,9 @@ include_directories_ispc(${EMBREE_INCLUDE_DIRS}
                          ${OSPRAY_SOURCEDIR}/ospray/include)
 
 include_directories(${Galaxy_BINARY_DIR}/src
-                    ${gxy_framework_SOURCE_DIR}
-                    ../data
-                    ${gxy_ospray_SOURCE_DIR}
+                    ${Galaxy_SOURCE_DIR}/src/framework
+                    ${Galaxy_SOURCE_DIR}/src/data
+                    ${Galaxy_SOURCE_DIR}/src/ospray
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS})
 

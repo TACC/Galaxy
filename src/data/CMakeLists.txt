@@ -35,9 +35,9 @@ if (COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 include_directories(${GALAXY_INCLUDES}
-                    ../framework
-                    ../ospray
-                    ../data
+                    ${Galaxy_SOURCE_DIR}/src/framework
+                    ${Galaxy_SOURCE_DIR}/src/ospray
+                    ${Galaxy_SOURCE_DIR}/src/data
                     ${Galaxy_BINARY_DIR}/src
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS})
