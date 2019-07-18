@@ -4,8 +4,6 @@
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
 // you may not use this file except in compliance with the License.           //
-// A copy of the License is included with this software in the file LICENSE.  //
-// If your copy does not contain the License, you may obtain a copy of the    //
 // License at:                                                                //
 //                                                                            //
 //     https://www.apache.org/licenses/LICENSE-2.0                            //
@@ -18,53 +16,42 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "SamplerTraceRays.h"
+#include "SamplerTraceRays_ispc.h"
 
-/*! \file Triangles.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
-
+#include <fstream>
+#include <iostream>
+#include <math.h>
+#include <sstream>
+#include <stdlib.h>
 #include <string>
-#include <string.h>
-#include <memory.h>
 
-#include <vtkUnstructuredGrid.h>
+#include "galaxy.h"
+#include "RayFlags.h"
 
-#include "Application.h"
-#include "Box.h"
-#include "dtypes.h"
-#include "Geometry.h"
-
-#include "rapidjson/document.h"
+using namespace std;
+using namespace rapidjson;
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Triangles)
-
-//! a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
- */
-class Triangles : public Geometry
+SamplerTraceRays::SamplerTraceRays()
 {
-  KEYED_OBJECT_SUBCLASS(Triangles, Geometry)
+  allocate_ispc();
+  initialize_ispc();
+}
 
-public:
-	void initialize(); //!< initialize this Triangles object
-	virtual ~Triangles(); //!< default destructor 
+SamplerTraceRays::~SamplerTraceRays()
+{
+}
 
-  //! Allocate space for vertices(data) and connectivity
-  virtual void allocate_vertices(int nv);
+RayList *
+SamplerTraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
+{
+  ispc::SamplerTraceRays_SamplerTraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
+	return NULL;
+}
 
-  vec3f* GetNormals() { return (vec3f *)normals.data(); }
-
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
-
-protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
-  std::vector<vec3f> normals;
-};
 
 } // namespace gxy
+

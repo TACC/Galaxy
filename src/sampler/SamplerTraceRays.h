@@ -20,51 +20,47 @@
 
 #pragma once
 
-/*! \file Triangles.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
+/*! \file SamplerTraceRays.h 
+ * \brief controls the ray tracing loop within Galaxy
+ * \ingroup render
  */
 
-#include <string>
+#include <memory>
 #include <string.h>
-#include <memory.h>
+#include <string>
+#include <vector>
 
-#include <vtkUnstructuredGrid.h>
-
-#include "Application.h"
-#include "Box.h"
 #include "dtypes.h"
-#include "Geometry.h"
-
-#include "rapidjson/document.h"
+#include "IspcObject.h"
+#include "Rays.h"
+#include "Visualization.h"
 
 namespace gxy
 {
+OBJECT_POINTER_TYPES(SamplerTraceRays)
 
-OBJECT_POINTER_TYPES(Triangles)
-
-//! a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
+//! controls the ray tracing loop within Galaxy
+/*! \sa KeyedObject, IspcObject
+ * \ingroup render
  */
-class Triangles : public Geometry
+class SamplerTraceRays : public IspcObject
 {
-  KEYED_OBJECT_SUBCLASS(Triangles, Geometry)
-
 public:
-	void initialize(); //!< initialize this Triangles object
-	virtual ~Triangles(); //!< default destructor 
+  SamplerTraceRays(); //!< default constructor
+  ~SamplerTraceRays(); //!< default destructor
 
-  //! Allocate space for vertices(data) and connectivity
-  virtual void allocate_vertices(int nv);
+  //! trace a given RayList against the given Visualization 
+  /*! \returns a RayList pointer to rays spawned during this trace
+   * \param lights a pointer to the Lighting object to use during this trace
+   * \param visualization a pointer to the Visualization to trace
+   * \param raysIn a pointer to the RayList of rays to trace
+   */
+  RayList *Trace(Lighting* lights, VisualizationP visualization, RayList * raysIn);
 
-  vec3f* GetNormals() { return (vec3f *)normals.data(); }
-
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
 
 protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
-  std::vector<vec3f> normals;
+
+
 };
 
 } // namespace gxy

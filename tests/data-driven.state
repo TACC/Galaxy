@@ -60,13 +60,13 @@
                         [ 1.0, 0.0 ]
                     ],
                     "slices": [ [ 1.0, 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0, 0.0 ] ],
-                    "type": "Volume",
+                    "type": "VolumeVis",
                     "volume rendering": true
                 },
                 {
                     "dataset": "pathlines",
                     "colormap": [ [0.0, 0.0, 1.0, 0.0], [2.0, 1.0, 0.0, 1.0]],
-                    "type": "PathLines",
+                    "type": "PathLinesVis",
                     "radius0": 0.002,
                     "radius1": 0.02,
                     "value0": 0.0,

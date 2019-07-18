@@ -27,6 +27,7 @@ include_directories(${gxy_framework_SOURCE_DIR}
 									  ${gxy_sampler_SOURCE_DIR}
                     ${OSPRAY_INCLUDE_DIRS}
 									  ${gxy_data_SOURCE_DIR}
+									  ${gxy_ospray_SOURCE_DIR}
 									  ${Galaxy_BINARY_DIR}/src)
 
 set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${MPI_C_LIBRARIES})

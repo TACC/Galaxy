@@ -21,6 +21,7 @@
 #include <iostream>
 #include "vtkerror.h"
 #include "PathLines.h"
+#include "OsprayPathLines.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -134,6 +135,12 @@ PathLines::GetPLVertices(PLVertex*& p, int& n)
     p[i].value = data[i];
   }
 }
+
+OsprayObjectP 
+PathLines::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+{ 
+  return OsprayObject::Cast(OsprayPathLines::NewP(PathLines::Cast(kdop)));
+} 
 
 
 } // namespace gxy

@@ -18,53 +18,120 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
-
-/*! \file Triangles.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
-
+#include <iostream>
+#include <math.h>
+#include <stdlib.h>
 #include <string>
-#include <string.h>
-#include <memory.h>
-
-#include <vtkUnstructuredGrid.h>
-
+#include <sstream>
+#include <fstream>
 #include "Application.h"
-#include "Box.h"
-#include "dtypes.h"
-#include "Geometry.h"
+#include "SamplerVis.h"
+#include "SamplerVis_ispc.h"
 
 #include "rapidjson/document.h"
+
+using namespace std;
+using namespace rapidjson;
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Triangles)
+KEYED_OBJECT_CLASS_TYPE(SamplerVis)
 
-//! a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
- */
-class Triangles : public Geometry
+void
+SamplerVis::Register()
 {
-  KEYED_OBJECT_SUBCLASS(Triangles, Geometry)
+	RegisterClass();
+}
 
-public:
-	void initialize(); //!< initialize this Triangles object
-	virtual ~Triangles(); //!< default destructor 
+SamplerVis::~SamplerVis()
+{
+}
 
-  //! Allocate space for vertices(data) and connectivity
-  virtual void allocate_vertices(int nv);
+void
+SamplerVis::initialize()
+{
+  super::initialize();
+}
 
-  vec3f* GetNormals() { return (vec3f *)normals.data(); }
+void 
+SamplerVis::initialize_ispc()
+{
+  super::initialize_ispc();
+  ispc::SamplerVis_initialize(ispc);
+}
 
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
+void
+SamplerVis::allocate_ispc()
+{
+  ispc = ispc::SamplerVis_allocate();
+}
 
-protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
-  std::vector<vec3f> normals;
-};
+bool 
+SamplerVis::Commit(DatasetsP datasets)
+{
+	return Vis::Commit(datasets);
+}
+
+bool
+SamplerVis::LoadFromJSON(Value& v)
+{
+  Vis::LoadFromJSON(v);
+
+  if (v.HasMember("tolerance"))
+     tolerance = v["tolerance"].GetDouble();
+
+  return true;
+}
+
+void
+SamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
+{
+  super::SetTheOsprayDataObject(o);
+}
+
+int
+SamplerVis::serialSize() 
+{
+	return super::serialSize() + sizeof(float);
+}
+
+unsigned char *
+SamplerVis::deserialize(unsigned char *ptr) 
+{
+  ptr = super::deserialize(ptr);
+
+  tolerance = *(float *)ptr;
+  ptr += sizeof(float);
+
+  return ptr;
+}
+
+unsigned char *
+SamplerVis::serialize(unsigned char *ptr)
+{
+  ptr = super::serialize(ptr);
+
+  *(float *)ptr = tolerance;
+  ptr += sizeof(float);
+
+  return ptr;
+}
+
+bool 
+SamplerVis::local_commit(MPI_Comm c)
+{
+  if(super::local_commit(c))  
+    return true;
+  
+  ispc::SamplerVis_set_tolerance(ispc, tolerance);
+  return false;
+}
+
+void 
+SamplerVis::SetTolerance(float t) { tolerance = t; }
+
+float 
+SamplerVis::GetTolerance() { return tolerance; }
 
 } // namespace gxy

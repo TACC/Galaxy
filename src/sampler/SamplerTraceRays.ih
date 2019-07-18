@@ -18,53 +18,10 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "ospray/SDK/math/vec.ih"
 
-/*! \file Triangles.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
-
-#include <string>
-#include <string.h>
-#include <memory.h>
-
-#include <vtkUnstructuredGrid.h>
-
-#include "Application.h"
-#include "Box.h"
-#include "dtypes.h"
-#include "Geometry.h"
-
-#include "rapidjson/document.h"
-
-namespace gxy
+struct SamplerTraceRays_ispc
 {
-
-OBJECT_POINTER_TYPES(Triangles)
-
-//! a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
- */
-class Triangles : public Geometry
-{
-  KEYED_OBJECT_SUBCLASS(Triangles, Geometry)
-
-public:
-	void initialize(); //!< initialize this Triangles object
-	virtual ~Triangles(); //!< default destructor 
-
-  //! Allocate space for vertices(data) and connectivity
-  virtual void allocate_vertices(int nv);
-
-  vec3f* GetNormals() { return (vec3f *)normals.data(); }
-
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
-
-protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
-  std::vector<vec3f> normals;
 };
 
-} // namespace gxy
+

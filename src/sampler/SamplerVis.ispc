@@ -18,53 +18,24 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "SamplerVis.ih"
 
-/*! \file Triangles.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
-
-#include <string>
-#include <string.h>
-#include <memory.h>
-
-#include <vtkUnstructuredGrid.h>
-
-#include "Application.h"
-#include "Box.h"
-#include "dtypes.h"
-#include "Geometry.h"
-
-#include "rapidjson/document.h"
-
-namespace gxy
+export void *uniform SamplerVis_allocate()
 {
+    SamplerVis_ispc *uniform v = uniform new uniform SamplerVis_ispc;
+    return (void *)v;
+}
 
-OBJECT_POINTER_TYPES(Triangles)
-
-//! a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
- */
-class Triangles : public Geometry
+export void SamplerVis_initialize(void *uniform _self)
 {
-  KEYED_OBJECT_SUBCLASS(Triangles, Geometry)
+    SamplerVis_ispc *uniform self = (uniform SamplerVis_ispc *)_self;
+    self->tolerance = 0;
+}
 
-public:
-	void initialize(); //!< initialize this Triangles object
-	virtual ~Triangles(); //!< default destructor 
+export void SamplerVis_set_tolerance(void *uniform _self, uniform float t)
+{
+    SamplerVis_ispc *uniform self = (uniform SamplerVis_ispc *)_self;
+    self->tolerance = t;
+}                                                                                                                            
 
-  //! Allocate space for vertices(data) and connectivity
-  virtual void allocate_vertices(int nv);
 
-  vec3f* GetNormals() { return (vec3f *)normals.data(); }
-
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
-
-protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
-  std::vector<vec3f> normals;
-};
-
-} // namespace gxy

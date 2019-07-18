@@ -267,6 +267,24 @@ public:
     return new_procs.size() - 1;
   }
 
+  KeyedObjectP 
+  NewP(std::string classname)
+  {
+    for (auto i = 0; i < class_names.size(); i++)
+      if (class_names[i] == classname)
+      {
+        Key k = keygen();
+        KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[i](k));
+        kop->primary = true;
+        aol(kop);
+        add_weak(kop);
+        NewMsg msg(i, k);
+        msg.Broadcast(true, true);
+        return kop;
+      }
+    return NULL;
+  }
+
   //! commit all new and dropped keys to the local registry on each process
 	static void Register()
 	{

@@ -20,51 +20,71 @@
 
 #pragma once
 
-/*! \file Triangles.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
+/*! \file SamplerVis.h 
+ * \brief a visualization element that uses a color map and opacity map to define its rendering behavior
+ * \ingroup render
  */
 
 #include <string>
 #include <string.h>
-#include <memory.h>
+#include <vector>
+#include <memory>
 
-#include <vtkUnstructuredGrid.h>
-
-#include "Application.h"
-#include "Box.h"
 #include "dtypes.h"
-#include "Geometry.h"
+#include "Vis.h"
+#include "Datasets.h"
+#include "KeyedObject.h"
 
 #include "rapidjson/document.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Triangles)
+OBJECT_POINTER_TYPES(SamplerVis)
 
-//! a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
+//! a visualization element that uses a color map and opacity map to define its rendering behavior
+/*! \ingroup render
+ * \sa KeyedObject, KeyedDataObject, Vis
  */
-class Triangles : public Geometry
+class SamplerVis : public Vis
 {
-  KEYED_OBJECT_SUBCLASS(Triangles, Geometry)
+  KEYED_OBJECT_SUBCLASS(SamplerVis, Vis)
 
 public:
-	void initialize(); //!< initialize this Triangles object
-	virtual ~Triangles(); //!< default destructor 
 
-  //! Allocate space for vertices(data) and connectivity
-  virtual void allocate_vertices(int nv);
+  virtual ~SamplerVis(); //!< default destructor
 
-  vec3f* GetNormals() { return (vec3f *)normals.data(); }
+  virtual void initialize(); //!< initialize this SamplerVis object
 
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
+  //! commit this object to the global registry across all processes
+  virtual bool Commit(DatasetsP);
 
-protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
-  std::vector<vec3f> normals;
+  //! set the tolerance for this SamplerVis
+  void SetTolerance(float t);
+
+  //! get the tolerance for this SamplerVis
+  float GetTolerance();
+
+  //! construct a SamplerVis from a Galaxy JSON specification
+  virtual bool LoadFromJSON(rapidjson::Value&);
+
+  //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
+  virtual void SetTheOsprayDataObject(OsprayObjectP o);
+
+  //! commit this object to the local registry
+  virtual bool local_commit(MPI_Comm);
+
+ protected:
+  virtual void allocate_ispc();
+  virtual void initialize_ispc();
+
+  float tolerance;
+
+  virtual int serialSize();
+  virtual unsigned char *serialize(unsigned char *);
+  virtual unsigned char *deserialize(unsigned char *);
+
 };
 
 } // namespace gxy
+
