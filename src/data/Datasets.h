@@ -17,13 +17,12 @@
 // limitations under the License.                                             //
 //                                                                            //
 // ========================================================================== //
-
-#pragma once
-
 /*! \file Datasets.h 
  * \brief container for KeyedDataObjects within Galaxy
  * \ingroup data
  */
+
+#pragma once
 
 #include <iostream>
 #include <map>
@@ -44,11 +43,11 @@ OBJECT_POINTER_TYPES(Datasets)
 
 //! container for KeyedDataObjects within Galaxy
 /*! \ingroup data 
- * \sa KeyedObject, KeyedDataObject
+ * \sa KeyedObject
  */
-class Datasets : public KeyedDataObject
+class Datasets : public KeyedObject
 {
-  KEYED_OBJECT_SUBCLASS(Datasets, KeyedDataObject)
+  KEYED_OBJECT_SUBCLASS(Datasets, KeyedObject)
 
 	using datasets_t = std::map<std::string, KeyedDataObjectP>;
 
