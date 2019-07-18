@@ -24,8 +24,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galaxy.h.in ${CMAKE_CURRENT_BINARY_DI
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h DESTINATION include/gxy)
 
 add_subdirectory(framework)
-add_subdirectory(data)
 add_subdirectory(ospray)
+add_subdirectory(data)
 add_subdirectory(renderer)
 add_subdirectory(multiserver)
 add_subdirectory(sampler)
