@@ -27,6 +27,7 @@
 
 #include <memory>
 #include <string>
+#include <pthread.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkClientSocket.h>
