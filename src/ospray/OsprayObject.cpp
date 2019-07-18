@@ -19,8 +19,6 @@
 // ========================================================================== //
 
 #include "OsprayObject.h"
-#include "Geometry.h"
-#include "Volume.h"
 
 namespace gxy
 {
