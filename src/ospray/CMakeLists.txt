@@ -43,6 +43,7 @@ include_directories_ispc(${EMBREE_INCLUDE_DIRS}
 
 include_directories(${Galaxy_BINARY_DIR}/src
 AAAAAAAAAA
+../framework
                     ${gxy_framework_SOURCE_DIR}
 BBBBBBBBBB
                     ${gxy_data_SOURCE_DIR}
