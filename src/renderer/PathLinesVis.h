@@ -27,7 +27,7 @@
 
 #include "dtypes.h"
 #include "Application.h"
-#include "MappedVis.h"
+#include "GeometryVis.h"
 #include "PathLines.h"
 #include "Datasets.h"
 
@@ -44,9 +44,9 @@ OBJECT_POINTER_TYPES(PathLinesVis)
 /* \ingroup render 
  * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
-class PathLinesVis : public MappedVis
+class PathLinesVis : public GeometryVis
 {
-  KEYED_OBJECT_SUBCLASS(PathLinesVis, MappedVis) 
+  KEYED_OBJECT_SUBCLASS(PathLinesVis, GeometryVis) 
 
 public:
 	~PathLinesVis(); //!< destructor

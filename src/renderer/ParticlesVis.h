@@ -27,7 +27,7 @@
 
 #include "dtypes.h"
 #include "Application.h"
-#include "MappedVis.h"
+#include "GeometryVis.h"
 #include "Particles.h"
 #include "Datasets.h"
 
@@ -44,9 +44,9 @@ OBJECT_POINTER_TYPES(ParticlesVis)
 /* \ingroup render 
  * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
-class ParticlesVis : public MappedVis
+class ParticlesVis : public GeometryVis
 {
-  KEYED_OBJECT_SUBCLASS(ParticlesVis, MappedVis) 
+  KEYED_OBJECT_SUBCLASS(ParticlesVis, GeometryVis) 
 
 public:
 	~ParticlesVis(); //!< destructor

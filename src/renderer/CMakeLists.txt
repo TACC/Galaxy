@@ -70,6 +70,7 @@ set (CPP_SOURCES
   IspcObject.cpp
   Lighting.cpp
   MappedVis.cpp
+  GeometryVis.cpp
   ParticlesVis.cpp
   PathLinesVis.cpp
   RayQManager.cpp
@@ -104,6 +105,7 @@ install(FILES
   RenderingSet.h 
   TraceRays.h 
   MappedVis.h
+  GeometryVis.h
   ParticlesVis.h
   PathLinesVis.h
   TrianglesVis.h

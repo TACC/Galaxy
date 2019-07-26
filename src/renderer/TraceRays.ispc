@@ -288,9 +288,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
-// print ("TraceRays_TraceRays\n");
-
-
   step = -1;
   for (uniform int major = 0; major < vis->nVolumeVis; major++)
   {

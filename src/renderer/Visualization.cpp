@@ -27,11 +27,11 @@
 
 #include <ospray/ospray.h>
 
-#include "OsprayVolume.h"
-#include "OsprayParticles.h"
-#include "OsprayPathLines.h"
-#include "OsprayTriangles.h"
-#include "OsprayUtil.h"
+// #include "OsprayVolume.h"
+// #include "OsprayParticles.h"
+// #include "OsprayPathLines.h"
+// #include "OsprayTriangles.h"
+// #include "OsprayUtil.h"
 
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
@@ -231,12 +231,12 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   
     v->SetTheOsprayDataObject(op);
     
-    if (OsprayVolume::IsA(op))
-      vispc[nvispc++] = v->GetIspc();
-    else if (ParticlesVis::IsA(v) || PathLinesVis::IsA(v) || TrianglesVis::IsA(v))
+    if (GeometryVis::IsA(v))
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
     else
-      mispc[nmispc++] = v->GetIspc();
+      vispc[nvispc++] = v->GetIspc();
+      //if (VolumeVis::IsA(v))
+        //vispc[nvispc++] = v->GetIspc();
   }
 
   if (ospModel)
