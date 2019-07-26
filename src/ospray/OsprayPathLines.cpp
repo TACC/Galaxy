@@ -40,6 +40,9 @@ OsprayPathLines::OsprayPathLines(PathLinesP p)
     ospCommit(vdata);
     ospSetData(ospg, "vertices", vdata);
 
+    float R = 0.1;
+    ospSet1f(ospg, "radius", R);
+
     OSPData ddata = ospNewData(nv, OSP_FLOAT, p->GetData(), OSP_DATA_SHARED_BUFFER);
     ospCommit(ddata);
     ospSetData(ospg, "data", ddata);
@@ -49,7 +52,7 @@ OsprayPathLines::OsprayPathLines(PathLinesP p)
     ospCommit(sdata);
     ospSetData(ospg, "indices", sdata);
 
-    float colors[nv*4];
+    float *colors = new float[nv*4];
     for (int i = 0; i < nv; i++)
     {
       colors[(i<<2) + 0] = 1.0;
@@ -58,12 +61,11 @@ OsprayPathLines::OsprayPathLines(PathLinesP p)
       colors[(i<<2) + 3] = 1.0;
     }
 
-    float R = 0.1;
-    ospSet1f(ospg, "radius", R);
-
     OSPData cdata = ospNewData(nv, OSP_FLOAT4, colors);
     ospCommit(cdata);
     ospSetData(ospg, "vertex.color", cdata);
+
+    delete[] colors;
   }
   ospCommit(ospg);
 
