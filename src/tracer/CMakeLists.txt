@@ -18,16 +18,17 @@ set(Galaxy_LIBRARIES
     ${OSPRAY_LIBRARIES}
     ${MPI_C_LIBRARIES})
 
-add_executable(tester tester.cpp RungeKutta.cpp TraceToPathLines.cpp)
-target_link_libraries(tester ${VTK_LIBRARIES} ${Galaxy_LIBRARIES} ${MPI_C_LIBRARIES})
-set(BINS tester)
-
 if (GXY_WRITE_IMAGES)
+
+  add_executable(tester tester.cpp RungeKutta.cpp TraceToPathLines.cpp)
+  target_link_libraries(tester ${VTK_LIBRARIES} ${Galaxy_LIBRARIES} ${MPI_C_LIBRARIES})
+  set(BINS tester)
 
   add_executable(sampletrace sampletrace.cpp RungeKutta.cpp TraceToPathLines.cpp)
   target_link_libraries(sampletrace gxy_sampler ${VTK_LIBRARIES} ${Galaxy_LIBRARIES} ${MPI_C_LIBRARIES})
   set(BINS sampletrace ${BINS})
 
+  install(TARGETS ${BINS} DESTINATION bin)
+
 endif (GXY_WRITE_IMAGES)
 
-install(TARGETS ${BINS} DESTINATION bin)
