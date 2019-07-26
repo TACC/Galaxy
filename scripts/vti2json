@@ -1,4 +1,5 @@
-#! /usr/bin/env vtkpython
+
+#! /usr/bin/env python
 ## ========================================================================== ##
 ## Copyright (c) 2014-2019 The University of Texas at Austin.                 ##
 ## All rights reserved.                                                       ##
@@ -68,7 +69,9 @@ for var in sys.argv[2:]:
     of.write('}\n')
     of.close()
 
-  if isfile(volname):
+  if (a.GetNumberOfComponents != 1)
+    print ("Can't create .vol file for vector data (use json)")
+  elif isfile(volname):
     print ("skipping", var, "vol file")
   else:
     sz = [o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]
