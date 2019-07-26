@@ -32,6 +32,7 @@ add_subdirectory(sampler)
 add_subdirectory(schlieren)
 add_subdirectory(apps)
 add_subdirectory(cinema)
+add_subdirectory(tracer)
 
 
 
