@@ -1,8 +1,8 @@
 #include <mpi.h>
 
-#include <gxy/Application.h>
-#include <gxy/PathLines.h>
-#include <gxy/Work.h>
+#include "Application.h"
+#include "PathLines.h"
+#include "Work.h"
 
 #include "RungeKutta.h"
 

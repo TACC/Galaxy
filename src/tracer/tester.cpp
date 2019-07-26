@@ -23,17 +23,17 @@
 #include <sstream>
 #include <time.h>
 
-#include "gxy/Application.h"
-#include "gxy/KeyedDataObject.h"
-#include "gxy/DataObjects.h"
-#include "gxy/Datasets.h"
-#include "gxy/PathLines.h"
-#include "gxy/Camera.h"
-#include "gxy/PathLinesVis.h"
-#include "gxy/Volume.h"
-#include "gxy/Rendering.h"
-#include "gxy/RenderingSet.h"
-#include "gxy/Renderer.h"
+#include "Application.h"
+#include "KeyedDataObject.h"
+#include "DataObjects.h"
+#include "Datasets.h"
+#include "PathLines.h"
+#include "Camera.h"
+#include "PathLinesVis.h"
+#include "Volume.h"
+#include "Rendering.h"
+#include "RenderingSet.h"
+#include "Renderer.h"
 
 #include "RungeKutta.h"
 #include "TraceToPathLines.h"
@@ -53,7 +53,7 @@ syntax(char *a)
   exit(1);
 }
 
-#include "gxy/Debug.h"
+#include "Debug.h"
 
 int main(int argc,  char *argv[])
 {

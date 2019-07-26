@@ -2,10 +2,10 @@
 #include "map"
 #include "vector"
 #include "memory"
-#include "gxy/KeyedDataObject.h"
-#include "gxy/Threading.h"
-#include "gxy/Volume.h"
-#include "gxy/Particles.h"
+#include "KeyedDataObject.h"
+#include "Threading.h"
+#include "Volume.h"
+#include "Particles.h"
 
 namespace gxy
 {

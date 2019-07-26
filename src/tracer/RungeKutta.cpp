@@ -1,6 +1,6 @@
 #include "RungeKutta.h"
-#include "gxy/Application.h"
-#include "gxy/Volume.h"
+#include "Application.h"
+#include "Volume.h"
 
 #include <pthread.h>
 
