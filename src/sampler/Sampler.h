@@ -51,7 +51,10 @@ class Sampler : public Renderer
 public:
   static void Initialize();
   // virtual void initialize(); //!< initialize this object
-  virtual void HandleTerminatedRays(RayList *raylist);
+
+  virtual void HandleTerminatedRays(RayList *);
+  virtual void Trace(RayList *);
+
   void SetSamples(ParticlesP p) {mSamples = p;}
   ParticlesP GetSamples()
   {

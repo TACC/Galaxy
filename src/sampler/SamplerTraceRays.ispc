@@ -1,5 +1,3 @@
-#define PRINT_BEND  if (1 == 0)
-
 // ========================================================================== //
 // Copyright (c) 2016-2018 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
@@ -79,8 +77,6 @@ ExitT(const Ray& ray, const uniform box3f& box)
   const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
   const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
 
-   PRINT_BEND print("BuZ: %\n", box.upper.x);
-
   // print("mins.x %\nmins.y %\nmins.z %\n", mins.x, mins.y, mins.z);
   // print("maxs.x %\nmaxs.y %\nmaxs.z %\n", maxs.x, maxs.y, maxs.z);
 
@@ -99,25 +95,13 @@ Step(Ray& ray, const uniform float step, const uniform box3f& box)
 {
   vec3f coord = ray.org + step*ray.dir;
 
-  PRINT_BEND print("box\nl % % %\nu % % %\nOX %\nOY %\nOZ %\n", 
-    box.lower.x,
-    box.lower.y,
-    box.lower.z,
-    box.upper.x,
-    box.upper.y,
-    box.upper.z,
-    coord.x, coord.y, coord.z);
-
   if (box.lower.x > coord.x || box.lower.y > coord.y || box.lower.z > coord.z ||
       box.upper.x < coord.x || box.upper.y < coord.y || box.upper.z < coord.z) 
   {
     float tExit = ExitT(ray, box);
     if (tExit < 0 || tExit > step)
-       PRINT_BEND print("invalid tExit\n");
 
-     PRINT_BEND print("XX: org.z = %\ndir.z = %\ntExit = %\n", ray.org.z, ray.dir.z, tExit);
     ray.org  = ray.org + tExit*ray.dir;
-     PRINT_BEND print("Exit: ", ray.org.z);
     return true;
   }
   else
@@ -141,11 +125,13 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
   // For the moment, assume that the visualization contains only one vis and its a SampleVis
 
   uniform SamplerVis_ispc *uniform svis = (uniform SamplerVis_ispc *uniform)vis->volumeVis[0];
+  
   if (vis->nVolumeVis == 1)
   {
     uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)svis)->data;
 
-    step = vol->samplingStep * vol->samplingRate;
+    uniform float isoval = svis->tolerance;
+    uniform float step = vol->samplingStep * vol->samplingRate;
 
     foreach (i = 0 ... nRaysIn)
     {
@@ -153,6 +139,8 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
 
       ray.org = make_vec3f(raysIn->ox[i], raysIn->oy[i], raysIn->oz[i]);
       ray.dir = make_vec3f(raysIn->dx[i], raysIn->dy[i], raysIn->dz[i]);
+      ray.t = raysIn->t[i];
+
       if (ray.dir.x == 0.f) ray.dir.x = 1e-6f;
       if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
       if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
@@ -162,108 +150,56 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
       // since the ray bends.
 
       float tEntry = EntryT(ray, box);
+      float tExit = ExitT(ray, box);
+
+      // print("tEntry %\ntExit %\nray.t %\nray.t0 %\n", tEntry, tExit, ray.t, ray.t0);
 
       // move the ray origin to the entry point (if its not already inside the volume)
+      if (tEntry < ray.t)
+        tEntry = ray.t;
 
-      if (tEntry > ray.t0) ray.org = ray.org + tEntry * ray.dir;
+      float tLast = tEntry;
+      float tThis = tEntry + step;
+      bool hit = false;
 
-      float sLast = vol->sample(vol, ray.org);
-      PRINT_BEND print("sL %\n", sLast);
+      vec3f coord = ray.org + tEntry * ray.dir;
+      float sLast = vol->sample(vol, coord);
+      // print("START T %\nZ %\nS %\n", tEntry, coord.z, sLast);
 
-      bool done = false;
-      do
+      while (tThis <= tExit && !hit)
       {
-        vec3f odir = normalize(ray.dir);
+        coord = ray.org + tThis * ray.dir;
+        float sThis = vol->sample(vol, coord);
 
-        done = Step(ray, step, box);
-        PRINT_BEND print("sN % %\n", sLast, done);
+        // print("T %\nZ %\nS %\n", tThis, coord.z, sThis);
 
-        float sThis = vol->sample(vol, ray.org);
-
-        if (sThis != sLast)
+        if (((sLast < isoval) && (sThis >= isoval)) || ((sLast > isoval) && sThis <= isoval))
         {
-          vec3f grad = vol->computeGradient(vol, ray.org);
-          PRINT_BEND print("GX %\nGY %\nGZ %\n", grad.x, grad.y, grad.z);
-
-          // Better not be zero!
-
-          float magd = length(ray.dir);
-          float magg = length(grad);
-
-          if (magd > 0.0001 && magg > 0.0001)
-          {
-            PRINT_BEND print("OX %\nOY %\nOZ %\n", ray.org.x, ray.org.y, ray.org.z);
-
-            vec3f nD = (1/magd) * ray.dir;
-            PRINT_BEND print("DIX %\nDIY %\nDIZ %\n", nD.x, nD.y, nD.z);
-
-            vec3f nG = (1/magg) * grad;
-            PRINT_BEND print("nGX %\nnGY %\nnGZ %\n", nG.x, nG.y, nG.z);
-
-            // Axis of rotation
-
-            vec3f u = make_vec3f(nD.y*nG.z - nD.z*nG.y, nD.z*nG.x - nD.x*nG.z, nD.x*nG.y - nD.y*nG.x);
-            PRINT_BEND print("UX %\nUY %\nUZ %\n", u.x, u.y, u.z);
-
-            float dcu = length(u);
-            if (dcu < 0.000001)
-              continue;
-       
-            u = u / dcu;
-
-            // Alpha is the angle between the incoming direction and the gradient, beta the angle between the
-            // new outgoing direction and the gradient
-
-            float cosAlpha = dot(nG, nD);
-            if (cosAlpha > -0.000001 && cosAlpha < 0.000001)
-              continue;
-
-            float sinAlpha = cos2sin(cosAlpha);
-
-            float bend = sLast / sThis;
-            float sinBeta = bend * sinAlpha;
-            float cosBeta = sin2cos(sinBeta);
-
-            if (cosAlpha < 0)
-              cosBeta = -cosBeta;
-
-            PRINT_BEND print("BEND %\nSA %\nCA %\n", bend, sinAlpha, cosAlpha);
-            PRINT_BEND print("SB %\nCB %\nUX %\nUY %\nUZ %\n", sinBeta, cosBeta, u.x, u.y, u.z);
-
-            vec3f vx = make_vec3f(cosBeta + u.x*u.x*(1 - cosBeta),     u.x*u.y*(1 - cosBeta) - u.z*sinBeta, u.x*u.z*(1 - cosBeta) + u.y*sinBeta);
-            vec3f vy = make_vec3f(u.y*u.x*(1 - cosBeta) + u.z*sinBeta, cosBeta + u.y*u.y*(1 - cosBeta),     u.y*u.z*(1 - cosBeta) - u.x*sinBeta);
-            vec3f vz = make_vec3f(u.z*u.x*(1 - cosBeta) - u.y*sinBeta, u.z*u.y*(1 - cosBeta) + u.x*sinBeta, cosBeta + u.z*u.z*(1 - cosBeta));
-
-            PRINT_BEND print("VXX %\nVXY %\nVXZ %\n", vx.x, vx.y, vx.z);
-            PRINT_BEND print("VYX %\nVYY %\nVYZ %\n", vy.x, vy.y, vy.z);
-            PRINT_BEND print("VZX %\nVZY %\nVZZ %\n", vz.x, vz.y, vz.z);
-
-            vec3f rdir = (nG.x * vx) + (nG.y * vy) + (nG.z * vz);
-            
-            // DO NOT BEND   ...   DEBUGGING ray.dir = magd*rdir;
-
-            vec3f ndir = normalize(ray.dir);
-            float dirdot = dot(odir, ndir);
-
-            PRINT_BEND print("DOX %\nDOY %\nDOZ %\nDD %\n", rdir.x, rdir.y, rdir.z, dirdot);
-            PRINT_BEND print("done\n");
-
-          }
+          // print ("hit!\n");
+          tThis = tLast + (((isoval - sLast)/(sThis - sLast)) * (tThis - tLast));
+          hit   = true;
         }
-        sLast = sThis;
+        else if (tThis == tExit)
+        {
+          break;
+        }
+        else
+        {
+          sLast = sThis;
+          tLast = tThis;
+          tThis = tThis + step;
+          if (tThis > tExit)
+            tThis = tExit;
+        }
       }
-      while (!done);
-      
-      raysIn->term[i] |= RAY_BOUNDARY;
-      raysIn->ox[i] = ray.org.x;
-      raysIn->oy[i] = ray.org.y;
-      raysIn->oz[i] = ray.org.z;
-      raysIn->dx[i] = ray.dir.x;
-      raysIn->dy[i] = ray.dir.y;
-      raysIn->dz[i] = ray.dir.z;
+
+      if (hit)
+        raysIn->t[i] = tThis + 0.001;
+      else
+        raysIn->t[i] = tThis;
+
+      raysIn->term[i] = hit ? RAY_SURFACE : RAY_BOUNDARY;
     }
   }
-  else
-     PRINT_BEND print("Can only Sampler one volume\n");
 }
 

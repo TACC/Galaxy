@@ -31,7 +31,7 @@
 #include <memory>
 
 #include "dtypes.h"
-#include "Vis.h"
+#include "VolumeVis.h"
 #include "Datasets.h"
 #include "KeyedObject.h"
 

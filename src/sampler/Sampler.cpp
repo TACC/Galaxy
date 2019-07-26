@@ -22,9 +22,12 @@
 
 #include <stdlib.h>
 #include "Sampler.h"
+#include "SamplerVis.h"
 #include "Particles.h"
 #include "Rays.h"
 #include "RayFlags.h"
+
+#include "SamplerTraceRays.h"
 
 namespace gxy 
 {
@@ -36,6 +39,7 @@ void
 Sampler::Initialize()
 { 
   RegisterClass();
+  SamplerVis::Register();
   SampleMsg::Register();
 }
 
@@ -50,22 +54,22 @@ Sampler::initialize()
 void
 Sampler::HandleTerminatedRays(RayList *raylist)
 {
-  int terminated_count = 0;
+  int hit_count = 0;
 
   for (int i = 0; i < raylist->GetRayCount(); i++)
-    if (raylist->get_classification(i) == Renderer::TERMINATED) terminated_count++;
+    if (raylist->get_classification(i) & RAY_SURFACE) hit_count++;
 
   std::cerr << std::dec;
-  std::cerr << "Sampler::HandleTerminatedRays entry - " << raylist->GetRayCount() << " in, " << terminated_count << " terminated\n";
+  std::cerr << "Sampler::HandleTerminatedRays entry - " << raylist->GetRayCount() << " in, " << hit_count << " terminated\n";
 
   RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
   RenderingP rendering = raylist->GetTheRendering();
 
-  if (terminated_count == 0) return;
+  if (hit_count == 0) return;
 
   Renderer::SendPixelsMsg *spmsg = (!rendering->IsLocal()) ? 
     new Renderer::SendPixelsMsg(rendering, renderingSet,
-    raylist->GetFrame(), terminated_count) : NULL;
+    raylist->GetFrame(), hit_count) : NULL;
 
   ParticlesP samples = this->GetSamples();
 
@@ -172,5 +176,22 @@ Sampler::SampleMsg::Action(int sender)
   return false;
 }
 
+void
+Sampler::Trace(RayList *raylist)
+{
+  RendererP      renderer  = raylist->GetTheRenderer();
+  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingP     rendering     = raylist->GetTheRendering();
+  VisualizationP visualization = rendering->GetTheVisualization();
+
+  // This is called when a list of rays is pulled off the
+  // RayQ.  When we are done with it we decrement the 
+  // ray list count (rather than when it was pulled off the
+  // RayQ) so we don't send a message upstream saying we are idle
+  // until we actually are.
+
+  SamplerTraceRays tracer;
+  RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
+}
 
 } // namespace gxy
