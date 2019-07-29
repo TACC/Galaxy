@@ -68,6 +68,7 @@ set (CPP_SOURCES
   mypng.cpp
   Camera.cpp 
   IspcObject.cpp
+  ImageWriter.cpp
   Lighting.cpp
   MappedVis.cpp
   GeometryVis.cpp

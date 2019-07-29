@@ -621,18 +621,20 @@ RenderingSet::serialize(unsigned char *ptr)
 }
 
 void
-RenderingSet::SaveImages(string basename)
+RenderingSet::SaveImages(string basename, bool asFloat)
 {
-	SaveImagesMsg *msg = new SaveImagesMsg(this, basename);
+	SaveImagesMsg *msg = new SaveImagesMsg(this, basename, asFloat);
 	msg->Broadcast(true, true);
 }
 
-RenderingSet::SaveImagesMsg::SaveImagesMsg(RenderingSet *r, string basename) 
-		: SaveImagesMsg(sizeof(Key) + basename.length() + 1)
+RenderingSet::SaveImagesMsg::SaveImagesMsg(RenderingSet *r, string basename, bool asFloat) 
+		: SaveImagesMsg(sizeof(Key) + sizeof(bool) + basename.length() + 1)
 {
 	unsigned char *p = (unsigned char *)contents->get();
 	*(Key *)p = r->getkey();
 	p += sizeof(Key);
+	*(bool *)p = asFloat;
+	p += sizeof(bool);
 	memcpy(p, basename.c_str(), basename.length()+1);
 }
 
@@ -642,13 +644,15 @@ RenderingSet::SaveImagesMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 	char *ptr = (char *)contents->get();
 	Key key = *(Key *)ptr;
 	ptr += sizeof(Key);
+  bool asFloat = *(bool *)ptr;
+  ptr += sizeof(bool);
 	string basename(ptr);
 
 	RenderingSetP rs = GetByKey(key);
 	
 	for (int i = 0; i < rs->GetNumberOfRenderings(); i++)
 		if (rs->GetRendering(i)->IsLocal())
-			rs->GetRendering(i)->SaveImage(basename, i);
+			rs->GetRendering(i)->SaveImage(basename, i, asFloat);
 
 	return false;
 }

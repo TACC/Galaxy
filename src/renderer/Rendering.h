@@ -103,7 +103,7 @@ public:
 	virtual void AddLocalPixels(Pixel *p, int n, int f, int sender = -1);	// Add to local FB from received send buffer
 
 	bool IsLocal(); //!< returns true if the calling process owns this Rendering (i.e. if the process rank matches the owner tag)
-	void SaveImage(std::string, int); //!< save the current framebuffer to a PNG file using the given filename base and index increment
+	void SaveImage(std::string, int, bool asFloat); //!< save the current framebuffer to a color or float image file using the given filename base and index increment
 
 	virtual int serialSize(); //!< returns the size in bytes for the serialization of this Rendering
 	virtual unsigned char *serialize(unsigned char *); //!< serialize this Rendering to the given byte array

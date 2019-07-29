@@ -71,8 +71,8 @@ public:
 	 */
 	RenderingP GetRendering(int i);
 
-	//! save PNG images for this RenderingSet using the supplied base name for the image files
-	void SaveImages(std::string basename); 
+	//! save images for this RenderingSet using the supplied base name for the image files.  If asFLoat is true, then save four-channel fload images in fits format; otherwise, write a png color image.
+	void SaveImages(std::string basename, bool asFloat=false); 
 
 	//! Add the given RayList to be processed against this RenderingSet
 	/*! Add a raylist to the queue of raylists to be processed
@@ -274,7 +274,7 @@ private:
   class SaveImagesMsg : public Work
   {
   public:
-		SaveImagesMsg(RenderingSet *r, std::string basename);
+		SaveImagesMsg(RenderingSet *r, std::string basename, bool isFloat);
 
     WORK_CLASS(SaveImagesMsg, true);
 

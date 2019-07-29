@@ -260,7 +260,7 @@ int main(int argc,  char *argv[])
       theSchlierenRenderer->NormalizeImages(rs);
       sleep(4);
 
-      rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image");
+      rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image", true);
 
       long t1 = my_time();
       cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds" << endl;
