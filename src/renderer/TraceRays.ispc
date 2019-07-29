@@ -153,7 +153,6 @@ LookForSliceHit(varying bool shadeFlag,
         if (abs(denom) > 0.0001)
         {
           float t = (d - dot(ray.org, pnorm)) / denom;
-
           if (t >= ray.t0 && t <= ray.t)
           {
 

@@ -121,6 +121,12 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
       vec3f p_term(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i));
       vec3f d_term(raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
 
+      if (raylist->get_x(i) == 1 && raylist->get_y(i) == 6)
+      {
+        std::cerr << "o " << raylist->get_ox(i) << " " << raylist->get_oy(i) << " " << raylist->get_oz(i) << "\n";
+        std::cerr << "d " << raylist->get_dx(i) << " " << raylist->get_dy(i) << " " << raylist->get_dz(i) << "\n";
+      }
+
       normalize(d_term);
 
       // We want the intersection of the ray starting at the exit point in

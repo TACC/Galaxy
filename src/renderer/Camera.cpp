@@ -411,7 +411,7 @@ Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
 
     if (is_ortho)
     {
-      vorigin = xy_wcs;
+      vorigin = xy_wcs - vdir;
       vray = vdir;
     }
     else
@@ -708,7 +708,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
 
       if (aov == 0) // orthographic...
       { 
-        vorigin = xy_wcs;
+        vorigin = xy_wcs - vdir;
         vray = vdir;
       }
       else
