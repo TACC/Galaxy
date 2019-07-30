@@ -134,7 +134,7 @@ report "Generating datasets for data-driven geometry tests..."
 ${GXY_ROOT}/tests/create_data_driven_datasets.vpy
 
 
-GXY_VOLS="oneBall eightBalls xramp yramp zramp vectors"
+GXY_VOLS="oneBall eightBalls xramp yramp zramp"
 report "Converting vti to vol with ${GXY_VTI2VOL}"
 ${GXY_VTI2VOL} radial-0.vti ${GXY_VOLS} > /dev/null 2>&1
 if [ $? != 0 ]; then
