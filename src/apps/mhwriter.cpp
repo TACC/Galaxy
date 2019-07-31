@@ -512,7 +512,7 @@ main(int argc, char * argv[])
 
     theRenderingSet->Commit();
 
-    theRenderer->Render(theRenderingSet);
+    theRenderer->Start(theRenderingSet);
 
 #ifdef GXY_WRITE_IMAGES
     theRenderingSet->WaitForDone();

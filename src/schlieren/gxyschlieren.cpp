@@ -230,7 +230,7 @@ int main(int argc,  char *argv[])
         theApplication.Wait();
         exit(1);
       }
-      theSchlierenRenderer->Render(rs);
+      theSchlierenRenderer->Start(rs);
 
 #if 1
 #ifdef GXY_PRODUCE_STATUS_MESSAGES

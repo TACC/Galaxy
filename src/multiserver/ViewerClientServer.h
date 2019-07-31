@@ -98,7 +98,7 @@ public:
 
     camera->Commit();
 
-    renderer->Render(renderingSet);
+    renderer->Start(renderingSet);
   }
 
 private:

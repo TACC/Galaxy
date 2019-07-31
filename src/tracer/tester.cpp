@@ -216,7 +216,7 @@ int main(int argc,  char *argv[])
     renderingSet->AddRendering(theRendering);
     renderingSet->Commit();
 
-    theRenderer->Render(renderingSet);
+    theRenderer->Start(renderingSet);
     renderingSet->WaitForDone();
     renderingSet->SaveImages(string("plines"));
 

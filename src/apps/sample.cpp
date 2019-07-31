@@ -316,7 +316,7 @@ main(int argc, char * argv[])
     theRenderingSet->Commit();
 
 std::cerr << "RENDER\n";
-		theRenderer->Render(theRenderingSet);
+		theRenderer->Start(theRenderingSet);
 // #ifdef GXY_WRITE_IMAGES
 std::cerr << "WAIT\n";
 		theRenderingSet->WaitForDone();

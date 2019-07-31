@@ -92,7 +92,7 @@ public:
   virtual unsigned char *Deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
 
   //! broadcasts a RenderMsg to all processes to begin rendering via each localRendering method
-	virtual void Render(RenderingSetP);
+	virtual void Start(RenderingSetP);
   //! return the frame number for the current render
 	int GetFrame() { return frame; }
 

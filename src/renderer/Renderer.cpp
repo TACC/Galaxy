@@ -830,7 +830,7 @@ Renderer::AckRaysMsg::Action(int sender)
 #endif // GXY_WRITE_IMAGES
 
 void
-Renderer::Render(RenderingSetP rs)
+Renderer::Start(RenderingSetP rs)
 {
   static int render_frame = 0;
 #ifdef GXY_EVENT_TRACKING

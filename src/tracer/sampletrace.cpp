@@ -254,7 +254,7 @@ main(int argc, char * argv[])
 
     // Render, wait, and write results
 
-    theRenderer->Render(theRenderingSet1);
+    theRenderer->Start(theRenderingSet1);
     theRenderingSet1->WaitForDone();
     theRenderingSet1->SaveImages(string("samples"));
 
