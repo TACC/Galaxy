@@ -167,7 +167,7 @@ main(int argc, char * argv[])
 
     // Commit the Sampler, initiate sampling, and wait for it to be done
     theSampler->Commit();
-    theSampler->Sample(theRenderingSet0);
+    theSampler->Start(theRenderingSet0);
     theRenderingSet0->WaitForDone();
 
     // Now the 'samples' particle set contains the samples. Save it to the datasets
