@@ -65,25 +65,9 @@ public:
   virtual unsigned char *Serialize(unsigned char *);
   virtual unsigned char *Deserialize(unsigned char *);
 
-  virtual void Sample(RenderingSetP);
-
 private:
   ParticlesP mSamples = NULL;
   pthread_mutex_t lock;
-
-  class SampleMsg : public Work
-  {
-  public:
-    SampleMsg(Sampler *, RenderingSetP);
-    ~SampleMsg() {}
-
-    WORK_CLASS(SampleMsg, true);
-
-    bool Action(int s);
-
-    private:
-        int frame;
-  };
 
 };
 

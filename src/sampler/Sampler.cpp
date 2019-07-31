@@ -31,8 +31,6 @@
 
 namespace gxy 
 {
-WORK_CLASS_TYPE(Sampler::SampleMsg);
-
 KEYED_OBJECT_CLASS_TYPE(Sampler)
 
 void
@@ -40,7 +38,6 @@ Sampler::Initialize()
 { 
   RegisterClass();
   SamplerVis::Register();
-  SampleMsg::Register();
 }
 
 #if 0
@@ -115,39 +112,6 @@ Sampler::Deserialize(unsigned char *p)
   return p;
 }
 
-void
-Sampler::Sample(RenderingSetP rs)
-{   
-  SampleMsg msg(this, rs);
-  msg.Broadcast(false, true);
-}
-
-Sampler::SampleMsg::SampleMsg(Sampler* r, RenderingSetP rs) :
-  Sampler::SampleMsg(sizeof(Key) + r->SerialSize() + sizeof(Key))
-{
-  unsigned char *p = contents->get();
-  *(Key *)p = r->getkey();
-  p = p + sizeof(Key);
-  p = r->Serialize(p);
-  *(Key *)p = rs->getkey();
-}
-
-bool
-Sampler::SampleMsg::Action(int sender)
-{
-  unsigned char *p = (unsigned char *)get();
-  Key sampler_key = *(Key *)p;
-  p += sizeof(Key);
-
-  SamplerP sampler = Sampler::GetByKey(sampler_key);
-  p = sampler->Deserialize(p);
-
-  RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
-
-  sampler->local_render(sampler, rs);
-
-  return false;
-}
 
 void
 Sampler::Trace(RayList *raylist)
