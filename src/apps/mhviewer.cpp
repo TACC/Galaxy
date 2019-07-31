@@ -481,7 +481,7 @@ render_thread(void *d)
 			if (render_one)
 				render_one = false;
 
-			theRenderer->Render(theRenderingSet);
+			theRenderer->Start(theRenderingSet);
 			X0 = X1; Y0 = Y1;
 		}
 

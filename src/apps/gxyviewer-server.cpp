@@ -137,7 +137,7 @@ render_thread(void *buf)
   theRenderingSet->AddRendering(theRendering);
   theRenderingSet->Commit();
 
-	theRenderer->Render(theRenderingSet);
+	theRenderer->Start(theRenderingSet);
 
 	while (! quit)
 	{
@@ -197,7 +197,7 @@ render_thread(void *buf)
 
 			X0 = X1; Y0 = Y1;
 
-			theRenderer->Render(theRenderingSet);
+			theRenderer->Start(theRenderingSet);
 
 			timespec ts = {0, 100000000};
 			nanosleep(&ts, NULL);
