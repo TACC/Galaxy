@@ -111,18 +111,6 @@ Step(Ray& ray, const uniform float step, const uniform box3f& box)
   }
 }
 
-inline float
-F(varying vec3f vlast, varying vec3f vnext)
-{
-  varying float vlast_mag = length(vlast);
-  varying float vnext_mag = length(vnext);
-
-  varying float v0 = vlast_mag - vnext_mag;
-  varying float v1 = dot(safe_normalize(vlast), safe_normalize(vnext));
-
-  return v0 + v1;
-}
-
 export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
                                void *uniform _vis,
                                const uniform int nRaysIn,
@@ -142,7 +130,7 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
   {
     uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)svis)->data;
 
-    uniform float tolerance = svis->tolerance;
+    uniform float isoval = svis->tolerance;
     uniform float step = vol->samplingStep * vol->samplingRate;
 
     foreach (i = 0 ... nRaysIn)
@@ -175,20 +163,20 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
       bool hit = false;
 
       vec3f coord = ray.org + tEntry * ray.dir;
-      vec3f sLast = vol->computeGradient(vol, coord);
+      float sLast = vol->sample(vol, coord);
+      // print("START T %\nZ %\nS %\n", tEntry, coord.z, sLast);
 
       while (tThis <= tExit && !hit)
       {
         coord = ray.org + tThis * ray.dir;
-        vec3f sThis = vol->computeGradient(vol, coord);
+        float sThis = vol->sample(vol, coord);
 
         // print("T %\nZ %\nS %\n", tThis, coord.z, sThis);
 
-        varying float f = F(sLast, sThis);
-
-        if (f > tolerance)
+        if (((sLast < isoval) && (sThis >= isoval)) || ((sLast > isoval) && sThis <= isoval))
         {
-          tThis = (tLast + tThis) / 2.0;
+          // print ("hit!\n");
+          tThis = tLast + (((isoval - sLast)/(sThis - sLast)) * (tThis - tLast));
           hit   = true;
         }
         else if (tThis == tExit)

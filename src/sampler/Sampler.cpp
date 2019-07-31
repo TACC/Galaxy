@@ -67,10 +67,6 @@ Sampler::HandleTerminatedRays(RayList *raylist)
 
   if (hit_count == 0) return;
 
-  Renderer::SendPixelsMsg *spmsg = (!rendering->IsLocal()) ? 
-    new Renderer::SendPixelsMsg(rendering, renderingSet,
-    raylist->GetFrame(), hit_count) : NULL;
-
   ParticlesP samples = this->GetSamples();
 
   samples->Lock();
@@ -79,43 +75,20 @@ Sampler::HandleTerminatedRays(RayList *raylist)
   {
     if (raylist->get_term(i) & RAY_SURFACE)
     {
-      if (rendering->IsLocal())
-      {
-        // add a particle, setting position from ray
-        Particle newsample;
-        newsample.xyz.x = raylist->get_ox(i) + raylist->get_t(i)*raylist->get_dx(i);
-        newsample.xyz.y = raylist->get_oy(i) + raylist->get_t(i)*raylist->get_dy(i);
-        newsample.xyz.z = raylist->get_oz(i) + raylist->get_t(i)*raylist->get_dz(i);
-        newsample.u.value = 0.0;
+      // add a particle, setting position from ray
+      Particle newsample;
+      newsample.xyz.x = raylist->get_ox(i) + raylist->get_t(i)*raylist->get_dx(i);
+      newsample.xyz.y = raylist->get_oy(i) + raylist->get_t(i)*raylist->get_dy(i);
+      newsample.xyz.z = raylist->get_oz(i) + raylist->get_t(i)*raylist->get_dz(i);
+      newsample.u.value = 0.0;
 
-        // newsample.xyz.x = (float)(rand() % 100)/100.0; 
-        // newsample.xyz.y = (float)(rand() % 100)/100.0; 
-        // newsample.xyz.z = (float)(rand() % 100)/100.0; 
-
-        samples->push_back(newsample);
-      }
-      else
-      {
-        spmsg->StashPixel(raylist, i);
-      }
+      samples->push_back(newsample);
     }
   }
 
   samples->Unlock();
 
   std::cerr << "Sampler::HandleTerminatedRays: " << samples->GetNumberOfVertices() << " samples stashed\n";
-
-  if (spmsg)
-  {
-    if (renderingSet->IsActive(raylist->GetFrame()))
-    {
-      spmsg->Send(rendering->GetTheOwner());
-    }
-    else
-    {
-      delete spmsg;
-    }
-  }
 }
 
 int
