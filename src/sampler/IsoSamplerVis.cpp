@@ -25,9 +25,8 @@
 #include <sstream>
 #include <fstream>
 #include "Application.h"
-#include "SamplerVis.h"
-#include "SamplerVis_ispc.h"
 #include "IsoSamplerVis.h"
+#include "IsoSamplerVis_ispc.h"
 
 #include "rapidjson/document.h"
 
@@ -37,87 +36,102 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(SamplerVis)
+KEYED_OBJECT_CLASS_TYPE(IsoSamplerVis)
 
 void
-SamplerVis::Register()
+IsoSamplerVis::Register()
 {
 	RegisterClass();
-    IsoSamplerVis::Register();
 }
 
-SamplerVis::~SamplerVis()
+IsoSamplerVis::~IsoSamplerVis()
 {
 }
 
 void
-SamplerVis::initialize()
+IsoSamplerVis::initialize()
 {
   super::initialize();
 }
 
 void 
-SamplerVis::initialize_ispc()
+IsoSamplerVis::initialize_ispc()
 {
   super::initialize_ispc();
-  ispc::SamplerVis_initialize(ispc);
+  ispc::IsoSamplerVis_initialize(ispc);
 }
 
 void
-SamplerVis::allocate_ispc()
+IsoSamplerVis::allocate_ispc()
 {
-  ispc = ispc::SamplerVis_allocate();
+  ispc = ispc::IsoSamplerVis_allocate();
 }
 
 bool 
-SamplerVis::Commit(DatasetsP datasets)
+IsoSamplerVis::Commit(DatasetsP datasets)
 {
-	return Vis::Commit(datasets);
+	return super::Commit(datasets);
 }
 
 bool
-SamplerVis::LoadFromJSON(Value& v)
+IsoSamplerVis::LoadFromJSON(Value& v)
 {
-  Vis::LoadFromJSON(v);
+  super::LoadFromJSON(v);
+
+  if (v.HasMember("tolerance"))
+     tolerance = v["tolerance"].GetDouble();
 
   return true;
 }
 
 void
-SamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
+IsoSamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
 {
   super::SetTheOsprayDataObject(o);
 }
 
 int
-SamplerVis::serialSize() 
+IsoSamplerVis::serialSize() 
 {
-	return super::serialSize();
+	return super::serialSize() + sizeof(float);
 }
 
 unsigned char *
-SamplerVis::deserialize(unsigned char *ptr) 
+IsoSamplerVis::deserialize(unsigned char *ptr) 
 {
   ptr = super::deserialize(ptr);
+
+  tolerance = *(float *)ptr;
+  ptr += sizeof(float);
 
   return ptr;
 }
 
 unsigned char *
-SamplerVis::serialize(unsigned char *ptr)
+IsoSamplerVis::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
+
+  *(float *)ptr = tolerance;
+  ptr += sizeof(float);
 
   return ptr;
 }
 
 bool 
-SamplerVis::local_commit(MPI_Comm c)
+IsoSamplerVis::local_commit(MPI_Comm c)
 {
   if(super::local_commit(c))  
     return true;
   
+  ispc::IsoSamplerVis_set_tolerance(ispc, tolerance);
   return false;
 }
+
+void 
+IsoSamplerVis::SetTolerance(float t) { tolerance = t; }
+
+float 
+IsoSamplerVis::GetTolerance() { return tolerance; }
 
 } // namespace gxy

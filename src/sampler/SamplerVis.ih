@@ -26,15 +26,10 @@
 struct SamplerVis_ispc
 {
   struct VolumeVis_ispc super;
-  float tolerance;
 
   varying bool (*uniform init)(void *uniform, varying Ray& ray, varying float t);
   varying bool (*uniform check_interval)(void *uniform, varying Ray& ray, varying float t);
   varying float (*uniform get_sample_t)(void *uniform);
-
-  varying float tHit;
-  varying float sLast;
-  varying float tLast;
 };  
 
 typedef uniform SamplerVis_ispc *uniform pSamplerVis_ispc;
