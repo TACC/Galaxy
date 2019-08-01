@@ -1,4 +1,4 @@
-// ========================================================================== //
+
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -241,6 +241,7 @@ extern void aol(KeyedObjectP& p);
  * \ingroup framework
  * \sa KeyedObject, Work, OBJECT_POINTER_TYPES, KEYED_OBJECT, KEYED_OBJECT_SUBCLASS
  */
+
 class KeyedObjectFactory
 {
 public:
@@ -251,21 +252,7 @@ public:
   /*! \param n pointer to a KeyedObject-derived object instance
    * \param s class name of the passed object
    */
-  int register_class(KeyedObject *(*n)(Key), std::string s)
-  {
-    for (auto i = 0; i < class_names.size(); i++)
-      if (class_names[i] == s)
-      {
-        if (new_procs[i] != n)
-          new_procs[i] = n;
-
-        return i;
-      }
-
-    new_procs.push_back(n);
-    class_names.push_back(s);
-    return new_procs.size() - 1;
-  }
+  int register_class(KeyedObject *(*n)(Key), std::string s);
 
   KeyedObjectP 
   NewP(std::string classname)
