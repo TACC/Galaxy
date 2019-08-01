@@ -20,13 +20,16 @@
 
 #pragma once
 
-#include "Vis.ih"
-struct TransferFunction;
+#include "ospray/SDK/common/Ray.ih"
+#include "VolumeVis.ih"
 
 struct SamplerVis_ispc
 {
-  struct Vis_ispc vis;
-  float tolerance;
+  struct VolumeVis_ispc super;
+
+  varying bool (*uniform init)(void *uniform, varying Ray& ray, varying float t);
+  varying bool (*uniform check_interval)(void *uniform, varying Ray& ray, varying float t);
+  varying float (*uniform get_sample_t)(void *uniform);
 };  
 
 typedef uniform SamplerVis_ispc *uniform pSamplerVis_ispc;

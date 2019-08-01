@@ -18,108 +18,73 @@
 //                                                                            //
 // ========================================================================== //
 
-#include <iostream>
-#include <math.h>
-#include <stdlib.h>
+#pragma once
+
+/*! \file GradientSamplerVis.h 
+ * \brief a visualization element that  
+ * \ingroup render
+ */
+
 #include <string>
-#include <sstream>
-#include <fstream>
-#include "Application.h"
+#include <string.h>
+#include <vector>
+#include <memory>
+
+#include "dtypes.h"
 #include "SamplerVis.h"
-#include "SamplerVis_ispc.h"
-#include "IsoSamplerVis.h"
-#include "GradientSamplerVis.h"
+#include "Datasets.h"
+#include "KeyedObject.h"
 
 #include "rapidjson/document.h"
-
-using namespace std;
-using namespace rapidjson;
 
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(SamplerVis)
+OBJECT_POINTER_TYPES(GradientSamplerVis)
 
-void
-SamplerVis::Register()
+//! a visualization element that identifies isosurface crossings as samples
+/*! \ingroup render
+ * \sa KeyedObject, KeyedDataObject, Vis, SamplerVis
+ */
+class GradientSamplerVis : public SamplerVis
 {
-	RegisterClass();
-    IsoSamplerVis::Register();
-    GradientSamplerVis::Register();
-}
+  KEYED_OBJECT_SUBCLASS(GradientSamplerVis, SamplerVis)
 
-SamplerVis::~SamplerVis()
-{
-}
+public:
 
-void
-SamplerVis::initialize()
-{
-  super::initialize();
-}
+  virtual ~GradientSamplerVis(); //!< default destructor
 
-void 
-SamplerVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::SamplerVis_initialize(ispc);
-}
+  virtual void initialize(); //!< initialize this GradientSamplerVis object
 
-void
-SamplerVis::allocate_ispc()
-{
-  ispc = ispc::SamplerVis_allocate();
-}
+  //! commit this object to the global registry across all processes
+  virtual bool Commit(DatasetsP);
 
-bool 
-SamplerVis::Commit(DatasetsP datasets)
-{
-	return Vis::Commit(datasets);
-}
+  //! set the tolerance for this GradientSamplerVis
+  void SetTolerance(float t);
 
-bool
-SamplerVis::LoadFromJSON(Value& v)
-{
-  Vis::LoadFromJSON(v);
+  //! get the tolerance for this GradientSamplerVis
+  float GetTolerance();
 
-  return true;
-}
+  //! construct a GradientSamplerVis from a Galaxy JSON specification
+  virtual bool LoadFromJSON(rapidjson::Value&);
 
-void
-SamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
-{
-  super::SetTheOsprayDataObject(o);
-}
+  //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
+  virtual void SetTheOsprayDataObject(OsprayObjectP o);
 
-int
-SamplerVis::serialSize() 
-{
-	return super::serialSize();
-}
+  //! commit this object to the local registry
+  virtual bool local_commit(MPI_Comm);
 
-unsigned char *
-SamplerVis::deserialize(unsigned char *ptr) 
-{
-  ptr = super::deserialize(ptr);
+ protected:
+  virtual void allocate_ispc();
+  virtual void initialize_ispc();
 
-  return ptr;
-}
+  float tolerance;
 
-unsigned char *
-SamplerVis::serialize(unsigned char *ptr)
-{
-  ptr = super::serialize(ptr);
+  virtual int serialSize();
+  virtual unsigned char *serialize(unsigned char *);
+  virtual unsigned char *deserialize(unsigned char *);
 
-  return ptr;
-}
-
-bool 
-SamplerVis::local_commit(MPI_Comm c)
-{
-  if(super::local_commit(c))  
-    return true;
-  
-  return false;
-}
+};
 
 } // namespace gxy
+

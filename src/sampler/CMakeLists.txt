@@ -40,12 +40,16 @@ include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCL
 set (ISPC_SOURCES 
  SamplerTraceRays.ispc
  SamplerVis.ispc
+ IsoSamplerVis.ispc
+ GradientSamplerVis.ispc
 )
 
 set (CPP_SOURCES 
   Sampler.cpp
   SamplerTraceRays.cpp
   SamplerVis.cpp
+  IsoSamplerVis.cpp
+  GradientSamplerVis.cpp
   )
 
 set(SERVERS "")

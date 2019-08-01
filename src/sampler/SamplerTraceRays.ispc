@@ -112,7 +112,7 @@ Step(Ray& ray, const uniform float step, const uniform box3f& box)
 }
 
 inline float
-F(varying vec3f vlast, varying vec3f vnext)
+test_values(varying vec3f vlast, varying vec3f vnext)
 {
   varying float vlast_mag = length(vlast);
   varying float vnext_mag = length(vnext);
@@ -122,6 +122,8 @@ F(varying vec3f vlast, varying vec3f vnext)
 
   return v0 + v1;
 }
+
+typedef uniform SamplerVis_ispc *uniform SVIS_PTR;
 
 export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
                                void *uniform _vis,
@@ -134,16 +136,18 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
   uniform box3f box = vis->local_bb;
   uniform float step;
 
-  // For the moment, assume that the visualization contains only one vis and its a SampleVis
-
-  uniform SamplerVis_ispc *uniform svis = (uniform SamplerVis_ispc *uniform)vis->volumeVis[0];
-  
-  if (vis->nVolumeVis == 1)
+  if (vis->nVolumeVis >= 1)
   {
-    uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)svis)->data;
-
-    uniform float tolerance = svis->tolerance;
+    uniform Vis_ispc *uniform svis = (uniform Vis_ispc *uniform)vis->volumeVis[0];
+    uniform Volume *uniform vol = (uniform Volume *uniform)(svis->data);
     uniform float step = vol->samplingStep * vol->samplingRate;
+    for (uniform int i = 1; i < vis->nVolumeVis; i++)
+    {
+        svis = (uniform Vis_ispc *uniform)vis->volumeVis[i];
+        vol = (uniform Volume *uniform)(svis->data);
+        uniform float s = vol->samplingStep * vol->samplingRate;
+        if (s < step) step = s;
+    }
 
     foreach (i = 0 ... nRaysIn)
     {
@@ -162,55 +166,57 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
       // since the ray bends.
 
       float tEntry = EntryT(ray, box);
-      float tExit = ExitT(ray, box);
+      float tExit  = ExitT(ray, box);
 
       // print("tEntry %\ntExit %\nray.t %\nray.t0 %\n", tEntry, tExit, ray.t, ray.t0);
 
       // move the ray origin to the entry point (if its not already inside the volume)
       if (tEntry < ray.t)
+      {
         tEntry = ray.t;
+      }
 
       float tLast = tEntry;
       float tThis = tEntry + step;
-      bool hit = false;
+      int   hit   = -1;
 
-      vec3f coord = ray.org + tEntry * ray.dir;
-      vec3f sLast = vol->computeGradient(vol, coord);
+      // vec3f coord = ray.org + tEntry * ray.dir;
+      // vec3f sLast = vol->computeGradient(vol, coord);
 
-      while (tThis <= tExit && !hit)
+      for (uniform int i = 0; i < vis->nVolumeVis; i++)
       {
-        coord = ray.org + tThis * ray.dir;
-        vec3f sThis = vol->computeGradient(vol, coord);
+          uniform SamplerVis_ispc *uniform svis = (uniform SamplerVis_ispc *uniform)vis->volumeVis[i];
+          svis->init(svis, ray, tEntry);
+      }
 
-        // print("T %\nZ %\nS %\n", tThis, coord.z, sThis);
+      while (tThis <= tExit && hit == -1)
+      {
+          hit = -1;
+          for (uniform int i = 0; i < vis->nVolumeVis && hit == -1; i++)
+          {
+              uniform SamplerVis_ispc *uniform svis = (uniform SamplerVis_ispc *uniform)vis->volumeVis[i];
+              if (svis->check_interval(svis, ray, tThis)) 
+              {
+                  tThis = svis->get_sample_t(svis);
+                  hit = i;
+              }
+          }
 
-        varying float f = F(sLast, sThis);
+          if (hit != -1 ||  tThis == tExit)
+              break;
 
-        if (f > tolerance)
-        {
-          tThis = (tLast + tThis) / 2.0;
-          hit   = true;
-        }
-        else if (tThis == tExit)
-        {
-          break;
-        }
-        else
-        {
-          sLast = sThis;
           tLast = tThis;
           tThis = tThis + step;
           if (tThis > tExit)
             tThis = tExit;
-        }
       }
 
-      if (hit)
+      if (hit != -1)
         raysIn->t[i] = tThis + 0.001;
       else
         raysIn->t[i] = tThis;
 
-      raysIn->term[i] = hit ? RAY_SURFACE : RAY_BOUNDARY;
+      raysIn->term[i] = (hit != -1) ? RAY_SURFACE : RAY_BOUNDARY;
     }
   }
 }
