@@ -18,108 +18,21 @@
 //                                                                            //
 // ========================================================================== //
 
-#include <iostream>
-#include <math.h>
-#include <stdlib.h>
-#include <string>
-#include <sstream>
-#include <fstream>
-#include "Application.h"
-#include "SamplerVis.h"
-#include "SamplerVis_ispc.h"
-#include "IsoSamplerVis.h"
-#include "GradientSamplerVis.h"
+#pragma once
 
-#include "rapidjson/document.h"
+#include "ospray/SDK/common/Ray.ih"
+#include "SamplerVis.ih"
 
-using namespace std;
-using namespace rapidjson;
-
-namespace gxy
+struct GradientSamplerVis_ispc
 {
+  struct SamplerVis_ispc super;
+  float tolerance;
 
-KEYED_OBJECT_CLASS_TYPE(SamplerVis)
+  varying float tHit;
+  varying float sLast;
+  varying float tLast;
+};  
 
-void
-SamplerVis::Register()
-{
-	RegisterClass();
-    IsoSamplerVis::Register();
-    GradientSamplerVis::Register();
-}
+typedef uniform GradientSamplerVis_ispc *uniform pGradientSamplerVis_ispc;
 
-SamplerVis::~SamplerVis()
-{
-}
 
-void
-SamplerVis::initialize()
-{
-  super::initialize();
-}
-
-void 
-SamplerVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::SamplerVis_initialize(ispc);
-}
-
-void
-SamplerVis::allocate_ispc()
-{
-  ispc = ispc::SamplerVis_allocate();
-}
-
-bool 
-SamplerVis::Commit(DatasetsP datasets)
-{
-	return Vis::Commit(datasets);
-}
-
-bool
-SamplerVis::LoadFromJSON(Value& v)
-{
-  Vis::LoadFromJSON(v);
-
-  return true;
-}
-
-void
-SamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
-{
-  super::SetTheOsprayDataObject(o);
-}
-
-int
-SamplerVis::serialSize() 
-{
-	return super::serialSize();
-}
-
-unsigned char *
-SamplerVis::deserialize(unsigned char *ptr) 
-{
-  ptr = super::deserialize(ptr);
-
-  return ptr;
-}
-
-unsigned char *
-SamplerVis::serialize(unsigned char *ptr)
-{
-  ptr = super::serialize(ptr);
-
-  return ptr;
-}
-
-bool 
-SamplerVis::local_commit(MPI_Comm c)
-{
-  if(super::local_commit(c))  
-    return true;
-  
-  return false;
-}
-
-} // namespace gxy

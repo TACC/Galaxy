@@ -41,6 +41,7 @@ set (ISPC_SOURCES
  SamplerTraceRays.ispc
  SamplerVis.ispc
  IsoSamplerVis.ispc
+ GradientSamplerVis.ispc
 )
 
 set (CPP_SOURCES 
@@ -48,6 +49,7 @@ set (CPP_SOURCES
   SamplerTraceRays.cpp
   SamplerVis.cpp
   IsoSamplerVis.cpp
+  GradientSamplerVis.cpp
   )
 
 set(SERVERS "")

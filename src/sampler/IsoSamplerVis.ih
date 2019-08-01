@@ -33,6 +33,6 @@ struct IsoSamplerVis_ispc
   varying float tLast;
 };  
 
-typedef uniform SamplerVis_ispc *uniform pIsoSamplerVis_ispc;
+typedef uniform IsoSamplerVis_ispc *uniform pIsoSamplerVis_ispc;
 
 

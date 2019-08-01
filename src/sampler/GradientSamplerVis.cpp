@@ -25,10 +25,8 @@
 #include <sstream>
 #include <fstream>
 #include "Application.h"
-#include "SamplerVis.h"
-#include "SamplerVis_ispc.h"
-#include "IsoSamplerVis.h"
 #include "GradientSamplerVis.h"
+#include "GradientSamplerVis_ispc.h"
 
 #include "rapidjson/document.h"
 
@@ -38,88 +36,102 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(SamplerVis)
+KEYED_OBJECT_CLASS_TYPE(GradientSamplerVis)
 
 void
-SamplerVis::Register()
+GradientSamplerVis::Register()
 {
 	RegisterClass();
-    IsoSamplerVis::Register();
-    GradientSamplerVis::Register();
 }
 
-SamplerVis::~SamplerVis()
+GradientSamplerVis::~GradientSamplerVis()
 {
 }
 
 void
-SamplerVis::initialize()
+GradientSamplerVis::initialize()
 {
   super::initialize();
 }
 
 void 
-SamplerVis::initialize_ispc()
+GradientSamplerVis::initialize_ispc()
 {
   super::initialize_ispc();
-  ispc::SamplerVis_initialize(ispc);
+  ispc::GradientSamplerVis_initialize(ispc);
 }
 
 void
-SamplerVis::allocate_ispc()
+GradientSamplerVis::allocate_ispc()
 {
-  ispc = ispc::SamplerVis_allocate();
+  ispc = ispc::GradientSamplerVis_allocate();
 }
 
 bool 
-SamplerVis::Commit(DatasetsP datasets)
+GradientSamplerVis::Commit(DatasetsP datasets)
 {
-	return Vis::Commit(datasets);
+	return super::Commit(datasets);
 }
 
 bool
-SamplerVis::LoadFromJSON(Value& v)
+GradientSamplerVis::LoadFromJSON(Value& v)
 {
-  Vis::LoadFromJSON(v);
+  super::LoadFromJSON(v);
+
+  if (v.HasMember("tolerance"))
+     tolerance = v["tolerance"].GetDouble();
 
   return true;
 }
 
 void
-SamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
+GradientSamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
 {
   super::SetTheOsprayDataObject(o);
 }
 
 int
-SamplerVis::serialSize() 
+GradientSamplerVis::serialSize() 
 {
-	return super::serialSize();
+	return super::serialSize() + sizeof(float);
 }
 
 unsigned char *
-SamplerVis::deserialize(unsigned char *ptr) 
+GradientSamplerVis::deserialize(unsigned char *ptr) 
 {
   ptr = super::deserialize(ptr);
+
+  tolerance = *(float *)ptr;
+  ptr += sizeof(float);
 
   return ptr;
 }
 
 unsigned char *
-SamplerVis::serialize(unsigned char *ptr)
+GradientSamplerVis::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
+
+  *(float *)ptr = tolerance;
+  ptr += sizeof(float);
 
   return ptr;
 }
 
 bool 
-SamplerVis::local_commit(MPI_Comm c)
+GradientSamplerVis::local_commit(MPI_Comm c)
 {
   if(super::local_commit(c))  
     return true;
   
+  ispc::GradientSamplerVis_set_tolerance(ispc, tolerance);
   return false;
 }
+
+void 
+GradientSamplerVis::SetTolerance(float t) { tolerance = t; }
+
+float 
+GradientSamplerVis::GetTolerance() { return tolerance; }
 
 } // namespace gxy
