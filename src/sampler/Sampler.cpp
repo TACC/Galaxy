@@ -116,8 +116,7 @@ Sampler::Deserialize(unsigned char *p)
 void
 Sampler::Trace(RayList *raylist)
 {
-  RendererP      renderer  = raylist->GetTheRenderer();
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+  RendererP      renderer      = raylist->GetTheRenderer();
   RenderingP     rendering     = raylist->GetTheRendering();
   VisualizationP visualization = rendering->GetTheVisualization();
 
