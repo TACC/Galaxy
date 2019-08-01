@@ -59,11 +59,11 @@ public:
   //! commit this object to the global registry across all processes
   virtual bool Commit(DatasetsP);
 
-  //! set the tolerance for this IsoSamplerVis
-  void SetTolerance(float t);
+  //! set the isovalue for this IsoSamplerVis
+  void SetIsovalue(float t);
 
-  //! get the tolerance for this IsoSamplerVis
-  float GetTolerance();
+  //! get the isovalue for this IsoSamplerVis
+  float GetIsovalue();
 
   //! construct a IsoSamplerVis from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
@@ -78,7 +78,7 @@ public:
   virtual void allocate_ispc();
   virtual void initialize_ispc();
 
-  float tolerance;
+  float isovalue;
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *);

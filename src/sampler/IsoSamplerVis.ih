@@ -26,7 +26,7 @@
 struct IsoSamplerVis_ispc
 {
   struct SamplerVis_ispc super;
-  float tolerance;
+  float isovalue;
 
   varying float tHit;
   varying float sLast;

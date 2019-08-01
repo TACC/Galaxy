@@ -27,10 +27,10 @@ export void *uniform IsoSamplerVis_allocate()
     return (void *)v;
 }
 
-export void IsoSamplerVis_set_tolerance(void *uniform _self, uniform float t)
+export void IsoSamplerVis_set_isovalue(void *uniform _self, uniform float t)
 {
     IsoSamplerVis_ispc *uniform self = (uniform IsoSamplerVis_ispc *)_self;
-    self->tolerance = t;
+    self->isovalue = t;
 }                                                                                                                            
 
 varying bool IsoSamplerVis_init(void *uniform _self, varying Ray& ray, varying float t)
@@ -52,9 +52,9 @@ varying bool IsoSamplerVis_check_interval(void *uniform _self, varying Ray& ray,
 
     bool hit = false;
 
-    if (((self->sLast < self->tolerance) && (sThis >= self->tolerance)) || ((self->sLast > self->tolerance) && sThis <= self->tolerance))
+    if (((self->sLast < self->isovalue) && (sThis >= self->isovalue)) || ((self->sLast > self->isovalue) && sThis <= self->isovalue))
     {
-      self->tHit = self->tLast + (((self->tolerance - self->sLast)/(sThis - self->sLast)) * (tThis - self->tLast));
+      self->tHit = self->tLast + (((self->isovalue - self->sLast)/(sThis - self->sLast)) * (tThis - self->tLast));
       hit   = true;
     }
 
@@ -77,6 +77,6 @@ export void IsoSamplerVis_initialize(void *uniform _self)
     super->get_sample_t = IsoSamplerVis_get_sample_t;
 
     IsoSamplerVis_ispc *uniform self = (uniform IsoSamplerVis_ispc *)_self;
-    self->tolerance = 0;
+    self->isovalue = 0;
 }
 

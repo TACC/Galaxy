@@ -78,8 +78,8 @@ IsoSamplerVis::LoadFromJSON(Value& v)
 {
   super::LoadFromJSON(v);
 
-  if (v.HasMember("tolerance"))
-     tolerance = v["tolerance"].GetDouble();
+  if (v.HasMember("isovalue"))
+     isovalue = v["isovalue"].GetDouble();
 
   return true;
 }
@@ -101,7 +101,7 @@ IsoSamplerVis::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
 
-  tolerance = *(float *)ptr;
+  isovalue = *(float *)ptr;
   ptr += sizeof(float);
 
   return ptr;
@@ -112,7 +112,7 @@ IsoSamplerVis::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
 
-  *(float *)ptr = tolerance;
+  *(float *)ptr = isovalue;
   ptr += sizeof(float);
 
   return ptr;
@@ -124,14 +124,14 @@ IsoSamplerVis::local_commit(MPI_Comm c)
   if(super::local_commit(c))  
     return true;
   
-  ispc::IsoSamplerVis_set_tolerance(ispc, tolerance);
+  ispc::IsoSamplerVis_set_isovalue(ispc, isovalue);
   return false;
 }
 
 void 
-IsoSamplerVis::SetTolerance(float t) { tolerance = t; }
+IsoSamplerVis::SetIsovalue(float t) { isovalue = t; }
 
 float 
-IsoSamplerVis::GetTolerance() { return tolerance; }
+IsoSamplerVis::GetIsovalue() { return isovalue; }
 
 } // namespace gxy
