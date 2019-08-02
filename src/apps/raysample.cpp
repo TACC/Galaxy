@@ -71,12 +71,7 @@ main(int argc, char * argv[])
   char *dbgarg;
   bool dbg = false;
   int downsample = 0;
-
-  ospInit(&argc, (const char **)argv);
-
-  Application theApplication(&argc, &argv);
-  theApplication.Start();
-
+  
   // process command line args
   for (int i = 1; i < argc; i++)
   {
@@ -90,10 +85,20 @@ main(int argc, char * argv[])
         case 'd': downsample = atoi(argv[++i]); break;
         default:
           syntax(argv[0]);
+          exit(0);
       }
     else if (data == "")   data = argv[i];
-    else syntax(argv[0]);
+    else {
+        syntax(argv[0]);
+        exit(0);
+    }
   }
+
+  ospInit(&argc, (const char **)argv);
+
+  Application theApplication(&argc, &argv);
+  theApplication.Start();
+
 
   theApplication.Run();
   mpiRank = theApplication.GetRank();
@@ -220,7 +225,7 @@ main(int argc, char * argv[])
 
     theRenderer->Start(theRenderingSet1);
     theRenderingSet1->WaitForDone();
-    theRenderingSet1->SaveImages(string("samples"));
+    theRenderingSet1->SaveImages(string("raysample"));
 
     theApplication.QuitApplication();
   }
