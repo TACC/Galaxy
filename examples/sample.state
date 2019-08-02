@@ -1,0 +1,44 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "scalar",
+        "type": "Volume",
+        "filename": "vectors-oneBall.vol"
+      },
+      {
+        "name": "vectors",
+        "type": "Volume",
+        "filename": "vectors-vectors.json"
+      }
+    ],
+    "Visualizations":
+    [
+      {
+        "annotation": "",
+        "operators":
+          [
+            {
+              "type": "IsoSampler",
+              "dataset": "scalar",
+              "isovalue": 0.9,
+              "volume rendering": false
+            },
+            {
+              "type": "GradientSampler",
+              "dataset": "scalar",
+              "tolerance": 0.5,
+              "volume rendering": false
+            }
+          ]
+      } 
+    ],    
+    "Cameras": [
+      {   
+        "aov"           : 30.0,
+        "viewpoint"     : [0.0, 0.0, -20.0],
+        "viewdirection" : [0.0, 0.0, 1.0],
+        "viewup"        : [0.0, 1.0, 0.0]
+      }
+    ]
+}   
