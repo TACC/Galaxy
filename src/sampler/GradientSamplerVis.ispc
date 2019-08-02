@@ -55,8 +55,9 @@ varying bool GradientSamplerVis_check_interval(void *uniform _self, varying Ray&
 
     // float dotValue = dot(safe_normalize(sThis), safe_normalize(self->sLast));
     float dotValue = dot(sThis, self->sLast);
-    print("XXXXT %\nDOT %\nX %\nY %\nZ %\n", tThis, dotValue, sThis.x, sThis.y, sThis.z);
-
+#ifdef DEBUG_GRADIENTSAMPLERVIS
+    print("VECTOR\n%\n,%\n,%\n,%\n,%\n,%\n", coord.x, coord.y, coord.z,  sThis.x, sThis.y, sThis.z);
+#endif
     if (dotValue < self->tolerance)
     {
       self->tHit = (self->tLast + tThis)/2.0;
