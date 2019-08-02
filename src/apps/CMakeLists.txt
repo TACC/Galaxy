@@ -23,14 +23,21 @@ cmake_minimum_required (VERSION 3.9)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
 include_directories(${gxy_framework_SOURCE_DIR} 
-									  ${gxy_renderer_SOURCE_DIR}
-									  ${gxy_sampler_SOURCE_DIR}
+                    ${gxy_renderer_SOURCE_DIR}
+					${gxy_sampler_SOURCE_DIR}
                     ${OSPRAY_INCLUDE_DIRS}
-									  ${gxy_data_SOURCE_DIR}
-									  ${gxy_ospray_SOURCE_DIR}
-									  ${Galaxy_BINARY_DIR}/src)
+					${gxy_data_SOURCE_DIR}
+					${gxy_ospray_SOURCE_DIR}
+					${Galaxy_BINARY_DIR}/src)
 
-set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${MPI_C_LIBRARIES})
+set(GALAXY_LIBRARIES 
+    gxy_framework 
+    gxy_renderer 
+    gxy_sampler
+    gxy_data 
+    gxy_ospray 
+    ${OSPRAY_LIBRARIES}
+    ${MPI_C_LIBRARIES})
 
 set(BINS "")
 
@@ -40,13 +47,13 @@ find_package(GLUT)
 
 if (GXY_WRITE_IMAGES)
 
-	add_executable(gxywriter gxywriter.cpp)
+    add_executable(gxywriter gxywriter.cpp)
 	target_link_libraries(gxywriter ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 	set(BINS gxywriter ${BINS})
 
-  add_executable(samray samray.cpp)
-  target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} gxy_sampler)
-  set(BINS samray ${BINS})
+  add_executable(raysample raysample.cpp)
+  target_link_libraries(raysample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  set(BINS raysample ${BINS})
 
   add_executable(sample sample.cpp)
   target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
