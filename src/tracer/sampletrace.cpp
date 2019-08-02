@@ -59,7 +59,7 @@ int   samples_per_partition = 100;
 void
 syntax(char *a)
 {
-  cerr << "syntax: " << a << " [options] data" << endl;
+  cerr << "syntax: " << a << " sampling.state rendering.state [options]" << endl;
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;
   cerr << "  -n nsamples   number of samples in each partition (" << samples_per_partition << ")" << endl;
@@ -72,7 +72,8 @@ syntax(char *a)
 int
 main(int argc, char * argv[])
 {
-  string data = "";
+  string sampling_state = "";
+  string rendering_state = "";
   char *dbgarg;
   bool dbg = false;
   int downsample = 0;
@@ -90,15 +91,18 @@ main(int argc, char * argv[])
       {
         case 'D': dbg = true, dbgarg = argv[i] + 2; break;
         case 'n': samples_per_partition = atoi(argv[++i]); break;
-        case 'r': radius = atof(argv[++i]); break;
         case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
         case 'd': downsample = atoi(argv[++i]); break;
         default:
           syntax(argv[0]);
       }
-    else if (data == "")   data = argv[i];
+    else if (sampling_state == "")   sampling_state = argv[i];
+    else if (rendering_state == "")  rendering_state = argv[i];
     else syntax(argv[0]);
   }
+
+  if (sampling_state == "" || rendering_state == "")
+    syntax(argv[0]);
 
   theApplication.Run();
   mpiRank = theApplication.GetRank();
@@ -112,9 +116,6 @@ main(int argc, char * argv[])
   SamplerP  theSampler  = Sampler::NewP();
   RendererP theRenderer = Renderer::NewP();
 
-  Document *doc = theApplication.OpenJSONFile( data ); 
-  theRenderer->LoadStateFromDocument(*doc);
-
   srand(mpiRank);
 
   Debug *d = dbg ? new Debug(argv[0], false, dbgarg) : NULL;
@@ -122,37 +123,59 @@ main(int argc, char * argv[])
   if (mpiRank == 0)
   {
     // BEGIN SAMPLING
+
+    Document *sdoc = theApplication.OpenJSONFile(sampling_state);
+    if (! sdoc)
+    {
+      std::cerr << "error loading sampling state file\n";
+      exit(1);
+    }
+
+    Document *rdoc = theApplication.OpenJSONFile(rendering_state);
+    if (! rdoc)
+    {
+      std::cerr << "error rendering state file\n";
+      exit(1);
+    }
+
+    theSampler->LoadStateFromDocument(*sdoc);
+
     // sampling state is loaded from an external file
     DatasetsP theDatasets = Datasets::NewP();
-    theDatasets->LoadFromJSON(*doc);
+    theDatasets->LoadFromJSON(*sdoc);
     theDatasets->Commit();
     
-    // Create a Visualization that specifies how the volume is to be sampled...
-    VisualizationP vis0 = Visualization::NewP();
-    vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
-    vis0 = theVisualizations[0];
-    vis0->Commit(theDatasets);
+    // Create a list of sampling Visualizations that specifies how the volume is to be sampled...
+    vector<VisualizationP> theSamplingVisualizations = Visualization::LoadVisualizationsFromJSON(*sdoc);
+
+    for (auto i : theSamplingVisualizations)
+      i->Commit(theDatasets);
   
-    // Create a rendering set for the sampling pass...
-    RenderingSetP theRenderingSet0 = RenderingSet::NewP();
-
     // read in a set of cameras which are used to sample the data
-    vector<CameraP> theCameras;
-    Camera::LoadCamerasFromJSON(*doc, theCameras);
-    RenderingP theRendering0;
-    for (vector<CameraP>::iterator iCam = theCameras.begin(); iCam != theCameras.end(); iCam++)
-    {
-        theRendering0 = Rendering::NewP();
-        theRendering0->SetTheOwner(0);
-        theRendering0->SetTheSize(width >> downsample, height >> downsample);
-        theRendering0->SetTheDatasets(theDatasets);
-        theRendering0->SetTheCamera(*iCam);
-        theRendering0->SetTheVisualization(vis0);
-        theRendering0->Commit();
+    vector<CameraP> theSamplingCameras;
+    Camera::LoadCamerasFromJSON(*sdoc, theSamplingCameras);
+    for (auto c : theSamplingCameras)
+      c->Commit();
 
-        theRenderingSet0->AddRendering(theRendering0);
-        theRenderingSet0->Commit();
-    }
+    // Create a rendering set for the sampling pass...
+    RenderingSetP theSamplingRenderingSet = RenderingSet::NewP();
+
+    for (auto v : theSamplingVisualizations)
+      for (auto c : theSamplingCameras)
+      {
+        RenderingP r = Rendering::NewP();
+        r = Rendering::NewP();
+        r->SetTheOwner(0);
+        r->SetTheSize(width >> downsample, height >> downsample);
+        r->SetTheDatasets(theDatasets);
+        r->SetTheCamera(c);
+        r->SetTheVisualization(v);
+        r->Commit();
+
+        theSamplingRenderingSet->AddRendering(r);
+      }
+
+    theSamplingRenderingSet->Commit();
 
     // Creates a Particles dataset to sample into and attach it to the 
     // 'Sampler' renderer.   
@@ -167,8 +190,8 @@ main(int argc, char * argv[])
 
     // Commit the Sampler, initiate sampling, and wait for it to be done
     theSampler->Commit();
-    theSampler->Start(theRenderingSet0);
-    theRenderingSet0->WaitForDone();
+    theSampler->Start(theSamplingRenderingSet);
+    theSamplingRenderingSet->WaitForDone();
 
     // Now the 'samples' particle set contains the samples. Save it to the datasets
     samples->Commit();
@@ -196,67 +219,54 @@ main(int argc, char * argv[])
     theDatasets->Insert("pathlines", plp);
     theDatasets->Commit();
 
-    // Now we set up a Visualization to visualize the samples.  
-    // This time we'll be lighting...
+    // And now on to rendering...
 
-    VisualizationP vis1 = Visualization::NewP();
+    theRenderer->LoadStateFromDocument(*rdoc);
 
-    float light[] = {1.0, 2.0, 3.0}; int t = 1;
-    Lighting *l = vis1->get_the_lights();
-    l->SetLights(1, light, &t);
-    l->SetK(0.8, 0.2);
-    l->SetShadowFlag(false);
-    l->SetAO(0, 0.0);
+    // Now make sure datasets are available for the rendering...
+
+    theDatasets->LoadFromJSON(*rdoc);
+    theDatasets->Commit();
+
+    // Create a list of sampling Visualizations that specifies how the volume is to be sampled...
+    vector<VisualizationP> theRenderingVisualizations = Visualization::LoadVisualizationsFromJSON(*rdoc);
+
+    for (auto i = theRenderingVisualizations.begin(); i != theRenderingVisualizations.end(); i++)
+      (*i)->Commit(theDatasets);
   
-    // A ParticlesVis to render the samples
+    // read in a set of cameras which are used to sample the data
+    vector<CameraP> theRenderingCameras;
+    Camera::LoadCamerasFromJSON(*rdoc, theRenderingCameras);
+    // for (auto c = theRenderingCameras.begin(); c != theRenderingCameras.end(); c++)
 
-    ParticlesVisP pvis = ParticlesVis::NewP();
-    pvis->SetName("samples");
-    pvis->Commit(theDatasets);
-    pvis->SetRadius(radius);
-    vec4f cmap1[2] = { {0.0, 1.0, 1.0, 0.0}, {1.0, 0.0, 1.0, 1.0} };
-    pvis->SetColorMap(2, cmap1);
-    pvis->SetRadiusTransform(0.0, 0.02, 1.0, 0.02);
-    vis1->AddVis(pvis);
+    for (auto c : theRenderingCameras)
+      c->Commit();
 
-    PathLinesVisP plvis = PathLinesVis::NewP();
-    plvis->SetName("pathlines");
-    plvis->SetRadiusTransform(0.0, 0.005, 10.5984, 0.01);
-    vec4f cmap2[2] = { {0.0, 1.0, 0.5, 0.5}, {10.5984, 0.5, 0.5, 1.0} };
-    plvis->SetColorMap(2, cmap2);
-    vec2f omap2[2] = { {0.0, 1.0}, {1.0, 1.0} };
-    plvis->SetOpacityMap(2, omap2);
-    plvis->Commit(theDatasets);
-    vis1->AddVis(plvis);
+    // Create a rendering set for the sampling pass...
+    RenderingSetP theRenderingRenderingSet = RenderingSet::NewP();
 
-    vis1->Commit(theDatasets);
+    for (auto v : theRenderingVisualizations)
+      for (auto c : theRenderingCameras)
+      {
+        RenderingP r = Rendering::NewP();
+        r = Rendering::NewP();
+        r->SetTheOwner(0);
+        r->SetTheSize(width, height);
+        r->SetTheDatasets(theDatasets);
+        r->SetTheCamera(c);
+        r->SetTheVisualization(v);
+        r->Commit();
 
-    // Now we set up a RenderingSet for the visualization of the particles.
-    CameraP cam1 = Camera::NewP();
-    cam1->set_viewup(0.0, 1.0, 0.0);
-    cam1->set_angle_of_view(35.0);
-    cam1->set_viewpoint(-1.0, -2.0, -3.0);
-    cam1->set_viewdirection(1.0, 2.0, 3.0);
-    cam1->Commit();
+        theRenderingRenderingSet->AddRendering(r);
+      }
 
-    RenderingSetP theRenderingSet1 = RenderingSet::NewP();
-
-    RenderingP theRendering2 = Rendering::NewP();
-    theRendering2->SetTheOwner(0);
-    theRendering2->SetTheSize(width, height);
-    theRendering2->SetTheDatasets(theDatasets);
-    theRendering2->SetTheCamera(cam1);          
-    theRendering2->SetTheVisualization(vis1);
-    theRendering2->Commit();
-
-    theRenderingSet1->AddRendering(theRendering2);
-    theRenderingSet1->Commit();
+    theRenderingRenderingSet->Commit();
 
     // Render, wait, and write results
 
-    theRenderer->Start(theRenderingSet1);
-    theRenderingSet1->WaitForDone();
-    theRenderingSet1->SaveImages(string("samples"));
+    theRenderer->Start(theRenderingRenderingSet);
+    theRenderingRenderingSet->WaitForDone();
+    theRenderingRenderingSet->SaveImages(string("samples"));
 
     theApplication.QuitApplication();
   }
