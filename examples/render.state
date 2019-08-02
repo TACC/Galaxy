@@ -1,0 +1,57 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "oneBall",
+        "type": "Volume",
+        "filename": "vectors-oneBall.vol"
+      }
+    ],
+    "Renderer": {
+    },
+    "Visualizations":
+    [
+      {
+        "Lighting": {
+          "Sources": [[1, 1, 0, 1]],
+          "shadows": true,
+          "Ka": 0.4,
+          "Kd": 0.6,
+          "ao count": 32,
+          "ao radius": 1.0
+        },
+        "operators":
+          [
+            {
+              "type": "VolumeVis",
+              "dataset": "oneBall",
+              "isovalues": [ 0.5 ],
+              "volume rendering": false,
+              "colormap": [
+                [0.00,1.0,0.5,0.5],
+                [0.25,0.5,1.0,0.5],
+                [0.50,0.5,0.5,1.0],
+                [0.75,1.0,1.0,0.5],
+                [1.00,1.0,0.5,1.0]
+               ],
+              "opacitymap": [
+                [ 0.00, 0.05],
+                [ 0.20, 0.05],
+                [ 0.21, 0.00],
+                [ 1.00, 0.00]
+               ]
+            }
+          ]
+       }
+    ],
+    "Cameras":
+    [
+      {
+        "viewpoint": [0, 0, -5],
+        "viewcenter": [0, 0, 0],
+        "viewup": [0, 1, 0],
+        "aov": 30
+      }
+    ]
+}
+

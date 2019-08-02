@@ -1,0 +1,38 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "scalar",
+        "type": "Volume",
+        "filename": "noise-noise.json"
+      },
+      {
+        "name": "vectors",
+        "type": "Volume",
+        "filename": "noise-noiseGradient.json"
+      }
+    ],
+    "Visualizations":
+    [
+      {
+        "annotation": "",
+        "operators":
+          [
+            {
+              "type": "GradientSampler",
+              "dataset": "scalar",
+              "tolerance": 0.1,
+              "volume rendering": false
+            }
+          ]
+      } 
+    ],    
+    "Cameras": [
+      {   
+        "aov"           : 30.0,
+        "viewpoint"     : [0.0, 0.0, -20.0],
+        "viewdirection" : [0.0, 0.0, 1.0],
+        "viewup"        : [0.0, 1.0, 0.0]
+      }
+    ]
+}   

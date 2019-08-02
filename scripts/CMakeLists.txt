@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 2.8.7)
 cmake_policy(SET CMP0048 NEW)
 project(Util VERSION ${GALAXY_VERSION})
-install(PROGRAMS partitionVTUs.vpy createPartitionDoc.py blazar msdata mssample vtp2tri.py async-wrapper cm2gxy.py csv2xyz vti2vol vti2json pv-cam-to-json.py DESTINATION bin)
+install(PROGRAMS partitionVTUs.vpy createPartitionDoc.py msdata mssample vtp2tri.py async-wrapper cm2gxy.py csv2xyz vti2vol vti2json pv-cam-to-json.py DESTINATION bin)
 if(APPLE)
 	install(PROGRAMS dbg_script.macos DESTINATION scripts RENAME dbg_script)
 	configure_file(galaxy.env.macos galaxy.env @ONLY)

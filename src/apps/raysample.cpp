@@ -18,8 +18,6 @@
 //                                                                            //
 // ========================================================================== //
 
-#define SAMPLE 1
-
 #include <iostream>
 
 #include <unistd.h>
@@ -30,8 +28,9 @@
 
 #include <dtypes.h>
 #include <Application.h>
-#include "Renderer.h"
-#include "Sampler.h"
+#include <PathLinesVis.h>
+#include <Renderer.h>
+#include <Sampler.h>
 
 #include <ospray/ospray.h>
 
@@ -61,6 +60,7 @@ syntax(char *a)
   cerr << "  -n nsamples   number of samples in each partition (" << samples_per_partition << ")" << endl;
   cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -r radius     radius of samples (" << radius << ")" << endl;
+  cerr << "  -d factor     downsampling factor for sampler pass (0)" << endl;
   exit(1);
 }
 
@@ -70,12 +70,8 @@ main(int argc, char * argv[])
   string data = "";
   char *dbgarg;
   bool dbg = false;
-
-  ospInit(&argc, (const char **)argv);
-
-  Application theApplication(&argc, &argv);
-  theApplication.Start();
-
+  int downsample = 0;
+  
   // process command line args
   for (int i = 1; i < argc; i++)
   {
@@ -86,12 +82,22 @@ main(int argc, char * argv[])
         case 'n': samples_per_partition = atoi(argv[++i]); break;
         case 'r': radius = atof(argv[++i]); break;
         case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
+        case 'd': downsample = atoi(argv[++i]); break;
         default:
           syntax(argv[0]);
+          exit(0);
       }
     else if (data == "")   data = argv[i];
-    else syntax(argv[0]);
+    else {
+        syntax(argv[0]);
+        exit(0);
+    }
   }
+
+  ospInit(&argc, (const char **)argv);
+
+  Application theApplication(&argc, &argv);
+  theApplication.Start();
 
 
   theApplication.Run();
@@ -100,6 +106,7 @@ main(int argc, char * argv[])
 
   Sampler::Initialize();
   Renderer::Initialize();
+
   SamplerP  theSampler  = Sampler::NewP();
   RendererP theRenderer = Renderer::NewP();
 
@@ -135,7 +142,7 @@ main(int argc, char * argv[])
     {
         theRendering0 = Rendering::NewP();
         theRendering0->SetTheOwner(0);
-        theRendering0->SetTheSize(width/4, height/4);
+        theRendering0->SetTheSize(width >> downsample, height >> downsample);
         theRendering0->SetTheDatasets(theDatasets);
         theRendering0->SetTheCamera(*iCam);
         theRendering0->SetTheVisualization(vis0);
@@ -151,23 +158,22 @@ main(int argc, char * argv[])
     vector<string> datasets = theDatasets->GetDatasetNames(); 
     VolumeP volume = Volume::Cast(theDatasets->Find(datasets[0]));
 
-    ParticlesP samrays = Particles::NewP();
-    samrays->CopyPartitioning(volume);
-    samrays->SetDefaultColor(0.5, 0.5, 0.5, 1.0);
-    theSampler->SetSamples(samrays);
+    ParticlesP samples = Particles::NewP();
+    samples->CopyPartitioning(volume);
+    samples->SetDefaultColor(0.5, 0.5, 0.5, 1.0);
+    theSampler->SetSamples(samples);
 
     // Commit the Sampler, initiate sampling, and wait for it to be done
     theSampler->Commit();
     theSampler->Start(theRenderingSet0);
     theRenderingSet0->WaitForDone();
 
-    // Now the 'samrays' particle set contains the samples. Save it to the datasets
-    samrays->Commit();
-    theDatasets->Insert("samrays", samrays);
+    // Now the 'samples' particle set contains the samples. Save it to the datasets
+    samples->Commit();
+    theDatasets->Insert("samples", samples);
     theDatasets->Commit();
 
     // END SAMPLING
-
 
     // Now we set up a Visualization to visualize the samples.  
     // This time we'll be lighting...
@@ -184,25 +190,22 @@ main(int argc, char * argv[])
     // A ParticlesVis to render the samples
 
     ParticlesVisP pvis = ParticlesVis::NewP();
-    pvis->SetName("samrays");
+    pvis->SetName("samples");
     pvis->Commit(theDatasets);
     pvis->SetRadius(radius);
-
-    vec4f colormap[2] = { {0.0, 1.0, 1.0, 0.0}, {1.0, 0.0, 1.0, 1.0} };
-    pvis->SetColorMap(2, colormap);
-
+    vec4f cmap1[2] = { {0.0, 1.0, 1.0, 0.0}, {1.0, 0.0, 1.0, 1.0} };
+    pvis->SetColorMap(2, cmap1);
     pvis->SetRadiusTransform(0.0, 0.02, 1.0, 0.02);
-
     vis1->AddVis(pvis);
 
     vis1->Commit(theDatasets);
 
-    // Now we set up a RenderingSet for the visualization of the particles.
+    // Now we set up a RenderingSet for the visualization
     CameraP cam1 = Camera::NewP();
     cam1->set_viewup(0.0, 1.0, 0.0);
-    cam1->set_angle_of_view(45.0);
-    cam1->set_viewpoint(3.0, 3.0, 3.0);
-    cam1->set_viewdirection(-1.0, -1.0, -1.0);
+    cam1->set_angle_of_view(35.0);
+    cam1->set_viewpoint(-1.0, -2.0, -3.0);
+    cam1->set_viewdirection(1.0, 2.0, 3.0);
     cam1->Commit();
 
     RenderingSetP theRenderingSet1 = RenderingSet::NewP();
@@ -222,7 +225,7 @@ main(int argc, char * argv[])
 
     theRenderer->Start(theRenderingSet1);
     theRenderingSet1->WaitForDone();
-    theRenderingSet1->SaveImages(string("samples"));
+    theRenderingSet1->SaveImages(string("raysample"));
 
     theApplication.QuitApplication();
   }

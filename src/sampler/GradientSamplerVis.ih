@@ -29,8 +29,8 @@ struct GradientSamplerVis_ispc
   float tolerance;
 
   varying float tHit;
-  varying float sLast;
   varying float tLast;
+  varying vec3f sLast;
 };  
 
 typedef uniform GradientSamplerVis_ispc *uniform pGradientSamplerVis_ispc;
