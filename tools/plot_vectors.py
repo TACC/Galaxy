@@ -3,11 +3,18 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import sys
 
-LARGE =  100000
-SMALL = -100000 
+if (len(sys.argv) < 3):
+    print("ERROR: must include: <input filename> ...")
+    print("")
+    print("  python plot_vectors.py <input>")
+    print("")
+    exit(1)
 
 inputfile = sys.argv[1] 
 data = []
+
+LARGE =  100000
+SMALL = -100000 
 xmin = LARGE
 ymin = LARGE
 zmin = LARGE
