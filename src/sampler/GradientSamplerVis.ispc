@@ -38,7 +38,8 @@ varying bool GradientSamplerVis_init(void *uniform _self, varying Ray& ray, vary
     GradientSamplerVis_ispc *uniform self = (uniform GradientSamplerVis_ispc *)_self;
     vec3f coord = ray.org + t*ray.dir;
     uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)self)->data;
-    self->sLast = vol->sample(vol, coord);
+
+    self->sLast = vol->computeGradient(vol, coord);
     self->tLast = t;
     return true;
 }                                                                                                                            
@@ -48,14 +49,18 @@ varying bool GradientSamplerVis_check_interval(void *uniform _self, varying Ray&
     GradientSamplerVis_ispc *uniform self = (uniform GradientSamplerVis_ispc *)_self;
     vec3f coord = ray.org + tThis*ray.dir;
     uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)self)->data;
-    varying float sThis = vol->sample(vol, coord);
+    varying vec3f sThis = vol->computeGradient(vol, coord);
 
     bool hit = false;
 
-    if (((self->sLast < self->tolerance) && (sThis >= self->tolerance)) || ((self->sLast > self->tolerance) && sThis <= self->tolerance))
+    // float dotValue = dot(safe_normalize(sThis), safe_normalize(self->sLast));
+    float dotValue = dot(sThis, self->sLast);
+    print("XXXXT %\nDOT %\nX %\nY %\nZ %\n", tThis, dotValue, sThis.x, sThis.y, sThis.z);
+
+    if (dotValue < self->tolerance)
     {
-      self->tHit = self->tLast + (((self->tolerance - self->sLast)/(sThis - self->sLast)) * (tThis - self->tLast));
-      hit   = true;
+      self->tHit = (self->tLast + tThis)/2.0;
+      hit = true;
     }
 
     self->sLast = sThis;
