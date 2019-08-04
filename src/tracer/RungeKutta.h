@@ -54,6 +54,9 @@ public:
   int  get_max_steps() { return max_steps; }
   void set_max_steps(int n) { max_steps = n; }
 
+  float get_stepsize() { return stepsize; }
+  void set_stepsize(float s) { stepsize = s; }
+
   int get_number_of_local_trajectories() { return trajectories.size(); }
 
   void get_keys(std::vector<int>& v)
@@ -94,6 +97,7 @@ protected:
   std::map<int, trajectory> trajectories;
 
   int max_steps;
+  float stepsize;
 
   class RKTraceMsg : public Work
   {

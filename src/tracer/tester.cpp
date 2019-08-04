@@ -131,34 +131,20 @@ int main(int argc,  char *argv[])
 
     sleep(1);
 
-#if 0
-    bool done = false;
-    int id = 0;
-    while (! done)
-    {
-      vec3f p;
-      cin >> p.x >> p.y >> p.z;
-
-      done = cin.eof();
-      if (!done)
-      {
-        std::cerr << "me,X,Y,Z,VX,VY,VZ,UX,UY,UZ,t,twist\n";
-        rkp->Trace(id++, p);
-      }
-    }
-#elif 0
-    // This will wait for each
-
-    for (int i = 0; i < 10; i++)
-    {
-      float d = -0.5 + (i / 9.0);
-      vec3f p(d, d, -0.9);
-      rkp->Trace(p, i);
-    }
-#else
     // this will wait for them all
     vec3f pts[10];
 
+#if 1
+    pts[0].x = 0.0; pts[0].y = 0.0; pts[0].z = 0.0;
+    rkp->Trace(1, pts);
+#elif 0
+    pts[0].x = 0.537704; pts[0].y = 0.379942; pts[0].z = 0.370605;
+    pts[1].x = 0.593975; pts[1].y = 0.383839; pts[1].z = 0.381792;
+    pts[2].x = 0.563123; pts[2].y = 0.405790; pts[2].z = 0.379712;
+    pts[3].x = 0.540981; pts[3].y = 0.370795; pts[3].z = 0.425081;
+
+    rkp->Trace(4, pts);
+#else
     for (int i = 0; i < 10; i++)
     {
       float d = -0.5 + (i / 9.0);
@@ -180,9 +166,9 @@ int main(int argc,  char *argv[])
 
     CameraP camera = Camera::NewP();
     camera->set_viewup(0.0, 1.0, 0.0);
-    camera->set_angle_of_view(45.0);
-    camera->set_viewpoint(1.0, 2.0, 3.0);
-    camera->set_viewdirection(-1.0, -2.0, -3.0);
+    camera->set_angle_of_view(30.0);
+    camera->set_viewpoint(0.0, 0.0, 2.0);
+    camera->set_viewdirection(0.0, 0.0, -1.0);
     camera->Commit();
 
     vec4f cmap[2];
@@ -190,8 +176,8 @@ int main(int argc,  char *argv[])
     cmap[1] = {10.5984, 1.0, 1.0, 1.0};
 
     vec2f omap[2];
-    omap[0] = {0.0,  0.1};
-    omap[1] = {10.5984, 0.2};
+    omap[0] = {0.0,  1.0};
+    omap[1] = {10.5984, 1.0};
 
     PathLinesVisP plvis = PathLinesVis::NewP();
     plvis->SetName("pathlines");

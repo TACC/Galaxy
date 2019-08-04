@@ -20,12 +20,13 @@ RungeKutta::initialize()
 {
   super::initialize();
   max_steps = 1000;
+  stepsize = 0.1;
   pthread_cond_init(&signal, NULL);
   pthread_mutex_init(&lock, NULL);
 }
 
 int 
-RungeKutta::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int); }
+RungeKutta::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int) + sizeof(float); }
 
 bool
 RungeKutta::SetVectorField(VolumeP v)
@@ -45,6 +46,7 @@ RungeKutta::serialize(unsigned char *ptr)
   ptr = super::serialize(ptr);
   *(Key *)ptr = vectorField->getkey(); ptr += sizeof(Key);
   *(int *)ptr = max_steps; ptr += sizeof(int);
+  *(float *)ptr = stepsize; ptr += sizeof(float);
   return ptr;
 }
 
@@ -54,6 +56,7 @@ RungeKutta::deserialize(unsigned char *ptr)
   ptr = super::deserialize(ptr);
   vectorField = Volume::GetByKey(*(Key *)ptr); ptr += sizeof(Key);
   max_steps = *(int *)ptr; ptr += sizeof(int);
+  stepsize = *(float *)ptr; ptr += sizeof(float);
   return ptr;
 }
 
@@ -145,7 +148,7 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
   vec3f d;
   v->get_deltas(d.x, d.y, d.z);
 
-  float h = d.x > d.y ? d.y > d.z ? d.z : d.y : d.x > d.z ? d.z : d.x;
+  float h = stepsize * (d.x > d.y ? d.y > d.z ? d.z : d.y : d.x > d.z ? d.z : d.x);
 
   // If this is the first point, find a reasonable up
 
