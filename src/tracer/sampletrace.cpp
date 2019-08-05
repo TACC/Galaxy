@@ -55,6 +55,7 @@ int   width  = WIDTH;
 int   height = HEIGHT;
 float radius = 0.001;
 int   samples_per_partition = 100;
+int   maxsteps = 2000;
 
 void
 syntax(char *a)
@@ -66,6 +67,8 @@ syntax(char *a)
   cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -r radius     radius of samples (" << radius << ")" << endl;
   cerr << "  -d factor     downsampling factor for sampler pass (0)" << endl;
+  cerr << "  -m n          max number of steps per streamline (2000)" << endl;
+  cerr << "  -P            print samples\n";
   exit(1);
 }
 
@@ -77,6 +80,7 @@ main(int argc, char * argv[])
   char *dbgarg;
   bool dbg = false;
   int downsample = 0;
+  bool printsamples = false;
 
   ospInit(&argc, (const char **)argv);
 
@@ -93,6 +97,8 @@ main(int argc, char * argv[])
         case 'n': samples_per_partition = atoi(argv[++i]); break;
         case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
         case 'd': downsample = atoi(argv[++i]); break;
+        case 'm': maxsteps = atoi(argv[++i]); break;
+        case 'P': printsamples = true; break;
         default:
           syntax(argv[0]);
       }
@@ -198,11 +204,17 @@ main(int argc, char * argv[])
     theDatasets->Insert("samples", samples);
     theDatasets->Commit();
 
-    // END SAMPLING
-
+    if (printsamples)
+    {
+      Particle *p; int n;
+      samples->GetParticles(p, n);
+      std::cout << "X,Y,Z\n";
+      for (auto i = 0; i < n; i++)
+        std::cout << p[i].xyz.x << "," << p[i].xyz.y << "," << p[i].xyz.z << "\n";
+    }
     RungeKuttaP rkp = RungeKutta::NewP();
 
-    rkp->set_max_steps(100000);
+    rkp->set_max_steps(maxsteps);
 
     if (! rkp->SetVectorField(Volume::Cast(theDatasets->Find("vectors"))))
       exit(1);

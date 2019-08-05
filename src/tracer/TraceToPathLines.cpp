@@ -56,6 +56,8 @@ public:
       }
     }
 
+std::cerr << np << " points, " << nc << " cells\n";
+
     plp->allocate(np, nc);
     
     vec3f *pbuf = plp->GetVertices();
