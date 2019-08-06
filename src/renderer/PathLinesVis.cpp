@@ -136,6 +136,15 @@ PathLinesVis::SetTheOsprayDataObject(OsprayObjectP o)
   ospSet1f(o->GetOSP(), "value1", v1);
   ospSet1f(o->GetOSP(), "radius1", r1);
 }
+
+void
+PathLinesVis::ScaleMaps(float xmin, float xmax)
+{
+  super::ScaleMaps(xmin, xmax);
+  v0 = xmin;
+  v1 = xmax;
+}
+
  
 } // namespace gxy
 

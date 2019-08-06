@@ -75,6 +75,9 @@ public:
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
 
+  //! scale mapping to a given range
+  virtual void ScaleMaps(float xmin, float xmax);
+
  protected:
   virtual void allocate_ispc();
   virtual void initialize_ispc();

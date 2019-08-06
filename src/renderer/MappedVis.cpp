@@ -308,4 +308,21 @@ MappedVis::SetOpacityMap(int n, vec2f *ptr)
 		opacitymap.push_back(ptr[i]);
 }
 
+void
+MappedVis::ScaleMaps(float xmin, float xmax)
+{
+  float x0 = colormap[0].x;
+  float x1 = colormap[colormap.size()-1].x;
+
+  for (auto i = 0; i < colormap.size(); i++)
+    colormap[i].x = xmin + ((colormap[i].x - x0)/(x1 - x0)) * (xmax - xmin);
+
+  x0 = opacitymap[0].x;
+  x1 = opacitymap[opacitymap.size()-1].x;
+
+  for (auto i = 0; i < opacitymap.size(); i++)
+    opacitymap[i].x = xmin + ((opacitymap[i].x - x0)/(x1 - x0)) * (xmax - xmin);
+}
+
+
 } // namespace gxy

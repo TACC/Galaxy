@@ -64,6 +64,9 @@ public:
   //! Get the transformation from data values to radius - linear between (v0,r0) and (v1,r1)
   void GetRadiusTransform(float& _v0, float& _r0, float& _v1, float& _r1) { _v0 = v0; _r0 = r0; _v1 = v1; _r1 = r1;}
 
+  //! scale mapping to a given range
+  virtual void ScaleMaps(float xmin, float xmax);
+
 protected:
 
 	virtual void initialize_ispc();
