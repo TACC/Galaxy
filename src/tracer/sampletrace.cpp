@@ -56,6 +56,7 @@ int   height = HEIGHT;
 int   maxsteps = 2000;
 float h = 0.2;
 float z = 1e-12;
+float max_i = -1;
 
 
 void
@@ -70,6 +71,7 @@ syntax(char *a)
   cerr << "  -d factor     downsampling factor for sampler pass (0)" << endl;
   cerr << "  -m n          max number of steps per streamline (2000)" << endl;
   cerr << "  -P            print samples\n";
+  cerr << "  -I max        scale the colormap to this to avoid hairballs (scale to max integration time)\n";
   exit(1);
 }
 
@@ -99,9 +101,11 @@ main(int argc, char * argv[])
         case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
         case 'd': downsample = atoi(argv[++i]); break;
         case 'm': maxsteps = atoi(argv[++i]); break;
-        case 'h': h = atof(argv[++i]);
-        case 'z': z = atof(argv[++i]);
+        case 'h': h = atof(argv[++i]); break;
+        case 'z': z = atof(argv[++i]); break;
         case 'P': printsamples = true; break;
+        case 'I': max_i = atof(argv[++i]); break;
+
         default:
           syntax(argv[0]);
       }
@@ -234,6 +238,9 @@ main(int argc, char * argv[])
 #else
     rkp->Trace(samples);
 #endif
+
+    std::cerr << "max integration time: " << rkp->get_maximum_integration_time() << "\n";
+    if (max_i == -1) max_i = rkp->get_maximum_integration_time();
     
     PathLinesP plp = PathLines::NewP();
 
@@ -255,13 +262,20 @@ main(int argc, char * argv[])
     // Create a list of sampling Visualizations that specifies how the volume is to be sampled...
     vector<VisualizationP> theRenderingVisualizations = Visualization::LoadVisualizationsFromJSON(*rdoc);
 
-    for (auto i = theRenderingVisualizations.begin(); i != theRenderingVisualizations.end(); i++)
-      (*i)->Commit(theDatasets);
-  
+    for (auto v : theRenderingVisualizations)
+    {
+      for (auto i = 0; i < v->GetNumberOfVis(); i++)
+      {
+        MappedVisP mvp = MappedVis::Cast(v->GetVis(i));
+        if (mvp)
+          mvp->ScaleMaps(0.0, max_i);
+      }
+      v->Commit(theDatasets);
+    }
+
     // read in a set of cameras which are used to sample the data
     vector<CameraP> theRenderingCameras;
     Camera::LoadCamerasFromJSON(*rdoc, theRenderingCameras);
-    // for (auto c = theRenderingCameras.begin(); c != theRenderingCameras.end(); c++)
 
     for (auto c : theRenderingCameras)
       c->Commit();

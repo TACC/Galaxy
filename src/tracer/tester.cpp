@@ -58,6 +58,7 @@ syntax(char *a)
   cerr << "  -S seeds.csv  seeds (csv with header line) (none)" << endl;
   cerr << "  -P x y z      single seed to trace (0.0, 0.0, 0.0)" << endl;
   cerr << "  -T            dump local trajectories to stderr (no)" << endl;
+  cerr << "  -I max        scale the colormap to this to avoid hairballs (scale to max integration time)\n";
   exit(1);
 }
 
@@ -75,7 +76,8 @@ int main(int argc,  char *argv[])
   float h = 0.2;
   float z = 1e-12;
   float X = 0.0, Y = 0.0, Z = 0.0;
-  bool dump_trajectories = false;
+  bool  dump_trajectories = false;
+  float max_i = -1;
 
   ospInit(&argc, (const char **)argv);
 
@@ -92,6 +94,7 @@ int main(int argc,  char *argv[])
     else if (!strcmp(argv[i],"-S")) seedfile = argv[++i];
     else if (!strcmp(argv[i],"-P")) X = atof(argv[++i]), Y = atof(argv[++i]), Z = atof(argv[++i]);
     else if (!strcmp(argv[i],"-T")) dump_trajectories = true;
+    else if (!strcmp(argv[i],"-I")) max_i = atof(argv[++i]); 
     else if (!strcmp(argv[i],"--")) syntax(argv[0]);
     else statefile = argv[i];
   }
@@ -189,7 +192,10 @@ int main(int argc,  char *argv[])
       rkp->Trace(1, &pt);
     }
 
-    sleep(1);
+    std::cerr << "max integration time: " << rkp->get_maximum_integration_time() << "\n";
+
+    if (max_i == -1) max_i = rkp->get_maximum_integration_time();
+
     if (dump_trajectories)
     {
       int nt = rkp->get_number_of_local_trajectories();
@@ -197,12 +203,12 @@ int main(int argc,  char *argv[])
       for (auto i = 0; i < nt; i++)
       {
         trajectory t = rkp->get_trajectory(i);
-        std::cerr << "X,Y,Z,T\n";
+        cout << "X,Y,Z,T\n";
         for (auto s : (*t))
           for (auto j = 0; j < s->points.size(); j++)
           {
             vec3f xyz = s->points[j];
-            std::cerr << xyz.x << "," << xyz.y << "," << xyz.z << "," << s->times[j] << "\n";
+            cout << xyz.x << "," << xyz.y << "," << xyz.z << "," << s->times[j] << "\n";
           }
         }
     }
@@ -222,7 +228,15 @@ int main(int argc,  char *argv[])
 
     vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
     for (auto v : theVisualizations)
+    {
+      for (auto i = 0; i < v->GetNumberOfVis(); i++)
+      {
+        MappedVisP mvp = MappedVis::Cast(v->GetVis(i));
+        if (mvp)
+          mvp->ScaleMaps(0.0, max_i);
+      }
       v->Commit(theDatasets);
+    }
 
     RenderingSetP theRenderingSet = RenderingSet::NewP();
     for (auto v : theVisualizations)
