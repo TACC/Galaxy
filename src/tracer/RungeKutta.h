@@ -57,6 +57,9 @@ public:
   float get_stepsize() { return stepsize; }
   void set_stepsize(float s) { stepsize = s; }
 
+  float get_minlen() { return minlen; }
+  void set_minlen(float m) { minlen = m; }
+
   int get_number_of_local_trajectories() { return trajectories.size(); }
 
   void get_keys(std::vector<int>& v)
@@ -98,6 +101,7 @@ protected:
 
   int max_steps;
   float stepsize;
+  float minlen;
 
   class RKTraceMsg : public Work
   {
