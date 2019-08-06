@@ -69,6 +69,7 @@ RungeKutta::Trace(vec3f& p, int id)
   Lock();
 
   in_flight = 1;
+  max_integration_time = 0;
   
   vec3f u(0.0, 1.0, 0.0);
   _Trace(GetVectorField()->PointOwner(p), id, 0, p, u, 0.0);
@@ -370,7 +371,7 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
 
   if (terminated || next == -1)
   {
-    RKTraceCompleteMsg msg(getkey(), id);
+    RKTraceCompleteMsg msg(getkey(), tLast);
     msg.Send(0);
   }
   else

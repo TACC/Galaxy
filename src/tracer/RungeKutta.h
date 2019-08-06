@@ -61,6 +61,7 @@ public:
   void set_minlen(float m) { minlen = m; }
 
   int get_number_of_local_trajectories() { return trajectories.size(); }
+  float get_maximum_integration_time() { return max_integration_time; }
 
   void get_keys(std::vector<int>& v)
   {
@@ -76,9 +77,24 @@ public:
 
   virtual bool local_commit(MPI_Comm);
 
-  void set_in_flight(int n) { Lock(); in_flight = n; Unlock(); }
-  void add_in_flight(int n) { Lock(); in_flight += n; Unlock(); }
-  void decrement_in_flight(int k = 1) { Lock(); in_flight -= k; if (in_flight == 0) Signal(); Unlock(); }
+  void decrement_in_flight(float t)
+  {
+    Lock();
+    if (t > max_integration_time) max_integration_time = t;
+    in_flight --;
+    if (in_flight == 0)
+      Signal();
+    Unlock();
+  }
+
+  void remove_offset(int n)
+  {
+    Lock();
+    in_flight -= (RUNGEKUTTA_INFLIGHT_OFFSET - n);
+    if (in_flight == 0)
+      Signal(); 
+    Unlock();
+  }
 
   void Lock() { pthread_mutex_lock(&lock); }
   void Unlock() { pthread_mutex_unlock(&lock); }
@@ -92,6 +108,7 @@ protected:
   pthread_cond_t signal;
 
   int in_flight;
+  float max_integration_time;
 
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
@@ -153,13 +170,13 @@ protected:
   class RKTraceCompleteMsg : public Work
   {
   public:
-    RKTraceCompleteMsg(Key rkk, int id) : RKTraceCompleteMsg(sizeof(Key) + sizeof(int))
+    RKTraceCompleteMsg(Key rkk, float t) : RKTraceCompleteMsg(sizeof(Key) + sizeof(float))
     {
       unsigned char *g = (unsigned char *)get();
       *(Key *)g = rkk;
       g += sizeof(Key);
-      *(int *)g = id;
-      g += sizeof(int);
+      *(float *)g = t;
+      g += sizeof(float);
     }
 
     ~RKTraceCompleteMsg() {}
@@ -171,9 +188,9 @@ protected:
       unsigned char *g = (unsigned char *)get();
       RungeKuttaP rkp = RungeKutta::GetByKey(*(Key *)g);
       g += sizeof(Key);
-      int id = *(int *)g;
+      float t = *(float *)g;
 
-      rkp->decrement_in_flight();
+      rkp->decrement_in_flight(t);
 
       return false;
     }
@@ -247,7 +264,7 @@ protected:
         // If any traces complete *before we get here* this will ensure
         // that their completion will be taken into account
 
-        rkp->decrement_in_flight(RUNGEKUTTA_INFLIGHT_OFFSET - pp->GetNumberOfVertices());
+        rkp->remove_offset(pp->GetNumberOfVertices());
       }
       else if (rank == (size - 1))
       {
@@ -292,7 +309,7 @@ protected:
       g += sizeof(Key);
       int n = *(int *)g;
 
-      rkp->decrement_in_flight(RUNGEKUTTA_INFLIGHT_OFFSET - n);
+      rkp->remove_offset(n);
 
       return false;
     }
