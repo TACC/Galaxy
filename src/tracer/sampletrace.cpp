@@ -53,9 +53,10 @@ using namespace rapidjson;
 // default values
 int   width  = WIDTH;
 int   height = HEIGHT;
-float radius = 0.001;
-int   samples_per_partition = 100;
 int   maxsteps = 2000;
+float h = 0.2;
+float z = 1e-12;
+
 
 void
 syntax(char *a)
@@ -63,9 +64,9 @@ syntax(char *a)
   cerr << "syntax: " << a << " sampling.state rendering.state [options]" << endl;
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;
-  cerr << "  -n nsamples   number of samples in each partition (" << samples_per_partition << ")" << endl;
   cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
-  cerr << "  -r radius     radius of samples (" << radius << ")" << endl;
+  cerr << "  -h h          portion of cell size to step (0.2)" << endl;
+  cerr << "  -z z          termination magnitude of vectors (1e-12)" << endl;
   cerr << "  -d factor     downsampling factor for sampler pass (0)" << endl;
   cerr << "  -m n          max number of steps per streamline (2000)" << endl;
   cerr << "  -P            print samples\n";
@@ -82,6 +83,7 @@ main(int argc, char * argv[])
   int downsample = 0;
   bool printsamples = false;
 
+
   ospInit(&argc, (const char **)argv);
 
   Application theApplication(&argc, &argv);
@@ -94,10 +96,11 @@ main(int argc, char * argv[])
       switch (argv[i][1])
       {
         case 'D': dbg = true, dbgarg = argv[i] + 2; break;
-        case 'n': samples_per_partition = atoi(argv[++i]); break;
         case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
         case 'd': downsample = atoi(argv[++i]); break;
         case 'm': maxsteps = atoi(argv[++i]); break;
+        case 'h': h = atof(argv[++i]);
+        case 'z': z = atof(argv[++i]);
         case 'P': printsamples = true; break;
         default:
           syntax(argv[0]);
@@ -212,16 +215,25 @@ main(int argc, char * argv[])
       for (auto i = 0; i < n; i++)
         std::cout << p[i].xyz.x << "," << p[i].xyz.y << "," << p[i].xyz.z << "\n";
     }
-    RungeKuttaP rkp = RungeKutta::NewP();
 
+    RungeKuttaP rkp = RungeKutta::NewP();
     rkp->set_max_steps(maxsteps);
+    rkp->set_stepsize(h);
+    rkp->set_minlen(z);
 
     if (! rkp->SetVectorField(Volume::Cast(theDatasets->Find("vectors"))))
       exit(1);
 
     rkp->Commit();
 
+    
+#if 0
+    vec3f pts[10];
+    pts[0].x = 0.0; pts[0].y = 0.0; pts[0].z = 0.0;
+    rkp->Trace(1, pts);
+#else
     rkp->Trace(samples);
+#endif
     
     PathLinesP plp = PathLines::NewP();
 
