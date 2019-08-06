@@ -21,6 +21,8 @@
 #include <string>
 #include <unistd.h>
 #include <sstream>
+#include <fstream>
+#include <vector>
 #include <time.h>
 
 #include "Application.h"
@@ -46,10 +48,16 @@ int mpiRank = 0, mpiSize = 1;
 void
 syntax(char *a)
 {
-  cerr << "test\n";
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "optons:" << endl;
-  cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
+  cerr << "  -D[which]     run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
+  cerr << "  -m n          max number of steps (2000)" << endl;
+  cerr << "  -h h          portion of cell size to step (0.2)" << endl;
+  cerr << "  -z z          termination magnitude of vectors (1e-12)" << endl;
+  cerr << "  -s w h        image size (512x512)" << endl;
+  cerr << "  -S seeds.csv  seeds (csv with header line) (none)" << endl;
+  cerr << "  -P x y z      single seed to trace (0.0, 0.0, 0.0)" << endl;
+  cerr << "  -T            dump local trajectories to stderr (no)" << endl;
   exit(1);
 }
 
@@ -57,12 +65,17 @@ syntax(char *a)
 
 int main(int argc,  char *argv[])
 {
+  string seedfile("");
   string statefile("tester.state");
   char *dbgarg;
   bool dbg = false;
   bool atch = false;
   int width = 512, height = 512;
-  int nsteps = 100;
+  int nsteps = 2000;
+  float h = 0.2;
+  float z = 1e-12;
+  float X = 0.0, Y = 0.0, Z = 0.0;
+  bool dump_trajectories = false;
 
   ospInit(&argc, (const char **)argv);
 
@@ -72,10 +85,15 @@ int main(int argc,  char *argv[])
   for (int i = 1; i < argc; i++)
   {
     if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i],"-n")) nsteps = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-m")) nsteps = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-h")) h = atof(argv[++i]); 
+    else if (!strcmp(argv[i],"-z")) z = atof(argv[++i]); 
     else if (!strcmp(argv[i],"-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
-    else if (statefile == "")   statefile = argv[i];
-    else syntax(argv[0]);
+    else if (!strcmp(argv[i],"-S")) seedfile = argv[++i];
+    else if (!strcmp(argv[i],"-P")) X = atof(argv[++i]), Y = atof(argv[++i]), Z = atof(argv[++i]);
+    else if (!strcmp(argv[i],"-T")) dump_trajectories = true;
+    else if (!strcmp(argv[i],"--")) syntax(argv[0]);
+    else statefile = argv[i];
   }
 
   if (statefile == "")
@@ -125,86 +143,108 @@ int main(int argc,  char *argv[])
 
     RungeKuttaP rkp = RungeKutta::NewP();
     rkp->set_max_steps(nsteps);
+    rkp->set_stepsize(h);
+    rkp->set_minlen(z);
+
     if (! rkp->SetVectorField(Volume::Cast(theDatasets->Find("vectors"))))
       exit(1);
     rkp->Commit();
 
-    sleep(1);
-
-    // this will wait for them all
-    vec3f pts[10];
-
-#if 1
-    pts[0].x = 0.0; pts[0].y = 0.0; pts[0].z = 0.0;
-    rkp->Trace(1, pts);
-#elif 0
-    pts[0].x = 0.537704; pts[0].y = 0.379942; pts[0].z = 0.370605;
-    pts[1].x = 0.593975; pts[1].y = 0.383839; pts[1].z = 0.381792;
-    pts[2].x = 0.563123; pts[2].y = 0.405790; pts[2].z = 0.379712;
-    pts[3].x = 0.540981; pts[3].y = 0.370795; pts[3].z = 0.425081;
-
-    rkp->Trace(4, pts);
-#else
-    for (int i = 0; i < 10; i++)
+    if (seedfile.size() > 0)
     {
-      float d = -0.5 + (i / 9.0);
-      pts[i] = vec3f(d, d, -0.9);
+      ifstream sf(seedfile);
+      if (sf.fail())
+      {
+        std::cerr << "error unable to open seed file: " << seedfile << "\n";
+        exit(1);
+      }
+
+      char line[1024];
+      sf.getline(line, 1024);
+
+      vector<vec3f> seeds;
+      while (1 == 1)
+      {
+        sf.getline(line, 1024);
+        if (sf.eof())
+          break;
+
+        if (line[0] != '#')
+        {
+          vec3f seed;
+          if (sscanf(line, "%f,%f,%f", &seed.x, &seed.y, &seed.z) != 3)
+          {
+            std::cerr << "error unable to read seed file: " << seedfile << "\n";
+            exit(1);
+          }
+          seeds.push_back(seed);
+        }
+      }
+
+      rkp->Trace(seeds.size(), seeds.data());
+    }
+    else
+    {
+      vec3f pt(X, Y, Z);
+      rkp->Trace(1, &pt);
     }
 
-    rkp->Trace(10, pts);
-#endif
+    sleep(1);
+    if (dump_trajectories)
+    {
+      int nt = rkp->get_number_of_local_trajectories();
+      std::cerr << "NT " << nt << "\n";
+      for (auto i = 0; i < nt; i++)
+      {
+        trajectory t = rkp->get_trajectory(i);
+        std::cerr << "X,Y,Z,T\n";
+        for (auto s : (*t))
+          for (auto j = 0; j < s->points.size(); j++)
+          {
+            vec3f xyz = s->points[j];
+            std::cerr << xyz.x << "," << xyz.y << "," << xyz.z << "," << s->times[j] << "\n";
+          }
+        }
+    }
 
-  sleep(1);
+    PathLinesP plp = PathLines::NewP();
 
-  PathLinesP plp = PathLines::NewP();
+    TraceToPathLines(rkp, plp);
+    plp->Commit();
 
-  TraceToPathLines(rkp, plp);
-  plp->Commit();
-
-  theDatasets->Insert("pathlines", plp);
+    theDatasets->Insert("pathlines", plp);
     theDatasets->Commit();
 
-    CameraP camera = Camera::NewP();
-    camera->set_viewup(0.0, 1.0, 0.0);
-    camera->set_angle_of_view(30.0);
-    camera->set_viewpoint(0.0, 0.0, 2.0);
-    camera->set_viewdirection(0.0, 0.0, -1.0);
-    camera->Commit();
+    vector<CameraP> theCameras;
+    Camera::LoadCamerasFromJSON(*doc, theCameras);
+    for (auto c : theCameras)
+      c->Commit();
 
-    vec4f cmap[2];
-    cmap[0] = {0.0, 1.0, 0.0, 0.0};
-    cmap[1] = {10.5984, 1.0, 1.0, 1.0};
+    vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
+    for (auto v : theVisualizations)
+      v->Commit(theDatasets);
 
-    vec2f omap[2];
-    omap[0] = {0.0,  1.0};
-    omap[1] = {10.5984, 1.0};
+    RenderingSetP theRenderingSet = RenderingSet::NewP();
+    for (auto v : theVisualizations)
+      for (auto c : theCameras)
+      {
+        RenderingP r = Rendering::NewP();
+        r = Rendering::NewP();
+        r->SetTheOwner(0);
+        r->SetTheSize(width, height);
+        r->SetTheDatasets(theDatasets);
+        r->SetTheCamera(c);
+        r->SetTheVisualization(v);
+        r->Commit();
 
-    PathLinesVisP plvis = PathLinesVis::NewP();
-    plvis->SetName("pathlines");
-    plvis->SetRadiusTransform(0.0, 0.01, 10.5984, 0.02);
-    plvis->SetColorMap(2, cmap);
-    plvis->SetOpacityMap(2, omap);
-    plvis->Commit(theDatasets);
+        theRenderingSet->AddRendering(r);
+      }
 
-    VisualizationP visualization = Visualization::NewP();
-    visualization->AddVis(plvis);
-    visualization->Commit(theDatasets);
+    theRenderingSet->Commit();
 
-    RenderingP theRendering = Rendering::NewP();
-    theRendering->SetTheOwner(0);
-    theRendering->SetTheSize(width, height);
-    theRendering->SetTheDatasets(theDatasets);
-    theRendering->SetTheCamera(camera);
-    theRendering->SetTheVisualization(visualization);
-    theRendering->Commit();
-
-    RenderingSetP renderingSet = RenderingSet::NewP();
-    renderingSet->AddRendering(theRendering);
-    renderingSet->Commit();
-
-    theRenderer->Start(renderingSet);
-    renderingSet->WaitForDone();
-    renderingSet->SaveImages(string("plines"));
+    theRenderer->Start(theRenderingSet);
+    theRenderingSet->WaitForDone();
+    theRenderingSet->SaveImages(string("plines"));
 
     theApplication.QuitApplication();
   }
