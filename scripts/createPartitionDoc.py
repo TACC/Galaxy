@@ -34,9 +34,9 @@ nparts = -1
 volfile = ""
 
 def syntax():
-  print "syntax:", sys.argv[0], "[-o origin] [-s spacing] [-c counts] [-v volfile] nparts"
-  print "NOTE: the dataset is assumed herein to have the same origin counts and"
-  print "spacing in each axis"
+  print ("syntax:", sys.argv[0], "[-o origin] [-s spacing] [-c counts] [-v volfile] nparts")
+  print ("NOTE: the dataset is assumed herein to have the same origin counts and")
+  print ("spacing in each axis")
   sys.exit(1)
 
 args = sys.argv[1:]
@@ -108,6 +108,6 @@ partitions = partition(factor(nparts), [origin]*3, [spacing]*3, [counts]*3)
 partitions = [[p[0][0], p[0][1], p[1][0], p[1][1], p[2][0], p[2][1]] for p in partitions]
 
 layout = {"parts": [{"extent": p} for p in partitions]}
-print json.dumps(layout)
+print (json.dumps(layout))
 
 

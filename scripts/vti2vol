@@ -19,7 +19,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-print 'vti2vol entry'
+print ('vti2vol entry')
 
 import sys
 from vtk import *
@@ -79,4 +79,4 @@ for var in sys.argv[2:]:
     of.write('%f %f %f\n' % tuple(ssz))
     of.write(rawname + '\n')
 
-print 'vti2vol exit'
+print ('vti2vol exit')

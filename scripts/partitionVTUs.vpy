@@ -47,7 +47,7 @@ while len(args) > 0:
     args = args[1:]
 
 if pdoc == "" or len(vtus) == 0:
-  print 'syntax: vtkpython', sys.argv[0], '[-g ghostsize] pdocfile vtu0 vtu1...'
+  print ('syntax: vtkpython', sys.argv[0], '[-g ghostsize] pdocfile vtu0 vtu1...')
   sys.exit(1)
 
 import json 
@@ -150,11 +150,11 @@ else:
         elif ctype == VTK_LINE or VTK_TRIANGLE or ctype == VTK_QUAD:
   
           pts = src.Points[cell]
-          # print 'PTs', pts
+          # print ('PTs', pts)
           inside = np.any([(pt < upper).all() and (pt > lower).all() for pt in pts])
-          # print 'inside', inside
+          # print ('inside', inside)
           if inside:
-            # print 'cell', cell
+            # print ('cell', cell)
             octypes.append(ctype)
             for ic in cell:
               if pmap[ic] == 99999999:
@@ -162,8 +162,8 @@ else:
                 nxtp = nxtp + 1
             ocells.append([pmap[ic] for ic in cell])
             cmap.append(cindex)
-            # print 'ocells', ocells
-            # print 'pmap', pmap
+            # print ('ocells', ocells)
+            # print ('pmap', pmap)
   
         elif ctype == VTK_TRIANGLE_STRIP:      # if its a polyline...
           
@@ -209,12 +209,12 @@ else:
           
         else:
           if bad_cell_types == False:
-            print 'input contains cell types that are not handled'
+            print ('input contains cell types that are not handled')
             bad_cell_types = True
   
-      # print 'pmap', pmap
-      # print 'cmap', cmap
-      # print 'ocells', ocells
+      # print ('pmap', pmap)
+      # print ('cmap', cmap)
+      # print ('ocells', ocells)
             
       # Now aggregate the output unstructured grid for this partition of this input unstructured grid...
   
@@ -225,20 +225,20 @@ else:
       for i,j in zip([len(c) for c in ocells], ocells):
         ocells1 = ocells1 + [i] + j
   
-      # print 'ct', ct
-      # print 'cl', cl
-      # print 'ocells1', ocells1
+      # print ('ct', ct)
+      # print ('cl', cl)
+      # print ('ocells1', ocells1)
       dst.SetCells(ct, cl, ocells1)
   
       # ipmap[k] is the index in the output array of the input vertex k.   First we invert the map so that ipmap[k]
       # is the index of the input vertex that goes into the k'th slot of the output, followed by 9999999 for every
       # input vertex that is not required.   Then we chop those off.
   
-      # print 'pmap', pmap
+      # print ('pmap', pmap)
       ipmap = np.argsort(pmap)
-      # print 'ipmap', ipmap
+      # print ('ipmap', ipmap)
       ipmap = ipmap[0:np.argmax(np.array(pmap)[ipmap])+1]
-      # print 'ipmap', ipmap
+      # print ('ipmap', ipmap)
       dst.SetPoints(src.Points[ipmap])
       for n in src.PointData.keys():
         dst.PointData.append(src.PointData[n][ipmap], n)
@@ -264,7 +264,7 @@ else:
   
       parts.append({'extent': boxes[ip], 'filename': ofname})
   
-      print '%s done' % ofname
+      print ('%s done' % ofname)
   
     pname = srcname[:-4] + '.part'
     f = open(pname, "w")
