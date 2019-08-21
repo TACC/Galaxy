@@ -75,15 +75,19 @@ fi
 
 cd ${GXY_ROOT}/third-party
 for tp_lib_dir in embree ospray rapidjson; do
-	report "building ${tp_lib_dir}..."
-	pushd $tp_lib_dir
-	mkdir build
-	cd build
-	${CMAKE_BIN} ${CMAKE_FLAGS} .. && make -j 4 install
-	if [ $? != 0 ]; then
-		fail "Build failed for ${tp_lib_dir}."
+	if [ -d $tp_lib_dir/install ]; then
+		report "$tp_lib_dir already installed."
+	else 
+		report "building ${tp_lib_dir}..."
+		pushd $tp_lib_dir
+		mkdir build
+		cd build
+		${CMAKE_BIN} ${CMAKE_FLAGS} .. && make -j 4 install
+		if [ $? != 0 ]; then
+			fail "Build failed for ${tp_lib_dir}."
+		fi
+		popd
 	fi
-	popd
 done
 
 report "done!"
