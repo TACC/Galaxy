@@ -1,7 +1,7 @@
 # Galaxy Release Notes
 
 
-## version 0.3.0 - pending
+## version 0.3.0 - 20190821
 
 * Added `sampler` with a variety of data-space sampling algorithms:
   - metropolis-hastings sampling as a multiserver tool 
