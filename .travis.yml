@@ -93,9 +93,9 @@ script:
 
   # use this to update embree and ospray versions
   - rm .galaxy/gxy_third_party_installed ; GXY_REBUILDING_CACHE=1
-  - pushd third-party/embree && rm -rf build/* install/* && git checkout --force HEAD; popd
-  - pushd third-party/ospray && rm -rf build/* install/* && git checkout --force HEAD; popd
-  - git submodule update
+  - git submodule update --init
+  - pushd third-party/embree && rm -rf build install && git checkout --force HEAD; popd
+  - pushd third-party/ospray && rm -rf build install && git checkout --force HEAD; popd
   - pushd third-party/embree && git apply ../patches/embree.patch ; popd
   - pushd third-party/ospray && git apply ../patches/ospray.patch ; popd
   - scripts/install-third-party.sh
