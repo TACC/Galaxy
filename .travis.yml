@@ -43,10 +43,10 @@ git:
 cache:
   directories:
     - .galaxy
-    - third-party/ispc
-    - third-party/embree
-    - third-party/ospray
-    - third-party/rapidjson
+    - third-party/ispc/ispc-*
+    - third-party/embree/install
+    - third-party/ospray/install
+    - third-party/rapidjson/install
     - third-party/VTK-8.1.2
 
 addons:
