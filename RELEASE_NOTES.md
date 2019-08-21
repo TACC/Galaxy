@@ -6,8 +6,8 @@
 * Added `sampler` with a variety of data-space sampling algorithms:
   - metropolis-hastings sampling as a multiserver tool 
   - ray-based sampling using the 'Sampler' infrastructure
-    > Sampler is a subclass of Renderer that supports integration with active-Vis operators
-    > active-Vis operators to implement sampling based on isosurface crossing and significant changes to gradient
+    + Sampler is a subclass of Renderer that supports integration with active-Vis operators
+    + active-Vis operators to implement sampling based on isosurface crossing and significant changes to gradient
   - interpolation of a scalar field onto a set of samples (as a multiserver tool)
 * Support for vector-valued volumes
   - added JSON format for volume description files that implements 'number of components' field
