@@ -3,14 +3,18 @@
 
 ## version 0.3.0 - pending
 
-* Expanded `multiserver` to ...
-* Added `ospray` modules for ...
+* Added `sampler` with a variety of data-space sampling algorithms, including metropolis-hastings, gradient, interpolation, and isovalue.
+* Added `schlieren` to provide multi-hued Schlieren and shadowgraph-style rendering
+* Added `ospray` modules for class overrides to the underlying [OSPRay][1] rendering engine
 * Separated data-generation and data-management tools into `data` from `apps`
 * Added unit testing framework
 * Renamed `async` app and associated source to `gxyviewer`
 * Renamed `vis` app and associated source to `gxywriter`
 * Renamed `mh` app and associated source to `mhwriter` 
 * Renamed `amh` app and associated source to `mhviewer`
+* updated third-party/ispc to download v1.10.0
+* updated third-party/embree to use v3.5.2
+* updated third-party/ospray to use v1.7.3
 
 ## version 0.2.1 - 20190325
 
@@ -39,4 +43,6 @@ Initial Galaxy release!
 * Doxygen-based documentation of classes
 * CMake build and packaging
 
+
+[1]: https://ospray.org/
 
