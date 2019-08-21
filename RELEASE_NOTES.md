@@ -17,6 +17,9 @@
   - also implemented 'float-image' output (in FITS format)
 * Added `ospray` modules for class overrides to the underlying [OSPRay][1] rendering engine
 * Separated data-generation and data-management tools into `data` from `apps`
+* Added Docker containers:
+    - [`galaxy`][2]: contains pre-built version of galaxy in CentOS linux
+    - [`galaxy-base`][3]: contains pre-requisites for galaxy build in CentOS linux
 * Added unit testing framework
 * Renamed `async` app and associated source to `gxyviewer`
 * Renamed `vis` app and associated source to `gxywriter`
@@ -55,4 +58,7 @@ Initial Galaxy release!
 
 
 [1]: https://ospray.org/
+[2]: https://hub.docker.com/r/pnav/galaxy
+[3]: https://hub.docker.com/r/pnav/galaxy-base
+
 
