@@ -3,8 +3,18 @@
 
 ## version 0.3.0 - pending
 
-* Added `sampler` with a variety of data-space sampling algorithms, including metropolis-hastings, gradient, interpolation, and isovalue.
+* Added `sampler` with a variety of data-space sampling algorithms:
+  - metropolis-hastings sampling as a multiserver tool 
+  - ray-based sampling using the 'Sampler' infrastructure
+    > Sampler is a subclass of Renderer that supports integration with active-Vis operators
+    > active-Vis operators to implement sampling based on isosurface crossing and significant changes to gradient
+  - interpolation of a scalar field onto a set of samples (as a multiserver tool)
+* Support for vector-valued volumes
+  - added JSON format for volume description files that implements 'number of components' field
+* Initial implementation of RungeKutta operator to trace streamlines in vector volumes
+  - also 'TraceToPathLines' opewrtor to convert RungeKutta results to path lines for rendering
 * Added `schlieren` to provide multi-hued Schlieren and shadowgraph-style rendering
+  - also implemented 'float-image' output (in FITS format)
 * Added `ospray` modules for class overrides to the underlying [OSPRay][1] rendering engine
 * Separated data-generation and data-management tools into `data` from `apps`
 * Added unit testing framework
