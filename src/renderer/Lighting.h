@@ -22,7 +22,7 @@
 
 /*! \file Lighting.h 
  * \brief represents a light source within Galaxy
- * \ingroup data
+ * \ingroup render
  */
 
 #include <iostream>
@@ -30,14 +30,14 @@
 
 #include "dtypes.h"
 #include "rapidjson/document.h"
-#include "ISPCObject.h"
+#include "IspcObject.h"
 
 namespace gxy
 {
 
 //! represents a light source within Galaxy
-/*! \ingroup data 
- * \sa ISPCObject
+/*! \ingroup render 
+ * \sa IspcObject
  * Three types of light sources are currently supported: lights given by a 
  * displacement vector from the camera location, lights given as points in 
  * object space, and lights from infinitely distant sources, specified as 
@@ -48,7 +48,7 @@ namespace gxy
  *
  * Default is a single light at infinity in the direction (1,1,1)
  */  
-class Lighting : public ISPCObject
+class Lighting : public IspcObject
 {
 public:
    Lighting(); //!< default constructor

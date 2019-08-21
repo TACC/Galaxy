@@ -97,27 +97,28 @@ public:
 		y = global_origin.y + local_offset.y * deltas.y;
 		z = global_origin.z + local_offset.z * deltas.z;
 	}
-        //! set the local bounding box 
-        /*! The input are the extreme corners of the bounding box. The coordinates of the corner nearest the origin and those of the corner farthest from the origin. */
-        void set_local_box(vec3f low, vec3f high) 
-        {
-            local_box = Box(low,high);
-        }
-        //! set the ghosted local offset values. 
-        /* The values of the ghosted_local_offset are directly set with this method */
-        void set_ghosted_local_offset(int x, int y, int z)
-        {
-            ghosted_local_offset.x = x;
-            ghosted_local_offset.y = y;
-            ghosted_local_offset.z = z;
-        }
-        //! set the local offset values.
-        void set_local_offset(int x, int y, int z)
-        {
-            local_offset.x = x;
-            local_offset.y = y;
-            local_offset.z = z;
-        }
+
+  //! set the local bounding box 
+  /*! The input are the extreme corners of the bounding box. The coordinates of the corner nearest the origin and those of the corner farthest from the origin. */
+  void set_local_box(vec3f low, vec3f high) 
+  {
+      local_box = Box(low,high);
+  }
+  //! set the ghosted local offset values. 
+  /* The values of the ghosted_local_offset are directly set with this method */
+  void set_ghosted_local_offset(int x, int y, int z)
+  {
+      ghosted_local_offset.x = x;
+      ghosted_local_offset.y = y;
+      ghosted_local_offset.z = z;
+  }
+  //! set the local offset values.
+  void set_local_offset(int x, int y, int z)
+  {
+      local_offset.x = x;
+      local_offset.y = y;
+      local_offset.z = z;
+  }
 	//! get the local origin, including ghost data, for the data at this process in this Volume
 	/*! These values are computed from the global origin and ghosted local offsets */
 	void get_ghosted_local_origin(float &x, float &y, float &z)
@@ -189,10 +190,6 @@ public:
   /*! This action is performed in response to a ImportMsg */
 	virtual bool local_import(char *fname, MPI_Comm c);
 
-  //! load a timestep into local memory
-  /*! This action is performed in response to a LoadTimestepMsg */
-	virtual bool local_load_timestep(MPI_Comm c);
-
 	//! get the global min and max data values for this Volume
 	void get_global_minmax(float &min, float &max) { min = global_min; max = global_max; }
 
@@ -201,8 +198,22 @@ public:
 
   //! construct a Volume from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-  //! save this Volume to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+
+  //! Get the number of components
+  int get_number_of_components() { return number_of_components; }
+
+  //! Set the number of components
+  void set_number_of_components(int n) { number_of_components = n; }
+
+  //! Interpolate an arbitrary point and return true if its in the local partition, otherwise false
+  bool Sample(vec3f& p, float* i);
+  bool Sample(vec3f& p, vec3f& v);
+  bool Sample(vec3f& p, float& v);
+
+  //! Which process owns an arbitrary point in this global volume? -1 for outside
+  int PointOwner(vec3f& p);
+
+  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
 
 protected:
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep
@@ -215,6 +226,9 @@ protected:
 
 	vec3f deltas;
 
+  int number_of_components;
+
+	vec3i global_partitions;
 	vec3f global_origin;
 	vec3i global_counts;
 	vec3i local_offset;
@@ -223,12 +237,6 @@ protected:
 	vec3i ghosted_local_counts;
 
 	unsigned char *samples;
-
-	float local_min, local_max;
-	float global_min, global_max;
-
-	void set_global_minmax(float min, float max)   { global_min = min; global_max = max; }
-	void set_local_minmax(float min, float max)   { local_min = min; local_max = max; }
 };
 
 } // namespace gxy

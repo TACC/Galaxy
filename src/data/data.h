@@ -28,15 +28,15 @@
  * \brief all classes for Galaxy's supported data types and data operations (filters)
  */
 
+#include "AmrVolume.h"
 #include "Box.h"
 #include "DataObjects.h"
+#include "Datasets.h"
 #include "Geometry.h"
 #include "ImageWriter.h"
 #include "KeyedDataObject.h"
-#include "mypng.h"
 #include "Particles.h"
 #include "Triangles.h"
 #include "Volume.h"
-#include "AmrVolume.h"
 #include "vtkerror.h"
 

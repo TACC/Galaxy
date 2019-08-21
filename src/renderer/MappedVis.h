@@ -22,7 +22,7 @@
 
 /*! \file MappedVis.h 
  * \brief a visualization element that uses a color map and opacity map to define its rendering behavior
- * \ingroup data
+ * \ingroup render
  */
 
 #include <string>
@@ -45,7 +45,7 @@ namespace gxy
 OBJECT_POINTER_TYPES(MappedVis)
 
 //! a visualization element that uses a color map and opacity map to define its rendering behavior
-/*! \ingroup data
+/*! \ingroup render
  * \sa KeyedObject, KeyedDataObject, Vis
  */
 class MappedVis : public Vis
@@ -68,11 +68,15 @@ public:
 
   //! construct a MappedVis from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-  //! save this MappedVis to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+
+  //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
+  virtual void SetTheOsprayDataObject(OsprayObjectP o);
 
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
+
+  //! scale mapping to a given range
+  virtual void ScaleMaps(float xmin, float xmax);
 
  protected:
   virtual void allocate_ispc();

@@ -19,6 +19,8 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
+print ('vti2vol entry')
+
 import sys
 from vtk import *
 from vtk.util import numpy_support as ns
@@ -76,3 +78,5 @@ for var in sys.argv[2:]:
     of.write('%d %d %d\n' % o.GetDimensions())
     of.write('%f %f %f\n' % tuple(ssz))
     of.write(rawname + '\n')
+
+print ('vti2vol exit')

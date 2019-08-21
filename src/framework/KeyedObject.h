@@ -1,4 +1,4 @@
-// ========================================================================== //
+
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -194,9 +194,6 @@ public:
   //! construct object from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&) { std::cerr << "abstract KeyedObject LoadFromJSON" << std::endl; return false; }
 
-  //! save object to a Galaxy JSON specification
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&) { std::cerr << "abstract KeyedObject SaveToJSON" << std::endl; }
-
   //! a helper class for global messages to deserialize and commit the KeyedObject to each process local registry
   class CommitMsg : public Work
   {
@@ -244,6 +241,7 @@ extern void aol(KeyedObjectP& p);
  * \ingroup framework
  * \sa KeyedObject, Work, OBJECT_POINTER_TYPES, KEYED_OBJECT, KEYED_OBJECT_SUBCLASS
  */
+
 class KeyedObjectFactory
 {
 public:
@@ -254,20 +252,24 @@ public:
   /*! \param n pointer to a KeyedObject-derived object instance
    * \param s class name of the passed object
    */
-  int register_class(KeyedObject *(*n)(Key), std::string s)
+  int register_class(KeyedObject *(*n)(Key), std::string s);
+
+  KeyedObjectP 
+  NewP(std::string classname)
   {
     for (auto i = 0; i < class_names.size(); i++)
-      if (class_names[i] == s)
+      if (class_names[i] == classname)
       {
-        if (new_procs[i] != n)
-          new_procs[i] = n;
-
-        return i;
+        Key k = keygen();
+        KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[i](k));
+        kop->primary = true;
+        aol(kop);
+        add_weak(kop);
+        NewMsg msg(i, k);
+        msg.Broadcast(true, true);
+        return kop;
       }
-
-    new_procs.push_back(n);
-    class_names.push_back(s);
-    return new_procs.size() - 1;
+    return NULL;
   }
 
   //! commit all new and dropped keys to the local registry on each process

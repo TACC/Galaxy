@@ -31,8 +31,6 @@ namespace gxy
 {
 
 WORK_CLASS_TYPE(KeyedDataObject::ImportMsg);
-WORK_CLASS_TYPE(KeyedDataObject::AttachMsg);
-WORK_CLASS_TYPE(KeyedDataObject::LoadTimestepMsg);
 
 void
 KeyedDataObject::Register()
@@ -40,8 +38,6 @@ KeyedDataObject::Register()
   RegisterClass();
 
   ImportMsg::Register();
-  AttachMsg::Register();
-  LoadTimestepMsg::Register();
 
   Datasets::Register();
   Geometry::Register();
@@ -59,6 +55,12 @@ KeyedDataObject::~KeyedDataObject()
     skt->CloseSocket();
     skt->Delete();
   }
+}
+
+OsprayObjectP
+KeyedDataObject::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+{
+  return NULL;
 }
 
 void 
@@ -86,27 +88,6 @@ KeyedDataObject::local_commit(MPI_Comm c)
 }
 
 bool
-KeyedDataObject::Attach(string layout) { return Attach(layout, NULL, 0); }
-
-bool
-KeyedDataObject::Attach(string layout, void *args, int argsSize)
-{
-  AttachMsg msg(sizeof(Key) + layout.length() + 1 + argsSize);
-  char *p = (char *)msg.get();
-  *(Key *)p = getkey();
-  p = p + sizeof(Key);
-  memcpy(p, layout.c_str(), layout.length());
-  p = p + layout.length();
-  *p++ = 0;
-
-  if (argsSize > 0)
-    memcpy(p, args, argsSize);
-
-  msg.Broadcast(true, true);
-  return skt != NULL;
-}
-
-bool
 KeyedDataObject::Import(string filename) { return Import(filename, NULL, 0); }
 
 bool
@@ -118,74 +99,9 @@ KeyedDataObject::Import(string filename, void *args, int argsSize)
 }
 
 bool
-KeyedDataObject::WaitForTimestep()
-{
-  if (! skt)
-    return false;
-
-  int flag = -1;
-  if ((skt->Receive((void *)&flag, sizeof(flag)) != sizeof(flag)) || (flag < 1))
-  {
-    skt->CloseSocket();
-    skt->Delete();
-    skt = NULL;
-    return false;
-  }
-  else
-    return true;
-}
-
-bool
-KeyedDataObject::LoadTimestep()
-{
-  LoadTimestepMsg msg(getkey());
-  msg.Broadcast(true, true);
-  return get_error() != 0;
-}
-
-bool
 KeyedDataObject::local_import(char *s, MPI_Comm c)
 {
   std::cerr << "ERROR: generic KeyedDataObject::local_import called?" << std::endl;
-  return false;
-}
-
-bool
-KeyedDataObject::local_load_timestep(MPI_Comm c)
-{
-  std::cerr << "ERROR: generic KeyedDataObject::local_load_timestep called?" << std::endl;
-  set_error(1);
-  return false;
-}
-
-bool
-KeyedDataObject::AttachMsg::CollectiveAction(MPI_Comm c, bool isRoot)
-{
-  char *p = (char *)contents->get();
-  Key k = *(Key *)p;
-  p += sizeof(Key);
-
-  KeyedDataObjectP o = KeyedDataObject::GetByKey(k);
-
-  int rank = GetTheApplication()->GetRank();
-
-  string server;
-  int port;
-
-  ifstream ifs(p);
-  for (int i = 0; i <= rank; i++)
-  {
-    if (ifs.eof()) {cerr << "ERROR: could not get attachment point for CollectiveAction message" << endl; exit(1); }
-    ifs >> server >> port;
-  }
-
-  o->skt = vtkClientSocket::New();
-  if (o->skt->ConnectToServer(server.c_str(), port))
-  {
-    o->skt->Delete();
-    o->skt = NULL;
-  }
-
   return false;
 }
 

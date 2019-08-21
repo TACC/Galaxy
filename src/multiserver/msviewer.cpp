@@ -39,14 +39,14 @@
 #include "Pixel.h"
 #include "ImageWriter.h"
 #include "ClientWindow.h"
-#include "IF.h"
+#include "JsonInterface.h"
 
 // #include "ViewerClientServer.h"
 #include "CommandLine.h"
 
 #include "trackball.hpp"
 
-#include <ospray/ospray.h>
+// #include <ospray/ospray.h>
 
 using namespace gxy;
 using namespace std;
@@ -89,7 +89,7 @@ Trackball trackball;
 float scaling;
 
 ClientWindow *theClientWindow;
-CameraIF theCamera;
+CameraInterface theCamera;
 
 int mpiRank = 0, mpiSize = 1;
 #include "Debug.h"

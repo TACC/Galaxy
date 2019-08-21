@@ -50,7 +50,6 @@ OBJECT_POINTER_TYPES(Camera)
 class Rays;
 class Rendering;
 class RayList;
-class args;
 
 //! a viewpoint from which images are rendered
 /*! \ingroup render */
@@ -58,10 +57,33 @@ class Camera : public KeyedObject
 {
 	KEYED_OBJECT(Camera)
 
+  struct spawn_rays_args
+  { 
+    spawn_rays_args(int fnum, float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy,
+       vec3f& vr, vec3f& vu, vec3f& veye, vec3f center,
+       Box *lb, Box *gb, RendererP rndr, RenderingSetP rs, RenderingP r, Camera *c) :
+       fnum(fnum), iwidth(iw), ixmin(ixmin), iymin(iymin),
+       scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
+       vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
+       renderer(rndr), rs(rs), r(r), camera(c) {}
+    ~spawn_rays_args() {}
+
+    int fnum;
+    float scaling;
+    int iwidth, ixmin, iymin;
+    float off_x, off_y;
+    vec3f vr, vu, veye, center;
+    Box *lbox, *gbox;
+    RendererP renderer;
+    RenderingSetP rs;
+    RenderingP r;
+    Camera *camera;
+  };
+
   class spawn_rays_task : public ThreadPoolTask
   {
   public:
-    spawn_rays_task(int start, int count, std::shared_ptr<args> _a) :
+    spawn_rays_task(int start, int count, std::shared_ptr<spawn_rays_args> _a) :
               ThreadPoolTask(1), start(start), count(count), a(_a) {}
 
     ~spawn_rays_task() {}
@@ -70,7 +92,7 @@ class Camera : public KeyedObject
 
   private:
     int start, count;
-    std::shared_ptr<args> a;
+    std::shared_ptr<spawn_rays_args> a;
   };
 
 public:
@@ -84,10 +106,6 @@ public:
 	//! construct a Camera from a Paraview PVCC
 	bool LoadFromPVCC(const char *filename);
 
-	//! save this Camera to a Galaxy JSON specification 
-	virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
-
-	// virtual bool local_commit(MPI_Comm);
 	//! set the spatial location for this camera
 	void set_viewpoint(float x, float y, float z) { eye[0] = x; eye[1] = y; eye[2] = z; }
 	//! set the spatial location for this camera
@@ -134,6 +152,8 @@ public:
 	void set_angle_of_view(float a) { aov = a; }
 	//! get the view angle for the camera
 	void get_angle_of_view(float &a) { a = aov; }
+	//! get the view angle for the camera
+	float get_angle_of_view() { return aov; }
 
 	//! print the details of this camera
 	void print();
@@ -162,6 +182,8 @@ public:
   const char *GetAnnotation() { return annotation.c_str(); } //!< return the annotation string for this Camera
 
 protected:
+
+  bool SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count);
 
   std::string annotation;
 	

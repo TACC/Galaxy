@@ -29,8 +29,19 @@
  */
 
 #include "Camera.h"
-#include "dtypes.h"
 #include "hits.h"
+#include "ImageWriter.h"
+#include "IspcObject.h"
+#include "Lighting.h"
+#include "MappedVis.h"
+#include "mypng.h"
+#include "OsprayDatasets.h"
+#include "OsprayParticles.h"
+#include "OsprayObject.h"
+#include "OsprayTriangles.h"
+#include "OsprayUtil.h"
+#include "OsprayVolume.h"
+#include "ParticlesVis.h"
 #include "Pixel.h"
 #include "RayFlags.h"
 #include "RayQManager.h"
@@ -40,3 +51,5 @@
 #include "RenderingEvents.h"
 #include "RenderingSet.h"
 #include "TraceRays.h"
+#include "TrianglesVis.h"
+

@@ -36,10 +36,28 @@ Galaxy has the following components associated in the `third-party` subdirectory
 *NOTE:* the third-party component locations are intended for development builds of Galaxy. If you intend to install Galaxy for general use, you should install Embree, OSPRay and rapidjson into a generally-accessible location and use those locations in the Galaxy build.
 
 ## Installing Galaxy associated dependencies
-Prior to building Galaxy itself, you should ensure that all the general dependencies are installed (we recommend your humble OS package manager). Once those are in place, you're ready to install the dependencies in `third-party`. 
+Prior to building Galaxy itself, you should ensure that all the general dependencies are installed (we recommend your humble OS package manager). Once those are in place, you're ready to install the dependencies in `third-party`. There are two steps to this process: 1) downloading and patching the submodules, and 2) building and installing the submodules.
 
-From the root directory of your local Galaxy repository, run the script `prep-third-party.sh`, which will init and update the git submodules, download ispc to where Galaxy expects to find it, and apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. 
+### Scripted build
+We recommend using the Galaxy-provided build script `scripts/install-third-party.sh`, which will configure and build all submodules with a single command (if this script does not work for your configuration, please open a [GitHub issue][19]). If you need to customize your build, please see the next section.
 
+To **download, patch, and build** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/install-third-party.sh`, which will (1) init and update the git submodules, (2) download ispc to where Galaxy expects to find it, (3) apply patches to the third-party CMake files to make them easier for Galaxy to find, and (4) build each in a `build` subdirectory and install into an `install` subdirectory. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. For example, the OSPRay install will be located in `third-party/ospray/install`.
+
+### Custom build
+The third-party dependency build can also be done by hand, for example, to 
+specify custom software locations or to change the configuration of Embree or OSPRay. Note that even with a custom build, the submodules still should be patched as described below.
+
+To **download and patch** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/prep-third-party.sh`, which will (1) init and update the git submodules, (2) download ispc to where Galaxy expects to find it, and (3) apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. 
+
+To **build and install** the submodules, do the following in `third-party/embree`, then `third-part/ospray`, then `third-party/rapidjson` (`third-party/ispc is already installed via the script`):
+
+```bash
+mkdir build
+cd build
+cmake .. && make && make install
+```
+
+#### NOTE on patches:
 All patch updates insert the prominent header: 
 ```
 NOTE: This file has been modified by a Galaxy patch.
@@ -52,13 +70,14 @@ GALAXY BEGIN ADDED CODE - by Galaxy patch
 GALAXY END ADDED CODE - by Galaxy patch
 ```
 
+#### Local installs of Galaxy associated dependencies
 If you prefer to use local installs of any of the dependencies, you can follow instructions below. Make sure to issue `git submodule init <path>` and `git submodule update <path>` for the third-party dependencies you do *NOT* have locally installed. For example, to use the rapidjson submodule, type:
 ```bash
 git submodule init third-party/rapidjson
 git submodule update third-party/rapidjson
 ```
 
-### Installing ISPC
+#### ISPC
 The `third-party/ispc` directory contains a script to download a recent ISPC binary for MacOS or Linux. ISPC installed using this script should be detected automatically by the Galaxy CMake configuration. If you already have a recent ISPC installed (at least version 1.9.1) you are free to use it, though you might need to specify its location by hand in the CMake configurations for Embree, OSPRay, and Galaxy.
 
 From the root directory of your Galaxy repository, issue the following commands:
@@ -69,7 +88,7 @@ cd third-party/ispc
 
 This will download ISPC (currently version 1.9.2) into `third-party/ispc/ispc-v<version>-<OS type>` (e.g., ispc-v1.9.2-osx). If this binary does not work for you, you will need to build ISPC by hand following the directions at the [ISPC website][10]. 
 
-### Installing Embree
+#### Embree
 After updating the git submodules as described above, the `third-party/embree` directory should contain the Embree source tree. We recommend building in `third-party/embree/build` and installing to `third-party/embree/install`, as doing so should enable OSPRay and Galaxy to find Embree automatically. The recommended install directory is configured as part of the Galaxy Embree patch.
 
 First, apply the Galaxy Embree patch to the Embree repository. From the root directory of your Galaxy repository, issue the following commands:
@@ -86,7 +105,7 @@ cmake .. && make && make install
 ```
 If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
-### Installing OSPRay
+#### OSPRay
 Before installing OSPRay, make sure you have updated the Galaxy git submodules and successfully built Embree, as described above. Once the git submodules have been updated, the `third-party/ospray` directory should contain the OSPRay source tree. We recommend building in `third-party/ospray/build` and installing to `third-party/ospray/install`, as doing so should enable Galaxy to find OSPRay automatically. The recommended install directory is configured as part of the Galaxy OSPRay patch.
 
 First, apply the Galaxy OSPRay patch to the OSPRay repository. From the root directory of your Galaxy repository, issue the following commands:
@@ -103,7 +122,7 @@ cmake .. && make && make install
 ```
 If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
 
-### Installing rapidjson
+#### rapidjson
 Before installing rapidjson, make sure you have updated the Galaxy git submodules as described above. Once the git submodules have been updated, the `third-party/rapidjson` directory should contain the rapidjson source tree. We recommend building in `third-party/rapidjson/build` and installing to `third-party/rapidjson/install`, as doing so should enable Galaxy to find rapidjson automatically. The recommended install directory is configured as part of the Galaxy rapidjson patch.
 
 First, apply the Galaxy rapidjson patch to the rapidjson repository. From the root directory of your Galaxy repository, issue the following commands:
@@ -159,11 +178,9 @@ will create a .VTI dataset (radial-0.vti - note that radial will create timestep
 
 will create radial-0-oneBall.vol, radial-0-eightBalls.vol and corresponding …raw files that actually contain the data as bricks of floats.
 
-### Batch Mode
+### Sample Galaxy State File
 
-Batch mode relies on a state file to define one or more visualizations and one or more cameras. 
-A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc.   
-The result of the state file is the cross product of the sets of visualizations and cameras: a rendering of each visualization from every camera will be produced.
+Galaxy uses a JSON state file format to describe data and visualization operations. We discuss a sample Galaxy configuraiton file below. For more details about Galaxy state files, see `docs/state_files.md`.
 
 The following is a state file that should work with the datasets we created above, and will result in six renderings: two visualizations rendered from each of the three cameras.
 
@@ -210,7 +227,7 @@ The following is a state file that should work with the datasets we created abov
                 [0.75,1.0,1.0,0.5],
                 [1.00,1.0,0.5,1.0]
                ],
-							"slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
+              "slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
               "opacitymap": [
                 [ 0.00, 0.05],
                 [ 0.20, 0.05],
@@ -227,7 +244,7 @@ The following is a state file that should work with the datasets we created abov
             {
               "type": "Volume",
               "dataset": "eightBalls",
-							"slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
+              "slices": [ [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0] ],
               "volume rendering": true,
               "colormap": [
                 [0.00,1.0,0.5,0.5],
@@ -306,10 +323,29 @@ The Visualizations section is an array, where each element (a visualization) con
 ```
 
 Finally, the Cameras section is also an array, consisting of the cameras to be used.   Cameras are very simply specified.
+ 
+
+### Interactive Viewing
+
+Interactive mode, where images are displayed in a client viewer, is the default Galaxy CMake configuration (i.e. `GXY_WRITE_IMAGES` is off).
+
+A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc. The Galaxy viewer will use the first camera and visualization specified in the configuratin file. The Galaxy writer will produce images for the complete cross-product of cameras and visualizations (see below).
 
 If you cut’n’paste the complete state file above into a text file named radial.json in the test directory, you can run:
 
-`[mpirun mpiargs] vis [-s width height] radial.json`
+`[mpirun mpiargs] gxyviewer [-s width height] radial.json`
+
+
+### Batch Mode Image Writing
+
+Batch mode, where images are written to file without an interactive viewer, relies on a state file to define one or more visualizations and one or more cameras. Batch mode is activated by turning on `GXY_WRITE_IMAGES` in the Galaxy CMake configuration.
+
+A visualization consists of a specification of one or more datasets to appear in the visualization, along with the properties of each - the slicing planes, isovalues, transfer functions, radii etc.   
+The result of the state file is the cross product of the sets of visualizations and cameras: a rendering of each visualization from every camera will be produced.
+
+If you cut’n’paste the complete state file above into a text file named radial.json in the test directory, you can run:
+
+`[mpirun mpiargs] gxywriter [-s width height] radial.json`
 
 You will produce three output .png files.   
 
@@ -393,7 +429,7 @@ Given such a cinema.json file, the included Python script cinema2state will expa
 
 which will create state.json and initialize cinema.cdb.  Following this, 
 
-`[mpirun mpiargs] state [-s width height] -C state.json`
+`[mpirun mpiargs] cinema [-s width height] -C state.json`
 
 will render the necessary images and deposit them into cinema.cdb.
 
@@ -439,5 +475,6 @@ The following environment variables affect Galaxy behavior:
 [16]: http://rapidjson.org/
 [17]: https://cinemascience.org/
 [18]: https://www.python.org/
+[19]: https://github.com/TACC/Galaxy/issues
 
 

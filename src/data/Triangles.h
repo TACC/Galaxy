@@ -29,6 +29,8 @@
 #include <string.h>
 #include <memory.h>
 
+#include <vtkUnstructuredGrid.h>
+
 #include "Application.h"
 #include "Box.h"
 #include "dtypes.h"
@@ -53,35 +55,16 @@ public:
 	void initialize(); //!< initialize this Triangles object
 	virtual ~Triangles(); //!< default destructor 
 
-  /*! This action is performed in response to a ImportMsg */
-  virtual bool local_import(char *, MPI_Comm);
+  //! Allocate space for vertices(data) and connectivity
+  virtual void allocate_vertices(int nv);
 
-  //! construct a Triangles from a Galaxy JSON specification
-  virtual bool LoadFromJSON(rapidjson::Value&);
-  //! save this Triangles to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
+  vec3f* GetNormals() { return (vec3f *)normals.data(); }
 
-  //! Get the number of vertices
-  int GetNumberOfVertices() { return n_vertices; }
+  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
 
-  //! Get the number of triangles
-  int GetNumberOfTriangles() { return n_triangles; }
-
-  //! Get the vertices
-  float *GetVertices() { return vertices; }
-
-  //! Get the normals
-  float *GetNormals() { return normals; }
-
-  //! Get the triangles
-  int *GetTriangles() { return triangles; }
-
-private:
-	int n_triangles;
-	int n_vertices;
-	float *vertices;
-	float *normals;
-	int *triangles;
+protected:
+  virtual bool load_from_vtkPointSet(vtkPointSet *);
+  std::vector<vec3f> normals;
 };
 
 } // namespace gxy

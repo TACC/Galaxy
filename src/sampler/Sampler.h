@@ -33,6 +33,7 @@
  */
 
 #include <vector>
+#include <pthread.h>
 
 #include "Renderer.h"
 
@@ -41,7 +42,7 @@ namespace gxy
 
 class RayList;
 
-KEYED_OBJECT_POINTER(Sampler)
+OBJECT_POINTER_TYPES(Sampler)
 
 class Sampler : public Renderer
 {
@@ -49,32 +50,24 @@ class Sampler : public Renderer
     
 public:
   static void Initialize();
-  virtual void HandleTerminatedRays(RayList *raylist, int *classification);
+  // virtual void initialize(); //!< initialize this object
+
+  virtual void HandleTerminatedRays(RayList *);
+  virtual void Trace(RayList *);
+
   void SetSamples(ParticlesP p) {mSamples = p;}
-  ParticlesP GetSamples() {return mSamples;}
+  ParticlesP GetSamples()
+  {
+    return mSamples;
+  }
 
   virtual int SerialSize();
   virtual unsigned char *Serialize(unsigned char *);
   virtual unsigned char *Deserialize(unsigned char *);
 
-  virtual void Sample(RenderingSetP);
-
 private:
   ParticlesP mSamples = NULL;
-
-  class SampleMsg : public Work
-  {
-  public:
-    SampleMsg(Sampler *, RenderingSetP);
-    ~SampleMsg() {}
-
-    WORK_CLASS(SampleMsg, true);
-
-    bool Action(int s);
-
-    private:
-        int frame;
-  };
+  pthread_mutex_t lock;
 
 };
 

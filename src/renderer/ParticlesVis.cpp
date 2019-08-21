@@ -46,6 +46,11 @@ void
 ParticlesVis::initialize()
 {
   super::initialize();
+
+  r0 =  0.025;
+  r1 =  0.0;
+  v0 =  0.0;
+  v1 =  0.0;
 }
 
 void
@@ -61,17 +66,23 @@ ParticlesVis::allocate_ispc()
   ispc = ispc::ParticlesVis_allocate();
 }
 
-int 
+
+int
 ParticlesVis::serialSize()
 {
-  return super::serialSize();
+  return super::serialSize() + 4 * sizeof(float);
 }
 
 unsigned char *
 ParticlesVis::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
-  
+
+  *(float *)ptr = v0; ptr += sizeof(float);
+  *(float *)ptr = r0; ptr += sizeof(float);
+  *(float *)ptr = v1; ptr += sizeof(float);
+  *(float *)ptr = r1; ptr += sizeof(float);
+ 
   return ptr;
 }
 
@@ -79,19 +90,31 @@ unsigned char *
 ParticlesVis::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
+
+  v0 = *(float *)ptr; ptr += sizeof(float);
+  r0 = *(float *)ptr; ptr += sizeof(float);
+  v1 = *(float *)ptr; ptr += sizeof(float);
+  r1 = *(float *)ptr; ptr += sizeof(float);
+
+
   return ptr;
 }
+
 
 bool 
 ParticlesVis::LoadFromJSON(Value& v)
 {
-  return super::LoadFromJSON(v);
-}
+  if (v.HasMember("radius0")) r0 = v["radius0"].GetDouble();
+  if (v.HasMember("radius1")) r1 = v["radius1"].GetDouble();
+  if (v.HasMember("value0"))  v0 = v["value0"].GetDouble();
+  if (v.HasMember("value1"))  v1 = v["value1"].GetDouble();
+  if (v.HasMember("radius"))
+  {
+    r0 = v["radius"].GetDouble();
+    v0 = v1 = r1 = 0.0;
+  }
 
-void
-ParticlesVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
+  return super::LoadFromJSON(v);
 }
 
 void
@@ -109,5 +132,25 @@ ParticlesVis::local_commit(MPI_Comm c)
 	return super::local_commit(c);
 }
 
+void
+ParticlesVis::SetTheOsprayDataObject(OsprayObjectP o)
+{
+  super::SetTheOsprayDataObject(o);
+
+  ospSet1f(o->GetOSP(), "value0", v0);
+  ospSet1f(o->GetOSP(), "radius0", r0);
+  ospSet1f(o->GetOSP(), "value1", v1);
+  ospSet1f(o->GetOSP(), "radius1", r1);
+}
+
+void
+ParticlesVis::ScaleMaps(float xmin, float xmax)
+{
+  super::ScaleMaps(xmin, xmax);
+  v0 = xmin;
+  v1 = xmax;
+}
+
+ 
 } // namespace gxy
 

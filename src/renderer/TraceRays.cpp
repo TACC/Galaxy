@@ -36,8 +36,9 @@ using namespace rapidjson;
 namespace gxy
 {
 
-TraceRays::TraceRays()
+TraceRays::TraceRays(float e)
 {
+  epsilon = e;
   allocate_ispc();
   initialize_ispc();
 }
@@ -46,22 +47,10 @@ TraceRays::~TraceRays()
 {
 }
 
-void 
-TraceRays::allocate_ispc()
-{
-  ispc = ispc::TraceRays_allocate();
-}
-
-void 
-TraceRays::initialize_ispc()
-{
-   ispc::TraceRays_initialize(GetISPC());
-}
-
 RayList *
 TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
 {
-  ispc::TraceRays_TraceRays(GetISPC(), visualization->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC());
+  ispc::TraceRays_TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), epsilon);
 	RayList *raysOut = NULL;
 
 	int nl, *t; float *l;
@@ -115,68 +104,27 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
   }
   
 #ifdef GXY_REVERSE_LIGHTING
-	ispc::TraceRays_ambientLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(),  raysIn->GetISPC());
+	ispc::TraceRays_ambientLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(),  raysIn->GetIspc());
 	if (ao_ray_knt)
-		ispc::TraceRays_generateAORays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), ao_offsets, raysOut->GetISPC());
+		ispc::TraceRays_generateAORays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), ao_offsets, raysOut->GetIspc(), epsilon);
 	
-	ispc::TraceRays_diffuseLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC());
+	ispc::TraceRays_diffuseLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 	if (shadow_ray_knt)
-		ispc::TraceRays_generateShadowRays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), shadow_offsets, raysOut->GetISPC());
+		ispc::TraceRays_generateShadowRays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), shadow_offsets, raysOut->GetIspc(), epsilon);
 #else
 	if (ao_ray_knt)
-		ispc::TraceRays_generateAORays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), ao_offsets, raysOut->GetISPC());
+		ispc::TraceRays_generateAORays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), ao_offsets, raysOut->GetIspc(), epsilon);
 	else
-		ispc::TraceRays_ambientLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(),  raysIn->GetISPC());
+		ispc::TraceRays_ambientLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(),  raysIn->GetIspc());
 	
 	if (shadow_ray_knt)
-		ispc::TraceRays_generateShadowRays(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC(), shadow_offsets, raysOut->GetISPC());
+		ispc::TraceRays_generateShadowRays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), shadow_offsets, raysOut->GetIspc(), epsilon);
 	else
-		ispc::TraceRays_diffuseLighting(GetISPC(), lights->GetISPC(), raysIn->GetRayCount(), raysIn->GetISPC());
+		ispc::TraceRays_diffuseLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 #endif
 
 	return raysOut;
 
-}
-
-bool TraceRays::LoadStateFromValue(Value& v)
-{
-  if (v.HasMember("epsilon"))
-  {
-    float e = v["epsilon"].GetDouble();
-    SetEpsilon(e);
-  }
-  return true;
-}
-
-void TraceRays::SaveStateToValue(Value& v, Document& doc)
-{
-  Value tv;
-  tv.AddMember("epsilon", Value().SetBool(GetEpsilon()), doc.GetAllocator());
-  v.AddMember("Tracer", tv, doc.GetAllocator());
-}
-
-void TraceRays::SetEpsilon(float e)
-{
-  ispc::TraceRays_SetEpsilon(GetISPC(), e);
-}
-
-float TraceRays::GetEpsilon()
-{
-  return ispc::TraceRays_GetEpsilon(GetISPC());
-}
-
-int TraceRays::SerialSize() { return sizeof(float); }
-
-unsigned char *TraceRays::Serialize(unsigned char *p)
-{
-  *(float *)p = GetEpsilon();
-  return p + sizeof(float);
-  
-}
-unsigned char *TraceRays::Deserialize(unsigned char *p)
-{
-  SetEpsilon(*(float *)p);
-  return p + sizeof(float);
 }
 
 } // namespace gxy

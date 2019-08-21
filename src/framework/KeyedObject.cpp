@@ -85,6 +85,23 @@ KeyedObjectFactory* GetTheKeyedObjectFactory()
 	return GetTheApplication()->GetTheKeyedObjectFactory();
 }
 
+int
+KeyedObjectFactory::register_class(KeyedObject *(*n)(Key), std::string s)
+{
+  for (auto i = 0; i < class_names.size(); i++)
+    if (class_names[i] == s)
+    {
+      if (new_procs[i] != n)
+        new_procs[i] = n;
+
+      return i;
+    }
+
+  new_procs.push_back(n);
+  class_names.push_back(s);
+  return new_procs.size() - 1;
+}
+
 bool
 KeyedObjectFactory::NewMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 {

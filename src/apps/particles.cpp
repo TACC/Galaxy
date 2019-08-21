@@ -123,8 +123,7 @@ main(int argc, char *argv[])
     MM = {1, 1, 1};
   }
 
-	int psize = random_v ? 4 : 3;
-  float *particles = new float[psize*nparticles];
+  float *particles = new float[4*nparticles];
 	float *p = particles;
   
   if (nparticles == 1)
@@ -134,6 +133,8 @@ main(int argc, char *argv[])
     *p++ = (MM.x + mm.x) / 2.0;
     if (random_v)
       *p++ = frand();
+    else
+      *p++ = 0;
   }
   else
     for (int i = 0; i < nparticles; i++)
@@ -143,11 +144,13 @@ main(int argc, char *argv[])
       *p++ = mm.z + frand()*(MM.z - mm.z);
       if (random_v)
         *p++ = frand();
+      else
+        *p++ = (float)i;
     }
 
   char buf[256];
   int fd = open(oname.c_str(), O_TRUNC | O_WRONLY | O_CREAT, 0644);
-  write(fd, particles, psize*nparticles*sizeof(float));
+  write(fd, particles, 4*nparticles*sizeof(float));
   close(fd);
 
   delete[] particles;

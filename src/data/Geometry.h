@@ -27,8 +27,11 @@
 
 #include <string>
 #include <string.h>
+#include <pthread.h>
 #include <memory.h>
 #include <vector>
+
+#include <vtkPointSet.h>
 
 #include "KeyedDataObject.h"
 
@@ -44,6 +47,83 @@ OBJECT_POINTER_TYPES(Geometry)
 class Geometry : public KeyedDataObject
 {
   KEYED_OBJECT_SUBCLASS(Geometry, KeyedDataObject)
+
+  //! Load JSON partition file and send it to servers so they can import their bits
+  virtual bool Import(std::string);
+
+  //! Allocate space for vertices(data) and connectivity
+  virtual void allocate_vertices(int nv);
+  virtual void allocate_connectivity(int nc);
+  void allocate(int nv, int nc) { allocate_vertices(nv); allocate_connectivity(nc); }
+
+  /*! This action is performed in response to a ImportMsg */
+  virtual bool local_import(char *, MPI_Comm);
+
+  //! load geometry from a Galaxy JSON specification
+  virtual bool LoadFromJSON(rapidjson::Value&);
+
+  //! set the default color to use when rendering these Particles
+  void SetDefaultColor(vec4f dc) { default_color = dc; }
+  void SetDefaultColor(float r, float g, float b, float a)
+  {
+    default_color.x = r;
+    default_color.y = g;
+    default_color.z = b;
+    default_color.w = a;
+  }
+
+  //! get the default color to use when rendering these Particles
+  void GetDefaultColor(vec4f& dc) { dc = default_color; }
+  void GetDefaultColor(float& r, float& g, float& b, float& a)
+  {
+    r = default_color.x;
+    g = default_color.y;
+    b = default_color.z;
+    a = default_color.w;
+  }
+
+  int GetNumberOfVertices() { return vertices.size(); }
+  int GetConnectivitySize() { return connectivity.size(); }
+
+  vec3f* GetVertices() { return (vec3f *)vertices.data(); }
+  float* GetData() { return (float *)data.data(); }
+  int*   GetConnectivity() { return (int *)connectivity.data(); }
+
+  void clear()
+  {
+    vertices.clear();
+    data.clear();
+    connectivity.clear();
+  }
+
+  void Lock() { pthread_mutex_lock(&lock); }
+  void Unlock() { pthread_mutex_unlock(&lock); }
+
+protected:
+  pthread_mutex_t lock;
+
+  virtual int serialSize();
+  virtual unsigned char* serialize(unsigned char *ptr);
+  virtual unsigned char* deserialize(unsigned char *ptr);
+
+  vec4f default_color;
+
+  virtual bool load_from_vtkPointSet(vtkPointSet *) { return false; }
+
+  void initialize(); //!< initialize this Geometry objec
+
+  //! Get partitioning info from JSON object
+  bool get_partitioning(rapidjson::Value&);
+
+  //! Load partitioning info from JSON file
+  bool get_partitioning_from_file(char *);
+
+  //! vertex, data and connectivity storage
+  std::vector<vec3f> vertices;
+  std::vector<float> data;
+  std::vector<int>   connectivity;
+
+  vtkDataSet *vtkobj; // If there is a retained VTK dataset
 };
 
 } // namespace gxy

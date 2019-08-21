@@ -18,25 +18,41 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
 project (gxy_sampler VERSION ${GALAXY_VERSION})
 
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
+										${gxy_multiserver_SOURCE_DIR}
 										${gxy_sampler_SOURCE_DIR}
 										${gxy_data_SOURCE_DIR}
+										${gxy_ospray_SOURCE_DIR}
 										${gxy_data_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src)
 
 link_directories(${Galaxy_BINARY_DIR}/src/data 
                  ${Galaxy_BINARY_DIR}/src/framework)
 
+include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
+
 set (ISPC_SOURCES 
+ SamplerTraceRays.ispc
+ SamplerVis.ispc
+ IsoSamplerVis.ispc
+ GradientSamplerVis.ispc
 )
 
 set (CPP_SOURCES 
-  Sampler.cpp)
+  Sampler.cpp
+  SamplerTraceRays.cpp
+  SamplerVis.cpp
+  IsoSamplerVis.cpp
+  GradientSamplerVis.cpp
+  )
+
+set(SERVERS "")
 
 if (ospray_DIR)
   ospray_create_library(gxy_sampler ${CPP_SOURCES} ${ISPC_SOURCES} 
@@ -45,7 +61,21 @@ if (ospray_DIR)
   install(TARGETS gxy_sampler DESTINATION lib)
 endif()
 
+add_library(gxy_module_mhsampler MODULE MHSampleClientServer)
+target_link_libraries(gxy_module_mhsampler gxy_multiserver gxy_data gxy_framework)
+set(SERVERS gxy_module_mhsampler ${SERVERS})
+
+add_library(gxy_module_interpolator MODULE InterpolatorClientServer)
+target_link_libraries(gxy_module_interpolator gxy_multiserver gxy_data gxy_framework)
+set(SERVERS gxy_module_interpolator ${SERVERS})
+
+install(TARGETS ${BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 install(FILES 
   Sampler.h 
+  SamplerTraceRays.h 
   DESTINATION include)
+
+install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
  

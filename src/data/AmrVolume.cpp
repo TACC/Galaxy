@@ -413,11 +413,4 @@ AmrVolume::ReadGxyAmrHeader()
     }
 }
 
-bool
-AmrVolume::local_load_timestep(MPI_Comm c) 
-{
-    return false;
-}
-
-
 } // namespace gxy

@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 12ade5e8..3e5d0c79 100644
+index 12ade5e8a..3e5d0c797 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -14,6 +14,9 @@
@@ -26,7 +26,7 @@ index 12ade5e8..3e5d0c79 100644
  # CMake modules and macro files
  ##############################################################
 diff --git a/cmake/ospray_macros.cmake b/cmake/ospray_macros.cmake
-index 7a6bb843..49a16eb5 100644
+index d16d44b91..00ba6e8f0 100644
 --- a/cmake/ospray_macros.cmake
 +++ b/cmake/ospray_macros.cmake
 @@ -14,6 +14,9 @@
@@ -55,8 +55,8 @@ index 7a6bb843..49a16eb5 100644
    if(NOT DEFINED EMBREE_INCLUDE_DIRS)
      message(FATAL_ERROR
              "We did not find Embree installed on your system. OSPRay requires"
-@@ -58,6 +68,12 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
-     get_filename_component(EMBREE_LIBRARY ${EMBREE_LIBRARY} REALPATH)
+@@ -52,6 +62,12 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
+     message(STATUS "Found Embree v${EMBREE_VERSION}: ${EMBREE_LIBRARY}")
    endif()
  
 +  # GALAXY BEGIN ADDED CODE - by Galaxy patch
@@ -69,27 +69,94 @@ index 7a6bb843..49a16eb5 100644
  endmacro()
  
 diff --git a/components/ospcommon/cmake/ispc.cmake b/components/ospcommon/cmake/ispc.cmake
-index 7d02f37c..378a9cc3 100644
+index b70fc0728..5350ba335 100644
 --- a/components/ospcommon/cmake/ispc.cmake
 +++ b/components/ospcommon/cmake/ispc.cmake
-@@ -14,6 +14,9 @@
+@@ -14,29 +14,67 @@
  ## limitations under the License.                                           ##
  ## ======================================================================== ##
  
 +## NOTE: This file has been modified by a Galaxy patch.
 +##       See the GALAXY BEGIN / GALAXY END block(s) below.
 +
++# GALAXY BEGIN MODIFIED CODE - by Galaxy patch
++# original code:
++# # ISPC versions to look for, in decending order (newest first)
++# SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
++# LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
++
++# IF (NOT ISPC_EXECUTABLE)
++#   # try sibling folder as hint for path of ISPC
++#   IF (APPLE)
++#     SET(ISPC_DIR_SUFFIX "osx")
++#   ELSEIF(WIN32)
++#     SET(ISPC_DIR_SUFFIX "windows")
++#     IF (MSVC_VERSION LESS 1900)
++#       MESSAGE(WARNING "MSVC 12 2013 is not supported anymore.")
++#     ELSE()
++#       LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
++#     ENDIF()
++#   ELSE()
++#     SET(ISPC_DIR_SUFFIX "linux")
++#   ENDIF()
++#   FOREACH(ver ${ISPC_VERSION_WORKING})
++#     FOREACH(suffix ${ISPC_DIR_SUFFIX})
++#       LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-v${ver}-${suffix})
++#     ENDFOREACH()
++#   ENDFOREACH()
++# new code (taken from ospray/components/ospcommon/cmake/ispc.cmake v1.8.5)
  # ISPC versions to look for, in decending order (newest first)
- SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
- LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
-@@ -35,6 +38,10 @@ IF (NOT ISPC_EXECUTABLE)
-   FOREACH(ver ${ISPC_VERSION_WORKING})
-     FOREACH(suffix ${ISPC_DIR_SUFFIX})
-       LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-v${ver}-${suffix})
-+      # GALAXY BEGIN ADDED CODE - by Galaxy patch
-+      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc/ispc-v${ver}-${suffix}
-+                                ${PROJECT_SOURCE_DIR}/third-party/ispc/ispc-v${ver}-${suffix})
-+      # GALAXY END MODIFIED CODE - by Galaxy patch
-     ENDFOREACH()
-   ENDFOREACH()
+-SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
+-LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
++set(ISPC_VERSION_WORKING "1.10.0" "1.9.2" "1.9.1")
++list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
  
+-IF (NOT ISPC_EXECUTABLE)
++if (NOT ISPC_EXECUTABLE)
+   # try sibling folder as hint for path of ISPC
+-  IF (APPLE)
+-    SET(ISPC_DIR_SUFFIX "osx")
+-  ELSEIF(WIN32)
+-    SET(ISPC_DIR_SUFFIX "windows")
+-    IF (MSVC_VERSION LESS 1900)
+-      MESSAGE(WARNING "MSVC 12 2013 is not supported anymore.")
+-    ELSE()
+-      LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
+-    ENDIF()
+-  ELSE()
+-    SET(ISPC_DIR_SUFFIX "linux")
+-  ENDIF()
+-  FOREACH(ver ${ISPC_VERSION_WORKING})
+-    FOREACH(suffix ${ISPC_DIR_SUFFIX})
+-      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-v${ver}-${suffix})
+-    ENDFOREACH()
+-  ENDFOREACH()
++  if (APPLE)
++    set(ISPC_DIR_SUFFIX "osx" "Darwin")
++  elseif(WIN32)
++    set(ISPC_DIR_SUFFIX "windows" "win32")
++    if (MSVC_VERSION LESS 1900)
++      message(WARNING "MSVC 12 2013 is not supported anymore.")
++    else()
++      list(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
++    endif()
++  else()
++    set(ISPC_DIR_SUFFIX "linux" "Linux")
++  endif()
++  foreach(v "" "v")
++   foreach(ver ${ISPC_VERSION_WORKING})
++    foreach(suffix ${ISPC_DIR_SUFFIX})
++     foreach(d "" "/bin")
++      list(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-${v}${ver}-${suffix}${d})
++      # GALAXY BEGIN ADDED CODE - by Galaxy patch
++      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc/ispc-${v}${ver}-${suffix}${d})
++      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/third-party/ispc/ispc-${v}${ver}-${suffix}${d})
++      # GALAXY END ADDED CODE - by Galaxy patch
++     endforeach()
++    endforeach()
++   endforeach()
++  endforeach()
++# GALAXY END MODIFIED CODE - by Galaxy patch
+ 
+   FIND_PROGRAM(ISPC_EXECUTABLE ispc HINTS ${ISPC_DIR_HINT} DOC "Path to the ISPC executable.")
+   IF (NOT ISPC_EXECUTABLE)

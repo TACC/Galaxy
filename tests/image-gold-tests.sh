@@ -42,7 +42,8 @@ function run_tests()
   for state in *.state; do
     test=$(echo ${state} | sed s/\.state//)
     report "  Generating ${test} images"
-    ${MPI_COMMAND} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
+    # ${MPI_COMMAND} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} > /dev/null 2>&1
+    ${MPI_COMMAND} ${GXY_IMAGE_WRITER} ${RESOLUTION} ${state} 2>&1
     if [ $? != 0 ]; then
       fail "$GXY_IMAGE_WRITER exited with code $?"
     fi
@@ -88,9 +89,15 @@ fi
 GXY_BIN=${GXY_ROOT}/install/bin
 GXY_RADIAL=${GXY_BIN}/radial
 GXY_VTI2VOL=${GXY_BIN}/vti2vol
-GXY_IMAGE_WRITER=${GXY_BIN}/vis
+GXY_IMAGE_WRITER=${GXY_BIN}/gxywriter
+GXY_CREATE_PARTITION_DOC=${GXY_BIN}/createPartitionDoc.py
+GXY_PARTITION_VTUS=${GXY_BIN}/partitionVTUs.vpy
 GXY_ENV=${GXY_ROOT}/install/galaxy.env
 PERCEPTUAL_DIFF=`which perceptualdiff`
+
+if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+  GXY_VTI2VOL="python3 ${GXY_BIN}/vti2vol"
+fi
 
 if [ ! -x ${GXY_RADIAL} ]; then
   fail "Could not find or execute the Galaxy radial generator '${GXY_RADIAL}'"
@@ -100,6 +107,12 @@ if [ ! -x ${GXY_VTI2VOL} ]; then
 fi
 if [ ! -x ${GXY_IMAGE_WRITER} ]; then
   fail "Could not find or execute the Galaxy image writer '${GXY_IMAGE_WRITER}'. Ensure Galaxy was configured with -D GXY_WRITE_IMAGES=ON"
+fi
+if [ ! -x ${GXY_CREATE_PARTITION_DOC} ]; then
+  fail "Could not find or execute the Galaxy partition document writer '${GXY_CREATE_PARTITION_DOC}'."
+fi
+if [ ! -x ${GXY_PARTITION_VTUS} ]; then
+  fail "Could not find or execute the Galaxy VTU partitioner '${GXY_PARTITION_VTUS}'."
 fi
 if [ ! -f ${GXY_ENV} ]; then
   fail "Could not find Galaxy environment file at '${GXY_ENV}'"
@@ -112,10 +125,14 @@ report "Sourcing Galaxy environment"
 . ${GXY_ENV}
 
 report "Generating radial-0.vti with ${GXY_RADIAL}"
-${GXY_RADIAL} -r 256 256 256 > /dev/null 2>&1
+${GXY_RADIAL} -r 256 256 256
 if [ $? != 0 ]; then
   fail "$GXY_RADIAL exited with code $?"
 fi
+
+report "Generating datasets for data-driven geometry tests..."
+${GXY_ROOT}/tests/create_data_driven_datasets.vpy
+
 
 GXY_VOLS="oneBall eightBalls xramp yramp zramp"
 report "Converting vti to vol with ${GXY_VTI2VOL}"
@@ -132,20 +149,24 @@ PDIFF_OPTIONS="-fov 85"
 TESTS=0
 FAILS=0
 
-MPI_COMMAND=""
-report "Running single process tests..."
-run_tests
-
 if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+  MPI_COMMAND=""
+  report "Running single process tests..."
+  ${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 1 > partition.json
+  ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
+  run_tests
+
   MPI_COMMAND="mpirun -np 2"
   report "Running MPI tests with command '${MPI_COMMAND}'..."
+  ${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 2 > partition.json
+  ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
   run_tests
 fi
 
 if [ ${FAILS} == 0 ]; then
   report "${TESTS}/${TESTS} image comparison tests passed"
 else
-  fail "${FAILS}/${TESTS} image comparisons failed"
+  fail "${FAILS}/${TESTS} image comparisons FAILED"
 fi
 
 report "done!"

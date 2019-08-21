@@ -35,23 +35,29 @@ endif(COMMAND cmake_policy)
 
 find_library(PNG_LIBRARY_RELEASE png)
 
+include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
+include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
+
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
 										${gxy_data_SOURCE_DIR}
+										${gxy_ospray_SOURCE_DIR}
 										${gxy_data_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src)
 
-link_directories(${Galaxy_BINARY_DIR}/src/data 
+link_directories(${Galaxy_BINARY_DIR}/src/ospray
+                 ${Galaxy_BINARY_DIR}/src/data 
                  ${Galaxy_BINARY_DIR}/src/framework)
 
 set (ISPC_SOURCES 
-  ISPCObject.ispc
+  IspcObject.ispc
  	MappedVis.ispc
 	Rays.ispc
 	TrianglesVis.ispc
   Visualization.ispc
   Lighting.ispc
 	ParticlesVis.ispc
+	PathLinesVis.ispc
   TraceRays.ispc
 	Vis.ispc
 	VolumeVis.ispc
@@ -61,15 +67,13 @@ set (ISPC_SOURCES
 set (CPP_SOURCES 
   mypng.cpp
   Camera.cpp 
-  ISPCObject.cpp
+  IspcObject.cpp
+  ImageWriter.cpp
   Lighting.cpp
   MappedVis.cpp
-  OSPRayObject.cpp
-  OTriangles.cpp
-  OParticles.cpp
-  OVolume.cpp
-  OSPUtil.cpp
+  GeometryVis.cpp
   ParticlesVis.cpp
+  PathLinesVis.cpp
   RayQManager.cpp
   Rays.cpp 
   Renderer.cpp
@@ -84,7 +88,7 @@ set (CPP_SOURCES
 
 if (ospray_DIR)
   ospray_create_library(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework ${PNG_LIBRARY_RELEASE} COMPONENT lib)
+    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} COMPONENT lib)
   set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   # install(TARGETS gxy_renderer DESTINATION lib)
 endif()
@@ -101,5 +105,15 @@ install(FILES
   Rendering.h 
   RenderingSet.h 
   TraceRays.h 
+  MappedVis.h
+  GeometryVis.h
+  ParticlesVis.h
+  PathLinesVis.h
+  TrianglesVis.h
+  Vis.h
+  VolumeVis.h
+  IspcObject.h
+  Visualization.h
+  RenderingEvents.h
   DESTINATION include/gxy)
  

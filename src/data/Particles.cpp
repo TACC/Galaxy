@@ -29,12 +29,18 @@
 
 #include "Application.h"
 #include "Particles.h"
+#include "OsprayParticles.h"
 
 
 #include <vtkNew.h>
 #include <vtkerror.h>
+#include <vtkCell.h>
+#include <vtkCellType.h>
+#include <vtkCellIterator.h>
 #include <vtkSmartPointer.h>
 #include <vtkDataSetReader.h>
+#include <vtkDataArray.h>
+#include <vtkDoubleArray.h>
 #include <vtkFloatArray.h>
 #include <vtkIntArray.h>
 #include <vtkPointData.h>
@@ -50,517 +56,84 @@ using namespace rapidjson;
 namespace gxy
 {
 
-WORK_CLASS_TYPE(Particles::LoadPartitioningMsg);
-
 KEYED_OBJECT_CLASS_TYPE(Particles)
 
 void
 Particles::Register()
 {
   RegisterClass();
-
-	LoadPartitioningMsg::Register();
 }
 
 void
 Particles::initialize()
 {
-  radius = 1;
-	vtkobj = NULL;
   super::initialize();
-}
-
-void
-Particles::allocate(int n)
-{
-	samples.resize(n);
 }
 
 Particles::~Particles()
 {
-	if (vtkobj) vtkobj->Delete();
-}
-
-int
-Particles::serialSize()
-{
-	return super::serialSize() + sizeof(float);
-}
-
-unsigned char* 
-Particles::serialize(unsigned char *ptr)
-{
-	ptr = super::serialize(ptr);
-	*(float *)ptr = radius;
-	ptr += sizeof(float);
-	return ptr;
-}
-
-unsigned char* 
-Particles::deserialize(unsigned char *ptr)
-{
-	ptr = super::deserialize(ptr);
-	radius = *(float *)ptr;
-	ptr += sizeof(float);
-	return ptr;
-}
-
-bool
-Particles::LoadPartitioning(string p)
-{
-	LoadPartitioningMsg msg(getkey(), p);
-  msg.Broadcast(true, true);
-  return get_error() == 0;
-}
-
-bool
-Particles::Import(string s)
-{
-	filename = s;
-
-	struct stat info;
-	if (stat(s.c_str(), &info))
-	{
-		cerr << "ERROR: Cannot open file " << s << endl;
-		set_error(1);
-    return false;
-	} 
-
-	int fd = open(s.c_str(), O_RDONLY);
-
-	char *buf = new char[info.st_size + 1];
-		
-	char *p = buf;
-	for (int m, n = info.st_size; n > 0; n -= m, p += m) m = read(fd, p, n);
-	*p = 0;
-
-	close(fd);
-
-	set_attached(false);
-
-	struct foo
-	{
-		float r[2];
-		char s[2];
-	};
-
-	int sz = strlen(s.c_str()) + 1 + 2*sizeof(float);
-	char *tmp = new char[sz];
-	struct foo *args = (struct foo *)tmp;
-	
-	args->r[0] = radius;
-	strcpy(args->s, s.c_str());
-
-	bool r = Geometry::Import(buf, (void *)tmp, sz);
-
-	delete[] tmp;
-  return r;
-}
-
-bool
-Particles::LoadFromJSON(Value& v)
-{
-  if (v.HasMember("color")  || v.HasMember("default color"))
-  {
-    Value& oa = v.HasMember("default color") ? v["default color"] : v["color"];
-    default_color.x = oa[0].GetDouble();
-    default_color.y = oa[1].GetDouble();
-    default_color.z = oa[2].GetDouble();
-    if (oa.Size() > 3)
-      default_color.w = oa[3].GetDouble();
-    else
-      default_color.w = 1.0;
-  }
-  else
-  {
-    default_color.x = 0.8;
-    default_color.y = 0.8;
-    default_color.z = 0.8;
-    default_color.w = 1.0;
-  }
-
-  if (v.HasMember("radius"))
-	{
-    radius = v["radius"].GetDouble();
-	}
-
-  if (v.HasMember("filename"))
-  {
-		return Import(v["filename"].GetString());
-  }
-  else if (v.HasMember("attach"))
-  {
-		Value& attach = v["attach"];
-		if (!attach.HasMember("partitions") || !attach.HasMember("layout"))
-		{
-			cerr << "ERROR: Need both partitions and layout in attach clause" << endl;
-			exit(1);
-		}
-    set_attached(true);
-    if (! LoadPartitioning(string(attach["partitions"].GetString())))
-      return false;
-    
-    if (! Attach(string(attach["layout"].GetString())))
-      return false;
-  }
-  else
-  {
-    cerr << "ERROR: json Particles block has neither a filename nor a layout spec" << endl;
-    exit(1);
-  }
-
-  return true;
 }
 
 void
-Particles::SaveToJSON(Value& v, Document& doc)
+Particles::GetParticles(Particle*& p, int& n)
 {
-	Value container(kObjectType);
-
-  if (attached)
-    container.AddMember("layout", Value().SetString(filename.c_str(), doc.GetAllocator()), doc.GetAllocator());
-  else
-    container.AddMember("filename", Value().SetString(filename.c_str(), doc.GetAllocator()), doc.GetAllocator());
-
-	container.AddMember("type", Value().SetString("Particles", doc.GetAllocator()), doc.GetAllocator());
-
-	if (radius > 0)
-		container.AddMember("radius", Value().SetDouble(radius), doc.GetAllocator());
-
-  Value c(kArrayType);
-  c.PushBack(Value().SetDouble(default_color.x), doc.GetAllocator());
-  c.PushBack(Value().SetDouble(default_color.y), doc.GetAllocator());
-  c.PushBack(Value().SetDouble(default_color.z), doc.GetAllocator());
-  c.PushBack(Value().SetDouble(default_color.w), doc.GetAllocator());
-  container.AddMember("default color", c, doc.GetAllocator());
-
-
-	v.PushBack(container, doc.GetAllocator());
+  n = vertices.size();
+  p = new Particle[n];
+  for (int i = 0; i < n; i++)
+  { 
+    p[i].xyz = vertices[i];
+    p[i].u.value = data[i];
+  }
 }
 
 bool
-Particles::local_load_timestep(MPI_Comm c)
+Particles::load_from_vtkPointSet(vtkPointSet *pset)
 {
-	if (vtkobj) vtkobj->Delete();
-	vtkobj = NULL;
-
-	int sz;
-  char *str;
-  skt->Receive((void *)&sz, sizeof(sz));
-  if (sz < 0)
-    return false;
-
-  vtkNew<vtkCharArray> bufArray;
-  bufArray->Allocate(sz);
-  bufArray->SetNumberOfTuples(sz);
-  void *ptr = bufArray->GetVoidPointer(0);
-
-  skt->Receive(ptr, sz);
-
-  vtkNew<vtkDataSetReader> reader;
-  reader->ReadFromInputStringOn();
-  reader->SetInputArray(bufArray.GetPointer());
-  reader->Update();
-
-  vtkobj = vtkPolyData::New();
-  vtkobj->ShallowCopy(vtkPolyData::SafeDownCast(reader->GetOutput()));
-  if (! vtkobj)
+  if (pset->GetNumberOfPoints() == 0)
   {
-    cerr << "ERROR: load_local_timestep received something other than a vtkPolyData object" << endl;
-    set_error(1);
-    return false;
-  }
-
-  return true;
-}
-
-bool
-Particles::get_partitioning_from_file(char *s)
-{
-  ifstream ifs(s);
-  if (! ifs)
-  {
-    std::cerr << "Unable to open " << s << "\n";
-    set_error(1);
-    return false;
+    allocate(0, 0);
   }
   else
   {
-    stringstream ss;
-    ss << ifs.rdbuf();
+    int nv = pset->GetNumberOfPoints();
 
-    Document doc;
-    if (doc.Parse<0>(ss.str().c_str()).HasParseError())
+    allocate(nv, 0);
+
+    vtkFloatArray *parray = vtkFloatArray::SafeDownCast(pset->GetPoints()->GetData());
+    if (! parray) 
     {
-      std::cerr << "JSON parse error in " << s << "\n";
-      set_error(1);
-      return false;
+      std::cerr << "can only handle float points\n";
+      exit(1);
     }
 
-    return get_partitioning(doc);
-  }
-}
+    vec3f *points = (vec3f *)parray->GetVoidPointer(0);
 
-bool
-Particles::get_partitioning(Value& doc)
-{
-  if (!doc.HasMember("parts"))
-  {
-    cerr << "partition document does not have parts\n";
-    set_error(1);
-    return false;
-  }
+    vtkDataArray *array = pset->GetPointData()->GetScalars();
+    if (! array) array = pset->GetPointData()->GetArray("data");
 
-  Value& parts = doc["parts"];
+    vtkFloatArray *farray = vtkFloatArray::SafeDownCast(array);
+    float *fdata = (farray) ? (float *)farray->GetVoidPointer(0) : NULL;
 
-  if (!parts.IsArray() || parts.Size() != GetTheApplication()->GetSize())
-  {
-    cerr << "invalid partition document\n";
-    set_error(1);
-    return false;
-  }
+    vtkDoubleArray *darray = vtkDoubleArray::SafeDownCast(array);
+    double *ddata = (darray) ? (double *)darray->GetVoidPointer(0) : NULL;
 
-  float extents[6*parts.Size()];
-
-  for (int i = 0; i < parts.Size(); i++)
-  {
-    Value& ext = parts[i]["extent"];
-    for (int j = 0; j < 6; j++)
-      extents[i*6 + j] = ext[j].GetDouble();
-  }
-
-  for (int i = 0; i < 6; i++) neighbors[i] = -1;
-
-  float *extent = extents + 6*GetTheApplication()->GetRank();
-	float gminmax[6], lminmax[6];
-
-  gminmax[0] =  FLT_MAX;
-  gminmax[1] = -FLT_MAX;
-  gminmax[2] =  FLT_MAX;
-  gminmax[3] = -FLT_MAX;
-  gminmax[4] =  FLT_MAX;
-  gminmax[5] = -FLT_MAX;
-
-  memcpy(lminmax, extents + 6*GetTheApplication()->GetRank(), 6*sizeof(float));
-
-  for (int i = 0; i < parts.Size(); i++)
-  {
-    float *e = extents + i*6;
-
-#define LAST(axis) (e[2*axis + 1] == lminmax[2*axis + 0])
-#define NEXT(axis) (e[2*axis + 0] == lminmax[2*axis + 1])
-#define EQ(axis)   (e[2*axis + 0] == lminmax[2*axis + 0])
-
-    if (e[0] < gminmax[0]) gminmax[0] = e[0];
-    if (e[1] > gminmax[1]) gminmax[1] = e[1];
-    if (e[2] < gminmax[2]) gminmax[2] = e[2];
-    if (e[3] > gminmax[3]) gminmax[3] = e[3];
-    if (e[4] < gminmax[4]) gminmax[4] = e[4];
-    if (e[5] > gminmax[5]) gminmax[5] = e[5];
-
-    if (LAST(0) && EQ(1) && EQ(2)) neighbors[0] = i;
-    if (NEXT(0) && EQ(1) && EQ(2)) neighbors[1] = i;
-
-    if (EQ(0) && LAST(1) && EQ(2)) neighbors[2] = i;
-    if (EQ(0) && NEXT(1) && EQ(2)) neighbors[3] = i;
-
-    if (EQ(0) && EQ(1) && LAST(2)) neighbors[4] = i;
-    if (EQ(0) && EQ(1) && NEXT(2)) neighbors[5] = i;
-  }
-
-	global_box = Box(vec3f(gminmax[0], gminmax[2], gminmax[4]), vec3f(gminmax[1], gminmax[3], gminmax[5]));
-	local_box = Box(vec3f(lminmax[0], lminmax[2], lminmax[4]), vec3f(lminmax[1], lminmax[3], lminmax[5]));
-
-  return true;
-}
-
-bool
-Particles::local_import(char *p, MPI_Comm c)
-{
-  int rank = GetTheApplication()->GetRank();
-
-  string json(p);
-
-  struct foo
-  {
-    float r[2];
-    char s[2];
-  };
-
-  struct foo *args = (struct foo *)(p + strlen(p) + 1);
-
-  radius = args->r[0];
-
-  string f(args->s);
-	string dir = (f.find_last_of("/") == f.npos) ? "./" : f.substr(0, f.find_last_of("/") + 1);
-
-	if (vtkobj) vtkobj->Delete();
-	vtkobj = NULL;
-
-	samples.clear();
-
-  ifstream ifs(json);
-  if (! ifs)
-  {
-    if (rank == 0) std::cerr << "unable to open partition document: " << json << "\n";
-    set_error(1);
-    return false;
-  }
- 
-  Document doc;
-  if (doc.Parse<0>(json.c_str()).HasParseError() || !get_partitioning(doc))
-  {
-    if (rank == 0) std::cerr << "parse error in partition document: " << json << "\n";
-    set_error(1);
-    return false;
-  }
-
-  // Checks in get_partitioning ensures this is OK
-  const char *fname = doc["parts"][GetTheApplication()->GetRank()]["filename"].GetString();
-
-	if (! strcmp(fname + (strlen(fname)-3), "sph"))
-	{
-		string f = dir + string(fname);
-
-		struct stat info;
-		if (stat(f.c_str(), &info))
-		{
-			cerr << "ERROR " << rank << ": Cannot open file " << f << endl;
-			return false;
-		}
-
-		int n_samples = info.st_size / sizeof(Particle);
-		samples.resize(n_samples);
-
-		int fd = open(f.c_str(), O_RDONLY);
-
-		char *p = (char *)samples.data();;
-		int m, n = info.st_size;
-
-		for (n = info.st_size; n > 0; n -= m, p += m)
-		{
-			m = read(fd, p, n);
-			if (m < 0)
-			{
-				cerr << "ERROR " << rank << ": Error reading file " << f.c_str() << endl;
-				return false;
-			}
-		}
-
-		close(fd);
-	}
-	else if (! strcmp(fname + (strlen(fname)-3), "vtp"))
-	{
-		string f = dir + string(fname);
-
-    VTKError *ve = VTKError::New();
-		vtkXMLPolyDataReader *reader = vtkXMLPolyDataReader::New();
-    ve->watch(reader);
-
-    reader->SetFileName(f.c_str());
-    reader->Update();
-
-    if (ve->GetError())
+    int i = 0;
+    for (int i = 0; i < nv; i++)
     {
-      cerr << "ERROR " << rank << ": error reading vtu Triangle partition" << endl;
-      return false;
+      vertices[i] = points[i];
+      data[i] = (fdata) ? fdata[i] : (ddata) ? ((float)ddata[i]) : 0.0;
     }
-
-		vtkobj = vtkPolyData::New();
-		vtkobj->ShallowCopy(reader->GetOutput());
-		reader->Delete();
-	}
-	else
-	{
-		cerr << "ERROR " << rank << ": Particles have to be in .sph or .vtp format" << endl;
-		return false;
-	}
+  }
 
   return true;
 }
 
-void
-Particles::GetPolyData(vtkPolyData*& v)
-{
-	if (! vtkobj)
-	{
-		Particle *ptr = get_samples();
-		int n_samples = get_n_samples();
+OsprayObjectP 
+Particles::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+{ 
+  return OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
+} 
 
-		vtkobj = vtkPolyData::New();
-		vtkobj->Allocate(n_samples);
 
-		vtkFloatArray *xyz = vtkFloatArray::New();
-		xyz->SetNumberOfComponents(3);
-		xyz->SetNumberOfTuples(n_samples);
-
-		vtkFloatArray *val = vtkFloatArray::New();
-		val->SetName("value");
-		val->SetNumberOfComponents(1);
-		val->SetNumberOfTuples(n_samples);
-
-		float *pxyz = (float *)xyz->GetVoidPointer(0);
-		float *pval = (float *)val->GetVoidPointer(0);
-
-		vtkIdList *ids = vtkIdList::New();
-		ids->SetNumberOfIds(1);
-
-		for (int i = 0; i < n_samples; i++, ptr++)
-		{
-			*pxyz++ = ptr->xyz.x;
-			*pxyz++ = ptr->xyz.y;
-			*pxyz++ = ptr->xyz.z;
-			*pval++ = ptr->u.value;
-			ids->SetId(0, i);
-			vtkobj->InsertNextCell(VTK_VERTEX, ids);
-		}
-
-		vtkPoints *vtp = vtkPoints::New();
-		vtp->SetData(xyz);
-		xyz->Delete();
-
-		vtkobj->SetPoints(vtp);
-		vtp->Delete();
-
-		vtkobj->GetPointData()->AddArray(val);
-	}
-
-	v = vtkobj;
-}
-
-void
-Particles::GetSamples(Particle*& s, int& n)
-{
-	if (samples.empty() && (!vtkobj || vtkobj->GetNumberOfPoints() == 0))
-		s = NULL, n = 0;
-	else if (! samples.empty())
-		s = samples.data(), n = samples.size();
-	else
-	{
-		vtkPoints *pts = vtkobj->GetPoints();
-		vtkFloatArray *parr = vtkFloatArray::SafeDownCast(pts->GetData());
-
-		int indx;
-		vtkFloatArray *varr = vtkFloatArray::SafeDownCast(vtkobj->GetPointData()->GetAbstractArray("value", indx));
-
-		int n_samples = parr->GetNumberOfTuples();
-		samples.resize(n_samples);
-
-		Particle *dst = samples.data();
-		float *pptr = (float *)parr->GetVoidPointer(0);
-		float *vptr = (float *) (varr ? varr->GetVoidPointer(0) : NULL);
-
-		for (int i = 0; i < n_samples; i++, dst++)
-		{
-			dst->xyz.x = *pptr++;
-			dst->xyz.y = *pptr++;
-			dst->xyz.z = *pptr++;
-			dst->u.value = vptr ? *vptr++ : 0;
-		}
-
-		s = samples.data(); 
-		n = samples.size();
-	}
-}
 
 } // namespace gxy

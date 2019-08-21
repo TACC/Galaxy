@@ -22,16 +22,16 @@
 #include "Renderer.h"
 
 #include "Rendering.h"
-#include "Rendering.h"
 #include "Visualization.h"
 #include "Visualization_ispc.h"
 
 #include <ospray/ospray.h>
 
-#include "OVolume.h"
-#include "OParticles.h"
-#include "OTriangles.h"
-#include "OSPUtil.h"
+// #include "OsprayVolume.h"
+// #include "OsprayParticles.h"
+// #include "OsprayPathLines.h"
+// #include "OsprayTriangles.h"
+// #include "OsprayUtil.h"
 
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
@@ -56,8 +56,8 @@ Visualization::Register()
 void
 Visualization::initialize()
 {
-	ospModel = NULL;
-	super::initialize();
+  ospModel = NULL;
+  super::initialize();
 }
 
 Visualization::~Visualization()
@@ -74,20 +74,20 @@ Visualization::allocate_ispc()
 void 
 Visualization::initialize_ispc()
 {
-  ispc::Visualization_initialize(GetISPC());
+  ispc::Visualization_initialize(GetIspc());
 }
 
 bool
 Visualization::Commit(DatasetsP datasets)
 {
-	for (auto s : vis)
+  for (auto s : vis)
     if (! s->Commit(datasets))
     {
       set_error(1);
       return false;
     }
 
-	return KeyedObject::Commit();
+  return KeyedObject::Commit();
 }
 
 vector<VisualizationP>
@@ -101,92 +101,112 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
     if (c.IsArray())
     {
       for (int i = 0; i < c.Size(); i++)
-			{
-				VisualizationP v = Visualization::NewP();
+      {
+        VisualizationP v = Visualization::NewP();
         if (v->LoadFromJSON(c[i]))
           visualizations.push_back(v);
         else
           std::cerr << "error loading visualization " << i << "\n";
-			}
+      }
     }
     else
-		{
-			VisualizationP v = Visualization::NewP();
+    {
+      VisualizationP v = Visualization::NewP();
       if (v->LoadFromJSON(c))
         visualizations.push_back(v);
       else
         std::cerr << "error loading visualization\n";
-		}
+    }
   }
 
   return visualizations;
 }
 
-#define CHECKBOX(XX)																														\
-	for (vector<VisP>::iterator it = XX.begin(); it != XX.end(); it++)					  \
-	{																																						  \
-		VisP v = *it;																															  \
-	 																																						  \
-		KeyedDataObjectP kdop = v->GetTheData();																	  \
-		if (! kdop) std::cerr << "WARNING: NULL KeyedDataObjectP" << endl;					\
-																																							  \
-		Box *l = kdop->get_local_box();																						  \
-		Box *g = kdop->get_global_box();																					  \
-																																							  \
-		if (first)																																  \
-		{																																					  \
-			first = false;																													  \
-																																							  \
-      local_box = *l;																													  \
-      global_box = *g;																												  \
-																																							  \
-      for (int i = 0; i < 6; i++)																							  \
-        neighbors[i] = kdop->get_neighbor(i);																	  \
-    }																																					  \
-    else																																			  \
-    {																																					  \
-      if (local_box != *l || global_box != *g)																  \
-      {																																				  \
-        APP_PRINT(<< "ERROR: Datasets partitioning mismatch between participants");	  \
-        exit(1);																															  \
-      }																																				  \
-      for (int i = 0; i < 6; i++)																							  \
-      {																																				  \
-        if (neighbors[i] != kdop->get_neighbor(i))														  \
-        {																																			  \
-          APP_PRINT(<< "ERROR: Datasets partitioning mismatch between participants");	\
-          exit(1);																															\
-        }																																				\
-      }																																					\
-    }																																						\
-	}
+#define CHECKBOX(XX)                                                            \
+  for (vector<VisP>::iterator it = XX.begin(); it != XX.end(); it++)            \
+  {                                                                              \
+    VisP v = *it;                                                                \
+                                                                                 \
+    KeyedDataObjectP kdop = v->GetTheData();                                    \
+    if (! kdop) std::cerr << "WARNING: NULL KeyedDataObjectP" << endl;          \
+                                                                                \
+    Box *l = kdop->get_local_box();                                              \
+    Box *g = kdop->get_global_box();                                            \
+                                                                                \
+    if (first)                                                                  \
+    {                                                                            \
+      first = false;                                                            \
+                                                                                \
+      local_box = *l;                                                            \
+      global_box = *g;                                                          \
+                                                                                \
+      for (int i = 0; i < 6; i++)                                                \
+        neighbors[i] = kdop->get_neighbor(i);                                    \
+    }                                                                            \
+    else                                                                        \
+    {                                                                            \
+      if (local_box != *l || global_box != *g)                                  \
+      {                                                                          \
+        APP_PRINT(<< "ERROR: XXDatasets partitioning mismatch between participants:\n"    \
+            << "\n" << "local xyz_min: " << local_box.xyz_min.x << " " << local_box.xyz_min.y << " " << local_box.xyz_min.z \
+            << "\n" << "local xyz_max: " << local_box.xyz_max.x << " " << local_box.xyz_max.y << " " << local_box.xyz_max.z \
+            << "\n" << "*l xyz_min: " << l->xyz_min.x << " " << l->xyz_min.y << " " << l->xyz_min.z \
+            << "\n" << "*l xyz_max: " << l->xyz_max.x << " " << l->xyz_max.y << " " << l->xyz_max.z \
+            << "\n" << "global xyz_min: " << global_box.xyz_min.x << " " << global_box.xyz_min.y << " " << global_box.xyz_min.z \
+            << "\n" << "global xyz_max: " << global_box.xyz_max.x << " " << global_box.xyz_max.y << " " << global_box.xyz_max.z \
+            << "\n" << "*g xyz_min: " << g->xyz_min.x << " " << g->xyz_min.y << " " << g->xyz_min.z \
+            << "\n" << "*g xyz_max: " << g->xyz_max.x << " " << g->xyz_max.y << " " << g->xyz_max.z); \
+        exit(1);                                                                \
+      }                                                                          \
+      for (int i = 0; i < 6; i++)                                                \
+      {                                                                          \
+        if (neighbors[i] != kdop->get_neighbor(i))                              \
+         {                                                                      \
+          APP_PRINT(<< "ERROR: Datasets partitioning mismatch between participants:\n"   \
+                    << "N: " << neighbors[0] << " " \
+                             << neighbors[1] << " " \
+                             << neighbors[2] << " " \
+                             << neighbors[3] << " " \
+                             << neighbors[4] << " " \
+                             << neighbors[5] << "\n"  \
+                    << "K: " << kdop->get_neighbor(0) << " "  \
+                             << kdop->get_neighbor(1) << " "  \
+                             << kdop->get_neighbor(2) << " "  \
+                             << kdop->get_neighbor(3) << " "  \
+                             << kdop->get_neighbor(4) << " "  \
+                             << kdop->get_neighbor(5) << "\n"); \
+          exit(1);                                                              \
+        }                                                                        \
+      }                                                                          \
+    }                                                                            \
+  }
 
 bool 
 Visualization::local_commit(MPI_Comm c)
 {
-	bool first = true;
+  bool first = true;
 
   for (auto v : vis)
     v->local_commit(c);
 
-	CHECKBOX(vis)
-	return false;
+  CHECKBOX(vis)
+  return false;
 }
 
 void
-Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
+Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 {
   if (! ispc)
-	{
+  {
     allocate_ispc();
-		initialize_ispc();
-	}
+    initialize_ispc();
+  }
 
-	// Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
+  // Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
   // volumevis - NULL unless there's some model data
 
 
-	if (ospModel) ospRelease(ospModel);
+  if (ospModel) ospRelease(ospModel);
   ospModel = NULL;
 
   void *mispc[vis.size()]; int nmispc = 0;
@@ -194,50 +214,36 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
 
   for (auto v : vis)
   {
-    OSPRayObjectP op;
+    OsprayObjectP op;
     KeyedDataObjectP kdop = v->GetTheData();
 
     Key key = kdop->getkey();
 
-    auto it = ospray_object_map.find(key);
-    if (it == ospray_object_map.end())
+    if (! ospModel)
+      ospModel = ospNewModel();
+
+    op = kdop->GetTheOSPRayEquivalent(kdop);
+    if (! op)
     {
-      if (Volume::IsA(kdop))
-        op = OSPRayObject::Cast(OVolume::NewP(Volume::Cast(kdop)));
-      else if (Particles::IsA(kdop))
-        op = OSPRayObject::Cast(OParticles::NewP(Particles::Cast(kdop)));
-      else if (Triangles::IsA(kdop))
-        op = OSPRayObject::Cast(OTriangles::NewP(Triangles::Cast(kdop)));
-      else
-      {
-        cerr << "huh?";
-        exit(1);
-      }
-
-      ospray_object_map[key] = op;
+      cerr << "no OSPRay equivalent for this data object\n";
+      exit(1);
     }
-    else
-      op = it->second;
-
-    v->SetTheOSPRayDataObject(op);
+  
+    v->SetTheOsprayDataObject(op);
     
-    if (OVolume::IsA(op))
-      vispc[nvispc++] = v->GetISPC();
-    else if (ParticlesVis::IsA(v))
-    {
-      if (! ospModel)
-        ospModel = ospNewModel();
+    if (GeometryVis::IsA(v))
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
-    }
     else
-      mispc[nmispc++] = v->GetISPC();
+      vispc[nvispc++] = v->GetIspc();
+      //if (VolumeVis::IsA(v))
+        //vispc[nvispc++] = v->GetIspc();
   }
 
   if (ospModel)
     ospCommit(ospModel);
    
   ispc::Visualization_commit(ispc, 
-          ospModel ? osp_util::GetIE(ospModel) : NULL,
+          ospModel ? ospray_util::GetIE(ospModel) : NULL,
           nvispc, vispc,
           nmispc, mispc,
           global_box.get_min(), global_box.get_max(),
@@ -247,20 +253,7 @@ Visualization::SetOSPRayObjects(std::map<Key, OSPRayObjectP>& ospray_object_map)
 void
 Visualization::AddVis(VisP o)
 {
-	vis.push_back(o);
-}
-
-void 
-Visualization::SaveToJSON(Value& v, Document&  doc)
-{
-	Value varray(kArrayType);
-	for (auto it : vis)
-	{
-		Value v(kObjectType);
-		it->SaveToJSON(v, doc);
-		varray.PushBack(v, doc.GetAllocator());
-	}
-	v.AddMember("Visualization", varray, doc.GetAllocator());
+  vis.push_back(o);
 }
 
 bool 
@@ -277,65 +270,46 @@ Visualization::LoadFromJSON(Value& v)
     lighting.LoadStateFromValue(v["lighting"]);
 
   ops = v["operators"];
-	for (int i = 0; i < ops.Size(); i++)
-	{
-		Value& vv = ops[i];
+  for (int i = 0; i < ops.Size(); i++)
+  {
+    Value& vv = ops[i];
 
-		if (! vv.HasMember("type"))
-		{
-			cerr << "ERROR: json has Visualization element with no type" << endl;
-			exit(1);
-		}
+    if (! vv.HasMember("type"))
+    {
+      cerr << "ERROR: json has Visualization element with no type" << endl;
+      exit(1);
+    }
 
-		string t = string(vv["type"].GetString());
+    string t = string(vv["type"].GetString());
+    if (t.substr(t.size() - 3) != "Vis")
+      t = t + "Vis";
 
-		VisP vp;
-		if (t == "Volume")
-		{
-			VisP vp = VolumeVis::NewP();
-			if (! vp->LoadFromJSON(vv))
+    VisP vp = Vis::Cast(GetTheKeyedObjectFactory()->NewP(t));
+    if (vp)
+    {
+      if (! vp->LoadFromJSON(vv))
       {
         set_error(1);
         return false;
       }
-			AddVis(vp);
-		}
-		else if (t == "Particles")
-		{
-			VisP p = ParticlesVis::NewP();
-			if (! p->LoadFromJSON(vv))
-      {
-        set_error(1);
-        return false;
-      }
-			AddVis(p);
-		}
-		else if (t == "Triangles")
-		{
-			VisP p = TrianglesVis::NewP();
-			if (! p->LoadFromJSON(vv))
-      {
-        set_error(1);
-        return false;
-      }
-			AddVis(p);
-		}
-		else
-		{
-			cerr << "ERROR: unknown type: " << t << " in json Visualization element" << endl;
+      AddVis(vp);
+    }
+    else
+    {
+      cerr << "ERROR: unknown type: " << " in json Visualization element (" << t << ")" << endl;
       set_error(1);
       return false;
-		}
-	}
+    }
+  }
   return true;
 }
 
 int 
 Visualization::serialSize()
 {
-	return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) 
-		+ sizeof(int) + vis.size()*sizeof(Key)
-		+ lighting.SerialSize();
+  return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) 
+    + sizeof(int) + vis.size()*sizeof(Key)
+    + lighting.SerialSize();
 }
 
 unsigned char *
@@ -351,16 +325,16 @@ Visualization::serialize(unsigned char *p)
   p[l-1] = 0;
   p += l;
 
-	*(int *)p = vis.size();
-	p += sizeof(int);
+  *(int *)p = vis.size();
+  p += sizeof(int);
 
-	for (auto v : vis)
-	{
-		*(Key *)p = v->getkey();
-		p += sizeof(Key);
-	}
+  for (auto v : vis)
+  {
+    *(Key *)p = v->getkey();
+    p += sizeof(Key);
+  }
 
-	return p;
+  return p;
 }
 
 unsigned char *
@@ -373,17 +347,17 @@ Visualization::deserialize(unsigned char *p)
   annotation = (char *)p;
   p += l;
 
-	int n = *(int *)p;
-	p += sizeof(int);
+  int n = *(int *)p;
+  p += sizeof(int);
 
-	for (int i = 0; i < n; i++)
-	{
-		Key k = *(Key *)p;
-		p += sizeof(Key);
-		AddVis(Vis::GetByKey(k));
-	}
+  for (int i = 0; i < n; i++)
+  {
+    Key k = *(Key *)p;
+    p += sizeof(Key);
+    AddVis(Vis::GetByKey(k));
+  }
 
-	return p;
+  return p;
 }
 
 void 

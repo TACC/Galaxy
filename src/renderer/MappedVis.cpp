@@ -175,32 +175,13 @@ MappedVis::LoadFromJSON(Value& v)
   return true;
 }
 
-void 
-MappedVis::SaveToJSON(Value& v, Document& doc)
+void
+MappedVis::SetTheOsprayDataObject(OsprayObjectP o)
 {
-	Vis::SaveToJSON(v, doc);
+  super::SetTheOsprayDataObject(o);
 
-  Value cmap(kArrayType);
-  for (auto xrgb : colormap)
-  {
-    Value v(kArrayType);
-    v.PushBack(Value().SetDouble(xrgb.x), doc.GetAllocator());
-    v.PushBack(Value().SetDouble(xrgb.y), doc.GetAllocator());
-    v.PushBack(Value().SetDouble(xrgb.z), doc.GetAllocator());
-    v.PushBack(Value().SetDouble(xrgb.w), doc.GetAllocator());
-    cmap.PushBack(v, doc.GetAllocator());
-  }
-  v.AddMember("colormap", cmap, doc.GetAllocator());
-
-  Value omap(kArrayType);
-  for (auto xo : opacitymap)
-  {
-    Value v(kArrayType);
-    v.PushBack(Value().SetDouble(xo.x), doc.GetAllocator());
-    v.PushBack(Value().SetDouble(xo.y), doc.GetAllocator());
-    omap.PushBack(v, doc.GetAllocator());
-  }
-  v.AddMember("opacitymap", omap, doc.GetAllocator());
+  ospSetObject(o->GetOSP(), "transferFunction", transferFunction);
+  ospCommit(o->GetOSP());
 }
 
 int
@@ -303,11 +284,11 @@ MappedVis::local_commit(MPI_Comm c)
   ospSetData(transferFunction, "opacities", oAlphas);
   ospRelease(oAlphas);
 
-  ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_opacities-1].x);
+  ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
 
   ospCommit(transferFunction);
   
-  ispc::MappedVis_set_transferFunction(ispc, osp_util::GetIE(transferFunction));
+  ispc::MappedVis_set_transferFunction(ispc, ospray_util::GetIE(transferFunction));
   return false;
 }
 
@@ -326,5 +307,22 @@ MappedVis::SetOpacityMap(int n, vec2f *ptr)
 	for (int i = 0; i < n; i++)
 		opacitymap.push_back(ptr[i]);
 }
+
+void
+MappedVis::ScaleMaps(float xmin, float xmax)
+{
+  float x0 = colormap[0].x;
+  float x1 = colormap[colormap.size()-1].x;
+
+  for (auto i = 0; i < colormap.size(); i++)
+    colormap[i].x = xmin + ((colormap[i].x - x0)/(x1 - x0)) * (xmax - xmin);
+
+  x0 = opacitymap[0].x;
+  x1 = opacitymap[opacitymap.size()-1].x;
+
+  for (auto i = 0; i < opacitymap.size(); i++)
+    opacitymap[i].x = xmin + ((opacitymap[i].x - x0)/(x1 - x0)) * (xmax - xmin);
+}
+
 
 } // namespace gxy

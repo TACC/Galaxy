@@ -264,21 +264,27 @@ void Rendering::SetTheDatasets(DatasetsP ds) { datasets = ds; }
 VisualizationP Rendering::GetTheVisualization() { return visualization; }
 void Rendering::SetTheVisualization(VisualizationP dm) { visualization = dm; }
 
-void Rendering::SaveImage(string filename, int indx)
+void Rendering::SaveImage(string filename, int indx, bool asFloat)
 {
   if ((strlen(GetTheVisualization()->GetAnnotation()) > 0) || (strlen(GetTheCamera()->GetAnnotation()) > 0))
-    filename = filename + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation() + ".png"; 
+    filename = filename + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation();
   else
   {
     char istr[10];
     sprintf(istr, "%05d", indx);
-    filename = filename + '_' + istr + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation() + ".png"; 
+    filename = filename + '_' + istr + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation();
   }
 
-	// std::cerr << "Saving " << indx << ": " << filename << endl;
-
-	ImageWriter writer;
-  writer.Write(width, height, framebuffer, filename.c_str());
+  if (asFloat)
+  {
+    FloatImageWriter writer;
+    writer.Write(width, height, framebuffer, filename.c_str());
+  }
+  else
+  {
+    ColorImageWriter writer;
+    writer.Write(width, height, framebuffer, filename.c_str());
+  }
 }
 
 int

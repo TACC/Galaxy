@@ -1,5 +1,34 @@
 # Galaxy Release Notes
 
+
+## version 0.3.0 - pending
+
+* Added `sampler` with a variety of data-space sampling algorithms:
+  - metropolis-hastings sampling as a multiserver tool 
+  - ray-based sampling using the 'Sampler' infrastructure
+    + Sampler is a subclass of Renderer that supports integration with active-Vis operators
+    + active-Vis operators to implement sampling based on isosurface crossing and significant changes to gradient
+  - interpolation of a scalar field onto a set of samples (as a multiserver tool)
+* Support for vector-valued volumes
+  - added JSON format for volume description files that implements 'number of components' field
+* Initial implementation of RungeKutta operator to trace streamlines in vector volumes
+  - also 'TraceToPathLines' opewrtor to convert RungeKutta results to path lines for rendering
+* Added `schlieren` to provide multi-hued Schlieren and shadowgraph-style rendering
+  - also implemented 'float-image' output (in FITS format)
+* Added `ospray` modules for class overrides to the underlying [OSPRay][1] rendering engine
+* Separated data-generation and data-management tools into `data` from `apps`
+* Added Docker containers:
+    - [`galaxy`][2]: contains pre-built version of galaxy in CentOS linux
+    - [`galaxy-base`][3]: contains pre-requisites for galaxy build in CentOS linux
+* Added unit testing framework
+* Renamed `async` app and associated source to `gxyviewer`
+* Renamed `vis` app and associated source to `gxywriter`
+* Renamed `mh` app and associated source to `mhwriter` 
+* Renamed `amh` app and associated source to `mhviewer`
+* updated third-party/ispc to download v1.10.0
+* updated third-party/embree to use v3.5.2
+* updated third-party/ospray to use v1.7.3
+
 ## version 0.2.1 - 20190325
 
 * Moved Doxygen to root Galaxy directory
@@ -26,5 +55,10 @@ Initial Galaxy release!
 * Distributed ray tracing renderer built on Intel OSPRay and Embree for volume integration and geometry intersection, respectively
 * Doxygen-based documentation of classes
 * CMake build and packaging
+
+
+[1]: https://ospray.org/
+[2]: https://hub.docker.com/r/pnav/galaxy
+[3]: https://hub.docker.com/r/pnav/galaxy-base
 
 

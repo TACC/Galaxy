@@ -32,9 +32,10 @@
 namespace gxy
 {
 
-//! writes PNG format images
+//! abstract class that writes images
 /*! \ingroup data 
  */
+
 class ImageWriter
 {
 public:
@@ -48,51 +49,24 @@ public:
 	 */
  	ImageWriter() : basename("frame"), frame(0) {}
 
- 	//! write a given RGBA array as a PNG image
+ 	//! write a given RGBA array to an image file
  	/*! \param w the image width
  	 * \param h the image height
  	 * \param rgba a buffer of float RGBA values with size `4 * w * h`
 	 * \param name the filename to use for this image (if NULL, uses basename and frame count)
 	 * \warning assumes existence of alpha channel but ignores its value, using full opacity instead
 	 */
-	void Write(int w, int h, float *rgba, const char *name=NULL)
-	{
-		unsigned char *buf = new unsigned char[w*h*4];
-		float *p = rgba;
-		for (int y = 0; y < h; y++)
-    {
-      unsigned char *b = buf + ((h-1)-y)*w*4;
-      for (int x = 0; x < w; x++)
-      {
-        *b++ = (unsigned char)(255*(*p++));
-        *b++ = (unsigned char)(255*(*p++));
-        *b++ = (unsigned char)(255*(*p++));
-        *b++ = 0xff ; p ++;
-      }
-    }
-		Write(w, h, (unsigned int *)buf, name);
-		delete[] buf;
-	}
+	virtual void Write(int w, int h, float *rgba, const char *name=NULL) {}
 
- 	//! write a given RGBA array as a PNG image
+ 	//! write a given RGBA array to an image file
  	/*! \param w the image width
  	 * \param h the image height
  	 * \param rgba a buffer of RGBA values with size `4 * w * h`
 	 * \param name the filename to use for this image (if NULL, uses basename and frame count)
 	 */
-	void Write(int w, int h, unsigned int *rgba, const char *name=NULL)
-	{
-		if (name)
-			write_png(name, w, h, (unsigned int *)rgba);
-		else
-		{
-			char filename[1024];
-			sprintf(filename, "%s_%04d.png", basename.c_str(), frame++);
-			write_png(filename, w, h, (unsigned int *)rgba);
-		}
-	}
+	virtual void Write(int w, int h, unsigned int *rgba, const char *name=NULL) {}
 
- 	//! write a given RGBA array as a PNG image
+ 	//! write a given RGBA array to an image file
  	/*! \param w the image width
  	 * \param h the image height
  	 * \param rgba a buffer of RGBA values with size `4 * w * h`
@@ -103,8 +77,19 @@ public:
 		Write(w, h, (unsigned int *)rgba, name);
 	}
 
-private:
+protected:
 
+  int frame;
+	std::string basename;
+};
+
+class ColorImageWriter : public ImageWriter
+{
+public:
+  void Write(int w, int h, float *rgba, const char *name=NULL);
+  void Write(int w, int h, unsigned int *rgba, const char *name=NULL);
+
+private:
 	static void png_error(png_structp png_ptr, png_const_charp error_msg)
 	{
 		std::cerr << "PNG error: " << error_msg << std::endl;
@@ -160,9 +145,14 @@ private:
 
 		return 1;
 	}
+};
 
-  int frame;
-	std::string basename;
+class FloatImageWriter : public ImageWriter
+{
+public:
+
+	void Write(int w, int h, float *rgba, const char *name=NULL);
+  void Write(int w, int h, unsigned int *rgba, const char *name=NULL);
 };
 
 }

@@ -20,7 +20,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.9)
 
 cmake_policy(SET CMP0048 NEW)
-PROJECT(Galaxy VERSION 0.2.1)
+PROJECT(Galaxy VERSION 0.3.0)
 
 set(GALAXY_VERSION ${PROJECT_VERSION})
 set(GALAXY_SOVERSION ${PROJECT_VERSION_MAJOR})
@@ -65,8 +65,9 @@ set(GXY_EVENT_TRACKING OFF CACHE BOOL "Generate event log during render?")
 set(GXY_LOGGING OFF CACHE BOOL "Generate log messages in the Galaxy Renderer")
 set(GXY_PRODUCE_STATUS_MESSAGES OFF CACHE BOOL "produce periodic status massages?")
 set(GXY_REVERSE_LIGHTING ON CACHE BOOL "Use subtractive lighting model?")
-set(GXY_WRITE_IMAGES OFF CACHE BOOL "write image files rather than interactive display?")
+set(GXY_WRITE_IMAGES OFF CACHE BOOL "write image files rather than interactive display (\"batch mode\")?")
 set(GXY_TIMING OFF CACHE BOOL "Generate timing statistics for the Galaxy Renderer")
+set(GXY_UNIT_TESTING OFF CACHE BOOL "Generate Galaxy unit testing framework")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -116,9 +117,6 @@ if (ospray_DIR)
   include(macros)
   include(ospray_macros)
   include(ispc)
-
-  include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
-  include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
 else(ospray_DIR)
   message(FATAL_ERROR "OSPRay not found. Please run ${PROJECT_SOURCE_DIR}/prep-third-party.sh and build the third-party dependencies before building Galaxy.")
 endif(ospray_DIR)
@@ -154,5 +152,8 @@ install(FILES "${CMAKE_BINARY_DIR}/${GALAXY_CONFIG}" "${CMAKE_BINARY_DIR}/${GALA
 
 add_subdirectory(scripts)
 add_subdirectory(src)
+if (GXY_UNIT_TESTING)
+  add_subdirectory(tests/src)
+endif(GXY_UNIT_TESTING)
 
 

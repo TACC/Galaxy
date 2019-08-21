@@ -161,37 +161,6 @@ VolumeVis::LoadFromJSON(Value& v)
 }
 
 void
-VolumeVis::SaveToJSON(Value& v, Document&  doc)
-{
-  Vis::SaveToJSON(v, doc);
-
-  v.AddMember("volume rendering", Value().SetBool(volume_rendering), doc.GetAllocator());
-  
-  if (isovalues.size() > 0)
-  {
-    Value i(kArrayType);
-    for (auto a : isovalues)
-      i.PushBack(Value().SetDouble(a), doc.GetAllocator());
-    v.AddMember("isovalues", i, doc.GetAllocator());
-  }
-
-  if (slices.size() > 0)
-  {
-    Value i(kArrayType);
-    for (auto a : slices)
-    {
-      Value j(kArrayType);
-      j.PushBack(Value().SetDouble(a.x), doc.GetAllocator());
-      j.PushBack(Value().SetDouble(a.y), doc.GetAllocator());
-      j.PushBack(Value().SetDouble(a.z), doc.GetAllocator());
-      j.PushBack(Value().SetDouble(a.w), doc.GetAllocator());
-      i.PushBack(j, doc.GetAllocator());
-    }
-    v.AddMember("slices", i, doc.GetAllocator());
-  }
-}
-
-void
 VolumeVis::destroy_ispc()
 {
   if (ispc)
@@ -206,9 +175,9 @@ VolumeVis::local_commit(MPI_Comm c)
 	if (super::local_commit(c))
     return true;
 
-	ispc::VolumeVis_SetSlices(GetISPC(), slices.size(), ((float *)slices.data()));
-	ispc::VolumeVis_SetIsovalues(GetISPC(), isovalues.size(), ((float *)isovalues.data()));
-	ispc::VolumeVis_SetVolumeRenderFlag(GetISPC(), volume_rendering);
+	ispc::VolumeVis_SetSlices(GetIspc(), slices.size(), ((float *)slices.data()));
+	ispc::VolumeVis_SetIsovalues(GetIspc(), isovalues.size(), ((float *)isovalues.data()));
+	ispc::VolumeVis_SetVolumeRenderFlag(GetIspc(), volume_rendering);
 
 	return false;
 }

@@ -31,7 +31,7 @@
 #include <vector>
 
 #include "dtypes.h"
-#include "ISPCObject.h"
+#include "IspcObject.h"
 #include "Lighting.h"
 #include "Rays.h"
 #include "Visualization.h"
@@ -41,22 +41,14 @@ namespace gxy
 OBJECT_POINTER_TYPES(TraceRays)
 
 //! controls the ray tracing loop within Galaxy
-/*! \sa KeyedObject, ISPCObject
+/*! \sa KeyedObject, IspcObject
  * \ingroup render
  */
-class TraceRays : public ISPCObject
+class TraceRays : public IspcObject
 {
 public:
-  TraceRays(); //!< default constructor
+  TraceRays(float epsilon = 0.001);
   ~TraceRays(); //!< default destructor
-
-  //! populate state into this TraceRays object from a Galaxy JSON object
-  virtual bool LoadStateFromValue(rapidjson::Value&);
-  //!< save the state of this TraceRays object to a Galaxy JSON object
-  virtual void SaveStateToValue(rapidjson::Value&, rapidjson::Document&); 
-
-  void SetEpsilon(float e); //!< set the epsilon ray offset value for use by this TraceRays object
-  float GetEpsilon(); //!< return the current epsilon ray offset value used by this TraceRays object
 
   //! trace a given RayList against the given Visualization using the given Lighting
   /*! \returns a RayList pointer to rays spawned during this trace
@@ -66,17 +58,8 @@ public:
    */
   RayList *Trace(Lighting* lights, VisualizationP visualization, RayList * raysIn);
 
-  //! return the size in bytes of this TraceRays object
-  virtual int SerialSize(); 
-  //! serialize this TraceRays object to the given byte stream
-  virtual unsigned char *Serialize(unsigned char *); 
-  //! deserialize a TraceRays object from the given byte stream into this object
-  virtual unsigned char *Deserialize(unsigned char *); 
-
 protected:
-
-  virtual void allocate_ispc();
-  virtual void initialize_ispc();
+  float epsilon;
 
 };
 

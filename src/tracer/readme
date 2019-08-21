@@ -1,0 +1,21 @@
+This directory is preliminary work on streamline tracing.   
+
+The vectors.vti includes to variables: oneBall and 'vectors', which define a helical vector field.
+
+The vti2json script creates .json format descriptors and .raw files.   Use it like vti2vol.
+
+The tester.state file simply defines a Datasets that includes the vector volume.
+
+The tester.cpp program uses the RungeKutta.cpp,h to trace streamlines through the vector field.
+Run it:
+
+  mpirun -np k tester -n N 
+
+It will trace 10 streamlines seeded along a diagonal at Z=-0.9
+
+That'll start up k processes and generate streamlines up to N points long.
+
+The traces are converted to path lines by the capability in TraceToPathLines.*
+
+The results are then rendered using hardcoded settings.
+

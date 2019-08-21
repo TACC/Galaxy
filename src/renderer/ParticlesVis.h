@@ -22,12 +22,12 @@
 
 /*! \file ParticlesVis.h 
  * \brief a visualization element operating on a particle dataset within Galaxy
- * \ingroup data
+ * \ingroup render
  */
 
 #include "dtypes.h"
 #include "Application.h"
-#include "Vis.h"
+#include "GeometryVis.h"
 #include "Particles.h"
 #include "Datasets.h"
 
@@ -41,12 +41,12 @@ namespace gxy
 OBJECT_POINTER_TYPES(ParticlesVis)
 
 //!  a visualization element operating on a particle dataset within Galaxy
-/* \ingroup data 
- * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
+/* \ingroup render 
+ * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
-class ParticlesVis : public Vis
+class ParticlesVis : public GeometryVis
 {
-  KEYED_OBJECT_SUBCLASS(ParticlesVis, Vis) 
+  KEYED_OBJECT_SUBCLASS(ParticlesVis, GeometryVis) 
 
 public:
 	~ParticlesVis(); //!< destructor
@@ -56,6 +56,20 @@ public:
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
+  virtual void SetTheOsprayDataObject(OsprayObjectP o);
+
+  //! Set a constant radius
+  void SetRadius(float r0) { SetRadiusTransform(0.0, r0, 0.0, 0.0); }
+
+  //! Set the transformation from data values to radius - linear between (v0,r0) and (v1,r1)
+  void SetRadiusTransform(float _v0, float _r0, float _v1, float _r1) { v0 = _v0; r0 = _r0; v1 = _v1; r1 = _r1;}
+
+  //! Get the transformation from data values to radius - linear between (v0,r0) and (v1,r1)
+  void GetRadiusTransform(float& _v0, float& _r0, float& _v1, float& _r1) { _v0 = v0; _r0 = r0; _v1 = v1; _r1 = r1;}
+
+  //! scale mapping to a given range
+  virtual void ScaleMaps(float xmin, float xmax);
+
 protected:
 
 	virtual void initialize_ispc();
@@ -63,11 +77,12 @@ protected:
 	virtual void destroy_ispc();
 
   virtual bool LoadFromJSON(rapidjson::Value&);
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
+
+  float v0, r0, v1, r1; // Map radius linearly between (v0,r0) and (v1,r1)
 };
 
 } // namespace gxy

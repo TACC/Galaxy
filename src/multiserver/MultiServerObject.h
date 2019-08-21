@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
 #include "MultiServerHandler.h"
 
 /*! \file MultiServerObject.h

@@ -25,10 +25,14 @@
  * \ingroup framework
  */
 
+#include "Application.h"
+
 #include <chrono>
 #include <ctime>
 #include <ratio>
 #include <string>
+#include <sstream>
+#include <fstream>
 
 namespace gxy
 {

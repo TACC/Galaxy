@@ -22,7 +22,7 @@
 
 /*! \file Vis.h 
  * \brief the parent class for visualization elements that operate on a dataset within Galaxy
- * \ingroup data
+ * \ingroup render
  */
 
 #include <string>
@@ -33,9 +33,9 @@
 
 #include "Datasets.h"
 #include "dtypes.h"
-#include "ISPCObject.h"
+#include "IspcObject.h"
 #include "KeyedObject.h"
-#include "OSPRayObject.h"
+#include "OsprayObject.h"
 
 namespace gxy
 {
@@ -46,10 +46,10 @@ OBJECT_POINTER_TYPES(Vis)
 /* This object represents a single visualization element, namely a set of filters applied to data. 
  * In contrast, a Visualization object combines one or more Vis objects with
  * with lighting information.
- * \ingroup data 
- * \sa Visualization, KeyedObject, ISPCObject, OSPRayObject
+ * \ingroup render 
+ * \sa Visualization, KeyedObject, IspcObject, OsprayObject
  */
-class Vis : public KeyedObject, public ISPCObject
+class Vis : public KeyedObject, public IspcObject
 {
     KEYED_OBJECT(Vis)
 
@@ -62,17 +62,15 @@ public:
     //! return a pointer to the KeyedDataObject data that this Vis targets
     KeyedDataObjectP GetTheData() { return data; }
 
-    //! set the KeyedDataObject data that this Vis should target
+    //! set the KeyedDataObject data that this Vis should target.
     void SetTheData( KeyedDataObjectP d ) { data = d; }
 
-    //! set the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.
+    //! set the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.   This is the opportunity to set any Vis options on the OSPRay object itself.
     //! 
-    void SetTheOSPRayDataObject(OSPRayObjectP o);
+    virtual void SetTheOsprayDataObject(OsprayObjectP o);
 
     //! construct a Vis from a Galaxy JSON specification
     virtual bool LoadFromJSON(rapidjson::Value&);
-    //! save this Vis to a Galaxy JSON specification 
-    virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
     //! set the name of this Vis
     void SetName(std::string n) { name = n; }
@@ -92,6 +90,7 @@ protected:
     std::string name;
     Key datakey;
     KeyedDataObjectP data;
+    OsprayObjectP    odata;
 };
 
 } // namespace gxy

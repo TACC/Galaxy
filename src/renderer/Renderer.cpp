@@ -46,9 +46,9 @@
 #include "TraceRays_ispc.h"
 #include "Visualization_ispc.h"
 
-#include "OVolume.h"
-#include "OTriangles.h"
-#include "OParticles.h"
+#include "OsprayVolume.h"
+#include "OsprayTriangles.h"
+#include "OsprayParticles.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -84,6 +84,10 @@ int Renderer::NO_NEIGHBOR   = -1;
 void
 Renderer::Initialize()
 {
+  extern void force_ospray_library_load();
+  force_ospray_library_load();
+
+
   RegisterClass();
   
   RegisterDataObjects();
@@ -107,30 +111,50 @@ Renderer::Initialize()
 #endif // GXY_WRITE_IMAGES
 }
 
+static  void
+print_ospray_error_messages(const char *m)
+{
+  // APP_LOG(<< m);
+  std::cerr << "XXXX" << m;
+}
+
 void
 Renderer::initialize()
 {
-	frame = 0;
+  epsilon = 0.001;
+
+  frame = 0;
   rayQmanager = new RayQManager(this);
-	pthread_mutex_init(&lock, NULL);
+  pthread_mutex_init(&lock, NULL);
 
-	sent_to = new int[GetTheApplication()->GetSize()];
-	received_from = new int[GetTheApplication()->GetSize()];
+  sent_to = new int[GetTheApplication()->GetSize()];
+  received_from = new int[GetTheApplication()->GetSize()];
 
-	max_rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
+  max_rays_per_packet = getenv("GXY_RAYS_PER_PACKET") ? atoi(getenv("GXY_RAYS_PER_PACKET")) : 1000000;
 
+// If writing images, DO NOT set permute pixels sinnce this will reset the permutation table 
+// for each generate_pixels that share a camera
+
+#ifdef GXY_WRITE_IMAGES
+  SetPermutePixels(false);
+#else
   char *permute = getenv("GXY_PERMUTE_PIXELS");
   if (permute)
     SetPermutePixels(atoi(permute) > 0);
   else
     SetPermutePixels(true);
+#endif
 
   ospInit(0, NULL);
+
+  char *ospMsgs = getenv("GXY_SHOW_OSPRAY_MESSAGES");
+  if (ospMsgs && atoi(ospMsgs) > 0)
+    ospDeviceSetStatusFunc(ospGetCurrentDevice(), print_ospray_error_messages);
 }
 
 Renderer::~Renderer()
 {
-  	rayQmanager->Kill();
+    rayQmanager->Kill();
     delete rayQmanager;
 
     ospShutdown();
@@ -139,7 +163,13 @@ Renderer::~Renderer()
 void 
 Renderer::SetEpsilon(float e)
 { 
-  tracer.SetEpsilon(e); 
+  epsilon = e;
+}
+
+float
+Renderer::GetEpsilon()
+{ 
+  return epsilon;
 }
 
 bool
@@ -153,173 +183,333 @@ void
 Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
 {
 #ifdef GXY_EVENT_TRACKING
-	GetTheEventTracker()->Add(new StartRenderingEvent);
+  GetTheEventTracker()->Add(new StartRenderingEvent);
 #endif
 
 #ifdef GXY_LOGGING
-	APP_LOG(<< "Renderer::localRendering start");
+  APP_LOG(<< "Renderer::localRendering start");
 #endif
 
-	originated_ray_count = 0;
-	sent_ray_count = 0;
-	sent_pixels_count = 0;
-	terminated_ray_count = 0;
-	secondary_ray_count = 0;
+  originated_ray_count = 0;
+  sent_ray_count = 0;
+  sent_pixels_count = 0;
+  terminated_ray_count = 0;
+  secondary_ray_count = 0;
   ProcessRays_input_count = 0;
   ProcessRays_continued_count = 0;
 
-	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		sent_to[i] = 0, received_from[i] = 0;
+  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+    sent_to[i] = 0, received_from[i] = 0;
 
-	// NeedInitialRays tells us whether we need to generate initial rays
-	// for the current frame.  It is possible that this RenderingSet has
-	// already seen a raylist from a later frame, in which case we won't
-	// bother generating rays for this one.
-	
-	int fnum = renderingSet->NeedInitialRays();
+  // NeedInitialRays tells us whether we need to generate initial rays
+  // for the current frame.  It is possible that this RenderingSet has
+  // already seen a raylist from a later frame, in which case we won't
+  // bother generating rays for this one.
+  
+  int fnum = renderingSet->NeedInitialRays();
   if (fnum != -1)
-	{
-	  // std::cerr << GetTheApplication()->GetRank() << " starting " << frame << "\n";
+  {
+    // std::cerr << GetTheApplication()->GetRank() << " starting " << frame << "\n";
 #ifdef GXY_LOGGING
-	if (GetTheApplication()->GetRank() == 0)
-		std:cerr << "starting ray processing\n";
+  if (GetTheApplication()->GetRank() == 0)
+    std:cerr << "starting ray processing\n";
 #endif
 
 #ifdef GXY_WRITE_IMAGES
-		GetTheRayQManager()->Pause();
+    GetTheRayQManager()->Pause();
 
-		if (renderingSet->CameraIsActive())
-		{
-			std::cerr << "RenderingSet: Cannot InitializeState when camera is already active\n";
-			exit(0);
-		}
-	
-		// Bump to keep from seeming finished until all camera rays have been spawned
+    if (renderingSet->CameraIsActive())
+    {
+      std::cerr << "RenderingSet: Cannot InitializeState when camera is already active\n";
+      exit(0);
+    }
+  
+    // Bump to keep from seeming finished until all camera rays have been spawned
 
-		renderingSet->IncrementActiveCameraCount();
+    renderingSet->IncrementActiveCameraCount();
 
-		GetTheRayQManager()->Resume();
+    GetTheRayQManager()->Resume();
 #endif
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
-		renderingSet->_initStateTimer();
+    renderingSet->_initStateTimer();
 #endif
 
 #ifdef GXY_WRITE_IMAGES
-		renderingSet->initializeSpawnedRayCount();
+    renderingSet->initializeSpawnedRayCount();
 #endif
 
-		vector<future<int>> rvec;
-		for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
-		{
-			RenderingP rendering = renderingSet->GetRendering(i);
-			rendering->resolve_lights(renderer);
+    vector<future<int>> rvec;
+    for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
+    {
+      RenderingP rendering = renderingSet->GetRendering(i);
+      rendering->resolve_lights(renderer);
 
-			CameraP camera = rendering->GetTheCamera();
-			VisualizationP visualization = rendering->GetTheVisualization();
+      CameraP camera = rendering->GetTheCamera();
+      VisualizationP visualization = rendering->GetTheVisualization();
 
-			Box *gBox = visualization->get_global_box();
-			Box *lBox = visualization->get_local_box();
+      Box *gBox = visualization->get_global_box();
+      Box *lBox = visualization->get_local_box();
 
-			camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
-		}
+      camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
+    }
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
-		renderingSet->_dumpState(c, "status"); // Note this will sync after cameras, I think
+    renderingSet->_dumpState(c, "status"); // Note this will sync after cameras, I think
 #endif
 
 #ifdef GXY_EVENT_TRACKING
-		GetTheEventTracker()->Add(new CameraLoopEndEvent);
+    GetTheEventTracker()->Add(new CameraLoopEndEvent);
 #endif
 
 #ifdef GXY_WRITE_IMAGES
-		for (auto& r : rvec)
-			r.get();
+    for (auto& r : rvec)
+      r.get();
 
-		renderingSet->DecrementActiveCameraCount(0);
+    renderingSet->DecrementActiveCameraCount(0);
 #endif // GXY_WRITE_IMAGES
-	}
-	
+  }
+  
 }
 
 bool
 Renderer::LoadStateFromDocument(Document& doc)
 {
   if (doc.HasMember("Renderer"))
-  {
-    Value& v = doc["Renderer"];
-    if (v.HasMember("Tracer"))
-      return tracer.LoadStateFromValue(v["Tracer"]);
-    else
-      return true;
-  }
-  else
-    return true;
+    LoadStateFromValue(doc["Renderer"]);
+
+  return true;
 }
 
 void
 Renderer::SaveStateToDocument(Document& doc)
 {
-  Value r(kObjectType);
+  Value v(kObjectType);
+  SaveStateToValue(v, doc);
+  doc.AddMember("Renderer", v, doc.GetAllocator());
+}
 
-  tracer.SaveStateToValue(r, doc);
 
-	doc.AddMember("Renderer", r, doc.GetAllocator());
+bool
+Renderer::LoadStateFromValue(Value& v)
+{
+  if (v.HasMember("epsilon"))
+    SetEpsilon(v["epsilon"].GetDouble());
+
+  return true;
 }
 
 void
-Renderer::HandleTerminatedRays(RayList *raylist, int *classification)
+Renderer::SaveStateToValue(Value& v, Document& doc)
 {
-    int terminated_count = 0;
+  v.AddMember("epsilon", Value().SetDouble(GetEpsilon()), doc.GetAllocator());
+}
+
+void
+Renderer::Classify(RayList *raylist)
+{
+  // Tracing the input rays classifies them by an application-specific
+  // flag.   Classify classifies these into 4 categories known by the 
+  // superclass:  DROP_ON_FLOOR - that is, ignored in further processing;
+  // BOUNDARY - that is, hit a boundary without terminating for any 
+  // application-specific and thus is a candidate for sending elsewhere 
+  // (if its not an external boundary, but thats a question for the
+  // partitioning manager); KEEP_HERE - for example, having encountered an
+  // application event that caused the ray tracing to break but after which
+  // the ray will continue, and TERMINATED, if the ray has reached a
+  // terminal state and is ready to update the final result.
+
+  for (int i = 0; i < raylist->GetRayCount(); i++)
+  {
+    int typ  = raylist->get_type(i);
+    int term = raylist->get_term(i);
+
+    if (typ == RAY_PRIMARY)
+    {
+      raylist->set_classification(i, 0);
+
+      // A primary ray expires and is added to the FB if it terminated opaque OR if 
+      // it has timed out OR if it exitted the global box. 
+      //
+      // If its opaque it has a non-zero color component.  If it times out, it has a 
+      // non-zero lighting component.  In either case, we send it to the FB
+      //
+      // If it exits the global box, we only send it if it has a non-zero color component
+      //
+      // Otherwise, if it hit a *partition* boundary then it'll go to the neighbor.
+      //
+      // Otherwise, it better have hit a TRANSLUCENT  surface and will remain in the
+      // current partition.
+
+      if (term & RAY_BOUNDARY)
+      {
+        raylist->set_classification(i, RAY_BOUNDARY);
+      }
+      else if ((term & RAY_OPAQUE) | (term & RAY_TIMEOUT))
+      {
+        raylist->set_classification(i, TERMINATED);
+      }
+      else		// Translucent surface
+      {
+        raylist->set_classification(i, KEEP_HERE);
+      }
+    }
+    
+    // If its a shadow ray it gets added into the FB if it terminated at the 
+    // external boundary.   If it exitted at a internal boundary it keeps 
+    // going.   If it hit a surface it dies.
+
+    else if (typ == RAY_SHADOW)
+    {
+      if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
+      {
+        // We don't need to add in the light's contribution
+        // OR, if reverse lighting, send to FB to ADD the (negative) shadow
+
+#ifdef GXY_REVERSE_LIGHTING
+        raylist->set_classification(i, TERMINATED);
+#else
+        raylist->set_classification(i, DROP_ON_FLOOR);
+#endif
+      }
+      else if (term & RAY_BOUNDARY)
+      {
+        raylist->set_classification(i, RAY_BOUNDARY);
+      }
+      else 
+      {
+        std::cerr << "Shadow ray died for an unknown reason\n";
+        raylist->set_classification(i, DROP_ON_FLOOR);
+      }
+    }
+
+    // If its an AO ray, same thing - except it CAN time out.
+    
+    else if (typ == RAY_AO)
+    {
+      if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
+      {
+        // We don't need to add in the light's contribution
+        // OR, if reverse lighting, send to FB to ADD the (negative)
+        // ambient contribution
+
+#ifdef GXY_REVERSE_LIGHTING
+        raylist->set_classification(i, TERMINATED);
+#else
+        raylist->set_classification(i, DROP_ON_FLOOR);
+#endif
+      }
+      else if (term & RAY_BOUNDARY)
+      {
+        raylist->set_classification(i, RAY_BOUNDARY);
+      }
+      else if (term & RAY_TIMEOUT)
+      {
+        // Timed-out - drop on floor in REVERSE case so
+        // we don't add the (negative) ambient contribution;
+        // otherwise, send  to FB to add in (positive) ambient
+        // contribution
+#ifdef GXY_REVERSE_LIGHTING
+        raylist->set_classification(i, DROP_ON_FLOOR);
+#else
+        raylist->set_classification(i, TERMINATED);
+#endif
+      }
+      else
+      {
+        std::cerr << "AO ray died for an unknown reason\n";
+        raylist->set_classification(i, DROP_ON_FLOOR);
+      }
+    }
+  }
+}
+
+void
+Renderer::AssignDestinations(RayList *raylist)
+{
+  VisualizationP visualization = raylist->GetTheRendering()->GetTheVisualization();
+  Box *box = visualization->get_local_box();
+
+  for (int i = 0; i < raylist->GetRayCount(); i++)
+  {
+    if (raylist->get_classification(i) == RAY_BOUNDARY)
+    {
+      int exit_face = box->exit_face(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
+                                   raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
+
+      if (visualization->has_neighbor(exit_face)) 
+        raylist->set_classification(i, visualization->get_neighbor(exit_face));
+      else
+      {
+        int t = raylist->get_type(i);
+        if (t == RAY_SHADOW || t == RAY_AO)
+        {
+#ifdef GXY_REVERSE_LIGHTING
+          raylist->set_classification(i, DROP_ON_FLOOR);
+#else
+          raylist->set_classification(i, TERMINATED);
+#endif
+        }
+        else
+          raylist->set_classification(i, TERMINATED);
+      }
+    }
+  }
+}
+
+void
+Renderer::HandleTerminatedRays(RayList *raylist)
+{
+  int terminated_count = 0;
+
+  for (int i = 0; i < raylist->GetRayCount(); i++)
+    if (raylist->get_classification(i) == Renderer::TERMINATED) terminated_count++;
+
+  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingP rendering = raylist->GetTheRendering();
+
+  if (terminated_count == 0) return;
+
+  if (rendering->IsLocal())
+  {
+    Pixel *local_pixels = new Pixel[terminated_count];
+
+    Pixel *p = local_pixels;
+    for (int i = 0; i < raylist->GetRayCount(); i++)
+    if (raylist->get_classification(i) == Renderer::TERMINATED)
+    {
+      p->x = raylist->get_x(i);
+      p->y = raylist->get_y(i);
+      p->r = raylist->get_r(i);
+      p->g = raylist->get_g(i);
+      p->b = raylist->get_b(i);
+      p->o = raylist->get_o(i);
+      p++;
+    }
+
+    rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
+    delete[] local_pixels;
+  }
+  else
+  {
+    Renderer::SendPixelsMsg *spmsg = new Renderer::SendPixelsMsg(rendering, renderingSet, raylist->GetFrame(), terminated_count);
 
     for (int i = 0; i < raylist->GetRayCount(); i++)
-        if (classification[i] == Renderer::TERMINATED) terminated_count++;
+      if (raylist->get_classification(i) == Renderer::TERMINATED)
+        spmsg->StashPixel(raylist, i);
 
-    RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-    RenderingP rendering = raylist->GetTheRendering();
+    if (renderingSet->IsActive(raylist->GetFrame()))
+      spmsg->Send(rendering->GetTheOwner());
 
-    if (terminated_count == 0) return;
-
-    if (rendering->IsLocal())
-    {
-      Pixel *local_pixels = new Pixel[terminated_count];
-
-      Pixel *p = local_pixels;
-      for (int i = 0; i < raylist->GetRayCount(); i++)
-        if (classification[i] == Renderer::TERMINATED)
-        {
-          p->x = raylist->get_x(i);
-          p->y = raylist->get_y(i);
-          p->r = raylist->get_r(i);
-          p->g = raylist->get_g(i);
-          p->b = raylist->get_b(i);
-          p->o = raylist->get_o(i);
-          p++;
-        }
-
-      rendering->AddLocalPixels(local_pixels, terminated_count, raylist->GetFrame(), GetTheApplication()->GetRank());
-      delete[] local_pixels;
-    }
-    else
-    {
-      Renderer::SendPixelsMsg *spmsg = new Renderer::SendPixelsMsg(rendering, renderingSet, raylist->GetFrame(), terminated_count);
-
-      for (int i = 0; i < raylist->GetRayCount(); i++)
-        if (classification[i] == Renderer::TERMINATED)
-          spmsg->StashPixel(raylist, i);
-
-			if (renderingSet->IsActive(raylist->GetFrame()))
-        spmsg->Send(rendering->GetTheOwner());
-
-      delete spmsg;
-    }
+    delete spmsg;
+  }
 }
 
 class processRays_task : public ThreadPoolTask
 {
 public:
-	processRays_task(RayList *raylist, Renderer *renderer) : 
-		ThreadPoolTask(raylist->GetType() == RayList::PRIMARY ? 3 : 2), raylist(raylist), renderer(renderer) {}
+  processRays_task(RayList *raylist, Renderer *renderer) : 
+    ThreadPoolTask(raylist->GetType() == RayList::PRIMARY ? 3 : 2), raylist(raylist), renderer(renderer) {}
   ~processRays_task() {}
 
 	int work() { 
@@ -349,190 +539,36 @@ public:
 			// This may put secondary lists on the ray queue
 			renderer->Trace(raylist);
 
-			// Tracing the input rays classifies them by termination class.
-			// If a ray is terminated by a boundary, it needs to get moved
-			// to the corresponding neighbor (unless there is none, in which 
-			// case it is just plain terminated).   If it is just plain
-			// terminated, add its contribution to the FB
+      // Classify annotated rays
+      renderer->Classify(raylist);
 
-			Box *box = visualization->get_local_box();
+      // Assign destinations to rays that need to go elsewhere
+      renderer->AssignDestinations(raylist);
 
-			// Where does each ray go next?  Either nowhere (DROP_ON_FLOOR), into one of
-			// the 0->5 neighbors, to the FB (TERMINATED) or remain here (KEEP_HERE)
-
-			int *classification = new int[raylist->GetRayCount()];
-
-			for (int i = 0; i < raylist->GetRayCount(); i++)
-			{
-				int typ  = raylist->get_type(i);
-				int term = raylist->get_term(i);
-
-				int exit_face; // Which face a ray that terminated at a boundary
-											 // exits. NO_NEIGHBOR if the boundary is an external 
-											 // boundary.   Only matters if ray hit boundaty
-
-				if (term & RAY_BOUNDARY)
-				{
-					// then its an internal boundary between 
-					// blocks or an external boundary. Figure out
-					// which
-
-					exit_face = box->exit_face(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
-																		 raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
-
-					if (! visualization->has_neighbor(exit_face)) 
-						exit_face = Renderer::NO_NEIGHBOR;
-				}
-
-				if (typ == RAY_PRIMARY)
-				{
-					// A primary ray expires and is added to the FB if it terminated opaque OR if 
-					// it has timed out OR if it exitted the global box. 
-					//
-					// If its opaque it has a non-zero color component.  If it times out, it has a 
-					// non-zero lighting component.  In either case, we send it to the FB
-					//
-					// If it exits the global box, we only send it if it has a non-zero color component
-					//
-					// Otherwise, if it hit a *partition* boundary then it'll go to the neighbor.
-					//
-					// Otherwise, it better have hit a TRANSLUCENT  surface and will remain in the
-					// current partition.
-
-					if ((term & RAY_OPAQUE) | (term & RAY_TIMEOUT))
-					{
-                        // DHR sample here
-                        // renderer->do_your_stuff()
-						classification[i] = Renderer::TERMINATED;
-					}
-					else if ((term & RAY_BOUNDARY) && (exit_face == Renderer::NO_NEIGHBOR))
-					{
-						if ((raylist->get_r(i) != 0) || (raylist->get_g(i) != 0) || (raylist->get_b(i) != 0))
-							classification[i] = Renderer::TERMINATED;
-						else
-							classification[i] = Renderer::DROP_ON_FLOOR;
-					}
-					else if (term & RAY_BOUNDARY)  // then exit_face is not NO_NEIGHBOR -- see previous condition
-					{
-						classification[i] = exit_face;  // 0 ... 5
-					}
-					else		// Translucent surface
-					{
-						classification[i] = Renderer::KEEP_HERE;
-					}
-				}
-    
-				// If its a shadow ray it gets added into the FB if it terminated at the 
-				// external boundary.   If it exitted at a internal boundary it keeps 
-				// going.   If it hit a surface it dies.
-
-				else if (typ == RAY_SHADOW)
-				{
-					if (term & RAY_BOUNDARY)
-					{
-						// If an EXTERNAL boundary....
-						if (exit_face == Renderer::NO_NEIGHBOR)
-						{
-							// Then send the rays to the FB to add in the directed-light contribution
-							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
-							// to ADD the (negative) shadow
-
-#ifdef GXY_REVERSE_LIGHTING
-							classification[i] = Renderer::DROP_ON_FLOOR;
-#else
-							classification[i] = Renderer::TERMINATED;
-#endif
-						}
-						else
-							classification[i] = exit_face;  // 0 ... 5
-					}
-					else if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
-					{
-						// We don't need to add in the light's contribution
-						// OR, if reverse lighting, send to FB to ADD the (negative) shadow
-#ifdef GXY_REVERSE_LIGHTING
-					classification[i] = Renderer::TERMINATED;
-#else
-          classification[i] = Renderer::DROP_ON_FLOOR;
-#endif
-					}
-					else 
-					{
-						std::cerr << "Shadow ray died for an unknown reason\n";
-						classification[i] = Renderer::DROP_ON_FLOOR;
-					}
-				}
-
-				// If its an AO ray, same thing - except it CAN time out.
-      
-				else if (typ == RAY_AO)
-				{
-					if (term & RAY_BOUNDARY)
-					{
-						if (exit_face == Renderer::NO_NEIGHBOR)
-						{
-							// Then send the rays to the FB to add in the ambient-light contribution
-							// OR, if reverse lighting, drop on floor - the ray escaped and so we don't want
-							// to ADD the (negative) shadow
-
-#ifdef GXY_REVERSE_LIGHTING
-							classification[i] = Renderer::DROP_ON_FLOOR;
-#else
-							classification[i] = Renderer::TERMINATED;
-#endif
-						}
-						else
-							classification[i] = exit_face;	// 0 ... 5
-					}
-					else if ((term & RAY_OPAQUE) | (term & RAY_SURFACE))
-					{
-						// We don't need to add in the light's contribution
-						// OR, if reverse lighting, send to FB to ADD the (negative)
-						// ambient contribution
-#ifdef GXY_REVERSE_LIGHTING
-						classification[i] = Renderer::TERMINATED;
-#else
-						classification[i] = Renderer::DROP_ON_FLOOR;
-#endif
-					}
-					else if (term == RAY_TIMEOUT)
-					{
-						// Timed-out - drop on floor in REVERSE case so
-						// we don't add the (negative) ambient contribution;
-						// otherwise, send  to FB to add in (positive) ambient
-						// contribution
-#ifdef GXY_REVERSE_LIGHTING
-						classification[i] = Renderer::DROP_ON_FLOOR;
-#else
-						classification[i] = Renderer::TERMINATED;
-#endif
-					}
-					else
-					{
-						std::cerr << "AO ray died for an unknown reason\n";
-						classification[i] = -1;
-					}
-				}
-			}
+      // And handle the ones that terminate
+      renderer->HandleTerminatedRays(raylist);
 
 			// OK, now we know the fate of the input rays.   Partition them accordingly
 			// counts going to each destination - six exit faces and stay right here.
 
-			int knts[7] = {0, 0, 0, 0, 0, 0, 0};
+      int *knts = new int[GetTheApplication()->GetSize()];
+      for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+        knts[i] = 0;
 
-			int fbknt = 0;
+      int nKeepers = 0;
 			for (int i = 0; i < raylist->GetRayCount(); i++)
 			{
-        int clss = classification[i];
+        int dst = raylist->get_classification(i);
 
-				if (clss == Renderer::TERMINATED)
-					fbknt++;
-				else if (clss == Renderer::KEEP_HERE)
-					knts[6] ++;
-				else if (clss >= 0 && clss < 6)
-					knts[clss] ++;
-				else if (clss != Renderer::DROP_ON_FLOOR)
-					std::cerr << "CLASSIFICATION ERROR 1\n";
+				if (dst == Renderer::KEEP_HERE)
+					nKeepers++;
+				else if (dst >= 0)
+					knts[dst] ++;
+				else if (dst != Renderer::DROP_ON_FLOOR && dst != Renderer::TERMINATED)
+        {
+					std::cerr << "CLASSIFICATION ERROR 1 - " << dst << "\n";
+          raylist->print(i);
+        }
 			}
 
 			// Allocate a RayList for each remote destination's rays and the keepers.
@@ -544,8 +580,10 @@ public:
 			// They'll bound up in a SendRays message later, without a copy. 7 lists, for
 			// each of 6 faces and stay here
 
-			RayList *ray_lists[7];
-			for (int i = 0; i < 7; i++)
+			RayList **ray_lists = new RayList*[GetTheApplication()->GetSize()];
+      RayList *keepers = (nKeepers > 0) ? new RayList(renderer, renderingSet, rendering, nKeepers, raylist->GetFrame(), raylist->GetType()) : (RayList *)NULL;
+        
+			for (int i = 0; i < GetTheApplication()->GetSize(); i++)
 			{
 				if (knts[i])
 					ray_lists[i]   = new RayList(renderer, renderingSet, rendering, knts[i], raylist->GetFrame(), raylist->GetType());
@@ -556,16 +594,11 @@ public:
 											 // the output ray list
 			}
 
-
-			// Now we sort the rays based on the classification.   If TERMINATED
-			// and the FB is local,  just do it.  Otherwise, set up a message buffer.
-
-      renderer->HandleTerminatedRays(raylist, classification);
-
+      nKeepers = 0;
 			for (int i = 0; i < raylist->GetRayCount(); i++)
 			{
-				int clss = classification[i];
-				if (clss >= 0 && clss <= 6)
+        int clss = raylist->get_classification(i);
+				if (clss >= 0)
 				{
 					if (knts[clss] >= ray_lists[clss]->GetRayCount())
 						std::cerr << "CLASSIFICATION ERROR 2\n";
@@ -573,115 +606,119 @@ public:
 					RayList::CopyRay(raylist, i, ray_lists[clss], knts[clss]);
 					knts[clss]++;
 				}
-            }
+        else if (clss == Renderer::KEEP_HERE)
+					RayList::CopyRay(raylist, i, keepers, nKeepers++);
+      }
 
-			for (int i = 0; i < 6; i++)
+			for (int i = 0; i < GetTheApplication()->GetSize(); i++)
 				if (knts[i])
 				{
 #ifdef GXY_WRITE_IMAGES
 					// This process gets "ownership" of the new ray list until its recipient acknowleges 
 					renderingSet->IncrementRayListCount();
-					renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
+					renderer->SendRays(ray_lists[i], i);
 #else
 					if (renderingSet->IsActive(ray_lists[i]->GetFrame()))
 					{
-						renderer->SendRays(ray_lists[i], visualization->get_neighbor(i));
+						renderer->SendRays(ray_lists[i], i);
 					}
 #endif
-					delete ray_lists[i];
-				}
+          delete ray_lists[i];
+        }
 
-			if (classification) delete[] classification;
+      delete raylist;
+      delete[] knts;
+			delete[] ray_lists;
 
-			delete raylist;
+      // Just loop on the keepers.
 
-			// Just loop on the keepers.
-
-			raylist = ray_lists[6];
+			raylist = keepers;
 		}
 
 #ifdef GXY_WRITE_IMAGES
-		// Finished processing this ray list.  
-		renderingSet->DecrementRayListCount();
+    // Finished processing this ray list.  
+    renderingSet->DecrementRayListCount();
 #endif //  GXY_WRITE_IMAGES
 
-		return 0;
-	}
+    return 0;
+  }
 
 private:
-	RayList *raylist;
-	Renderer *renderer;
+  RayList *raylist;
+  Renderer *renderer;
 };
 
 void
 Renderer::Trace(RayList *raylist)
 {
-	RendererP      renderer  = raylist->GetTheRenderer();
-	RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-	RenderingP     rendering     = raylist->GetTheRendering();
-	VisualizationP visualization = rendering->GetTheVisualization();
+  RendererP      renderer  = raylist->GetTheRenderer();
+  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingP     rendering     = raylist->GetTheRendering();
+  VisualizationP visualization = rendering->GetTheVisualization();
 
-	// This is called when a list of rays is pulled off the
-	// RayQ.  When we are done with it we decrement the 
-	// ray list count (rather than when it was pulled off the
-	// RayQ) so we don't send a message upstream saying we are idle
-	// until we actually are.
+  // This is called when a list of rays is pulled off the
+  // RayQ.  When we are done with it we decrement the 
+  // ray list count (rather than when it was pulled off the
+  // RayQ) so we don't send a message upstream saying we are idle
+  // until we actually are.
 
-	RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
-	if (out)
-	{
-		if (out->GetRayCount() > renderer->GetMaxRayListSize())
-		{
-			vector<RayList*> rayLists;
-			out->Split(rayLists);
-			for (vector<RayList*>::iterator it = rayLists.begin(); it != rayLists.end(); it++)
-			{
-				RayList *s = *it;
-				renderingSet->Enqueue(*it);
-			}
-			delete out;
-		}
-		else
-			renderingSet->Enqueue(out);
-	}
+  TraceRays tracer(GetEpsilon());
+
+  RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
+  if (out)
+  {
+    if (out->GetRayCount() > renderer->GetMaxRayListSize())
+    {
+      vector<RayList*> rayLists;
+      out->Split(rayLists);
+      for (vector<RayList*>::iterator it = rayLists.begin(); it != rayLists.end(); it++)
+      {
+        RayList *s = *it;
+        renderingSet->Enqueue(*it);
+      }
+      delete out;
+    }
+    else
+      renderingSet->Enqueue(out);
+  }
 }
 
 void
 Renderer::ProcessRays(RayList *in)
 {
-	GetTheApplication()->GetTheThreadPool()->AddTask(new processRays_task(in, this));
+  GetTheApplication()->GetTheThreadPool()->AddTask(new processRays_task(in, this));
 }
 
 void
 Renderer::_dumpStats()
 {
-	stringstream s;
-	s << endl << "originated ray count " << originated_ray_count << " rays" << endl;
-	s << "sent ray count " << sent_ray_count << " rays" << endl;
-	s << "terminated ray count " << terminated_ray_count << " rays" << endl;
-	s << "secondary ray count " << secondary_ray_count << " rays" << endl;
-	s << "ProcessRays saw " << ProcessRays_input_count << " rays" << endl;
-	s << "ProcessRays continued " << ProcessRays_continued_count << " rays" << endl;
-	s << "ProcessRays sent " << sent_pixels_count << " pixels" << endl;
-	s << "sent to neighbors:";
+  stringstream s;
+  s << endl << "originated ray count " << originated_ray_count << " rays" << endl;
+  s << "sent ray count " << sent_ray_count << " rays" << endl;
+  s << "terminated ray count " << terminated_ray_count << " rays" << endl;
+  s << "secondary ray count " << secondary_ray_count << " rays" << endl;
+  s << "ProcessRays saw " << ProcessRays_input_count << " rays" << endl;
+  s << "ProcessRays continued " << ProcessRays_continued_count << " rays" << endl;
+  s << "ProcessRays sent " << sent_pixels_count << " pixels" << endl;
+  s << "sent to neighbors:";
 
-	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
+  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+    s << sent_to[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
 
-	s << "received from neighbors:";
-	for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-		s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
-	
-	APP_LOG(<< s.str());
+  s << "received from neighbors:";
+  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+    s << received_from[i] << (i == (GetTheApplication()->GetSize() - 1) ? "\n" : " ");
+  
+  APP_LOG(<< s.str());
 }
 
 bool
 Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
 {
-	char *ptr = (char *)contents->get();
+  char *ptr = (char *)contents->get();
   Key key = *(Key *)ptr;
   RendererP r = GetByKey(key);
-	r->_dumpStats();
+  r->_dumpStats();
   return false;
 }
 
@@ -689,134 +726,132 @@ void
 Renderer::SendRays(RayList *rays, int destination)
 {
 #ifdef GXY_WRITE_IMAGES
-	rays->GetTheRenderingSet()->IncrementInFlightCount();
+  rays->GetTheRenderingSet()->IncrementInFlightCount();
 #endif
 
-	int nReceived = rays->GetRayCount();
-	_sent_to(destination, nReceived);
+  int nReceived = rays->GetRayCount();
+  _sent_to(destination, nReceived);
 
-	SendRaysMsg msg(rays);
-	msg.Send(destination);
+  SendRaysMsg msg(rays);
+  msg.Send(destination);
 }
 
 bool
 Renderer::SendRaysMsg::Action(int sender)
 {
-	RayList *rayList = new RayList(this->contents);
+  RayList *rayList = new RayList(this->contents);
 
-	int nReceived = rayList->GetRayCount();
-	rayList->GetTheRenderer()->_received_from(sender, nReceived);
+  int nReceived = rayList->GetRayCount();
+  rayList->GetTheRenderer()->_received_from(sender, nReceived);
 
-	RenderingP rendering = rayList->GetTheRendering();
-	RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
-	if (! renderingSet)
-	{
-		cerr << "WARNING: ray list arrived before rendering/renderingSet" << endl;
-		delete rayList;
-		return false;
-	}
+  RenderingP rendering = rayList->GetTheRendering();
+  RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
+  if (! renderingSet)
+  {
+    cerr << "WARNING: ray list arrived before rendering/renderingSet" << endl;
+    delete rayList;
+    return false;
+  }
 
 #ifdef GXY_EVENT_TRACKING
-	class ReceiveRaysEvent : public Event
-	{
-	public:
-		ReceiveRaysEvent(int s, int c, Key r) : sender(s), count(c), rset(r) {};
+  class ReceiveRaysEvent : public Event
+  {
+  public:
+    ReceiveRaysEvent(int s, int c, Key r) : sender(s), count(c), rset(r) {};
 
-	protected:
-		void print(ostream& o)
-		{
-			Event::print(o);
-			o << "received " << count << " rays from " << sender << " for rset " << rset;
-		}
+  protected:
+    void print(ostream& o)
+    {
+      Event::print(o);
+      o << "received " << count << " rays from " << sender << " for rset " << rset;
+    }
 
-	private:
-		int sender;
-		int count;
-		Key rset;
-	};
+  private:
+    int sender;
+    int count;
+    Key rset;
+  };
 
-	GetTheEventTracker()->Add(new ReceiveRaysEvent(sender, rayList->GetRayCount(), rayList->GetTheRenderingSet()->getkey()));
+  GetTheEventTracker()->Add(new ReceiveRaysEvent(sender, rayList->GetRayCount(), rayList->GetTheRenderingSet()->getkey()));
 #endif
 
-	renderingSet->Enqueue(rayList);
+  renderingSet->Enqueue(rayList);
 
 #ifdef GXY_WRITE_IMAGES
-	Renderer::AckRaysMsg ack(renderingSet);
-	ack.Send(sender);
+  Renderer::AckRaysMsg ack(renderingSet);
+  ack.Send(sender);
 #endif // GXY_WRITE_IMAGES
-	
-	return false;
+  
+  return false;
 }
 
 int
 Renderer::SerialSize()
 {
-	return tracer.SerialSize() + sizeof(bool) + sizeof(int);
+  return sizeof(bool) + sizeof(int);
 }
 
 unsigned char *
 Renderer::Serialize(unsigned char *p)
 {
-	p = tracer.Serialize(p);
-	*(bool*)p = permute_pixels;
-	p += sizeof(bool);
-	*(int*)p = max_rays_per_packet;
-	p += sizeof(int);
+  *(bool*)p = permute_pixels;
+  p += sizeof(bool);
+  *(int*)p = max_rays_per_packet;
+  p += sizeof(int);
 
-	return p;
+  return p;
 }
 
 unsigned char *
 Renderer::Deserialize(unsigned char *p)
 {
-	p = tracer.Deserialize(p);
-	permute_pixels = *(bool*)p;
-	p += sizeof(bool);
-	max_rays_per_packet = *(int*)p;
-	p += sizeof(int);
+  permute_pixels = *(bool*)p;
+  p += sizeof(bool);
+  max_rays_per_packet = *(int*)p;
+  p += sizeof(int);
 
-	return p;
+  return p;
 }
 
 #ifdef GXY_WRITE_IMAGES
 Renderer::AckRaysMsg::AckRaysMsg(RenderingSetP rs) : AckRaysMsg(sizeof(Key))
 {
-	*(Key *)contents->get() = rs->getkey();
+  *(Key *)contents->get() = rs->getkey();
 }
 
 bool
 Renderer::AckRaysMsg::Action(int sender)
 {
-	RenderingSetP rs = RenderingSet::GetByKey(*(Key *)contents->get());
-	rs->DecrementInFlightCount();
-	rs->DecrementRayListCount();
-	return false;
+  RenderingSetP rs = RenderingSet::GetByKey(*(Key *)contents->get());
+  rs->DecrementInFlightCount();
+  rs->DecrementRayListCount();
+  return false;
 }
 #endif // GXY_WRITE_IMAGES
 
 void
-Renderer::Render(RenderingSetP rs)
+Renderer::Start(RenderingSetP rs)
 {
-	static int render_frame = 0;
+  static int render_frame = 0;
 #ifdef GXY_EVENT_TRACKING
 
-	class StartRenderingEvent : public Event
-	{
-	public:
-		StartRenderingEvent(Key r) : rset(r) {};
+  class StartRenderingEvent : public Event
+  {
+  public:
+    StartRenderingEvent(Key r) : rset(r) {};
 
-	protected:
-		void print(ostream& o)
-		{
-			Event::print(o);
-			o << "start rendering rset " << rset;
-		}
+  protected:
+    void print(ostream& o)
+    {
+      Event::print(o);
+      o << "start rendering rset " << rset;
+    }
 
-	private:
-		Key rset;
-	};
+  private:
+    Key rset;
+  };
 
-	GetTheEventTracker()->Add(new StartRenderingEvent(rs->getkey()));
+  GetTheEventTracker()->Add(new StartRenderingEvent(rs->getkey()));
 #endif
 
   RenderMsg msg(this, rs);

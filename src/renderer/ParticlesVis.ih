@@ -26,7 +26,7 @@
 
 struct ParticlesVis_ispc
 {
-  struct Vis_ispc vis;
+  struct MappedVis_ispc vis;
 };  
 
 typedef uniform ParticlesVis_ispc *uniform pParticlesVis_ispc;

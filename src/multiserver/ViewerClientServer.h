@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <sstream>
@@ -96,7 +98,7 @@ public:
 
     camera->Commit();
 
-    renderer->Render(renderingSet);
+    renderer->Start(renderingSet);
   }
 
 private:

@@ -23,8 +23,9 @@
 #include "Application.h"
 #include "KeyedDataObject.h"
 #include "MappedVis.h"
-#include "OSPUtil.h"
+#include "OsprayUtil.h"
 #include "ParticlesVis.h"
+#include "PathLinesVis.h"
 #include "TrianglesVis.h"
 #include "Vis_ispc.h"
 #include "VolumeVis.h"
@@ -46,6 +47,7 @@ Vis::Register()
 	MappedVis::Register();
 	VolumeVis::Register();
 	ParticlesVis::Register();
+	PathLinesVis::Register();
 	TrianglesVis::Register();
 }
 
@@ -62,13 +64,13 @@ Vis::allocate_ispc()
 void 
 Vis::initialize_ispc()
 {
-  ispc::Vis_initialize(GetISPC());
+  ispc::Vis_initialize(GetIspc());
 }
 
 void 
 Vis::destroy_ispc()
 {
-  ispc::Vis_destroy(GetISPC());
+  ispc::Vis_destroy(GetIspc());
 }
 
 bool 
@@ -99,16 +101,11 @@ Vis::LoadFromJSON(Value& v)
 	}
 }
 
-void 
-Vis::SaveToJSON(Value& v, Document& doc)
-{
-	v.AddMember("dataset", Value().SetString(name.c_str(), doc.GetAllocator()), doc.GetAllocator());
-}
-
 void
-Vis::SetTheOSPRayDataObject(OSPRayObjectP o)
+Vis::SetTheOsprayDataObject(OsprayObjectP o)
 {
-	ispc::Vis_set_data(GetISPC(), o->GetOSP_IE());
+  odata = o;
+	ispc::Vis_set_data(GetIspc(), o->GetOSP_IE());
 }
 
 int

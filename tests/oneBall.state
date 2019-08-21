@@ -23,7 +23,7 @@
         "operators":
           [
             {
-              "type": "Volume",
+              "type": "VolumeVis",
               "dataset": "oneBall",
               "isovalues": [ 0.25 ],
               "volume rendering": false,

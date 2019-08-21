@@ -27,7 +27,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <ospray/ospray.h>
+// #include <ospray/ospray.h>
 
 #include "galaxy.h"
 
@@ -192,7 +192,7 @@ main(int argc, char * argv[])
 		rs->AddRendering(r);
 		rs->Commit();
 
-		theRenderer->Render(rs);
+		theRenderer->Start(rs);
 
 #ifdef GXY_WRITE_IMAGES
 		rs->WaitForDone();

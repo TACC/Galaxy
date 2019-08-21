@@ -19,7 +19,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-VERSION="1.9.2"
+VERSION="1.10.0"
 
 if [ "x$1" != "x" ]; then
 	echo "usage: get-ispc.sh"
@@ -37,16 +37,18 @@ function fail
 OS_TYPE=$(uname)
 if [ "x${OS_TYPE}" == "xLinux" ]; then
 	TARGET_OS="linux"
+	TARGET_OS_DIR="Linux"
 elif [ "x${OS_TYPE}" == "xDarwin" ]; then
 	TARGET_OS="osx"
+	TARGET_OS_DIR="Darwin"
 else
 	fail "Unrecognized OS type '${OS_TYPE}'"
 fi
 
-TARGET_DIR="ispc-v${VERSION}-${TARGET_OS}"
-TARBALL="${TARGET_DIR}.tar.gz"
+TARGET_DIR="ispc-${VERSION}-${TARGET_OS_DIR}"
+TARBALL="ispc-v${VERSION}-${TARGET_OS}.tar.gz"
 
-if [ -x $TARGET_DIR/ispc ]; then
+if [ -x $TARGET_DIR/bin/ispc ]; then
 	echo "ispc for ${OS_TYPE} already exists. Nothing more to do."
 	exit 0
 fi
@@ -68,11 +70,11 @@ else
 	fail "Could not find ${TARBALL}"
 fi
 
-if [ -x ${TARGET_DIR}/ispc ]; then
+if [ -x ${TARGET_DIR}/bin/ispc ]; then
 	echo "ispc for ${OS_TYPE} successfully retrieved!"
 	rm ${TARBALL}
 else
-	fail "Executable ${TARGET_DIR}/ispc not found"
+	fail "Executable ${TARGET_DIR}/bin/ispc not found"
 fi
 
 exit 0

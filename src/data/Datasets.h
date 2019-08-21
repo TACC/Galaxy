@@ -17,13 +17,12 @@
 // limitations under the License.                                             //
 //                                                                            //
 // ========================================================================== //
-
-#pragma once
-
 /*! \file Datasets.h 
  * \brief container for KeyedDataObjects within Galaxy
  * \ingroup data
  */
+
+#pragma once
 
 #include <iostream>
 #include <map>
@@ -44,11 +43,11 @@ OBJECT_POINTER_TYPES(Datasets)
 
 //! container for KeyedDataObjects within Galaxy
 /*! \ingroup data 
- * \sa KeyedObject, KeyedDataObject
+ * \sa KeyedObject
  */
-class Datasets : public KeyedDataObject
+class Datasets : public KeyedObject
 {
-  KEYED_OBJECT_SUBCLASS(Datasets, KeyedDataObject)
+  KEYED_OBJECT_SUBCLASS(Datasets, KeyedObject)
 
 	using datasets_t = std::map<std::string, KeyedDataObjectP>;
 
@@ -123,15 +122,8 @@ public:
   //! load from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
 
-  //! save this Datasets to a Galaxy JSON specification 
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
-
   //! load from a file containing a JSON spec
   virtual bool LoadFromJSONFile(std::string);
-
-	bool IsTimeVarying(); //!< are the data in this Datasets time-varying?
-  bool WaitForTimestep(); //!< wait for receipt of next timestep for all attached data sources (e.g. a running simulation for in situ analysis)
-  bool LoadTimestep(); //!< broadcast a LoadTimestepMsg to all Galaxy processes for all attached data sources (e.g. a running simulation for in situ analysis)
 
 	using iterator = datasets_t::iterator;
 	//! return an iterator positioned at the beginning of the data list for this Datasets

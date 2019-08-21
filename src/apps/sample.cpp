@@ -243,8 +243,6 @@ main(int argc, char * argv[])
     // create empty distributed container for particles
     // particle partitioning will match volume partition
     ParticlesP samples = Particles::NewP();
-    samples->SetRadius(radius);
-    std::cerr << "radius is " << radius << "\n";
 
     // define action to perform on volume (see SampleMsg above)
     SampleMsg *smsg = new SampleMsg(volume, samples);
@@ -318,7 +316,7 @@ main(int argc, char * argv[])
     theRenderingSet->Commit();
 
 std::cerr << "RENDER\n";
-		theRenderer->Render(theRenderingSet);
+		theRenderer->Start(theRenderingSet);
 // #ifdef GXY_WRITE_IMAGES
 std::cerr << "WAIT\n";
 		theRenderingSet->WaitForDone();

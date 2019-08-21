@@ -22,7 +22,6 @@
 
 struct TraceRays_ispc
 {
-  float epsilon;
 };
 
 

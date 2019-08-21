@@ -23,12 +23,21 @@ cmake_minimum_required (VERSION 3.9)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
 include_directories(${gxy_framework_SOURCE_DIR} 
-									  ${gxy_renderer_SOURCE_DIR}
-									  ${gxy_sampler_SOURCE_DIR}
-									  ${gxy_data_SOURCE_DIR}
-									  ${Galaxy_BINARY_DIR}/src)
+                    ${gxy_renderer_SOURCE_DIR}
+					${gxy_sampler_SOURCE_DIR}
+                    ${OSPRAY_INCLUDE_DIRS}
+					${gxy_data_SOURCE_DIR}
+					${gxy_ospray_SOURCE_DIR}
+					${Galaxy_BINARY_DIR}/src)
 
-set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
+set(GALAXY_LIBRARIES 
+    gxy_framework 
+    gxy_renderer 
+    gxy_sampler
+    gxy_data 
+    gxy_ospray 
+    ${OSPRAY_LIBRARIES}
+    ${MPI_C_LIBRARIES})
 
 set(BINS "")
 
@@ -38,56 +47,60 @@ find_package(GLUT)
 
 if (GXY_WRITE_IMAGES)
 
-	add_executable(vis vis.cpp)
-	target_link_libraries(vis ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-	set(BINS vis ${BINS})
+    add_executable(gxywriter gxywriter.cpp)
+	target_link_libraries(gxywriter ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+	set(BINS gxywriter ${BINS})
 
-  # add_executable(samray samray.cpp)
-  # target_link_libraries(samray ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} gxy_sampler)
-  # set(BINS samray ${BINS})
+  add_executable(raysample raysample.cpp)
+  target_link_libraries(raysample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  set(BINS raysample ${BINS})
 
   add_executable(sample sample.cpp)
   target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
   set(BINS sample ${BINS})
 
+  add_executable(particleproc particleproc.cpp)
+  target_link_libraries(particleproc ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  set(BINS particleproc ${BINS})
+
+  add_executable(mhwriter mhwriter.cpp)
+	target_link_libraries(mhwriter ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+	set(BINS mhwriter ${BINS})
+
 else(GXY_WRITE_IMAGES)
 
-	add_executable(async-server async-server.cpp Socket.cpp ServerRendering.cpp quat.cpp)
-	target_link_libraries(async-server ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-	set(BINS async-server ${BINS})
+	add_executable(gxyviewer-server gxyviewer-server.cpp Socket.cpp ServerRendering.cpp)
+	target_link_libraries(gxyviewer-server ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+	set(BINS gxyviewer-server ${BINS})
 
-	add_executable(async-client-no-x async-client-no-x.cpp Socket.cpp)
-	target_link_libraries(async-client-no-x pthread ${PNG_LIBRARY_RELEASE})
-	set(BINS async-client-no-x ${BINS})
+	add_executable(gxyviewer-client-no-x gxyviewer-client-no-x.cpp Socket.cpp)
+	target_link_libraries(gxyviewer-client-no-x pthread ${PNG_LIBRARY_RELEASE})
+	set(BINS gxyviewer-client-no-x ${BINS})
 
 	if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
 		link_libraries(${X11_LIBRARIES})
 
-		add_executable(amh amh.cpp quat.cpp AsyncRendering.cpp)
-		target_link_libraries(amh ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
-		set(BINS amh ${BINS})
+		add_executable(mhviewer mhviewer.cpp AsyncRendering.cpp)
+		target_link_libraries(mhviewer ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+		set(BINS mhviewer ${BINS})
 
-		add_executable(async async.cpp quat.cpp AsyncRendering.cpp)
-		target_link_libraries(async ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+		add_executable(gxyviewer gxyviewer.cpp AsyncRendering.cpp)
+		target_link_libraries(gxyviewer ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
 
-		add_executable(async-worker async-worker.cpp AsyncRendering.cpp)
-		# target_link_libraries(async-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${OPENGL_LIBRARIES})
-		target_link_libraries(async-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+		add_executable(gxyviewer-worker gxyviewer-worker.cpp AsyncRendering.cpp)
+		# target_link_libraries(gxyviewer-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${OPENGL_LIBRARIES})
+		target_link_libraries(gxyviewer-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 
-		add_executable(async-client async-client.cpp Socket.cpp)
-		target_link_libraries(async-client ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} pthread)
+		add_executable(gxyviewer-client gxyviewer-client.cpp Socket.cpp)
+		target_link_libraries(gxyviewer-client ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} pthread)
 
-		set(BINS async-worker async async-client ${BINS})
+		set(BINS gxyviewer-worker gxyviewer gxyviewer-client ${BINS})
   else(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
-		message(WARNING "Could not find all GUI components for async client: X11 ${X11_FOUND}, OpenGL ${OpenGL_FOUND}, GLUT ${GLUT_FOUND}")
+		message(WARNING "Could not find all GUI components for gxyviewer client: X11 ${X11_FOUND}, OpenGL ${OpenGL_FOUND}, GLUT ${GLUT_FOUND}")
 	endif(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 
 endif (GXY_WRITE_IMAGES)
-
-add_executable(mh mh.cpp)
-target_link_libraries(mh ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-set(BINS mh ${BINS})
 
 option(GXP_APP_CINEMA "Build cimema database generator" ON)
 if (WITH_CINEMA)
@@ -96,13 +109,6 @@ if (WITH_CINEMA)
   target_link_libraries(cinema ${GALAXY_LIBRARIES})
 	set(BINS ${BINS} cinema)
 endif (WITH_CINEMA)
-
-option(GXY_APP_STATE "Build simple Galaxy renderer" OFF)
-if (GXY_APP_STATE)
-	add_executable(state state.cpp)
-	target_link_libraries(state ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-	set(BINS ${BINS} state)
-endif (GXY_APP_STATE)
 
 option(GXY_APP_PISO "Build the Galaxy piso app (requires VTK 8.x)" OFF)
 if(GXY_APP_PISO)
@@ -144,7 +150,5 @@ set(BINS particles ${BINS})
 add_executable(partition partition.cpp)
 target_link_libraries(partition ${MPI_LIBRARIES})
 set(BINS partition ${BINS})
-
-install(PROGRAMS blazar DESTINATION python)
 
 install(TARGETS ${BINS} DESTINATION bin)

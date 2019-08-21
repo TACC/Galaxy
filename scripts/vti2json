@@ -1,0 +1,85 @@
+
+#! /usr/bin/env python
+## ========================================================================== ##
+## Copyright (c) 2014-2019 The University of Texas at Austin.                 ##
+## All rights reserved.                                                       ##
+##                                                                            ##
+## Licensed under the Apache License, Version 2.0 (the "License");            ##
+## you may not use this file except in compliance with the License.           ##
+## A copy of the License is included with this software in the file LICENSE.  ##
+## If your copy does not contain the License, you may obtain a copy of the    ##
+## License at:                                                                ##
+##                                                                            ##
+##     https://www.apache.org/licenses/LICENSE-2.0                            ##
+##                                                                            ##
+## Unless required by applicable law or agreed to in writing, software        ##
+## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  ##
+## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           ##
+## See the License for the specific language governing permissions and        ##
+## limitations under the License.                                             ##
+##                                                                            ##
+## ========================================================================== ##
+
+import sys
+from vtk import *
+from vtk.util import numpy_support as ns
+from os.path import isfile
+
+rdr = vtkXMLImageDataReader()
+rdr.SetFileName(sys.argv[1])
+rdr.Update()
+o = rdr.GetOutput()
+
+for var in sys.argv[2:]:
+  rawname = sys.argv[1].rsplit('.', 1)[0] + '-' + var + '.raw'
+  jsnname = sys.argv[1].rsplit('.', 1)[0] + '-' + var + '.json'
+  volname = sys.argv[1].rsplit('.', 1)[0] + '-' + var + '.vol'
+
+  a = o.GetPointData().GetArray(var)
+  nd = ns.vtk_to_numpy(a)
+  if nd.dtype == 'float32':
+    dtype = 'float'
+  elif nd.dtype == 'float64'or nd.dtype == 'int32' or nd.dtype == 'int32':
+    nd = nd.astype('float32')
+    dtype = 'float'
+  else:
+    dtype = 'uchar'
+
+  if isfile(rawname):
+    print ("skipping raw", var, "data")
+  else:
+    of = open(rawname, 'wb')
+    nd.tofile(of)
+    of.close()
+
+  if isfile(jsnname):
+    print ("skipping", var, "osp file")
+  else:
+    sz = [o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]
+    nsz = [sz[j]/max(sz) for j in range(3)]
+    ssz = [2*nsz[j]/(o.GetExtent()[2*j+1] - o.GetExtent()[2*j]) for j in range(3)]
+    of = open(jsnname, 'w')
+    of.write('{\n')
+    of.write('  "type": "%s",\n' % dtype)
+    of.write('  "origin": [%f, %f, %f],\n' % tuple([-nsz[j] for j in range(3)]))
+    of.write('  "counts": [%d, %d, %d],\n' % o.GetDimensions())
+    of.write('  "delta": [%f, %f, %f],\n' % tuple(ssz))
+    of.write('  "rawdata": "%s",\n' % rawname)
+    of.write('  "number of components": %d\n' % a.GetNumberOfComponents())
+    of.write('}\n')
+    of.close()
+
+  if a.GetNumberOfComponents != 1:
+    print ("Can't create .vol file for vector data (use json)")
+  elif isfile(volname):
+    print ("skipping", var, "vol file")
+  else:
+    sz = [o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]
+    nsz = [sz[j]/max(sz) for j in range(3)]
+    ssz = [2*nsz[j]/(o.GetExtent()[2*j+1] - o.GetExtent()[2*j]) for j in range(3)]
+    of = open(volname, 'w')
+    of.write('%s\n' % dtype)
+    of.write('%f %f %f\n' % tuple([-nsz[j] for j in range(3)]))
+    of.write('%d %d %d\n' % o.GetDimensions())
+    of.write('%f %f %f\n' % tuple(ssz))
+    of.write(rawname + '\n')

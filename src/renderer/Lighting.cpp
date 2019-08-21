@@ -52,7 +52,7 @@ Lighting::allocate_ispc()
 void
 Lighting::initialize_ispc()
 {
-  ispc::Lighting_initialize(GetISPC());
+  ispc::Lighting_initialize(GetIspc());
 }
 
 void
@@ -243,50 +243,50 @@ Lighting::Deserialize(unsigned char *p)
 void
 Lighting::SetLights(int n, float *l, int *t)
 {
-  ispc::Lighting_SetLights(GetISPC(), n, l, t);
+  ispc::Lighting_SetLights(GetIspc(), n, l, t);
 }
 
 void 
 Lighting::GetLights(int& n, float*& l, int*& t)
 {
-  ispc::Lighting_GetLights(GetISPC(), &n, &l, &t);
+  ispc::Lighting_GetLights(GetIspc(), &n, &l, &t);
 }
 
 void
 Lighting::SetK(float ka, float kd)
 {
-  ispc::Lighting_SetK(GetISPC(), ka, kd);
+  ispc::Lighting_SetK(GetIspc(), ka, kd);
 }
  
 void
 Lighting::GetK(float& ka, float& kd)
 {
-  ispc::Lighting_GetK(GetISPC(), &ka, &kd);
+  ispc::Lighting_GetK(GetIspc(), &ka, &kd);
 }
  
 void
 Lighting::SetAO(int n, float r)
 {
-  ispc::Lighting_SetAO(GetISPC(), n, r);
+  ispc::Lighting_SetAO(GetIspc(), n, r);
 }
  
 void
 Lighting::GetAO(int& n, float& r)
 {
-  ispc::Lighting_GetAO(GetISPC(), &n, &r);
+  ispc::Lighting_GetAO(GetIspc(), &n, &r);
 }
  
 void
 Lighting::SetShadowFlag(bool b)
 {
-  ispc::Lighting_SetShadowFlag(GetISPC(), b ? 1 : 0);
+  ispc::Lighting_SetShadowFlag(GetIspc(), b ? 1 : 0);
 }
  
 void
 Lighting::GetShadowFlag(bool &b)
 {
   int bb;
-  ispc::Lighting_GetShadowFlag(GetISPC(), &bb);
+  ispc::Lighting_GetShadowFlag(GetIspc(), &bb);
   b = bb == 1;
 }
  

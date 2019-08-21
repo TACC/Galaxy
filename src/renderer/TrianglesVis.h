@@ -22,7 +22,7 @@
 
 /*! \file TrianglesVis.h 
  * \brief a visualization element operating on a triangle (tessellated) dataset within Galaxy
- * \ingroup data
+ * \ingroup render
  */
 
 #include "Application.h"
@@ -30,7 +30,7 @@
 #include "dtypes.h"
 #include "KeyedObject.h"
 #include "Triangles.h"
-#include "Vis.h"
+#include "GeometryVis.h"
 
 namespace gxy
 {
@@ -38,12 +38,12 @@ namespace gxy
 OBJECT_POINTER_TYPES(TrianglesVis)
 
 //! a visualization element operating on a triangle (tessellated) dataset within Galaxy
-/* \ingroup data 
- * \sa Vis, KeyedObject, ISPCObject, OSPRayObject
+/* \ingroup render 
+ * \sa Vis, KeyedObject, IspcObject, OsprayObject
  */
-class TrianglesVis : public Vis
+class TrianglesVis : public GeometryVis
 {
-  KEYED_OBJECT_SUBCLASS(TrianglesVis, Vis) 
+  KEYED_OBJECT_SUBCLASS(TrianglesVis, GeometryVis) 
 
 public:
 	~TrianglesVis(); //!< default destructor
@@ -60,7 +60,6 @@ protected:
 	virtual void destroy_ispc();
 
   virtual bool LoadFromJSON(rapidjson::Value&);
-  virtual void SaveToJSON(rapidjson::Value&, rapidjson::Document&);
 
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);

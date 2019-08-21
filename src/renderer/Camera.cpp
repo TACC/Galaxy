@@ -64,6 +64,7 @@ static int Xmax, Xmin, Ymax, Ymin;
 void
 generate_permutation(vector<int>& p, int num)
 {
+  std::cerr << "generate_permutation!\n";
   std::srand (unsigned(std::time(0)));
   p.clear();
   for (int i=1; i<num; ++i) p.push_back(i);
@@ -112,34 +113,6 @@ Camera::LoadCamerasFromJSON(Value& v, vector<CameraP>& cameras)
     std::cerr << "No cameras found\n";
 
   return true;
-}
-
-void
-Camera::SaveToJSON(Value&v, Document& doc)
-{
-  Value c(kObjectType);
-
-  Value e(kArrayType);
-  e.PushBack(Value().SetDouble(eye[0]), doc.GetAllocator());
-  e.PushBack(Value().SetDouble(eye[1]), doc.GetAllocator());
-  e.PushBack(Value().SetDouble(eye[2]), doc.GetAllocator());
-  c.AddMember("viewpoint", e, doc.GetAllocator());
-
-  Value d(kArrayType);
-  d.PushBack(Value().SetDouble(dir[0]), doc.GetAllocator());
-  d.PushBack(Value().SetDouble(dir[1]), doc.GetAllocator());
-  d.PushBack(Value().SetDouble(dir[2]), doc.GetAllocator());
-  c.AddMember("viewdirection", d, doc.GetAllocator());
-
-  Value u(kArrayType);
-  u.PushBack(Value().SetDouble(up[0]), doc.GetAllocator());
-  u.PushBack(Value().SetDouble(up[1]), doc.GetAllocator());
-  u.PushBack(Value().SetDouble(up[2]), doc.GetAllocator());
-  c.AddMember("viewup", u, doc.GetAllocator());
-
-  c.AddMember("aov", Value().SetDouble(aov), doc.GetAllocator());
-
-  v.AddMember("Camera", c, doc.GetAllocator());
 }
 
 bool 
@@ -319,21 +292,19 @@ Camera::set_viewup(float x, float y, float z)
 }
 
 static bool
-intersect_line_plane(vec3f& p0, vec3f& p1, vec3f& plane_xyz, float plane_w, vec3f& x)
+intersect_line_plane(vec3f& point_on_line, vec3f& line, vec3f& plane_abc, float plane_d, vec3f& intersection_point)
 {
-  float W = (p0 * plane_xyz) + plane_w;
-  vec3f V = (p0 - plane_xyz * W);
+  //  ((point_on_line + t*line) * plane_abc) + plane_d = 0    solve for t
+  //  
+  //  t = -((point_on_line * plane_abc) + plane_d) / (plane_abc * L)
+  //  intersection_point = point_on_line + t*line
 
-  vec3f w = p0 - V;
-  vec3f u = p1 - p0;
-  float N = -(plane_xyz * w);
-  float D = plane_xyz * u;
-  if (fabs(D) < 1e-6) return false;
-  else
-  {
-    x = p0 + (u * (N / D));
-    return true;
-  }
+  float denom = plane_abc * line;     // is the line perpendicular to the plane normal?  If so, it'll never hit
+  if (denom < 1e-6) 
+    return false;
+
+  intersection_point = point_on_line - (line * (((point_on_line  * plane_abc) + plane_d) / denom));
+  return true;
 }
 
 class InitialRaysEvent : public Event
@@ -383,29 +354,6 @@ protected:
   }
 };
 
-struct args
-{
-  args(int fnum, float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy, 
-       vec3f& vr, vec3f& vu, vec3f& veye, vec3f center, 
-       Box *lb, Box *gb, RendererP rndr, RenderingSetP rs, RenderingP r, Camera *c) :
-       fnum(fnum), iwidth(iw), ixmin(ixmin), iymin(iymin),
-       scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
-       vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
-       renderer(rndr), rs(rs), r(r), camera(c) {}
-  ~args() {}
-
-  int fnum;
-  float scaling;
-  int iwidth, ixmin, iymin;
-  float off_x, off_y;
-  vec3f vr, vu, veye, center;
-  Box *lbox, *gbox;
-  RendererP renderer;
-  RenderingSetP rs;
-  RenderingP r;
-  Camera *camera;
-};
-
 // Given a slew of camera parameters and a range of pixels that MIGHT
 // be first-hit, figure out which actually are, create a raylist for them,
 // and queue them for processing
@@ -418,46 +366,66 @@ Camera::spawn_rays_task::work()
   if (! a->rs->IsActive(a->fnum))
     return 0;
 
+  return a->camera->SpawnRays(a, start, count);
+}
+
+bool 
+Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
+{
 #if defined(GXY_EVENT_TRACKING)
   GetTheEventTracker()->Add(new CameraTaskStartEvent());
 #endif
     
   RayList *rlist = NULL;
 
+  bool is_ortho = a->camera->get_angle_of_view() == 0.0;
+
+  vec3f vdir, veye;
+  a->camera->get_viewdirection(vdir);
+  a->camera->get_viewpoint(veye);
+
   int dst = 0;
   for (int i = 0; i < count; i++)
   {
-      int pindex = i + start;
-      int x, y;
-    vec3f xy_wcs, vray;
+    int pindex = i + start;
+    int x, y;
+    vec3f xy_wcs, vray, vorigin;
 
-    if (a->camera->permute)
-    {
-      int p = a->camera->permutation[pindex];
-      x = a->ixmin + (p % a->iwidth);
-      y = a->iymin + (p / a->iwidth);
-    }
-    else
-    {
-      x = a->ixmin + (pindex % a->iwidth);
-      y = a->iymin + (pindex / a->iwidth);
-    }
+    // Figure out the pixel (x,y) for the pindex'th pixel
+
+    int p = a->camera->permute ? a->camera->permutation[pindex] : pindex;
+
+    x = a->ixmin + (p % a->iwidth);
+    y = a->iymin + (p / a->iwidth);
+
+    // Get pixel location in (-1,1) space
 
     float fx = (x - a->off_x) * a->scaling;
     float fy = (y - a->off_y) * a->scaling;
+
+    // Get the pixel location in 3D camera space 
 
     xy_wcs.x = a->center.x + fx * a->vr.x + fy * a->vu.x;
     xy_wcs.y = a->center.y + fx * a->vr.y + fy * a->vu.y;
     xy_wcs.z = a->center.z + fx * a->vr.z + fy * a->vu.z;
 
-    vray = xy_wcs - a->veye;
-    normalize(vray);
+    if (is_ortho)
+    {
+      vorigin = xy_wcs - vdir;
+      vray = vdir;
+    }
+    else
+    {
+      vorigin = a->veye;
+      vray = xy_wcs - a->veye;
+      normalize(vray);
+    }
 
     float gmin, gmax;
-    bool hit = a->gbox->intersect(a->veye, vray, gmin, gmax);
+    bool hit = a->gbox->intersect(vorigin, vray, gmin, gmax);
 
     float lmin, lmax;
-    if (hit) hit = a->lbox->intersect(a->veye, vray, lmin, lmax);
+    if (hit) hit = a->lbox->intersect(vorigin, vray, lmin, lmax);
 
     float d = fabs(lmin) - fabs(gmin);
     if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
@@ -466,9 +434,9 @@ Camera::spawn_rays_task::work()
 
       rlist->set_x(dst, x);
       rlist->set_y(dst, y);
-      rlist->set_ox(dst, a->veye.x);
-      rlist->set_oy(dst, a->veye.y);
-      rlist->set_oz(dst, a->veye.z);
+      rlist->set_ox(dst, vorigin.x);
+      rlist->set_oy(dst, vorigin.y);
+      rlist->set_oz(dst, vorigin.z);
       rlist->set_dx(dst, vray.x);
       rlist->set_dy(dst, vray.y);
       rlist->set_dz(dst, vray.z);
@@ -502,7 +470,6 @@ Camera::spawn_rays_task::work()
       delete rlist;
     }
   }
-
 
 #ifdef GXY_WRITE_IMAGES
   a->rs->DecrementActiveCameraCount(dst);        
@@ -558,6 +525,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
 
   check_env(renderer, width, height);
 
+
   permute = renderer->GetPermutePixels();
   if (permute && permutation.size() != width*height)
     generate_permutation(permutation, width*height);
@@ -565,12 +533,21 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
   vec3f veye(eye);
   vec3f vu(up);
   vec3f vdir(dir);
-  normalize(vdir);
 
   // Center is the center of the image plane in WCS
 
-  float d = 1.0 / tan(2*3.1415926*(aov/2.0)/360.0);
-  vec3f center = vec3f(eye) + (vdir * d);
+  vec3f center;
+  if (aov == 0.0) // that is, orthographic...
+  {
+    center = veye + vdir;
+    normalize(vdir);
+  }
+  else
+  {
+    float d = 1.0 / tan(2*3.1415926*(aov/2.0)/360.0);
+    normalize(vdir);
+    center = veye + (vdir * d);
+  }
 
   // Right is the normalized cross product of the camera view direction
   // and the up direction (which better not be colinear)
@@ -620,7 +597,14 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       vec3f proj, corner = lbox->corner(i);
   
       // This gives the projection of the corner onto the image plane in WCS
-      intersect_line_plane(veye, corner, vdir, w, proj);
+
+      if (aov == 0.0) // orthographic
+        intersect_line_plane(corner, vdir, vdir, w, proj);
+      else
+      {
+        vec3f line = corner - veye;
+        intersect_line_plane(corner, line, vdir, w, proj);
+      }
     
       // This gives the vector from the projection to the center of the image in WCS
       proj = proj - center;
@@ -630,6 +614,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       // Rotate the projection point around the Z axis - now in coordinates of
       // (vr, vu, vdir) but we don't care about Z - the points all lie in the image
       // plane Z=vdist
+
       float x = proj * vr;
       float y = proj * vu;
 
@@ -713,29 +698,40 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       int x = rayList->get_x(k);
       int y = rayList->get_y(k);
 
-      vec3f xy_wcs, vray;
+      vec3f xy_wcs, vray, vorigin = veye;
       float fx = (x - off_x) / pixel_scaling;
       float fy = (y - off_y) / pixel_scaling;
+
       xy_wcs.x = center.x + fx * vr.x + fy * vu.x;
       xy_wcs.y = center.y + fx * vr.y + fy * vu.y;
       xy_wcs.z = center.z + fx * vr.z + fy * vu.z;
-      vray = xy_wcs - veye;
-      normalize(vray);
+
+      if (aov == 0) // orthographic...
+      { 
+        vorigin = xy_wcs - vdir;
+        vray = vdir;
+      }
+      else
+      {
+        vorigin = veye;
+        vray = xy_wcs - veye;
+        normalize(vray);
+      }
 
       float gmin, gmax;
-      bool hit = gbox->intersect(veye, vray, gmin, gmax);
+      bool hit = gbox->intersect(vorigin, vray, gmin, gmax);
 
       float lmin, lmax;
-      if (hit) hit = lbox->intersect(veye, vray, lmin, lmax);
+      if (hit) hit = lbox->intersect(vorigin, vray, lmin, lmax);
 
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
       {
         rayList->set_x(kk, rayList->get_x(k));
         rayList->set_y(kk, rayList->get_y(k));
-        rayList->set_ox(kk, veye.x);
-        rayList->set_oy(kk, veye.y);
-        rayList->set_oz(kk, veye.z);
+        rayList->set_ox(kk, vorigin.x);
+        rayList->set_oy(kk, vorigin.y);
+        rayList->set_oz(kk, vorigin.z);
         rayList->set_dx(kk, vray.x);
         rayList->set_dy(kk, vray.y);
         rayList->set_dz(kk, vray.z);
@@ -800,13 +796,14 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
     int iheight = (iymax - ixmin) + 1;
 
     ThreadPool *threadpool = GetTheApplication()->GetTheThreadPool();
-    shared_ptr<args> a = shared_ptr<args>(new args(fnum, pixel_scaling, iwidth, 
-                                                   ixmin, iymin,
-                                                   off_x, off_y, 
-                                                   vr, vu, veye, center, 
-                                                   lbox, gbox, 
-                                                   renderer, renderingSet, 
-                                                   rendering, this));
+    shared_ptr<spawn_rays_args> a = shared_ptr<spawn_rays_args>(new spawn_rays_args(
+      fnum, pixel_scaling, iwidth, 
+      ixmin, iymin,
+      off_x, off_y, 
+      vr, vu, veye, center, 
+      lbox, gbox, 
+      renderer, renderingSet, 
+      rendering, this));
 
       for (int i = 0; i < (iwidth * iheight); i += rays_per_packet)
       {

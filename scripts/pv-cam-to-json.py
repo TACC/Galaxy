@@ -25,7 +25,7 @@ import json
 import xmltodict
 
 if len(sys.argv) != 3:
-		print "syntax: camera.xml  camera.json"
+		print ("syntax: camera.xml  camera.json")
 		sys.exit(0)
 
 with open(sys.argv[1], 'r') as f:

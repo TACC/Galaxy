@@ -1,0 +1,33 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "scalar",
+        "type": "Volume",
+        "filename": "noise-noise.json"
+      }
+    ],
+    "Visualizations":
+    [
+      {
+        "annotation": "",
+        "operators":
+          [
+            {
+              "type": "Volume",
+              "dataset": "scalar",
+              "isovalue": 0.0,
+              "volume rendering": false
+            }
+          ]
+      } 
+    ],    
+    "Cameras": [
+      {   
+        "aov"           : 30.0,
+        "viewpoint"     : [0.0, 0.0, -3.0],
+        "viewdirection" : [0.0, 0.0, 1.0],
+        "viewup"        : [0.0, 1.0, 0.0]
+      }
+    ]
+}   

@@ -19,19 +19,22 @@
 ## ========================================================================== ##
 
 cmake_minimum_required (VERSION 3.9)
+project (gxy_multiserver VERSION ${GALAXY_VERSION})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
 include_directories(${gxy_framework_SOURCE_DIR} 
 									  ${gxy_data_SOURCE_DIR}
+									  ${gxy_ospray_SOURCE_DIR}
 									  ${Galaxy_BINARY_DIR}/src)
 
-set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data ${MPI_C_LIBRARIES})
+set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${MPI_C_LIBRARIES})
 
 set(BINS "")
 set(SERVERS "")
 set(LIBS "")
 
+include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 include_directories(${GLUT_INCLUDE_DIR})
 
 add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerHandler.cpp MultiServerObject.cpp SocketHandler.cpp DynamicLibraryManager.cpp)
@@ -42,7 +45,7 @@ add_executable(msserver msserver.cpp CommandLine.cpp)
 target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework)
 set(BINS msserver ${BINS})
 
-add_executable(msviewer msviewer.cpp ClientWindow.cpp IF.cpp CommandLine.cpp)
+add_executable(msviewer msviewer.cpp ClientWindow.cpp JsonInterface.cpp CommandLine.cpp)
 target_link_libraries(msviewer gxy_multiserver ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} ${OSPRAY_LIBRARIES} pthread)
 set(BINS msviewer ${BINS})
 
@@ -50,7 +53,7 @@ add_executable(msclient msclient.cpp SocketHandler.cpp CommandLine.cpp)
 target_link_libraries(msclient pthread)
 set(BINS msclient ${BINS})
 
-add_library(gxy_module_viewer MODULE ViewerClientServer.cpp ServerRendering.cpp IF.cpp)
+add_library(gxy_module_viewer MODULE ViewerClientServer.cpp ServerRendering.cpp JsonInterface.cpp)
 target_link_libraries(gxy_module_viewer gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
 set(SERVERS gxy_module_viewer ${SERVERS})
 
@@ -65,10 +68,6 @@ set(SERVERS gxy_module_ping ${SERVERS})
 add_library(gxy_module_test MODULE TestClientServer.cpp)
 target_link_libraries(gxy_module_test gxy_multiserver gxy_framework)
 set(SERVERS gxy_module_test ${SERVERS})
-
-add_library(gxy_module_mhsampler MODULE MHSampleClientServer)
-target_link_libraries(gxy_module_mhsampler gxy_multiserver gxy_data gxy_framework)
-set(SERVERS gxy_module_mhsampler ${SERVERS})
 
 install(TARGETS ${BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})

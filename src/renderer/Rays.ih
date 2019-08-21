@@ -44,4 +44,5 @@ struct RayList_ispc
 	int   *y;
 	int   *type;
 	int   *term;
+	int   *classification;
 };

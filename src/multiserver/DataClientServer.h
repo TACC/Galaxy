@@ -18,18 +18,16 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <sstream>
-
-using namespace std;
 
 #include "MultiServerHandler.h"
 #include "Datasets.h"
 
 #include "rapidjson/filereadstream.h"
-
-using namespace rapidjson;
 
 namespace gxy
 {
