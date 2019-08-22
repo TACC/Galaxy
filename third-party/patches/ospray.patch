@@ -162,3 +162,27 @@ index b70fc0728..338d47028 100644
  
    FIND_PROGRAM(ISPC_EXECUTABLE ispc HINTS ${ISPC_DIR_HINT} DOC "Path to the ISPC executable.")
    IF (NOT ISPC_EXECUTABLE)
+diff --git a/ospray/CMakeLists.txt b/ospray/CMakeLists.txt
+index 951aedb67..3bd2969ae 100644
+--- a/ospray/CMakeLists.txt
++++ b/ospray/CMakeLists.txt
+@@ -14,6 +14,9 @@
+ ## limitations under the License.                                           ##
+ ## ======================================================================== ##
+ 
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ OPTION(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" ON)
+ MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
+ 
+@@ -276,6 +279,9 @@ OSPRAY_INSTALL_SDK_HEADERS(
+   common/Ray.ih
+   common/Texture.h
+   common/Util.h
++  # GALAXY BEGIN ADDED CODE - by Galaxy patch
++  common/safe_gather.ih
++  # GALAXY END ADDED CODE - by Galaxy patch
+   DESTINATION common
+ )
+ 

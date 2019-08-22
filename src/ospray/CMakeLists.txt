@@ -34,12 +34,9 @@ if (COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 
-set(OSPRAY_SOURCEDIR ${Galaxy_SOURCE_DIR}/third-party/ospray CACHE STRING "root of OSPRAY source tree")
-include_directories_ispc(${EMBREE_INCLUDE_DIRS} 
-                         ${OSPRAY_INCLUDE_DIR}/ospray
-                         ${OSPRAY_SOURCEDIR}
-                         ${OSPRAY_SOURCEDIR}/ospray
-                         ${OSPRAY_SOURCEDIR}/ospray/include)
+include_directories_ispc(${EMBREE_INCLUDE_DIRS}                   
+                         ${OSPRAY_INCLUDE_DIRS}
+                         )
 
 include_directories(${Galaxy_BINARY_DIR}/src
                     ${Galaxy_SOURCE_DIR}/src/framework
@@ -48,7 +45,12 @@ include_directories(${Galaxy_BINARY_DIR}/src
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS})
 
-set (ISPC_SOURCES DataDrivenPathLines.ispc DataDrivenSpheres.ispc DataDrivenTriangleMesh.ispc)
+set (ISPC_SOURCES 
+  DataDrivenPathLines.ispc 
+  DataDrivenSpheres.ispc 
+  DataDrivenTriangleMesh.ispc
+  )
+
 set (CPP_SOURCES 
   force_ospray_library_load.cpp
   DataDrivenPathLines.cpp
@@ -60,7 +62,7 @@ set (CPP_SOURCES
   OsprayPathLines.cpp
   OsprayVolume.cpp
   OsprayUtil.cpp
-)
+  )
 
 install(FILES
   OsprayObject.h

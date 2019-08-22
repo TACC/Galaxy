@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include "math/vec.ih"
-#include "math/box.ih"
-#include "common/Ray.ih"
-#include "common/Model.ih"
-#include "geometry/Geometry.ih"
-#include "math/sampling.ih"
+#include <SDK/math/vec.ih>
+#include <SDK/math/box.ih>
+#include <SDK/common/Ray.ih>
+#include <SDK/common/Model.ih>
+#include <SDK/geometry/Geometry.ih>
+#include <SDK/math/sampling.ih>
 
 
 //! ispc-equivalent of the ospray::DataDrivenTriangleMesh geometry

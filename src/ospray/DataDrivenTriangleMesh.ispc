@@ -16,10 +16,10 @@
 
 // ospray
 #include "DataDrivenTriangleMesh.ih"
-#include "common/Model.ih"
-#include "common/safe_gather.ih"
-#include "math/LinearSpace.ih"
-#include "math/sampling.ih"
+#include <SDK/common/Model.ih>
+#include <SDK/common/safe_gather.ih>
+#include <SDK/math/LinearSpace.ih>
+#include <SDK/math/sampling.ih>
 
 int32 DataDrivenTriangleMesh_getMaterialID(
     const Geometry *uniform const _self
