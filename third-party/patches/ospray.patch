@@ -69,10 +69,10 @@ index d16d44b91..00ba6e8f0 100644
  endmacro()
  
 diff --git a/components/ospcommon/cmake/ispc.cmake b/components/ospcommon/cmake/ispc.cmake
-index b70fc0728..5350ba335 100644
+index b70fc0728..338d47028 100644
 --- a/components/ospcommon/cmake/ispc.cmake
 +++ b/components/ospcommon/cmake/ispc.cmake
-@@ -14,29 +14,67 @@
+@@ -14,29 +14,69 @@
  ## limitations under the License.                                           ##
  ## ======================================================================== ##
  
@@ -151,6 +151,8 @@ index b70fc0728..5350ba335 100644
 +      # GALAXY BEGIN ADDED CODE - by Galaxy patch
 +      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc/ispc-${v}${ver}-${suffix}${d})
 +      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/third-party/ispc/ispc-${v}${ver}-${suffix}${d})
++      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc/install/ispc-${v}${ver}-${suffix}${d})
++      LIST(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/third-party/ispc/install/ispc-${v}${ver}-${suffix}${d})
 +      # GALAXY END ADDED CODE - by Galaxy patch
 +     endforeach()
 +    endforeach()

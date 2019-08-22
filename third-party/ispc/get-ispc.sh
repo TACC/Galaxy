@@ -45,7 +45,7 @@ else
 	fail "Unrecognized OS type '${OS_TYPE}'"
 fi
 
-TARGET_DIR="ispc-${VERSION}-${TARGET_OS_DIR}"
+TARGET_DIR="install/ispc-${VERSION}-${TARGET_OS_DIR}"
 TARBALL="ispc-v${VERSION}-${TARGET_OS}.tar.gz"
 
 if [ -x $TARGET_DIR/bin/ispc ]; then
@@ -65,7 +65,10 @@ fi
 
 if [ -f ${TARBALL} ]; then
 	echo "untarring ${TARBALL}"
-	tar xf ${TARBALL}
+	mkdir -p install
+	pushd install
+	tar xf ../${TARBALL}
+	popd
 else
 	fail "Could not find ${TARBALL}"
 fi
