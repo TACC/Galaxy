@@ -97,6 +97,7 @@ script:
   - git submodule update --init
   - pushd third-party/embree && git apply ../patches/embree.patch ; popd
   - pushd third-party/ospray && git apply ../patches/ospray.patch ; popd
+  - pushd third-party/rapidjson && git apply ../patches/rapidjson.patch ; popd
   - scripts/install-third-party.sh
 
 

@@ -80,7 +80,7 @@ for tp_lib_dir in embree ospray rapidjson; do
 	else 
 		report "building ${tp_lib_dir}..."
 		pushd $tp_lib_dir
-		mkdir build
+		mkdir -p build
 		cd build
 		${CMAKE_BIN} "${CMAKE_FLAGS}" .. && make -j 4 install
 		if [ $? != 0 ]; then
