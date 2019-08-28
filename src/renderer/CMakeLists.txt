@@ -34,6 +34,7 @@ if (COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 find_library(PNG_LIBRARY_RELEASE png)
+find_library(Z_LIBRARY_RELEASE z)
 
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
@@ -88,7 +89,7 @@ set (CPP_SOURCES
 
 if (ospray_DIR)
   ospray_create_library(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} COMPONENT lib)
+    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE} COMPONENT lib)
   set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   # install(TARGETS gxy_renderer DESTINATION lib)
 endif()

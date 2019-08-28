@@ -74,7 +74,7 @@ else(GXY_WRITE_IMAGES)
 	set(BINS gxyviewer-server ${BINS})
 
 	add_executable(gxyviewer-client-no-x gxyviewer-client-no-x.cpp Socket.cpp)
-	target_link_libraries(gxyviewer-client-no-x pthread ${PNG_LIBRARY_RELEASE})
+	target_link_libraries(gxyviewer-client-no-x pthread ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE})
 	set(BINS gxyviewer-client-no-x ${BINS})
 
 	if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
@@ -93,7 +93,7 @@ else(GXY_WRITE_IMAGES)
 		target_link_libraries(gxyviewer-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 
 		add_executable(gxyviewer-client gxyviewer-client.cpp Socket.cpp)
-		target_link_libraries(gxyviewer-client ${PNG_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} pthread)
+		target_link_libraries(gxyviewer-client ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} pthread)
 
 		set(BINS gxyviewer-worker gxyviewer gxyviewer-client ${BINS})
   else(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
