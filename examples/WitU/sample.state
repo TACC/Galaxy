@@ -1,0 +1,37 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "scalar",
+        "type": "Volume",
+        "filename": "WitU-Density.json"
+      },
+      {
+        "name": "vectors",
+        "type": "Volume",
+        "filename": "WitU-vectors.json"
+      }
+    ],
+    "Visualizations":
+    [
+      {
+        "annotation": "",
+        "operators":
+          [
+            {
+              "type": "IsoSampler",
+              "dataset": "scalar",
+              "isovalue": 3
+            }
+          ]
+      }
+    ],
+    "Cameras": [
+      {
+        "aov"           : 30.0,
+        "viewpoint"     : [0.0, 0.0, -20.0],
+        "viewdirection" : [0.0, 0.0, 1.0],
+        "viewup"        : [0.0, 1.0, 0.0]
+      }
+    ]
+}
