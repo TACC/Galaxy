@@ -88,6 +88,15 @@ MappedVis::LoadFromJSON(Value& v)
 {
 	Vis::LoadFromJSON(v);
 
+	if (v.HasMember("data range"))
+    {
+        data_range_min = v["data range"][0].GetDouble();
+        data_range_max = v["data range"][1].GetDouble();
+        data_range = true;
+    }
+    else
+        data_range = false;
+           
 	if (v.HasMember("transfer function"))
 	{
     string fname = v["transfer function"].GetString();
@@ -284,7 +293,10 @@ MappedVis::local_commit(MPI_Comm c)
   ospSetData(transferFunction, "opacities", oAlphas);
   ospRelease(oAlphas);
 
-  ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
+  if (data_range)
+      ospSet2f(transferFunction, "valueRange", data_range_min, data_range_max);
+  else
+      ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
 
   ospCommit(transferFunction);
   
