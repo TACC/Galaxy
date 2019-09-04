@@ -1,5 +1,4 @@
 language: cpp
-n
 dist: xenial # get a semi-modern linux
 
 branches:
