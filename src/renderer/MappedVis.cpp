@@ -199,13 +199,14 @@ MappedVis::serialSize()
 {
 	return super::serialSize() + sizeof(Key) +
 				 sizeof(int) + colormap.size()*sizeof(vec4f) +
-				 sizeof(int) + opacitymap.size()*sizeof(vec2f);
+				 sizeof(int) + opacitymap.size()*sizeof(vec2f) +
+                 sizeof(float) + sizeof(float) + sizeof(bool);
 }
 
 unsigned char *
 MappedVis::deserialize(unsigned char *ptr) 
 {
-	ptr = super::deserialize(ptr);
+  ptr = super::deserialize(ptr);
 
   int nc = *(int *)ptr;
   ptr += sizeof(int);
@@ -217,25 +218,43 @@ MappedVis::deserialize(unsigned char *ptr)
   SetOpacityMap(no, (vec2f *)ptr);
   ptr += no * sizeof(vec2f);
 
-	return ptr;
+  data_range_min = *(float *)ptr;
+  ptr += sizeof(float);
+
+  data_range_max = *(float *)ptr;
+  ptr += sizeof(float);
+
+  data_range = *(bool *)ptr;
+  ptr += sizeof(bool);
+
+  return ptr;
 }
 
 unsigned char *
 MappedVis::serialize(unsigned char *ptr)
 {
-	ptr = super::serialize(ptr);
+  ptr = super::serialize(ptr);
 
-	*(int *)ptr = colormap.size();
-	ptr += sizeof(int);
-	memcpy(ptr, colormap.data(), colormap.size()*sizeof(vec4f));
-	ptr += colormap.size()*sizeof(vec4f);
+  *(int *)ptr = colormap.size();
+  ptr += sizeof(int);
+  memcpy(ptr, colormap.data(), colormap.size()*sizeof(vec4f));
+  ptr += colormap.size()*sizeof(vec4f);
 
-	*(int *)ptr = opacitymap.size();
-	ptr += sizeof(int);
-	memcpy(ptr, opacitymap.data(), opacitymap.size()*sizeof(vec2f));
-	ptr += opacitymap.size()*sizeof(vec2f);
+  *(int *)ptr = opacitymap.size();
+  ptr += sizeof(int);
+  memcpy(ptr, opacitymap.data(), opacitymap.size()*sizeof(vec2f));
+  ptr += opacitymap.size()*sizeof(vec2f);
 
-	return ptr;
+  *(float *)ptr = data_range_min;
+  ptr += sizeof(float);
+
+  *(float *)ptr = data_range_max;
+  ptr += sizeof(float);
+
+  *(bool *)ptr = data_range; 
+  ptr += sizeof(bool);
+
+  return ptr;
 }
 
 bool 
