@@ -167,6 +167,12 @@ ViewerClientServer::handle(string line)
     if (ss.fail())
       return string("error window command needs width and height as integers");
 
+    // DHR: not clear what to do here ...
+    GetTheCamera()->set_width(w);
+    GetTheCamera()->set_height(h);
+    GetTheCamera()->Commit();
+
+    // assuming the Rendering already has the camera ...
     GetTheRendering()->SetTheSize(w, h);
     GetTheRendering()->SetHandler(this);
     GetTheRendering()->Commit();
