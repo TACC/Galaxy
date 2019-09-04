@@ -90,13 +90,14 @@ MappedVis::LoadFromJSON(Value& v)
 
 	if (v.HasMember("data range"))
     {
-      // DATA RANGE: ignore for now: failing tests
-      // data_range_min = v["data range"][0].GetDouble();
-      // data_range_max = v["data range"][1].GetDouble();
-      // data_range = true;
+      data_range_min = v["data range"][0].GetDouble();
+      data_range_max = v["data range"][1].GetDouble();
+      data_range = true;
     }
     else
+    {
         data_range = false;
+    }
            
 	if (v.HasMember("transfer function"))
 	{
