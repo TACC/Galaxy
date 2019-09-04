@@ -47,12 +47,12 @@ using namespace gxy;
 using namespace std;
 using namespace rapidjson;
 
-#define WIDTH  1920
-#define HEIGHT 1080
+// #define WIDTH  1920
+// #define HEIGHT 1080
 
 // default values
-int   width  = WIDTH;
-int   height = HEIGHT;
+// int   width  = WIDTH;
+// int   height = HEIGHT;
 int   maxsteps = 2000;
 float h = 0.2;
 float z = 1e-12;
@@ -65,7 +65,7 @@ syntax(char *a)
   cerr << "syntax: " << a << " sampling.state rendering.state [options]" << endl;
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;
-  cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
+  // cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -h h          portion of cell size to step (0.2)" << endl;
   cerr << "  -z z          termination magnitude of vectors (1e-12)" << endl;
   cerr << "  -d factor     downsampling factor for sampler pass (0)" << endl;
@@ -82,7 +82,7 @@ main(int argc, char * argv[])
   string rendering_state = "";
   char *dbgarg;
   bool dbg = false;
-  int downsample = 0;
+  // int downsample = 0;
   bool printsamples = false;
 
 
@@ -98,8 +98,8 @@ main(int argc, char * argv[])
       switch (argv[i][1])
       {
         case 'D': dbg = true, dbgarg = argv[i] + 2; break;
-        case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
-        case 'd': downsample = atoi(argv[++i]); break;
+        // case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
+        // case 'd': downsample = atoi(argv[++i]); break;
         case 'm': maxsteps = atoi(argv[++i]); break;
         case 'h': h = atof(argv[++i]); break;
         case 'z': z = atof(argv[++i]); break;
@@ -179,8 +179,8 @@ main(int argc, char * argv[])
         RenderingP r = Rendering::NewP();
         r = Rendering::NewP();
         r->SetTheOwner(0);
-        r->SetTheSize(width >> downsample, height >> downsample);
         r->SetTheDatasets(theDatasets);
+            // this call now sets size
         r->SetTheCamera(c);
         r->SetTheVisualization(v);
         r->Commit();
@@ -289,7 +289,6 @@ main(int argc, char * argv[])
         RenderingP r = Rendering::NewP();
         r = Rendering::NewP();
         r->SetTheOwner(0);
-        r->SetTheSize(width, height);
         r->SetTheDatasets(theDatasets);
         r->SetTheCamera(c);
         r->SetTheVisualization(v);

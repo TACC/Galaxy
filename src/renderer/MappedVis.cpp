@@ -88,7 +88,6 @@ MappedVis::LoadFromJSON(Value& v)
 {
 	Vis::LoadFromJSON(v);
 
-/*
 	if (v.HasMember("data range"))
     {
         data_range_min = v["data range"][0].GetDouble();
@@ -97,7 +96,6 @@ MappedVis::LoadFromJSON(Value& v)
     }
     else
         data_range = false;
-*/
            
 	if (v.HasMember("transfer function"))
 	{
@@ -294,13 +292,10 @@ MappedVis::local_commit(MPI_Comm c)
   OSPData oAlphas = ospNewData(256, OSP_FLOAT, opacity);
   ospSetData(transferFunction, "opacities", oAlphas);
   ospRelease(oAlphas);
-/*
   if (data_range)
       ospSet2f(transferFunction, "valueRange", data_range_min, data_range_max);
   else
       ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
-*/
-  ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
   ospCommit(transferFunction);
   
   ispc::MappedVis_set_transferFunction(ispc, ospray_util::GetIE(transferFunction));

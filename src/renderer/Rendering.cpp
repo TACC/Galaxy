@@ -256,7 +256,11 @@ Rendering::local_reset()
 }
 
 CameraP Rendering::GetTheCamera() { return camera; }
-void Rendering::SetTheCamera(CameraP c) { camera = c; }
+void Rendering::SetTheCamera(CameraP c) 
+{ 
+  camera = c;
+  SetTheSize(c->get_width(), c->get_height());
+}
 
 DatasetsP Rendering::GetTheDatasets() { return datasets; }
 void Rendering::SetTheDatasets(DatasetsP ds) { datasets = ds; }

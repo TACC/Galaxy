@@ -80,6 +80,7 @@ Camera::Register()
 bool
 Camera::LoadCamerasFromJSON(Value& v, vector<CameraP>& cameras)
 {
+  std::cerr << "loading cameras\n";
   if (v.HasMember("Camera") || v.HasMember("Cameras"))
   {
     Value& c = v.HasMember("Camera") ? v["Camera"] : v["Cameras"];
@@ -238,7 +239,9 @@ Camera::LoadFromJSON(Value& v)
   else
   {
     if (v.HasMember("annotation"))
+    {
       SetAnnotation(string(v["annotation"].GetString()));
+    }
 
     eye[0] = v["viewpoint"][0].GetDouble();
     eye[1] = v["viewpoint"][1].GetDouble();
@@ -263,11 +266,26 @@ Camera::LoadFromJSON(Value& v)
       return false;
     }
 
+    if (v.HasMember("width"))
+    {
+      std::cerr << "Loading camera: 04" << std::endl;
+      camwidth = v["width"].GetInt();
+      std::cerr << "width set: " << camwidth << std::endl;
+    }
+
+    if (v.HasMember("height"))
+    {
+      camheight = v["height"].GetInt();
+      std::cerr << "height set: " << camheight << std::endl;
+    }
+
     up[0] = v["viewup"][0].GetDouble();
     up[1] = v["viewup"][1].GetDouble();
     up[2] = v["viewup"][2].GetDouble();
 
     aov = v["aov"].GetDouble();
+
+    std::cerr << "Here 01" << std::endl;
   }
 
   return true;
@@ -832,7 +850,7 @@ Camera::print()
 int 
 Camera::serialSize()
 {
-  return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) + sizeof(eye) + sizeof(dir) + sizeof(up) + sizeof(float);
+  return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) + sizeof(eye) + sizeof(dir) + sizeof(up) + sizeof(float) + sizeof(int) + sizeof(int);
 }
 
 unsigned char *
@@ -858,6 +876,12 @@ Camera::serialize(unsigned char *p)
   *(float *)p = aov;
   p += sizeof(float);
 
+  *(int *)p = camwidth;
+  p += sizeof(int);
+
+  *(int *)p = camheight;
+  p += sizeof(int);
+
   return p;
 }
 
@@ -880,6 +904,12 @@ Camera::deserialize(unsigned char *p)
 
   set_angle_of_view(*(float *)p);
   p += sizeof(float);
+
+  set_width(*(int *)p);
+  p += sizeof(int);
+
+  set_height(*(int *)p);
+  p += sizeof(int);
 
   return p;
 }
