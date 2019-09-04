@@ -53,6 +53,8 @@ using namespace rapidjson;
 // default values
 int   width  = WIDTH;
 int   height = HEIGHT;
+int   sam_width  = WIDTH;
+int   sam_height = HEIGHT;
 int   maxsteps = 2000;
 float h = 0.2;
 float z = 1e-12;
@@ -65,6 +67,7 @@ syntax(char *a)
   cerr << "syntax: " << a << " sampling.state rendering.state [options]" << endl;
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;
+  cerr << "  -s x y        sample size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -w x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -h h          portion of cell size to step (0.2)" << endl;
   cerr << "  -z z          termination magnitude of vectors (1e-12)" << endl;
@@ -83,6 +86,7 @@ main(int argc, char * argv[])
   bool dbg = false;
   bool printsamples = false;
   bool override_windowsize = false;
+  bool override_samplesize = false;
 
 
   ospInit(&argc, (const char **)argv);
@@ -99,6 +103,10 @@ main(int argc, char * argv[])
         case 'D': dbg = true, dbgarg = argv[i] + 2; break;
         case 'm': maxsteps = atoi(argv[++i]); break;
         // case 'h': h = atof(argv[++i]); break;
+        case 's': sam_width = atoi(argv[++i]); 
+                  sam_height = atoi(argv[++i]); 
+                  override_samplesize = true;
+                  break;
         case 'w': width = atoi(argv[++i]); 
                   height = atoi(argv[++i]); 
                   override_windowsize = true;
@@ -181,6 +189,12 @@ main(int argc, char * argv[])
         r = Rendering::NewP();
         r->SetTheOwner(0);
         r->SetTheDatasets(theDatasets);
+        if (override_samplesize)
+        {
+            std::cerr << "Overriding sampling width, height: " << sam_width << ", " << sam_height << std::endl;
+            c->set_width(sam_width);
+            c->set_height(sam_height);
+        }
             // this call now sets size
         r->SetTheCamera(c);
         r->SetTheVisualization(v);
