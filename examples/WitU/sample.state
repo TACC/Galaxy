@@ -37,8 +37,7 @@
         "viewpoint"     : [0.0, 0.0, -20.0],
         "viewdirection" : [0.0, 0.0, 1.0],
         "viewup"        : [0.0, 1.0, 0.0],
-        "width"         : 50,
-        "height"        : 50
+        "dimensions"    : [50, 50]
       }
     ]
 }

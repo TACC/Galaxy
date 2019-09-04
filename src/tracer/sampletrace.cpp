@@ -102,7 +102,6 @@ main(int argc, char * argv[])
       {
         case 'D': dbg = true, dbgarg = argv[i] + 2; break;
         case 'm': maxsteps = atoi(argv[++i]); break;
-        // case 'h': h = atof(argv[++i]); break;
         case 's': sam_width = atoi(argv[++i]); 
                   sam_height = atoi(argv[++i]); 
                   override_samplesize = true;

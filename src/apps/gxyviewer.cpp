@@ -334,6 +334,8 @@ render_thread(void *d)
 	normalize(viewright);
 	orig_viewup = cross(viewright, orig_viewdirection);
 	theCamera->set_viewup(orig_viewup);
+    theCamera->set_width(width);
+    theCamera->set_height(height);
 	theCamera->Commit();
 
   theDatasets = Datasets::NewP();
@@ -347,9 +349,10 @@ render_thread(void *d)
 	theRendering = AsyncRendering::NewP();
 	theRendering->SetMaxAge(age, fadeout);
 	theRendering->SetTheOwner(0);
-	theRendering->SetTheSize(width, height);
 	theRendering->SetTheDatasets(theDatasets);
 	theRendering->SetTheVisualization(theVisualization);
+    theCamera->set_width(width);
+    theCamera->set_height(height);
 	theRendering->SetTheCamera(theCamera);
 	theRendering->Commit();
 

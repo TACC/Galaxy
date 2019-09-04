@@ -73,6 +73,7 @@ int main(int argc,  char *argv[])
   bool clientserver = false;
   ClientServer cs;
   int maxConcurrentRenderings = 99999999;
+  bool override_windowsize = false;
 
   for (int i = 1; i < argc; i++)
   {
@@ -80,7 +81,12 @@ int main(int argc,  char *argv[])
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strcmp(argv[i], "-c")) clientserver = true;
     else if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
+    else if (!strcmp(argv[i], "-s"))
+    {
+        width = atoi(argv[++i]);
+        height = atoi(argv[++i]);
+        override_windowsize = true;
+    }
     else if (!strcmp(argv[i], "-S")) skip = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-N")) maxConcurrentRenderings = atoi(argv[++i]);
     else if (statefile == "")   statefile = argv[i];
@@ -195,7 +201,11 @@ int main(int argc,  char *argv[])
         RenderingP theRendering = Rendering::NewP();
 
         theRendering->SetTheOwner(index++ % mpiSize );
-        theRendering->SetTheSize(width, height);
+        if (override_windowsize)
+        {
+            c->set_width(width);
+            c->set_height(height);
+        }
         theRendering->SetTheCamera(c);
         theRendering->SetTheDatasets(theDatasets);
         theRendering->SetTheVisualization(v);

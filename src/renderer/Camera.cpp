@@ -265,14 +265,10 @@ Camera::LoadFromJSON(Value& v)
       return false;
     }
 
-    if (v.HasMember("width"))
+    if (v.HasMember("dimensions"))
     {
-      camwidth = v["width"].GetInt();
-    }
-
-    if (v.HasMember("height"))
-    {
-      camheight = v["height"].GetInt();
+      set_width(v["dimensions"][0].GetInt());
+      set_height(v["dimensions"][0].GetInt());
     }
 
     up[0] = v["viewup"][0].GetDouble();

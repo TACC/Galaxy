@@ -125,12 +125,13 @@ render_thread(void *buf)
 
   theRendering = ServerRendering::NewP();
 
-	theRendering->SetSocket(skt);
+  theRendering->SetSocket(skt);
   theRendering->SetTheOwner(0);
-  theRendering->SetTheSize(width, height);
   theRendering->SetTheDatasets(theDatasets);
   theRendering->SetTheVisualization(theVisualization);
-	theRendering->SetTheCamera(theCamera);
+  theCamera->set_width(width);
+  theCamera->set_height(height);
+  theRendering->SetTheCamera(theCamera);
   theRendering->Commit();
 
   RenderingSetP theRenderingSet = RenderingSet::NewP();
