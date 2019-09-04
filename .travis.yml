@@ -1,4 +1,5 @@
 language: cpp
+n
 dist: xenial # get a semi-modern linux
 
 branches:
@@ -6,6 +7,7 @@ branches:
     - travis-ci
     - dev
     - master
+    - camdev
 
 matrix:
   include:
