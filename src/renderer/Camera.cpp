@@ -80,7 +80,6 @@ Camera::Register()
 bool
 Camera::LoadCamerasFromJSON(Value& v, vector<CameraP>& cameras)
 {
-  std::cerr << "loading cameras\n";
   if (v.HasMember("Camera") || v.HasMember("Cameras"))
   {
     Value& c = v.HasMember("Camera") ? v["Camera"] : v["Cameras"];
@@ -268,15 +267,12 @@ Camera::LoadFromJSON(Value& v)
 
     if (v.HasMember("width"))
     {
-      std::cerr << "Loading camera: 04" << std::endl;
       camwidth = v["width"].GetInt();
-      std::cerr << "width set: " << camwidth << std::endl;
     }
 
     if (v.HasMember("height"))
     {
       camheight = v["height"].GetInt();
-      std::cerr << "height set: " << camheight << std::endl;
     }
 
     up[0] = v["viewup"][0].GetDouble();
@@ -284,8 +280,6 @@ Camera::LoadFromJSON(Value& v)
     up[2] = v["viewup"][2].GetDouble();
 
     aov = v["aov"].GetDouble();
-
-    std::cerr << "Here 01" << std::endl;
   }
 
   return true;

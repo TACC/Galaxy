@@ -47,12 +47,12 @@ using namespace gxy;
 using namespace std;
 using namespace rapidjson;
 
-// #define WIDTH  1920
-// #define HEIGHT 1080
+#define WIDTH  1920
+#define HEIGHT 1080
 
 // default values
-// int   width  = WIDTH;
-// int   height = HEIGHT;
+int   width  = WIDTH;
+int   height = HEIGHT;
 int   maxsteps = 2000;
 float h = 0.2;
 float z = 1e-12;
@@ -65,10 +65,9 @@ syntax(char *a)
   cerr << "syntax: " << a << " sampling.state rendering.state [options]" << endl;
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;
-  // cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
+  cerr << "  -w x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -h h          portion of cell size to step (0.2)" << endl;
   cerr << "  -z z          termination magnitude of vectors (1e-12)" << endl;
-  cerr << "  -d factor     downsampling factor for sampler pass (0)" << endl;
   cerr << "  -m n          max number of steps per streamline (2000)" << endl;
   cerr << "  -P            print samples\n";
   cerr << "  -I max        scale the colormap to this to avoid hairballs (scale to max integration time)\n";
@@ -82,8 +81,8 @@ main(int argc, char * argv[])
   string rendering_state = "";
   char *dbgarg;
   bool dbg = false;
-  // int downsample = 0;
   bool printsamples = false;
+  bool override_windowsize = false;
 
 
   ospInit(&argc, (const char **)argv);
@@ -98,10 +97,12 @@ main(int argc, char * argv[])
       switch (argv[i][1])
       {
         case 'D': dbg = true, dbgarg = argv[i] + 2; break;
-        // case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
-        // case 'd': downsample = atoi(argv[++i]); break;
         case 'm': maxsteps = atoi(argv[++i]); break;
-        case 'h': h = atof(argv[++i]); break;
+        // case 'h': h = atof(argv[++i]); break;
+        case 'w': width = atoi(argv[++i]); 
+                  height = atoi(argv[++i]); 
+                  override_windowsize = true;
+                  break;
         case 'z': z = atof(argv[++i]); break;
         case 'P': printsamples = true; break;
         case 'I': max_i = atof(argv[++i]); break;
@@ -290,6 +291,12 @@ main(int argc, char * argv[])
         r = Rendering::NewP();
         r->SetTheOwner(0);
         r->SetTheDatasets(theDatasets);
+        if (override_windowsize)
+        {
+            std::cerr << "Overriding rendering width, height: " << width << ", " << height << std::endl;
+            c->set_width(width);
+            c->set_height(height);
+        }
         r->SetTheCamera(c);
         r->SetTheVisualization(v);
         r->Commit();
