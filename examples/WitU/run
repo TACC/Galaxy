@@ -1,2 +1,2 @@
-sampletrace sample.state render.state 
+sampletrace -w 100 500 sample.state render.state 
 
