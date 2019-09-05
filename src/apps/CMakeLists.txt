@@ -47,13 +47,9 @@ find_package(GLUT)
 
 if (GXY_WRITE_IMAGES)
 
-    add_executable(gxywriter gxywriter.cpp)
-	target_link_libraries(gxywriter ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-	set(BINS gxywriter ${BINS})
-
-  add_executable(raysample raysample.cpp)
-  target_link_libraries(raysample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-  set(BINS raysample ${BINS})
+  add_executable(gxywriter gxywriter.cpp)
+  target_link_libraries(gxywriter ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  set(BINS gxywriter ${BINS})
 
   add_executable(sample sample.cpp)
   target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
