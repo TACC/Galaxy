@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+
+from math import * 
+
+
+radius = 20.0
+phi    = [0.0, 22.5, 45.0, 77.5, 90.]
+theta  = [45.0]
+aov    = 40.0
+width  = 500
+height = 500
+
+
+print("    \"Cameras\": [")
+for p in phi:
+    for t in theta:
+        print("      {")
+        print("        \"aov\"        : {},".format(aov))
+        print("        \"viewpoint\"  : [{}, {}, {}],".format( radius*sin(p)*cos(t), radius*sin(p)*sin(t), radius*cos(p) ))
+        print("        \"viewcenter\" : [0.0, 0.0, 0.0]," )
+        print("        \"viewup\"     : [0.0, 0.0, 1.0]," ) 
+        print("        \"dimensions\" : [{}, {}]".format(width, height))
+        print("      },")
+print("    ]")
