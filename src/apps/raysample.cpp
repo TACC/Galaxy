@@ -46,9 +46,11 @@ using namespace rapidjson;
 #define HEIGHT 1080
 
 // default values
-int   width  = WIDTH;
-int   height = HEIGHT;
-float radius = 0.001;
+int   width      = WIDTH;
+int   height     = HEIGHT;
+int   sam_width  = WIDTH;
+int   sam_height = HEIGHT;
+float radius     = 0.001;
 int   samples_per_partition = 100;
 
 void
@@ -58,7 +60,8 @@ syntax(char *a)
   cerr << "optons:" << endl;
   cerr << "  -D            run debugger" << endl;
   cerr << "  -n nsamples   number of samples in each partition (" << samples_per_partition << ")" << endl;
-  cerr << "  -s x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
+  cerr << "  -s x y        sample size (" << WIDTH << "x" << HEIGHT << ")" << endl;
+  cerr << "  -w x y        window size (" << WIDTH << "x" << HEIGHT << ")" << endl;
   cerr << "  -r radius     radius of samples (" << radius << ")" << endl;
   cerr << "  -d factor     downsampling factor for sampler pass (0)" << endl;
   exit(1);
@@ -70,7 +73,8 @@ main(int argc, char * argv[])
   string data = "";
   char *dbgarg;
   bool dbg = false;
-  int downsample = 0;
+  bool override_windowsize = false;
+  bool override_samplesize = false;
   
   // process command line args
   for (int i = 1; i < argc; i++)
@@ -81,8 +85,14 @@ main(int argc, char * argv[])
         case 'D': dbg = true, dbgarg = argv[i] + 2; break;
         case 'n': samples_per_partition = atoi(argv[++i]); break;
         case 'r': radius = atof(argv[++i]); break;
-        case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
-        case 'd': downsample = atoi(argv[++i]); break;
+        case 's': sam_width = atoi(argv[++i]); 
+                  sam_height = atoi(argv[++i]); 
+                  override_samplesize = true;
+                  break;
+        case 'w': width = atoi(argv[++i]); 
+                  height = atoi(argv[++i]); 
+                  override_windowsize = true;
+                  break;
         default:
           syntax(argv[0]);
           exit(0);
@@ -142,8 +152,13 @@ main(int argc, char * argv[])
     {
         theRendering0 = Rendering::NewP();
         theRendering0->SetTheOwner(0);
-        theRendering0->SetTheSize(width >> downsample, height >> downsample);
         theRendering0->SetTheDatasets(theDatasets);
+        if (override_samplesize)
+        {
+            std::cerr << "Overriding sampling width, height: " << sam_width << ", " << sam_height << std::endl;
+            (*iCam)->set_width(sam_width);
+            (*iCam)->set_height(sam_height);
+        }
         theRendering0->SetTheCamera(*iCam);
         theRendering0->SetTheVisualization(vis0);
         theRendering0->Commit();
@@ -212,8 +227,13 @@ main(int argc, char * argv[])
 
     RenderingP theRendering2 = Rendering::NewP();
     theRendering2->SetTheOwner(0);
-    theRendering2->SetTheSize(width, height);
     theRendering2->SetTheDatasets(theDatasets);
+    if (override_windowsize)
+    {
+        std::cerr << "Overriding rendering width, height: " << width << ", " << height << std::endl;
+        cam1->set_width(width);
+        cam1->set_height(height);
+    }
     theRendering2->SetTheCamera(cam1);          
     theRendering2->SetTheVisualization(vis1);
     theRendering2->Commit();

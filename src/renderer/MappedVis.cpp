@@ -88,16 +88,16 @@ MappedVis::LoadFromJSON(Value& v)
 {
 	Vis::LoadFromJSON(v);
 
-/*
 	if (v.HasMember("data range"))
     {
-        data_range_min = v["data range"][0].GetDouble();
-        data_range_max = v["data range"][1].GetDouble();
-        data_range = true;
+      data_range_min = v["data range"][0].GetDouble();
+      data_range_max = v["data range"][1].GetDouble();
+      data_range = true;
     }
     else
+    {
         data_range = false;
-*/
+    }
            
 	if (v.HasMember("transfer function"))
 	{
@@ -200,13 +200,14 @@ MappedVis::serialSize()
 {
 	return super::serialSize() + sizeof(Key) +
 				 sizeof(int) + colormap.size()*sizeof(vec4f) +
-				 sizeof(int) + opacitymap.size()*sizeof(vec2f);
+				 sizeof(int) + opacitymap.size()*sizeof(vec2f) +
+                 sizeof(float) + sizeof(float) + sizeof(bool);
 }
 
 unsigned char *
 MappedVis::deserialize(unsigned char *ptr) 
 {
-	ptr = super::deserialize(ptr);
+  ptr = super::deserialize(ptr);
 
   int nc = *(int *)ptr;
   ptr += sizeof(int);
@@ -218,25 +219,43 @@ MappedVis::deserialize(unsigned char *ptr)
   SetOpacityMap(no, (vec2f *)ptr);
   ptr += no * sizeof(vec2f);
 
-	return ptr;
+  data_range_min = *(float *)ptr;
+  ptr += sizeof(float);
+
+  data_range_max = *(float *)ptr;
+  ptr += sizeof(float);
+
+  data_range = *(bool *)ptr;
+  ptr += sizeof(bool);
+
+  return ptr;
 }
 
 unsigned char *
 MappedVis::serialize(unsigned char *ptr)
 {
-	ptr = super::serialize(ptr);
+  ptr = super::serialize(ptr);
 
-	*(int *)ptr = colormap.size();
-	ptr += sizeof(int);
-	memcpy(ptr, colormap.data(), colormap.size()*sizeof(vec4f));
-	ptr += colormap.size()*sizeof(vec4f);
+  *(int *)ptr = colormap.size();
+  ptr += sizeof(int);
+  memcpy(ptr, colormap.data(), colormap.size()*sizeof(vec4f));
+  ptr += colormap.size()*sizeof(vec4f);
 
-	*(int *)ptr = opacitymap.size();
-	ptr += sizeof(int);
-	memcpy(ptr, opacitymap.data(), opacitymap.size()*sizeof(vec2f));
-	ptr += opacitymap.size()*sizeof(vec2f);
+  *(int *)ptr = opacitymap.size();
+  ptr += sizeof(int);
+  memcpy(ptr, opacitymap.data(), opacitymap.size()*sizeof(vec2f));
+  ptr += opacitymap.size()*sizeof(vec2f);
 
-	return ptr;
+  *(float *)ptr = data_range_min;
+  ptr += sizeof(float);
+
+  *(float *)ptr = data_range_max;
+  ptr += sizeof(float);
+
+  *(bool *)ptr = data_range; 
+  ptr += sizeof(bool);
+
+  return ptr;
 }
 
 bool 
@@ -294,13 +313,10 @@ MappedVis::local_commit(MPI_Comm c)
   OSPData oAlphas = ospNewData(256, OSP_FLOAT, opacity);
   ospSetData(transferFunction, "opacities", oAlphas);
   ospRelease(oAlphas);
-/*
   if (data_range)
       ospSet2f(transferFunction, "valueRange", data_range_min, data_range_max);
   else
       ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
-*/
-  ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
   ospCommit(transferFunction);
   
   ispc::MappedVis_set_transferFunction(ispc, ospray_util::GetIE(transferFunction));

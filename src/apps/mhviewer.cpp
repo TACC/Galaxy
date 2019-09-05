@@ -389,8 +389,10 @@ render_thread(void *d)
   theCamera->get_viewdirection(orig_viewdirection);
   theCamera->get_viewup(orig_viewup);
   theCamera->get_angle_of_view(orig_aov);
+  theCamera->set_width(width);
+  theCamera->set_height(height);
 
-	center = orig_viewpoint + orig_viewdirection;
+  center = orig_viewpoint + orig_viewdirection;
 
 	orig_viewdistance = len(orig_viewdirection);
   normalize(orig_viewdirection);
@@ -416,7 +418,6 @@ render_thread(void *d)
 	theRendering = AsyncRendering::NewP();
 	theRendering->SetMaxAge(age, fadeout);
 	theRendering->SetTheOwner(0);
-	theRendering->SetTheSize(width, height);
 	theRendering->SetTheDatasets(theDatasets);
 	theRendering->SetTheCamera(theCamera);
 

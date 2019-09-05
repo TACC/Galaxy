@@ -115,6 +115,7 @@ main(int argc, char * argv[])
   string data = "";
   char *dbgarg;
   bool dbg = false;
+  bool override_windowsize = false;
 
   ospInit(&argc, (const char **)argv);
 
@@ -129,7 +130,10 @@ main(int argc, char * argv[])
         case 'D': dbg = true, dbgarg = argv[i] + 2; break;
         case 'n': samples_per_partition = atoi(argv[++i]); break;
         case 'r': radius = atof(argv[++i]); break;
-        case 's': width = atoi(argv[++i]); height = atoi(argv[++i]); break;
+        case 's': width = atoi(argv[++i]); 
+                  height = atoi(argv[++i]); 
+                  override_windowsize = true;
+                  break;
         default:
           syntax(argv[0]);
       }
@@ -219,7 +223,11 @@ main(int argc, char * argv[])
     {
       RenderingP theRendering = Rendering::NewP();
       theRendering->SetTheOwner((indx++) % mpiSize);
-      theRendering->SetTheSize(width, height);
+      if (override_windowsize)
+      {
+          c->set_width(width);
+          c->set_height(height);
+      }
       theRendering->SetTheCamera(c);
       theRendering->SetTheDatasets(theDatasets);
       theRendering->SetTheVisualization(v);

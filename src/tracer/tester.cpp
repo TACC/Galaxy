@@ -78,6 +78,7 @@ int main(int argc,  char *argv[])
   float X = 0.0, Y = 0.0, Z = 0.0;
   bool  dump_trajectories = false;
   float max_i = -1;
+  bool override_windowsize = false;
 
   ospInit(&argc, (const char **)argv);
 
@@ -90,7 +91,12 @@ int main(int argc,  char *argv[])
     else if (!strcmp(argv[i],"-m")) nsteps = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-h")) h = atof(argv[++i]); 
     else if (!strcmp(argv[i],"-z")) z = atof(argv[++i]); 
-    else if (!strcmp(argv[i],"-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-s")) 
+    {
+        width  = atoi(argv[++i]);
+        height = atoi(argv[++i]);
+        override_windowsize = true;
+    }
     else if (!strcmp(argv[i],"-S")) seedfile = argv[++i];
     else if (!strcmp(argv[i],"-P")) X = atof(argv[++i]), Y = atof(argv[++i]), Z = atof(argv[++i]);
     else if (!strcmp(argv[i],"-T")) dump_trajectories = true;
@@ -245,7 +251,11 @@ int main(int argc,  char *argv[])
         RenderingP r = Rendering::NewP();
         r = Rendering::NewP();
         r->SetTheOwner(0);
-        r->SetTheSize(width, height);
+        if (override_windowsize)
+        {
+            c->set_width(width);
+            c->set_height(height);
+        }
         r->SetTheDatasets(theDatasets);
         r->SetTheCamera(c);
         r->SetTheVisualization(v);

@@ -143,25 +143,29 @@
         "viewpoint": [4.0, 0, 0],
         "viewcenter": [0, 0, 0],
         "viewup": [0, 1, 0],
-        "aov": 40
+        "aov": 40,
+        "dimensions": [500, 500]
       },
       {
         "viewpoint": [0, 4.0, 0],
         "viewcenter": [0, 0, 0],
         "viewup": [0, 0, 1],
-        "aov": 40
+        "aov": 40,
+        "dimensions": [500, 500]
       },
       {
         "viewpoint": [0, 0, 4.0],
         "viewcenter": [0, 0, 0],
         "viewup": [0, 1, 0],
-        "aov": 40
+        "aov": 40,
+        "dimensions": [500, 500]
       },
       {
         "viewpoint": [1, 2, -3],
         "viewcenter": [0, 0, 0],
         "viewup": [0, 1, 0],
-        "aov": 40
+        "aov": 40,
+        "dimensions": [500, 500]
       }
     ]
 }

@@ -82,8 +82,8 @@ public:
   virtual void allocate_ispc();
   virtual void initialize_ispc();
 
-  // float data_range_min, data_range_max;
-  // bool data_range;
+  float data_range_min, data_range_max;
+  bool data_range;
  
   std::vector<vec4f> colormap;
   std::vector<vec2f> opacitymap;

@@ -6,6 +6,7 @@ branches:
     - travis-ci
     - dev
     - master
+    - camdev
 
 matrix:
   include:
