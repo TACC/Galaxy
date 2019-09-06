@@ -1,16 +1,25 @@
 #!/bin/bash
 
-./generate_cameras
+# clean up
+OUTDIR="tmp"
+rm -rf $OUTDIR
+mkdir $OUTDIR
 
+./generate_cameras render_samples_nocameras.state render.state
 sampletrace sample.state render.state 
 
-CDB="test"
+CDB="samples"
+mkdir $OUTDIR/${CDB}.cdb
+mv *.png $OUTDIR/${CDB}.cdb
+mv data.csv $OUTDIR/${CDB}.cdb
 
-rm -rf data
-mkdir data
-mkdir data/${CDB}.cdb
-mv *.png data/${CDB}.cdb
-mv data.csv data/${CDB}.cdb
+./generate_cameras render_visualization_nocameras.state render.state
+sampletrace sample.state render.state 
+
+CDB="visualization"
+mkdir $OUTDIR/${CDB}.cdb
+mv *.png $OUTDIR/${CDB}.cdb
+mv data.csv $OUTDIR/${CDB}.cdb
 
 
 

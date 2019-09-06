@@ -1,0 +1,13 @@
+            {
+              "dataset": "Temperature",
+              "type": "Volume",
+              "isovalues" : [4000.0],
+              "colormap": [
+                    [ 0.0, 1.0, 0.0, 0.0 ], 
+                    [ 1.0, 0.0, 0.0, 1.0 ]
+               ],
+              "opacitymap": [
+                [ 0.00, 1.00],
+                [ 1.00, 1.00]
+               ]
+            }
