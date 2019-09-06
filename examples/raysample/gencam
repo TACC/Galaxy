@@ -4,17 +4,30 @@
 from math import * 
 import os
 
+def polar2cartesian( r, theta, phi):
+    return [
+            r*cos(radians(t))*sin(radians(p)),
+            r*sin(radians(t))*sin(radians(p)),
+            r*cos(radians(p))
+            ]
+
 
 radius = 4.0
-theta  = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
-theta  = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
-theta  = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0] 
+# theta is angle from x axis
+# theta  = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
+# theta  = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
+# theta  = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0] 
 # theta  = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0]
+theta  = [  0.0,  10.0,  20.0,  30.0,  40.0,  50.0,  60.0,  70.0,  80.0,  90.0, 
+          100.0, 110.0, 120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 
+          200.0, 210.0, 220.0, 230.0, 240.0, 250.0, 260.0, 270.0, 280.0, 290.0, 
+          300.0, 310.0, 320.0, 330.0, 340.0, 350.0]
 # theta  = [0.0]
-phi    = [10.0]
+# phi is angle from z axis
+phi    = [90.0]
 aov    = 40.0
-width  = 500
-height = 500
+width  = 250
+height = 250
 csv    = "data.csv"
 state  = "render_samples.state"
 state_begin = "render_samples_begin.state"
@@ -30,15 +43,12 @@ with open(csv, "w") as cdb, open(state, "a") as state_file:
             cdb.write("{},{},samples_{:05d}.png\n".format(p, t, curid)) 
             if (curid != 0):
                 state_file.write("      },\n")
-
-            x = radius*sin(p)*cos(t)
-            y = radius*sin(p)*sin(t)
-            z = radius*cos(p)
+            (x, y, z) = polar2cartesian( radius, t, p ) 
             state_file.write("      {\n")
             state_file.write("        \"aov\"        : {},\n".format(aov))
             state_file.write("        \"viewpoint\"  : [{}, {}, {}],\n".format( x, y, z )) 
             state_file.write("        \"viewcenter\" : [0.0, 0.0, 0.0],\n" )
-            state_file.write("        \"viewup\"     : [0.0, 1.0, 0.0],\n" ) 
+            state_file.write("        \"viewup\"     : [0.0, 0.0, 1.0],\n" ) 
             state_file.write("        \"dimensions\" : [{}, {}]\n".format(width, height))
             curid = curid + 1
     state_file.write("      }\n")
