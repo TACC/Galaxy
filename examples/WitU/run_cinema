@@ -5,18 +5,22 @@ OUTDIR="tmp"
 rm -rf $OUTDIR
 mkdir $OUTDIR
 
-./generate_cameras render_samples_nocameras.state render.state
-sampletrace sample.state render.state 
+./generate_render_state data/state_01.json render.tmp
+./generate_cameras render.tmp state.tmp
+sampletrace sample.state state.tmp
+rm state.tmp render.tmp
 
-CDB="samples"
+CDB="visualization"
 mkdir $OUTDIR/${CDB}.cdb
 mv *.png $OUTDIR/${CDB}.cdb
 mv data.csv $OUTDIR/${CDB}.cdb
 
-./generate_cameras render_visualization_nocameras.state render.state
-sampletrace sample.state render.state 
+./generate_render_state data/state_02.json render.tmp
+./generate_cameras render.tmp state.tmp 
+sampletrace sample.state state.tmp 
+rm state.tmp render.tmp
 
-CDB="visualization"
+CDB="samples"
 mkdir $OUTDIR/${CDB}.cdb
 mv *.png $OUTDIR/${CDB}.cdb
 mv data.csv $OUTDIR/${CDB}.cdb

@@ -1,9 +1,21 @@
 #!/usr/bin/env python
 
-
 import os
+import json
+import sys
 
-outfile = "out.state"
+if (len(sys.argv) != 3):
+    print("ERROR: need one arg: output filename")
+    exit
+
+rdef    = sys.argv[1]
+outfile = sys.argv[2] 
+
+with open(rdef) as rdef_json:
+    rdata = json.load(rdef_json)
+
+lights    = rdata["lights"] 
+operators = rdata["operators"]
 
 preamble = '''{
     "Datasets":
@@ -17,14 +29,6 @@ preamble = '''{
 '''
 
 postamble = "          ]\n        }\n    ],\n"
-
-lights    = ["data/render/visualizations/lighting/light_01.state"]
-operators = [
-#               "data/render/visualizations/operators/pathlines.state",
-#               "data/render/visualizations/operators/samples.state",
-                "data/render/visualizations/operators/slice.state",
-                "data/render/visualizations/operators/volume.state"
-            ]
 
 with open(outfile, "w") as state:
     state.write(preamble)
