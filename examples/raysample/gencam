@@ -2,24 +2,39 @@
 
 
 from math import * 
+import os
 
 
-radius = 20.0
-phi    = [0.0, 22.5, 45.0, 77.5, 90.]
-theta  = [45.0]
+radius = 4.0
+theta  = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0]
+# theta  = [0.0]
+phi    = [0.0]
 aov    = 40.0
 width  = 500
 height = 500
+csv    = "data.csv"
+state  = "render_samples.state"
+state_begin = "render_samples_begin.state"
 
+os.system("cat {} > {}".format(state_begin, state))
 
-print("    \"Cameras\": [")
-for p in phi:
-    for t in theta:
-        print("      {")
-        print("        \"aov\"        : {},".format(aov))
-        print("        \"viewpoint\"  : [{}, {}, {}],".format( radius*sin(p)*cos(t), radius*sin(p)*sin(t), radius*cos(p) ))
-        print("        \"viewcenter\" : [0.0, 0.0, 0.0]," )
-        print("        \"viewup\"     : [0.0, 0.0, 1.0]," ) 
-        print("        \"dimensions\" : [{}, {}]".format(width, height))
-        print("      },")
-print("    ]")
+curid = 0
+with open(csv, "w") as cdb, open(state, "a") as state_file:
+    cdb.write("phi,theta,FILE\n")
+    state_file.write("    \"Cameras\": [\n")
+    for p in phi:
+        for t in theta:
+            cdb.write("{},{},samples_{:05d}.png\n".format(p, t, curid)) 
+            if (curid != 0):
+                state_file.write("      },\n")
+
+            state_file.write("      {\n")
+            state_file.write("        \"aov\"        : {},\n".format(aov))
+            state_file.write("        \"viewpoint\"  : [{}, {}, {}],\n".format( radius*sin(p)*cos(t), radius*sin(p)*sin(t), radius*cos(p) ))
+            state_file.write("        \"viewcenter\" : [0.0, 0.0, 0.0],\n" )
+            state_file.write("        \"viewup\"     : [0.0, 1.0, 0.0],\n" ) 
+            state_file.write("        \"dimensions\" : [{}, {}]\n".format(width, height))
+            curid = curid + 1
+    state_file.write("      }\n")
+    state_file.write("    ]\n")
+    state_file.write("}\n")
