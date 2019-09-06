@@ -1,0 +1,16 @@
+#!/bin/bash
+
+./gencam
+
+sampletrace sample.state render.state 
+
+CDB="test"
+
+rm -rf data
+mkdir data
+mkdir data/${CDB}.cdb
+mv *.png data/${CDB}.cdb
+mv data.csv data/${CDB}.cdb
+
+
+
