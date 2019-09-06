@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./gencam
+./generate_cameras
 
 sampletrace sample.state render.state 
 
