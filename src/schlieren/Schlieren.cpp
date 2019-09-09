@@ -179,7 +179,7 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
 
       vec3f delta = p_proj - p_proj_orig;
       
-      float dd = sqrt(delta.x*delta.x + delta.y*delta.y);
+      float dd = sqrt(delta.x*delta.x + delta.y*delta.y + delta.z*delta.z);
       if (dd > dmax)
       {
         mx = pixel_ix;
@@ -189,7 +189,8 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
 
       raylist->set_r(i, delta.x);
       raylist->set_g(i, delta.y);
-      raylist->set_b(i, dd);
+      raylist->set_b(i, delta.z);
+      raylist->set_o(i, dd);
     }
   }
 
@@ -300,11 +301,28 @@ Schlieren::NormalizeSchlierenImagesMsg::CollectiveAction(MPI_Comm c, bool is_roo
         }
       }
 
+
+      p = r->GetPixels();
+      float m[4] = {0.0, 0.0, 0.0};
+      for (int i = 0; i < n; i++, p += 4)
+        for (int j = 0; j < 4; j++)
+          if (!i || (abs(p[j]) > m[j]))
+            m[j] = abs(p[j]);
+
       p = r->GetPixels();
       for (int i = 0; i < n; i++, p += 4)
+      {
         for (int j = 0; j < 3; j++)
-          if (MM[j] != mm[j])
-            p[j] = (p[j] - mm[j])/(MM[j] - mm[j]);
+          if (m[j])
+            p[j] = 0.5 + 0.5*(p[j] / m[j]);
+          else 
+            p[j] = 0.5;
+
+        if (m[3])
+          p[3] = p[3] / m[3];
+        else 
+          p[3] = 0.5;
+      }
     }
   }
 
