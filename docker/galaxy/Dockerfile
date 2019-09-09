@@ -17,7 +17,7 @@
 ## limitations under the License.                                             ##
 ##                                                                            ##
 ## ========================================================================== ##
-FROM galaxy-base:v0.2.1
+FROM pnav/galaxy-base:v0.3.0
 
 USER galaxy:galaxy
 ENV GXY_ROOT /opt/local/galaxy
