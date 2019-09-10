@@ -80,6 +80,7 @@ syntax(char *a)
 int
 main(int argc, char * argv[])
 {
+  string data_state = "";
   string sampling_state = "";
   string rendering_state = "";
   char *dbgarg;
@@ -117,12 +118,13 @@ main(int argc, char * argv[])
         default:
           syntax(argv[0]);
       }
+    else if (data_state == "")       data_state = argv[i];
     else if (sampling_state == "")   sampling_state = argv[i];
     else if (rendering_state == "")  rendering_state = argv[i];
     else syntax(argv[0]);
   }
 
-  if (sampling_state == "" || rendering_state == "")
+  if (data_state == "" || sampling_state == "" || rendering_state == "")
     syntax(argv[0]);
 
   theApplication.Run();
@@ -143,8 +145,14 @@ main(int argc, char * argv[])
 
   if (mpiRank == 0)
   {
-    // BEGIN SAMPLING
+    Document *ddoc = theApplication.OpenJSONFile(data_state);
+    if (! ddoc)
+    {
+      std::cerr << "error loading data state file\n";
+      exit(1);
+    }
 
+    // BEGIN SAMPLING
     Document *sdoc = theApplication.OpenJSONFile(sampling_state);
     if (! sdoc)
     {
@@ -159,13 +167,14 @@ main(int argc, char * argv[])
       exit(1);
     }
 
-    theSampler->LoadStateFromDocument(*sdoc);
 
-    // sampling state is loaded from an external file
+    // load datasets 
     DatasetsP theDatasets = Datasets::NewP();
-    theDatasets->LoadFromJSON(*sdoc);
+    theDatasets->LoadFromJSON(*ddoc);
     theDatasets->Commit();
     
+    // load the sampling state
+    theSampler->LoadStateFromDocument(*sdoc);
     // Create a list of sampling Visualizations that specifies how the volume is to be sampled...
     vector<VisualizationP> theSamplingVisualizations = Visualization::LoadVisualizationsFromJSON(*sdoc);
 
