@@ -32,10 +32,10 @@ theta  = [  0.0,  10.0,  20.0,  30.0,  40.0,  50.0,  60.0,  70.0,  80.0,  90.0,
           300.0, 310.0, 320.0, 330.0, 340.0, 350.0]
 # theta  = [0.0]
 # phi is angle from z axis
-phi    = [90.0]
+phi    = [90.0, 80.0, 70.0, 60.0, 50.0]
 aov    = 40.0
-width  = 250
-height = 250
+width  = 500
+height = 500
 csv    = "data.csv"
 
 os.system("cat {} > {}".format(state_nocameras, state))

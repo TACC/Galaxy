@@ -3,9 +3,8 @@
             "data/render/visualizations/lighting/light_01.state"
         ],
     "operators" : [
-            "data/render/visualizations/operators/pathlines.state",
+            "data/render/visualizations/operators/volume.state",
             "data/render/visualizations/operators/samples.state",
-            "data/render/visualizations/operators/slice.state",
-            "data/render/visualizations/operators/volume.state"
+            "data/render/visualizations/operators/slice.state"
         ]
 }
