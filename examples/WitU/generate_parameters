@@ -2,19 +2,71 @@
 
 import itertools
 import numpy
+from cintools.cdb import cdb 
+from cintools.install import install 
+import re
+import os
 
+cursubdir = -1 
 
-def generate(i, phi, theta):
-    with open("data.csv", "w") as dfile:
-        dfile.write("slice,phi,theta,FILE\n")
+CLAUSES = {
+        "slice" : "data/render/visualizations/operators/slice_sub.state"
+}
+
+def next_subdir():
+    global cursubdir
+    cursubdir = cursubdir + 1
+    cur = "{:05d}".format(cursubdir) 
+    return cur 
+
+def generate(db, i, phi, theta):
+    global CLAUSES
+    # create the cinema database metadata
+    with open("data.csv", "w+") as cdb:
+        curid = 0
+        subdir = next_subdir()
+        newfile = "tmp/tmp_slice.state"
+        create_new_slice_clause(CLAUSES["slice"], newfile, i )
+
+        # generate the images
+
+        # write out the cinema database metadata
         for s in itertools.product([i], phi, theta):
-            dfile.write("{},{},{},some.png\n".format(s[0], s[1], s[2]))
+            db.add_entry({
+                "slice":s[0],
+                "phi":s[1],
+                "theta":s[2],
+                "FILE":"{}/samples_{:05d}.png".format(subdir,curid)
+                })
+            curid = curid + 1
+
+        # clean up 
+        os.remove(newfile)
+
+def create_new_slice_clause(inclause, outclause, value):
+    lines = []
+    with open(inclause, "r") as infile:
+        lines = infile.readlines();
+        
+    with open(outclause, "w") as outfile:
+        for line in lines:
+            outfile.write(re.sub("XVALUE", str(value), line))
+
 
 slices = numpy.arange(0.0,  10.0, 2.0)
 theta  = numpy.arange(0.0, 360.0, 10.0)
 phi    = [90.0] 
 
-print(phi)
-print(theta)
+dbs = [
+        "tmp/database.cdb"
+]
+database = cdb.CDB(dbs[0])
+database.create()
 for s in slices: 
-    generate( s, phi, theta )
+    generate( database, s, phi, theta )
+
+database.finalize()
+install.compare("cintools/cinema.source",
+                 "tmp",
+                 "compare.html",
+                 dbs)

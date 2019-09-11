@@ -1,0 +1,130 @@
+[
+	{
+		"name" : "UC volume",
+		"directory" : "data/tester.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	},
+	{
+		"name" : "UC volume",
+		"directory" : "data/volume_uncertainty.cdb",
+		"image_measures" : ["u_avg_"]
+
+	},
+	{
+		"name" : "sphere",
+		"directory" : "data/sphere.cdb"
+	},
+	{
+		"name" : "Sphere Multi-Image",
+		"directory" : "data/sphere_multi-image.cdb"
+	},
+	{
+		"name" : "Many File Types",
+		"directory" : "data/file_types.cdb"
+	},
+	{
+		"name" : "Bogus 1",
+		"directory" : "data/bogus/bogus_1.cdb",
+		"filter" : "(^FILE)|(5$)",
+		"query": {
+			"Float_6" : [20, 70],
+			"Integer_2": [40, 60]
+		},
+		"selection": {
+			"Integer_3": [20, 50]
+		}
+	},
+	{
+		"name" : "Bogus 2",
+		"directory" : "data/bogus/bogus_2.cdb"
+	},
+	{
+		"name" : "Bogus 3",
+		"directory" : "data/bogus/bogus_3.cdb"
+	},
+	{
+		"name" : "Bogus 4",
+		"directory" : "data/bogus/bogus_4.cdb"
+	},
+	{
+		"name" : "Big Bogus 1",
+		"directory" : "data/bogus/big_bogus_1.cdb"
+	},
+	{
+		"name" : "Big Bogus 2",
+		"directory" : "data/bogus/big_bogus_2.cdb"
+	},
+	{
+		"name" : "Big Bogus 3",
+		"directory" : "data/bogus/big_bogus_3.cdb"
+	},
+	{
+		"name" : "Big Bogus 4",
+		"directory" : "data/bogus/big_bogus_4.cdb"
+	},
+	{
+		"name" : "volume",
+		"directory" : "data/volume.cdb"
+	},
+	{
+		"name" : "Uncertainty Example",
+		"directory" : "data/example_uncertainty.cdb"
+	},
+	{
+		"name" : "Density Field",
+		"directory" : "data/density_field.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	},
+	{
+		"name" : "Bubbles",
+		"directory" : "data/bubbles.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	},
+	{
+		"name" : "Sampled Data",
+		"directory" : "data/sampled_data.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	},
+	{
+		"name" : "Parameters2D",
+		"directory" : "data/parameters2D.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	},
+	{
+		"name" : "Parameters3D",
+		"directory" : "data/parameters3D.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	},
+	{
+		"name" : "Warp3D_1",
+		"directory" : "data/warp3d_Ex_videocopy1_fixedbar_fixedrot.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	},
+	{
+		"name" : "Warp3D_2",
+		"directory" : "data/warp3d_Ex_videocopy2_fixedbar_fixedrot.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	},
+	{
+		"name" : "Warp3D_2 only avg",
+		"directory" : "data/warp3d_Ex_videocopy2_fixedbar_fixedrot.cdb",
+		"image_measures" : ["u_avg_"],
+		"exclude_dimension" : ["u_min_","u_max_"]
+	},
+	{
+		"name" : "Warp3D_2 only u",
+		"directory" : "data/warp3d_Ex_videocopy2_fixedbar_fixedrot.cdb",
+		"image_measures" : ["u_"]
+	},
+	{
+		"name" : "Warp3D_2 only u - min max",
+		"directory" : "data/warp3d_Ex_videocopy2_fixedbar_fixedrot.cdb",
+		"image_measures" : ["u_"],
+		"exclude_dimension" : ["u_max_"]
+	},
+	{
+		"name" : "HGlass",
+		"directory" : "data/sample_stratified_random_hist_0.1.cdb",
+		"image_measures" : ["u_min_","u_avg_","u_max_"]
+	}
+]

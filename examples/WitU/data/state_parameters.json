@@ -1,0 +1,10 @@
+{
+    "lights" : [   
+            "data/render/visualizations/lighting/light_01.state"
+        ],
+    "operators" : [
+            "data/render/visualizations/operators/volume.state",
+            "data/render/visualizations/operators/samples.state",
+            "tmp/tmp_slice.state"
+        ]
+}
