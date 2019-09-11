@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import itertools
-import numpy
+import numpy 
 from cintools.cdb import cdb 
 from cintools.install import install 
 import re
@@ -13,6 +13,22 @@ CLAUSES = {
         "slice" : "data/render/visualizations/operators/slice_sub.state"
 }
 
+RENDERSTATE = {
+        "slice" : "data/state_parameters.json"
+}
+
+COMMAND = {
+        "renderstate" : "./generate_render_state",
+        "cameras"     : "./generate_cameras",
+        "sampletrace" : "sampletrace"
+}
+
+FILE = {
+        "data"   : "data.state",
+        "sample" : "sample.state",
+        "camera" : "data/camera.json"
+}
+
 def next_subdir():
     global cursubdir
     cursubdir = cursubdir + 1
@@ -21,14 +37,42 @@ def next_subdir():
 
 def generate(db, i, phi, theta):
     global CLAUSES
+    global RENDERSTATE
+    global COMMAND
+    global FILE
+
+    cleanup = [] 
     # create the cinema database metadata
     with open("data.csv", "w+") as cdb:
         curid = 0
         subdir = next_subdir()
-        newfile = "tmp/tmp_slice.state"
+        newfile = "slice_state.tmp"
         create_new_slice_clause(CLAUSES["slice"], newfile, i )
+        cleanup.append(newfile)
 
         # generate the images
+            # render state
+        renderfile = "render_slice.tmp"
+        cmd = "{} {} {}".format(COMMAND["renderstate"], RENDERSTATE["slice"], renderfile) 
+        print(cmd)
+        os.system(cmd)
+        cleanup.append(renderfile)
+            # cameras
+        camerafile = "camera_slice.tmp"
+        cmd = "{} {} {} {}".format(COMMAND["cameras"], FILE["camera"], renderfile, camerafile)
+        print(cmd)
+        os.system(cmd)
+        cleanup.append(camerafile)
+            # generate images
+        cmd = "{} {} {} {}".format(COMMAND["sampletrace"], FILE["data"], FILE["sample"], camerafile)
+        print(cmd)
+        os.system(cmd)
+            # move images
+        newdir = "{}/{}".format(db.path, subdir)  
+        os.makedirs(newdir)
+        cmd = "mv *.png {}".format(newdir)
+        print(cmd)
+        os.system(cmd)
 
         # write out the cinema database metadata
         for s in itertools.product([i], phi, theta):
@@ -41,10 +85,24 @@ def generate(db, i, phi, theta):
             curid = curid + 1
 
         # clean up 
-        os.remove(newfile)
+        for f in cleanup:
+            print("removing {} ...".format(f))
+            os.remove(f)
+
+def write_camera_json_file(path, phi, theta):
+    with open(path, "w") as output:
+        output.write("{\n")
+        output.write("   \"radius\" : 4.0,\n")
+        output.write("   \"aov\"    : 40.0,\n")
+        output.write("   \"width\"  : 500,\n")
+        output.write("   \"height\" : 500,\n")
+        output.write("   \"theta\"  : [{}, {}, {}],\n".format(theta[0], theta[1], theta[2]))
+        output.write("   \"phi\"    : [{}, {}, {}]\n".format(phi[0],   phi[1],   phi[2]))
+        output.write("}\n")
 
 def create_new_slice_clause(inclause, outclause, value):
     lines = []
+    print("creating new slice clause: {}".format(outclause))
     with open(inclause, "r") as infile:
         lines = infile.readlines();
         
@@ -52,21 +110,26 @@ def create_new_slice_clause(inclause, outclause, value):
         for line in lines:
             outfile.write(re.sub("XVALUE", str(value), line))
 
+slice_params = [-1.0, 1.0, 0.25]
+theta_params = [0.0, 360.0, 10.0]
+phi_params   = [90.0, 40.0, -10.0]
 
-slices = numpy.arange(0.0,  10.0, 2.0)
-theta  = numpy.arange(0.0, 360.0, 10.0)
-phi    = [90.0] 
+write_camera_json_file(FILE["camera"], phi_params, theta_params)
+
+slices = numpy.arange(slice_params[0], slice_params[1], slice_params[2])
+theta  = numpy.arange(theta_params[0], theta_params[1], theta_params[2])
+phi    = numpy.arange(phi_params[0], phi_params[1], phi_params[2])
 
 dbs = [
-        "tmp/database.cdb"
+    "database.cdb"
 ]
-database = cdb.CDB(dbs[0])
+database = cdb.CDB("tmp/{}".format(dbs[0]))
 database.create()
 for s in slices: 
     generate( database, s, phi, theta )
 
 database.finalize()
-install.compare("cintools/cinema.source",
+install.compare( "cintools/cinema.source",
                  "tmp",
                  "compare.html",
                  dbs)

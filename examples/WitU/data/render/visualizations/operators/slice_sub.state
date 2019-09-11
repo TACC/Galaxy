@@ -1,7 +1,7 @@
             {
               "dataset": "Temperature",
               "type": "Volume",
-              "slices": [ [ XVALUE, 0.0, 0.0, 0.0 ] ],
+              "slices": [ [ 1.0, 0.0, 0.0, XVALUE ] ],
               "data range": [0.0, 5300.0],
               "colormap": [
                     [ 0.000000, 0.984314, 0.988235, 0.909804 ],
