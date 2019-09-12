@@ -10,7 +10,7 @@ if (len(sys.argv) != 4):
 
 camera_state    = sys.argv[1]
 state_nocameras = sys.argv[2]
-state           = sys.argv[3]
+output_state    = sys.argv[3]
 
 from math import * 
 import os
@@ -26,10 +26,10 @@ camdata = []
 with open(camera_state, "r") as camjson:
     camdata = json.load(camjson)
 
-os.system("cat {} > {}".format(state_nocameras, state))
+os.system("cat {} > {}".format(state_nocameras, output_state))
 
 curid = 0
-with open(state, "a") as state_file:
+with open(output_state, "a") as state_file:
     state_file.write("    \"Cameras\": [\n")
     all_phis = numpy.arange(camdata["phi"][0], camdata["phi"][1], camdata["phi"][2])
     for p in all_phis: 

@@ -5,6 +5,6 @@
     "operators" : [
             "data/render/visualizations/operators/volume.state",
             "data/render/visualizations/operators/samples.state",
-            "slice_state.tmp"
+            "tmp/slice_state.state"
         ]
 }

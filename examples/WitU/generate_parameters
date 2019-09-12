@@ -7,7 +7,11 @@ from cintools.install import install
 import re
 import os
 
+CLEAN = False 
+
 cursubdir = -1 
+
+BASEDIR = "tmp"
 
 CLAUSES = {
         "slice" : "data/render/visualizations/operators/slice_sub.state"
@@ -25,9 +29,10 @@ COMMAND = {
 
 FILE = {
         "data"   : "data.state",
-        "sample" : "sample.state",
-        "camera" : "camera_tmp.json"
+        "sample" : "{}/sample.state".format(BASEDIR),
+        "camera" : "{}/camera.json".format(BASEDIR)
 }
+
 
 def next_subdir():
     global cursubdir
@@ -35,59 +40,115 @@ def next_subdir():
     cur = "{:05d}".format(cursubdir) 
     return cur 
 
-def generate(db, i, phi, theta):
+def generate(db, sVal, phis, thetas):
     global CLAUSES
     global RENDERSTATE
     global COMMAND
     global FILE
+    global BASEDIR
 
     cleanup = [] 
-    # create the cinema database metadata
-    with open("data.csv", "w+") as cdb:
-        curid = 0
-        subdir = next_subdir()
-        newfile = "slice_state.tmp"
-        create_new_slice_clause(CLAUSES["slice"], newfile, i )
-        cleanup.append(newfile)
+    curid = 0
+    subdir = next_subdir()
+    newfile = "{}/slice_state.state".format(BASEDIR)
+    write_slice_clause(CLAUSES["slice"], newfile, sVal )
+    cleanup.append(newfile)
 
-        # generate the images
-            # render state
-        renderfile = "render_slice.tmp"
-        cmd = "{} {} {}".format(COMMAND["renderstate"], RENDERSTATE["slice"], renderfile) 
-        print(cmd)
-        os.system(cmd)
-        cleanup.append(renderfile)
-            # cameras
-        camerafile = "camera_slice.tmp"
-        cmd = "{} {} {} {}".format(COMMAND["cameras"], FILE["camera"], renderfile, camerafile)
-        print(cmd)
-        os.system(cmd)
-        cleanup.append(camerafile)
-            # generate images
-        cmd = "{} {} {} {}".format(COMMAND["sampletrace"], FILE["data"], FILE["sample"], camerafile)
-        print(cmd)
-        os.system(cmd)
-            # move images
-        newdir = "{}/{}".format(db.path, subdir)  
-        os.makedirs(newdir)
-        cmd = "mv *.png {}".format(newdir)
-        print(cmd)
-        os.system(cmd)
+    # generate the images
+        # render state
+    renderfile = "{}/render_slice.state".format(BASEDIR)
+    cmd = "{} {} {}".format(COMMAND["renderstate"], RENDERSTATE["slice"], renderfile) 
+    print(cmd)
+    os.system(cmd)
+    cleanup.append(renderfile)
+        # cameras
+    camerafile = "{}/camera_slice.state".format(BASEDIR)
+    cmd = "{} {} {} {}".format(COMMAND["cameras"], FILE["camera"], renderfile, camerafile)
+    print(cmd)
+    os.system(cmd)
+    cleanup.append(camerafile)
+        # generate images
+    cmd = "{} {} {} {}".format(COMMAND["sampletrace"], FILE["data"], FILE["sample"], camerafile)
+    print(cmd)
+    os.system(cmd)
+        # move images
+    newdir = "{}/{}".format(db.path, subdir)  
+    os.makedirs(newdir)
+    cmd = "mv *.png {}".format(newdir)
+    print(cmd)
+    os.system(cmd)
 
-        # write out the cinema database metadata
-        for s in itertools.product([i], phi, theta):
-            db.add_entry({
-                "slice":s[0],
-                "phi":s[1],
-                "theta":s[2],
-                "FILE":"{}/samples_{:05d}.png".format(subdir,curid)
-                })
-            curid = curid + 1
+    # write out the cinema database metadata
+    for s in itertools.product([sVal], phis, thetas):
+        db.add_entry({
+            "slice":s[0],
+            "phi":s[1],
+            "theta":s[2],
+            "FILE":"{}/samples_{:05d}.png".format(subdir,curid)
+            })
+        curid = curid + 1
 
-        # clean up 
+    # clean up 
+    if CLEAN:
         for f in cleanup:
             print("removing {} ...".format(f))
             os.remove(f)
+    else:
+            print("NOT cleaning up ...")
+
+def write_sample_state(path, **kwargs):
+    # set default values
+    vals = {
+        "type"          : "IsoSampler",
+        "dataset"       : "Density",
+        "isovalue"      : 3.0,
+        "aov"           : 1.0,
+        "viewpoint"     : [0.0, 0.0, -20.0],
+        "viewdirection" : [0.0, 0.0, 1.0],
+        "viewup"        : [0.0, 1.0, 0.0],
+        "dimensions"    : [50, 50]
+    }
+
+    # overwrite with values from the function call
+    for key, value in kwargs.items():
+        vals[key] = value
+
+    # write out a file
+    with open(path, "w") as s:
+        s.write('''{{
+    \"Visualizations\" :
+    [
+      {{
+        \"operators\" :
+        [
+          {{
+            \"type\"     : \"{}\",
+            \"dataset\"  : \"{}\",
+            \"isovalue\" : {}
+          }}
+        ]
+      }}
+    ],
+    \"Cameras\" : 
+    [
+      {{
+        \"aov\"           : {},
+        \"viewpoint\"     : {},
+        \"viewdirection\" : {},
+        \"viewup\"        : {},
+        \"dimensions\"    : {}
+      }}
+    ]
+}}       '''.format(
+                    vals["type"],
+                    vals["dataset"],
+                    vals["isovalue"],
+                    vals["aov"],
+                    vals["viewpoint"],
+                    vals["viewdirection"],
+                    vals["viewup"],
+                    vals["dimensions"]
+                    ))
 
 def write_camera_json_file(path, phi, theta):
     with open(path, "w") as output:
@@ -100,7 +161,7 @@ def write_camera_json_file(path, phi, theta):
         output.write("   \"phi\"    : [{}, {}, {}]\n".format(phi[0],   phi[1],   phi[2]))
         output.write("}\n")
 
-def create_new_slice_clause(inclause, outclause, value):
+def write_slice_clause(inclause, outclause, value):
     lines = []
     print("creating new slice clause: {}".format(outclause))
     with open(inclause, "r") as infile:
@@ -110,11 +171,32 @@ def create_new_slice_clause(inclause, outclause, value):
         for line in lines:
             outfile.write(re.sub("XVALUE", str(value), line))
 
-slice_params = [-1.0, 1.0, 0.25]
-theta_params = [0.0, 360.0, 10.0]
-phi_params   = [90.0, 40.0, -10.0]
+
+# set the camera parameters for the Cinema database
+slice_params = []
+theta_params = []
+phi_params   = []
+
+FULL = False
+if FULL:
+    # create a full database
+    slice_params = [-0.75,  1.0,   0.25]
+    theta_params = [ 0.0, 360.0,  10.0]
+    phi_params   = [90.0,  40.0, -10.0]
+else:
+    # use test (smaller) parameters 
+    slice_params = [ 0.0,  2.0,   1.0]
+    theta_params = [ 0.0, 20.0,  10.0] 
+    phi_params   = [90.0, 70.0, -10.0] 
+
+if os.path.exists(BASEDIR):
+    print("Directory \"{}\" exists. Exiting ...".format(BASEDIR))
+    exit()
+else:
+    os.mkdir(BASEDIR)
 
 write_camera_json_file(FILE["camera"], phi_params, theta_params)
+write_sample_state("{}/sample.state".format(BASEDIR))
 
 slices = numpy.arange(slice_params[0], slice_params[1], slice_params[2])
 theta  = numpy.arange(theta_params[0], theta_params[1], theta_params[2])
@@ -123,13 +205,13 @@ phi    = numpy.arange(phi_params[0], phi_params[1], phi_params[2])
 dbs = [
     "database.cdb"
 ]
-database = cdb.CDB("tmp/{}".format(dbs[0]))
+database = cdb.CDB("{}/{}".format(BASEDIR, dbs[0]))
 database.create()
 for s in slices: 
     generate( database, s, phi, theta )
 
 database.finalize()
 install.compare( "cintools/cinema.source",
-                 "tmp",
+                 BASEDIR,
                  "compare.html",
                  dbs)
