@@ -124,8 +124,6 @@ fi
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
 
-if [ 1 == 0 ] ; then
-
 report "Generating radial-0.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256
 if [ $? != 0 ]; then
@@ -143,8 +141,6 @@ if [ $? != 0 ]; then
   fail "$GXY_VTI2VOL exited with code $?"
 fi
 
-fi
-
 # reasonable settings for Travis-CI VM environment
 export GXY_APP_NTHREADS=1
 export GXY_NTHREADS=4
@@ -153,7 +149,7 @@ PDIFF_OPTIONS="-fov 85"
 TESTS=0
 FAILS=0
 
-#if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
   MPI_COMMAND=""
   report "Running single process tests..."
   ${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 1 > partition.json
@@ -165,7 +161,7 @@ FAILS=0
   ${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 2 > partition.json
   ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
   run_tests
-#fi
+fi
 
 if [ ${FAILS} == 0 ]; then
   report "${TESTS}/${TESTS} image comparison tests passed"
