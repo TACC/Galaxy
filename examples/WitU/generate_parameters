@@ -177,11 +177,12 @@ slice_params = []
 theta_params = []
 phi_params   = []
 
-FULL = False
+FULL = True
 if FULL:
     # create a full database
     slice_params = [-0.75,  1.0,   0.25]
-    theta_params = [ 0.0, 360.0,  10.0]
+    # theta_params = [ 0.0, 360.0,  10.0]
+    theta_params = [ 0.0, 20.0,  10.0] 
     phi_params   = [90.0,  40.0, -10.0]
 else:
     # use test (smaller) parameters 
@@ -196,7 +197,7 @@ else:
     os.mkdir(BASEDIR)
 
 write_camera_json_file(FILE["camera"], phi_params, theta_params)
-write_sample_state("{}/sample.state".format(BASEDIR))
+write_sample_state("{}/sample.state".format(BASEDIR), aov=1.0)
 
 slices = numpy.arange(slice_params[0], slice_params[1], slice_params[2])
 theta  = numpy.arange(theta_params[0], theta_params[1], theta_params[2])

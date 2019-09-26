@@ -2,6 +2,7 @@
               "dataset": "Temperature",
               "type": "Volume",
               "volume rendering" : true,
+              "data range": [0.0, 10.0],
               "colormap": [
                     [ 0.000000, 0.984314, 0.988235, 0.909804 ],
                     [ 0.050000, 0.980392, 0.980392, 0.823529 ],
