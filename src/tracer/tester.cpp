@@ -58,6 +58,8 @@ syntax(char *a)
   cerr << "  -S seeds.csv  seeds (csv with header line) (none)" << endl;
   cerr << "  -P x y z      single seed to trace (0.0, 0.0, 0.0)" << endl;
   cerr << "  -T            dump local trajectories to stderr (no)" << endl;
+  cerr << "  -z z          termination magnitude of vectors (1e-12)" << endl;
+  cerr << "  -t t          max integration time (none)" << endl;
   cerr << "  -I max        scale the colormap to this to avoid hairballs (scale to max integration time)\n";
   exit(1);
 }
@@ -75,6 +77,7 @@ int main(int argc,  char *argv[])
   int nsteps = 2000;
   float h = 0.2;
   float z = 1e-12;
+  float t = -1;
   float X = 0.0, Y = 0.0, Z = 0.0;
   bool  dump_trajectories = false;
   float max_i = -1;
@@ -101,6 +104,8 @@ int main(int argc,  char *argv[])
     else if (!strcmp(argv[i],"-P")) X = atof(argv[++i]), Y = atof(argv[++i]), Z = atof(argv[++i]);
     else if (!strcmp(argv[i],"-T")) dump_trajectories = true;
     else if (!strcmp(argv[i],"-I")) max_i = atof(argv[++i]); 
+    else if (!strcmp(argv[i],"-z")) z = atof(argv[++i]);
+    else if (!strcmp(argv[i],"-t")) t = atof(argv[++i]);
     else if (!strcmp(argv[i],"--")) syntax(argv[0]);
     else statefile = argv[i];
   }
@@ -153,7 +158,8 @@ int main(int argc,  char *argv[])
     RungeKuttaP rkp = RungeKutta::NewP();
     rkp->set_max_steps(nsteps);
     rkp->set_stepsize(h);
-    rkp->set_minlen(z);
+    rkp->SetMinVelocity(z);
+    rkp->SetMaxIntegrationTime(t);
 
     if (! rkp->SetVectorField(Volume::Cast(theDatasets->Find("vectors"))))
       exit(1);
@@ -221,7 +227,7 @@ int main(int argc,  char *argv[])
 
     PathLinesP plp = PathLines::NewP();
 
-    TraceToPathLines(rkp, plp);
+    TraceToPathLines(rkp, plp, 1e10, 1e10);
     plp->Commit();
 
     theDatasets->Insert("pathlines", plp);

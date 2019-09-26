@@ -128,14 +128,24 @@ MappedVis::LoadFromJSON(Value& v)
 
 		opacitymap.clear();
 
-		Value& oa = doc["Points"];
-		for (int i = 0; i < oa.Size(); i += 4)
-		{
-			vec2f xo;
-      xo.x = oa[i+0].GetDouble();
-      xo.y = oa[i+1].GetDouble();
+    if (doc.HasMember("Points"))
+    {
+      Value& oa = doc["Points"];
+      for (int i = 0; i < oa.Size(); i += 4)
+      {
+        vec2f xo;
+        xo.x = oa[i+0].GetDouble();
+        xo.y = oa[i+1].GetDouble();
+        opacitymap.push_back(xo);
+      }
+    }
+    else
+    {
+      vec2f xo = {0.0, 1.0};
       opacitymap.push_back(xo);
-		}
+      xo = {1.0, 1.0};
+      opacitymap.push_back(xo);
+    }
 
 		colormap.clear();
 

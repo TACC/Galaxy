@@ -19,15 +19,16 @@ void
 RungeKutta::initialize()
 {
   super::initialize();
+  min_velocity = -1;
+  max_integration_time = -1;
   max_steps = 1000;
   stepsize = 0.2;
-  minlen = 1e-12;
   pthread_cond_init(&signal, NULL);
   pthread_mutex_init(&lock, NULL);
 }
 
 int 
-RungeKutta::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int) + 2*sizeof(float); }
+RungeKutta::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int) + 3*sizeof(float); }
 
 bool
 RungeKutta::SetVectorField(VolumeP v)
@@ -48,7 +49,9 @@ RungeKutta::serialize(unsigned char *ptr)
   *(Key *)ptr = vectorField->getkey(); ptr += sizeof(Key);
   *(int *)ptr = max_steps; ptr += sizeof(int);
   *(float *)ptr = stepsize; ptr += sizeof(float);
-  *(float *)ptr = minlen; ptr += sizeof(float);
+  *(float *)ptr = min_velocity; ptr += sizeof(float);
+  *(float *)ptr = max_integration_time; ptr += sizeof(float);
+
   return ptr;
 }
 
@@ -59,7 +62,9 @@ RungeKutta::deserialize(unsigned char *ptr)
   vectorField = Volume::GetByKey(*(Key *)ptr); ptr += sizeof(Key);
   max_steps = *(int *)ptr; ptr += sizeof(int);
   stepsize = *(float *)ptr; ptr += sizeof(float);
-  minlen = *(float *)ptr; ptr += sizeof(float);
+  min_velocity = *(float *)ptr; ptr += sizeof(float);
+  max_integration_time = *(float *)ptr; ptr += sizeof(float);
+
   return ptr;
 }
 
@@ -191,7 +196,7 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     vec3f velocity(vel[0], vel[1], vel[2]), normalized_velocity;
 
     float vlen = len(velocity);
-    if (vlen < minlen)
+    if (min_velocity > 0 && vlen < min_velocity)
     {
       terminated = true;
       zero(velocity);
@@ -199,6 +204,9 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     }
     else
     {
+      if (max_integration_time >= 0  && max_integration_time < tLast)
+        terminated = true;
+
       normalized_velocity = velocity * (1.0 / vlen);
     }
 

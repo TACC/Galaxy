@@ -80,11 +80,11 @@ def factor(ijk):
     mm = ijk + 3;
     i = 1
     while i <= (ijk >> 1):
-      jk = ijk / i;
+      jk = int(ijk / i);
       if ijk == (i * jk):
         j = 1
         while j <= (jk >> 1):
-          k = jk / j;
+          k = int(jk / j);
           if jk == (j * k):
             m = i + j + k;
             if m < mm:
@@ -96,10 +96,10 @@ def factor(ijk):
 
 def partition(factors, origin, spacing, counts):
   boxes = []
-  n = [(c-2) / f for c,f in zip(counts, factors)]
+  n = [int((c-2) / f) for c,f in zip(counts, factors)]
   counts = [i - 2 for i in counts]
   IJK = [[1 + i * n[j] for i in range(factors[j])] + [counts[j]] for j in range(3)]
-  IJK = [zip(IJK[j][:-1], IJK[j][1:]) for j in range(3)]
+  IJK = [list(zip(IJK[j][:-1], IJK[j][1:])) for j in range(3)]
   IJK = [[k,j,i] for i in IJK[2] for j in IJK[1] for k in IJK[0]]
   XYZ = [[[origin[i] + ijk[i][0]*spacing[i], origin[i] + ijk[i][1]*spacing[i]] for i in range(3)] for ijk in IJK]
   return XYZ
