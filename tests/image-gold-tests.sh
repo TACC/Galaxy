@@ -96,7 +96,7 @@ GXY_ENV=${GXY_ROOT}/install/galaxy.env
 PERCEPTUAL_DIFF=`which perceptualdiff`
 
 if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-  GXY_VTI2VOL="python ${GXY_BIN}/vti2vol"
+  GXY_VTI2VOL="python3 ${GXY_BIN}/vti2vol"
 fi
 
 if [ ! -x ${GXY_RADIAL} ]; then
