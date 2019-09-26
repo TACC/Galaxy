@@ -200,8 +200,8 @@ protected:
   float dir[3];
   float up[3];
   float aov;
-  int   camwidth=0;
-  int   camheight=0;
+  int   camwidth=512;
+  int   camheight=512;
 
   std::vector<int> permutation;
   bool permute;
