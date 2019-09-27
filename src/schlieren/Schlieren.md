@@ -1,4 +1,4 @@
-#Schlieren 
+# Schlieren 
 
 The files in this directory contain two implementations of Schlieren rendering.  Each is implemented as subclasses of *Renderer* which replace the Trace method to do bendy schlieren integration rather than the straight-ray tracing done by the standard Renderer.   
 
