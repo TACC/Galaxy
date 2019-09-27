@@ -1,0 +1,50 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "iref",
+        "type": "Volume",
+        "filename": "csafe-data.json"
+      }
+    ],
+    "Renderer": {
+      "far": 30
+    },
+    "Visualizations":
+    [
+      {
+        "Lighting": 
+        {
+        },
+        "operators":
+          [
+            {
+              "type": "Volume",
+              "dataset": "iref"
+            }
+          ]
+       }
+    ],
+    "Cameras":
+    [
+      {
+        "viewpoint": [0, 0, -2],
+        "viewcenter": [0, 0, 0],
+        "viewup": [1, 0, 0],
+        "aov": 0
+      },
+      {
+        "viewpoint": [0, -2, 0],
+        "viewcenter": [0, 0, 0],
+        "viewup": [1, 0, 0],
+        "aov": 0
+      },
+      {
+        "viewpoint": [-2, 0, 0],
+        "viewcenter": [0, 0, 0],
+        "viewup": [0, 1, 0],
+        "aov": 0
+      }
+    ]
+}
+
