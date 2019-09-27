@@ -81,7 +81,7 @@ int main(int argc,  char *argv[])
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-S1")) original_algorithm = false;
+    else if (!strcmp(argv[i], "-S1")) original_algorithm = true;
     else if (!strcmp(argv[i], "-S2")) original_algorithm = false;
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strcmp(argv[i], "-c")) clientserver = true;
@@ -133,7 +133,20 @@ int main(int argc,  char *argv[])
       cerr << "connection ok" << endl;
     }
 
-    RendererP theRenderer = Schlieren::NewP();
+    RendererP theRenderer;
+
+    if (original_algorithm)
+    {
+      Schlieren::Initialize();
+      theRenderer = Schlieren::NewP();
+    }
+    else
+    {
+      Schlieren2::Initialize();
+      Schlieren2Rendering::Register();
+      theRenderer = Schlieren2::NewP();
+    }
+
 
     rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
     if (! doc)
@@ -202,7 +215,16 @@ int main(int argc,  char *argv[])
         if (theRenderingSets.back()->GetNumberOfRenderings() >= maxConcurrentRenderings)
           theRenderingSets.push_back(RenderingSet::NewP());
 
-        RenderingP theRendering = Rendering::NewP();
+        RenderingP theRendering;
+
+        if (original_algorithm)
+        {
+          theRendering = Rendering::NewP();
+        }
+        else
+        {
+          theRendering = Schlieren2Rendering::NewP();
+        }
 
         theRendering->SetTheOwner(index++ % mpiSize );
         if (override_windowsize)
