@@ -81,8 +81,8 @@ syntax(char *a)
   cerr << "  -I max        scale the colormap to this to avoid hairballs (scale to max integration time)\n";
   cerr << "  -dt dt        truncate pathlines to this length in proportion of total integration time (don't truncate)\n";
   cerr << "  -nf nf        animate by moving head of pathlines from 0 to total integration time in this number of frames (1)\n";
-  cerr << "  -pdata name   volume to map onto samples\n";
-  cerr << "  -sdata name   volume to map onto pathlines\n";
+  cerr << "  -sdata name   volume to map onto samples\n";
+  cerr << "  -pdata name   volume to map onto pathlines\n";
   exit(1);
 }
 
