@@ -163,17 +163,14 @@ main(int argc, char * argv[])
     }
     else if (data_state == "")   
     {
-      cerr << "setting data state " << argv[i];
       data_state = argv[i];
     }
     else if (sampling_state == "")   
     {
-      cerr << "setting sample state " << argv[i];
       sampling_state = argv[i];
     }
     else if (rendering_state == "")  
     {
-      cerr << "setting render state " << argv[i];
       rendering_state = argv[i];
     }
     else
