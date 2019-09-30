@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+import sys
+import json
+import numpy
+
+if (len(sys.argv) != 4):
+    print("ERROR: need three [3] args")
+    exit
+
+camera_state    = sys.argv[1]
+state_nocameras = sys.argv[2]
+output_state    = sys.argv[3]
+
+from math import * 
+import os
+
+def polar2cartesian( r, theta, phi):
+    return [
+            r*cos(radians(t))*sin(radians(p)),
+            r*sin(radians(t))*sin(radians(p)),
+            r*cos(radians(p))
+            ]
+
+camdata = [] 
+with open(camera_state, "r") as camjson:
+    camdata = json.load(camjson)
+
+os.system("cat {} > {}".format(state_nocameras, output_state))
+
+curid = 0
+with open(output_state, "a") as state_file:
+    state_file.write("    \"Cameras\": [\n")
+    all_phis = numpy.arange(camdata["phi"][0], camdata["phi"][1], camdata["phi"][2])
+    for p in all_phis: 
+        all_thetas = numpy.arange(camdata["theta"][0], camdata["theta"][1], camdata["theta"][2])
+        for t in all_thetas: 
+            if (curid != 0):
+                state_file.write("      },\n")
+            (x, y, z) = polar2cartesian( camdata["radius"], t, p ) 
+            state_file.write("      {\n")
+            state_file.write("        \"aov\"        : {},\n".format(camdata["aov"]))
+            state_file.write("        \"viewpoint\"  : [{}, {}, {}],\n".format( x, y, z )) 
+            state_file.write("        \"viewcenter\" : [0.0, 0.0, 0.0],\n" )
+            state_file.write("        \"viewup\"     : [0.0, 0.0, 1.0],\n" ) 
+            state_file.write("        \"dimensions\" : [{}, {}]\n".format(camdata["width"], camdata["height"]))
+            curid = curid + 1
+    state_file.write("      }\n")
+    state_file.write("    ]\n")
+    state_file.write("}\n")

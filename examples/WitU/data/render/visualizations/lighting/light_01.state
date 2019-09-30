@@ -1,0 +1,8 @@
+        "Lighting": {
+          "Sources": [[1, 1, 0, 1]],
+          "shadows": true,
+          "Ka": 0.4,
+          "Kd": 0.6,
+          "ao count": 0,
+          "ao radius": 1.0
+        },

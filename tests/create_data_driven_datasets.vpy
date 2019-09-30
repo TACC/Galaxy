@@ -57,11 +57,11 @@ def SetVectors(d, name):
 def Names(d):
   pd = d.GetPointData()
   if pd.GetScalars() != None:
-    print 'scalars:', pd.GetScalars().GetName()
+    print('scalars:', pd.GetScalars().GetName())
   if pd.GetVectors() != None:
-    print 'vectors:', pd.GetVectors().GetName()
+    print('vectors:', pd.GetVectors().GetName())
   for i in range(pd.GetNumberOfArrays()):
-    print i, ": ", pd.GetArray(i).GetName()
+    print(i, ": ", pd.GetArray(i).GetName())
 
 def do_particles(id):
   SetScalars(id, 'eightBalls')

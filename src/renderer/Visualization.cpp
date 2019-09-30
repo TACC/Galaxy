@@ -235,8 +235,6 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
     else
       vispc[nvispc++] = v->GetIspc();
-      //if (VolumeVis::IsA(v))
-        //vispc[nvispc++] = v->GetIspc();
   }
 
   if (ospModel)

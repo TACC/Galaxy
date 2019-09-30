@@ -57,9 +57,6 @@ public:
   float get_stepsize() { return stepsize; }
   void set_stepsize(float s) { stepsize = s; }
 
-  float get_minlen() { return minlen; }
-  void set_minlen(float m) { minlen = m; }
-
   int get_number_of_local_trajectories() { return trajectories.size(); }
   float get_maximum_integration_time() { return max_integration_time; }
 
@@ -101,6 +98,12 @@ public:
   void Signal() { pthread_cond_signal(&signal); }
   void Wait() { pthread_cond_wait(&signal, &lock); }
 
+  float GetMinVelocity() { return min_velocity; }
+  void SetMinVelocity(float v) { min_velocity = v; }
+
+  float GetMaxIntegrationTime() { return max_integration_time; }
+  void SetMaxIntegrationTime(float t) { max_integration_time = t; }
+
 protected:
   VolumeP vectorField;
 
@@ -118,7 +121,8 @@ protected:
 
   int max_steps;
   float stepsize;
-  float minlen;
+  float min_velocity;
+  float max_time;
 
   class RKTraceMsg : public Work
   {

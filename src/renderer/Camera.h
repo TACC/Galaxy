@@ -127,7 +127,7 @@ public:
 	//! set the view direction for the camera
 	void set_viewdirection(vec3f xyz)  { dir[0] = xyz.x; dir[1] = xyz.y; dir[2] = xyz.z; }
 
-  //! get the view direction for the camera
+    //! get the view direction for the camera
 	void get_viewdirection(float &x, float &y, float &z) { x = dir[0]; y = dir[1]; z = dir[2]; }
 	//! get the view direction for the camera
 	void get_viewdirection(float *xyz)  { xyz[0] = dir[0]; xyz[1] = dir[1]; xyz[2] = dir[2]; }
@@ -141,7 +141,7 @@ public:
 	//! set the up orientation for the camera
 	void set_viewup(vec3f xyz)  { up[0] = xyz.x; up[1] = xyz.y; up[2] = xyz.z; }
 
-  //! get the up orientation for the camera
+    //! get the up orientation for the camera
 	void get_viewup(float &x, float &y, float &z) { x = up[0]; y = up[1]; z = up[2]; }
 	//! get the up orientation for the camera
 	void get_viewup(float *xyz)  { xyz[0] = up[0]; xyz[1] = up[1]; xyz[2] = up[2]; }
@@ -154,6 +154,15 @@ public:
 	void get_angle_of_view(float &a) { a = aov; }
 	//! get the view angle for the camera
 	float get_angle_of_view() { return aov; }
+
+    //! set width
+    void set_width(int w) {camwidth = w;}
+    //! set height
+    void set_height(int h) {camheight = h;}
+    //! get width
+    int get_width() { return camwidth;}
+    //! get height of camera
+    int get_height() { return camheight;}
 
 	//! print the details of this camera
 	void print();
@@ -187,10 +196,12 @@ protected:
 
   std::string annotation;
 	
-	float eye[3];
-	float dir[3];
-	float up[3];
-	float aov;
+  float eye[3];
+  float dir[3];
+  float up[3];
+  float aov;
+  int   camwidth=512;
+  int   camheight=512;
 
   std::vector<int> permutation;
   bool permute;

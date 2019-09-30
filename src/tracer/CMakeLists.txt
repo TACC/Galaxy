@@ -24,7 +24,7 @@ if (GXY_WRITE_IMAGES)
   target_link_libraries(tester ${VTK_LIBRARIES} ${Galaxy_LIBRARIES} ${MPI_C_LIBRARIES})
   set(BINS tester)
 
-  add_executable(sampletrace sampletrace.cpp RungeKutta.cpp TraceToPathLines.cpp)
+  add_executable(sampletrace sampletrace.cpp RungeKutta.cpp TraceToPathLines.cpp Interpolator.cpp)
   target_link_libraries(sampletrace gxy_sampler ${VTK_LIBRARIES} ${Galaxy_LIBRARIES} ${MPI_C_LIBRARIES})
   set(BINS sampletrace ${BINS})
 

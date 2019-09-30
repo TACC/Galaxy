@@ -25,6 +25,8 @@
 
 #include "Application.h"
 #include "Schlieren.h"
+#include "Schlieren2.h"
+#include "Schlieren2Rendering.h"
 #include "ClientServer.h"
 
 #include <ospray/ospray.h>
@@ -44,7 +46,8 @@ syntax(char *a)
   cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
   cerr << "  -A         wait for attachment" << endl;
   cerr << "  -s w h     window width, height (1920 1080)" << endl;
-  cerr << "  -S k       render only every k'th rendering" << endl;
+  cerr << "  -S1        Snell integration, difference vector in image plane (default)" << endl;
+  cerr << "  -S2        Snell integration, accumulation at hit point" << endl;
   cerr << "  -c         client/server interface" << endl;
   cerr << "  -N         max number of simultaneous renderings (VERY large)" << endl;
   exit(1);
@@ -69,19 +72,26 @@ int main(int argc,  char *argv[])
   bool atch = false;
   bool cinema = false;
   int width = 1920, height = 1080;
-  int skip = 0;
   bool clientserver = false;
   ClientServer cs;
   int maxConcurrentRenderings = 99999999;
+  bool override_windowsize = false;
+  bool original_algorithm = true;
 
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
+    else if (!strcmp(argv[i], "-S1")) original_algorithm = true;
+    else if (!strcmp(argv[i], "-S2")) original_algorithm = false;
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strcmp(argv[i], "-c")) clientserver = true;
     else if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-s")) width = atoi(argv[++i]), height = atoi(argv[++i]);
-    else if (!strcmp(argv[i], "-S")) skip = atoi(argv[++i]);
+    else if (!strcmp(argv[i], "-s"))
+    {
+        width = atoi(argv[++i]);
+        height = atoi(argv[++i]);
+        override_windowsize = true;
+    }
     else if (!strcmp(argv[i], "-N")) maxConcurrentRenderings = atoi(argv[++i]);
     else if (statefile == "")   statefile = argv[i];
     else syntax(argv[0]);
@@ -90,12 +100,18 @@ int main(int argc,  char *argv[])
   if (statefile == "")
     syntax(argv[0]);
 
-  // ospInit(&argc, (const char **)argv);
-
   Application theApplication(&argc, &argv);
   theApplication.Start();
 
-  Schlieren::Initialize();
+  if (original_algorithm)
+  {
+    Schlieren::Initialize();
+  }
+  else
+  {
+    Schlieren2::Initialize();
+    Schlieren2Rendering::Register();
+  }
 
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
@@ -117,7 +133,20 @@ int main(int argc,  char *argv[])
       cerr << "connection ok" << endl;
     }
 
-    SchlierenP theSchlierenRenderer = Schlieren::NewP();
+    RendererP theRenderer;
+
+    if (original_algorithm)
+    {
+      Schlieren::Initialize();
+      theRenderer = Schlieren::NewP();
+    }
+    else
+    {
+      Schlieren2::Initialize();
+      Schlieren2Rendering::Register();
+      theRenderer = Schlieren2::NewP();
+    }
+
 
     rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
     if (! doc)
@@ -128,7 +157,7 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    theSchlierenRenderer->LoadStateFromDocument(*doc);
+    theRenderer->LoadStateFromDocument(*doc);
 
     vector<CameraP> theCameras;
     if (! Camera::LoadCamerasFromJSON(*doc, theCameras))
@@ -183,19 +212,26 @@ int main(int argc,  char *argv[])
     for (auto c : theCameras)
       for (auto v : theVisualizations)
       {
-        if (skip && (k % skip) != 0)
-        {
-          std::cerr << "S";
-          continue;
-        }
-
         if (theRenderingSets.back()->GetNumberOfRenderings() >= maxConcurrentRenderings)
           theRenderingSets.push_back(RenderingSet::NewP());
 
-        RenderingP theRendering = Rendering::NewP();
+        RenderingP theRendering;
+
+        if (original_algorithm)
+        {
+          theRendering = Rendering::NewP();
+        }
+        else
+        {
+          theRendering = Schlieren2Rendering::NewP();
+        }
 
         theRendering->SetTheOwner(index++ % mpiSize );
-        theRendering->SetTheSize(width, height);
+        if (override_windowsize)
+        {
+            c->set_width(width);
+            c->set_height(height);
+        }
         theRendering->SetTheCamera(c);
         theRendering->SetTheDatasets(theDatasets);
         theRendering->SetTheVisualization(v);
@@ -230,7 +266,7 @@ int main(int argc,  char *argv[])
         theApplication.Wait();
         exit(1);
       }
-      theSchlierenRenderer->Start(rs);
+      theRenderer->Start(rs);
 
 #if 1
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
@@ -257,7 +293,8 @@ int main(int argc,  char *argv[])
 #endif
       rs->WaitForDone();
 
-      theSchlierenRenderer->NormalizeImages(rs);
+      if (original_algorithm)
+        Schlieren::Cast(theRenderer)->NormalizeImages(rs);
       sleep(4);
 
       rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image", true);
@@ -275,7 +312,7 @@ int main(int argc,  char *argv[])
     theVisualizations.clear();
     theCameras.clear();
 
-    theSchlierenRenderer = nullptr;
+    theRenderer = nullptr;
     theApplication.QuitApplication();
   }
 

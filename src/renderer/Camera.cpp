@@ -238,7 +238,9 @@ Camera::LoadFromJSON(Value& v)
   else
   {
     if (v.HasMember("annotation"))
+    {
       SetAnnotation(string(v["annotation"].GetString()));
+    }
 
     eye[0] = v["viewpoint"][0].GetDouble();
     eye[1] = v["viewpoint"][1].GetDouble();
@@ -261,6 +263,12 @@ Camera::LoadFromJSON(Value& v)
       std::cerr << "need either viewdirection or viewcenter\n";
       set_error(1);
       return false;
+    }
+
+    if (v.HasMember("dimensions"))
+    {
+      set_width(v["dimensions"][0].GetInt());
+      set_height(v["dimensions"][0].GetInt());
     }
 
     up[0] = v["viewup"][0].GetDouble();
@@ -832,7 +840,7 @@ Camera::print()
 int 
 Camera::serialSize()
 {
-  return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) + sizeof(eye) + sizeof(dir) + sizeof(up) + sizeof(float);
+  return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) + sizeof(eye) + sizeof(dir) + sizeof(up) + sizeof(float) + sizeof(int) + sizeof(int);
 }
 
 unsigned char *
@@ -858,6 +866,12 @@ Camera::serialize(unsigned char *p)
   *(float *)p = aov;
   p += sizeof(float);
 
+  *(int *)p = camwidth;
+  p += sizeof(int);
+
+  *(int *)p = camheight;
+  p += sizeof(int);
+
   return p;
 }
 
@@ -880,6 +894,12 @@ Camera::deserialize(unsigned char *p)
 
   set_angle_of_view(*(float *)p);
   p += sizeof(float);
+
+  set_width(*(int *)p);
+  p += sizeof(int);
+
+  set_height(*(int *)p);
+  p += sizeof(int);
 
   return p;
 }

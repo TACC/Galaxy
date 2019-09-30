@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# clean up
+OUTDIR="tmp"
+rm -rf $OUTDIR
+mkdir $OUTDIR
+
+./generate_render_state data/state_01.json vis_cam.tmp
+./generate_cameras vis_cam.tmp vis_state.tmp
+sampletrace data.state sample.state vis_state.tmp
+rm vis_state.tmp vis_cam.tmp
+
+CDB="visualization"
+mkdir $OUTDIR/${CDB}.cdb
+mv *.png $OUTDIR/${CDB}.cdb
+mv data.csv $OUTDIR/${CDB}.cdb
+
+./generate_render_state data/state_02.json sample_cam.tmp
+./generate_cameras sample_cam.tmp sample_state.tmp 
+sampletrace data.state sample.state sample_state.tmp 
+rm sample_state.tmp sample_cam.tmp
+
+CDB="samples"
+mkdir $OUTDIR/${CDB}.cdb
+mv *.png $OUTDIR/${CDB}.cdb
+mv data.csv $OUTDIR/${CDB}.cdb
+
+
+

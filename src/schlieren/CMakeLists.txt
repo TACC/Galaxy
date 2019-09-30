@@ -48,11 +48,15 @@ include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_D
 
 set (ISPC_SOURCES 
   SchlierenTraceRays.ispc
+  Schlieren2TraceRays.ispc
 )
 
 set (CPP_SOURCES 
   Schlieren.cpp
   SchlierenTraceRays.cpp
+  Schlieren2.cpp
+  Schlieren2TraceRays.cpp
+  Schlieren2Rendering.cpp
 )
 
 if (ospray_DIR)
@@ -61,7 +65,7 @@ if (ospray_DIR)
   install(TARGETS gxy_schlieren DESTINATION lib)
 endif()
 
-install(FILES Schlieren.h DESTINATION include)
+install(FILES Schlieren.h Schlieren2.h Schlieren2Rendering.h DESTINATION include)
 
 if (GXY_WRITE_IMAGES)
 

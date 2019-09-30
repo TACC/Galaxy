@@ -19,9 +19,9 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-print ('vti2vol entry')
 
 import sys
+print ('vti2vol version', sys.version)
 from vtk import *
 from vtk.util import numpy_support as ns
 from os.path import isfile

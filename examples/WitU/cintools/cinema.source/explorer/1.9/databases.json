@@ -1,0 +1,54 @@
+[
+	{
+		"name" : "sphere",
+		"directory" : "data/sphere.cdb"
+	},
+	{
+		"name" : "Sphere Multi-Image",
+		"directory" : "data/sphere_multi-image.cdb"
+	},
+	{
+		"name" : "Many File Types",
+		"directory" : "data/file_types.cdb"
+	},
+	{
+		"name" : "Bogus 1",
+		"directory" : "data/bogus/bogus_1.cdb",
+		"filter" : "(^FILE)|(5$)",
+		"query": {
+			"Float_6" : [20, 70],
+			"Integer_2": [40, 60]
+		},
+		"selection": {
+			"Integer_3": [20, 50]
+		}
+	},
+	{
+		"name" : "Bogus 2",
+		"directory" : "data/bogus/bogus_2.cdb"
+	},
+	{
+		"name" : "Bogus 3",
+		"directory" : "data/bogus/bogus_3.cdb"
+	},
+	{
+		"name" : "Bogus 4",
+		"directory" : "data/bogus/bogus_4.cdb"
+	},
+	{
+		"name" : "Big Bogus 1",
+		"directory" : "data/bogus/big_bogus_1.cdb"
+	},
+	{
+		"name" : "Big Bogus 2",
+		"directory" : "data/bogus/big_bogus_2.cdb"
+	},
+	{
+		"name" : "Big Bogus 3",
+		"directory" : "data/bogus/big_bogus_3.cdb"
+	},
+	{
+		"name" : "Big Bogus 4",
+		"directory" : "data/bogus/big_bogus_4.cdb"
+	}
+]

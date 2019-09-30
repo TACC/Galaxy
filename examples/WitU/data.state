@@ -1,0 +1,20 @@
+{
+    "Datasets":
+    [
+      {
+        "name": "Density",
+        "type": "Volume",
+        "filename": "WitU-Density.json"
+      },
+      {
+        "name": "Temperature",
+        "type": "Volume",
+        "filename": "WitU-Temperature.json"
+      },
+      {
+        "name": "vectors",
+        "type": "Volume",
+        "filename": "WitU-vectors.json"
+      }
+    ]
+}

@@ -1,0 +1,8 @@
+{
+  "type": "float",
+  "origin": [-1.000000, -1.000000, -1.000000],
+  "counts": [100, 100, 100],
+  "delta": [0.020202, 0.020202, 0.020202],
+  "rawdata": "csafe-data.raw",
+  "number of components": 1
+}

@@ -224,6 +224,7 @@ Rendering::local_commit(MPI_Comm c)
       delete[] framebuffer;
 
     framebuffer = new float[width*height*4];
+    memset(framebuffer, 0, width*height*4*sizeof(float));
 
 #ifndef GXY_WRITE_IMAGES
 		if (kbuffer)
@@ -256,7 +257,11 @@ Rendering::local_reset()
 }
 
 CameraP Rendering::GetTheCamera() { return camera; }
-void Rendering::SetTheCamera(CameraP c) { camera = c; }
+void Rendering::SetTheCamera(CameraP c) 
+{ 
+  camera = c;
+  SetTheSize(c->get_width(), c->get_height());
+}
 
 DatasetsP Rendering::GetTheDatasets() { return datasets; }
 void Rendering::SetTheDatasets(DatasetsP ds) { datasets = ds; }
