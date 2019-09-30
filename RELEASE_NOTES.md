@@ -1,5 +1,19 @@
 # Galaxy Release Notes
 
+## version 0.4.0 - pending
+
+* *TODO* - reorganize `src` directory to: framework, data, filters, apps
+* *TODO* - singularity recipe for multi-node distributed testing on TACC systems
+
+## version 0.3.1 - 20190930
+
+* added examples for Schlieren renderer in `examples/schlieren`
+* added examples for various data samplers in `examples/sampletrace`
+* added second, energy-accumulation schlieren algorithm
+* added 'data.state' argument to `sampletrace` to track data
+* moved image resolution specification to Camera
+* added Cinema database example of Water in the Universe data in `examples/WitU`
+* added 'data range' to visualizations to select range of interest
 
 ## version 0.3.0 - 20190821
 
@@ -12,7 +26,7 @@
 * Support for vector-valued volumes
   - added JSON format for volume description files that implements 'number of components' field
 * Initial implementation of RungeKutta operator to trace streamlines in vector volumes
-  - also 'TraceToPathLines' opewrtor to convert RungeKutta results to path lines for rendering
+  - also 'TraceToPathLines' operator to convert RungeKutta results to path lines for rendering
 * Added `schlieren` to provide multi-hued Schlieren and shadowgraph-style rendering
   - also implemented 'float-image' output (in FITS format)
 * Added `ospray` modules for class overrides to the underlying [OSPRay][1] rendering engine
