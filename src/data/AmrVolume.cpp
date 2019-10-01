@@ -488,6 +488,30 @@ AmrVolume::local_load_timestep(MPI_Comm c)
 {
     return false;
 }
-
+bool
+AmrVolume::set_numlevels(int numlev) {
+    numlevels = numlev;
+    return true;
+}
+void 
+AmrVolume::set_levelnumgrids(std::vector<int> lng) {
+    levelnumgrids = lng;
+}
+void
+AmrVolume::add_gridorigin(float x,float y,float z) {
+    gridorigin.push_back(vec3f(x,y,z));
+}
+void
+AmrVolume::add_gridcounts(int i, int j, int k) {
+    gridcounts.push_back(vec3i(i,j,k));
+}
+void
+AmrVolume::add_gridspacing(float sx,float sy, float sz) {
+    gridspacing.push_back(vec3f(sx,sy,sz));
+}
+void
+AmrVolume::add_samples(float *samples) {
+    gridsamples.push_back(samples);
+}
 
 } // namespace gxy

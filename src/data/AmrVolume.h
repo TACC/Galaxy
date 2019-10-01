@@ -59,6 +59,12 @@ public:
         virtual bool local_load_timestep(MPI_Comm c);
         //! method to read gxyamr data
         /*! an internal method used to load gxyamr metadata */
+        virtual bool set_numlevels(int );
+        virtual void set_levelnumgrids(std::vector<int> );
+        virtual void add_gridorigin(float,float,float);
+        virtual void add_gridcounts(int,int,int);
+        virtual void add_gridspacing(float,float,float);
+        virtual void add_samples(float*);
 
 private:
         enum amrtype {GXYAMR,ENZOAMR,NOEXT};
