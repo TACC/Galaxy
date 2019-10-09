@@ -37,7 +37,7 @@ find_library(PNG_LIBRARY_RELEASE png)
 find_library(Z_LIBRARY_RELEASE z)
 
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
-include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
+ispc_include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
 
 include_directories(${gxy_framework_SOURCE_DIR}
 										${gxy_renderer_SOURCE_DIR}
@@ -88,10 +88,11 @@ set (CPP_SOURCES
   VolumeVis.cpp)
 
 if (ospray_DIR)
-  ospray_create_library(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE} COMPONENT lib)
+  add_library(gxy_renderer SHARED)
+  ispc_target_add_sources(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES})
+  target_link_libraries(gxy_renderer ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE})
   set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  # install(TARGETS gxy_renderer DESTINATION lib)
+  install(TARGETS gxy_renderer DESTINATION lib)
 endif()
 
 install(FILES 

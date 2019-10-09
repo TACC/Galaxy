@@ -34,7 +34,7 @@ if (COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 
-include_directories_ispc(${EMBREE_INCLUDE_DIRS}                   
+ispc_include_directories(${EMBREE_INCLUDE_DIRS}
                          ${OSPRAY_INCLUDE_DIRS}
                          )
 
@@ -70,8 +70,10 @@ install(FILES
   DESTINATION include/gxy)
 
 if (ospray_DIR)
-  ospray_create_library(gxy_ospray ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} COMPONENT lib)
+  add_library(gxy_ospray SHARED)
+  ispc_target_add_sources(gxy_ospray ${CPP_SOURCES} ${ISPC_SOURCES})
+  target_link_libraries(gxy_ospray ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
   set_target_properties(gxy_ospray PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+  install(TARGETS gxy_ospray DESTINATION lib)
 endif()
 

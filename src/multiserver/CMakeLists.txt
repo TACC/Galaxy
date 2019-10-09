@@ -46,7 +46,7 @@ target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework)
 set(BINS msserver ${BINS})
 
 add_executable(msviewer msviewer.cpp ClientWindow.cpp JsonInterface.cpp CommandLine.cpp)
-target_link_libraries(msviewer gxy_multiserver ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} ${OSPRAY_LIBRARIES} pthread)
+target_link_libraries(msviewer gxy_multiserver ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES} ${OSPRAY_LIBRARIES} pthread)
 set(BINS msviewer ${BINS})
 
 add_executable(msclient msclient.cpp SocketHandler.cpp CommandLine.cpp)
