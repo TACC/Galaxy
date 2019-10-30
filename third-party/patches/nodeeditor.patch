@@ -1,0 +1,45 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1fc58a7..7ccf921 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,3 +1,6 @@
++## NOTE: This file has been modified by a Galaxy patch.
++##       See the GALAXY BEGIN / GALAXY END block(s) below.
++
+ cmake_minimum_required(VERSION 3.2)
+ # version 3.4 is required as other do not work with C++14 and clang
+ 
+@@ -6,6 +9,12 @@ project(NodeEditor CXX)
+ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+ set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
+ 
++# GALAXY BEGIN ADDED CODE - by Galaxy patch
++IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++  SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
++ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++# GALAXY END ADDED CODE - by Galaxy patch
++
+ get_directory_property(_has_parent PARENT_DIRECTORY)
+ if(_has_parent)
+   set(is_root_project OFF)
+diff --git a/src/NodeConnectionInteraction.cpp b/src/NodeConnectionInteraction.cpp
+index fb701be..4a442c1 100644
+--- a/src/NodeConnectionInteraction.cpp
++++ b/src/NodeConnectionInteraction.cpp
+@@ -227,6 +227,10 @@ bool
+ NodeConnectionInteraction::
+ nodePortIsEmpty(PortType portType, PortIndex portIndex) const
+ {
++#if 1
++  // Allow multiple connections to an input port
++  return true;
++#else
+   NodeState const & nodeState = _node->nodeState();
+ 
+   auto const & entries = nodeState.getEntries(portType);
+@@ -235,4 +239,5 @@ nodePortIsEmpty(PortType portType, PortIndex portIndex) const
+ 
+   const auto outPolicy = _node->nodeDataModel()->portOutConnectionPolicy(portIndex);
+   return ( portType == PortType::Out && outPolicy == NodeDataModel::ConnectionPolicy::Many);
++#endif
+ }
