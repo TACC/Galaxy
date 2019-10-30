@@ -34,6 +34,11 @@ add_subdirectory(apps)
 add_subdirectory(cinema)
 add_subdirectory(tracer)
 
+if (GXY_GUI)
+  add_subdirectory(gui)
+endif(GXY_GUI)
+
+
 
 
 

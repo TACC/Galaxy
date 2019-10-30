@@ -74,7 +74,7 @@ if [ $? != 0 ]; then
 fi
 
 cd ${GXY_ROOT}/third-party
-for tp_lib_dir in embree ospray rapidjson; do
+for tp_lib_dir in embree ospray nodeeditor rapidjson; do
 	if [ -d $tp_lib_dir/install ]; then
 		report "$tp_lib_dir already installed."
 	else 

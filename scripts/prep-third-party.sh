@@ -73,6 +73,9 @@ if [ $? != 0 ]; then
 	fail
 fi
 
+cd ${GXY_ROOT}/third-party/nodeeditor
+git checkout 2816c94 .
+
 report "applying patches..."
 PATCH_DIR=${GXY_ROOT}/third-party/patches
 cd ${PATCH_DIR}

@@ -42,8 +42,7 @@ if (COMMAND cmake_policy)
   endif()
 endif(COMMAND cmake_policy)
 
-# use C++11 foo explicitly
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 # ignore override warnings
@@ -67,6 +66,7 @@ set(GXY_PRODUCE_STATUS_MESSAGES OFF CACHE BOOL "produce periodic status massages
 set(GXY_REVERSE_LIGHTING ON CACHE BOOL "Use subtractive lighting model?")
 set(GXY_WRITE_IMAGES OFF CACHE BOOL "write image files rather than interactive display (\"batch mode\")?")
 set(GXY_TIMING OFF CACHE BOOL "Generate timing statistics for the Galaxy Renderer")
+set(GXY_GUI ON CACHE BOOL "Build Galaxy GUI")
 set(GXY_UNIT_TESTING OFF CACHE BOOL "Generate Galaxy unit testing framework")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
@@ -141,6 +141,9 @@ set(GALAXY_DATA_LIB "${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}gxy_d
 set(GALAXY_RENDERER_LIB "${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}gxy_renderer${CMAKE_SHARED_LIBRARY_SUFFIX}")
 set(GALAXY_SAMPLER_LIB "${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}gxy_sampler${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+
 write_basic_package_version_file("${GALAXY_CONFIG_VERSION}" COMPATIBILITY AnyNewerVersion)
 configure_package_config_file( "CMake/${PROJECT_NAME}Config.cmake.in" 
   "${GALAXY_CONFIG}"
@@ -155,5 +158,4 @@ add_subdirectory(src)
 if (GXY_UNIT_TESTING)
   add_subdirectory(tests/src)
 endif(GXY_UNIT_TESTING)
-
 
