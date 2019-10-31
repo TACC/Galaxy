@@ -52,12 +52,17 @@ SocketHandler::SocketHandler(int cfd, int dfd) : SocketHandler::SocketHandler()
 
 bool SocketHandler::Connect(std::string host, int port)
 {
+  return SocketHandler::Connect((char *)host.c_str(), port);
+}
+
+bool SocketHandler::Connect(char *host, int port)
+{
   pthread_mutex_init(&c_lock, NULL);
   pthread_mutex_init(&d_lock, NULL);
 
   struct hostent *server;
 
-  server = gethostbyname(host.c_str());
+  server = gethostbyname(host);
   if (server == NULL)
   {
     std::cerr <<  "ERROR: no such host (" << host << ")\n";

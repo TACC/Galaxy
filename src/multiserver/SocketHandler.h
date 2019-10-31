@@ -52,6 +52,7 @@ public:
   //! \param host name of host to connect to
   //! \param port port to connect to
   virtual bool Connect(std::string host, int port);
+  virtual bool Connect(char * host, int port);
 
   //! Given a set of memory pointers and sizes, send them as a contiguous multi-part message using the control socket
   bool CSendV(char** buf, int* size)
