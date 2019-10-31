@@ -27,8 +27,10 @@ find_package(Qt5 5.3 COMPONENTS Core Widgets Gui OpenGL)
 file(GLOB_RECURSE CPPS  ./*.cpp )
 file(GLOB_RECURSE HEADERS_TO_MOC ./*.hpp)
 
+include_directories(${gxy_multiserver_SOURCE_DIR})
+
 qt5_wrap_cpp(mocs ${HEADERS_TO_MOC} TARGET galaxygui OPTIONS --no-notes)
 
 add_executable(galaxygui ${CPPS} ${mocs})
-target_link_libraries(galaxygui NodeEditor::nodes)
+target_link_libraries(galaxygui NodeEditor::nodes gxy_multiserver)
 install(TARGETS galaxygui DESTINATION bin)

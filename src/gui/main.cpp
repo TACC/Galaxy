@@ -47,6 +47,11 @@ using QtNodes::ConnectionStyle;
 using QtNodes::TypeConverter;
 using QtNodes::TypeConverterId;
 
+#include "GxyConnectionMgr.hpp"
+
+GxyConnectionMgr *theGxyConnectionMgr = NULL;
+GxyConnectionMgr *getTheGxyConnectionMgr() { return theGxyConnectionMgr; }
+
 static std::shared_ptr<DataModelRegistry>
 registerDataModels()
 {
@@ -87,12 +92,12 @@ setStyle()
   )");
 }
 
-#if 1
-
 int
 main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
+
+  theGxyConnectionMgr = new GxyConnectionMgr();
 
   setStyle();
 
@@ -102,12 +107,18 @@ main(int argc, char *argv[])
   mainWindow.setCentralWidget(mainWidget);
 
   auto menuBar    = mainWindow.menuBar();
+
   auto fileMenu   = menuBar->addMenu("&File");
   auto loadAction = fileMenu->addAction("Load");
   auto saveAction = fileMenu->addAction("Save");
 
   auto editMenu     = menuBar->addMenu("&Edit");
   auto deleteAction = editMenu->addAction("Delete");
+
+  auto servermenu = menuBar->addMenu("&Server");
+  auto connectAction = servermenu->addAction("Connect...");
+
+  mainWindow.connect(connectAction, &QAction::triggered, theGxyConnectionMgr, &GxyConnectionMgr::makeConnection);
 
   QVBoxLayout *l = new QVBoxLayout(mainWidget);
   l->setContentsMargins(0, 0, 0, 0);
@@ -129,40 +140,3 @@ main(int argc, char *argv[])
   app.exec();
 
 }
-
-#else
-
-int
-main(int argc, char *argv[])
-{
-  QApplication app(argc, argv);
-
-  setStyle();
-
-  QWidget mainWidget;
-
-  auto menuBar    = new QMenuBar();
-  auto saveAction = menuBar->addAction("Save..");
-  auto loadAction = menuBar->addAction("Load..");
-
-  QVBoxLayout *l = new QVBoxLayout(&mainWidget);
-
-  l->addWidget(menuBar);
-  auto scene = new FlowScene(registerDataModels(), &mainWidget);
-  l->addWidget(new FlowView(scene));
-  l->setContentsMargins(0, 0, 0, 0);
-  l->setSpacing(0);
-
-  QObject::connect(saveAction, &QAction::triggered, scene, &FlowScene::save);
-
-  QObject::connect(loadAction, &QAction::triggered, scene, &FlowScene::load);
-
-  mainWidget.setWindowTitle("Galaxy");
-  mainWidget.resize(800, 600);
-
-  mainWidget.showNormal();
-
-  return app.exec();
-}
-
-#endif
