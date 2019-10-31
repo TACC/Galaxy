@@ -64,7 +64,6 @@ public:
 
   MultiServerHandler() : SocketHandler() {}
   MultiServerHandler(DynamicLibraryP dlp, int cfd, int dfd) : dlp(dlp), SocketHandler(cfd, dfd) {}
-  MultiServerHandler(std::string host, int port) : SocketHandler(host, port) {}
 
   bool RunServer(); //! Load the DL, run its server method.
 

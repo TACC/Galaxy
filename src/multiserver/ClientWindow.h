@@ -74,8 +74,14 @@ private:
 	static void *ager_thread(void *p);
   
 public:
-  //! Creator with width, height, host and port
-  ClientWindow(int, int, std::string, int);
+  //! Creator with width and height
+  ClientWindow(int, int);
+
+  //! Attempt to open a connection to a remote server - return false when unable to connect
+  //! \param host name of host to connect to
+  //! \param port port to connect to
+  virtual bool Connect(std::string host, int port);
+
 
   //! Destructor
 	~ClientWindow();

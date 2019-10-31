@@ -46,12 +46,12 @@ public:
   //! \param dfd file descriptor for data socket
   SocketHandler(int cfd, int dfd);
 
-  //! Creator to attempt to open a connection to a remote server
+  ~SocketHandler();
+
+  //! Attempt to open a connection to a remote server - return false when unable to connect
   //! \param host name of host to connect to
   //! \param port port to connect to
-  SocketHandler(std::string host, int port);
-
-  ~SocketHandler();
+  virtual bool Connect(std::string host, int port);
 
   //! Given a set of memory pointers and sizes, send them as a contiguous multi-part message using the control socket
   bool CSendV(char** buf, int* size)

@@ -72,7 +72,13 @@ main(int argc, char *argv[])
     else files.push_back(argv[i]);
   }
 
-  SocketHandler *sh = new SocketHandler(host.c_str(), port);
+  SocketHandler *sh = new SocketHandler();
+
+  if (! sh->Connect(host.c_str(), port))
+  {
+    cerr << "Unable to connect to Galaxy server\n";
+    exit(1);
+  }
 
   if (! sh->CSendRecv(sofile))
   {

@@ -50,7 +50,7 @@ SocketHandler::SocketHandler(int cfd, int dfd) : SocketHandler::SocketHandler()
   control_fd = cfd;
 }
 
-SocketHandler::SocketHandler(std::string host, int port)
+bool SocketHandler::Connect(std::string host, int port)
 {
   pthread_mutex_init(&c_lock, NULL);
   pthread_mutex_init(&d_lock, NULL);
@@ -61,7 +61,7 @@ SocketHandler::SocketHandler(std::string host, int port)
   if (server == NULL)
   {
     std::cerr <<  "ERROR: no such host (" << host << ")\n";
-    exit(0);
+    return false;
   }
 
   struct sockaddr_in serv_addr;
@@ -73,14 +73,16 @@ SocketHandler::SocketHandler(std::string host, int port)
   if ((control_fd = connect_fd((struct sockaddr*)&serv_addr)) < 0)
   {
     perror("ERROR opening control socket");
-    exit(1);
+    return false;
   }
 
   if ((data_fd = connect_fd((struct sockaddr*)&serv_addr)) < 0)
   {
     perror("ERROR opening data sockets");
-    exit(1);
+    return false;
   }
+
+  return true;
 }
 
 SocketHandler::~SocketHandler()
