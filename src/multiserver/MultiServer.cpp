@@ -30,7 +30,7 @@
 using namespace std;
 
 #include "MultiServer.h"
-#include "MultiServerHandler.h"
+#include "ServerClientConnection.hpp"
 
 namespace gxy
 {
@@ -69,24 +69,10 @@ MultiServer::Start(int p)
 }
 
 void *
-MultiServer::start(void *d)
-{
-  MultiServerHandler *msh = (MultiServerHandler *)d;
-
-  if (! msh->RunServer())
-    cerr << "RunServer failed\n";
-
-  delete msh;
-
-  MultiServer::Get()->getTheDynamicLibraryManager()->Flush();
-
-  pthread_exit(NULL);
-}
-
-void *
 MultiServer::watch(void *d)
 {
   MultiServer *me = (MultiServer *)d;
+  std::vector<pthread_t> connection_threads;
   
   me->fd = socket(AF_INET, SOCK_STREAM, 0);
   if (me->fd < 0)
@@ -134,105 +120,16 @@ MultiServer::watch(void *d)
       if (n <= 0)
         reply = "connection failed";
 
-      char *libname;
+      dfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
 
-      if (reply == "ok")
-      {
-        dfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
+      ServerClientConnection *scc = new ServerClientConnection(cfd, dfd);
 
-        int sz;
-        char *bb = (char *)&sz;
-        int nn = sizeof(sz);
-        while(nn && reply == "ok")
-        {
-          int t = read(cfd, bb, nn);
-          if (t <= 0)
-            reply = "error reading libname";
-
-          bb += t;
-          nn -= t;
-        }
-
-        libname = (char *)malloc(sz);
-
-        bb = libname;
-        nn = sz;
-        while(nn && reply == "ok")
-        {
-          int t = read(cfd, bb, nn);
-          if (t <= 0)
-            reply = "error reading libname\n";
-
-          bb += t;
-          nn -= t;
-        }
-      }
-
-      MultiServerHandler *msh = NULL;
-
-      if (reply == "ok")
-      {
-        DynamicLibraryP dlp = MultiServer::Get()->getTheDynamicLibraryManager()->Load(libname);
-        free(libname);
-
-        if (! dlp)
-          reply = string("error loading ") + libname;
-
-        if (reply == "ok")
-        {
-          MultiServerHandler::new_handler nh = (MultiServerHandler::new_handler)dlp->GetSym("new_handler");
-          if (! nh)
-            reply = string("error retrieving new_handler from ") + libname;
-
-          if (reply == "ok")
-          {
-            msh = nh(dlp, cfd, dfd);
-            dlp = NULL;
-            if (! nh)
-              reply = string("error new_handler(") + libname + ") returned NULL";
-          }
-        }
-      }
-
-      int sz = reply.size() + 1;
-      char *bb = (char *)&sz;
-      int nn = sizeof(sz);
-      while(nn)
-      {
-        int t = write(cfd, bb, nn);
-        if (t <= 0)
-        {
-          std::cerr << "error sending reply\n";
-          break;
-        }
-
-        bb += t;
-        nn -= t;
-      }
-
-      bb = (char *)reply.c_str();
-      nn = reply.size() + 1;
-      while(nn)
-      {
-        int t = write(cfd, bb, nn);
-        if (t <= 0)
-        {
-          std::cerr << "error sending reply\n";
-          break;
-        }
-
-        bb += t;
-        nn -= t;
-      }
-
-      if (reply == "ok")
-      {
-        pthread_t tid;
-        if (pthread_create(&tid, NULL, MultiServer::start, (void *)msh))
-          reply = "error starting client handler thread";
-      };
-
-      cerr << reply << "\n";
+      // pthread_t tid;
+      // if (pthread_create(&tid, NULL, ServerClientConnection::thread, (void *)scc))
+      // reply = "error starting client handler thread";
+      // 
+      // connection_threads.push_back(tid);
+      // cerr << reply << "\n";
     }
   }
 

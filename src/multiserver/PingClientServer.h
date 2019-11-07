@@ -53,9 +53,9 @@ public:
 class PingClientServer : public MultiServerHandler
 {
 public:
-  PingClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd) {}
+  PingClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}
   static void init();
-  std::string handle(std::string line);
+  bool handle(std::string line, std::string& reply);
 };
 
 

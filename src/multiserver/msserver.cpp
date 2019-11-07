@@ -31,7 +31,6 @@ using namespace std;
 #include "Application.h"
 #include "DataObjects.h"
 #include "MultiServer.h"
-#include "MultiServerHandler.h"
 #include "CommandLine.h"
 
 using namespace gxy;

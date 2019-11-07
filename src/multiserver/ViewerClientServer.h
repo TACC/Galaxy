@@ -35,10 +35,10 @@ class ViewerClientServer : public MultiServerHandler
 {
 public:
   static void init();
-  std::string handle(std::string line);
+  bool handle(std::string line, std::string& reply);
   virtual ~ViewerClientServer(){}
 
-  ViewerClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd)
+  ViewerClientServer(SocketHandler *sh) : MultiServerHandler(sh)
   {
     first = true;
 

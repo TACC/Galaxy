@@ -22,11 +22,20 @@
 #include <vector>
 #include <sstream>
 
-
 #include <string.h>
 #include <pthread.h>
 
 #include "DataClientServer.h"
+#include "SocketHandler.h"
+#include "Volume.h"
+#include "PathLines.h"
+#include "Triangles.h"
+#include "Particles.h"
+
+#include "rapidjson/rapidjson.h"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
 using namespace gxy;
 using namespace rapidjson; 
@@ -41,20 +50,19 @@ init()
   DataClientServer::init();
 }
 
-extern "C" MultiServerHandler *
-new_handler(DynamicLibraryP dlp, int cfd, int dfd)
+extern "C" DataClientServer *
+new_handler(SocketHandler *sh)
 {
-  return new DataClientServer(dlp, cfd, dfd);
+  return new DataClientServer(sh);
 }
-
 
 void
 DataClientServer::init()
 {
 }
 
-std::string
-DataClientServer::handle(std::string line)
+bool
+DataClientServer::handle(std::string line, std::string& reply)
 {
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
@@ -74,12 +82,19 @@ DataClientServer::handle(std::string line)
     Document doc;
 
     if (doc.Parse<0>(remaining.c_str()).HasParseError())
-      return std::string("error parsing import command");
+    {
+      reply = "error parsing import command";
+      return true;
+    }
 
     if (! theDatasets->LoadFromJSON(doc))
-      return std::string("error loading datasets");
+    {
+      reply = "error loading JSON";
+      return true;
+    }
 
-    return std::string("ok");
+    reply = std::string("ok");
+    return true;
   }
   else if (cmd == "range")
   {
@@ -93,10 +108,15 @@ DataClientServer::handle(std::string line)
 
       std::stringstream rtn;
       rtn << "ok dataset " << objName << " range: " << gmin << " to " << gmax;
-      return rtn.str();
+      reply = rtn.str();
+
+      return true;
     }
     else
-      return std::string("error dataset") + objName + " not found";
+    {
+      reply = std::string("error dataset") + objName + " not found";
+      return true;
+    }
   }
   else if (cmd == "commit")
   {
@@ -106,25 +126,78 @@ DataClientServer::handle(std::string line)
     if (kop)
     {
       kop->Commit();
-      return std::string("ok ") + objName + " committed";
+      reply = std::string("ok ") + objName + " committed";
+      return true;
     }
     else
-      return std::string("error dataset") + objName + " not found";
+      reply = std::string("error dataset") + objName + " not found";
+
+    return true;
   }
   else if (cmd == "list")
   {
     if (! theDatasets)
-      return std::string("unable to access global datasets");
+    {
+      reply = std::string("unable to access global datasets");
+      exit(1);
+    }
+
+    reply = "ok datasets:\n";
 
     vector<string> names = theDatasets->GetDatasetNames();
-    std::string reply = "ok datasets:\n";
     for (vector<string>::iterator it = names.begin(); it != names.end(); ++it)
     {
       reply.append(*it);
       reply.append("\n");
     }
 
-    return reply;
+    return true;
+  }
+  else if (cmd == "listWithInfo")
+  {
+    if (! theDatasets)
+    {
+      reply = std::string("unable to access global datasets");
+      exit(1);
+    }
+
+    reply = "ok ";
+
+    rapidjson::Document doc;
+    doc.SetObject();
+
+    Value array(kArrayType);
+
+    vector<string> names = theDatasets->GetDatasetNames();
+    for (vector<string>::iterator it = names.begin(); it != names.end(); ++it)
+    {
+      KeyedDataObjectP kdop = theDatasets->Find(std::string(*it));
+     
+      int type;
+      if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
+      else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
+      else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
+      else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+      else type = -1;
+
+      rapidjson::Value dset(rapidjson::kObjectType);
+      dset.AddMember("name", rapidjson::Value().SetString(it->c_str(), it->length()+1), doc.GetAllocator());
+      dset.AddMember("type", rapidjson::Value().SetInt(type), doc.GetAllocator());
+
+      array.PushBack(dset, doc.GetAllocator());
+    }
+
+    doc.AddMember("Datasets", array, doc.GetAllocator());
+
+    rapidjson::StringBuffer strbuf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+    doc.Accept(writer);
+
+    reply = reply + strbuf.GetString();
+
+    std::cerr << "returning " << reply << "\n";
+
+    return true;
   }
   else if (cmd == "drop" || cmd == "delete")
   {
@@ -134,12 +207,17 @@ DataClientServer::handle(std::string line)
     if (kop)
     {
       theDatasets->DropDataset(objName);
-      return std::string("ok");
+      reply = std::string("ok");
+      return true;
     }
     else
-      return std::string("error no such dataset: " + objName);
+    {
+      reply = std::string("error no such dataset: " + objName);
+      return true;
+    }
   }
-  else return MultiServerHandler::handle(line);
+  else 
+    return false;
 }
 
 }

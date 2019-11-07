@@ -37,7 +37,7 @@ set(LIBS "")
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 include_directories(${GLUT_INCLUDE_DIR})
 
-add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerHandler.cpp MultiServerObject.cpp SocketHandler.cpp DynamicLibraryManager.cpp)
+add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerHandler.cpp ServerClientConnection.hpp SocketHandler.cpp DynamicLibraryManager.cpp)
 target_link_libraries(gxy_multiserver gxy_data gxy_framework)
 set(LIBS gxy_multiserver ${LIBS})
 
@@ -78,7 +78,7 @@ install(FILES
   DynamicLibraryManager.h
   MultiServer.h
   MultiServerHandler.h
-  MultiServerObject.h
+  ServerClientConnection.hpp
   SocketHandler.h
   DESTINATION include/gxy)
 

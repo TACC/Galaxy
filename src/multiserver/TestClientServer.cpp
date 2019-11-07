@@ -39,9 +39,9 @@ init()
 }
 
 extern "C" MultiServerHandler *
-new_handler(DynamicLibraryP dlp, int cfd, int dfd)
+new_handler(SocketHandler *sh)
 {
-  return new TestClientServer(dlp, cfd, dfd);
+  return new TestClientServer(sh);
 }
 
 static pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;
@@ -138,8 +138,8 @@ TestClientServer::init()
   ShowKeyedObjectsMsg::Register();
 }
 
-string
-TestClientServer::handle(string line)
+bool
+TestClientServer::handle(string line, string& reply)
 {
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
@@ -158,26 +158,28 @@ TestClientServer::handle(string line)
     ss >> name;
 
     TestObjectP to = TestObject::NewP();
-    to->SetDynamicLibrary(GetTheDynamicLibrary());
     to->SetString(name);
     to->Commit();
 
     theDatasets->Insert(name, to);
     theDatasets->Commit();
 
-    return string("ok created ") + name;
+    reply = string("ok created ") + name;
+    return true;
   }
   else if (cmd == "showds")  
   {
     ShowDatasetsMsg sd(theDatasets);
     sd.Send(0);
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "showko")
   {
     ShowKeyedObjectsMsg sko(1);
     sko.Send(0);
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "reset")
   {
@@ -187,7 +189,10 @@ TestClientServer::handle(string line)
     TestObjectP to = TestObject::Cast(theDatasets->Find(name));
 
     if (! to)
-      return string("error ") + name + " hasn't been created\n";
+    {
+      reply = string("error ") + name + " hasn't been created\n";
+      return true;
+    }
     else
     {
       to->SetString(newstring);
@@ -195,7 +200,8 @@ TestClientServer::handle(string line)
 
       stringstream ss;
       ss << "ok " << name << " new string: " << newstring;
-      return ss.str();
+      reply = ss.str();
+      return true;
     }
   }
   else if (cmd == "drop")
@@ -206,17 +212,22 @@ TestClientServer::handle(string line)
     TestObjectP to = TestObject::Cast(theDatasets->Find(name));
 
     if (! to)
-      return string("error ") + name + " hasn't been created\n";
+    {
+      reply = string("error ") + name + " hasn't been created\n";
+      return true;
+    }
     else
     {
       theDatasets->DropDataset(name);
       theDatasets->Commit();
 
       ss << "ok " << name << " dropped";
-      return ss.str();
+      reply = ss.str();
+      return true;
     }
   }
-  else return MultiServerHandler::handle(line);
+  else
+    return false;
 }
 
 }

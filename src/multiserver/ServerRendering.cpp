@@ -59,7 +59,7 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
     if (handler)
-      handler->DSendV(ptrs, szs);
+      handler->getTheSocketHandler()->DSendV(ptrs, szs);
 
     // std::cerr << "after... n = " << n << " f = " << f << "\n";
 	}

@@ -80,7 +80,8 @@ main(int argc, char *argv[])
     exit(1);
   }
 
-  if (! sh->CSendRecv(sofile))
+  string loadcmd = string("load ") + sofile;
+  if (! sh->CSendRecv(loadcmd))
   {
     cerr << "Sending sofile failed\n";
     exit(1);

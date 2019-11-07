@@ -41,64 +41,17 @@
 namespace gxy
 {
 
-thread_local MultiServerHandler* thread_msh;
-
-MultiServerHandler*
-MultiServerHandler::GetTheThreadMultiServerHandler() { return gxy::thread_msh; }
-
-static void brk(){ std::cerr << "break\n"; } // for debugging
-
-std::string
-MultiServerHandler::handle(std::string line)
+bool
+MultiServerHandler::handle(std::string line, std::string& reply)
 {
   if (line == "break")
   {
-    brk();
-    return std::string("ok");
+    std::cerr << "break\n";
+    reply = "ok";
+    return true;
   }
   else
-  {
-    return std::string("error unrecognized command: ") + line;
-  }
-}
-
-bool
-MultiServerHandler::RunServer()
-{
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
-  if (! theDatasets)
-  {
-    theDatasets = Datasets::NewP();
-    MultiServer::Get()->SetGlobal("global datasets", theDatasets);
-  }
-
-  bool client_done = false;
-  while (! client_done)
-  {
-    std::string line, reply;
-
-    if (! CRecv(line))
-      break;
-
-    cerr << "received " << line << "\n";
-
-    if (line == "quit")
-    {
-      client_done = true;
-      reply = "ok";
-    }
-    if (line == "clear")
-    {
-      MultiServer::Get()->ClearGlobals();
-      reply = "ok";
-    }
-    else
-      reply = handle(line);
-
-    CSend(reply.c_str(), reply.length()+1);
-  }
-
-  return true;
+    return false;
 }
 
 }
