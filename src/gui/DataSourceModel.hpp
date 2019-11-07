@@ -252,8 +252,12 @@ private Q_SLOTS:
 
       rapidjson::Value dsets(rapidjson::kObjectType);
 
-      dsets.AddMember("name", rapidjson::StringRef(dlg->getDataName().c_str()), doc.GetAllocator());
-      dsets.AddMember("filename", rapidjson::StringRef(dlg->getFileName().c_str()), doc.GetAllocator());
+      std::string dataName = dlg->getDataName().c_str();
+      std::string fileName = dlg->getFileName().c_str();
+
+      dsets.AddMember("name", rapidjson::Value().SetString(dataName.c_str(), dataName.length()+1), doc.GetAllocator());
+      dsets.AddMember("filename", rapidjson::Value().SetString(fileName.c_str(), fileName.length()+1), doc.GetAllocator());
+
       switch (dlg->getDataType())
       {
         case 0: dsets.AddMember("type", "Volume", doc.GetAllocator()); break;
@@ -319,6 +323,8 @@ private Q_SLOTS:
       }
       else
       {
+        std::cerr << "received " << line << "\n";
+
         rapidjson::Document rply;
         std::getline(ss, line);
 
