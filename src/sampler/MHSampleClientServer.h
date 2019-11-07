@@ -51,9 +51,9 @@ namespace gxy
 class MHSampleClientServer : public MultiServerHandler
 {
 public:
-  MHSampleClientServer(DynamicLibraryP dlp, int cfd, int dfd);
+  MHSampleClientServer(SocketHandler *);
   static void init();
-  std::string handle(std::string line);
+  bool handle(std::string line, std::string&);
 
   VolumeP volume;             // volume to be sampled
   ParticlesP particles;       // particles object to stash samples

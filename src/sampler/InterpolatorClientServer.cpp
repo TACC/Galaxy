@@ -29,6 +29,7 @@
 
 #include "Datasets.h"
 #include "InterpolatorClientServer.h"
+#include "SocketHandler.h"
 
 #include <time.h>
 
@@ -40,7 +41,7 @@ namespace gxy
 
 // Interpolate a point set in a volume 
 
-InterpolatorClientServer::InterpolatorClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd)
+InterpolatorClientServer::InterpolatorClientServer(SocketHandler *sh) : MultiServerHandler(sh)
 {
   volume = NULL;
   src = NULL;
@@ -156,13 +157,13 @@ init()
 }
 
 extern "C" MultiServerHandler *
-new_handler(DynamicLibraryP dlp, int cfd, int dfd)
+new_handler(SocketHandler *sh)
 {
-  return new InterpolatorClientServer(dlp, cfd, dfd);
+  return new InterpolatorClientServer(sh);
 }
 
-std::string
-InterpolatorClientServer::handle(std::string line)
+bool
+InterpolatorClientServer::handle(std::string line, std::string &reply)
 {
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
@@ -181,13 +182,24 @@ InterpolatorClientServer::handle(std::string line)
     string vname, sname, dname;
     ss >> vname >> sname >> dname;
     if (ss.fail())
-      return std::string("error Interpolator interpolate command requires three string naming a volume, a pre-existing particles set and a new particles set");
+    {
+      reply = std::string("error Interpolator interpolate command requires three string naming a volume, a pre-existing particles set and a new particles set");
+      return true;
+    }
 
     volume = Volume::Cast(theDatasets->Find(vname));
-    if (! volume) return std::string("error Interpolator first arg must name a volume dataset");
+    if (! volume) 
+    {
+      reply = "error Interpolator first arg must name a volume dataset";
+      return true;
+    }
 
     src = Particles::Cast(theDatasets->Find(sname));
-    if (! src) return std::string("error Interpolator second arg must name a pre-existing particles dataset");
+    if (! src) 
+    {
+      reply = "error Interpolator second arg must name a pre-existing particles dataset";
+      return true;
+    }
 
     dst = Particles::NewP();
     theDatasets->Insert(dname, dst);
@@ -196,11 +208,16 @@ InterpolatorClientServer::handle(std::string line)
     msg.Broadcast(false, false);
 
     if (! dst->Commit())
-      return string("error committing interpolated particles dataset");
+    {
+      reply = "error committing interpolated particles dataset";
+      return true;
+    }
 
-    return string("ok");
+    reply = "ok";
+    return true;
   }
-  else return MultiServerHandler::handle(line);
+  else
+    return false;
 }
 
 }
