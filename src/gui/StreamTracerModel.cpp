@@ -58,45 +58,45 @@ StreamTracerModel::StreamTracerModel()
 }
 
 unsigned int
-StreamTracerModel::nPorts(PortType portType) const
+StreamTracerModel::nPorts(QtNodes::PortType portType) const
 {
-  if (portType == PortType::In)
+  if (portType == QtNodes::PortType::In)
     return 2;
   else
     return 1;
 }
 
-NodeDataType
-StreamTracerModel::dataType(PortType pt, PortIndex) const
+QtNodes::NodeDataType
+StreamTracerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
 {
-  if (pt == PortType::In)
+  if (pt == QtNodes::PortType::In)
     return GxyData().type();
   else
-    return GxyStreamTraces().type();
+    return GxyData().type();
 }
 
 void
 StreamTracerModel::apply() { std::cerr << "Apply\n"; }
 
-std::shared_ptr<NodeData>
-StreamTracerModel::outData(PortIndex)
+std::shared_ptr<QtNodes::NodeData>
+StreamTracerModel::outData(QtNodes::PortIndex)
 {
-  std::shared_ptr<GxyStreamTraces> result;
-  return std::static_pointer_cast<NodeData>(result);
+  std::shared_ptr<GxyData> result;
+  return std::static_pointer_cast<QtNodes::NodeData>(result);
 }
 
 void
 StreamTracerModel::
-setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
+setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   // volumeData = std::dynamic_pointer_cast<GxyData>(data);
 }
 
 
-NodeValidationState
+QtNodes::NodeValidationState
 StreamTracerModel::validationState() const
 {
-  return NodeValidationState::Valid;
+  return QtNodes::NodeValidationState::Valid;
 }
 
 

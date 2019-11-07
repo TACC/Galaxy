@@ -23,6 +23,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QVector>
+#include <QtCore/QUuid>
 
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
@@ -44,6 +45,7 @@ class GxyModel : public NodeDataModel
 public:
   GxyModel()
   {
+    model_identifier = QUuid::createUuid().toString().toStdString();
     _container = new ParameterFrame(this);
   }
 
@@ -51,9 +53,11 @@ public:
   ~GxyModel() {}
 
   QWidget *embeddedWidget() override { return _container; }
+  std::string getModelIdentifier() { return model_identifier; }
 
 private Q_SLOTS:
 
 protected:
   ParameterFrame *_container;
+  std::string model_identifier;
 };

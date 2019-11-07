@@ -22,43 +22,44 @@
   
 #include <nodes/NodeDataModel>
 
-#include <QtCore/QUuid>
-
-using QtNodes::NodeDataType;
-using QtNodes::NodeData;
-
-class GxyData : public NodeData
+class GxyGuiObject : public QtNodes::NodeData
 {
 public:
   
-  GxyData() 
-  {
-    QUuid uuid = QUuid::createUuid();
-    _name = uuid.toString();
-  }
+  GxyGuiObject() {}
+  GxyGuiObject(std::string o) { origin = o; }
   
-  GxyData(char *name) : _name(name)
-  {}
-  
-  NodeDataType type() const override
+  QtNodes::NodeDataType type() const override
   { 
-    return NodeDataType {"galaxy data", "GxyData"};
+    return QtNodes::NodeDataType {"gxygui", "GxyGui"};
   }
-  
-  virtual QString name() { return _name; }
+
+  virtual void print()
+  {
+    std::cerr << "origin: " << origin << "\n";
+  }
 
 private:
 
-  QString _name;
+  std::string origin;
 };
 
-class GxyStreamTraces : public GxyData
+
+class GxyData : public GxyGuiObject
 {
 public:
-  
-  NodeDataType type() const override
-  { 
-    return NodeDataType {"strace", "GxyStreamTrace"};
-  }
-};
+  GxyData() : GxyGuiObject() {}
 
+  GxyData(std::string o) : GxyGuiObject(o) {}
+  
+  virtual void 
+  print()
+  {
+    GxyGuiObject::print();
+    std::cerr << "dataName: " << dataName << "\n";
+    std::cerr << "dataType: " << dataType << "\n";
+  }
+
+  std::string dataName;
+  int dataType;
+};

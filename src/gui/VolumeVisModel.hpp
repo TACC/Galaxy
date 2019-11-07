@@ -36,6 +36,8 @@
 
 #include "GxyModel.hpp"
 
+using QtNodes::NodeData;
+using QtNodes::NodeDataType;
 using QtNodes::NodeDataModel;
 using QtNodes::PortType;
 using QtNodes::PortIndex;
@@ -47,10 +49,11 @@ using QtNodes::PortType;
 using QtNodes::PortIndex;
 using QtNodes::NodeValidationState;
 
-#include "Json.hpp"
 #include "GxyData.hpp"
 #include "PlanesDialog.hpp"
 #include "ScalarsDialog.hpp"
+
+#include "VolumeVis.hpp"
 
 class VolumeVisModel : public GxyModel
 {
@@ -60,6 +63,7 @@ public:
   VolumeVisModel();
 
   virtual
+
   ~VolumeVisModel() {}
 
   unsigned int nPorts(PortType portType) const override;
@@ -78,27 +82,24 @@ public:
 
   QString name() const override { return QStringLiteral("VolumeVis"); }
 
-  QWidget *embeddedWidget() override { return _container; }
-
-protected:
-
-  virtual void apply();
 
 private Q_SLOTS:
 
+  void onApply();
+
   void openPlanesDialog() 
   {
-    PlanesDialog *planesDialog = new PlanesDialog(planes);
+    PlanesDialog *planesDialog = new PlanesDialog(slices);
     planesDialog->exec();
-    planes = planesDialog->get_planes();
+    slices = planesDialog->get_planes();
     delete planesDialog;
   }
 
   void openIsovaluesDialog() 
   {
-    ScalarsDialog *scalarsDialog = new ScalarsDialog(scalars);
+    ScalarsDialog *scalarsDialog = new ScalarsDialog(isovalues);
     scalarsDialog->exec();
-    scalars = scalarsDialog->get_scalars();
+    isovalues = scalarsDialog->get_scalars();
     delete scalarsDialog;
   }
 
@@ -112,10 +113,17 @@ private Q_SLOTS:
     delete fileDialog;
   }
 
-private:
+public:
 
-  QLineEdit               *tf_widget;
-  std::vector<gxy::vec4f> planes;
-  std::vector<float>      scalars;
-  std::weak_ptr<GxyData>  volumeData;
+  std::vector<gxy::vec4f>  slices;
+  std::vector<float>       isovalues;
+  bool                     volume_rendering_flag;
+  std::string              transfer_function;
+
+private:
+  std::shared_ptr<VolumeVis> output;
+  std::shared_ptr<GxyData> input;
+
+
+  QLineEdit                *tf_widget;
 };

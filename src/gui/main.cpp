@@ -24,49 +24,17 @@
 #include <nodes/ConnectionStyle>
 #include <nodes/TypeConverter>
 
-#include <QtWidgets/QApplication>
+#include <QtCore/QCoreApplication>
+
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QMenuBar>
 
 #include <nodes/DataModelRegistry>
 
-#include "VolumeVisModel.hpp"
-#include "ParticlesVisModel.hpp"
-#include "PathlinesVisModel.hpp"
-#include "ImporterModel.hpp"
-#include "RenderModel.hpp"
-#include "SamplerModel.hpp"
-#include "StreamTracerModel.hpp"
-#include "TraceDecoratorModel.hpp"
-#include "InterpolatorModel.hpp"
-
-using QtNodes::DataModelRegistry;
-using QtNodes::FlowScene;
-using QtNodes::FlowView;
-using QtNodes::ConnectionStyle;
-using QtNodes::TypeConverter;
-using QtNodes::TypeConverterId;
-
-#include "GxyConnectionMgr.hpp"
+#include "GxyMainWindow.hpp"
 
 GxyConnectionMgr *theGxyConnectionMgr = NULL;
 GxyConnectionMgr *getTheGxyConnectionMgr() { return theGxyConnectionMgr; }
-
-static std::shared_ptr<DataModelRegistry>
-registerDataModels()
-{
-  auto ret = std::make_shared<DataModelRegistry>();
-  ret->registerModel<ImporterModel>("Data Access");
-  ret->registerModel<SamplerModel>("Filters");
-  ret->registerModel<StreamTracerModel>("Filters");
-  ret->registerModel<TraceDecoratorModel>("Filters");
-  ret->registerModel<InterpolatorModel>("Filters");
-  ret->registerModel<VolumeVisModel>("Visualizations");
-  ret->registerModel<ParticlesVisModel>("Visualizations");
-  ret->registerModel<PathlinesVisModel>("Visualizations");
-  ret->registerModel<RenderModel>("Rendering");
-  return ret;
-}
 
 static
 void
@@ -92,50 +60,37 @@ setStyle()
   )");
 }
 
+void
+syntax(char *a)
+{
+  std::cerr << "syntax " << a << " [options]\n";
+  std::cerr << "options:\n";
+  std::cerr << "  -s server    default server (localhost)\n";
+  std::cerr << "  -p port      default port (5001)\n";
+  std::cerr << "  -c           connect on startup\n";
+  exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
-  QApplication app(argc, argv);
-
   theGxyConnectionMgr = new GxyConnectionMgr();
 
+  QApplication app(argc, argv);
+  GxyMainWindow mainWindow;
+
+  bool startit = false;
+  for (int i = 1; i < argc; i++)
+    if (! strcmp(argv[i], "-s")) theGxyConnectionMgr->setServer(argv[++i]); 
+    else if (! strcmp(argv[i], "-p")) theGxyConnectionMgr->setPort(argv[++i]); 
+    else if (! strcmp(argv[i], "-c")) startit = true;
+    else syntax(argv[0]);
+
+
+  if (startit)
+    theGxyConnectionMgr->connectToServer();
+
   setStyle();
-
-  QMainWindow mainWindow;
-
-  QWidget *mainWidget = new QWidget;
-  mainWindow.setCentralWidget(mainWidget);
-
-  auto menuBar    = mainWindow.menuBar();
-
-  auto fileMenu   = menuBar->addMenu("&File");
-  auto loadAction = fileMenu->addAction("Load");
-  auto saveAction = fileMenu->addAction("Save");
-
-  auto editMenu     = menuBar->addMenu("&Edit");
-  auto deleteAction = editMenu->addAction("Delete");
-
-  auto servermenu = menuBar->addMenu("&Server");
-  auto connectAction = servermenu->addAction("Connect...");
-
-  mainWindow.connect(connectAction, &QAction::triggered, theGxyConnectionMgr, &GxyConnectionMgr::makeConnection);
-
-  QVBoxLayout *l = new QVBoxLayout(mainWidget);
-  l->setContentsMargins(0, 0, 0, 0);
-  l->setSpacing(0);
-
-  auto scene = new FlowScene(registerDataModels(), mainWidget);
-
-  auto flowView = new FlowView(scene);
-  l->addWidget(flowView);
-
-  QObject::connect(saveAction, &QAction::triggered, scene, &FlowScene::save);
-  QObject::connect(loadAction, &QAction::triggered, scene, &FlowScene::load);
-  QObject::connect(deleteAction, &QAction::triggered, flowView, &FlowView::deleteSelectedNodes);
-
-  mainWindow.setWindowTitle("Galaxy");
-  mainWindow.resize(800, 600);
-  mainWindow.showNormal();
 
   app.exec();
 

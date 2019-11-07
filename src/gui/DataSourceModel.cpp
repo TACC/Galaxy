@@ -18,77 +18,77 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "RenderModel.hpp"
+#include <iostream>
 
-RenderModel::RenderModel() 
+#include "DataSourceModel.hpp"
+#include "GxyData.hpp"
+
+DataSourceModel::DataSourceModel() 
 {
-  QFrame *frame  = new QFrame();
-  QVBoxLayout *layout = new QVBoxLayout();
-  layout->setSpacing(0);
-  layout->setContentsMargins(2, 0, 2, 0);
-  frame->setLayout(layout);
+  output = std::make_shared<GxyData>(getModelIdentifier());
 
-  QPushButton *openCamera = new QPushButton("Camera");
-  connect(openCamera, SIGNAL(released()), this, SLOT(openCameraDialog()));
-  layout->addWidget(openCamera);
+  QFrame *frame = new QFrame();
 
-  QPushButton *openLights = new QPushButton("Lights");
-  connect(openLights, SIGNAL(released()), this, SLOT(openLightsDialog()));
-  layout->addWidget(openLights);
+  QVBoxLayout *outer_layout = new QVBoxLayout();
+  outer_layout->setSpacing(0);
+  outer_layout->setContentsMargins(2, 0, 2, 0);
+
+  objectList = new QListWidget();
+  connect(objectList, SIGNAL(itemPressed(QListWidgetItem *)), this, SLOT(selection(QListWidgetItem *)));
+  outer_layout->addWidget(objectList);
+
+  frame->setLayout(outer_layout);
   
   _container->setCentralWidget(frame);
 
-  Light default_light;
-  lights.push_back(default_light);
+  QPushButton *add = new QPushButton("Add");
+  connect(add, SIGNAL(released()), this, SLOT(onAdd()));
+  _container->addButton(add);
+
+  QPushButton *refresh = new QPushButton("Refresh");
+  connect(refresh, SIGNAL(released()), this, SLOT(onRefresh()));
+  _container->addButton(refresh);
+
+  connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+
+  GxyConnectionMgr *gxyMgr = getTheGxyConnectionMgr();
+  if (gxyMgr->isConnected())
+    onRefresh();
+
+  connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 }
 
 unsigned int
-RenderModel::nPorts(PortType portType) const
+DataSourceModel::nPorts(PortType portType) const
 {
-  if (portType == PortType::In)
-    return 1;
-  else
-    return 0;
+  return (portType == PortType::In) ? 0 : 1;
 }
 
 NodeDataType
-RenderModel::dataType(PortType pt, PortIndex pi) const
+DataSourceModel::dataType(PortType, PortIndex) const
 {
-  // if (pt != PortType::In || pi != 0)
-  // {
-    // std::cerr << "RenderModel::dataType error!\n";
-    // exit(1);
-  // }
-
-  return GxyVis().type();
+  return GxyData().type();
 }
 
 std::shared_ptr<NodeData>
-RenderModel::outData(PortIndex)
+DataSourceModel::outData(PortIndex)
 {
-  return NULL;
+  return std::static_pointer_cast<NodeData>(output);
 }
 
 void
-RenderModel::
+DataSourceModel::
 setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
-{
-  input = std::dynamic_pointer_cast<GxyVis>(data);
-  std::cerr << "RenderModel receives:\n";
-  if (input) input->print();
-  else std::cerr << "nothing\n";
-}
-
+{}
 
 NodeValidationState
-RenderModel::validationState() const
+DataSourceModel::validationState() const
 {
   return NodeValidationState::Valid;
 }
 
-
 QString
-RenderModel::validationMessage() const
+DataSourceModel::validationMessage() const
 {
   return QString("copacetic");
 }

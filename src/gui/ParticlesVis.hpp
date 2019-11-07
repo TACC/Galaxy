@@ -19,61 +19,26 @@
 // ========================================================================== //
 
 #pragma once
+  
+#include <iostream>
+#include "GxyVis.hpp"
 
-#include "dtypes.h"
-
-#include <vector>
-#include <string>
-
-#include <QtCore/QObject>
-
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QGridLayout>
-#include <QtWidgets/QCheckBox>
-#include <QtWidgets/QFileDialog>
-
-#include "GxyModel.hpp"
-
-#include "GxyData.hpp"
-
-class StreamTracerModel : public GxyModel
+class ParticlesVis : public GxyVis
 {
-  Q_OBJECT
-
 public:
-  StreamTracerModel();
+  
+  ParticlesVis() : GxyVis() {}
+  ParticlesVis(std::string o) : GxyVis(o) {}
 
-  virtual
-  ~StreamTracerModel() {}
+  QtNodes::NodeDataType type() const override
+  { 
+    return QtNodes::NodeDataType {"ptvis", "PTVIS"};
+  }
 
-  unsigned int nPorts(QtNodes::PortType portType) const override;
+  virtual void print() override
+  {
+    GxyVis::print();
+  }
 
-  QtNodes::NodeDataType dataType(QtNodes::PortType portType, QtNodes::PortIndex portIndex) const override;
-
-  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex port) override;
-
-  void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
-
-  QtNodes::NodeValidationState validationState() const override;
-
-  QString validationMessage() const override;
-
-  QString caption() const override { return QStringLiteral("StreamTracer"); }
-
-  QString name() const override { return QStringLiteral("StreamTracer"); }
-
-protected:
-
-  virtual void apply();
-
-private:
-
-  QLineEdit               *maxsteps;
-  QLineEdit               *stepsize;
-  QLineEdit               *minvelocity;
-  QLineEdit               *maxtime;
-  std::shared_ptr<GxyData> output;
 };
+

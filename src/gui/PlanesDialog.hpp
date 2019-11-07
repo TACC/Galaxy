@@ -110,9 +110,9 @@ public:
 private Q_SLOTS:
 
   void set_a(QString const &string) { plane.x = _a->text().toDouble(); }
-  void set_b(QString const &string) { plane.x = _b->text().toDouble(); }
-  void set_c(QString const &string) { plane.x = _c->text().toDouble(); }
-  void set_d(QString const &string) { plane.x = _d->text().toDouble(); }
+  void set_b(QString const &string) { plane.y = _b->text().toDouble(); }
+  void set_c(QString const &string) { plane.z = _c->text().toDouble(); }
+  void set_d(QString const &string) { plane.w = _d->text().toDouble(); }
 
 private:
   gxy::vec4f plane;

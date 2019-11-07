@@ -38,19 +38,7 @@
 #include <QtGui/QDoubleValidator>
 
 #include "GxyModel.hpp"
-
-using QtNodes::NodeDataModel;
-using QtNodes::PortType;
-using QtNodes::PortIndex;
-using QtNodes::NodeValidationState;
-
-
-using QtNodes::NodeDataModel;
-using QtNodes::PortType;
-using QtNodes::PortIndex;
-using QtNodes::NodeValidationState;
-
-#include "Json.hpp"
+#include "PathlinesVis.hpp"
 #include "GxyData.hpp"
 
 class PathlinesVisModel : public GxyModel
@@ -63,23 +51,21 @@ public:
   virtual
   ~PathlinesVisModel() {}
 
-  unsigned int nPorts(PortType portType) const override;
+  unsigned int nPorts(QtNodes::PortType portType) const override;
 
-  NodeDataType dataType(PortType portType, PortIndex portIndex) const override;
+  QtNodes::NodeDataType dataType(QtNodes::PortType portType, QtNodes::PortIndex portIndex) const override;
 
-  std::shared_ptr<NodeData> outData(PortIndex port) override;
+  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex port) override;
 
-  void setInData(std::shared_ptr<NodeData> data, PortIndex portIndex) override;
+  void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
 
-  NodeValidationState validationState() const override;
+  QtNodes::NodeValidationState validationState() const override;
 
   QString validationMessage() const override;
 
   QString caption() const override { return QStringLiteral("PathlinesVis"); }
 
   QString name() const override { return QStringLiteral("PathlinesVis"); }
-
-  QWidget *embeddedWidget() override { return _container; }
 
 protected:
 
@@ -111,4 +97,6 @@ private:
   QLineEdit               *maxrange;
   QLineEdit               *minradius;
   QLineEdit               *maxradius;
+
+  std::shared_ptr<GxyData> output;
 };

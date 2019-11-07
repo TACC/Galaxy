@@ -86,42 +86,42 @@ PathlinesVisModel::PathlinesVisModel()
 }
 
 unsigned int
-PathlinesVisModel::nPorts(PortType portType) const
+PathlinesVisModel::nPorts(QtNodes::PortType portType) const
 {
-  return 1; // PortType::In or ::Out
+  return 1; // QtNodes::PortType::In or ::Out
 }
 
-NodeDataType
-PathlinesVisModel::dataType(PortType pt, PortIndex) const
+QtNodes::NodeDataType
+PathlinesVisModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
 {
-  if (pt == PortType::In)
+  if (pt == QtNodes::PortType::In)
     return GxyData().type();
   else
-    return JsonVis().type();
+    return PathlinesVis().type();
 }
 
 void
 PathlinesVisModel::apply() { std::cerr << "Apply\n"; }
 
-std::shared_ptr<NodeData>
-PathlinesVisModel::outData(PortIndex)
+std::shared_ptr<QtNodes::NodeData>
+PathlinesVisModel::outData(QtNodes::PortIndex)
 {
-  std::shared_ptr<Json> result;
-  return std::static_pointer_cast<NodeData>(result);
+  std::shared_ptr<PathlinesVis> result;
+  return std::static_pointer_cast<QtNodes::NodeData>(result);
 }
 
 void
 PathlinesVisModel::
-setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
+setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   // volumeData = std::dynamic_pointer_cast<GxyData>(data);
 }
 
 
-NodeValidationState
+QtNodes::NodeValidationState
 PathlinesVisModel::validationState() const
 {
-  return NodeValidationState::Valid;
+  return QtNodes::NodeValidationState::Valid;
 }
 
 

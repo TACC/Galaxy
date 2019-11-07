@@ -27,6 +27,7 @@ using QtNodes::NodeDataModel;
 
 #include <QtCore/QVector>
 #include <QFont>
+#include <QSizePolicy>
 
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QHBoxLayout>
@@ -62,24 +63,47 @@ public:
     outer_layout->addWidget(openClosed);
     outer_layout->setAlignment(openClosed, Qt::AlignLeft);
 
-    outer_layout->addWidget(w);
+    outer_layout->addWidget(panel);
     w->setFrameStyle(QFrame::Panel | QFrame::Raised);
     w->setLineWidth(2);
 
-    QFrame *buttonBox = new QFrame();
-    QHBoxLayout *buttonBox_layout = new QHBoxLayout();
-    buttonBox_layout->setSpacing(0);
-    buttonBox_layout->setContentsMargins(0, 0, 0, 0);
-    buttonBox->setLayout(buttonBox_layout);
+    QWidget *bottom_right = new QWidget();
+    QHBoxLayout *bottom_right_layout = new QHBoxLayout();
+    bottom_right_layout->setContentsMargins(0, 0, 0, 5);
+    bottom_right_layout->setSpacing(0);
+    bottom_right->setLayout(bottom_right_layout);
 
-    QPushButton *applyButton = new QPushButton("Apply");
-    applyButton->setEnabled(true);
-    buttonBox_layout->addWidget(applyButton);
-    buttonBox_layout->setAlignment(applyButton, Qt::AlignRight);
+    applyButton = new QPushButton("Apply");
+    bottom_right_layout->addWidget(applyButton, 0, Qt::AlignRight);
 
-    outer_layout->addWidget(buttonBox);
+    QWidget *bottom_left = new QWidget();
+    bottom_left_layout = new QHBoxLayout();
+    bottom_left_layout->setContentsMargins(0, 0, 0, 5);
+    bottom_left_layout->setSpacing(0);
+    bottom_left->setLayout(bottom_left_layout);
+
+    QWidget *bottom = new QWidget();
+    QHBoxLayout *bottom_layout = new QHBoxLayout();
+    bottom->setLayout(bottom_layout);
+
+    bottom_layout->addWidget(bottom_left);
+    bottom_layout->addWidget(bottom_right);
+
+    outer_layout->addWidget(bottom);
     setLayout(outer_layout);
   }
+
+  void addButton(QPushButton *w)
+  {
+    w->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    bottom_left_layout->addWidget(w);
+  }
+
+  QPushButton *getApplyButton() { return applyButton; }
+
+signals:
+
+  void apply();
 
 private Q_SLOTS:
 
@@ -98,6 +122,7 @@ private Q_SLOTS:
       openClosed->setText("v");
       adjustSize();
     }
+
     Q_EMIT parent->embeddedWidgetSizeUpdated();
   }
 
@@ -105,5 +130,7 @@ private:
   NodeDataModel *parent;
   QWidget *panel;
   QPushButton *openClosed;
+  QPushButton *applyButton;
   int toggle = 0;
+  QHBoxLayout *bottom_left_layout;
 };

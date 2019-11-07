@@ -32,13 +32,14 @@
 
 #include "GxyModel.hpp"
 
+using QtNodes::NodeData;
+using QtNodes::NodeDataType;
 using QtNodes::NodeDataModel;
 using QtNodes::PortType;
 using QtNodes::PortIndex;
 using QtNodes::NodeValidationState;
 
-#include "Json.hpp"
-#include "GxyData.hpp"
+#include "GxyVis.hpp"
 
 #include "Camera.hpp"
 #include "CameraDialog.hpp"
@@ -72,12 +73,6 @@ public:
 
   QString name() const override { return QStringLiteral("Render"); }
 
-  QWidget *embeddedWidget() override { return _container; }
-
-protected:
-
-  virtual void apply();
-
 private Q_SLOTS:
 
   void openCameraDialog() 
@@ -100,4 +95,5 @@ private:
 
   Camera camera;
   std::vector<Light> lights;
+  std::shared_ptr<GxyVis> input;
 };

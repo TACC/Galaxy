@@ -18,6 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
+#include "ParticlesVis.hpp"
 #include "ParticlesVisModel.hpp"
 
 ParticlesVisModel::ParticlesVisModel() 
@@ -86,42 +87,42 @@ ParticlesVisModel::ParticlesVisModel()
 }
 
 unsigned int
-ParticlesVisModel::nPorts(PortType portType) const
+ParticlesVisModel::nPorts(QtNodes::PortType portType) const
 {
-  return 1; // PortType::In or ::Out
+  return 1; // QtNodes::PortType::In or ::Out
 }
 
-NodeDataType
-ParticlesVisModel::dataType(PortType pt, PortIndex) const
+QtNodes::NodeDataType
+ParticlesVisModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
 {
-  if (pt == PortType::In)
+  if (pt == QtNodes::PortType::In)
     return GxyData().type();
   else
-    return JsonVis().type();
+    return ParticlesVis().type();
 }
 
 void
 ParticlesVisModel::apply() { std::cerr << "Apply\n"; }
 
-std::shared_ptr<NodeData>
-ParticlesVisModel::outData(PortIndex)
+std::shared_ptr<QtNodes::NodeData>
+ParticlesVisModel::outData(QtNodes::PortIndex)
 {
-  std::shared_ptr<Json> result;
-  return std::static_pointer_cast<NodeData>(result);
+  std::shared_ptr<ParticlesVis> result;
+  return std::static_pointer_cast<QtNodes::NodeData>(result);
 }
 
 void
 ParticlesVisModel::
-setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
+setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   // volumeData = std::dynamic_pointer_cast<GxyData>(data);
 }
 
 
-NodeValidationState
+QtNodes::NodeValidationState
 ParticlesVisModel::validationState() const
 {
-  return NodeValidationState::Valid;
+  return QtNodes::NodeValidationState::Valid;
 }
 
 

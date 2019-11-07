@@ -20,62 +20,18 @@
 
 #pragma once
   
-#include <iostream>
-#include <nodes/NodeDataModel>
+#include "GxyData.hpp"
 
-#include <QtCore/QtCore>
-
-using QtNodes::NodeDataType;
-using QtNodes::NodeData;
-
-class Json : public NodeData
+class GxyVis : public GxyData
 {
 public:
   
-  Json() {}
+  GxyVis() {}
+  GxyVis(std::string o) : GxyData(o) {}
 
-  Json(QJsonDocument doc)
-  {
-    _content = doc.toJson();
-  }
-  
-  Json(const QByteArray &bytes)
-  {
-    _content = bytes;
-  }
-  
-  NodeDataType type() const override
+  QtNodes::NodeDataType type() const override
   { 
-    return NodeDataType {"json", "JSON"};
-  }
-  
-  QJsonDocument getDocument()
-  {
-    QJsonParseError *error = new QJsonParseError();
-    QJsonDocument result = QJsonDocument::fromJson(_content, error);
-    if (error->error != QJsonParseError::NoError)
-    {
-      std::cerr << "json parse error: " << error->errorString().toStdString() << "\n";
-      exit(0);
-    }
-    delete error;
-    return result;
-  }
-
-private:
-
-  QByteArray _content;
-};
-
-class JsonVis : public Json
-{
-public:
-  
-  JsonVis() {}
-
-  NodeDataType type() const override
-  { 
-    return NodeDataType {"jsonVis", "JSONVIS"};
+    return QtNodes::NodeDataType {"Vis", "VIS"};
   }
 };
 

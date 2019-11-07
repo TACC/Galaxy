@@ -19,61 +19,36 @@
 // ========================================================================== //
 
 #pragma once
+  
+#include <iostream>
+#include "GxyVis.hpp"
 
-#include "dtypes.h"
-
-#include <vector>
-#include <string>
-
-#include <QtCore/QObject>
-
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QGridLayout>
-#include <QtWidgets/QCheckBox>
-#include <QtWidgets/QFileDialog>
-
-#include "GxyModel.hpp"
-
-#include "GxyData.hpp"
-
-class StreamTracerModel : public GxyModel
+class VolumeVis : public GxyVis
 {
-  Q_OBJECT
-
 public:
-  StreamTracerModel();
+  
+  VolumeVis() : GxyVis() {}
+  VolumeVis(std::string o) : GxyVis(o) {}
 
-  virtual
-  ~StreamTracerModel() {}
+  NodeDataType type() const override
+  { 
+    return NodeDataType {"vvis", "VVIS"};
+  }
 
-  unsigned int nPorts(QtNodes::PortType portType) const override;
+  virtual void print() override
+  {
+    GxyVis::print();
+    std::cerr << "slicing planes: \n";
+    for (auto s : slices)
+      std::cerr << "    " << s.x << " " << s.y << " " << s.z << " " << s.w << "\n";
+    std::cerr << "isovalues: \n";
+    for (auto i : isovalues)
+      std::cerr << "    " << i << "\n";
+  }
 
-  QtNodes::NodeDataType dataType(QtNodes::PortType portType, QtNodes::PortIndex portIndex) const override;
-
-  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex port) override;
-
-  void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
-
-  QtNodes::NodeValidationState validationState() const override;
-
-  QString validationMessage() const override;
-
-  QString caption() const override { return QStringLiteral("StreamTracer"); }
-
-  QString name() const override { return QStringLiteral("StreamTracer"); }
-
-protected:
-
-  virtual void apply();
-
-private:
-
-  QLineEdit               *maxsteps;
-  QLineEdit               *stepsize;
-  QLineEdit               *minvelocity;
-  QLineEdit               *maxtime;
-  std::shared_ptr<GxyData> output;
+  std::vector<gxy::vec4f> slices;
+  std::vector<float> isovalues;
+  bool volume_rendering_flag;
+  std::string transfer_function;
 };
+

@@ -24,6 +24,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(NodeEditor)
 find_package(Qt5 5.3 COMPONENTS Core Widgets Gui OpenGL)
 
+SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH} ${NodeEditor_DIR}/../..)
+
 file(GLOB_RECURSE CPPS  ./*.cpp )
 file(GLOB_RECURSE HEADERS_TO_MOC ./*.hpp)
 

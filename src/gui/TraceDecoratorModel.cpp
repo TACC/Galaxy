@@ -26,37 +26,51 @@ TraceDecoratorModel::TraceDecoratorModel()
   QGridLayout *layout = new QGridLayout();
   frame->setLayout(layout);
 
-  layout->addWidget(new QLabel("head time"), 0, 0);
+  layout->addWidget(new QLabel("max steps"), 0, 0);
 
-  headtime = new QLineEdit();
-  headtime->setText(QString::number(0.0));
-  headtime->setValidator(new QDoubleValidator());
-  layout->addWidget(headtime, 0, 1);
+  maxsteps = new QLineEdit();
+  maxsteps->setText(QString::number(2000));
+  maxsteps->setValidator(new QIntValidator());
+  layout->addWidget(maxsteps, 0, 1);
 
-  layout->addWidget(new QLabel("delta-t"), 1, 0);
+  layout->addWidget(new QLabel("step size"), 1, 0);
 
-  deltat = new QLineEdit();
-  deltat->setText(QString::number(0.1)); 
-  deltat->setValidator(new QDoubleValidator());
-  layout->addWidget(deltat, 1, 1);
+  stepsize = new QLineEdit();
+  stepsize->setText(QString::number(0.2)); 
+  stepsize->setValidator(new QDoubleValidator());
+  layout->addWidget(stepsize, 1, 1);
+
+  layout->addWidget(new QLabel("min velocity"), 2, 0);
+
+  minvelocity = new QLineEdit();
+  minvelocity->setText(QString::number(1e-12));
+  minvelocity->setValidator(new QDoubleValidator());
+  layout->addWidget(minvelocity, 2, 1);
+
+  layout->addWidget(new QLabel("max time"), 3, 0);
+
+  maxtime = new QLineEdit();
+  maxtime->setText(QString::number(-1.0));
+  maxtime->setValidator(new QDoubleValidator());
+  layout->addWidget(maxtime, 3, 1);
 
   _container->setCentralWidget(frame);
 }
 
 unsigned int
-TraceDecoratorModel::nPorts(PortType portType) const
+TraceDecoratorModel::nPorts(QtNodes::PortType portType) const
 {
-  if (portType == PortType::In)
-    return 1;
+  if (portType == QtNodes::PortType::In)
+    return 2;
   else
     return 1;
 }
 
-NodeDataType
-TraceDecoratorModel::dataType(PortType pt, PortIndex) const
+QtNodes::NodeDataType
+TraceDecoratorModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
 {
-  if (pt == PortType::In)
-    return GxyStreamTraces().type();
+  if (pt == QtNodes::PortType::In)
+    return GxyData().type();
   else
     return GxyData().type();
 }
@@ -64,25 +78,25 @@ TraceDecoratorModel::dataType(PortType pt, PortIndex) const
 void
 TraceDecoratorModel::apply() { std::cerr << "Apply\n"; }
 
-std::shared_ptr<NodeData>
-TraceDecoratorModel::outData(PortIndex)
+std::shared_ptr<QtNodes::NodeData>
+TraceDecoratorModel::outData(QtNodes::PortIndex)
 {
-  std::shared_ptr<GxyStreamTraces> result;
-  return std::static_pointer_cast<NodeData>(result);
+  std::shared_ptr<GxyData> result;
+  return std::static_pointer_cast<QtNodes::NodeData>(result);
 }
 
 void
 TraceDecoratorModel::
-setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
+setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   // volumeData = std::dynamic_pointer_cast<GxyData>(data);
 }
 
 
-NodeValidationState
+QtNodes::NodeValidationState
 TraceDecoratorModel::validationState() const
 {
-  return NodeValidationState::Valid;
+  return QtNodes::NodeValidationState::Valid;
 }
 
 

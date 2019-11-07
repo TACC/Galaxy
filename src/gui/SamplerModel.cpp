@@ -58,16 +58,16 @@ SamplerModel::SamplerModel()
 }
 
 unsigned int
-SamplerModel::nPorts(PortType portType) const
+SamplerModel::nPorts(QtNodes::PortType portType) const
 {
-  if (portType == PortType::In)
+  if (portType == QtNodes::PortType::In)
     return 1;
   else
     return 1;
 }
 
-NodeDataType
-SamplerModel::dataType(PortType pt, PortIndex pi) const
+QtNodes::NodeDataType
+SamplerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
 {
   return GxyData().type();
 }
@@ -75,24 +75,24 @@ SamplerModel::dataType(PortType pt, PortIndex pi) const
 void
 SamplerModel::apply() { std::cerr << "Apply\n"; }
 
-std::shared_ptr<NodeData>
-SamplerModel::outData(PortIndex)
+std::shared_ptr<QtNodes::NodeData>
+SamplerModel::outData(QtNodes::PortIndex)
 {
   std::shared_ptr<GxyData> result;
-  return std::static_pointer_cast<NodeData>(result);
+  return std::static_pointer_cast<QtNodes::NodeData>(result);
 }
 
 void
 SamplerModel::
-setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
+setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
 }
 
 
-NodeValidationState
+QtNodes::NodeValidationState
 SamplerModel::validationState() const
 {
-  return NodeValidationState::Valid;
+  return QtNodes::NodeValidationState::Valid;
 }
 
 

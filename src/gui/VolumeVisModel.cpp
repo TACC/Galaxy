@@ -22,6 +22,8 @@
 
 VolumeVisModel::VolumeVisModel() 
 {
+  output = std::make_shared<VolumeVis>(getModelIdentifier());
+
   QFrame *frame  = new QFrame();
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setSpacing(0);
@@ -55,8 +57,31 @@ VolumeVisModel::VolumeVisModel()
   connect(tfunc_browse_button, SIGNAL(released()), this, SLOT(openFileSelectorDialog()));
 
   layout->addWidget(cmap_box);
-  
+
   _container->setCentralWidget(frame);
+
+  connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+  
+}
+
+void 
+VolumeVisModel::onApply()
+{
+  std::cerr << "VVM onApply\n";
+  std::cerr << "input... get = " << ((long)input.get()) << "\n";
+  input->print();
+
+  output->dataName = input->dataName;
+  output->dataType = input->dataType;
+  output->slices = slices;
+  output->isovalues = isovalues;
+  output->volume_rendering_flag = volume_rendering_flag;
+  output->transfer_function = transfer_function;
+  
+  std::cerr << "output... get = " << ((long)output.get()) << "\n";
+  output->print();
+
+  Q_EMIT dataUpdated(0);
 }
 
 unsigned int
@@ -71,33 +96,34 @@ VolumeVisModel::dataType(PortType pt, PortIndex) const
   if (pt == PortType::In)
     return GxyData().type();
   else
-    return JsonVis().type();
+    return GxyVis().type();
 }
-
-void
-VolumeVisModel::apply() { std::cerr << "Apply\n"; }
 
 std::shared_ptr<NodeData>
 VolumeVisModel::outData(PortIndex)
 {
-  std::shared_ptr<Json> result;
-  return std::static_pointer_cast<NodeData>(result);
+  return std::static_pointer_cast<NodeData>(output);
 }
 
 void
 VolumeVisModel::
 setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
-  volumeData = std::dynamic_pointer_cast<GxyData>(data);
+  input = std::dynamic_pointer_cast<GxyData>(data);
+  std::cerr << "VolumeVisModel receives:\n";
+  if (input)
+  {
+    std::cerr << "VVM setInData... get = " << ((long)input.get()) << "\n";
+    input->print();
+  }
+  else std::cerr << "nothing\n";
 }
-
 
 NodeValidationState
 VolumeVisModel::validationState() const
 {
   return NodeValidationState::Valid;
 }
-
 
 QString
 VolumeVisModel::validationMessage() const
