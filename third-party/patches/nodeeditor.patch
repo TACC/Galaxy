@@ -22,6 +22,23 @@ index 1fc58a7..7ccf921 100644
  get_directory_property(_has_parent PARENT_DIRECTORY)
  if(_has_parent)
    set(is_root_project OFF)
+diff --git a/src/ConnectionGraphicsObject.cpp b/src/ConnectionGraphicsObject.cpp
+index 8fff264..fb0d2ee 100644
+--- a/src/ConnectionGraphicsObject.cpp
++++ b/src/ConnectionGraphicsObject.cpp
+@@ -207,6 +207,12 @@ mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
+   auto node = locateNodeAt(event->scenePos(), _scene,
+                            _scene.views()[0]->transform());
+ 
++  if (! node)
++  {
++    _scene.deleteConnection(_connection);
++    return;
++  }
++
+   NodeConnectionInteraction interaction(*node, _connection, _scene);
+ 
+   if (node && interaction.tryConnect())
 diff --git a/src/NodeConnectionInteraction.cpp b/src/NodeConnectionInteraction.cpp
 index fb701be..4a442c1 100644
 --- a/src/NodeConnectionInteraction.cpp
