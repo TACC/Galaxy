@@ -24,11 +24,14 @@
 #include <QtCore/QObject>
 #include <QtCore/QVector>
 
+#include <QtWidgets/QMainWindow>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QCheckBox>
+
+#include "GxyRenderWindow.hpp"
 
 #include "GxyModel.hpp"
 
@@ -73,6 +76,10 @@ public:
 
   QString name() const override { return QStringLiteral("Render"); }
 
+signals:
+
+  void camera_set();
+
 private Q_SLOTS:
 
   void openCameraDialog() 
@@ -80,6 +87,7 @@ private Q_SLOTS:
     CameraDialog *cameraDialog = new CameraDialog(camera);
     cameraDialog->exec();
     cameraDialog->get_camera(camera);
+    renderWindow.setCamera(camera);
     delete cameraDialog;
   }
 
@@ -96,4 +104,6 @@ private:
   Camera camera;
   std::vector<Light> lights;
   std::shared_ptr<GxyVis> input;
+
+  GxyRenderWindow renderWindow;
 };

@@ -1,4 +1,4 @@
-// ========================================================================== //
+
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -52,7 +52,7 @@ DataSourceModel::DataSourceModel()
   connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 
   GxyConnectionMgr *gxyMgr = getTheGxyConnectionMgr();
-  if (gxyMgr->isConnected())
+  if (gxyMgr->IsConnected())
     onRefresh();
 
   connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));

@@ -52,7 +52,6 @@ using QtNodes::NodeValidationState;
 #include "rapidjson/stringbuffer.h"
 #include <iostream>
 
-
 #include "GxyConnectionMgr.hpp"
 #include "GxyModel.hpp"
 #include "GxyData.hpp"
@@ -234,7 +233,7 @@ private Q_SLOTS:
   {
     GxyConnectionMgr *gxyMgr = getTheGxyConnectionMgr();
 
-    if (! gxyMgr->isConnected())
+    if (! gxyMgr->IsConnected())
     {
       QMessageBox msgBox;
       msgBox.setText("Not connected");
@@ -299,7 +298,7 @@ private Q_SLOTS:
     objectList->clear();
 
     GxyConnectionMgr *gxyMgr = getTheGxyConnectionMgr();
-    if (! gxyMgr->isConnected())
+    if (! gxyMgr->IsConnected())
     {
       QMessageBox msgBox;
       msgBox.setText("Not connected");

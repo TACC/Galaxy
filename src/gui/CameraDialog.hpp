@@ -160,6 +160,8 @@ public Q_SLOTS:
     _aov->setText(QString::number(camera.aov));
   }
 
+
+
 private:
 
   Camera camera;

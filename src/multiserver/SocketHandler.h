@@ -28,6 +28,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <unistd.h>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -187,6 +188,17 @@ public:
   //! Wait for the data socket to be unlocked
   //! \param sec max time to wait
   bool DWait(float sec) { bool b = Wait(data_fd, sec); return b; }
+
+  //! Disconnect
+  void Disconnect()
+  {
+    close(data_fd);
+    close(control_fd);
+    is_connected = false;
+  }
+
+  //! test whether connection exists
+  bool IsConnected() { return is_connected; }
   
 private:
   bool SendV(int fd, char** buf, int* size);
@@ -209,6 +221,7 @@ private:
 
   int data_fd;
   int control_fd;
+  bool is_connected;
   pthread_mutex_t c_lock;
   pthread_mutex_t d_lock;
 };

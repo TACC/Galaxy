@@ -29,10 +29,10 @@ SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH} ${NodeEditor_DIR}/../..)
 file(GLOB_RECURSE CPPS  ./*.cpp )
 file(GLOB_RECURSE HEADERS_TO_MOC ./*.hpp)
 
-include_directories(${gxy_multiserver_SOURCE_DIR})
+include_directories(${gxy_data_SOURCE_DIR} ${gxy_multiserver_SOURCE_DIR} ${gxy_renderer_SOURCE_DIR})
 
 qt5_wrap_cpp(mocs ${HEADERS_TO_MOC} TARGET galaxygui OPTIONS --no-notes)
 
 add_executable(galaxygui ${CPPS} ${mocs})
-target_link_libraries(galaxygui NodeEditor::nodes gxy_multiserver)
+target_link_libraries(galaxygui NodeEditor::nodes gxy_multiserver_client ${OPENGL_LIBRARIES})
 install(TARGETS galaxygui DESTINATION bin)

@@ -40,6 +40,13 @@ RenderModel::RenderModel()
 
   Light default_light;
   lights.push_back(default_light);
+
+  renderWindow.show();
+
+  QPushButton *open = new QPushButton("Open");
+  connect(open, SIGNAL(released()), &renderWindow, SLOT(show()));
+  _container->addButton(open);
+  
 }
 
 unsigned int
@@ -54,12 +61,6 @@ RenderModel::nPorts(PortType portType) const
 NodeDataType
 RenderModel::dataType(PortType pt, PortIndex pi) const
 {
-  // if (pt != PortType::In || pi != 0)
-  // {
-    // std::cerr << "RenderModel::dataType error!\n";
-    // exit(1);
-  // }
-
   return GxyVis().type();
 }
 
@@ -79,17 +80,14 @@ setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
   else std::cerr << "nothing\n";
 }
 
-
 NodeValidationState
 RenderModel::validationState() const
 {
   return NodeValidationState::Valid;
 }
 
-
 QString
 RenderModel::validationMessage() const
 {
   return QString("copacetic");
 }
-

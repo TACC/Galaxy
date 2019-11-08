@@ -1,3 +1,23 @@
+// ========================================================================== //
+// Copyright (c) 2014-2019 The University of Texas at Austin.                 //
+// All rights reserved.                                                       //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// A copy of the License is included with this software in the file LICENSE.  //
+// If your copy does not contain the License, you may obtain a copy of the    //
+// License at:                                                                //
+//                                                                            //
+//     https://www.apache.org/licenses/LICENSE-2.0                            //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT  //
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.           //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//                                                                            //
+// ========================================================================== //
+
 #pragma once
 
 #include <iostream>
@@ -21,7 +41,7 @@
 
 #include "SocketHandler.h"
 
-class GxyConnectionMgr; 
+class GxyConnectionMgr;
 extern GxyConnectionMgr *getTheGxyConnectionMgr();
 
 class GxyConnectionMgr : public QObject, public gxy::SocketHandler
@@ -52,7 +72,6 @@ public:
     
     server_le = new QLineEdit();
     server_le->setText(server);
-    connect(server_le, SIGNAL(editingFinished()), this, SLOT(server_entered()));
     grid_layout->addWidget(server_le, 0, 1);
     
     grid_layout->addWidget(new QLabel("port"), 1, 0);
@@ -60,7 +79,6 @@ public:
     port_le = new QLineEdit();
     port_le->setText(port);
     port_le->setValidator(new QIntValidator());
-    connect(port_le, SIGNAL(editingFinished()), this, SLOT(port_entered()));
     grid_layout->addWidget(port_le, 1, 1);
 
     layout->addWidget(grid);
@@ -70,7 +88,6 @@ public:
     hbox->setLayout(hbox_layout);
 
     connect_button = new QPushButton("connect");
-    connect_button->setEnabled(false);
     connect(connect_button, SIGNAL(released()), this, SLOT(connectToServerDialogConnect()));
     hbox_layout->addWidget(connect_button);
 
@@ -78,11 +95,11 @@ public:
     connect(done, SIGNAL(released()), dlg, SLOT(close()));
     hbox_layout->addWidget(done);
 
+    connect(this, SIGNAL(connectionStateChanged(bool)), this, SLOT(onConnectionStateChanged(bool)));
+
     layout->addWidget(hbox);
   }
       
-  bool isConnected() { return _isConnected; }
-
   void setServer(char *s)
   {
     QString qs = s;
@@ -111,16 +128,14 @@ public:
 
   bool connectToServer()
   {
-    // int   port = atoi(port_le->text().toStdString().c_str());
-    // char *host = (char *)server_le->text().toStdString().c_str();
-
     int   p = atoi(port.toStdString().c_str());
     char *s = (char *)server.toStdString().c_str();
 
-    std::cerr << "XXX" << s << "XXX" << p << "XXX\n";
+    std::cerr << "trying to connect to " << s << ":" << p << "\n";
 
-    _isConnected = Connect(s, p);
-    if (_isConnected)
+    getTheGxyConnectionMgr()->Connect(s, p);
+
+    if (getTheGxyConnectionMgr()->IsConnected())
     {
       std::string sofile = "load libgxy_module_data.so";
       if (! CSendRecv(sofile))
@@ -129,7 +144,7 @@ public:
         exit(1);
       }
       if (dlg) dlg->hide();
-      emit connectionStateChanged(true);
+      Q_EMIT connectionStateChanged(true);
       return true;
     }
     else
@@ -141,11 +156,28 @@ public:
     }
   }
 
+  void disconnectFromServer()
+  {
+    getTheGxyConnectionMgr()->Disconnect();
+    Q_EMIT connectionStateChanged(false);
+  }
+
+  // bool IsConnected()
+  // {
+    // return is_connected;
+  // }
+
 signals:
 
   void connectionStateChanged(bool b);
 
 public Q_SLOTS:
+
+  void onConnectionStateChanged(bool b)
+  {
+    // is_connected = b;
+    connect_button->setEnabled(getTheGxyConnectionMgr()->IsConnected());
+  }
 
   void openConnectToServerDialog()
   {
@@ -153,28 +185,6 @@ public Q_SLOTS:
       createDialog();
     dlg->show();
     dlg->exec();
-  }
-
-  void server_entered()
-  {
-    sset = true;
-    server = server_le->text();
-    if (pset) 
-    {
-      just_enabled = true;
-      connect_button->setEnabled(true);
-    }
-  }
-
-  void port_entered()
-  {
-    pset = true;
-    port = port_le->text();
-    if (sset) 
-    {
-      just_enabled = true;
-      connect_button->setEnabled(true);
-    }
   }
 
   void connectToServerDialogConnect()
@@ -187,15 +197,15 @@ public Q_SLOTS:
     else if (connectToServer())
     {
       if (dlg) dlg->hide();
-      emit connectionStateChanged(true);
+      Q_EMIT connectionStateChanged(true);
     }
   }
 
 private:
   
-  bool _isConnected = false;
   QPushButton *connect_button;
 
+  // bool is_connected = false;
   QDialog *dlg = NULL;
   bool pset = false, sset = false, just_enabled = false;
   QLineEdit *port_le, *server_le;

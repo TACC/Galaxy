@@ -76,6 +76,7 @@ private:
 public:
   //! Creator with width and height
   ClientWindow(int, int);
+  ClientWindow() : ClientWindow(512, 512) {}
 
   //! Attempt to open a connection to a remote server - return false when unable to connect
   //! \param host name of host to connect to

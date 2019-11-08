@@ -32,12 +32,12 @@
 #include <nodes/DataModelRegistry>
 
 #include "GxyMainWindow.hpp"
+#include "GxyConnectionMgr.hpp"
 
-GxyConnectionMgr *theGxyConnectionMgr = NULL;
-GxyConnectionMgr *getTheGxyConnectionMgr() { return theGxyConnectionMgr; }
+GxyConnectionMgr *_theGxyConnectionMgr;
+GxyConnectionMgr *getTheGxyConnectionMgr() { return  _theGxyConnectionMgr; }
 
-static
-void
+static void
 setStyle()
 {
   ConnectionStyle::setConnectionStyle(
@@ -74,21 +74,21 @@ syntax(char *a)
 int
 main(int argc, char *argv[])
 {
-  theGxyConnectionMgr = new GxyConnectionMgr();
+  _theGxyConnectionMgr = new GxyConnectionMgr();
 
   QApplication app(argc, argv);
   GxyMainWindow mainWindow;
 
   bool startit = false;
   for (int i = 1; i < argc; i++)
-    if (! strcmp(argv[i], "-s")) theGxyConnectionMgr->setServer(argv[++i]); 
-    else if (! strcmp(argv[i], "-p")) theGxyConnectionMgr->setPort(argv[++i]); 
+    if (! strcmp(argv[i], "-s")) getTheGxyConnectionMgr()->setServer(argv[++i]); 
+    else if (! strcmp(argv[i], "-p")) getTheGxyConnectionMgr()->setPort(argv[++i]); 
     else if (! strcmp(argv[i], "-c")) startit = true;
     else syntax(argv[0]);
 
 
   if (startit)
-    theGxyConnectionMgr->connectToServer();
+    getTheGxyConnectionMgr()->connectToServer();
 
   setStyle();
 

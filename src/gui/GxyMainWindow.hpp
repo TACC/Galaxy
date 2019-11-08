@@ -85,12 +85,17 @@ public:
     auto saveAction = fileMenu->addAction("Save");
 
     auto editMenu     = menuBar()->addMenu("&Edit");
-    auto deleteAction = editMenu->addAction("Delete");
+   auto deleteAction = editMenu->addAction("Delete");
 
     auto servermenu = menuBar()->addMenu("&Server");
 
     connectAction = servermenu->addAction("Connect...");
     connect(connectAction, &QAction::triggered, getTheGxyConnectionMgr(), &GxyConnectionMgr::openConnectToServerDialog);
+
+    disconnectAction = servermenu->addAction("Disconnect");
+    disconnectAction->setEnabled(false);
+    connect(disconnectAction, SIGNAL(triggered()), this, SLOT(disconnect()));
+
     connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(enableConnectAction(bool)));
 
     QVBoxLayout *l = new QVBoxLayout(mainWidget);
@@ -113,14 +118,22 @@ public:
 
 public Q_SLOTS:
 
+  void disconnect()
+  {
+    getTheGxyConnectionMgr()->Disconnect();
+    enableConnectAction(false);
+  }
+
   void enableConnectAction(bool b)
   {
-    connectAction->setEnabled(! b);
+    connectAction->setEnabled(!b);
+    disconnectAction->setEnabled(b);
   }
 
 private:
 
   QAction *connectAction;
+  QAction *disconnectAction;
   FlowScene *flowScene;
   FlowView *flowView;
 };
