@@ -36,14 +36,16 @@ public:
     direction = {0.0, 0.0, 1.0};
     up = {0.0, 1.0, 0.0};
     aov = 30.0;
+    size = {512, 512};
   }
   
-  Camera(gxy::vec3f p, gxy::vec3f d, gxy::vec3f u, float a)
+  Camera(gxy::vec3f p, gxy::vec3f d, gxy::vec3f u, float a, gxy::vec2i s)
   {
     point = p;
     direction = d;
     up = u;
     aov = a;
+    size = s;
   }
   
   ~Camera() {}
@@ -52,6 +54,7 @@ public:
   gxy::vec3f getDirection() { return direction; }
   gxy::vec3f getUp()        { return up; }
   float getAOV()            { return aov; }
+  gxy::vec2i getSize()      { return size; }
 
   void setPoint(gxy::vec3f p) { point = p; }
   void setPoint(float x, float y, float z) { point.x = x; point.y = y; point.z = z; }
@@ -64,9 +67,12 @@ public:
 
   void setAOV(float f)       { aov = f; }
 
+  void setSize(int w, int h) { size.x = w; size.y = h; }
+
 protected:
   gxy::vec3f point;
   gxy::vec3f direction;
   gxy::vec3f up;
+  gxy::vec2i size;
   float aov;
 };

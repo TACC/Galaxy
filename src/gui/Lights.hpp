@@ -21,6 +21,7 @@
 #pragma once
 
 #include <iostream> 
+#include <vector> 
 #include "dtypes.h"
 
 class LightDialog;
@@ -52,7 +53,29 @@ public:
 
   void set_type(int t)       { type = t; }
 
-protected:
   gxy::vec3f point;
   int type;
+};
+
+class LightingEnvironment 
+{
+public:
+  LightingEnvironment()
+  {
+    lights.push_back(Light(gxy::vec3f(1.0, 1.0, 0.0), 0));
+    shadow_flag = false;
+    ao_flag = false;
+    ao_count = 16;
+    ao_radius = 1.0;
+    Ka = 0.4;
+    Kd = 0.6;
+  }
+
+  ~LightingEnvironment() {}
+  
+  std::vector<Light> lights;
+  bool shadow_flag, ao_flag;
+  int  ao_count;
+  float ao_radius;
+  float Ka, Kd;
 };

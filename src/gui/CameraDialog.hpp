@@ -92,17 +92,17 @@ public:
 
     size_layout->addWidget(new QLabel("Image size     "));
 
-    width_le = new QLineEdit();
-    width_le->setText(QString::number(1920));    
-    width_le->setValidator(new QIntValidator());  
-    size_layout->addWidget(width_le);
+    _w = new QLineEdit();
+    _w->setText(QString::number(camera.size.x));    
+    _w->setValidator(new QIntValidator());  
+    size_layout->addWidget(_w);
 
     size_layout->addWidget(new QLabel("x"));
     
-    height_le = new QLineEdit();
-    height_le->setText(QString::number(1080));
-    height_le->setValidator(new QIntValidator());
-    size_layout->addWidget(height_le);
+    _h = new QLineEdit();
+    _h->setText(QString::number(camera.size.y));
+    _h->setValidator(new QIntValidator());
+    size_layout->addWidget(_h);
 
     outer_layout->addWidget(size_frame);
 
@@ -137,7 +137,10 @@ public:
     c.setUp(_vu_x->text().toDouble(),
                _vu_y->text().toDouble(),
                _vu_z->text().toDouble());
+    c.setSize(_w->text().toInt(),
+              _h->text().toInt());
     c.setAOV(_aov->text().toDouble());
+    gxy::vec3f p = c.getPoint();
   }
 
 
@@ -157,6 +160,10 @@ public Q_SLOTS:
     _vu_y->setText(QString::number(camera.up.y));
     _vu_z->setText(QString::number(camera.up.z));
 
+    _w->setText(QString::number(camera.size.x));
+    _h->setText(QString::number(camera.size.y));
+    _vu_z->setText(QString::number(camera.up.z));
+
     _aov->setText(QString::number(camera.aov));
   }
 
@@ -166,7 +173,7 @@ private:
 
   Camera camera;
 
-  QLineEdit *width_le, *height_le;
+  QLineEdit *_w, *_h;
 
   QLineEdit *_vp_x, *_vp_y, *_vp_z;
   QLineEdit *_vd_x, *_vd_y, *_vd_z;

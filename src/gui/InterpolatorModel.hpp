@@ -32,7 +32,6 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QGridLayout>
-#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFileDialog>
 
 #include "GxyModel.hpp"

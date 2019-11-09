@@ -78,7 +78,8 @@ public:
 
 signals:
 
-  void camera_set();
+  void cameraChanged(Camera&);
+  void lightingChanged(LightingEnvironment&);
 
 private Q_SLOTS:
 
@@ -87,22 +88,24 @@ private Q_SLOTS:
     CameraDialog *cameraDialog = new CameraDialog(camera);
     cameraDialog->exec();
     cameraDialog->get_camera(camera);
-    renderWindow.setCamera(camera);
+    Q_EMIT cameraChanged(camera);
     delete cameraDialog;
   }
 
   void openLightsDialog() 
   {
-    LightsDialog *lightsDialog = new LightsDialog(lights);
+    LightsDialog *lightsDialog = new LightsDialog(lighting);
     lightsDialog->exec();
-    lightsDialog->get_lights(lights);
+    lightsDialog->get_lights(lighting);
+    Q_EMIT lightingChanged(lighting);
     delete lightsDialog;
   }
 
 private:
 
   Camera camera;
-  std::vector<Light> lights;
+  LightingEnvironment lighting;
+
   std::shared_ptr<GxyVis> input;
 
   GxyRenderWindow renderWindow;

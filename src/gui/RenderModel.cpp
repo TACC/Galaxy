@@ -38,15 +38,14 @@ RenderModel::RenderModel()
   
   _container->setCentralWidget(frame);
 
-  Light default_light;
-  lights.push_back(default_light);
-
   renderWindow.show();
 
   QPushButton *open = new QPushButton("Open");
   connect(open, SIGNAL(released()), &renderWindow, SLOT(show()));
   _container->addButton(open);
-  
+
+  connect(this, SIGNAL(cameraChanged(Camera&)), &renderWindow, SLOT(onCameraChanged(Camera&)));
+  connect(this, SIGNAL(lightingChanged(LightingEnvironment&)), &renderWindow, SLOT(onLightingChanged(LightingEnvironment&)));
 }
 
 unsigned int

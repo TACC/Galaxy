@@ -33,7 +33,6 @@ using QtNodes::NodeDataModel;
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QCheckBox>
 
 #include <QtGui/QDoubleValidator>
 

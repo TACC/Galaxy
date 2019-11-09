@@ -29,7 +29,6 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QCheckBox>
 
 #include <nodes/NodeDataModel>
 
