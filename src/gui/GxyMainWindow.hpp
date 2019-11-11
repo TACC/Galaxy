@@ -46,6 +46,7 @@ using QtNodes::DataModelRegistry;
 using QtNodes::FlowScene;
 using QtNodes::FlowView;
 using QtNodes::ConnectionStyle;
+using QtNodes::Connection;
 using QtNodes::TypeConverter;
 using QtNodes::TypeConverterId;
 
@@ -85,12 +86,15 @@ public:
     auto saveAction = fileMenu->addAction("Save");
 
     auto editMenu     = menuBar()->addMenu("&Edit");
-   auto deleteAction = editMenu->addAction("Delete");
+    auto deleteAction = editMenu->addAction("Delete");
 
     auto servermenu = menuBar()->addMenu("&Server");
 
-    connectAction = servermenu->addAction("Connect...");
-    connect(connectAction, &QAction::triggered, getTheGxyConnectionMgr(), &GxyConnectionMgr::openConnectToServerDialog);
+    connectAction = servermenu->addAction("Connect");
+    connect(connectAction, SIGNAL(triggered()), this, SLOT(connectToServer()));
+
+    connectAsAction = servermenu->addAction("Connect As...");
+    connect(connectAsAction, &QAction::triggered, getTheGxyConnectionMgr(), &GxyConnectionMgr::openConnectToServerDialog);
 
     disconnectAction = servermenu->addAction("Disconnect");
     disconnectAction->setEnabled(false);
@@ -102,13 +106,10 @@ public:
     l->setContentsMargins(0, 0, 0, 0);
     l->setSpacing(0);
 
-    auto scene = new FlowScene(registerDataModels(), mainWidget);
-
-    auto flowView = new FlowView(scene);
     l->addWidget(flowView);
 
-    QObject::connect(saveAction, &QAction::triggered, scene, &FlowScene::save);
-    QObject::connect(loadAction, &QAction::triggered, scene, &FlowScene::load);
+    QObject::connect(saveAction, &QAction::triggered, flowScene, &FlowScene::save);
+    QObject::connect(loadAction, &QAction::triggered, flowScene, &FlowScene::load);
     QObject::connect(deleteAction, &QAction::triggered, flowView, &FlowView::deleteSelectedNodes);
 
     setWindowTitle("Galaxy");
@@ -120,19 +121,25 @@ public Q_SLOTS:
 
   void disconnect()
   {
-    getTheGxyConnectionMgr()->Disconnect();
-    enableConnectAction(false);
+    getTheGxyConnectionMgr()->disconnectFromServer();
   }
 
   void enableConnectAction(bool b)
   {
     connectAction->setEnabled(!b);
+    connectAsAction->setEnabled(!b);
     disconnectAction->setEnabled(b);
+  }
+
+  void connectToServer()
+  {
+    getTheGxyConnectionMgr()->connectToServer();
   }
 
 private:
 
   QAction *connectAction;
+  QAction *connectAsAction;
   QAction *disconnectAction;
   FlowScene *flowScene;
   FlowView *flowView;

@@ -43,15 +43,11 @@ using QtNodes::PortType;
 using QtNodes::PortIndex;
 using QtNodes::NodeValidationState;
 
-
-using QtNodes::NodeDataModel;
-using QtNodes::PortType;
-using QtNodes::PortIndex;
-using QtNodes::NodeValidationState;
-
 #include "GxyData.hpp"
 #include "PlanesDialog.hpp"
 #include "ScalarsDialog.hpp"
+
+#include <QJsonArray>
 
 #include "VolumeVis.hpp"
 
@@ -82,6 +78,8 @@ public:
 
   QString name() const override { return QStringLiteral("VolumeVis"); }
 
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
 
 private Q_SLOTS:
 

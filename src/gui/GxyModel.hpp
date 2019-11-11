@@ -54,6 +54,27 @@ public:
   QWidget *embeddedWidget() override { return _container; }
   std::string getModelIdentifier() { return model_identifier; }
 
+  QJsonObject
+  save() const override
+  {
+    QJsonObject modelJson = NodeDataModel::save();
+
+    modelJson["model_identifier"] = QString::fromStdString(model_identifier);
+
+    return modelJson;
+  }
+
+  void
+  restore(QJsonObject const &p) override
+  {
+    NodeDataModel::restore(p);
+
+    QJsonValue v = p["model_identifier"];
+
+    if (!v.isUndefined())
+      model_identifier = v.toString().toStdString();
+  }
+
 private Q_SLOTS:
 
 protected:

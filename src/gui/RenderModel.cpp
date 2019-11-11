@@ -46,6 +46,8 @@ RenderModel::RenderModel()
 
   connect(this, SIGNAL(cameraChanged(Camera&)), &renderWindow, SLOT(onCameraChanged(Camera&)));
   connect(this, SIGNAL(lightingChanged(LightingEnvironment&)), &renderWindow, SLOT(onLightingChanged(LightingEnvironment&)));
+  connect(this, SIGNAL(visUpdated(std::shared_ptr<GxyVis>)), &renderWindow, SLOT(onVisUpdate(std::shared_ptr<GxyVis>)));
+  connect(this, SIGNAL(visDeleted(std::string)), &renderWindow, SLOT(onVisRemoved(std::string)));
 }
 
 unsigned int
@@ -74,9 +76,15 @@ RenderModel::
 setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyVis>(data);
-  std::cerr << "RenderModel receives:\n";
+  std::cerr << "RenderModel " << getModelIdentifier() << " receives:\n";
   if (input) input->print();
   else std::cerr << "nothing\n";
+
+  if (portIndex == 0)
+  {
+    std::shared_ptr<GxyVis> vis = std::dynamic_pointer_cast<GxyVis>(data);
+    Q_EMIT visUpdated(vis);
+  }
 }
 
 NodeValidationState

@@ -35,6 +35,12 @@
 
 #include "GxyModel.hpp"
 
+#include <nodes/Connection>
+#include <nodes/Node>
+#include <nodes/NodeDataModel>
+
+using QtNodes::Connection;
+using QtNodes::Node;
 using QtNodes::NodeData;
 using QtNodes::NodeDataType;
 using QtNodes::NodeDataModel;
@@ -78,10 +84,22 @@ public:
 
 signals:
 
+  void visUpdated(std::shared_ptr<GxyVis>);
+  void visDeleted(std::string);
   void cameraChanged(Camera&);
   void lightingChanged(LightingEnvironment&);
 
 private Q_SLOTS:
+
+  void inputConnectionDeleted(QtNodes::Connection const& c) override
+  {
+    // std::cerr << "inputConnectionDeleted!\n";
+    Node *outNode = c.getNode(PortType::Out);
+    GxyModel *outModel = (GxyModel *)outNode->nodeDataModel();
+    // std::cerr << "to " << outModel->getModelIdentifier() << "\n";
+    emit visDeleted(outModel->getModelIdentifier());
+    NodeDataModel::inputConnectionDeleted(c);
+  }
 
   void openCameraDialog() 
   {

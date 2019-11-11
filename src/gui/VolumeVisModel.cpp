@@ -67,9 +67,9 @@ VolumeVisModel::VolumeVisModel()
 void 
 VolumeVisModel::onApply()
 {
-  std::cerr << "VVM onApply\n";
-  std::cerr << "input... get = " << ((long)input.get()) << "\n";
-  input->print();
+  // std::cerr << "VVM onApply\n";
+  // std::cerr << "input... get = " << ((long)input.get()) << "\n";
+  // input->print();
 
   output->dataName = input->dataName;
   output->dataType = input->dataType;
@@ -129,5 +129,64 @@ QString
 VolumeVisModel::validationMessage() const
 {
   return QString("copacetic");
+}
+
+QJsonObject
+VolumeVisModel::save() const 
+{
+  QJsonObject modelJson = NodeDataModel::save(); 
+
+  QJsonArray isovaluesJson;
+
+  for (auto isoval : isovalues)
+    isovaluesJson.push_back(isoval);
+
+  modelJson["isovalues"] = isovaluesJson;
+
+  QJsonArray slicesJson;
+
+  for (auto slice : slices)
+  {
+    QJsonObject sliceJson;
+    sliceJson["a"] = slice.x;
+    sliceJson["b"] = slice.y;
+    sliceJson["c"] = slice.z;
+    sliceJson["d"] = slice.w;
+    slicesJson.push_back(sliceJson);
+  }
+
+  modelJson["slices"] = slicesJson;
+
+  modelJson["volume rendering"] = volume_rendering_flag ? 1 : 0;
+
+  modelJson["transfer function"] = QString::fromStdString(transfer_function);
+  
+  return modelJson;
+}
+
+void
+VolumeVisModel::restore(QJsonObject const &p)
+{
+  QJsonArray isovaluesJson = p["isovalues"].toArray();
+
+  for (auto isovalueJson : isovaluesJson) 
+    isovalues.push_back(isovalueJson.toDouble());
+
+  QJsonArray slicesJson = p["slices"].toArray();
+
+  for (auto sliceJson : slicesJson) 
+  {
+    QJsonObject o = sliceJson.toObject();
+    gxy::vec4f slice;
+    slice.x = o["a"].toDouble();
+    slice.y = o["b"].toDouble();
+    slice.z = o["c"].toDouble();
+    slice.w = o["d"].toDouble();
+    slices.push_back(slice);
+  }
+
+  volume_rendering_flag = p["volume rendering"].toInt();
+  transfer_function = p["transfer function"].toString().toStdString();
+
 }
 

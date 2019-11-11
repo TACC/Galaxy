@@ -39,6 +39,8 @@ public:
     std::cerr << "origin: " << origin << "\n";
   }
 
+  std::string get_origin() { return origin; }
+
 private:
 
   std::string origin;
