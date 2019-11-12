@@ -117,6 +117,14 @@ public:
     showNormal();
   }
 
+
+  void 
+  closeEvent(QCloseEvent *event)
+  {
+    QApplication::closeAllWindows();
+    QMainWindow::closeEvent(event);
+  }
+
 public Q_SLOTS:
 
   void disconnect()

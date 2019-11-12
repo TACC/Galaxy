@@ -128,7 +128,8 @@ public:
 
   bool connectToServer()
   {
-    if (getTheGxyConnectionMgr()->IsConnected())
+    // if (getTheGxyConnectionMgr()->IsConnected())
+    if (IsConnected())
     {
       std::cerr << "cannot start a service without disconnecting from prior service first\n";
       return false;
@@ -140,16 +141,23 @@ public:
 
       std::cerr << "trying to connect to " << s << ":" << p << "\n";
 
-      getTheGxyConnectionMgr()->Connect(s, p);
+      // getTheGxyConnectionMgr()->Connect(s, p);
+      Connect(s, p);
 
-      if (getTheGxyConnectionMgr()->IsConnected())
+      if (IsConnected())
       {
-        std::string sofile = "load libgxy_module_data.so";
-        if (! CSendRecv(sofile))
+        for (auto m : modules)
         {
-          std::cerr << "Sending sofile failed\n";
-          exit(1);
+          std::string cmd = std::string("load ") + m;
+          if (! CSendRecv(cmd))
+          {
+            QMessageBox msgBox;
+            msgBox.setText("Unable to load module");
+            msgBox.exec();
+            return false;
+          }
         }
+        
         if (dlg) dlg->hide();
         Q_EMIT connectionStateChanged(true);
         return true;
@@ -167,14 +175,25 @@ public:
   void disconnectFromServer()
   {
     std::cerr << "CM: disconnect... emitting connectionStateChanged\n";
-    getTheGxyConnectionMgr()->Disconnect();
+    // getTheGxyConnectionMgr()->Disconnect();
+    Disconnect();
     Q_EMIT connectionStateChanged(false);
   }
 
-  // bool IsConnected()
-  // {
-    // return is_connected;
-  // }
+  void addModule(std::string m)
+  {
+    modules.push_back(m);
+    if (IsConnected())
+    {
+      std::string cmd = std::string("load ") + m;
+      if (! CSendRecv(cmd))
+      {
+        QMessageBox msgBox;
+        msgBox.setText("Unable to load module");
+        msgBox.exec();
+      }
+    }
+  }
 
 signals:
 
@@ -184,8 +203,8 @@ public Q_SLOTS:
 
   void onConnectionStateChanged(bool b)
   {
-    // is_connected = b;
-    connect_button->setEnabled(getTheGxyConnectionMgr()->IsConnected());
+    connect_button->setEnabled(IsConnected());
+    // connect_button->setEnabled(getTheGxyConnectionMgr()->IsConnected());
   }
 
   void openConnectToServerDialog()
@@ -213,6 +232,8 @@ public Q_SLOTS:
 private:
   
   QPushButton *connect_button;
+
+  std::vector<std::string> modules;
 
   // bool is_connected = false;
   QDialog *dlg = NULL;

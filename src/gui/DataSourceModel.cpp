@@ -25,6 +25,8 @@
 
 DataSourceModel::DataSourceModel() 
 {
+  DataSourceModel::init();
+
   output = std::make_shared<GxyData>(getModelIdentifier());
 
   QFrame *frame = new QFrame();

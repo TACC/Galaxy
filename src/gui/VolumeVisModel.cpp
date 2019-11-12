@@ -38,7 +38,7 @@ VolumeVisModel::VolumeVisModel()
   connect(openIsovalues, SIGNAL(released()), this, SLOT(openIsovaluesDialog()));
   layout->addWidget(openIsovalues);
 
-  QCheckBox *volumeRender = new QCheckBox("Volume render?");
+  volumeRender = new QCheckBox("Volume render?");
   volumeRender->setChecked(false);
   layout->addWidget(volumeRender);
 
@@ -66,17 +66,15 @@ VolumeVisModel::VolumeVisModel()
 void 
 VolumeVisModel::onApply()
 {
-  output->dataName = input->dataName;
-  output->dataType = input->dataType;
-  output->slices = slices;
-  output->isovalues = isovalues;
-  output->volume_rendering_flag = volume_rendering_flag;
-  output->transfer_function = transfer_function;
-  
-  std::cerr << "output... get = " << ((long)output.get()) << "\n";
-  output->print();
+  if (input)
+  {
+    output->dataName = input->dataName;
+    output->dataType = input->dataType;
+    
+    output->print();
 
-  Q_EMIT dataUpdated(0);
+    Q_EMIT dataUpdated(0);
+  }
 }
 
 unsigned int
@@ -129,58 +127,16 @@ VolumeVisModel::validationMessage() const
 QJsonObject
 VolumeVisModel::save() const 
 {
-  QJsonObject modelJson = NodeDataModel::save(); 
-
-  QJsonArray isovaluesJson;
-
-  for (auto isoval : isovalues)
-    isovaluesJson.push_back(isoval);
-
-  modelJson["isovalues"] = isovaluesJson;
-
-  QJsonArray slicesJson;
-
-  for (auto slice : slices)
-  {
-    QJsonObject sliceJson;
-    sliceJson["a"] = slice.x;
-    sliceJson["b"] = slice.y;
-    sliceJson["c"] = slice.z;
-    sliceJson["d"] = slice.w;
-    slicesJson.push_back(sliceJson);
-  }
-
-  modelJson["slices"] = slicesJson;
-
-  modelJson["volume rendering"] = volume_rendering_flag ? 1 : 0;
-
-  modelJson["transfer function"] = QString::fromStdString(transfer_function);
-  
+  QJsonObject modelJson = NodeDataModel::save();
+  output->save(modelJson);
   return modelJson;
 }
 
 void
 VolumeVisModel::restore(QJsonObject const &p)
 {
-  QJsonArray isovaluesJson = p["isovalues"].toArray();
-
-  for (auto isovalueJson : isovaluesJson) 
-    isovalues.push_back(isovalueJson.toDouble());
-
-  QJsonArray slicesJson = p["slices"].toArray();
-
-  for (auto sliceJson : slicesJson) 
-  {
-    QJsonObject o = sliceJson.toObject();
-    gxy::vec4f slice;
-    slice.x = o["a"].toDouble();
-    slice.y = o["b"].toDouble();
-    slice.z = o["c"].toDouble();
-    slice.w = o["d"].toDouble();
-    slices.push_back(slice);
-  }
-
-  volume_rendering_flag = p["volume rendering"].toInt();
-  transfer_function = p["transfer function"].toString().toStdString();
+  output->restore(p);
+  volumeRender->setChecked(output->volume_rendering_flag);
+  tf_widget->setText(output->transfer_function.c_str());
 }
 

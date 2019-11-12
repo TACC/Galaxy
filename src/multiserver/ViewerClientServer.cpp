@@ -154,6 +154,8 @@ ViewerClientServer::handle(string line, string& reply)
 
     if (doc.HasMember("Visualization"))
     {
+      GetTheVisualization()->Clear();
+
       if (!GetTheVisualization()->LoadFromJSON(doc["Visualization"]))
       {
         reply = "error loading visualization from json command";
@@ -225,6 +227,7 @@ ViewerClientServer::handle(string line, string& reply)
   }
   else if (cmd == "render")
   {
+    Commit();
     render();
     reply = "ok";
     return true;

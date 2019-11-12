@@ -20,7 +20,6 @@
 
 #pragma once
 
-
 #include <QtCore/QObject>
 #include <QtCore/QVector>
 
@@ -61,6 +60,16 @@ class RenderModel : public GxyModel
   Q_OBJECT
 
 public:
+  static void init()
+  {
+    static bool first = true;
+    if (first)
+    {
+      first = false;
+      getTheGxyConnectionMgr()->addModule("libgxy_module_viewer.so");
+    }
+  }
+
   RenderModel();
 
   virtual
@@ -96,10 +105,8 @@ private Q_SLOTS:
 
   void inputConnectionDeleted(QtNodes::Connection const& c) override
   {
-    // std::cerr << "inputConnectionDeleted!\n";
     Node *outNode = c.getNode(PortType::Out);
     GxyModel *outModel = (GxyModel *)outNode->nodeDataModel();
-    // std::cerr << "to " << outModel->getModelIdentifier() << "\n";
     emit visDeleted(outModel->getModelIdentifier());
     NodeDataModel::inputConnectionDeleted(c);
   }

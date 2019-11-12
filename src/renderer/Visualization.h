@@ -67,6 +67,8 @@ public:
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
 
+  void Clear() { vis.clear(); }
+
   //! Add a Vis object to this Visualization
   void AddVis(VisP g);
 

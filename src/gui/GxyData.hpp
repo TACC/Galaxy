@@ -62,6 +62,17 @@ public:
     std::cerr << "dataType: " << dataType << "\n";
   }
 
+  virtual void save(QJsonObject& p) const
+  {
+    p["dataset"] = QString(dataName.c_str());
+  }
+
+  virtual void restore(QJsonObject const &p)
+  {
+    dataName = p["dataset"].toString().toStdString();
+  }
+
+
   std::string dataName;
   int dataType;
 };

@@ -85,19 +85,24 @@ private Q_SLOTS:
 
   void onApply();
 
+  void transfer_function_set()
+  {
+    output->transfer_function = tf_widget->text().toStdString();
+  }
+
   void openPlanesDialog() 
   {
-    PlanesDialog *planesDialog = new PlanesDialog(slices);
+    PlanesDialog *planesDialog = new PlanesDialog(output->slices);
     planesDialog->exec();
-    slices = planesDialog->get_planes();
+    output->slices = planesDialog->get_planes();
     delete planesDialog;
   }
 
   void openIsovaluesDialog() 
   {
-    ScalarsDialog *scalarsDialog = new ScalarsDialog(isovalues);
+    ScalarsDialog *scalarsDialog = new ScalarsDialog(output->isovalues);
     scalarsDialog->exec();
-    isovalues = scalarsDialog->get_scalars();
+    output->isovalues = scalarsDialog->get_scalars();
     delete scalarsDialog;
   }
 
@@ -108,20 +113,14 @@ private Q_SLOTS:
     tf_widget->clear();
     tf_widget->insert(fileDialog->selectedFiles().at(0));
     std::cerr << tf_widget->text().toStdString() << "\n";
+    output->transfer_function = tf_widget->text().toStdString();
     delete fileDialog;
   }
-
-public:
-
-  std::vector<gxy::vec4f>  slices;
-  std::vector<float>       isovalues;
-  bool                     volume_rendering_flag;
-  std::string              transfer_function;
 
 private:
   std::shared_ptr<VolumeVis> output;
   std::shared_ptr<GxyData> input;
 
-
-  QLineEdit                *tf_widget;
+  QLineEdit *tf_widget;
+  QCheckBox *volumeRender;
 };

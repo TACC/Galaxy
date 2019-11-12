@@ -50,5 +50,60 @@ public:
   std::vector<float> isovalues;
   bool volume_rendering_flag;
   std::string transfer_function;
+
+  void save(QJsonObject& modelJson) const override
+  {
+    GxyVis::save(modelJson);
+
+    modelJson["type"] = "VolumeVis";
+
+    QJsonArray isovaluesJson;
+
+    for (auto isoval : isovalues)
+      isovaluesJson.push_back(isoval);
+
+    modelJson["isovalues"] = isovaluesJson;
+
+    QJsonArray slicesJson;
+    for (auto slice : slices)
+    {
+      QJsonArray sliceJson;
+      sliceJson.push_back(slice.x);
+      sliceJson.push_back(slice.y);
+      sliceJson.push_back(slice.z);
+      sliceJson.push_back(slice.w);
+      slicesJson.push_back(sliceJson);
+    }
+    modelJson["slices"] = slicesJson;
+
+    modelJson["volume rendering"]  = volume_rendering_flag;
+    modelJson["transfer function"] = transfer_function.c_str();
+  }
+
+  void restore(QJsonObject const &p) override
+  {
+    GxyVis::restore(p);
+
+    QJsonArray isovaluesJson = p["isovalues"].toArray();
+
+    for (auto isovalueJson : isovaluesJson)
+      isovalues.push_back(isovalueJson.toDouble());
+
+    QJsonArray slicesJson = p["slices"].toArray();
+
+    for (auto sliceJson : slicesJson)
+    {
+      QJsonArray o = sliceJson.toArray();
+      gxy::vec4f slice;
+      slice.x = o[0].toDouble();
+      slice.y = o[1].toDouble();
+      slice.z = o[2].toDouble();
+      slice.w = o[3].toDouble();
+      slices.push_back(slice);
+    }
+
+    volume_rendering_flag = p["volume rendering"].toInt();
+    transfer_function = p["transfer function"].toString().toStdString();
+  }
 };
 

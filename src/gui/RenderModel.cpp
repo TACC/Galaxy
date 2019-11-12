@@ -20,8 +20,12 @@
 
 #include "RenderModel.hpp"
 
+#include <QJsonDocument>
+
 RenderModel::RenderModel() 
 {
+  RenderModel::init();
+
   QFrame *frame  = new QFrame();
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setSpacing(0);

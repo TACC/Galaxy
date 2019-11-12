@@ -24,6 +24,7 @@
 #include "dtypes.h"
 
 #include <QJsonObject>
+#include <QJsonArray>
 
 class CameraDialog;
 
@@ -75,52 +76,52 @@ public:
   {
     QJsonObject modelJson;
 
-    QJsonObject pointJson;
-    pointJson["x"] = point.x;
-    pointJson["y"] = point.y;
-    pointJson["z"] = point.z;
-    modelJson["point"] = pointJson;
+    QJsonArray pointJson;
+    pointJson.push_back(point.x);
+    pointJson.push_back(point.y);
+    pointJson.push_back(point.z);
+    modelJson["viewpoint"] = pointJson;
 
-    QJsonObject directionJson;
-    directionJson["x"] = direction.x;
-    directionJson["y"] = direction.y;
-    directionJson["z"] = direction.z;
-    modelJson["direction"] = directionJson;
+    QJsonArray directionJson;
+    directionJson.push_back(direction.x);
+    directionJson.push_back(direction.y);
+    directionJson.push_back(direction.z);
+    modelJson["viewdirection"] = directionJson;
 
-    QJsonObject upJson;
-    upJson["x"] = up.x;
-    upJson["y"] = up.y;
-    upJson["z"] = up.z;
-    modelJson["up"] = upJson;
+    QJsonArray upJson;
+    upJson.push_back(up.x);
+    upJson.push_back(up.y);
+    upJson.push_back(up.z);
+    modelJson["viewup"] = upJson;
 
-    QJsonObject sizeJson;
-    pointJson["w"] = size.x;
-    pointJson["h"] = size.y;
-    modelJson["size"] = sizeJson;
+    QJsonArray sizeJson;
+    sizeJson.push_back(size.x);
+    sizeJson.push_back(size.y);
+    modelJson["dimensions"] = sizeJson;
 
-    modelJson["angle of view"] = aov;
+    modelJson["aov"] = aov;
 
     return modelJson;
   }
 
   virtual void restore(QJsonObject const& p) 
   {
-    point.x = p["point"]["x"].toDouble();
-    point.y = p["point"]["y"].toDouble();
-    point.z = p["point"]["z"].toDouble();
+    point.x = p["viewpoint"][0].toDouble();
+    point.y = p["viewpoint"][1].toDouble();
+    point.z = p["viewpoint"][2].toDouble();
 
-    direction.x = p["direction"]["x"].toDouble();
-    direction.y = p["direction"]["y"].toDouble();
-    direction.z = p["direction"]["z"].toDouble();
+    direction.x = p["viewdirection"][0].toDouble();
+    direction.y = p["viewdirection"][1].toDouble();
+    direction.z = p["viewdirection"][2].toDouble();
 
-    up.x = p["up"]["x"].toDouble();
-    up.y = p["up"]["y"].toDouble();
-    up.z = p["up"]["z"].toDouble();
+    up.x = p["viewup"][0].toDouble();
+    up.y = p["viewup"][1].toDouble();
+    up.z = p["viewup"][2].toDouble();
 
-    size.x = p["size"]["w"].toInt();
-    size.y = p["size"]["h"].toInt();
+    size.x = p["dimensions"][0].toInt();
+    size.y = p["dimensions"][1].toInt();
 
-    aov = p["angle of view"].toDouble();
+    aov = p["aov"].toDouble();
   }
 
 protected:

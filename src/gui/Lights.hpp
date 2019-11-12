@@ -54,24 +54,24 @@ public:
   void set_point(gxy::vec3f p) { point = p; }
   void set_point(float x, float y, float z) { point.x = x; point.y = y; point.z = z; }
 
-  virtual QJsonObject save() const
+  virtual QJsonArray save() const
   {
-    QJsonObject modelJson;
+    QJsonArray modelJson;
 
-    modelJson["x"] = point.x;
-    modelJson["y"] = point.x;
-    modelJson["z"] = point.x;
-    modelJson["type"] = type;
+    modelJson.push_back(point.x);
+    modelJson.push_back(point.y);
+    modelJson.push_back(point.z);
+    modelJson.push_back(type);
 
     return modelJson;
   }
 
-  virtual void restore(QJsonObject const& p)
+  virtual void restore(QJsonArray const& p)
   {
-    point.x = p["x"].toDouble();
-    point.y = p["y"].toDouble();
-    point.z = p["z"].toDouble();
-    type = p["type"].toInt();
+    point.x = p[0].toDouble();
+    point.y = p[1].toDouble();
+    point.z = p[2].toDouble();
+    type = p[3].toInt();
   }
 
   void set_type(int t)       { type = t; }
@@ -100,8 +100,7 @@ public:
   {
     QJsonObject modelJson;
 
-    modelJson["shadow flag"] = shadow_flag ? 1 : 0;
-    modelJson["ao flag"] = ao_flag ? 1 : 0;
+    modelJson["shadows"] = shadow_flag;
     modelJson["ao count"] = ao_count;
     modelJson["ao radius"] = ao_radius;
     modelJson["Ka"] = Ka;
@@ -111,31 +110,31 @@ public:
     for (auto l : lights)
       lightsJson.push_back(l.save());
 
-    modelJson["lights"] = lightsJson;
+    modelJson["Sources"] = lightsJson;
 
     return modelJson;
   }
 
   virtual void restore(QJsonObject const& p)
   {
-    shadow_flag = p["shadow flag"].toInt() == 1;
-    ao_flag = p["ao flag"].toInt() == 1;
+    shadow_flag = p["ShadowFlag"].toBool();
     ao_count = p["ao count"].toInt();
     ao_radius = p["ao radius"].toDouble();
+    ao_flag = ao_count > 0;
     Ka = p["Ka"].toDouble();
     Kd = p["Kd"].toDouble();
 
     lights.clear();
 
-    for (auto lightJson : p["lights"].toArray())
+    for (auto lightJson : p["Sources"].toArray())
     {
       gxy::vec3f pt;
       int t;
 
-      pt.x = lightJson.toObject()["x"].toDouble();
-      pt.y = lightJson.toObject()["y"].toDouble();
-      pt.z = lightJson.toObject()["z"].toDouble();
-      t = lightJson.toObject()["type"].toInt();
+      pt.x = lightJson.toArray()[0].toDouble();
+      pt.y = lightJson.toArray()[1].toDouble();
+      pt.z = lightJson.toArray()[2].toDouble();
+      t = lightJson.toArray()[3].toInt();
       
       Light l(pt, t);
       lights.push_back(l);
