@@ -24,6 +24,9 @@
 #include <vector> 
 #include "dtypes.h"
 
+#include <QJsonObject>
+#include <QJsonArray>
+
 class LightDialog;
 
 class Light
@@ -51,6 +54,26 @@ public:
   void set_point(gxy::vec3f p) { point = p; }
   void set_point(float x, float y, float z) { point.x = x; point.y = y; point.z = z; }
 
+  virtual QJsonObject save() const
+  {
+    QJsonObject modelJson;
+
+    modelJson["x"] = point.x;
+    modelJson["y"] = point.x;
+    modelJson["z"] = point.x;
+    modelJson["type"] = type;
+
+    return modelJson;
+  }
+
+  virtual void restore(QJsonObject const& p)
+  {
+    point.x = p["x"].toDouble();
+    point.y = p["y"].toDouble();
+    point.z = p["z"].toDouble();
+    type = p["type"].toInt();
+  }
+
   void set_type(int t)       { type = t; }
 
   gxy::vec3f point;
@@ -72,6 +95,52 @@ public:
   }
 
   ~LightingEnvironment() {}
+
+  virtual QJsonObject save() const
+  {
+    QJsonObject modelJson;
+
+    modelJson["shadow flag"] = shadow_flag ? 1 : 0;
+    modelJson["ao flag"] = ao_flag ? 1 : 0;
+    modelJson["ao count"] = ao_count;
+    modelJson["ao radius"] = ao_radius;
+    modelJson["Ka"] = Ka;
+    modelJson["Kd"] = Kd;
+    
+    QJsonArray lightsJson;
+    for (auto l : lights)
+      lightsJson.push_back(l.save());
+
+    modelJson["lights"] = lightsJson;
+
+    return modelJson;
+  }
+
+  virtual void restore(QJsonObject const& p)
+  {
+    shadow_flag = p["shadow flag"].toInt() == 1;
+    ao_flag = p["ao flag"].toInt() == 1;
+    ao_count = p["ao count"].toInt();
+    ao_radius = p["ao radius"].toDouble();
+    Ka = p["Ka"].toDouble();
+    Kd = p["Kd"].toDouble();
+
+    lights.clear();
+
+    for (auto lightJson : p["lights"].toArray())
+    {
+      gxy::vec3f pt;
+      int t;
+
+      pt.x = lightJson.toObject()["x"].toDouble();
+      pt.y = lightJson.toObject()["y"].toDouble();
+      pt.z = lightJson.toObject()["z"].toDouble();
+      t = lightJson.toObject()["type"].toInt();
+      
+      Light l(pt, t);
+      lights.push_back(l);
+    }
+  }
   
   std::vector<Light> lights;
   bool shadow_flag, ao_flag;

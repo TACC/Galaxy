@@ -111,6 +111,7 @@ public:
     button_box->setLayout(button_box_layout);
 
     QPushButton *reset = new QPushButton("Reset");
+    reset->setAutoDefault(false);
     connect(reset, SIGNAL(released()), this, SLOT(reset()));
     button_box_layout->addWidget(reset, 0, 2);
 

@@ -98,3 +98,22 @@ RenderModel::validationMessage() const
 {
   return QString("copacetic");
 }
+
+QJsonObject
+RenderModel::save() const
+{
+  QJsonObject modelJson = NodeDataModel::save();
+
+  modelJson["camera"] = camera.save();
+  modelJson["lighting"] = lighting.save();
+
+  return modelJson;
+}
+
+void
+RenderModel::restore(QJsonObject const &p)
+{
+  camera.restore(p["camera"].toObject());
+  lighting.restore(p["lighting"].toObject());
+}
+

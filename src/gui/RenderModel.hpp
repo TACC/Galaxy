@@ -82,6 +82,9 @@ public:
 
   QString name() const override { return QStringLiteral("Render"); }
 
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
+
 signals:
 
   void visUpdated(std::shared_ptr<GxyVis>);

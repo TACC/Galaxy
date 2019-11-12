@@ -129,7 +129,10 @@ public:
   bool connectToServer()
   {
     if (getTheGxyConnectionMgr()->IsConnected())
+    {
       std::cerr << "cannot start a service without disconnecting from prior service first\n";
+      return false;
+    }
     else
     {
       int   p = atoi(port.toStdString().c_str());

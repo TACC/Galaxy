@@ -23,6 +23,8 @@
 #include <iostream> 
 #include "dtypes.h"
 
+#include <QJsonObject>
+
 class CameraDialog;
 
 class Camera
@@ -68,6 +70,58 @@ public:
   void setAOV(float f)       { aov = f; }
 
   void setSize(int w, int h) { size.x = w; size.y = h; }
+
+  virtual QJsonObject save() const
+  {
+    QJsonObject modelJson;
+
+    QJsonObject pointJson;
+    pointJson["x"] = point.x;
+    pointJson["y"] = point.y;
+    pointJson["z"] = point.z;
+    modelJson["point"] = pointJson;
+
+    QJsonObject directionJson;
+    directionJson["x"] = direction.x;
+    directionJson["y"] = direction.y;
+    directionJson["z"] = direction.z;
+    modelJson["direction"] = directionJson;
+
+    QJsonObject upJson;
+    upJson["x"] = up.x;
+    upJson["y"] = up.y;
+    upJson["z"] = up.z;
+    modelJson["up"] = upJson;
+
+    QJsonObject sizeJson;
+    pointJson["w"] = size.x;
+    pointJson["h"] = size.y;
+    modelJson["size"] = sizeJson;
+
+    modelJson["angle of view"] = aov;
+
+    return modelJson;
+  }
+
+  virtual void restore(QJsonObject const& p) 
+  {
+    point.x = p["point"]["x"].toDouble();
+    point.y = p["point"]["y"].toDouble();
+    point.z = p["point"]["z"].toDouble();
+
+    direction.x = p["direction"]["x"].toDouble();
+    direction.y = p["direction"]["y"].toDouble();
+    direction.z = p["direction"]["z"].toDouble();
+
+    up.x = p["up"]["x"].toDouble();
+    up.y = p["up"]["y"].toDouble();
+    up.z = p["up"]["z"].toDouble();
+
+    size.x = p["size"]["w"].toInt();
+    size.y = p["size"]["h"].toInt();
+
+    aov = p["angle of view"].toDouble();
+  }
 
 protected:
   gxy::vec3f point;

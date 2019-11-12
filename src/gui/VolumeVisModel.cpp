@@ -50,7 +50,6 @@ VolumeVisModel::VolumeVisModel()
 
   tf_widget = new QLineEdit();
   cmap_box_layout->addWidget(tf_widget);
-  // cmap_box_layout->addWidget(&tf_widget);
   
   QPushButton *tfunc_browse_button = new QPushButton("...");
   cmap_box_layout->addWidget(tfunc_browse_button);
@@ -67,10 +66,6 @@ VolumeVisModel::VolumeVisModel()
 void 
 VolumeVisModel::onApply()
 {
-  // std::cerr << "VVM onApply\n";
-  // std::cerr << "input... get = " << ((long)input.get()) << "\n";
-  // input->print();
-
   output->dataName = input->dataName;
   output->dataType = input->dataType;
   output->slices = slices;
@@ -187,6 +182,5 @@ VolumeVisModel::restore(QJsonObject const &p)
 
   volume_rendering_flag = p["volume rendering"].toInt();
   transfer_function = p["transfer function"].toString().toStdString();
-
 }
 
