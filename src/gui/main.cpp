@@ -24,7 +24,7 @@
 #include <nodes/ConnectionStyle>
 #include <nodes/TypeConverter>
 
-#include <QtCore/QCoreApplication>
+#include <QApplication>
 
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QMenuBar>
@@ -74,6 +74,11 @@ syntax(char *a)
 int
 main(int argc, char *argv[])
 {
+  // QSurfaceFormat format;
+  // format.setDepthBufferSize(24);
+  // format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+  // QSurfaceFormat::setDefaultFormat(format);
+
   _theGxyConnectionMgr = new GxyConnectionMgr();
 
   QApplication app(argc, argv);
@@ -86,12 +91,10 @@ main(int argc, char *argv[])
     else if (! strcmp(argv[i], "-c")) startit = true;
     else syntax(argv[0]);
 
-
   if (startit)
     getTheGxyConnectionMgr()->connectToServer();
 
   setStyle();
 
   app.exec();
-
 }

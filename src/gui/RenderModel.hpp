@@ -30,6 +30,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QCheckBox>
 
+#include "GxyConnectionMgr.hpp"
 #include "GxyRenderWindow.hpp"
 
 #include "GxyModel.hpp"
