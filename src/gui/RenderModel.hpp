@@ -96,10 +96,12 @@ public:
   QJsonObject save() const override;
   void restore(QJsonObject const &p) override;
 
+  void sendCamera();
+  void sendVisualization();
+
 signals:
 
   void visUpdated(std::shared_ptr<GxyVis>);
-  void visDeleted(std::string);
   void cameraChanged(Camera&);
   void lightingChanged(LightingEnvironment&);
 
@@ -109,7 +111,7 @@ private Q_SLOTS:
   {
     Node *outNode = c.getNode(PortType::Out);
     GxyModel *outModel = (GxyModel *)outNode->nodeDataModel();
-    emit visDeleted(outModel->getModelIdentifier());
+    visList.erase(outModel->getModelIdentifier());
     NodeDataModel::inputConnectionDeleted(c);
   }
 
@@ -118,7 +120,10 @@ private Q_SLOTS:
     CameraDialog *cameraDialog = new CameraDialog(camera);
     cameraDialog->exec();
     cameraDialog->get_camera(camera);
-    Q_EMIT cameraChanged(camera);
+
+    if (getTheGxyConnectionMgr()->IsConnected())
+      sendCamera();
+
     delete cameraDialog;
   }
 
@@ -127,8 +132,34 @@ private Q_SLOTS:
     LightsDialog *lightsDialog = new LightsDialog(lighting);
     lightsDialog->exec();
     lightsDialog->get_lights(lighting);
-    Q_EMIT lightingChanged(lighting);
+
+    onVisualizationChanged();
+
     delete lightsDialog;
+  }
+
+  void onVisualizationChanged()
+  {
+    if (getTheGxyConnectionMgr()->IsConnected())
+      sendVisualization();
+  }
+
+  void onApply()
+  {
+    if (getTheGxyConnectionMgr()->IsConnected())
+    {
+      sendCamera();
+      sendVisualization();
+    }
+  }
+
+  void onConnectionStateChanged(bool state)
+  {
+    if (state)
+    {
+      sendCamera();
+      sendVisualization();
+    }
   }
 
   void setUpdateRate();
@@ -140,6 +171,7 @@ private:
   LightingEnvironment lighting;
 
   std::shared_ptr<GxyVis> input;
+  std::map<std::string, std::shared_ptr<GxyVis>> visList;
 
   GxyRenderWindow renderWindow;
   QLineEdit *update_rate;

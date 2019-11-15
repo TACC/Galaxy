@@ -66,10 +66,9 @@ RenderModel::RenderModel()
   connect(open, SIGNAL(released()), &renderWindow, SLOT(show()));
   _container->addButton(open);
 
-  connect(this, SIGNAL(cameraChanged(Camera&)), &renderWindow, SLOT(onCameraChanged(Camera&)));
-  connect(this, SIGNAL(lightingChanged(LightingEnvironment&)), &renderWindow, SLOT(onLightingChanged(LightingEnvironment&)));
-  connect(this, SIGNAL(visUpdated(std::shared_ptr<GxyVis>)), &renderWindow, SLOT(onVisUpdate(std::shared_ptr<GxyVis>)));
-  connect(this, SIGNAL(visDeleted(std::string)), &renderWindow, SLOT(onVisRemoved(std::string)));
+  connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+
+  connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onConnectionStateChanged(bool)));
 }
 
 unsigned int
@@ -101,6 +100,18 @@ setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
   std::cerr << "RenderModel " << getModelIdentifier() << " receives:\n";
   if (input) input->print();
   else std::cerr << "nothing\n";
+
+  if (data)
+  {
+    std::shared_ptr<GxyVis> v = std::dynamic_pointer_cast<GxyVis>(data);
+    visList[v->get_origin()] = v;
+
+    for (auto vis : visList)
+    {
+      std::cerr << vis.first << " =======================\n";
+      vis.second->print();
+    }
+  }
 
   if (portIndex == 0)
   {
@@ -163,4 +174,43 @@ RenderModel::timeout()
     renderWindow.Update();
     timer->start();
   }
+}
+
+void
+RenderModel::sendCamera()
+{
+  QJsonObject cameraJson;
+  cameraJson["Camera"] = camera.save();
+  QJsonDocument doc(cameraJson);
+  QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+  QString s = QLatin1String(bytes);
+  std::string msg = std::string("json ") + s.toStdString();
+  getTheGxyConnectionMgr()->CSendRecv(msg);
+}
+
+void
+RenderModel::sendVisualization()
+{
+  QJsonObject visualizationJson;
+
+  QJsonObject v;
+  v["Lighting"] = lighting.save();
+
+  QJsonArray operatorsJson;
+  for (auto vis : visList)
+  {
+    QJsonObject operatorJson;
+    vis.second->save(operatorJson);
+    operatorsJson.push_back(operatorJson);
+  }
+  v["operators"] = operatorsJson;
+
+  visualizationJson["Visualization"] = v;
+
+  QJsonDocument doc(visualizationJson);
+  QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+  QString s = QLatin1String(bytes);
+
+  std::string msg = std::string("json ") + s.toStdString();
+  getTheGxyConnectionMgr()->CSendRecv(msg);
 }
