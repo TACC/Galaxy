@@ -25,6 +25,7 @@ public:
 
   void render();
   void addPixels(gxy::Pixel *p, int n, int frame);
+  void Update() { update(); }
 
 protected:
   void resizeGL(int w, int h) override;
@@ -64,6 +65,7 @@ public:
   GxyRenderWindow();
 
   void render() { if (oglWidget) oglWidget->render(); }
+  void Update() { if (oglWidget) oglWidget->Update(); }
 
 protected:
 

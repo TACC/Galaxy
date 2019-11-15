@@ -21,6 +21,7 @@
 #include "RenderModel.hpp"
 
 #include <QJsonDocument>
+#include <QtGui/QDoubleValidator>
 
 RenderModel::RenderModel() 
 {
@@ -40,6 +41,23 @@ RenderModel::RenderModel()
   connect(openLights, SIGNAL(released()), this, SLOT(openLightsDialog()));
   layout->addWidget(openLights);
   
+  QWidget *update_widget = new QWidget;
+  QHBoxLayout *update_layout = new QHBoxLayout;
+  update_widget->setLayout(update_layout);
+  QLabel *update_label = new QLabel("Update rate:");
+  update_layout->addWidget(update_label);
+  update_rate = new QLineEdit;
+  update_rate->setValidator(new QDoubleValidator());
+  update_rate->setText(QString::number(update_rate_msec == 0.0 ? 0.0 : 1000.0 / update_rate_msec));
+  update_layout->addWidget(update_rate);
+  layout->addWidget(update_widget);
+  connect(update_rate, SIGNAL(editingFinished()), this, SLOT(setUpdateRate()));
+
+  timer = new QTimer(this);
+  timer->setSingleShot(true);
+  timer->setInterval(update_rate_msec);
+  connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
+
   _container->setCentralWidget(frame);
 
   renderWindow.show();
@@ -121,3 +139,28 @@ RenderModel::restore(QJsonObject const &p)
   lighting.restore(p["lighting"].toObject());
 }
 
+void
+RenderModel::setUpdateRate()
+{
+  std::cerr << "update rate set to " << update_rate->text().toDouble() << "\n";
+
+  float ups = update_rate->text().toDouble();
+  if (ups > 0.0)
+  {
+    update_rate_msec = 1000.0 / ups;
+    timer->setInterval(update_rate_msec);
+    timer->start();
+  }
+  else
+    update_rate_msec = 0;
+}
+
+void 
+RenderModel::timeout()
+{
+  if (update_rate_msec > 0)
+  {
+    renderWindow.Update();
+    timer->start();
+  }
+}

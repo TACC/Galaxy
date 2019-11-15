@@ -22,6 +22,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QVector>
+#include <QtCore/QTimer>
 
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QLabel>
@@ -130,6 +131,9 @@ private Q_SLOTS:
     delete lightsDialog;
   }
 
+  void setUpdateRate();
+  void timeout();
+
 private:
 
   Camera camera;
@@ -138,4 +142,7 @@ private:
   std::shared_ptr<GxyVis> input;
 
   GxyRenderWindow renderWindow;
+  QLineEdit *update_rate;
+  QTimer *timer;
+  float update_rate_msec = 0;
 };
