@@ -89,7 +89,6 @@ public:
     pbox->setLayout(playout);
 
     lbl = new QLabel("Name:");
-    lbl->setEnabled(false);
     playout->addWidget(lbl);
 
     dataName = new QLineEdit();
@@ -229,6 +228,7 @@ private Q_SLOTS:
   void selection(QListWidgetItem *item)
   {
     current_selection = item->text().toStdString();
+    _container->getApplyButton()->setEnabled(true);
     onApply();
   }
 

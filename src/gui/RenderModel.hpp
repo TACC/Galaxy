@@ -98,6 +98,7 @@ public:
 
   void sendCamera();
   void sendVisualization();
+  void render();
 
 signals:
 
@@ -125,6 +126,7 @@ private Q_SLOTS:
       sendCamera();
 
     delete cameraDialog;
+    Q_EMIT cameraChanged(camera);
   }
 
   void openLightsDialog() 
@@ -148,15 +150,20 @@ private Q_SLOTS:
   {
     if (getTheGxyConnectionMgr()->IsConnected())
     {
+      Q_EMIT(cameraChanged(camera));
       sendCamera();
       sendVisualization();
+      render();
     }
   }
 
   void onConnectionStateChanged(bool state)
   {
+    renderWindow.manageThreads(state);
+
     if (state)
     {
+      Q_EMIT(cameraChanged(camera));
       sendCamera();
       sendVisualization();
     }

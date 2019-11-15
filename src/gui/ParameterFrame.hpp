@@ -73,6 +73,7 @@ public:
     bottom_right->setLayout(bottom_right_layout);
 
     applyButton = new QPushButton("Apply");
+    applyButton->setEnabled(false);
     bottom_right_layout->addWidget(applyButton, 0, Qt::AlignRight);
 
     QWidget *bottom_left = new QWidget();

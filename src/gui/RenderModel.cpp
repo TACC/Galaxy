@@ -60,6 +60,7 @@ RenderModel::RenderModel()
 
   _container->setCentralWidget(frame);
 
+  connect(this, SIGNAL(cameraChanged(Camera&)), &renderWindow, SLOT(onCameraChanged(Camera&)));
   renderWindow.show();
 
   QPushButton *open = new QPushButton("Open");
@@ -69,6 +70,11 @@ RenderModel::RenderModel()
   connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onConnectionStateChanged(bool)));
+
+  if (getTheGxyConnectionMgr()->IsConnected())
+    renderWindow.manageThreads(true);
+
+  Q_EMIT(cameraChanged(camera));
 }
 
 unsigned int
@@ -97,21 +103,20 @@ RenderModel::
 setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyVis>(data);
+  visList[input->get_origin()] = input;
+  _container->getApplyButton()->setEnabled(visList.size() > 0);
+
+#if 0
   std::cerr << "RenderModel " << getModelIdentifier() << " receives:\n";
   if (input) input->print();
   else std::cerr << "nothing\n";
 
   if (data)
   {
-    std::shared_ptr<GxyVis> v = std::dynamic_pointer_cast<GxyVis>(data);
-    visList[v->get_origin()] = v;
-
     for (auto vis : visList)
-    {
-      std::cerr << vis.first << " =======================\n";
       vis.second->print();
-    }
   }
+#endif
 
   if (portIndex == 0)
   {
@@ -171,6 +176,7 @@ RenderModel::timeout()
 {
   if (update_rate_msec > 0)
   {
+    std::cerr << "timeout\n";
     renderWindow.Update();
     timer->start();
   }
@@ -183,9 +189,15 @@ RenderModel::sendCamera()
   cameraJson["Camera"] = camera.save();
   QJsonDocument doc(cameraJson);
   QByteArray bytes = doc.toJson(QJsonDocument::Compact);
-  QString s = QLatin1String(bytes);
-  std::string msg = std::string("json ") + s.toStdString();
+  QString qs = QLatin1String(bytes);
+  std::string msg = std::string("json ") + qs.toStdString();
   getTheGxyConnectionMgr()->CSendRecv(msg);
+
+  gxy::vec2i window_size = camera.getSize();
+  std::stringstream ss;
+  ss << "window " << window_size.x << " " << window_size.y;
+  std::string s = ss.str();
+  getTheGxyConnectionMgr()->CSendRecv(s);
 }
 
 void
@@ -214,3 +226,12 @@ RenderModel::sendVisualization()
   std::string msg = std::string("json ") + s.toStdString();
   getTheGxyConnectionMgr()->CSendRecv(msg);
 }
+
+void
+RenderModel::render()
+{
+  std::string s("render");
+  getTheGxyConnectionMgr()->CSendRecv(s);
+  std::cerr << "render reply: " << s << "\n";
+}
+

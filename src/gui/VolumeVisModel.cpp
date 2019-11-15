@@ -71,7 +71,7 @@ VolumeVisModel::onApply()
     output->dataName = input->dataName;
     output->dataType = input->dataType;
     
-    output->print();
+    //output->print();
 
     Q_EMIT dataUpdated(0);
   }
@@ -103,13 +103,21 @@ VolumeVisModel::
 setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
+  _container->getApplyButton()->setEnabled(input && input->dataName != "");
+
+#if 0
   std::cerr << "VolumeVisModel receives:\n";
-  if (input)
+  if (input && input->dataName != "")
   {
     std::cerr << "VVM setInData... get = " << ((long)input.get()) << "\n";
     input->print();
   }
-  else std::cerr << "nothing\n";
+  else
+  {
+    std::cerr << "nothing\n";
+  }
+#endif
+
 }
 
 NodeValidationState

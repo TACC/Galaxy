@@ -7,6 +7,8 @@ static int xx = 0;
 #include "GxyRenderWindow.hpp"
 
 #include <QJsonDocument>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QVBoxLayout>
 
 static long
 my_time()
@@ -16,9 +18,9 @@ my_time()
   return 1000000000*s.tv_sec + s.tv_nsec;
 }
 
-GxyOpenGLWidget::GxyOpenGLWidget(GxyRenderWindow *mw) : m_top(mw)
+GxyOpenGLWidget::GxyOpenGLWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
-  setMinimumSize(300, 250);
+  std::cerr << "new GxyOpenGLWidget " << ((long)this) << "\n";
 
   pthread_mutex_init(&lock, NULL);
 
@@ -31,6 +33,7 @@ GxyOpenGLWidget::GxyOpenGLWidget(GxyRenderWindow *mw) : m_top(mw)
 
 GxyOpenGLWidget::~GxyOpenGLWidget()
 {
+  std::cerr << "GxyOpenGLWidget dtor: " << ((long)this) << "\n";
   if (rcvr_tid)
   {
     kill_threads = true;
@@ -61,23 +64,31 @@ GxyOpenGLWidget::~GxyOpenGLWidget()
 }
 
 void 
-GxyOpenGLWidget::render()
+GxyOpenGLWidget::manageThreads(bool state)
 {
-  if (rcvr_tid == NULL)
+  if (state)
   {
-    kill_threads = false;
-    pthread_create(&rcvr_tid, NULL, pixel_receiver_thread, (void *)this);
-    pthread_create(&ager_tid, NULL, pixel_ager_thread, (void *)this);
+    if (rcvr_tid != NULL)
+      std::cerr << "threads are running at time of connection\n";
+    else
+    {
+      kill_threads = false;
+      pthread_create(&rcvr_tid, NULL, pixel_receiver_thread, (void *)this);
+      pthread_create(&ager_tid, NULL, pixel_ager_thread, (void *)this);
+    }
   }
-
-  std::stringstream ss;
-  ss << "window " << width << " " << height;
-  std::string s = ss.str();
-  getTheGxyConnectionMgr()->CSendRecv(s);
-
-  s = "render";
-  getTheGxyConnectionMgr()->CSendRecv(s);
-  std::cerr << "render reply: " << s << "\n";
+  else
+  {
+    if (rcvr_tid == NULL)
+      std::cerr << "threads are NOT running at time of disconnection\n";
+    else
+    {
+      kill_threads = true;
+      pthread_join(rcvr_tid, NULL);
+      pthread_join(ager_tid, NULL);
+      rcvr_tid = ager_tid = NULL;
+    }
+  }
 }
 
 void
@@ -103,6 +114,8 @@ GxyOpenGLWidget::paintGL()
 
   glClearColor(r, g, b, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  std::cerr << "paint\n";
 
   // sleep(1);
   // update();
@@ -148,6 +161,8 @@ GxyOpenGLWidget::resizeGL(int w, int h)
 void
 GxyOpenGLWidget::addPixels(gxy::Pixel *p, int n, int frame)
 {
+  std::cerr << "addPixels! " << width << " " << height << "\n";
+
   pthread_mutex_lock(&lock);
 
   long now = my_time();
@@ -156,7 +171,7 @@ GxyOpenGLWidget::addPixels(gxy::Pixel *p, int n, int frame)
   {
     //  If frame is strictly greater than current_frame then
     //  updating it will kick the ager to begin aging
-    //  any pixels from prior frames.   We want to start the 
+    //  any pixels from prior frames.   We want to start the
     //  aging process from the arrival of the first contribution
     //  to the new frame rather than its updated time.
 		
@@ -174,7 +189,7 @@ GxyOpenGLWidget::addPixels(gxy::Pixel *p, int n, int frame)
     {
       if (p->x < 0 || p->x >= width || p->y < 0 || p->y >= height)
       {
-        std::cerr << "pixel error: " << p->x << " " << p->y << "\n";
+        std::cerr << "pixel error: pixel is (" << p->x << "," << p->y << ") window is (" << width << "," << height << ")\n";
         exit(1);
       }
 
@@ -258,6 +273,8 @@ GxyOpenGLWidget::pixel_receiver_thread(void *d)
   GxyOpenGLWidget *oglWidget = (GxyOpenGLWidget *)d;
   GxyConnectionMgr *connection = getTheGxyConnectionMgr();
 
+  std::cerr << "pixel_receiver_thread running\n";
+
   while (! oglWidget->kill_threads)
   {
     if (connection->DWait(0.1))
@@ -280,6 +297,8 @@ GxyOpenGLWidget::pixel_receiver_thread(void *d)
       free(buf);
     }
   }
+
+  std::cerr << "pixel_receiver_thread stopping\n";
 
   pthread_exit(NULL);
 }
@@ -338,20 +357,36 @@ GxyOpenGLWidget::FrameBufferAger()
 
 GxyRenderWindow::GxyRenderWindow()
 {
+  resize(512, 512);
   setFocusPolicy(Qt::StrongFocus);
-  setFixedSize(512, 512);
-  GxyOpenGLWidget *m_glwidget = new GxyOpenGLWidget(this);
-  QGroupBox *w = new QGroupBox(this);
-  setCentralWidget(w);
-  QGridLayout *l = new QGridLayout(w);
-  l->addWidget(m_glwidget);
+
+  QWidget *w = new QWidget(this);
+  QVBoxLayout *l = new QVBoxLayout;
   w->setLayout(l);
+  
+  QScrollArea *sa = new QScrollArea(w);
+  l->addWidget(sa);
+  
+  oglWidget = new GxyOpenGLWidget(sa);
+  sa->setWidget(oglWidget);
+
+  std::cerr << "new GxyRenderWindow " << ((long)this) << " " << ((long)oglWidget) << "\n";
+
+  setCentralWidget(w);
+}
+
+GxyRenderWindow::~GxyRenderWindow()
+{
+  std::cerr << "GxyRenderWindow dtor: " << ((long)this) << " " << ((long)oglWidget) << "\n";
 }
 
 void
 GxyRenderWindow::onCameraChanged(Camera& c)
 {
   camera = c;
+  gxy::vec2i size = c.getSize();
+  std::cerr << "onCameraChanged " << size.x << " " << size.y << "\n";
+  oglWidget->resize(size.x, size.y);
 }
 
 
@@ -470,7 +505,7 @@ void
 GxyRenderWindow::mouseReleaseEvent(QMouseEvent *event) 
 {
   if (button == 0)
-  std::cerr << "u\n";
+  std::cerr << "up\n";
   button = -1;
   releaseMouse();
 }

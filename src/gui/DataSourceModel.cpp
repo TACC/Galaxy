@@ -1,4 +1,4 @@
-
+// ========================================================================== //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -58,6 +58,8 @@ DataSourceModel::DataSourceModel()
     onRefresh();
 
   connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+  connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onRefresh()));
+
 }
 
 unsigned int

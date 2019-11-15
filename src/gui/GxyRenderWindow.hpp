@@ -20,10 +20,10 @@ class GxyOpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions
   Q_OBJECT
 
 public:
-  GxyOpenGLWidget(GxyRenderWindow *mw);
+  GxyOpenGLWidget(QWidget *parent);
   ~GxyOpenGLWidget();
 
-  void render();
+  void manageThreads(bool);
   void addPixels(gxy::Pixel *p, int n, int frame);
   void Update() { update(); }
 
@@ -32,12 +32,16 @@ protected:
   void paintGL() override;
   void initializeGL() override;
 
+  void resizeEvent(QResizeEvent *e) override
+  {
+    std::cerr << "resize!\n";
+    QOpenGLWidget::resizeEvent(e);
+  }
+
 private:
   static void *pixel_receiver_thread(void *d);
   static void *pixel_ager_thread(void *d);
   void FrameBufferAger();
-
-  GxyRenderWindow *m_top;
 
   bool kill_threads;
   pthread_mutex_t lock;
@@ -63,9 +67,12 @@ class GxyRenderWindow : public QMainWindow
 
 public:
   GxyRenderWindow();
+  ~GxyRenderWindow();
 
-  void render() { if (oglWidget) oglWidget->render(); }
+  // void render() { if (oglWidget) oglWidget->render(); }
   void Update() { if (oglWidget) oglWidget->Update(); }
+
+  void manageThreads(bool b) { oglWidget->manageThreads(b); }
 
 protected:
 
