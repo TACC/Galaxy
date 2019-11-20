@@ -97,6 +97,7 @@ VolumeVisModel::onApply()
     output->di.data_min = data_range_min->text().toDouble();
     output->di.data_max = data_range_max->text().toDouble();
     output->transfer_function = tf_widget->text().toStdString();
+    output->volume_rendering_flag = volumeRender->isChecked();
 
     std::cerr << "output:\n";
     output->di.print();
