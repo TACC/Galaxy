@@ -180,9 +180,35 @@ DataClientServer::handle(std::string line, std::string& reply)
       else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
       else type = -1;
 
+      int ncomp;
+      if (type == 0)
+      {
+        gxy::VolumeP v = gxy::Volume::Cast(kdop);
+        ncomp = v->get_number_of_components();
+      }
+      else
+        ncomp = -1;
+
+      float m, M;
+      kdop->get_global_minmax(m, M);
+
+
       rapidjson::Value dset(rapidjson::kObjectType);
       dset.AddMember("name", rapidjson::Value().SetString(it->c_str(), it->length()+1), doc.GetAllocator());
       dset.AddMember("type", rapidjson::Value().SetInt(type), doc.GetAllocator());
+      dset.AddMember("ncomp", rapidjson::Value().SetInt(ncomp), doc.GetAllocator());
+      dset.AddMember("min", rapidjson::Value().SetDouble(m), doc.GetAllocator());
+      dset.AddMember("max", rapidjson::Value().SetDouble(M), doc.GetAllocator());
+
+      Box *box = kdop->get_global_box();
+      rapidjson::Value boxv(rapidjson::kArrayType);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), doc.GetAllocator());
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), doc.GetAllocator());
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), doc.GetAllocator());
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), doc.GetAllocator());
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), doc.GetAllocator());
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), doc.GetAllocator());
+      dset.AddMember("box", boxv, doc.GetAllocator());
 
       array.PushBack(dset, doc.GetAllocator());
     }
@@ -195,7 +221,7 @@ DataClientServer::handle(std::string line, std::string& reply)
 
     reply = reply + strbuf.GetString();
 
-    std::cerr << "returning " << reply << "\n";
+    std::cerr << "returning XX " << reply << "\n";
 
     return true;
   }

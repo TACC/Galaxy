@@ -98,6 +98,12 @@ MappedVis::LoadFromJSON(Value& v)
     {
         data_range = false;
     }
+
+  if (data_range)
+    std::cerr << "received data range: " << data_range_min <<  " " << data_range_max << "\n";
+  else
+    std::cerr << "did not receive data range\n";
+ 
            
 	if (v.HasMember("transfer function"))
 	{

@@ -21,6 +21,57 @@
 #pragma once
   
 #include <nodes/NodeDataModel>
+#include <QJsonArray>
+
+struct GxyDataInfo
+{
+  GxyDataInfo()
+  {
+    name = "none";
+    type = -1;
+    isVector = true;
+    data_min = data_max = 0;
+    box[0] = box[1] = box[2] = box[3] = box[4] = box[5] = 0;
+  }
+
+  virtual void save(QJsonObject& p) const
+  {
+    p["dataset"] = QString(name.c_str());
+    p["type"] = type;
+    p["isVector"] = isVector;
+    QJsonArray rangeJson = { data_min, data_max };
+    p["data range"] = rangeJson;
+
+    for (auto i = 0; i < 6; i++)
+      p["box"].toArray().push_back(box[i]);
+  }
+
+  virtual void restore(QJsonObject const &p)
+  {
+    name = p["dataset"].toString().toStdString();
+    type = p["type"].toInt();
+    isVector = p["isVector"].toBool();
+    data_min = p["data range"][0].toDouble();
+    data_max = p["data range"][1].toDouble();
+    for (auto i = 0; i < 6; i++)
+      box[i] = p["box"][i].toDouble();
+  }
+
+  void print()
+  {
+    std::cerr << "name: " << name << "\n";
+    std::cerr << "type: " << type << "\n";
+    std::cerr << "isVector: " << isVector << "\n";
+    std::cerr << "range: " << data_min << " " << data_max << "\n";
+    std::cerr << "box: " << box[0] << " " << box[1] << " " << box[2] << " " << box[3] << " " << box[4] << " " << box[5] << "\n";
+  }
+
+  std::string name;
+  int type;
+  bool isVector;
+  float data_min, data_max;
+  float box[6];
+};
 
 class GxyGuiObject : public QtNodes::NodeData
 {
@@ -50,29 +101,31 @@ private:
 class GxyData : public GxyGuiObject
 {
 public:
+  GxyData(GxyDataInfo& di) : di(di), GxyGuiObject() {}
   GxyData() : GxyGuiObject() {}
 
   GxyData(std::string o) : GxyGuiObject(o) {}
   
-  virtual void 
-  print()
+  void print() override
   {
     GxyGuiObject::print();
-    std::cerr << "dataName: " << dataName << "\n";
-    std::cerr << "dataType: " << dataType << "\n";
+    di.print();
+  }
+
+  QtNodes::NodeDataType type() const override
+  {
+    return QtNodes::NodeDataType {"gxygui", "GxyGui"};
   }
 
   virtual void save(QJsonObject& p) const
   {
-    p["dataset"] = QString(dataName.c_str());
+    di.save(p);
   }
 
   virtual void restore(QJsonObject const &p)
   {
-    dataName = p["dataset"].toString().toStdString();
+    di.restore(p);
   }
 
-
-  std::string dataName;
-  int dataType;
+  GxyDataInfo di;
 };

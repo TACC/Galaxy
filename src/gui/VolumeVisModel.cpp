@@ -39,6 +39,7 @@ VolumeVisModel::VolumeVisModel()
   layout->addWidget(openIsovalues);
 
   volumeRender = new QCheckBox("Volume render?");
+  connect(volumeRender, SIGNAL(stateChanged(int)), this, SLOT(volume_rendering_flag_state_changed(int)));
   volumeRender->setChecked(false);
   layout->addWidget(volumeRender);
 
@@ -46,7 +47,7 @@ VolumeVisModel::VolumeVisModel()
   QHBoxLayout *cmap_box_layout = new QHBoxLayout();
   cmap_box->setLayout(cmap_box_layout);
 
-  cmap_box_layout->addWidget(new QLabel("tfunc"));
+  cmap_box_layout->addWidget(new QLabel("color map"));
 
   tf_widget = new QLineEdit();
   cmap_box_layout->addWidget(tf_widget);
@@ -57,10 +58,35 @@ VolumeVisModel::VolumeVisModel()
 
   layout->addWidget(cmap_box);
 
+  QFrame *data_range_w = new QFrame;
+  QHBoxLayout *data_range_l = new QHBoxLayout();
+  data_range_l->setSpacing(0);
+  data_range_l->setContentsMargins(2, 0, 2, 0);
+  data_range_w->setLayout(data_range_l);
+
+  data_range_l->addWidget(new QLabel("data range"));
+  
+  data_range_min = new QLineEdit;
+  data_range_min->setText("0");
+  data_range_min->setValidator(new QDoubleValidator());
+  data_range_l->addWidget(data_range_min);
+  
+  data_range_max = new QLineEdit;
+  data_range_max->setText("0");
+  data_range_max->setValidator(new QDoubleValidator());
+  data_range_l->addWidget(data_range_max);
+
+  QPushButton *resetDataRange = new QPushButton("reset");
+  connect(resetDataRange, SIGNAL(released()), this, SLOT(onDataRangeReset()));
+  data_range_l->addWidget(resetDataRange);
+
+  layout->addWidget(data_range_w);
+
   _container->setCentralWidget(frame);
 
+  connect(data_range_max, SIGNAL(editingFinished()), this, SLOT(enableApply()));
+  connect(data_range_min, SIGNAL(editingFinished()), this, SLOT(enableApply()));
   connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
-  
 }
 
 void 
@@ -68,11 +94,13 @@ VolumeVisModel::onApply()
 {
   if (input)
   {
-    output->dataName = input->dataName;
-    output->dataType = input->dataType;
-    
-    //output->print();
+    output->di.data_min = data_range_min->text().toDouble();
+    output->di.data_max = data_range_max->text().toDouble();
+    output->transfer_function = tf_widget->text().toStdString();
 
+    std::cerr << "output:\n";
+    output->di.print();
+    
     Q_EMIT dataUpdated(0);
   }
 }
@@ -99,25 +127,26 @@ VolumeVisModel::outData(PortIndex)
 }
 
 void
-VolumeVisModel::
-setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
+VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
-  _container->getApplyButton()->setEnabled(input && input->dataName != "");
+  output->di = input->di;
 
-#if 0
-  std::cerr << "VolumeVisModel receives:\n";
-  if (input && input->dataName != "")
+  if (input)
   {
-    std::cerr << "VVM setInData... get = " << ((long)input.get()) << "\n";
-    input->print();
+    input->di.print();
+    input = std::dynamic_pointer_cast<GxyData>(data);
+    data_range_min->setText(QString::number(input->di.data_min));
+    data_range_max->setText(QString::number(input->di.data_max));
+    _container->getApplyButton()->setEnabled(input && input->di.name != "");
   }
-  else
-  {
-    std::cerr << "nothing\n";
-  }
-#endif
+}
 
+void 
+VolumeVisModel::onDataRangeReset()
+{
+  data_range_min->setText(QString::number(input->di.data_min));
+  data_range_max->setText(QString::number(input->di.data_max));
 }
 
 NodeValidationState

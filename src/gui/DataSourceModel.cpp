@@ -35,8 +35,8 @@ DataSourceModel::DataSourceModel()
   outer_layout->setSpacing(0);
   outer_layout->setContentsMargins(2, 0, 2, 0);
 
-  objectList = new QListWidget();
-  connect(objectList, SIGNAL(itemPressed(QListWidgetItem *)), this, SLOT(selection(QListWidgetItem *)));
+  objectList = new MyQListWidget;
+  connect(objectList, SIGNAL(itemClicked(QListWidgetItem *)), this, SLOT(selection(QListWidgetItem *)));
   outer_layout->addWidget(objectList);
 
   frame->setLayout(outer_layout);
@@ -46,6 +46,11 @@ DataSourceModel::DataSourceModel()
   QPushButton *add = new QPushButton("Add");
   connect(add, SIGNAL(released()), this, SLOT(onAdd()));
   _container->addButton(add);
+
+  info = new QPushButton("Info");
+  info->setEnabled(false);
+  connect(info, SIGNAL(released()), objectList, SLOT(showDialog()));
+  _container->addButton(info);
 
   QPushButton *refresh = new QPushButton("Refresh");
   connect(refresh, SIGNAL(released()), this, SLOT(onRefresh()));

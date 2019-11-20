@@ -102,7 +102,7 @@ public:
       slices.push_back(slice);
     }
 
-    volume_rendering_flag = p["volume rendering"].toInt();
+    volume_rendering_flag = p["volume rendering"].toInt() == 1;
     transfer_function = p["transfer function"].toString().toStdString();
   }
 };

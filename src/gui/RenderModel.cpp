@@ -103,14 +103,14 @@ RenderModel::
 setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyVis>(data);
-  visList[input->get_origin()] = input;
+  if (input) visList[input->get_origin()] = input;
   _container->getApplyButton()->setEnabled(visList.size() > 0);
 
-#if 0
   std::cerr << "RenderModel " << getModelIdentifier() << " receives:\n";
   if (input) input->print();
   else std::cerr << "nothing\n";
 
+#if 0
   if (data)
   {
     for (auto vis : visList)
@@ -176,7 +176,6 @@ RenderModel::timeout()
 {
   if (update_rate_msec > 0)
   {
-    std::cerr << "timeout\n";
     renderWindow.Update();
     timer->start();
   }
@@ -191,6 +190,7 @@ RenderModel::sendCamera()
   QByteArray bytes = doc.toJson(QJsonDocument::Compact);
   QString qs = QLatin1String(bytes);
   std::string msg = std::string("json ") + qs.toStdString();
+  std::cerr << "Camera: " << msg << "\n";
   getTheGxyConnectionMgr()->CSendRecv(msg);
 
   gxy::vec2i window_size = camera.getSize();
@@ -224,6 +224,7 @@ RenderModel::sendVisualization()
   QString s = QLatin1String(bytes);
 
   std::string msg = std::string("json ") + s.toStdString();
+  std::cerr << "Visualization: " << msg << "\n";
   getTheGxyConnectionMgr()->CSendRecv(msg);
 }
 

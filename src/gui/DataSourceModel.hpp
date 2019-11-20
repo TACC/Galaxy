@@ -35,7 +35,11 @@
 #include <QtWidgets/QRadioButton>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QMessageBox>
 
 #include <nodes/NodeDataModel>
 
@@ -55,6 +59,90 @@ using QtNodes::NodeValidationState;
 #include "GxyConnectionMgr.hpp"
 #include "GxyModel.hpp"
 #include "GxyData.hpp"
+#include <iostream>
+
+class MyQListWidgetItem : public QListWidgetItem
+{
+public:
+  MyQListWidgetItem(GxyDataInfo& di)  : QListWidgetItem(di.name.c_str()), di(di)
+  {
+    dlg = new QDialog;
+    dlg->setFixedWidth(300);
+    dlg->setModal(true);
+    QGridLayout *gl = new QGridLayout;
+    gl->setContentsMargins(0, 0, 0, 0);
+    gl->setSpacing(0);
+    dlg->setLayout(gl);
+
+    gl->addWidget(new QLabel("name"), 0, 0);
+    gl->addWidget(new QLabel(di.name.c_str()), 0, 1);
+
+    gl->addWidget(new QLabel("type"), 1, 0);
+    gl->addWidget(new QLabel(di.type == 0 ? "Volume" : di.type == 1 ? "Mesh" : "Particles"), 1, 1);
+
+    gl->addWidget(new QLabel("vector?"), 2, 0);
+    gl->addWidget(new QLabel(di.type != 0 ? "n/a" : di.isVector ? "yes" : "no"), 2, 1);
+    
+    gl->addWidget(new QLabel("data range"), 3, 0);
+    gl->addWidget(new QLabel(QString::number(di.data_max, 'g', 4)), 3, 1);
+    gl->addWidget(new QLabel(QString::number(di.data_min, 'g', 4)), 3, 2);
+
+    gl->addWidget(new QLabel("X span"), 4, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[0], 'g', 4)), 4, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[1], 'g', 4)), 4, 2);
+
+    gl->addWidget(new QLabel("Y span"), 5, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[2], 'g', 4)), 5, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[3], 'g', 4)), 5, 2);
+
+    gl->addWidget(new QLabel("Z span"), 6, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[4], 'g', 4)), 6, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[5], 'g', 4)), 6, 2);
+
+    QPushButton *done = new QPushButton("done");
+    dlg->connect(done, SIGNAL(released()), dlg, SLOT(accept()));
+    gl->addWidget(done, 7, 0);
+  }
+
+  ~MyQListWidgetItem()
+  {
+    delete dlg;
+  }
+
+  void showDialog() { dlg->show(); }
+  void getDataInfo(GxyDataInfo& _di) { _di = di; }
+  GxyDataInfo getDataInfo() { return di; }
+
+private:
+  QDialog *dlg = NULL;
+  GxyDataInfo di;
+};
+
+class MyQListWidget : public QListWidget
+{
+  Q_OBJECT
+
+public: 
+  MyQListWidget() : QListWidget()
+  {
+  }
+
+public Q_SLOTS:
+
+  void showDialog() 
+  {
+    if (selectedItems().length() > 0)
+    {
+      ((MyQListWidgetItem *)currentItem())->showDialog();
+    }
+    else
+    {
+      QMessageBox m;
+      m.setText("no item selected!\n");
+      m.exec();
+    }
+  }
+};
 
 class LoadDataDialog : public QDialog
 {
@@ -227,15 +315,15 @@ private Q_SLOTS:
 
   void selection(QListWidgetItem *item)
   {
-    current_selection = item->text().toStdString();
+    info->setEnabled(true);
+    current_selection = (MyQListWidgetItem *)item;
     _container->getApplyButton()->setEnabled(true);
     onApply();
   }
 
   void onApply()
   {
-    output->dataName = current_selection;
-    output->dataType = dataTypeByName[current_selection];
+    output->di = current_selection->getDataInfo();
     Q_EMIT dataUpdated(0);
   }
 
@@ -305,6 +393,7 @@ private Q_SLOTS:
 
   void onRefresh()
   {
+    info->setEnabled(false);
     objectList->clear();
 
     GxyConnectionMgr *gxyMgr = getTheGxyConnectionMgr();
@@ -344,17 +433,25 @@ private Q_SLOTS:
         for (auto i = 0; i < array.Size(); i++)
         {
           rapidjson::Value& dset = array[i];
-          new QListWidgetItem(tr(dset["name"].GetString()), objectList);
-          dataTypeByName[dset["name"].GetString()] = dset["type"].GetInt();
+          GxyDataInfo datainfo;
+          datainfo.name = dset["name"].GetString();
+          datainfo.type = dset["type"].GetInt();
+          datainfo.isVector = dset["isVector"].GetBool();
+          datainfo.data_min = dset["min"].GetDouble();
+          datainfo.data_max = dset["max"].GetDouble();
+          for (auto i = 0; i < 6; i++)
+            datainfo.box[i] = dset["box"][i].GetDouble();
+
+          MyQListWidgetItem *mlwi = new MyQListWidgetItem(datainfo);
+          objectList->addItem(mlwi);
         }
       }
     }
   }
 
 private:
-  QListWidget *objectList;
-  std::map<std::string, int>  dataTypeByName;
-  std::string current_selection;
-
+  MyQListWidget *objectList;
+  MyQListWidgetItem *current_selection;
+  QPushButton *info;
   std::shared_ptr<GxyData> output;
 };

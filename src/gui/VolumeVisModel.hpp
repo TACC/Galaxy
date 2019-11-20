@@ -1,4 +1,3 @@
-// ========================================================================== //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -33,6 +32,8 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFileDialog>
+
+#include <QtGui/QDoubleValidator>
 
 #include "GxyModel.hpp"
 
@@ -85,9 +86,27 @@ private Q_SLOTS:
 
   void onApply();
 
+  void disableApply()
+  {
+     _container->getApplyButton()->setEnabled(false);
+  }
+    
+  void enableApply()
+  {
+     _container->getApplyButton()->setEnabled(true);
+  }
+    
+  void onDataRangeReset();
+
   void transfer_function_set()
   {
     output->transfer_function = tf_widget->text().toStdString();
+  }
+
+  void volume_rendering_flag_state_changed(int s)
+  {
+    std::cerr << "checked: " << s << "\n";
+    output->volume_rendering_flag = s != 0;
   }
 
   void openPlanesDialog() 
@@ -121,6 +140,9 @@ private:
   std::shared_ptr<VolumeVis> output;
   std::shared_ptr<GxyData> input;
 
-  QLineEdit *tf_widget;
-  QCheckBox *volumeRender;
+  QLineEdit *tf_widget = NULL;
+  QCheckBox *volumeRender = NULL;
+
+  QLineEdit *data_range_min = NULL;
+  QLineEdit *data_range_max = NULL;
 };

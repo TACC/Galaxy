@@ -33,7 +33,6 @@ GxyOpenGLWidget::GxyOpenGLWidget(QWidget *parent) : QOpenGLWidget(parent)
 
 GxyOpenGLWidget::~GxyOpenGLWidget()
 {
-  std::cerr << "GxyOpenGLWidget dtor: " << ((long)this) << "\n";
   if (rcvr_tid)
   {
     kill_threads = true;
@@ -102,23 +101,13 @@ GxyOpenGLWidget::initializeGL()
   glOrtho(-1, 1, -1, 1, -1, 1);
   glMatrixMode(GL_MODELVIEW);
   glRasterPos2i(-1, -1);
+
 }
 
 void
 GxyOpenGLWidget::paintGL()
 {
-  float r = xx & 0x1 ? 1.0 : 0.5;
-  float g = xx & 0x2 ? 1.0 : 0.5;
-  float b = xx & 0x4 ? 1.0 : 0.5;
-  xx ++;
-
-  glClearColor(r, g, b, 1.0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  std::cerr << "paint\n";
-
-  // sleep(1);
-  // update();
+  glDrawPixels(width, height, GL_RGBA, GL_FLOAT, pixels);
 }
 
 void
@@ -161,8 +150,6 @@ GxyOpenGLWidget::resizeGL(int w, int h)
 void
 GxyOpenGLWidget::addPixels(gxy::Pixel *p, int n, int frame)
 {
-  std::cerr << "addPixels! " << width << " " << height << "\n";
-
   pthread_mutex_lock(&lock);
 
   long now = my_time();
@@ -370,14 +357,11 @@ GxyRenderWindow::GxyRenderWindow()
   oglWidget = new GxyOpenGLWidget(sa);
   sa->setWidget(oglWidget);
 
-  std::cerr << "new GxyRenderWindow " << ((long)this) << " " << ((long)oglWidget) << "\n";
-
   setCentralWidget(w);
 }
 
 GxyRenderWindow::~GxyRenderWindow()
 {
-  std::cerr << "GxyRenderWindow dtor: " << ((long)this) << " " << ((long)oglWidget) << "\n";
 }
 
 void
@@ -385,7 +369,6 @@ GxyRenderWindow::onCameraChanged(Camera& c)
 {
   camera = c;
   gxy::vec2i size = c.getSize();
-  std::cerr << "onCameraChanged " << size.x << " " << size.y << "\n";
   oglWidget->resize(size.x, size.y);
 }
 
@@ -475,6 +458,7 @@ void
 GxyRenderWindow::mouseMoveEvent(QMouseEvent *event) 
 {
   std::cerr << "m " << event->x() << " " << event->y() << "\n";
+
 #if 0
   x1 = -1.0 + 2.0*(float(event->x())/width);
   y1 = -1.0 + 2.0*(float(event->y())/height);
