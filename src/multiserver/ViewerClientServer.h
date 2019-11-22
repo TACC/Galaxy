@@ -72,10 +72,10 @@ public:
   void Commit()
   {
     renderer->Commit();
-    visualization->Commit(datasets);
-    camera->Commit();
-    rendering->Commit();
-    renderingSet->Commit();
+    // visualization->Commit(datasets);
+    // camera->Commit();
+    // rendering->Commit();
+    // renderingSet->Commit();
   }
 
   DatasetsP        GetTheDatasets() { return datasets; }
@@ -96,8 +96,7 @@ public:
       first = false;
     }
 
-    camera->Commit();
-
+    // camera->Commit();
     renderer->Start(renderingSet);
   }
 

@@ -27,6 +27,11 @@ RenderModel::RenderModel()
 {
   RenderModel::init();
 
+  timer = new QTimer(this);
+  timer->setSingleShot(true);
+  timer->setInterval(update_rate_msec);
+  connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
+
   QFrame *frame  = new QFrame();
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setSpacing(0);
@@ -53,18 +58,13 @@ RenderModel::RenderModel()
   layout->addWidget(update_widget);
   connect(update_rate, SIGNAL(editingFinished()), this, SLOT(setUpdateRate()));
 
-  timer = new QTimer(this);
-  timer->setSingleShot(true);
-  timer->setInterval(update_rate_msec);
-  connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
-
   _container->setCentralWidget(frame);
 
-  connect(this, SIGNAL(cameraChanged(Camera&)), &renderWindow, SLOT(onCameraChanged(Camera&)));
-  renderWindow.show();
+  renderWindow = new GxyRenderWindow(getModelIdentifier());
+  renderWindow->show();
 
   QPushButton *open = new QPushButton("Open");
-  connect(open, SIGNAL(released()), &renderWindow, SLOT(show()));
+  connect(open, SIGNAL(released()), renderWindow, SLOT(show()));
   _container->addButton(open);
 
   connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
@@ -72,9 +72,25 @@ RenderModel::RenderModel()
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onConnectionStateChanged(bool)));
 
   if (getTheGxyConnectionMgr()->IsConnected())
-    renderWindow.manageThreads(true);
+    renderWindow->manageThreads(true);
 
-  Q_EMIT(cameraChanged(camera));
+  connect(renderWindow, SIGNAL(characterStrike(char)), this, SLOT(characterStruck(char)));
+  connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(initializeWindow(bool)));
+
+  initializeWindow(getTheGxyConnectionMgr()->IsConnected());
+}
+
+RenderModel::~RenderModel()
+{
+  if (renderWindow) delete renderWindow;
+}
+
+void
+RenderModel::characterStruck(char c)
+{
+  std::cerr << "RenderModel: character struck " << c << "\n";
+  if (c == 'V')
+    sendVisualization();
 }
 
 unsigned int
@@ -93,14 +109,10 @@ RenderModel::dataType(PortType pt, PortIndex pi) const
 }
 
 std::shared_ptr<NodeData>
-RenderModel::outData(PortIndex)
-{
-  return NULL;
-}
+RenderModel::outData(PortIndex) { return NULL; } 
 
 void
-RenderModel::
-setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
+RenderModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyVis>(data);
   if (input) visList[input->get_origin()] = input;
@@ -176,28 +188,9 @@ RenderModel::timeout()
 {
   if (update_rate_msec > 0)
   {
-    renderWindow.Update();
+    renderWindow->Update();
     timer->start();
   }
-}
-
-void
-RenderModel::sendCamera()
-{
-  QJsonObject cameraJson;
-  cameraJson["Camera"] = camera.save();
-  QJsonDocument doc(cameraJson);
-  QByteArray bytes = doc.toJson(QJsonDocument::Compact);
-  QString qs = QLatin1String(bytes);
-  std::string msg = std::string("json ") + qs.toStdString();
-  std::cerr << "Camera: " << msg << "\n";
-  getTheGxyConnectionMgr()->CSendRecv(msg);
-
-  gxy::vec2i window_size = camera.getSize();
-  std::stringstream ss;
-  ss << "window " << window_size.x << " " << window_size.y;
-  std::string s = ss.str();
-  getTheGxyConnectionMgr()->CSendRecv(s);
 }
 
 void
@@ -219,20 +212,34 @@ RenderModel::sendVisualization()
 
   visualizationJson["Visualization"] = v;
 
+  visualizationJson["cmd"] = "gui::visualization";
+  visualizationJson["id"] = getModelIdentifier().c_str();
+
   QJsonDocument doc(visualizationJson);
   QByteArray bytes = doc.toJson(QJsonDocument::Compact);
   QString s = QLatin1String(bytes);
 
-  std::string msg = std::string("json ") + s.toStdString();
+  std::string msg = s.toStdString();
   std::cerr << "Visualization: " << msg << "\n";
   getTheGxyConnectionMgr()->CSendRecv(msg);
+  std::cerr << msg << "\n";
 }
 
 void
-RenderModel::render()
+RenderModel::initializeWindow(bool isConnected)
 {
-  std::string s("render");
-  getTheGxyConnectionMgr()->CSendRecv(s);
-  std::cerr << "render reply: " << s << "\n";
-}
+  if (isConnected)
+  {
+    QJsonObject initJson;
+    initJson["cmd"] = "gui::initWindow";
+    initJson["id"] = getModelIdentifier().c_str();
 
+    QJsonDocument doc(initJson);
+    QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+    QString qs = QLatin1String(bytes);
+
+    std::string msg = qs.toStdString();
+    std::cerr << "init: " << msg << "\n";
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+  }
+}

@@ -131,10 +131,10 @@ void
 VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
-  output->di = input->di;
 
   if (input)
   {
+    output->di = input->di;
     input->di.print();
     input = std::dynamic_pointer_cast<GxyData>(data);
     data_range_min->setText(QString::number(input->di.data_min));

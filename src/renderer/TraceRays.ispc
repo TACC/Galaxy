@@ -99,6 +99,8 @@ LookForGeometryHit(varying bool shadeFlag,
                    uniform Visualization_ispc *uniform vis,
                    varying Hit &hit)
 {
+  return false;
+
   traceRay(model, ray);
 
   if(ray.geomID < 0)
@@ -286,6 +288,11 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform bool integrate = false;
   uniform float step, epsilon;
   uniform Camera *uniform c;
+
+  if (vis)
+    print("% ", vis->nVolumeVis);
+  else
+    print("VIS IS NULL!\n");
 
   step = -1;
   for (uniform int major = 0; major < vis->nVolumeVis; major++)

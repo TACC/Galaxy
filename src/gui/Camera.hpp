@@ -41,6 +41,15 @@ public:
     aov = 30.0;
     size = {512, 512};
   }
+
+  void print()
+  {
+    std::cerr << "point: " << point.x << " " << point.y << " " << point.z << "\n";
+    std::cerr << "direction: " << direction.x << " " << direction.y << " " << direction.z << "\n";
+    std::cerr << "up: " << up.x << " " << up.y << " " << up.z << "\n";
+    std::cerr << "aov: " << aov << "\n";
+    std::cerr << "size: " << size.x << " " << size.y << "\n";
+  }
   
   Camera(gxy::vec3f p, gxy::vec3f d, gxy::vec3f u, float a, gxy::vec2i s)
   {

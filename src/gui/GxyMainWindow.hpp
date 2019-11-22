@@ -113,7 +113,7 @@ public:
     QObject::connect(deleteAction, &QAction::triggered, flowView, &FlowView::deleteSelectedNodes);
 
     setWindowTitle("Galaxy");
-    resize(800, 600);
+    resize(1200, 900);
     showNormal();
   }
 

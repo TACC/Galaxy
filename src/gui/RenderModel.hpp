@@ -68,14 +68,14 @@ public:
     if (first)
     {
       first = false;
-      getTheGxyConnectionMgr()->addModule("libgxy_module_viewer.so");
+      getTheGxyConnectionMgr()->addModule("libgxy_module_gui.so");
     }
   }
 
   RenderModel();
 
   virtual
-  ~RenderModel() {}
+  ~RenderModel();
 
   unsigned int nPorts(PortType portType) const override;
 
@@ -96,17 +96,19 @@ public:
   QJsonObject save() const override;
   void restore(QJsonObject const &p) override;
 
-  void sendCamera();
   void sendVisualization();
-  void render();
 
 signals:
 
   void visUpdated(std::shared_ptr<GxyVis>);
-  void cameraChanged(Camera&);
   void lightingChanged(LightingEnvironment&);
+  void cameraChanged(Camera&);
 
 private Q_SLOTS:
+
+  void initializeWindow(bool);
+
+  void characterStruck(char c);
 
   void inputConnectionDeleted(QtNodes::Connection const& c) override
   {
@@ -123,7 +125,7 @@ private Q_SLOTS:
     cameraDialog->get_camera(camera);
 
     if (getTheGxyConnectionMgr()->IsConnected())
-      sendCamera();
+      renderWindow->setCamera(camera);
 
     delete cameraDialog;
     Q_EMIT cameraChanged(camera);
@@ -148,23 +150,26 @@ private Q_SLOTS:
 
   void onApply()
   {
+    std::cerr << "onApply\n";
     if (getTheGxyConnectionMgr()->IsConnected())
     {
-      Q_EMIT(cameraChanged(camera));
-      sendCamera();
       sendVisualization();
-      render();
+      renderWindow->setCamera(camera);
+      renderWindow->render();
+      Q_EMIT cameraChanged(camera);
     }
+    else
+      std::cerr << "not connected\n";
   }
 
   void onConnectionStateChanged(bool state)
   {
-    renderWindow.manageThreads(state);
+    renderWindow->manageThreads(state);
 
     if (state)
     {
       Q_EMIT(cameraChanged(camera));
-      sendCamera();
+      renderWindow->setCamera(camera);
       sendVisualization();
     }
   }
@@ -180,8 +185,8 @@ private:
   std::shared_ptr<GxyVis> input;
   std::map<std::string, std::shared_ptr<GxyVis>> visList;
 
-  GxyRenderWindow renderWindow;
+  GxyRenderWindow *renderWindow = NULL;
   QLineEdit *update_rate;
   QTimer *timer;
-  float update_rate_msec = 0;
+  float update_rate_msec = 100;
 };

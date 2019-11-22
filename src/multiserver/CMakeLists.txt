@@ -61,6 +61,10 @@ add_library(gxy_module_viewer MODULE ViewerClientServer.cpp ServerRendering.cpp 
 target_link_libraries(gxy_module_viewer gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
 set(SERVERS gxy_module_viewer ${SERVERS})
 
+add_library(gxy_module_gui MODULE GuiClientServer.cpp ServerRendering.cpp JsonInterface.cpp)
+target_link_libraries(gxy_module_gui gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
+set(SERVERS gxy_module_gui ${SERVERS})
+
 add_library(gxy_module_data MODULE DataClientServer.cpp)
 target_link_libraries(gxy_module_data gxy_multiserver gxy_framework)
 set(SERVERS gxy_module_data ${SERVERS})

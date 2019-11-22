@@ -286,7 +286,7 @@ public:
     if (first)
     {
       first = false;
-      getTheGxyConnectionMgr()->addModule("libgxy_module_data.so");
+      // getTheGxyConnectionMgr()->addModule("libgxy_module_data.so");
     }
   }
 
@@ -348,6 +348,8 @@ private Q_SLOTS:
       doc.SetObject();
 
       rapidjson::Value dsets(rapidjson::kObjectType);
+      std::string cmd("gui::import");
+      dsets.AddMember("cmd", rapidjson::Value().SetString(cmd.c_str(), cmd.length()+1), doc.GetAllocator());
 
       std::string dataName = dlg->getDataName().c_str();
       std::string fileName = dlg->getFileName().c_str();
@@ -405,7 +407,16 @@ private Q_SLOTS:
     }
     else
     {
-      std::string line("listWithInfo");
+      rapidjson::Document doc;
+      doc.SetObject();
+
+      std::string cmd("gui::list");
+      doc.AddMember("cmd", rapidjson::Value().SetString(cmd.c_str(), cmd.length()+1), doc.GetAllocator());
+      rapidjson::StringBuffer strbuf;
+      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+      doc.Accept(writer);
+
+      std::string line = strbuf.GetString();
       gxyMgr->CSendRecv(line);
 
       std::stringstream ss(line);

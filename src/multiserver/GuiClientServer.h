@@ -18,56 +18,65 @@
 //                                                                            //
 // ========================================================================== //
 
+#pragma once
+
+#include <iostream>
+#include <vector>
+#include <sstream>
+
+#include "Renderer.h"
+#include "MultiServerHandler.h"
 #include "ServerRendering.h"
-#include <pthread.h>
 
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(ServerRendering)
-
-void
-ServerRendering::initialize()
+class GuiClientServer : public MultiServerHandler
 {
-  Rendering::initialize();
-  pthread_mutex_init(&lock, NULL);
-	max_frame = -1;
-  handler = NULL;
-  owner = 0;
-}
-
-ServerRendering::~ServerRendering()
-{
-  handler = NULL;
-  pthread_mutex_destroy(&lock);
-}
-
-void
-ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
-{
-  pthread_mutex_lock(&lock);
-
-  if (f >= max_frame)
-	{
-		max_frame = f;
-
-		char* ptrs[] = {(char *)&n, (char *)&f, (char *)&s, (char *)p};
-		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
-
-    if (handler)
+  struct GuiClient
+  {
+    GuiClient()
     {
-      std::cerr << "and sending them!\n";
-      handler->getTheSocketHandler()->DSendV(ptrs, szs);
+      visualization = Visualization::NewP();
+      camera = Camera::NewP();
+      rendering = ServerRendering::NewP();
+      renderingSet = RenderingSet::NewP();
+      renderingSet->AddRendering(rendering);
     }
-    else
-      std::cerr << "no handler\n";
 
-    // std::cerr << "after... n = " << n << " f = " << f << "\n";
-	}
-  else
-    std::cerr << "skipped due to frame number\n";
+    VisualizationP   visualization;
+    CameraP          camera;
+    ServerRenderingP rendering;
+    RenderingSetP    renderingSet;
+  };
+    
+  
+public:
+  static void init();
+  bool handle(std::string line, std::string& reply);
+  virtual ~GuiClientServer(){}
 
-  pthread_mutex_unlock(&lock);
+  GuiClientServer(SocketHandler *sh) : MultiServerHandler(sh)
+  {
+    first = true;
+
+    datasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+    if (! datasets)
+    {
+      datasets = Datasets::NewP();
+      MultiServer::Get()->SetGlobal("global datasets", datasets);
+    }
+
+    renderer = Renderer::NewP();
+    renderer->Commit();
+  }
+
+private:
+  bool        first;
+  RendererP   renderer;
+  DatasetsP   datasets;
+
+  std::map<std::string, GuiClient *> clients;
+};
+
 }
-
-} // namespace gxy

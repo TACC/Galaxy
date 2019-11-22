@@ -227,8 +227,24 @@ ViewerClientServer::handle(string line, string& reply)
   }
   else if (cmd == "render")
   {
-    Commit();
+    // Commit();
     render();
+    reply = "ok";
+    return true;
+  }
+  else if (cmd == "renderMany")
+  {
+    // Commit();
+    int n;
+    ss >> n;
+    for (auto i = 0; i < n; i++)
+    {
+      render();
+      struct timespec t;
+      t.tv_sec  = 0;
+      t.tv_nsec = 100000000;
+      nanosleep(&t, NULL);
+    }
     reply = "ok";
     return true;
   }

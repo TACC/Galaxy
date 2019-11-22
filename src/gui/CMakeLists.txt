@@ -29,7 +29,15 @@ SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH} ${NodeEditor_DIR}/../..)
 file(GLOB_RECURSE CPPS  ./*.cpp )
 file(GLOB_RECURSE HEADERS_TO_MOC ./*.hpp)
 
-include_directories(/opt/x11/include ${gxy_data_SOURCE_DIR} ${gxy_multiserver_SOURCE_DIR} ${gxy_renderer_SOURCE_DIR})
+include_directories(/opt/x11/include
+                    ${gxy_data_SOURCE_DIR}
+                    ${gxy_multiserver_SOURCE_DIR}
+                    ${gxy_renderer_SOURCE_DIR}
+                    ${gxy_framework_SOURCE_DIR}
+                    ${gxy_ospray_SOURCE_DIR}
+                    ${Galaxy_BINARY_DIR}/src
+                    ${OSPRAY_INCLUDE_DIRS}
+                    ${EMBREE_INCLUDE_DIRS})
 
 qt5_wrap_cpp(mocs ${HEADERS_TO_MOC} TARGET galaxygui OPTIONS --no-notes)
 

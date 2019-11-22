@@ -260,7 +260,7 @@ GxyOpenGLWidget::pixel_receiver_thread(void *d)
   GxyOpenGLWidget *oglWidget = (GxyOpenGLWidget *)d;
   GxyConnectionMgr *connection = getTheGxyConnectionMgr();
 
-  std::cerr << "pixel_receiver_thread running\n";
+  std::cerr << "YYYYYYYYYYYYYYYYYYYYY pixel_receiver_thread running\n";
 
   while (! oglWidget->kill_threads)
   {
@@ -313,6 +313,10 @@ GxyOpenGLWidget::FrameBufferAger()
     pthread_mutex_lock(&lock);
 
     long now = my_time();
+    int n = (height/2)*width + (width/2);
+
+    // std::cerr << "fid: " << frameids[n] << " ft: " << frame_times[n] << " max age: " << max_age << "\n";
+    // std::cerr << "ZZZZZZZZZZZZZZZZZZZZ Ager thread\n";
 
     for (int offset = 0; offset < width*height; offset++)
     {
@@ -342,8 +346,10 @@ GxyOpenGLWidget::FrameBufferAger()
 }
 
 
-GxyRenderWindow::GxyRenderWindow()
+GxyRenderWindow::GxyRenderWindow(std::string rid)
 {
+  renderer_id = rid;
+
   resize(512, 512);
   setFocusPolicy(Qt::StrongFocus);
 
@@ -365,11 +371,24 @@ GxyRenderWindow::~GxyRenderWindow()
 }
 
 void
-GxyRenderWindow::onCameraChanged(Camera& c)
+GxyRenderWindow::setCamera(Camera&c)
 {
-  camera = c;
+  camera = c; 
+  std::cerr << "setCamera: ";
+  camera.print();
+
+  trackball.reset();
+
+  current_direction = camera.getDirection();
+  current_up = camera.getUp();
+
+  gxy::vec3f point = camera.getPoint();
+  current_center = point + current_direction;
+
   gxy::vec2i size = c.getSize();
   oglWidget->resize(size.x, size.y);
+
+  sendCamera();
 }
 
 
@@ -394,6 +413,27 @@ GxyRenderWindow::onVisUpdate(std::shared_ptr<GxyVis> v)
 }
 
 void
+GxyRenderWindow::render()
+{
+  std::cerr << "render!\n";
+
+  if (getTheGxyConnectionMgr()->IsConnected())
+  {
+    QJsonObject renderJson;
+    renderJson["cmd"] = "gui::render";
+    renderJson["id"] = renderer_id.c_str();
+
+    QJsonDocument doc(renderJson);
+    QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+    QString qs = QLatin1String(bytes);
+
+    std::string msg = qs.toStdString();
+    std::cerr << "Render: " << msg << "\n";
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+  }
+}
+
+void
 GxyRenderWindow::onVisRemoved(std::string id)
 {
   Visualization.erase(id);
@@ -402,11 +442,15 @@ GxyRenderWindow::onVisRemoved(std::string id)
 std::string
 GxyRenderWindow::cameraString()
 {
+  std::cerr << "cameraString: entry"; camera.print();
+
   QJsonObject cameraJson;
   cameraJson["Camera"] = camera.save();
   QJsonDocument doc(cameraJson);
   QByteArray bytes = doc.toJson(QJsonDocument::Compact);
   QString s = QLatin1String(bytes);
+
+  std::cerr << " returning " << s.toStdString() << "\n";
   return s.toStdString();
 }
 
@@ -448,41 +492,41 @@ GxyRenderWindow::mousePressEvent(QMouseEvent *event)
     default: button = 3;
   }
 
-#if 0
   x0 = x1 = -1.0 + 2.0*(float(event->x())/width);
   y0 = y1 = -1.0 + 2.0*(float(event->y())/height);
-#endif
 }
 
 void
 GxyRenderWindow::mouseMoveEvent(QMouseEvent *event) 
 {
   std::cerr << "m " << event->x() << " " << event->y() << "\n";
-
-#if 0
+  
   x1 = -1.0 + 2.0*(float(event->x())/width);
   y1 = -1.0 + 2.0*(float(event->y())/height);
-
+  
   if (button == 0)
-  {
+  { 
     trackball.spin(x0, y0, x1, y1);
-
-    frame_direction = trackball.rotate_vector(current_direction);
-    frame_up = trackball.rotate_vector(current_up);
-    frame_center = current_center;
+    
+    gxy::vec3f direction = trackball.rotate_vector(current_direction);
+    gxy::vec3f up = trackball.rotate_vector(current_up);
+    gxy::vec3f point = current_center - direction;
+    
+    camera.setPoint(point);
+    camera.setDirection(direction);
+    camera.setUp(up);
+    sendCamera();
+    render();
+    // sleep(2);
   }
   else if (button == 1)
-  {
-    frame_direction = current_direction;
-    frame_up = current_up;
-
-    gxy::vec3f step = current_direction;
-    gxy::scale((y1 - y0), step);
-    frame_center = current_center = current_center + step;
+  { 
+    //frame_direction = current_direction;
+    //frame_up = current_up;
+    //gxy::vec3f step = current_direction;
+    //gxy::scale((y1 - y0), step);
+    //frame_center = current_center = current_center + step;
   }
-  
-  paintGL();
-#endif
 }
 
 void
@@ -499,5 +543,58 @@ GxyRenderWindow::keyPressEvent(QKeyEvent *event)
 {
   std::string key = event->text().toStdString();
   std::cerr << key << "\n";
+  if (key == "r")
+    render();
+  else if (key == "R")
+  {
+    std::stringstream ss;
+    ss << "renderMany 10";
+    std::string msg = ss.str();
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+  }
+  else if (key == "R")
+  {
+    std::string msg("renderMany 10");
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+    std::cerr << "got reply: " << msg << "\n";
+  }
+  else if (key == "C")
+  {
+    for (int i = 0; i < 10; i++)
+    {
+      sendCamera();
+      std::string msg("render");
+      getTheGxyConnectionMgr()->CSendRecv(msg);
+      std::cerr << "got reply: " << msg << "\n";
+    }
+  }
+  else
+  {
+    Q_EMIT characterStrike(key.c_str()[0]);
+  }
 }
+    
+void
+GxyRenderWindow::sendCamera()
+{
+  if (getTheGxyConnectionMgr()->IsConnected())
+  {
+    setSize(camera);
+
+    QJsonObject cameraJson;
+    cameraJson["Camera"] = camera.save();
+
+    cameraJson["cmd"] = "gui::camera";
+    cameraJson["id"] = renderer_id.c_str();
+
+    QJsonDocument doc(cameraJson);
+    QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+    QString qs = QLatin1String(bytes);
+
+    std::string msg = qs.toStdString();
+    std::cerr << "Camera: " << msg << "\n";
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+  }
+}
+
 

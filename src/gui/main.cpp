@@ -80,6 +80,7 @@ main(int argc, char *argv[])
   // QSurfaceFormat::setDefaultFormat(format);
 
   _theGxyConnectionMgr = new GxyConnectionMgr();
+  getTheGxyConnectionMgr()->addModule("libgxy_module_gui.so");
 
   QApplication app(argc, argv);
   GxyMainWindow mainWindow;

@@ -204,7 +204,6 @@ public Q_SLOTS:
   void onConnectionStateChanged(bool b)
   {
     connect_button->setEnabled(IsConnected());
-    // connect_button->setEnabled(getTheGxyConnectionMgr()->IsConnected());
   }
 
   void openConnectToServerDialog()
