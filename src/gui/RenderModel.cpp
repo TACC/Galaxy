@@ -59,7 +59,7 @@ RenderModel::RenderModel()
   connect(update_rate, SIGNAL(editingFinished()), this, SLOT(setUpdateRate()));
   setUpdateRate();
 
-  _properties->setCentralWidget(frame);
+  _properties->setPropertiesWidget(frame);
 
   renderWindow = new GxyRenderWindow(getModelIdentifier());
   renderWindow->show();
@@ -153,7 +153,7 @@ RenderModel::validationMessage() const
 QJsonObject
 RenderModel::save() const
 {
-  QJsonObject modelJson = NodeDataModel::save();
+  QJsonObject modelJson = GxyModel::save();
 
   modelJson["camera"] = camera.save();
   modelJson["lighting"] = lighting.save();
@@ -164,6 +164,7 @@ RenderModel::save() const
 void
 RenderModel::restore(QJsonObject const &p)
 {
+  GxyModel::restore(p);
   camera.restore(p["camera"].toObject());
   lighting.restore(p["lighting"].toObject());
 }

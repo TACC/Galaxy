@@ -54,7 +54,7 @@ TraceDecoratorModel::TraceDecoratorModel()
   maxtime->setValidator(new QDoubleValidator());
   layout->addWidget(maxtime, 3, 1);
 
-  _properties->setCentralWidget(frame);
+  _properties->setPropertiesWidget(frame);
 }
 
 unsigned int

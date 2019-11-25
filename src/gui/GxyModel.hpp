@@ -26,6 +26,7 @@
 #include <QtCore/QUuid>
 
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QFrame>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
@@ -45,13 +46,29 @@ public:
   GxyModel()
   {
     model_identifier = QUuid::createUuid().toString().toStdString();
-    _properties = new Properties(this);
+
+    frame = new QFrame();
+    layout = new QVBoxLayout;
+    layout->setSpacing(0);
+    layout->setContentsMargins(2, 0, 2, 0);
+    frame->setLayout(layout);
+
+    _properties = new Properties(this, frame);
+
+    QPushButton *openPropertiesButton = new QPushButton("Properties") ;
+    connect(openPropertiesButton, SIGNAL(released()), this, SLOT(openProperties()));
+    layout->addWidget(openPropertiesButton);
+
+    applyButton = new QPushButton("Apply");
+    connect(applyButton, SIGNAL(released()), this, SLOT(onApply()));
+    connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+    layout->addWidget(applyButton);
   }
 
   virtual
   ~GxyModel() {}
 
-  QWidget *embeddedWidget() override { return _properties; }
+  QWidget *embeddedWidget() override { return frame; }
   std::string getModelIdentifier() { return model_identifier; }
 
   QJsonObject
@@ -59,7 +76,8 @@ public:
   {
     QJsonObject modelJson = NodeDataModel::save();
 
-    modelJson["model_identifier"] = QString::fromStdString(model_identifier);
+    if (label)
+      modelJson["label"] = label->text();
 
     return modelJson;
   }
@@ -69,15 +87,44 @@ public:
   {
     NodeDataModel::restore(p);
 
-    QJsonValue v = p["model_identifier"];
+    QJsonValue l = p["label"];
+    if (!l.isUndefined())
+    {
+      addLabel();
+      label->setText(l.toString());
+    }
+  }
 
-    if (!v.isUndefined())
-      model_identifier = v.toString().toStdString();
+  void 
+  addLabel()
+  {
+    if (! label)
+    {
+      label = new QLineEdit;
+      layout->insertWidget(0, label);
+    }
   }
 
 private Q_SLOTS:
 
+  void openProperties() { _properties->show(); _properties->raise(); }
+
+  void enable(bool b)
+  {
+    applyButton->setEnabled(b);
+    _properties->getApplyButton()->setEnabled(b);
+  }
+
+  virtual void onApply() 
+  {
+    std::cerr << "generic onApply\n"; 
+  }
+
 protected:
+  QVBoxLayout *layout;
+  QLineEdit *label = NULL;
+  QPushButton *applyButton;
   Properties *_properties;
+  QFrame *frame;
   std::string model_identifier;
 };

@@ -23,6 +23,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QMenuBar>
 
+#include <nodes/Node>
 #include <nodes/NodeData>
 #include <nodes/FlowScene>
 #include <nodes/FlowView>
@@ -51,6 +52,7 @@ using QtNodes::ConnectionStyle;
 using QtNodes::Connection;
 using QtNodes::TypeConverter;
 using QtNodes::TypeConverterId;
+using QtNodes::NodeGraphicsObject;
 
 extern GxyConnectionMgr *getTheGxyConnectionMgr();
 
@@ -89,8 +91,9 @@ public:
     auto loadAction = fileMenu->addAction("Load");
     auto saveAction = fileMenu->addAction("Save");
 
-    auto editMenu     = menuBar()->addMenu("&Edit");
-    auto deleteAction = editMenu->addAction("Delete");
+    auto editMenu       = menuBar()->addMenu("&Edit");
+    auto deleteAction   = editMenu->addAction("Delete");
+    auto addLabelAction = editMenu->addAction("Add Label");
 
     auto servermenu = menuBar()->addMenu("&Server");
 
@@ -115,6 +118,8 @@ public:
     QObject::connect(saveAction, &QAction::triggered, flowScene, &FlowScene::save);
     QObject::connect(loadAction, &QAction::triggered, flowScene, &FlowScene::load);
     QObject::connect(deleteAction, &QAction::triggered, flowView, &FlowView::deleteSelectedNodes);
+    QObject::connect(deleteAction, &QAction::triggered, flowView, &FlowView::deleteSelectedNodes);
+    QObject::connect(addLabelAction, &QAction::triggered, flowView, &GxyFlowView::addLabel);
 
     QMap<QString, QMenu*> menus;
     for (auto const &cat : registry->categories())

@@ -84,7 +84,7 @@ public:
 
 private Q_SLOTS:
 
-  void onApply();
+  void onApply() override;
 
   void disableApply()
   {

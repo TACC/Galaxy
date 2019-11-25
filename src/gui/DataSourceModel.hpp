@@ -321,7 +321,7 @@ private Q_SLOTS:
     onApply();
   }
 
-  void onApply()
+  void onApply() override
   {
     output->di = current_selection->getDataInfo();
     Q_EMIT dataUpdated(0);

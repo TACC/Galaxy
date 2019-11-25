@@ -29,6 +29,8 @@
 
 #include <QInputEvent>
 
+#include "GxyModel.hpp"
+
 class GxyFlowView : public QtNodes::FlowView
 {
   Q_OBJECT
@@ -63,6 +65,18 @@ public:
   void setPendingModel(QString p)
   {
     pendingModel = p;
+  }
+
+  void addLabel()
+  {
+    for (QGraphicsItem * item : __scene->selectedItems())
+    {
+      if (auto n = qgraphicsitem_cast<QtNodes::NodeGraphicsObject*>(item))
+      {
+        GxyModel *model = dynamic_cast<GxyModel*>(n->node().nodeDataModel());
+        model->addLabel();
+      }
+    }
   }
 
 private:

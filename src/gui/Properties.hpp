@@ -41,30 +41,24 @@ class Properties : public QWidget
   Q_OBJECT;
 
 public:
-  Properties(NodeDataModel *p) 
+  Properties(NodeDataModel *p, QWidget *parent) 
   {
-    parent = p;
-  }
+    model = p;
 
-  void setCentralWidget(QFrame *w)
-  {
-    panel = w;
-
-    QVBoxLayout *outer_layout = new QVBoxLayout();
+    outer_layout = new QVBoxLayout();
     outer_layout->setSpacing(0);
     outer_layout->setContentsMargins(0, 0, 0, 0);
 
-    openClosed = new QPushButton("v");
-    QFont font("Times", 10, QFont::Bold);
-    openClosed->setFont(font);
-    openClosed->setChecked(true);
-    connect(openClosed, SIGNAL(released()), this, SLOT(toggleState()));
-    outer_layout->addWidget(openClosed);
-    outer_layout->setAlignment(openClosed, Qt::AlignLeft);
+    panel = new QFrame(parent);
+
+    panel->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    panel->setLineWidth(2);
+    panel_layout = new QVBoxLayout();
+    panel_layout->setSpacing(0);
+    panel_layout->setContentsMargins(0, 0, 0, 0);
+    panel->setLayout(panel_layout);
 
     outer_layout->addWidget(panel);
-    w->setFrameStyle(QFrame::Panel | QFrame::Raised);
-    w->setLineWidth(2);
 
     QWidget *bottom_right = new QWidget();
     QHBoxLayout *bottom_right_layout = new QHBoxLayout();
@@ -75,6 +69,10 @@ public:
     applyButton = new QPushButton("Apply");
     applyButton->setEnabled(false);
     bottom_right_layout->addWidget(applyButton, 0, Qt::AlignRight);
+
+    doneButton = new QPushButton("Done");
+    connect(doneButton, SIGNAL(released()), this, SLOT(close()));
+    bottom_right_layout->addWidget(doneButton, 0, Qt::AlignRight);
 
     QWidget *bottom_left = new QWidget();
     bottom_left_layout = new QHBoxLayout();
@@ -93,6 +91,11 @@ public:
     setLayout(outer_layout);
   }
 
+  void setPropertiesWidget(QFrame *w)
+  {
+    panel_layout->addWidget(w);
+  }
+
   void addButton(QPushButton *w)
   {
     w->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -105,32 +108,13 @@ signals:
 
   void apply();
 
-private Q_SLOTS:
-
-  void toggleState()
-  {
-    toggle = 1 - toggle;
-    if (toggle)
-    {
-      panel->hide();
-      openClosed->setText(">");
-      adjustSize();
-    }
-    else
-    {
-      panel->show();
-      openClosed->setText("v");
-      adjustSize();
-    }
-
-    Q_EMIT parent->embeddedWidgetSizeUpdated();
-  }
-
 private:
-  NodeDataModel *parent;
-  QWidget *panel;
-  QPushButton *openClosed;
+  NodeDataModel *model;
+  QPushButton *doneButton;
   QPushButton *applyButton;
   int toggle = 0;
   QHBoxLayout *bottom_left_layout;
+  QFrame *panel;
+  QVBoxLayout *panel_layout;
+  QVBoxLayout *outer_layout;
 };

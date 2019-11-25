@@ -82,7 +82,7 @@ VolumeVisModel::VolumeVisModel()
 
   layout->addWidget(data_range_w);
 
-  _properties->setCentralWidget(frame);
+  _properties->setPropertiesWidget(frame);
 
   connect(data_range_max, SIGNAL(editingFinished()), this, SLOT(enableApply()));
   connect(data_range_min, SIGNAL(editingFinished()), this, SLOT(enableApply()));
@@ -165,7 +165,7 @@ VolumeVisModel::validationMessage() const
 QJsonObject
 VolumeVisModel::save() const 
 {
-  QJsonObject modelJson = NodeDataModel::save();
+  QJsonObject modelJson = GxyModel::save();
   output->save(modelJson);
   return modelJson;
 }
@@ -173,6 +173,7 @@ VolumeVisModel::save() const
 void
 VolumeVisModel::restore(QJsonObject const &p)
 {
+  GxyModel::restore(p);
   output->restore(p);
   volumeRender->setChecked(output->volume_rendering_flag);
   tf_widget->setText(output->transfer_function.c_str());

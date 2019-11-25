@@ -148,7 +148,7 @@ private Q_SLOTS:
       sendVisualization();
   }
 
-  void onApply()
+  void onApply() override
   {
     std::cerr << "onApply\n";
     if (getTheGxyConnectionMgr()->IsConnected())
