@@ -197,7 +197,7 @@ GuiClientServer::handle(string line, string& reply)
     GuiClient *client = clients[id];
     if (! client)
     {
-      reply = "window has not been initialized ... " << id << "\n";
+      reply = "window has not been initialized\n";
       return true;
     }
 
@@ -214,7 +214,7 @@ GuiClientServer::handle(string line, string& reply)
     GuiClient *client = clients[id];
     if (! client)
     {
-      reply = "window has not been initialized ... " << id << "\n";
+      reply = "window has not been initialized\n";
       return true;
     }
 
@@ -231,7 +231,7 @@ GuiClientServer::handle(string line, string& reply)
     GuiClient *client = clients[id];
     if (! client)
     {
-      reply = "window has not been initialized ... " << id << "\n";
+      reply = "window has not been initialized\n";
       return true;
     }
 

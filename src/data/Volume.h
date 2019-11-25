@@ -237,6 +237,8 @@ protected:
 	vec3i ghosted_local_counts;
 
 	unsigned char *samples;
+
+  OsprayObjectP ospVolume = NULL;
 };
 
 } // namespace gxy
