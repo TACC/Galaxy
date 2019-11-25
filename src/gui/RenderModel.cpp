@@ -57,6 +57,7 @@ RenderModel::RenderModel()
   update_layout->addWidget(update_rate);
   layout->addWidget(update_widget);
   connect(update_rate, SIGNAL(editingFinished()), this, SLOT(setUpdateRate()));
+  setUpdateRate();
 
   _container->setCentralWidget(frame);
 

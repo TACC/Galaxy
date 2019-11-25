@@ -65,7 +65,6 @@ public:
       if (! CRecv(line))
         break;
 
-      cerr << "received " << line << "\n";
       std::stringstream ss(line);
 
       std::string cmd;

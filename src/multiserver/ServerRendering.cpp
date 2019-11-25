@@ -55,14 +55,9 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
     if (handler)
-    {
-      std::cerr << "and sending them!\n";
       handler->getTheSocketHandler()->DSendV(ptrs, szs);
-    }
     else
       std::cerr << "no handler\n";
-
-    // std::cerr << "after... n = " << n << " f = " << f << "\n";
 	}
   else
     std::cerr << "skipped due to frame number\n";
