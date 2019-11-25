@@ -41,28 +41,28 @@ DataSourceModel::DataSourceModel()
 
   frame->setLayout(outer_layout);
   
-  _container->setCentralWidget(frame);
+  _properties->setCentralWidget(frame);
 
   QPushButton *add = new QPushButton("Add");
   connect(add, SIGNAL(released()), this, SLOT(onAdd()));
-  _container->addButton(add);
+  _properties->addButton(add);
 
   info = new QPushButton("Info");
   info->setEnabled(false);
   connect(info, SIGNAL(released()), objectList, SLOT(showDialog()));
-  _container->addButton(info);
+  _properties->addButton(info);
 
   QPushButton *refresh = new QPushButton("Refresh");
   connect(refresh, SIGNAL(released()), this, SLOT(onRefresh()));
-  _container->addButton(refresh);
+  _properties->addButton(refresh);
 
-  connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+  connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 
   GxyConnectionMgr *gxyMgr = getTheGxyConnectionMgr();
   if (gxyMgr->IsConnected())
     onRefresh();
 
-  connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+  connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onRefresh()));
 
 }

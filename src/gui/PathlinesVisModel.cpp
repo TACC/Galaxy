@@ -82,7 +82,7 @@ PathlinesVisModel::PathlinesVisModel()
 
   layout->addWidget(cmap_box);
   
-  _container->setCentralWidget(frame);
+  _properties->setCentralWidget(frame);
 }
 
 unsigned int

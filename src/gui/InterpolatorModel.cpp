@@ -26,7 +26,7 @@ InterpolatorModel::InterpolatorModel()
   QGridLayout *layout = new QGridLayout();
   frame->setLayout(layout);
 
-  _container->setCentralWidget(frame);
+  _properties->setCentralWidget(frame);
 }
 
 unsigned int

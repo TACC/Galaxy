@@ -54,7 +54,7 @@ SamplerModel::SamplerModel()
 
   layout->addWidget(algorithm);
 
-  _container->setCentralWidget(frame);
+  _properties->setCentralWidget(frame);
 }
 
 unsigned int

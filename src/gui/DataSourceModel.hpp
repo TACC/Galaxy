@@ -317,7 +317,7 @@ private Q_SLOTS:
   {
     info->setEnabled(true);
     current_selection = (MyQListWidgetItem *)item;
-    _container->getApplyButton()->setEnabled(true);
+    _properties->getApplyButton()->setEnabled(true);
     onApply();
   }
 

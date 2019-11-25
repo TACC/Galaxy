@@ -82,11 +82,11 @@ VolumeVisModel::VolumeVisModel()
 
   layout->addWidget(data_range_w);
 
-  _container->setCentralWidget(frame);
+  _properties->setCentralWidget(frame);
 
   connect(data_range_max, SIGNAL(editingFinished()), this, SLOT(enableApply()));
   connect(data_range_min, SIGNAL(editingFinished()), this, SLOT(enableApply()));
-  connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+  connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 }
 
 void 
@@ -139,7 +139,7 @@ VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
     input = std::dynamic_pointer_cast<GxyData>(data);
     data_range_min->setText(QString::number(input->di.data_min));
     data_range_max->setText(QString::number(input->di.data_max));
-    _container->getApplyButton()->setEnabled(input && input->di.name != "");
+    _properties->getApplyButton()->setEnabled(input && input->di.name != "");
   }
 }
 

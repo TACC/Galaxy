@@ -54,7 +54,7 @@ StreamTracerModel::StreamTracerModel()
   maxtime->setValidator(new QDoubleValidator());
   layout->addWidget(maxtime, 3, 1);
 
-  _container->setCentralWidget(frame);
+  _properties->setCentralWidget(frame);
 }
 
 unsigned int

@@ -88,12 +88,12 @@ private Q_SLOTS:
 
   void disableApply()
   {
-     _container->getApplyButton()->setEnabled(false);
+     _properties->getApplyButton()->setEnabled(false);
   }
     
   void enableApply()
   {
-     _container->getApplyButton()->setEnabled(true);
+     _properties->getApplyButton()->setEnabled(true);
   }
     
   void onDataRangeReset();

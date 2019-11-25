@@ -36,12 +36,12 @@ using QtNodes::NodeDataModel;
 
 #include <QtGui/QDoubleValidator>
 
-class ParameterFrame : public QWidget
+class Properties : public QWidget
 {
   Q_OBJECT;
 
 public:
-  ParameterFrame(NodeDataModel *p) 
+  Properties(NodeDataModel *p) 
   {
     parent = p;
   }

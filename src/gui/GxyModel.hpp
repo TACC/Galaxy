@@ -34,7 +34,7 @@
 
 using QtNodes::NodeDataModel;
 
-#include "ParameterFrame.hpp"
+#include "Properties.hpp"
 
 
 class GxyModel : public NodeDataModel
@@ -45,13 +45,13 @@ public:
   GxyModel()
   {
     model_identifier = QUuid::createUuid().toString().toStdString();
-    _container = new ParameterFrame(this);
+    _properties = new Properties(this);
   }
 
   virtual
   ~GxyModel() {}
 
-  QWidget *embeddedWidget() override { return _container; }
+  QWidget *embeddedWidget() override { return _properties; }
   std::string getModelIdentifier() { return model_identifier; }
 
   QJsonObject
@@ -78,6 +78,6 @@ public:
 private Q_SLOTS:
 
 protected:
-  ParameterFrame *_container;
+  Properties *_properties;
   std::string model_identifier;
 };

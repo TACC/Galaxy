@@ -59,16 +59,16 @@ RenderModel::RenderModel()
   connect(update_rate, SIGNAL(editingFinished()), this, SLOT(setUpdateRate()));
   setUpdateRate();
 
-  _container->setCentralWidget(frame);
+  _properties->setCentralWidget(frame);
 
   renderWindow = new GxyRenderWindow(getModelIdentifier());
   renderWindow->show();
 
   QPushButton *open = new QPushButton("Open");
   connect(open, SIGNAL(released()), renderWindow, SLOT(show()));
-  _container->addButton(open);
+  _properties->addButton(open);
 
-  connect(_container->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+  connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onConnectionStateChanged(bool)));
 
@@ -117,7 +117,7 @@ RenderModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyVis>(data);
   if (input) visList[input->get_origin()] = input;
-  _container->getApplyButton()->setEnabled(visList.size() > 0);
+  _properties->getApplyButton()->setEnabled(visList.size() > 0);
 
   std::cerr << "RenderModel " << getModelIdentifier() << " receives:\n";
   if (input) input->print();
