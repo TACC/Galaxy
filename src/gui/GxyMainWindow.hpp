@@ -30,6 +30,8 @@
 #include <nodes/TypeConverter>
 #include <nodes/DataModelRegistry>
 
+#include "GxyFlowView.hpp"
+
 #include "VolumeVisModel.hpp"
 #include "ParticlesVisModel.hpp"
 #include "PathlinesVisModel.hpp"
@@ -56,7 +58,7 @@ static std::shared_ptr<QtNodes::DataModelRegistry>
 registerDataModels()
 {
   auto ret = std::make_shared<DataModelRegistry>();
-  ret->registerModel<DataSourceModel>("Data Access");
+  ret->registerModel<DataSourceModel>("Sources");
   ret->registerModel<SamplerModel>("Filters");
   ret->registerModel<StreamTracerModel>("Filters");
   ret->registerModel<TraceDecoratorModel>("Filters");
@@ -78,8 +80,10 @@ public:
     QWidget *mainWidget = new QWidget;
     setCentralWidget(mainWidget);
 
-    flowScene = new FlowScene(registerDataModels(), mainWidget);
-    flowView = new FlowView(flowScene);
+    std::shared_ptr<QtNodes::DataModelRegistry> registry = registerDataModels();
+
+    flowScene = new FlowScene(registry, mainWidget);
+    flowView = new GxyFlowView(flowScene);
 
     auto fileMenu   = menuBar()->addMenu("&File");
     auto loadAction = fileMenu->addAction("Load");
@@ -112,11 +116,27 @@ public:
     QObject::connect(loadAction, &QAction::triggered, flowScene, &FlowScene::load);
     QObject::connect(deleteAction, &QAction::triggered, flowView, &FlowView::deleteSelectedNodes);
 
+    QMap<QString, QMenu*> menus;
+    for (auto const &cat : registry->categories())
+    { 
+      auto item = menuBar()->addMenu(QString("&") + cat);
+      menus[cat] = item;
+    }
+
+    for (auto const &assoc : registry->registeredModelsCategoryAssociation())
+    {
+      auto menu = menus[assoc.second];
+      auto action = menu->addAction(assoc.first);
+      connect(action, &QAction::triggered, [=]() {
+         std::cerr << "model menu selection... " << action->text().toStdString() << "\n";
+         flowView->setPendingModel(action->text());
+      });
+    }
+
     setWindowTitle("Galaxy");
     resize(1200, 900);
     showNormal();
   }
-
 
   void 
   closeEvent(QCloseEvent *event)
@@ -126,6 +146,11 @@ public:
   }
 
 public Q_SLOTS:
+
+  void createNode(char *name)
+  {
+    std::cerr << "createnode " << name << "\n";
+  } 
 
   void disconnect()
   {
@@ -150,5 +175,5 @@ private:
   QAction *connectAsAction;
   QAction *disconnectAction;
   FlowScene *flowScene;
-  FlowView *flowView;
+  GxyFlowView *flowView;
 };

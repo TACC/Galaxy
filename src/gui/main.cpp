@@ -76,12 +76,6 @@ syntax(char *a)
 int
 main(int argc, char *argv[])
 {
-  QSurfaceFormat format;
-  // format.setDepthBufferSize(24);
-  // format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-  format.setSamples(1);
-  QSurfaceFormat::setDefaultFormat(format);
-
   _theGxyConnectionMgr = new GxyConnectionMgr();
   getTheGxyConnectionMgr()->addModule("libgxy_module_gui.so");
 
