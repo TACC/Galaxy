@@ -35,7 +35,7 @@ link_directories(${Galaxy_BINARY_DIR}/src/data
                  ${Galaxy_BINARY_DIR}/src/framework)
 
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
-include_directories_ispc(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
+ispc_include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
 
 set (ISPC_SOURCES 
  SamplerTraceRays.ispc
@@ -55,8 +55,9 @@ set (CPP_SOURCES
 set(SERVERS "")
 
 if (ospray_DIR)
-  ospray_create_library(gxy_sampler ${CPP_SOURCES} ${ISPC_SOURCES} 
-    LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_renderer gxy_framework COMPONENT lib)
+  add_library(gxy_sampler SHARED)
+  ispc_target_add_sources(gxy_sampler ${CPP_SOURCES} ${ISPC_SOURCES})
+  target_link_libraries(gxy_sampler ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_renderer gxy_framework)
   set_target_properties(gxy_sampler PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   install(TARGETS gxy_sampler DESTINATION lib)
 endif()

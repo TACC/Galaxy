@@ -78,18 +78,18 @@ else(GXY_WRITE_IMAGES)
 		link_libraries(${X11_LIBRARIES})
 
 		add_executable(mhviewer mhviewer.cpp AsyncRendering.cpp)
-		target_link_libraries(mhviewer ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+    target_link_libraries(mhviewer ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
 		set(BINS mhviewer ${BINS})
 
 		add_executable(gxyviewer gxyviewer.cpp AsyncRendering.cpp)
-		target_link_libraries(gxyviewer ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES})
+    target_link_libraries(gxyviewer ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
 
 		add_executable(gxyviewer-worker gxyviewer-worker.cpp AsyncRendering.cpp)
 		# target_link_libraries(gxyviewer-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${OPENGL_LIBRARIES})
 		target_link_libraries(gxyviewer-worker ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 
 		add_executable(gxyviewer-client gxyviewer-client.cpp Socket.cpp)
-		target_link_libraries(gxyviewer-client ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE} ${GLUT_glut_LIBRARY} ${OPENGL_LIBRARIES} pthread)
+    target_link_libraries(gxyviewer-client ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES} pthread)
 
 		set(BINS gxyviewer-worker gxyviewer gxyviewer-client ${BINS})
   else(X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)

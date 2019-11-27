@@ -41,7 +41,9 @@ GXY_ROOT=$PWD
 GXY_PREP_SCRIPT=prep-third-party.sh
 GXY_DONE_TAG="gxy_third_party_installed"
 CMAKE_BIN=`which cmake`
-CMAKE_FLAGS="-D CMAKE_C_FLAGS:STRING=\"-Wno-undef -Wno-deprecated-declarations\" -D CMAKE_CXX_FLAGS:STRING=\"-Wno-undef -Wno-deprecated-declarations\""
+CMAKE_FLAGS="-D CMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/
+             -D CMAKE_C_FLAGS:STRING=\"-Wno-undef -Wno-deprecated-declarations\"
+             -D CMAKE_CXX_FLAGS:STRING=\"-Wno-undef -Wno-deprecated-declarations\""
 
 if [ -f ${GXY_ROOT}/install-third-party.sh ]; then
 	# running from script dir, help a user out
