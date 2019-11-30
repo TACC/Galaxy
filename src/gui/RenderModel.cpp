@@ -173,8 +173,6 @@ RenderModel::restore(QJsonObject const &p)
 void
 RenderModel::setUpdateRate()
 {
-  std::cerr << "update rate set to " << update_rate->text().toDouble() << "\n";
-
   float ups = update_rate->text().toDouble();
   if (ups > 0.0)
   {

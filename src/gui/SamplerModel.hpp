@@ -67,11 +67,28 @@ public:
 
   QString name() const override { return QStringLiteral("Sampler"); }
 
-protected:
+public Q_SLOTS: 
 
-  virtual void apply();
+  virtual void onApply() override;
 
 private Q_SLOTS:
+
+  void algorithmChanged(int t)
+  {
+    std::cerr << "alg " << t << "\n";
+    openCamera->setEnabled(t != 0);
+    mh_properties->setVisible(t == 0);
+    raycast_properties->setVisible(t != 0);
+    gradient_properties->setVisible(t == 1);
+    isovalue_properties->setVisible(t == 2);
+  }
+
+  void mh_tfunc_Changed(int t)
+  {
+    std::cerr << t << "\n";
+    linear->setVisible(t == 1);
+    gaussian->setVisible(t == 2);
+  }
 
   void openCameraDialog() 
   {
@@ -85,7 +102,36 @@ private:
 
   Camera camera;
 
+  QFrame *mh_properties;
+  QComboBox *mh_tfunc;
+  QLineEdit *mh_radius;
+  QLineEdit *mh_sigma;
+  QLineEdit *mh_iterations;
+  QLineEdit *mh_startup;
+  QLineEdit *mh_skip;
+  QLineEdit *mh_miss;
+
+  QFrame *linear;
+  QLineEdit *mh_linear_tf_min;
+  QLineEdit *mh_linear_tf_max;
+
+  QFrame *gaussian;
+  QLineEdit *gaussian_mean;
+  QLineEdit *gaussian_std;
+
+  QFrame *raycast_properties;
+
+  QFrame *isovalue_properties;
+  QLineEdit *isovalue;
+
+  QFrame *gradient_properties;
+  QLineEdit *gradient;
+
   QComboBox *type;
+  QPushButton *openCamera;
   QLineEdit *parameter;
   std::shared_ptr<GxyData> output;
+
+  
+
 };

@@ -243,11 +243,6 @@ GuiClientServer::handle(string line, string& reply)
     client->rendering->SetTheDatasets(theDatasets);
     client->rendering->Commit();
 
-    // client->renderingSet = RenderingSet::NewP();
-    // client->renderingSet->AddRendering(client->rendering);
-    // client->renderingSet->Commit();
-    // renderer->Start(client->renderingSet);
-
     RenderingSetP rs = RenderingSet::NewP();
     rs->AddRendering(client->rendering);
     rs->Commit();

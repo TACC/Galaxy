@@ -201,7 +201,6 @@ GxyRenderWindow::mouseMoveEvent(QMouseEvent *event)
     camera.setUp(up);
     sendCamera();
     render();
-    // sleep(2);
   }
   else if (button == 1)
   { 
