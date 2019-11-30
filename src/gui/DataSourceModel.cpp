@@ -41,7 +41,7 @@ DataSourceModel::DataSourceModel()
 
   frame->setLayout(outer_layout);
   
-  _properties->setPropertiesWidget(frame);
+  _properties->addProperties(frame);
 
   QPushButton *add = new QPushButton("Add");
   connect(add, SIGNAL(released()), this, SLOT(onAdd()));

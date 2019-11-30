@@ -82,7 +82,7 @@ class ScalarsDialog : public QDialog
 
 public:
 
-  ScalarsDialog(std::vector<float> scalars)
+  ScalarsDialog()
   {
     // outermost frame layout
 
@@ -92,8 +92,8 @@ public:
 
     // Frame for scalars
 
-    QFrame *scalars_frame = new QFrame();
-    scalars_layout = new QVBoxLayout();
+    scalars_frame = new QFrame();
+    QVBoxLayout *scalars_layout = new QVBoxLayout();
     scalars_layout->setSpacing(0);
     scalars_layout->setContentsMargins(0, 0, 0, 0);
     scalars_frame->setLayout(scalars_layout);
@@ -118,38 +118,53 @@ public:
     // Add buttonbox to outermost layout
     outermost_layout->addWidget(buttonbox_frame);
 
-    for (auto p : scalars)
-    {
-      Scalar *f = new Scalar(p);
-      scalars_layout->addWidget(f->build(), 0, Qt::AlignTop);
-    }
-
     setLayout(outermost_layout);
   };
 
   ~ScalarsDialog() {};
 
+  void set_scalars(std::vector<float> scalars)
+  {
+    for (auto p : scalars)
+    {
+      Scalar *f = new Scalar(p);
+      ((QVBoxLayout *)scalars_frame->layout())->insertWidget(0, f->build(), Qt::AlignTop);
+    }
+  }
+
   std::vector<float> get_scalars()
   {
     std::vector<float> scalars;
 
-    for (auto i = 0; i < scalars_layout->count(); i++)
+    for (auto i = 0; i < scalars_frame->layout()->count(); i++)
     {
-      Scalar *s = (Scalar *)(scalars_layout->itemAt(i)->widget());
+      // Scalar *s = (Scalar *)((QBoxLayout *)scalars->layout())->itemAt(i)->widget());
+      Scalar *s = (Scalar *)(scalars_frame->layout()->itemAt(i)->widget());
       scalars.push_back(s->get_scalar());
     }
     
     return scalars;
   }
+
+  void clear()
+  {
+    QLayoutItem* item;
+    while ((item = scalars_frame->layout()->takeAt(0)) != NULL)
+    {
+        delete item->widget();
+        delete item;
+    }
+  }
+
       
 private Q_SLOTS:
 
   void add_scalar()
   {
     Scalar *f = new Scalar();
-    scalars_layout->addWidget(f->build(), 0, Qt::AlignTop);
+    ((QVBoxLayout *)scalars_frame->layout())->insertWidget(0, f->build(), Qt::AlignTop);
   }
 
 private:
-  QVBoxLayout *scalars_layout;
+  QFrame *scalars_frame;
 };

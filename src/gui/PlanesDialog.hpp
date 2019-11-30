@@ -21,8 +21,6 @@
 #pragma once
 
 #include <iostream>
-
-
 #include <vector>
 
 #include <QtWidgets/QApplication>
@@ -125,18 +123,18 @@ class PlanesDialog : public QDialog
 
 public:
 
-  PlanesDialog(std::vector<gxy::vec4f> planes)
+  PlanesDialog()
   {
     // outermost frame layout
 
-    QVBoxLayout *outermost_layout = new QVBoxLayout();
+    QVBoxLayout* outermost_layout = new QVBoxLayout();
     outermost_layout->setSpacing(0);
     outermost_layout->setContentsMargins(0, 0, 0, 0);
 
     // Frame for planes
 
-    QFrame *planes_frame = new QFrame();
-    planes_layout = new QVBoxLayout();
+    planes_frame = new QFrame();
+    QVBoxLayout* planes_layout = new QVBoxLayout();
     planes_layout->setSpacing(0);
     planes_layout->setContentsMargins(0, 0, 0, 0);
     planes_frame->setLayout(planes_layout);
@@ -153,12 +151,6 @@ public:
     // Add buttonbox to outermost layout
     outermost_layout->addWidget(buttonbox_frame);
 
-    for (auto p : planes)
-    {
-      PlaneWidget *f = new PlaneWidget(p);
-      planes_layout->addWidget(f, 0, Qt::AlignTop);
-    }
-
     QPushButton *ok = new QPushButton("OK");
     connect(ok, SIGNAL(released()), this, SLOT(hide()));
     buttonbox_layout->addWidget(ok, 0, 1);
@@ -173,17 +165,36 @@ public:
 
   ~PlanesDialog() {};
 
+  void set_planes(std::vector<gxy::vec4f> planes)
+  {
+    for (auto p : planes)
+    {
+      PlaneWidget *f = new PlaneWidget(p);
+      ((QBoxLayout *)planes_frame->layout())->insertWidget(0, f, Qt::AlignTop);
+    }
+  }
+
   std::vector<gxy::vec4f> get_planes()
   {
     std::vector<gxy::vec4f> planes;
 
-    for (auto i = 0; i < planes_layout->count(); i++)
+    for (auto i = 0; i < planes_frame->layout()->count(); i++)
     {
-      PlaneWidget *p = (PlaneWidget *)(planes_layout->itemAt(i)->widget());
+      PlaneWidget *p = (PlaneWidget *)(planes_frame->layout()->itemAt(i)->widget());
       planes.push_back(p->get_plane());
     }
     
     return planes;
+  }
+
+  void clear()
+  {
+    QLayoutItem* item;
+    while ((item = planes_frame->layout()->takeAt(0)) != NULL)
+    {
+        delete item->widget();
+        delete item;
+    }
   }
       
 private Q_SLOTS:
@@ -191,9 +202,10 @@ private Q_SLOTS:
   void add_plane()
   {
     PlaneWidget *f = new PlaneWidget();
-    planes_layout->addWidget(f, 0, Qt::AlignTop);
+    ((QBoxLayout *)planes_frame->layout())->insertWidget(0, f, Qt::AlignTop);
   }
 
 private:
-  QVBoxLayout *planes_layout;
+  
+  QFrame *planes_frame;
 };

@@ -83,7 +83,7 @@ ParticlesVisModel::ParticlesVisModel()
 
   layout->addWidget(cmap_box);
   
-  _properties->setPropertiesWidget(frame);
+  _properties->addProperties(frame);
 }
 
 unsigned int

@@ -1,4 +1,5 @@
 // ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -20,91 +21,55 @@
 
 #pragma once
   
-#include <nodes/NodeDataModel>
-#include <QJsonArray>
-
+#include <iostream>
 #include "GxyPacket.hpp"
 
-struct GxyDataInfo
-{
-  GxyDataInfo()
-  {
-    name = "none";
-    type = -1;
-    isVector = true;
-    data_min = data_max = 0;
-    box[0] = box[1] = box[2] = box[3] = box[4] = box[5] = 0;
-  }
+#include <QJsonArray>
 
-  virtual void toJson(QJsonObject& p) 
-  {
-    p["dataset"] = QString(name.c_str());
-    p["type"] = type;
-    p["isVector"] = isVector;
-    QJsonArray rangeJson = { data_min, data_max };
-    p["data range"] = rangeJson;
-
-    for (auto i = 0; i < 6; i++)
-      p["box"].toArray().push_back(box[i]);
-  }
-
-  virtual void fromJson(QJsonObject p)
-  {
-    name = p["dataset"].toString().toStdString();
-    type = p["type"].toInt();
-    isVector = p["isVector"].toBool();
-    data_min = p["data range"].toArray()[0].toDouble();
-    data_max = p["data range"].toArray()[1].toDouble();
-    for (auto i = 0; i < 6; i++)
-      box[i] = p["box"].toArray()[i].toDouble();
-  }
-
-  void print()
-  {
-    std::cerr << "name: " << name << "\n";
-    std::cerr << "type: " << type << "\n";
-    std::cerr << "isVector: " << isVector << "\n";
-    std::cerr << "range: " << data_min << " " << data_max << "\n";
-    std::cerr << "box: " << box[0] << " " << box[1] << " " << box[2] << " " << box[3] << " " << box[4] << " " << box[5] << "\n";
-  }
-
-  std::string name;
-  int type;
-  bool isVector;
-  float data_min, data_max;
-  float box[6];
-};
-
-class GxyData : public GxyPacket
+class Vis : public GxyPacket
 {
 public:
-  GxyData(GxyDataInfo& di) : dataInfo(di), GxyPacket() {}
-  GxyData() : GxyPacket() {}
-
-  GxyData(std::string o) : GxyPacket(o) {}
   
-  void print() override
-  {
-    GxyPacket::print();
-    dataInfo.print();
-  }
+  Vis() : GxyPacket() {}
+  Vis(std::string o) : GxyPacket(o) {}
 
   QtNodes::NodeDataType type() const override
+  { 
+    return QtNodes::NodeDataType {"vis", "VIS"};
+  }
+
+  virtual void print() override
   {
-    return QtNodes::NodeDataType {"gxygui", "GxyGui"};
+    GxyPacket::print();
+    std::cerr << "dataset: " << dataset << "\n";
+    std::cerr << "colormap file: " << colormap_file << "\n";
+    std::cerr << "colormap range: " << cmap_range_min << " " << cmap_range_max << "\n";
   }
 
   virtual void toJson(QJsonObject& p) override
   {
     GxyPacket::toJson(p);
-    dataInfo.toJson(p);
+
+    p["dataset"] = dataset.c_str();
+    p["colormap"] = colormap_file.c_str();
+
+    QJsonArray dataRangeJson;
+    dataRangeJson.push_back(cmap_range_min);
+    dataRangeJson.push_back(cmap_range_max);
+    p["data range"] = dataRangeJson;
   }
 
   virtual void fromJson(QJsonObject p) override
   {
     GxyPacket::fromJson(p);
-    dataInfo.fromJson(p);
+
+    dataset = p["dataset"].toString().toStdString();
+    colormap_file = p["colormap"].toString().toStdString();
+    cmap_range_min = p["data range"].toArray()[0].toDouble();
+    cmap_range_max = p["data range"].toArray()[1].toDouble();
   }
 
-  GxyDataInfo dataInfo;
+  std::string dataset;
+  std::string colormap_file;
+  float cmap_range_min, cmap_range_max;
 };

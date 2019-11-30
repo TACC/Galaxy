@@ -21,23 +21,23 @@
 #pragma once
   
 #include <iostream>
-#include "GxyVis.hpp"
+#include "Vis.hpp"
 
-class VolumeVis : public GxyVis
+class VolumeVis : public Vis
 {
 public:
   
-  VolumeVis() : GxyVis() {}
-  VolumeVis(std::string o) : GxyVis(o) {}
+  VolumeVis() : Vis() {}
+  VolumeVis(std::string o) : Vis(o) {}
 
-  NodeDataType type() const override
+  QtNodes::NodeDataType type() const override
   { 
-    return NodeDataType {"vvis", "VVIS"};
+    return QtNodes::NodeDataType {"vis", "VIS"};
   }
 
   virtual void print() override
   {
-    GxyVis::print();
+    Vis::print();
     std::cerr << "slicing planes: \n";
     for (auto s : slices)
       std::cerr << "    " << s.x << " " << s.y << " " << s.z << " " << s.w << "\n";
@@ -46,23 +46,18 @@ public:
       std::cerr << "    " << i << "\n";
   }
 
-  std::vector<gxy::vec4f> slices;
-  std::vector<float> isovalues;
-  bool volume_rendering_flag;
-  std::string transfer_function;
-
-  void save(QJsonObject& modelJson) const override
+  void toJson(QJsonObject& p) override
   {
-    GxyVis::save(modelJson);
+    Vis::toJson(p);
 
-    modelJson["type"] = "VolumeVis";
+    p["type"] = "VolumeVis";
 
     QJsonArray isovaluesJson;
 
     for (auto isoval : isovalues)
       isovaluesJson.push_back(isoval);
 
-    modelJson["isovalues"] = isovaluesJson;
+    p["isovalues"] = isovaluesJson;
 
     QJsonArray slicesJson;
     for (auto slice : slices)
@@ -74,15 +69,15 @@ public:
       sliceJson.push_back(slice.w);
       slicesJson.push_back(sliceJson);
     }
-    modelJson["slices"] = slicesJson;
+    p["slices"] = slicesJson;
 
-    modelJson["volume rendering"]  = volume_rendering_flag;
-    modelJson["transfer function"] = transfer_function.c_str();
+    p["volume rendering"]  = volume_rendering_flag;
+    p["transfer function"] = transfer_function.c_str();
   }
 
-  void restore(QJsonObject const &p) override
+  void fromJson(QJsonObject p) override
   {
-    GxyVis::restore(p);
+    Vis::fromJson(p);
 
     QJsonArray isovaluesJson = p["isovalues"].toArray();
 
@@ -105,5 +100,11 @@ public:
     volume_rendering_flag = p["volume rendering"].toBool();
     transfer_function = p["transfer function"].toString().toStdString();
   }
+
+  std::vector<gxy::vec4f> slices;
+  std::vector<float> isovalues;
+  bool volume_rendering_flag;
+  std::string transfer_function;
+  float xfer_range_min, xfer_range_max;
 };
 

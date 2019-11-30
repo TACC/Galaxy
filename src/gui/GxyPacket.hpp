@@ -19,26 +19,47 @@
 // ========================================================================== //
 
 #pragma once
-  
-#include <iostream>
-#include "Vis.hpp"
 
-class ParticlesVis : public Vis
+#include <iostream>
+#include <nodes/NodeDataModel>
+#include <QJsonDocument>
+  
+class GxyPacket : public QtNodes::NodeData
 {
 public:
   
-  ParticlesVis() : Vis() {}
-  ParticlesVis(std::string o) : Vis(o) {}
-
+  GxyPacket() { /* std::cerr << "AAAAAAA 1 " << ((long)this) << "\n"; */ }
+  GxyPacket(std::string o) { origin = o; /* std::cerr << "AAAAAAA 2 " << ((long)this) << "\n";  */ }
+  
   QtNodes::NodeDataType type() const override
   { 
-    return QtNodes::NodeDataType {"ptvis", "PTVIS"};
+    return QtNodes::NodeDataType {"pkt", "PKT"};
   }
 
-  virtual void print() override
+  virtual void print()
   {
-    Vis::print();
+    std::cerr << "origin: " << origin << "\n";
   }
 
+  std::string get_origin() { return origin; }
+
+  void setValid(bool v) { valid = v; }
+  bool isValid() { return valid; }
+
+  virtual void toJson(QJsonObject& o)
+  {
+    o["origin"] = origin.c_str();
+  }
+
+  virtual void fromJson(QJsonObject o)
+  {
+    origin = o["origin"].toString().toStdString();
+  }
+
+private:
+
+  bool valid = false;
+  std::string origin;
 };
+
 

@@ -21,14 +21,14 @@
 #pragma once
   
 #include <iostream>
-#include "GxyVis.hpp"
+#include "Vis.hpp"
 
-class PathlinesVis : public GxyVis
+class PathlinesVis : public Vis
 {
 public:
   
-  PathlinesVis() : GxyVis() {}
-  PathlinesVis(std::string o) : GxyVis(o) {}
+  PathlinesVis() : Vis() {}
+  PathlinesVis(std::string o) : Vis(o) {}
 
   QtNodes::NodeDataType type() const override
   { 
@@ -37,7 +37,7 @@ public:
 
   virtual void print() override
   {
-    GxyVis::print();
+    Vis::print();
   }
 
 };

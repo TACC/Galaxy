@@ -64,7 +64,7 @@ using QtNodes::NodeValidationState;
 class MyQListWidgetItem : public QListWidgetItem
 {
 public:
-  MyQListWidgetItem(GxyDataInfo& di)  : QListWidgetItem(di.name.c_str()), di(di)
+  MyQListWidgetItem(GxyDataInfo& di)  : QListWidgetItem(di.name.c_str()), dataInfo(di)
   {
     dlg = new QDialog;
     dlg->setFixedWidth(300);
@@ -110,12 +110,12 @@ public:
   }
 
   void showDialog() { dlg->show(); }
-  void getDataInfo(GxyDataInfo& _di) { _di = di; }
-  GxyDataInfo getDataInfo() { return di; }
+  void getDataInfo(GxyDataInfo& di) { di = dataInfo; }
+  GxyDataInfo getDataInfo() { return dataInfo; }
 
 private:
   QDialog *dlg = NULL;
-  GxyDataInfo di;
+  GxyDataInfo dataInfo;
 };
 
 class MyQListWidget : public QListWidget
@@ -311,20 +311,25 @@ public:
 
   QString name() const override { return QStringLiteral("DataSource"); }
 
+  bool isValid() override { return current_selection != NULL; }
+
 private Q_SLOTS:
 
   void selection(QListWidgetItem *item)
   {
-    info->setEnabled(true);
     current_selection = (MyQListWidgetItem *)item;
-    _properties->getApplyButton()->setEnabled(true);
-    onApply();
+    info->setEnabled(true);
+    enableIfValid();
   }
 
   void onApply() override
   {
-    output->di = current_selection->getDataInfo();
-    Q_EMIT dataUpdated(0);
+    if (current_selection)
+    {
+      output->dataInfo = current_selection->getDataInfo();
+      output->setValid(true);
+      Q_EMIT dataUpdated(0);
+    }
   }
 
   void onAdd()
@@ -432,8 +437,6 @@ private Q_SLOTS:
       }
       else
       {
-        std::cerr << "received " << line << "\n";
-
         rapidjson::Document rply;
         std::getline(ss, line);
 
@@ -462,7 +465,7 @@ private Q_SLOTS:
 
 private:
   MyQListWidget *objectList;
-  MyQListWidgetItem *current_selection;
+  MyQListWidgetItem *current_selection = NULL;
   QPushButton *info;
   std::shared_ptr<GxyData> output;
 };

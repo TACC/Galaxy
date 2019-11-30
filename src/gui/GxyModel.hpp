@@ -35,6 +35,7 @@
 
 using QtNodes::NodeDataModel;
 
+#include "GxyData.hpp"
 #include "Properties.hpp"
 
 
@@ -63,6 +64,8 @@ public:
     connect(applyButton, SIGNAL(released()), this, SLOT(onApply()));
     connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
     layout->addWidget(applyButton);
+
+    enable(false);
   }
 
   virtual
@@ -105,7 +108,21 @@ public:
     }
   }
 
-private Q_SLOTS:
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) const
+  {
+  }
+
+  virtual void loadParameterWidgets(std::shared_ptr<GxyPacket> p) const
+  {
+  }
+
+  virtual void loadOutput(std::shared_ptr<GxyPacket> p) const 
+  {
+  }
+
+  virtual bool isValid() { return true; }
+
+public Q_SLOTS:
 
   void openProperties() { _properties->show(); _properties->raise(); }
 
@@ -114,6 +131,12 @@ private Q_SLOTS:
     applyButton->setEnabled(b);
     _properties->getApplyButton()->setEnabled(b);
   }
+
+  void enableIfValid()
+  {
+    enable(isValid());
+  }
+
 
   virtual void onApply() 
   {

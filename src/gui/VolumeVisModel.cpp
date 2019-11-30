@@ -22,7 +22,10 @@
 
 VolumeVisModel::VolumeVisModel() 
 {
-  output = std::make_shared<VolumeVis>(getModelIdentifier());
+  output = std::dynamic_pointer_cast<Vis>(std::shared_ptr<VolumeVis>(new VolumeVis(model_identifier)));
+
+  isovaluesDialog = new ScalarsDialog;
+  slicesDialog = new PlanesDialog;
 
   QFrame *frame  = new QFrame();
   QVBoxLayout *layout = new QVBoxLayout();
@@ -43,67 +46,113 @@ VolumeVisModel::VolumeVisModel()
   volumeRender->setChecked(false);
   layout->addWidget(volumeRender);
 
-  QFrame *cmap_box = new QFrame();
-  QHBoxLayout *cmap_box_layout = new QHBoxLayout();
-  cmap_box->setLayout(cmap_box_layout);
+  QFrame *xfunc_box = new QFrame();
+  QHBoxLayout *xfunc_box_layout = new QHBoxLayout();
+  xfunc_box->setLayout(xfunc_box_layout);
 
-  cmap_box_layout->addWidget(new QLabel("color map"));
+  xfunc_box_layout->addWidget(new QLabel("transfer function"));
 
-  tf_widget = new QLineEdit();
-  cmap_box_layout->addWidget(tf_widget);
+  xfunc_widget = new QLineEdit();
+  xfunc_box_layout->addWidget(xfunc_widget);
   
   QPushButton *tfunc_browse_button = new QPushButton("...");
-  cmap_box_layout->addWidget(tfunc_browse_button);
+  xfunc_box_layout->addWidget(tfunc_browse_button);
   connect(tfunc_browse_button, SIGNAL(released()), this, SLOT(openFileSelectorDialog()));
 
-  layout->addWidget(cmap_box);
+  layout->addWidget(xfunc_box);
 
-  QFrame *data_range_w = new QFrame;
-  QHBoxLayout *data_range_l = new QHBoxLayout();
-  data_range_l->setSpacing(0);
-  data_range_l->setContentsMargins(2, 0, 2, 0);
-  data_range_w->setLayout(data_range_l);
+  QFrame *xfunc_range_w = new QFrame;
+  QHBoxLayout *xfunc_range_l = new QHBoxLayout();
+  xfunc_range_l->setSpacing(0);
+  xfunc_range_l->setContentsMargins(2, 0, 2, 0);
+  xfunc_range_w->setLayout(xfunc_range_l);
 
-  data_range_l->addWidget(new QLabel("data range"));
+  xfunc_range_l->addWidget(new QLabel("data range"));
   
-  data_range_min = new QLineEdit;
-  data_range_min->setText("0");
-  data_range_min->setValidator(new QDoubleValidator());
-  data_range_l->addWidget(data_range_min);
+  xfunc_range_min = new QLineEdit;
+  xfunc_range_min->setText("0");
+  xfunc_range_min->setValidator(new QDoubleValidator());
+  xfunc_range_l->addWidget(xfunc_range_min);
   
-  data_range_max = new QLineEdit;
-  data_range_max->setText("0");
-  data_range_max->setValidator(new QDoubleValidator());
-  data_range_l->addWidget(data_range_max);
+  xfunc_range_max = new QLineEdit;
+  xfunc_range_max->setText("0");
+  xfunc_range_max->setValidator(new QDoubleValidator());
+  xfunc_range_l->addWidget(xfunc_range_max);
 
   QPushButton *resetDataRange = new QPushButton("reset");
   connect(resetDataRange, SIGNAL(released()), this, SLOT(onDataRangeReset()));
-  data_range_l->addWidget(resetDataRange);
+  xfunc_range_l->addWidget(resetDataRange);
 
-  layout->addWidget(data_range_w);
+  layout->addWidget(xfunc_range_w);
 
-  _properties->setPropertiesWidget(frame);
+  _properties->addProperties(frame);
 
-  connect(data_range_max, SIGNAL(editingFinished()), this, SLOT(enableApply()));
-  connect(data_range_min, SIGNAL(editingFinished()), this, SLOT(enableApply()));
+  connect(xfunc_range_max, SIGNAL(editingFinished()), this, SLOT(enableApply()));
+  connect(xfunc_range_min, SIGNAL(editingFinished()), this, SLOT(enableApply()));
   connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+}
+
+VolumeVisModel::~VolumeVisModel()
+{
+  delete isovaluesDialog;
+  delete slicesDialog;
+}
+
+void
+VolumeVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+{
+  if (o)
+  {
+    VisModel::loadInputDrivenWidgets(o);
+
+    std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(o);
+
+    xfunc_range_min->setText(QString::number(d->dataInfo.data_min));
+    xfunc_range_max->setText(QString::number(d->dataInfo.data_min));
+  }
+}
+
+void
+VolumeVisModel::loadParameterWidgets(std::shared_ptr<GxyPacket> o) const
+{
+  VisModel::loadParameterWidgets(o);
+
+  std::shared_ptr<VolumeVis> v = std::dynamic_pointer_cast<VolumeVis>(o);
+
+  slicesDialog->clear();
+  slicesDialog->set_planes(v->slices);
+
+  isovaluesDialog->clear();
+  isovaluesDialog->set_scalars(v->isovalues);
+
+  xfunc_widget->setText(v->transfer_function.c_str());
+  xfunc_range_min->setText(QString::number(v->xfer_range_min));
+  xfunc_range_max->setText(QString::number(v->xfer_range_max));
+}
+
+void
+VolumeVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
+{
+  VisModel::loadOutput(o);
+
+  std::shared_ptr<VolumeVis> v = std::dynamic_pointer_cast<VolumeVis>(o);
+
+  v->slices = slicesDialog->get_planes();
+  v->isovalues = isovaluesDialog->get_scalars();
+  
+  v->volume_rendering_flag = volumeRender->isChecked();
+  v->transfer_function = xfunc_widget->text().toStdString();
+  v->xfer_range_min = xfunc_range_min->text().toDouble();
+  v->xfer_range_min = xfunc_range_min->text().toDouble();
 }
 
 void 
 VolumeVisModel::onApply()
 {
-  if (input)
-  {
-    output->di.data_min = data_range_min->text().toDouble();
-    output->di.data_max = data_range_max->text().toDouble();
-    output->transfer_function = tf_widget->text().toStdString();
-    output->volume_rendering_flag = volumeRender->isChecked();
-
-    std::cerr << "output:\n";
-    output->di.print();
-    
-    Q_EMIT dataUpdated(0);
-  }
+  output = std::shared_ptr<VolumeVis>(new VolumeVis(model_identifier));
+  loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+  output->setValid(true);
+  Q_EMIT dataUpdated(0);
 }
 
 unsigned int
@@ -112,13 +161,13 @@ VolumeVisModel::nPorts(PortType portType) const
   return 1; // PortType::In or ::Out
 }
 
-NodeDataType
+QtNodes::NodeDataType
 VolumeVisModel::dataType(PortType pt, PortIndex) const
 {
   if (pt == PortType::In)
     return GxyData().type();
   else
-    return GxyVis().type();
+    return Vis().type();
 }
 
 std::shared_ptr<NodeData>
@@ -132,22 +181,24 @@ VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
 
+  loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
+
   if (input)
   {
-    output->di = input->di;
-    input->di.print();
-    input = std::dynamic_pointer_cast<GxyData>(data);
-    data_range_min->setText(QString::number(input->di.data_min));
-    data_range_max->setText(QString::number(input->di.data_max));
-    _properties->getApplyButton()->setEnabled(input && input->di.name != "");
+    xfunc_range_min->setText(QString::number(input->dataInfo.data_min));
+    xfunc_range_max->setText(QString::number(input->dataInfo.data_max));
   }
+  else
+    std::cerr << "input was NULL\n";
+
+  enableIfValid();
 }
 
 void 
 VolumeVisModel::onDataRangeReset()
 {
-  data_range_min->setText(QString::number(input->di.data_min));
-  data_range_max->setText(QString::number(input->di.data_max));
+  xfunc_range_min->setText(QString::number(input->dataInfo.data_min));
+  xfunc_range_max->setText(QString::number(input->dataInfo.data_max));
 }
 
 NodeValidationState
@@ -165,17 +216,68 @@ VolumeVisModel::validationMessage() const
 QJsonObject
 VolumeVisModel::save() const 
 {
-  QJsonObject modelJson = GxyModel::save();
-  output->save(modelJson);
+  loadOutput(output);
+
+  QJsonObject modelJson = VisModel::save();
+
+  loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+  output->toJson(modelJson);
+
   return modelJson;
 }
 
 void
 VolumeVisModel::restore(QJsonObject const &p)
 {
-  GxyModel::restore(p);
-  output->restore(p);
-  volumeRender->setChecked(output->volume_rendering_flag);
-  tf_widget->setText(output->transfer_function.c_str());
+  // VisModel::restore(p);
+  output->fromJson(p);
+  loadParameterWidgets(output);
+/*
+  QJsonArray isovaluesJson = p["isovalues"].toArray();
+
+  std::vector<float> isovalues;
+  for (auto isovalueJson : isovaluesJson)
+    isovalues.push_back(isovalueJson.toDouble());
+
+  isovaluesDialog->clear();
+  isovaluesDialog->set_scalars(isovalues);
+
+  QJsonArray slicesJson = p["slices"].toArray();
+
+  std::vector<gxy::vec4f> slices;
+  for (auto sliceJson : slicesJson)
+  {
+    QJsonArray o = sliceJson.toArray();
+    gxy::vec4f slice;
+    slice.x = o[0].toDouble();
+    slice.y = o[1].toDouble();
+    slice.z = o[2].toDouble();
+    slice.w = o[3].toDouble();
+    slices.push_back(slice);
+  }
+
+  slicesDialog->clear();
+  slicesDialog->set_planes(slices);
+
+  volumeRender->setChecked(p["volume rendering"].toBool());
+  xfunc_widget->setText(p["transfer function"].toString());
+*/
 }
 
+bool
+VolumeVisModel::isValid()
+{
+  if (! VisModel::isValid() || ! input->isValid())
+  {
+    // std::cerr << "1 " << VisModel::isValid() << " " << input->isValid() << "\n";
+    return false;
+  }
+
+  if (volumeRender->isChecked() && xfunc_widget->text().toStdString() == "")
+  {
+    // std::cerr << "2 " << volumeRender->isChecked() <<  " " << xfunc_widget->text().toStdString() << "\n";
+    return false;
+  }
+
+  return true;
+}

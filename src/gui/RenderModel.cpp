@@ -59,7 +59,7 @@ RenderModel::RenderModel()
   connect(update_rate, SIGNAL(editingFinished()), this, SLOT(setUpdateRate()));
   setUpdateRate();
 
-  _properties->setPropertiesWidget(frame);
+  _properties->addProperties(frame);
 
   renderWindow = new GxyRenderWindow(getModelIdentifier());
   renderWindow->show();
@@ -68,7 +68,7 @@ RenderModel::RenderModel()
   connect(open, SIGNAL(released()), renderWindow, SLOT(show()));
   _properties->addButton(open);
 
-  connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
+  // connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onConnectionStateChanged(bool)));
 
@@ -106,36 +106,37 @@ RenderModel::nPorts(PortType portType) const
 NodeDataType
 RenderModel::dataType(PortType pt, PortIndex pi) const
 {
-  return GxyVis().type();
+  return Vis().type();
 }
 
 std::shared_ptr<NodeData>
 RenderModel::outData(PortIndex) { return NULL; } 
 
+bool 
+RenderModel::isValid()
+{
+  return visList.size() > 0;
+}
+
 void
 RenderModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
-  input = std::dynamic_pointer_cast<GxyVis>(data);
-  if (input) visList[input->get_origin()] = input;
-  _properties->getApplyButton()->setEnabled(visList.size() > 0);
+  input = std::dynamic_pointer_cast<Vis>(data);
 
-  std::cerr << "RenderModel " << getModelIdentifier() << " receives:\n";
-  if (input) input->print();
-  else std::cerr << "nothing\n";
-
-#if 0
-  if (data)
+  if (input)
   {
-    for (auto vis : visList)
-      vis.second->print();
+    if (input->isValid())
+    {
+      visList[input->get_origin()] = input;
+      std::shared_ptr<Vis> vis = std::dynamic_pointer_cast<Vis>(data);
+      Q_EMIT visUpdated(vis);
+    }
+    else
+    {
+      visList.erase(input->get_origin());
+    }
   }
-#endif
-
-  if (portIndex == 0)
-  {
-    std::shared_ptr<GxyVis> vis = std::dynamic_pointer_cast<GxyVis>(data);
-    Q_EMIT visUpdated(vis);
-  }
+  enableIfValid();
 }
 
 NodeValidationState
@@ -207,7 +208,7 @@ RenderModel::sendVisualization()
   for (auto vis : visList)
   {
     QJsonObject operatorJson;
-    vis.second->save(operatorJson);
+    vis.second->toJson(operatorJson);
     operatorsJson.push_back(operatorJson);
   }
   v["operators"] = operatorsJson;
@@ -222,9 +223,7 @@ RenderModel::sendVisualization()
   QString s = QLatin1String(bytes);
 
   std::string msg = s.toStdString();
-  std::cerr << "Visualization: " << msg << "\n";
   getTheGxyConnectionMgr()->CSendRecv(msg);
-  std::cerr << msg << "\n";
 }
 
 void
@@ -241,7 +240,6 @@ RenderModel::initializeWindow(bool isConnected)
     QString qs = QLatin1String(bytes);
 
     std::string msg = qs.toStdString();
-    std::cerr << "init: " << msg << "\n";
     getTheGxyConnectionMgr()->CSendRecv(msg);
   }
 }

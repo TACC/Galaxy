@@ -89,16 +89,18 @@ GxyRenderWindow::onLightingChanged(LightingEnvironment& l)
 }
 
 void
-GxyRenderWindow::onVisUpdate(std::shared_ptr<GxyVis> v)
+GxyRenderWindow::onVisUpdate(std::shared_ptr<Vis> v)
 {
   if (v)
   {
     Visualization[v->get_origin()] = v;
+#if 0
     for (auto vis : Visualization)
     {
       std::cerr << vis.first << " =======================\n";
       vis.second->print();
     }
+#endif
   }
 }
 
@@ -150,7 +152,7 @@ GxyRenderWindow::visualizationString()
   for (auto vis : Visualization)
   {
     QJsonObject operatorJson;
-    vis.second->save(operatorJson);
+    vis.second->toJson(operatorJson);
     operatorsJson.push_back(operatorJson);
   }
   v["operators"] = operatorsJson;
@@ -482,6 +484,7 @@ GxyRenderWindow::pixel_receiver_thread(void *d)
     {
       char *buf; int n;
       connection->DRecv(buf, n);
+      // std::cerr << "received " << ((long)buf) << " " << n << "\n";
 
       char *ptr = buf;
       int knt = *(int *)ptr;
@@ -493,8 +496,10 @@ GxyRenderWindow::pixel_receiver_thread(void *d)
       gxy::Pixel *p = (gxy::Pixel *)ptr;
 
       wndw->addPixels(p, knt, frame);
+      // std::cerr << "freeing " << ((long)buf) << "\n";
 
       free(buf);
+      // std::cerr << "done\n";
     }
   }
 

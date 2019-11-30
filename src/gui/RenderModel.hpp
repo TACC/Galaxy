@@ -49,7 +49,7 @@ using QtNodes::PortType;
 using QtNodes::PortIndex;
 using QtNodes::NodeValidationState;
 
-#include "GxyVis.hpp"
+#include "Vis.hpp"
 
 #include "Camera.hpp"
 #include "CameraDialog.hpp"
@@ -97,10 +97,11 @@ public:
   void restore(QJsonObject const &p) override;
 
   void sendVisualization();
+  bool isValid() override;
 
 signals:
 
-  void visUpdated(std::shared_ptr<GxyVis>);
+  void visUpdated(std::shared_ptr<Vis>);
   void lightingChanged(LightingEnvironment&);
   void cameraChanged(Camera&);
 
@@ -150,7 +151,6 @@ private Q_SLOTS:
 
   void onApply() override
   {
-    std::cerr << "onApply\n";
     if (getTheGxyConnectionMgr()->IsConnected())
     {
       sendVisualization();
@@ -182,8 +182,8 @@ private:
   Camera camera;
   LightingEnvironment lighting;
 
-  std::shared_ptr<GxyVis> input;
-  std::map<std::string, std::shared_ptr<GxyVis>> visList;
+  std::shared_ptr<Vis> input;
+  std::map<std::string, std::shared_ptr<Vis>> visList;
 
   GxyRenderWindow *renderWindow = NULL;
   QLineEdit *update_rate;

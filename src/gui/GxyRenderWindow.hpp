@@ -9,7 +9,7 @@
 #include "GxyConnectionMgr.hpp"
 #include "Camera.hpp"
 #include "Lights.hpp"
-#include "GxyVis.hpp"
+#include "Vis.hpp"
 
 #include "Pixel.h"
 #include "trackball.hpp"
@@ -65,7 +65,6 @@ protected:
   
   void resizeEvent(QResizeEvent *e) override
   {
-    std::cerr << "resize!\n";
     QOpenGLWidget::resizeEvent(e);
   }
 
@@ -82,7 +81,7 @@ signals:
 
 public Q_SLOTS:
   void onLightingChanged(LightingEnvironment&);
-  void onVisUpdate(std::shared_ptr<GxyVis>);
+  void onVisUpdate(std::shared_ptr<Vis>);
   void onVisRemoved(std::string);
 
 private:
@@ -95,7 +94,7 @@ private:
 
   Camera camera;
   LightingEnvironment lighting;
-  std::map<std::string, std::shared_ptr<GxyVis>> Visualization;
+  std::map<std::string, std::shared_ptr<Vis>> Visualization;
 
   int button = -1;
   std::string renderer_id;

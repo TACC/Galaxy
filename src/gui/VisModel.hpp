@@ -1,5 +1,3 @@
-// ========================================================================== //
-//                                                                            //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -27,21 +25,18 @@
 #include <string>
 
 #include <QtCore/QObject>
+
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFileDialog>
+
 #include <QtGui/QDoubleValidator>
-#include <QJsonArray>
 
-#include "PlanesDialog.hpp"
-#include "ScalarsDialog.hpp"
-#include "VisModel.hpp"
-#include "VolumeVis.hpp"
+#include "GxyModel.hpp"
 
-using QtNodes::Node;
 using QtNodes::NodeData;
 using QtNodes::NodeDataType;
 using QtNodes::NodeDataModel;
@@ -49,89 +44,70 @@ using QtNodes::PortType;
 using QtNodes::PortIndex;
 using QtNodes::NodeValidationState;
 
+#include "GxyData.hpp"
+#include "PlanesDialog.hpp"
+#include "ScalarsDialog.hpp"
 
+#include <QJsonArray>
 
-class VolumeVisModel : public VisModel
+#include "Vis.hpp"
+
+class VisModel : public GxyModel
 {
   Q_OBJECT
 
 public:
-  VolumeVisModel();
-  ~VolumeVisModel();
+  VisModel();
+  ~VisModel() {}
 
   unsigned int nPorts(PortType portType) const override;
-
-  NodeDataType dataType(PortType portType, PortIndex portIndex) const override;
-
-  std::shared_ptr<NodeData> outData(PortIndex port) override;
-
-  void setInData(std::shared_ptr<NodeData> data, PortIndex portIndex) override;
 
   NodeValidationState validationState() const override;
 
   QString validationMessage() const override;
 
-  QString caption() const override { return QStringLiteral("VolumeVis"); }
+  QString caption() const override { return QStringLiteral("Vis"); }
 
-  QString name() const override { return QStringLiteral("VolumeVis"); }
+  QString name() const override { return QStringLiteral("Vis"); }
 
   QJsonObject save() const override;
-  void restore(QJsonObject const &p) override;
 
-  bool isValid() override;
+  void setInData(std::shared_ptr<NodeData> data, PortIndex portIndex) override
+  {
+    std::cerr << "setInData on virtual VisModel\n";
+    exit(1);
+  }
 
   virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
   virtual void loadParameterWidgets(std::shared_ptr<GxyPacket> o) const override;
 
   virtual void loadOutput(std::shared_ptr<GxyPacket> o) const override;
 
+  bool isValid() override;
+
 private Q_SLOTS:
-
-  void volume_rendering_flag_state_changed(int b) 
-  {
-    enableIfValid();
-  }
-
 
   void onApply() override;
 
-  void disableApply()
-  {
-     _properties->getApplyButton()->setEnabled(false);
-  }
-    
-  void enableApply()
-  {
-     _properties->getApplyButton()->setEnabled(true);
-  }
-    
   void onDataRangeReset();
 
-  void openPlanesDialog() 
-  {
-    slicesDialog->exec();
-  }
-
-  void openIsovaluesDialog() 
-  {
-    isovaluesDialog->exec();
-  }
-
-  void openFileSelectorDialog()
+  void openCmapSelectorDialog()
   {
     QFileDialog *fileDialog = new QFileDialog();
+    fileDialog->setNameFilter(tr("Colormaps (*.cmap *.json)"));
     fileDialog->exec();
-    xfunc_widget->clear();
-    xfunc_widget->insert(fileDialog->selectedFiles().at(0));
+    cmap_widget->clear();
+    cmap_widget->insert(fileDialog->selectedFiles().at(0));
     delete fileDialog;
+    enableIfValid();
   }
 
-private:
-  ScalarsDialog *isovaluesDialog;
-  PlanesDialog  *slicesDialog;
+protected:
+  std::shared_ptr<GxyData> input;
+  std::shared_ptr<GxyPacket> output;
 
-  QLineEdit *xfunc_widget = NULL;
-  QCheckBox *volumeRender = NULL;
-  QLineEdit *xfunc_range_min = NULL;
-  QLineEdit *xfunc_range_max = NULL;
+private:
+  QLineEdit *cmap_widget = NULL;
+  QLineEdit *cmap_range_min = NULL;
+  QLineEdit *cmap_range_max = NULL;
 };

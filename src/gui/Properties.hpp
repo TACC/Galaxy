@@ -91,8 +91,9 @@ public:
     setLayout(outer_layout);
   }
 
-  void setPropertiesWidget(QFrame *w)
+  void addProperties(QFrame *w)
   {
+    w->setFrameStyle(QFrame::Panel | QFrame::Raised);
     panel_layout->addWidget(w);
   }
 
