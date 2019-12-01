@@ -101,11 +101,11 @@ VolumeVisModel::~VolumeVisModel()
 void
 VolumeVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 {
-  if (o)
+  if (input)
   {
-    VisModel::loadInputDrivenWidgets(o);
+    VisModel::loadInputDrivenWidgets(input);
 
-    std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(o);
+    std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(input);
 
     xfunc_range_min->setText(QString::number(d->dataInfo.data_min));
     xfunc_range_max->setText(QString::number(d->dataInfo.data_min));
@@ -113,11 +113,11 @@ VolumeVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 }
 
 void
-VolumeVisModel::loadParameterWidgets(std::shared_ptr<GxyPacket> o) const
+VolumeVisModel::loadParameterWidgets() const
 {
-  VisModel::loadParameterWidgets(o);
+  VisModel::loadParameterWidgets();
 
-  std::shared_ptr<VolumeVis> v = std::dynamic_pointer_cast<VolumeVis>(o);
+  std::shared_ptr<VolumeVis> v = std::dynamic_pointer_cast<VolumeVis>(output);
 
   slicesDialog->clear();
   slicesDialog->set_planes(v->slices);
@@ -180,16 +180,9 @@ void
 VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
-
-  loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
-
+  
   if (input)
-  {
-    xfunc_range_min->setText(QString::number(input->dataInfo.data_min));
-    xfunc_range_max->setText(QString::number(input->dataInfo.data_max));
-  }
-  else
-    std::cerr << "input was NULL\n";
+    loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
   enableIfValid();
 }
@@ -229,39 +222,8 @@ VolumeVisModel::save() const
 void
 VolumeVisModel::restore(QJsonObject const &p)
 {
-  // VisModel::restore(p);
   output->fromJson(p);
-  loadParameterWidgets(output);
-/*
-  QJsonArray isovaluesJson = p["isovalues"].toArray();
-
-  std::vector<float> isovalues;
-  for (auto isovalueJson : isovaluesJson)
-    isovalues.push_back(isovalueJson.toDouble());
-
-  isovaluesDialog->clear();
-  isovaluesDialog->set_scalars(isovalues);
-
-  QJsonArray slicesJson = p["slices"].toArray();
-
-  std::vector<gxy::vec4f> slices;
-  for (auto sliceJson : slicesJson)
-  {
-    QJsonArray o = sliceJson.toArray();
-    gxy::vec4f slice;
-    slice.x = o[0].toDouble();
-    slice.y = o[1].toDouble();
-    slice.z = o[2].toDouble();
-    slice.w = o[3].toDouble();
-    slices.push_back(slice);
-  }
-
-  slicesDialog->clear();
-  slicesDialog->set_planes(slices);
-
-  volumeRender->setChecked(p["volume rendering"].toBool());
-  xfunc_widget->setText(p["transfer function"].toString());
-*/
+  loadParameterWidgets();
 }
 
 bool
@@ -269,13 +231,11 @@ VolumeVisModel::isValid()
 {
   if (! VisModel::isValid() || ! input->isValid())
   {
-    // std::cerr << "1 " << VisModel::isValid() << " " << input->isValid() << "\n";
     return false;
   }
 
   if (volumeRender->isChecked() && xfunc_widget->text().toStdString() == "")
   {
-    // std::cerr << "2 " << volumeRender->isChecked() <<  " " << xfunc_widget->text().toStdString() << "\n";
     return false;
   }
 

@@ -112,7 +112,7 @@ public:
   {
   }
 
-  virtual void loadParameterWidgets(std::shared_ptr<GxyPacket> p) const
+  virtual void loadParameterWidgets() const
   {
   }
 

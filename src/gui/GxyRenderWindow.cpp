@@ -272,6 +272,8 @@ GxyRenderWindow::sendCamera()
     QString qs = QLatin1String(bytes);
 
     std::string msg = qs.toStdString();
+
+    // std::cerr << "cam: " << msg << "\n";
     getTheGxyConnectionMgr()->CSendRecv(msg);
   }
 }
@@ -328,6 +330,8 @@ GxyRenderWindow::paintGL()
 void
 GxyRenderWindow::resizeGL(int w, int h)
 {
+  std::cerr << "resizeGL " << w << " " << h << "\n";
+
   if (width != w || height != h)
   {
     width = w;
@@ -494,6 +498,7 @@ GxyRenderWindow::pixel_receiver_thread(void *d)
       ptr += sizeof(int);
       gxy::Pixel *p = (gxy::Pixel *)ptr;
 
+      // std::cerr << " wndw " << ((long)wndw) << "\n";
       wndw->addPixels(p, knt, frame);
       // std::cerr << "freeing " << ((long)buf) << "\n";
 

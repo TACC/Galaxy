@@ -140,13 +140,13 @@ VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) const
 }
 
 void
-VisModel::loadParameterWidgets(std::shared_ptr<GxyPacket> p) const
+VisModel::loadParameterWidgets() const
 {
-  if (p)
+  if (output)
   {
-    GxyModel::loadParameterWidgets(p);
+    GxyModel::loadParameterWidgets();
 
-    std::shared_ptr<Vis> v = std::dynamic_pointer_cast<Vis>(p);
+    std::shared_ptr<Vis> v = std::dynamic_pointer_cast<Vis>(output);
 
     cmap_widget->setText(v->colormap_file.c_str());
     cmap_range_min->setText(QString::number(v->cmap_range_min));

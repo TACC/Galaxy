@@ -201,13 +201,6 @@ SamplerModel::outData(QtNodes::PortIndex)
   return std::static_pointer_cast<QtNodes::NodeData>(result);
 }
 
-void
-SamplerModel::
-setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
-{
-}
-
-
 QtNodes::NodeValidationState
 SamplerModel::validationState() const
 {
@@ -220,4 +213,36 @@ SamplerModel::validationMessage() const
 {
   return QString("copacetic");
 }
+
+void
+SamplerModel::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
+{
+  input = std::dynamic_pointer_cast<GxyData>(data);
+  
+  if (input)
+    loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
+
+  enableIfValid();
+}
+
+void
+SamplerModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+{
+  std::shared_ptr<GxyData> input = std::dynamic_pointer_cast<GxyData>(o);
+  mh_linear_tf_min->setText(QString::number(input->dataInfo.data_min));
+  mh_linear_tf_max->setText(QString::number(input->dataInfo.data_max));
+}
+
+void
+SamplerModel::loadParameterWidgets() const
+{
+}
+
+bool
+SamplerModel::isValid()
+{
+  return input && input->isValid();
+}
+
+
 

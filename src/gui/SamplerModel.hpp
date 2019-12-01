@@ -41,6 +41,8 @@
 #include "Lights.hpp"
 #include "LightsDialog.hpp"
 
+#include <nodes/NodeData>
+
 class SamplerModel : public GxyModel
 {
   Q_OBJECT
@@ -66,6 +68,10 @@ public:
   QString caption() const override { return QStringLiteral("Sampler"); }
 
   QString name() const override { return QStringLiteral("Sampler"); }
+
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
+  virtual void loadParameterWidgets() const override;
+  bool isValid() override;
 
 public Q_SLOTS: 
 
@@ -100,6 +106,9 @@ private Q_SLOTS:
 
 private:
 
+  std::shared_ptr<GxyData> input;
+  std::shared_ptr<GxyData> output;
+
   Camera camera;
 
   QFrame *mh_properties;
@@ -130,8 +139,4 @@ private:
   QComboBox *type;
   QPushButton *openCamera;
   QLineEdit *parameter;
-  std::shared_ptr<GxyData> output;
-
-  
-
 };
