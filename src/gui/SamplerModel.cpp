@@ -23,6 +23,8 @@
 #include <QtGui/QIntValidator>
 #include <QtGui/QDoubleValidator>
 
+#include "GxyMainWindow.hpp"
+
 SamplerModel::SamplerModel() 
 {
   QFrame *frame  = new QFrame();
@@ -189,9 +191,17 @@ SamplerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
 void
 SamplerModel::onApply()
 {
-  QJsonObject sampleJson;
-  sampleJson["cmd"] = "gui::sample";
-  sampleJson["Camera"] = camera.save();
+  QJsonObject json = save();
+  json["cmd"] = "gui::sample";
+
+  QJsonDocument doc(json);
+  QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+  QString s = QLatin1String(bytes);
+
+  std::string msg = s.toStdString();
+  getTheGxyConnectionMgr()->CSendRecv(msg);
+
+  std::cerr << "SamplerModel apply reply: " << msg << "\n";
 }
 
 std::shared_ptr<QtNodes::NodeData>
@@ -233,11 +243,6 @@ SamplerModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
   mh_linear_tf_max->setText(QString::number(input->dataInfo.data_max));
 }
 
-void
-SamplerModel::loadParameterWidgets() const
-{
-}
-
 bool
 SamplerModel::isValid()
 {
@@ -245,4 +250,53 @@ SamplerModel::isValid()
 }
 
 
+QJsonObject
+SamplerModel::save() const
+{
+  QJsonObject modelJson = GxyModel::save();
+
+  modelJson["camera"] = camera.save();
+
+  modelJson["mh_tfunc"] = mh_tfunc->currentIndex();
+  modelJson["type"] = type->currentIndex();
+
+  modelJson["mh_radius"] = mh_radius->text().toDouble();
+  modelJson["mh_sigma"] = mh_sigma->text().toDouble();
+  modelJson["mh_iterations"] = mh_iterations->text().toInt();
+  modelJson["mh_startup"] = mh_startup->text().toInt();
+  modelJson["mh_skip"] = mh_skip->text().toInt();
+  modelJson["mh_miss"] = mh_miss->text().toInt();
+  modelJson["mh_linear_tf_min"] = mh_linear_tf_min->text().toDouble();
+  modelJson["mh_linear_tf_max"] = mh_linear_tf_max->text().toDouble();
+  modelJson["gaussian_mean"] = gaussian_mean->text().toDouble();
+  modelJson["gaussian_std"] = gaussian_std->text().toDouble();
+  modelJson["isovalue"] = isovalue->text().toDouble();
+  modelJson["gradient"] = gradient->text().toDouble();
+
+  return modelJson;
+}
+
+void
+SamplerModel::restore(QJsonObject const &p)
+{
+  camera.restore(p["camera"].toObject());
+
+  mh_tfunc->setCurrentIndex(p["mh_tfunc"].toInt());
+  type->setCurrentIndex(p["type"].toInt());
+
+  mh_radius->setText(QString::number(p["mh_radius"].toDouble()));
+  mh_sigma->setText(QString::number(p["mh_sigma"].toDouble()));
+  mh_iterations->setText(QString::number(p["mh_iterations"].toInt()));
+  mh_startup->setText(QString::number(p["mh_startup"].toInt()));
+  mh_skip->setText(QString::number(p["mh_skip"].toInt()));
+  mh_miss->setText(QString::number(p["mh_miss"].toInt()));
+  mh_linear_tf_min->setText(QString::number(p["mh_linear_tf_min"].toDouble()));
+  mh_linear_tf_max->setText(QString::number(p["mh_linear_tf_max"].toDouble()));
+  gaussian_mean->setText(QString::number(p["gaussian_mean"].toDouble()));
+  gaussian_std->setText(QString::number(p["gaussian_std"].toDouble()));
+  isovalue->setText(QString::number(p["isovalue"].toDouble()));
+  gradient->setText(QString::number(p["gradient"].toDouble()));
+
+  loadParameterWidgets();
+}
 

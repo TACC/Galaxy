@@ -74,6 +74,7 @@ DynamicLibrary::deserialize(unsigned char *p)
 bool
 DynamicLibrary::local_commit(MPI_Comm c)
 {
+  std::cerr << "opening " << name << "\n";
   handle = dlopen(const_cast<char *>(name.c_str()), RTLD_NOW);
   if (!handle)
   {
@@ -210,6 +211,7 @@ DynamicLibraryManager::Register()
 DynamicLibraryP
 DynamicLibraryManager::Load(string name)
 {
+  std::cerr << "load " << name << "\n";
   for (auto i : loadmap)
     if (i->GetName() == name)
       return i;

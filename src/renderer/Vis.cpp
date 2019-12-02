@@ -77,12 +77,35 @@ bool
 Vis::Commit(DatasetsP datasets)
 {
 	datakey = datasets->FindKey(name);
+
 	if (datakey == -1)
 	{
 		std::cerr << "ERROR: Unable to find data using name: " << name << endl;
 		set_error(1);
     return false;
 	}
+
+  return Commit();
+}
+
+bool 
+Vis::Commit(KeyedDataObjectP kdop)
+{
+  if (! kdop)
+  {
+    std::cerr << "ERROR: Unable to associate data object with Vis\n";
+    set_error(1);
+    return false;
+  }
+
+  datakey = kdop->getkey();
+
+  return Commit();
+}
+
+bool 
+Vis::Commit()
+{
 	return KeyedObject::Commit();
 }
 

@@ -70,8 +70,10 @@ public:
   QString name() const override { return QStringLiteral("Sampler"); }
 
   virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
-  virtual void loadParameterWidgets() const override;
   bool isValid() override;
+
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
 
 public Q_SLOTS: 
 

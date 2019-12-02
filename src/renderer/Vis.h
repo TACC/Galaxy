@@ -56,8 +56,11 @@ class Vis : public KeyedObject, public IspcObject
 public:
     virtual ~Vis(); //!< default destructor
 
-    //! commit this object to the global registry across all processes
+    //! commit this object to the global registry across all processes.  If by name, we need the Datasets object to dereference the dataset name.   If we give it a specific object, use it.  Otherwise, assume the datakey is already set.
+    
     virtual bool Commit(DatasetsP);
+    virtual bool Commit(KeyedDataObjectP);
+    virtual bool Commit();
 
     //! return a pointer to the KeyedDataObject data that this Vis targets
     KeyedDataObjectP GetTheData() { return data; }

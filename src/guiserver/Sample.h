@@ -21,62 +21,10 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
-#include <sstream>
 
-#include "Renderer.h"
-#include "MultiServerHandler.h"
-#include "ServerRendering.h"
+#include "rapidjson/document.h"
 
 namespace gxy
 {
-
-class GuiClientServer : public MultiServerHandler
-{
-  struct GuiClient
-  {
-    GuiClient()
-    {
-      visualization = Visualization::NewP();
-      camera = Camera::NewP();
-      rendering = ServerRendering::NewP();
-      renderingSet = RenderingSet::NewP();
-      renderingSet->AddRendering(rendering);
-    }
-
-    VisualizationP   visualization;
-    CameraP          camera;
-    ServerRenderingP rendering;
-    RenderingSetP    renderingSet;
-  };
-    
-  
-public:
-  static void init();
-  bool handle(std::string line, std::string& reply);
-  virtual ~GuiClientServer(){}
-
-  GuiClientServer(SocketHandler *sh) : MultiServerHandler(sh)
-  {
-    first = true;
-
-    datasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
-    if (! datasets)
-    {
-      datasets = Datasets::NewP();
-      MultiServer::Get()->SetGlobal("global datasets", datasets);
-    }
-
-    renderer = Renderer::NewP();
-    renderer->Commit();
-  }
-
-private:
-  bool        first;
-  RendererP   renderer;
-  DatasetsP   datasets;
-
-  std::map<std::string, GuiClient *> clients;
-};
-
+  bool MHSample(Document&, std::string);
 }

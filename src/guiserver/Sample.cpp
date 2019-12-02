@@ -24,13 +24,14 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
-// #include <cstdlib>
 #include <math.h>
 
 #include <dtypes.h>
 
+#include "rapidjson/document.h"
+
 #include "Datasets.h"
-#include "MHSampleClientServer.h"
+#include "Sample.h"
 
 #include <time.h>
 #include <boost/random/normal_distribution.hpp>
@@ -54,20 +55,49 @@ namespace gxy
 #define TF_LINEAR   1
 #define TF_GAUSSIAN 2
 
-MHSampleClientServer::MHSampleClientServer(SocketHandler *sh) : MultiServerHandler(sh)
+struct mhArgs
 {
-  args.radius       = 0.02;
-  args.tf_type      = TF_NONE;
-  args.sigma        = 1.0;
-  args.n_iterations = 20000;
-  args.n_startup    = 1000;
-  args.n_skip       = 10;
-  args.n_miss       = 10;
-  args.r = args.g = args.b = 0.8; args.a = 1.0;
+  Key sourceKey;       // identifier for source volume
+  Key destinationKey;  // identifier for destination particle set
 
-  volume = NULL;
-  particles = NULL;
+  int tf_type;         // none, linear, gaussian
+  int iterations;      // iteration limit - after the initial skipped iterations
+  int startup;         // initial iterations to ignore
+  int skip;            // only retain every n_skip'th successful sample
+  int miss;            // max number of successive misses allowed before termination
+
+  float radius;        // Radius for particles
+  float sigma;         // type of transfer function TF_LINEAR or TF_GAUSSIAN
+  float linear_tf_min; // min value of linear transfer function
+  float linear_tf_max; // max value of linear transfer function
+  float gaussian_mean; // gaussian transfer function mean
+  float gaussian_std;  // gaussian transfer function standard deviation
+
+  float istep;          // steps along i, j, and k axes
+  float jstep;
+  float kstep;
 };
+
+bool
+MHSample(std::string src, std::string dst, Document& doc, std::string reply)
+{
+  mhArgs args;
+
+  args.sourceKey         = kkkk
+
+  args.mh_radius         = p["mh_radius"].toDouble()));
+  args.mh_sigma          = p["mh_sigma"].toDouble()));
+  args.mh_iterations     = p["mh_iterations"].toInt()));
+  args.mh_startup        = p["mh_startup"].toInt()));
+  args.mh_skip           = p["mh_skip"].toInt()));
+  args.mh_miss           = p["mh_miss"].toInt()));
+  args.mh_linear_tf_min  = p["mh_linear_tf_min"].toDouble()));
+  args.mh_linear_tf_max  = p["mh_linear_tf_max"].toDouble()));
+  args.gaussian_mean     = p["gaussian_mean"].toDouble()));
+  args.gaussian_std      = p["gaussian_std"].toDouble()));
+  args.isovalue          = p["isovalue"].toDouble()));
+  args.gradient          = p["gradient"].toDouble()));
+}
 
 static variate_generator<mt19937, normal_distribution<> > *generator;
 
@@ -114,7 +144,6 @@ static float Q(VolumeP v, float s, MHSampleClientServer::Args *a)
   {
     q = gaussian(s, a->tf0, a->tf1);
   }
-
   return q;
 }
 

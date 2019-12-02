@@ -60,8 +60,17 @@ GuiClientServer::init()
 }
 
 bool
+GuiClientServer::Sample(Document& params, std::string& reply)
+{
+  reply = "OK";
+  return true;
+}
+
+bool
 GuiClientServer::handle(string line, string& reply)
 {
+  std::cerr << line << "\n";
+
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
@@ -238,6 +247,8 @@ GuiClientServer::handle(string line, string& reply)
     client->rendering->SetTheSize(client->camera->get_width(), client->camera->get_height());
     client->rendering->SetHandler(this);
 
+    std::cerr << "Rendering " << ((long)client->rendering.get()) << " handler " << ((long)this) << "\n";
+
     client->rendering->SetTheVisualization(client->visualization);
     client->rendering->SetTheCamera(client->camera);
     client->rendering->SetTheDatasets(theDatasets);
@@ -247,6 +258,10 @@ GuiClientServer::handle(string line, string& reply)
     rs->AddRendering(client->rendering);
     rs->Commit();
     renderer->Start(client->renderingSet);
+  }
+  else if (cmd == "gui::sample")
+  {
+    return Sample(doc, reply);
   }
   else
     return false;
