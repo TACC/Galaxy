@@ -206,8 +206,10 @@ RenderModel::sendVisualization()
   for (auto vis : visList)
   {
     QJsonObject operatorJson;
-    std::cerr << "=====================================\n";
-    vis.second->print();
+
+    // std::cerr << "=====================================\n";
+    // vis.second->print();
+
     vis.second->toJson(operatorJson);
     operatorsJson.push_back(operatorJson);
   }
@@ -223,7 +225,9 @@ RenderModel::sendVisualization()
   QString s = QLatin1String(bytes);
 
   std::string msg = s.toStdString();
-std::cerr << "XXXXXXXXXX " << msg << "\n";
+
+// std::cerr << "XXXXXXXXXX " << msg << "\n";
+
   getTheGxyConnectionMgr()->CSendRecv(msg);
 }
 

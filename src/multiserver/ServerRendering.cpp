@@ -56,14 +56,11 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 
     if (handler)
     {
-      std::cerr << "sending " << n << " pixels\n";
       handler->getTheSocketHandler()->DSendV(ptrs, szs);
     }
     else
       std::cerr << "no handler\n";
 	}
-  else
-    std::cerr << "skipped due to frame number\n";
 
   pthread_mutex_unlock(&lock);
 }

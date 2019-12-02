@@ -152,8 +152,6 @@ VolumeVisModel::onApply()
   output = std::shared_ptr<VolumeVis>(new VolumeVis(model_identifier));
   loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
   output->setValid(true);
-  std::cerr << "onApply onApply onApply onApply onApply onApply onApply onApply \n";
-  output->print();
 
   Q_EMIT dataUpdated(0);
 }
@@ -183,8 +181,6 @@ void
 VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
-  std::cerr << "+++++++++++++++++++ VolumeVisModel::setInData\n";
-  input->print();
   
   if (input)
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));

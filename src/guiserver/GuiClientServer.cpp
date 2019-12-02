@@ -54,7 +54,6 @@ new_handler(SocketHandler *sh)
 void
 GuiClientServer::init()
 {
-  std::cerr << "============ initializing renderer\n";
   Renderer::Initialize();
   ServerRendering::RegisterClass();
 }
@@ -69,8 +68,6 @@ GuiClientServer::Sample(Document& params, std::string& reply)
 bool
 GuiClientServer::handle(string line, string& reply)
 {
-  std::cerr << line << "\n";
-
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
@@ -150,7 +147,6 @@ GuiClientServer::handle(string line, string& reply)
       float m, M;
       kdop->get_global_minmax(m, M);
 
-      std::cerr << "XXXXXXXXXXXXXXXXXXXX ---------> " << kdop->getkey() << "\n";
       rapidjson::Value dset(rapidjson::kObjectType);
       dset.AddMember("name", rapidjson::Value().SetString(it->c_str(), it->length()+1), doc.GetAllocator());
       dset.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), doc.GetAllocator());
@@ -179,8 +175,6 @@ GuiClientServer::handle(string line, string& reply)
     doc.Accept(writer);
 
     reply = reply + strbuf.GetString();
-
-    std::cerr << "returning " << reply << "\n";
 
     return true;
   }
@@ -248,8 +242,6 @@ GuiClientServer::handle(string line, string& reply)
 
     client->rendering->SetTheSize(client->camera->get_width(), client->camera->get_height());
     client->rendering->SetHandler(this);
-
-    std::cerr << "Rendering " << ((long)client->rendering.get()) << " handler " << ((long)this) << "\n";
 
     client->rendering->SetTheVisualization(client->visualization);
     client->rendering->SetTheCamera(client->camera);
