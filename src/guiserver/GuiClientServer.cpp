@@ -150,8 +150,10 @@ GuiClientServer::handle(string line, string& reply)
       float m, M;
       kdop->get_global_minmax(m, M);
 
+      std::cerr << "XXXXXXXXXXXXXXXXXXXX ---------> " << kdop->getkey() << "\n";
       rapidjson::Value dset(rapidjson::kObjectType);
       dset.AddMember("name", rapidjson::Value().SetString(it->c_str(), it->length()+1), doc.GetAllocator());
+      dset.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), doc.GetAllocator());
       dset.AddMember("type", rapidjson::Value().SetInt(type), doc.GetAllocator());
       dset.AddMember("ncomp", rapidjson::Value().SetInt(ncomp), doc.GetAllocator());
       dset.AddMember("min", rapidjson::Value().SetDouble(m), doc.GetAllocator());
@@ -212,7 +214,7 @@ GuiClientServer::handle(string line, string& reply)
 
     client->visualization = Visualization::NewP();
     client->visualization->LoadFromJSON(doc["Visualization"]);
-    client->visualization->Commit(datasets);
+    client->visualization->Commit();
 
     cmd = "Got a visualization";
     return true;
@@ -227,7 +229,7 @@ GuiClientServer::handle(string line, string& reply)
       return true;
     }
 
-    client->camera = Camera::NewP();
+    // client->camera = Camera::NewP();
     client->camera->LoadFromJSON(doc["Camera"]);
     client->camera->Commit();
 

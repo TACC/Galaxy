@@ -90,6 +90,19 @@ Visualization::Commit(DatasetsP datasets)
   return KeyedObject::Commit();
 }
 
+bool
+Visualization::Commit()
+{
+  for (auto s : vis)
+    if (! s->Commit())
+    {
+      set_error(1);
+      return false;
+    }
+
+  return KeyedObject::Commit();
+}
+
 vector<VisualizationP>
 Visualization::LoadVisualizationsFromJSON(Value& v)
 {

@@ -41,7 +41,7 @@ public:
   virtual void print() override
   {
     GxyPacket::print();
-    std::cerr << "dataset: " << dataset << "\n";
+    std::cerr << "key: " << ((long)key) << "\n";
     std::cerr << "colormap file: " << colormap_file << "\n";
     std::cerr << "colormap range: " << cmap_range_min << " " << cmap_range_max << "\n";
   }
@@ -50,7 +50,7 @@ public:
   {
     GxyPacket::toJson(p);
 
-    p["dataset"] = dataset.c_str();
+    p["key"] = (qint64)key;
     p["colormap"] = colormap_file.c_str();
 
     QJsonArray dataRangeJson;
@@ -63,13 +63,13 @@ public:
   {
     GxyPacket::fromJson(p);
 
-    dataset = p["dataset"].toString().toStdString();
+    key = p["key"].toInt();
     colormap_file = p["colormap"].toString().toStdString();
     cmap_range_min = p["data range"].toArray()[0].toDouble();
     cmap_range_max = p["data range"].toArray()[1].toDouble();
   }
 
-  std::string dataset;
+  long key;
   std::string colormap_file;
   float cmap_range_min, cmap_range_max;
 };

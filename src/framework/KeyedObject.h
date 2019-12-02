@@ -261,6 +261,7 @@ public:
       if (class_names[i] == classname)
       {
         Key k = keygen();
+        std::cerr << "NewP: " << classname << " " << k << "\n";
         KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[i](k));
         kop->primary = true;
         aol(kop);
@@ -286,6 +287,7 @@ public:
   KeyedObjectP New(KeyedObjectClass c)
   {
     Key k = keygen();
+    std::cerr << "New: " << GetClassName(c) << " " << k << "\n";
     KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
     kop->primary = true;
     aol(kop);

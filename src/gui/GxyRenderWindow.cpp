@@ -487,7 +487,7 @@ GxyRenderWindow::pixel_receiver_thread(void *d)
     {
       char *buf; int n;
       connection->DRecv(buf, n);
-      // std::cerr << "received " << ((long)buf) << " " << n << "\n";
+      // std::cerr << "window " << ((long)wndw) << " received " << ((long)buf) << " " << n << "\n";
 
       char *ptr = buf;
       int knt = *(int *)ptr;

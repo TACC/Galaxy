@@ -161,7 +161,8 @@ VisModel::loadOutput(std::shared_ptr<GxyPacket> p) const
 
   std::shared_ptr<Vis> v = std::dynamic_pointer_cast<Vis>(p);
 
-  v->dataset = input->dataInfo.name;
+  v->key = input->dataInfo.key;
+  std::cerr << "VisModel::loadOutput: " << v->key << " " << input->dataInfo.key << "\n";
 
   v->colormap_file = cmap_widget->text().toStdString();
   v->cmap_range_min = cmap_range_min->text().toDouble();

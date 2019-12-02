@@ -115,6 +115,13 @@ Vis::LoadFromJSON(Value& v)
   if (v.HasMember("dataset"))
   {
 		name = string(v["dataset"].GetString());
+    datakey = -1;
+    return true;
+  }
+  else if (v.HasMember("key"))
+  {
+    datakey = v["key"].GetInt();
+    name = "none";
     return true;
   }
 	else

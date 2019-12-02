@@ -74,34 +74,38 @@ public:
     gl->setSpacing(0);
     dlg->setLayout(gl);
 
-    gl->addWidget(new QLabel("name"), 0, 0);
-    gl->addWidget(new QLabel(di.name.c_str()), 0, 1);
+    int row = 0;
+    gl->addWidget(new QLabel("name"), row, 0);
+    gl->addWidget(new QLabel(di.name.c_str()), row++, 1);
 
-    gl->addWidget(new QLabel("type"), 1, 0);
-    gl->addWidget(new QLabel(di.type == 0 ? "Volume" : di.type == 1 ? "Mesh" : "Particles"), 1, 1);
+    gl->addWidget(new QLabel("key"), row, 0);
+    gl->addWidget(new QLabel(QString::number(di.key)), row++, 1);
 
-    gl->addWidget(new QLabel("vector?"), 2, 0);
-    gl->addWidget(new QLabel(di.type != 0 ? "n/a" : di.isVector ? "yes" : "no"), 2, 1);
+    gl->addWidget(new QLabel("type"), row, 0);
+    gl->addWidget(new QLabel(di.type == 0 ? "Volume" : di.type == 1 ? "Mesh" : "Particles"), row++, 1);
+
+    gl->addWidget(new QLabel("vector?"), row, 0);
+    gl->addWidget(new QLabel(di.type != 0 ? "n/a" : di.isVector ? "yes" : "no"), row++, 1);
     
-    gl->addWidget(new QLabel("data range"), 3, 0);
-    gl->addWidget(new QLabel(QString::number(di.data_max, 'g', 4)), 3, 1);
-    gl->addWidget(new QLabel(QString::number(di.data_min, 'g', 4)), 3, 2);
+    gl->addWidget(new QLabel("data range"), row, 0);
+    gl->addWidget(new QLabel(QString::number(di.data_max, 'g', 4)), row, 1);
+    gl->addWidget(new QLabel(QString::number(di.data_min, 'g', 4)), row++, 2);
 
-    gl->addWidget(new QLabel("X span"), 4, 0);
-    gl->addWidget(new QLabel(QString::number(di.box[0], 'g', 4)), 4, 1);
-    gl->addWidget(new QLabel(QString::number(di.box[1], 'g', 4)), 4, 2);
+    gl->addWidget(new QLabel("X span"), row, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[0], 'g', 4)), row, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[1], 'g', 4)), row++, 2);
 
-    gl->addWidget(new QLabel("Y span"), 5, 0);
-    gl->addWidget(new QLabel(QString::number(di.box[2], 'g', 4)), 5, 1);
-    gl->addWidget(new QLabel(QString::number(di.box[3], 'g', 4)), 5, 2);
+    gl->addWidget(new QLabel("Y span"), row, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[2], 'g', 4)), row, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[3], 'g', 4)), row++, 2);
 
-    gl->addWidget(new QLabel("Z span"), 6, 0);
-    gl->addWidget(new QLabel(QString::number(di.box[4], 'g', 4)), 6, 1);
-    gl->addWidget(new QLabel(QString::number(di.box[5], 'g', 4)), 6, 2);
+    gl->addWidget(new QLabel("Z span"), row, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[4], 'g', 4)), row, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[5], 'g', 4)), row++, 2);
 
     QPushButton *done = new QPushButton("done");
     dlg->connect(done, SIGNAL(released()), dlg, SLOT(accept()));
-    gl->addWidget(done, 7, 0);
+    gl->addWidget(done, row++, 0);
   }
 
   ~MyQListWidgetItem()
@@ -449,6 +453,7 @@ private Q_SLOTS:
           rapidjson::Value& dset = array[i];
           GxyDataInfo datainfo;
           datainfo.name = dset["name"].GetString();
+          datainfo.key = dset["key"].GetInt();
           datainfo.type = dset["type"].GetInt();
           datainfo.isVector = dset["isVector"].GetBool();
           datainfo.data_min = dset["min"].GetDouble();
