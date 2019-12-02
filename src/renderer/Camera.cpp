@@ -67,8 +67,9 @@ generate_permutation(vector<int>& p, int num)
   std::cerr << "generate_permutation!\n";
   std::srand (unsigned(std::time(0)));
   p.clear();
-  for (int i=1; i<num; ++i) p.push_back(i);
+  for (int i=0; i<num; i++) p.push_back(i);
   std::random_shuffle (p.begin(), p.end() );
+  std::cerr << "XXXX " << p.size() << " " << num << "\n";
 }
 
 void
@@ -533,10 +534,13 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
 
   check_env(renderer, width, height);
 
-
   permute = renderer->GetPermutePixels();
   if (permute && permutation.size() != width*height)
+  {
+    // std::cerr << "P " << ((long)this) << " " << permutation.size() << " " << width*height << "\n";
     generate_permutation(permutation, width*height);
+    // std::cerr << "P2 " << ((long)this) << " " << permutation.size() << " " << width*height << "\n";
+  }
 
   vec3f veye(eye);
   vec3f vu(up);
