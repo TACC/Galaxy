@@ -135,6 +135,8 @@ inline void  add(vec4f& a, vec4f& b, vec4f& r) { r.x = a.x + b.x; r.y = a.y + b.
 inline float len(vec4f& a) { return sqrt(a.x*a.x + a.y*a.y + a.z*a.z + a.w*a.w); }
 //! destructively normalize the given vector, with check for divide by zero
 inline void  normalize(vec4f& a) { float d = len(a); if (d != 0) { d = 1.0 / d; a.x *= d; a.y *= d; a.z *= d; a.w *= d; }}
+//! -a
+inline vec4f neg(vec4f& a) { return vec4f(-a.x, -a.y, -a.z, -a.w); }
 
 //! set all vector elements to zero
 inline void  zero(vec3f& a) { a.x = 0; a.y = 0; a.z = 0; }
@@ -158,6 +160,8 @@ inline void  add(vec3f& a, vec3f& b, vec3f& r) { r.x = a.x + b.x; r.y = a.y + b.
 inline float len(vec3f& a) { return sqrt(a.x*a.x + a.y*a.y + a.z*a.z); }
 //! destructively normalize the given vector, with check for divide by zero
 inline void  normalize(vec3f& a) { float d = len(a); if (d != 0) { d = 1.0 / d; a.x *= d; a.y *= d; a.z *= d; }}
+//! -a
+inline vec3f neg(vec3f& a) { return vec3f(-a.x, -a.y, -a.z); }
 
 //! set all vector elements to zero
 inline void  zero(vec2f& a) { a.x = 0; a.y = 0; }
@@ -181,7 +185,8 @@ inline void  add(vec2f& a, vec2f& b, vec2f& r) { r.x = a.x + b.x; r.y = a.y + b.
 inline float len(vec2f& a) { return sqrt(a.x*a.x + a.y*a.y); }
 //! destructively normalize the given vector, with check for divide by zero
 inline void  normalize(vec2f& a) { float d = len(a); if (d != 0) { d = 1.0 / d; a.x *= d; a.y *= d; }}
-/*! }@ */
+//! -a
+inline vec2f neg(vec2f& a) { return vec2f(-a.x, -a.y); }
 
 //! calculate A x B = R, where R is a 3-element vector.
 /*! Note that for 4 element vector types, only the first three elements are used.
