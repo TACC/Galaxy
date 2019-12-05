@@ -27,6 +27,7 @@ include_directories(${gxy_framework_SOURCE_DIR}
 									  ${gxy_data_SOURCE_DIR}
 									  ${gxy_ospray_SOURCE_DIR}
 									  ${gxy_multiserver_SOURCE_DIR}
+									  ${gxy_sampler_SOURCE_DIR}
 									  ${Galaxy_BINARY_DIR}/src)
 
 set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${MPI_C_LIBRARIES})
@@ -37,8 +38,8 @@ set(LIBS "")
 
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 
-add_library(gxy_module_gui MODULE GuiClientServer.cpp MHSampler.cpp)
-target_link_libraries(gxy_module_gui gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
+add_library(gxy_module_gui MODULE GuiClientServer.cpp MHSampler.cpp RaycastSampler.cpp)
+target_link_libraries(gxy_module_gui gxy_sampler gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
 set(SERVERS gxy_module_gui ${SERVERS})
 
 install(TARGETS ${SERVERS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
