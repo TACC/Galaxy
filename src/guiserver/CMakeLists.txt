@@ -37,7 +37,7 @@ set(LIBS "")
 
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 
-add_library(gxy_module_gui MODULE GuiClientServer.cpp)
+add_library(gxy_module_gui MODULE GuiClientServer.cpp MHSampler.cpp)
 target_link_libraries(gxy_module_gui gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
 set(SERVERS gxy_module_gui ${SERVERS})
 

@@ -70,6 +70,8 @@ public:
 	Trackball(float s = 1) : size(s) {}
 	~Trackball() {}
 
+  void setSize(float s) { size = s; }
+
 	void spin(float p1x, float p1y, float p2x, float p2y)
 	{
     vec3f axis;      /* Axis of rotation */

@@ -91,8 +91,11 @@ VisModel::nPorts(PortType portType) const
 void 
 VisModel::onDataRangeReset()
 {
-  cmap_range_min->setText(QString::number(input->dataInfo.data_min));
-  cmap_range_max->setText(QString::number(input->dataInfo.data_max));
+  if (input)
+  {
+    cmap_range_min->setText(QString::number(input->dataInfo.data_min));
+    cmap_range_max->setText(QString::number(input->dataInfo.data_max));
+  }
 }
 
 QtNodes::NodeValidationState
@@ -120,8 +123,9 @@ VisModel::isValid()
 {
   std::string msg(" "); bool valid = true;
   if (! GxyModel::isValid()) { msg = msg + "Model invalid "; valid = false; }
-  if (! input || ! input->isValid() || input->dataInfo.name == "" || input->dataInfo.name == "(none)" ) { msg = "input invalid "; valid = false; }
+  if (! input || ! input->isValid()) { msg = "input invalid "; valid = false; }
   if (cmap_widget->text().toStdString() == "") { msg = msg + "cmap file name invalid"; valid = false; }
+  if (!valid) std::cerr << "VisModel:: " << msg << "\n";
   return valid;
 }
 
@@ -161,7 +165,10 @@ VisModel::loadOutput(std::shared_ptr<GxyPacket> p) const
 
   std::shared_ptr<Vis> v = std::dynamic_pointer_cast<Vis>(p);
 
-  v->key = input->dataInfo.key;
+  if (input)
+    v->key = input->dataInfo.key;
+  else
+    v->key = -1;
 
   v->colormap_file = cmap_widget->text().toStdString();
   v->cmap_range_min = cmap_range_min->text().toDouble();

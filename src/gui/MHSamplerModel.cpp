@@ -18,70 +18,24 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "SamplerModel.hpp"
+#include "MHSamplerModel.hpp"
 
 #include <QtGui/QIntValidator>
 #include <QtGui/QDoubleValidator>
 
 #include "GxyMainWindow.hpp"
 
-SamplerModel::SamplerModel() 
+MHSamplerModel::MHSamplerModel() 
 {
+  output = std::make_shared<GxyData>(getModelIdentifier());
+
   QFrame *frame  = new QFrame();
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setSpacing(0);
   layout->setContentsMargins(2, 0, 2, 0);
   frame->setLayout(layout);
 
-  QWidget *algorithm = new QWidget();
-  QGridLayout *algorithm_layout = new QGridLayout();
-  algorithm->setLayout(algorithm_layout);
-  algorithm_layout->addWidget(new QLabel("algorithm"), 0, 0);
-  
-  type = new QComboBox();
-  type->addItem("metropolis-hastings");
-  type->addItem("raycast-gradient");
-  type->addItem("raycast-isosurface");
-  connect(type, SIGNAL(currentIndexChanged(int)), this, SLOT(algorithmChanged(int)));
-
-  algorithm_layout->addWidget(type, 0, 1);
-  layout->addWidget(algorithm);
-
-  raycast_properties = new QFrame;
-  raycast_properties->setVisible(false);
-  QVBoxLayout *rcl = new QVBoxLayout;
-  raycast_properties->setLayout(rcl);
-
-  openCamera = new QPushButton("Camera");
-  connect(openCamera, SIGNAL(released()), this, SLOT(openCameraDialog()));
-  rcl->addWidget(openCamera);
-
-  isovalue_properties = new QFrame;
-  isovalue_properties->setVisible(false);
-  QHBoxLayout *rl = new QHBoxLayout;
-  isovalue_properties->setLayout(rl);
-  rl->addWidget(new QLabel("isovalue"));
-  isovalue = new QLineEdit;
-  isovalue->setValidator(new QDoubleValidator());
-  rl->addWidget(isovalue);
-
-  rcl->addWidget(isovalue_properties);
-
-  gradient_properties = new QFrame;
-  gradient_properties->setVisible(false);
-  rl = new QHBoxLayout;
-  gradient_properties->setLayout(rl);
-  rl->addWidget(new QLabel("gradient"));
-  gradient = new QLineEdit;
-  gradient->setValidator(new QDoubleValidator());
-  rl->addWidget(gradient);
-
-  rcl->addWidget(gradient_properties);
-
-  layout->addWidget(raycast_properties);
-
   mh_properties = new QFrame;
-  mh_properties->setVisible(true);
   QGridLayout *mhl = new QGridLayout;
   mh_properties->setLayout(mhl);
 
@@ -174,7 +128,7 @@ SamplerModel::SamplerModel()
 }
 
 unsigned int
-SamplerModel::nPorts(QtNodes::PortType portType) const
+MHSamplerModel::nPorts(QtNodes::PortType portType) const
 {
   if (portType == QtNodes::PortType::In)
     return 1;
@@ -183,49 +137,67 @@ SamplerModel::nPorts(QtNodes::PortType portType) const
 }
 
 QtNodes::NodeDataType
-SamplerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
+MHSamplerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
 {
   return GxyData().type();
 }
 
 void
-SamplerModel::onApply()
+MHSamplerModel::onApply()
 {
   QJsonObject json = save();
   json["cmd"] = "gui::sample";
+
+  json["sourceKey"] = input->dataInfo.key;
 
   QJsonDocument doc(json);
   QByteArray bytes = doc.toJson(QJsonDocument::Compact);
   QString s = QLatin1String(bytes);
 
   std::string msg = s.toStdString();
+  std::cerr << "MHSamplerModel request: " << msg << "\n";
   getTheGxyConnectionMgr()->CSendRecv(msg);
+  std::cerr << "MHSamplerModel reply: " << msg << "\n";
 
-  std::cerr << "SamplerModel apply reply: " << msg << "\n";
+  rapidjson::Document dset;
+  dset.Parse(msg.c_str());
+
+  output->dataInfo.name = dset["name"].GetString();
+  output->dataInfo.key = dset["key"].GetInt();
+  output->dataInfo.type = dset["type"].GetInt();
+  output->dataInfo.isVector = dset["isVector"].GetBool();
+  output->dataInfo.data_min = dset["min"].GetDouble();
+  output->dataInfo.data_max = dset["max"].GetDouble();
+  for (auto i = 0; i < 6; i++)
+    output->dataInfo.box[i] = dset["box"][i].GetDouble();
+
+  output->setValid(true);
+
+  Q_EMIT dataUpdated(0);
 }
 
 std::shared_ptr<QtNodes::NodeData>
-SamplerModel::outData(QtNodes::PortIndex)
+MHSamplerModel::outData(QtNodes::PortIndex)
 {
-  std::shared_ptr<GxyData> result;
-  return std::static_pointer_cast<QtNodes::NodeData>(result);
+  std::cerr << "MHSamplerModel::outData ===============\n"; output->print();
+  return std::static_pointer_cast<QtNodes::NodeData>(output);
 }
 
 QtNodes::NodeValidationState
-SamplerModel::validationState() const
+MHSamplerModel::validationState() const
 {
   return QtNodes::NodeValidationState::Valid;
 }
 
 
 QString
-SamplerModel::validationMessage() const
+MHSamplerModel::validationMessage() const
 {
   return QString("copacetic");
 }
 
 void
-SamplerModel::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
+MHSamplerModel::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
   
@@ -236,7 +208,7 @@ SamplerModel::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIn
 }
 
 void
-SamplerModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+MHSamplerModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 {
   std::shared_ptr<GxyData> input = std::dynamic_pointer_cast<GxyData>(o);
   mh_linear_tf_min->setText(QString::number(input->dataInfo.data_min));
@@ -244,21 +216,20 @@ SamplerModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 }
 
 bool
-SamplerModel::isValid()
+MHSamplerModel::isValid()
 {
-  return input && input->isValid();
+  bool r = input && input->isValid();
+  std::cerr << "MHSamplerModel::isValid :: " << r << "\n";
+  return r;
 }
 
 
 QJsonObject
-SamplerModel::save() const
+MHSamplerModel::save() const
 {
   QJsonObject modelJson = GxyModel::save();
 
-  modelJson["camera"] = camera.save();
-
   modelJson["mh_tfunc"] = mh_tfunc->currentIndex();
-  modelJson["type"] = type->currentIndex();
 
   modelJson["mh_radius"] = mh_radius->text().toDouble();
   modelJson["mh_sigma"] = mh_sigma->text().toDouble();
@@ -270,20 +241,14 @@ SamplerModel::save() const
   modelJson["mh_linear_tf_max"] = mh_linear_tf_max->text().toDouble();
   modelJson["gaussian_mean"] = gaussian_mean->text().toDouble();
   modelJson["gaussian_std"] = gaussian_std->text().toDouble();
-  modelJson["isovalue"] = isovalue->text().toDouble();
-  modelJson["gradient"] = gradient->text().toDouble();
 
   return modelJson;
 }
 
 void
-SamplerModel::restore(QJsonObject const &p)
+MHSamplerModel::restore(QJsonObject const &p)
 {
-  camera.restore(p["camera"].toObject());
-
   mh_tfunc->setCurrentIndex(p["mh_tfunc"].toInt());
-  type->setCurrentIndex(p["type"].toInt());
-
   mh_radius->setText(QString::number(p["mh_radius"].toDouble()));
   mh_sigma->setText(QString::number(p["mh_sigma"].toDouble()));
   mh_iterations->setText(QString::number(p["mh_iterations"].toInt()));
@@ -294,8 +259,6 @@ SamplerModel::restore(QJsonObject const &p)
   mh_linear_tf_max->setText(QString::number(p["mh_linear_tf_max"].toDouble()));
   gaussian_mean->setText(QString::number(p["gaussian_mean"].toDouble()));
   gaussian_std->setText(QString::number(p["gaussian_std"].toDouble()));
-  isovalue->setText(QString::number(p["isovalue"].toDouble()));
-  gradient->setText(QString::number(p["gradient"].toDouble()));
 
   loadParameterWidgets();
 }

@@ -126,6 +126,7 @@ inline void  copyvec(vec4f& s, vec4f& d) { d.x = s.x; d.y = s.y; d.z = s.z; d.w 
 /* \param s scaling factor
  * \param d destination vector
  */
+inline vec4f scalev(float s, vec4f& d) { return vec4f(d.x * s, d.y * s, d.z * s, d.w * s); }
 inline void  scale(float s, vec4f& d) { d.x *= s; d.y *= s; d.z *= s; d.w *= s; }
 //! a - b = r
 inline void  sub(vec4f& a, vec4f& b, vec4f& r) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; r.w = a.w - b.w; }
@@ -151,6 +152,7 @@ inline void  copyvec(vec3f& s, vec3f& d) { d.x = s.x; d.y = s.y; d.z = s.z; }
 /* \param s scaling factor
  * \param d destination vector
  */
+inline vec3f scalev(float s, vec3f& d) { return vec3f(d.x * s, d.y * s, d.z * s); }
 inline void  scale(float s, vec3f& d) { d.x *= s; d.y *= s; d.z *= s; }
 //! a - b = r
 inline void  sub(vec3f& a, vec3f& b, vec3f& r) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; }
@@ -176,6 +178,7 @@ inline void  copyvec(vec2f& s, vec2f& d) { d.x = s.x; d.y = s.y; }
 /* \param s scaling factor
  * \param d destination vector
  */
+inline vec2f scalev(float s, vec2f& d) { return vec2f(d.x * s, d.y * s); }
 inline void  scale(float s, vec2f& d) { d.x *= s; d.y *= s; }
 //! a - b = r
 inline void  sub(vec2f& a, vec2f& b, vec2f& r) { r.x = a.x - b.x; r.y = a.y - b.y; }

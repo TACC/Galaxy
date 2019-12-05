@@ -32,7 +32,7 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
 
-#include "GxyModel.hpp"
+#include "GxyFilter.hpp"
 
 #include "GxyData.hpp"
 #include "Camera.hpp"
@@ -43,15 +43,15 @@
 
 #include <nodes/NodeData>
 
-class SamplerModel : public GxyModel
+class MHSamplerModel : public GxyFilter
 {
   Q_OBJECT
 
 public:
-  SamplerModel();
+  MHSamplerModel();
 
   virtual
-  ~SamplerModel() {}
+  ~MHSamplerModel() {}
 
   unsigned int nPorts(QtNodes::PortType portType) const override;
 
@@ -65,9 +65,9 @@ public:
 
   QString validationMessage() const override;
 
-  QString caption() const override { return QStringLiteral("Sampler"); }
+  QString caption() const override { return QStringLiteral("MHSampler"); }
 
-  QString name() const override { return QStringLiteral("Sampler"); }
+  QString name() const override { return QStringLiteral("MHSampler"); }
 
   virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
   bool isValid() override;
@@ -81,37 +81,16 @@ public Q_SLOTS:
 
 private Q_SLOTS:
 
-  void algorithmChanged(int t)
-  {
-    std::cerr << "alg " << t << "\n";
-    openCamera->setEnabled(t != 0);
-    mh_properties->setVisible(t == 0);
-    raycast_properties->setVisible(t != 0);
-    gradient_properties->setVisible(t == 1);
-    isovalue_properties->setVisible(t == 2);
-  }
-
   void mh_tfunc_Changed(int t)
   {
-    std::cerr << t << "\n";
     linear->setVisible(t == 1);
     gaussian->setVisible(t == 2);
-  }
-
-  void openCameraDialog() 
-  {
-    CameraDialog *cameraDialog = new CameraDialog(camera);
-    cameraDialog->exec();
-    cameraDialog->get_camera(camera);
-    delete cameraDialog;
   }
 
 private:
 
   std::shared_ptr<GxyData> input;
   std::shared_ptr<GxyData> output;
-
-  Camera camera;
 
   QFrame *mh_properties;
   QComboBox *mh_tfunc;
@@ -129,16 +108,4 @@ private:
   QFrame *gaussian;
   QLineEdit *gaussian_mean;
   QLineEdit *gaussian_std;
-
-  QFrame *raycast_properties;
-
-  QFrame *isovalue_properties;
-  QLineEdit *isovalue;
-
-  QFrame *gradient_properties;
-  QLineEdit *gradient;
-
-  QComboBox *type;
-  QPushButton *openCamera;
-  QLineEdit *parameter;
 };

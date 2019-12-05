@@ -1,4 +1,5 @@
 // ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -23,6 +24,9 @@
 
 ParticlesVisModel::ParticlesVisModel() 
 {
+  output = std::dynamic_pointer_cast<Vis>(std::shared_ptr<ParticlesVis>(new ParticlesVis(model_identifier)));
+  output->setValid(false);
+
   QFrame *frame  = new QFrame();
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setSpacing(0);
@@ -35,21 +39,14 @@ ParticlesVisModel::ParticlesVisModel()
 
   radius_box_layout->addWidget(new QLabel("data range"), 0, 0);
 
-  useFullRange = new QCheckBox("full");
-  useFullRange->setChecked(true);
-  connect(useFullRange, SIGNAL(stateChanged(int)), this, SLOT(useFullRangeChanged(int)));
-  radius_box_layout->addWidget(useFullRange, 0, 1);
-
   minrange = new QLineEdit();
   minrange->setValidator(new QDoubleValidator());
   minrange->setText(QString::number(0.0));
-  minrange->setEnabled(false);
   radius_box_layout->addWidget(minrange, 0, 2);
 
   maxrange = new QLineEdit();
   maxrange->setValidator(new QDoubleValidator());
   maxrange->setText(QString::number(1.0));
-  maxrange->setEnabled(false);
   radius_box_layout->addWidget(maxrange, 0, 3);
 
   radius_box_layout->addWidget(new QLabel("radius range"), 1, 0);
@@ -57,32 +54,15 @@ ParticlesVisModel::ParticlesVisModel()
   minradius = new QLineEdit();
   minradius->setValidator(new QDoubleValidator());
   minradius->setText(QString::number(0.0));
-  minradius->setEnabled(true);
   radius_box_layout->addWidget(minradius, 1, 2);
 
   maxradius = new QLineEdit();
   maxradius->setValidator(new QDoubleValidator());
   maxradius->setText(QString::number(1.0));
-  maxradius->setEnabled(true);
   radius_box_layout->addWidget(maxradius, 1, 3);
 
   layout->addWidget(radius_box);
 
-  QFrame *cmap_box = new QFrame();
-  QHBoxLayout *cmap_box_layout = new QHBoxLayout();
-  cmap_box->setLayout(cmap_box_layout);
-
-  cmap_box_layout->addWidget(new QLabel("tfunc"));
-
-  tf_widget = new QLineEdit();
-  cmap_box_layout->addWidget(tf_widget);
-  
-  QPushButton *tfunc_browse_button = new QPushButton("...");
-  cmap_box_layout->addWidget(tfunc_browse_button);
-  connect(tfunc_browse_button, SIGNAL(released()), this, SLOT(openFileSelectorDialog()));
-
-  layout->addWidget(cmap_box);
-  
   _properties->addProperties(frame);
 }
 
@@ -98,7 +78,7 @@ ParticlesVisModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
   if (pt == QtNodes::PortType::In)
     return GxyData().type();
   else
-    return ParticlesVis().type();
+    return Vis().type();
 }
 
 void
@@ -107,15 +87,42 @@ ParticlesVisModel::apply() { std::cerr << "Apply\n"; }
 std::shared_ptr<QtNodes::NodeData>
 ParticlesVisModel::outData(QtNodes::PortIndex)
 {
-  std::shared_ptr<ParticlesVis> result;
-  return std::static_pointer_cast<QtNodes::NodeData>(result);
+  return std::static_pointer_cast<QtNodes::NodeData>(output);
 }
 
 void
 ParticlesVisModel::
 setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
-  // volumeData = std::dynamic_pointer_cast<GxyData>(data);
+  input = std::dynamic_pointer_cast<GxyData>(data);
+  if (input)
+    std::cerr << "setInData: " << ((long)input.get()) << "\n";
+  else
+    std::cerr << "setInData: input is NULL\n";
+
+  if (input)
+    loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
+
+  enableIfValid();
+}
+
+void
+ParticlesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+{ 
+  if (input)
+    std::cerr << "loadInputDrivenWidgets: " << ((long)input.get()) << "\n";
+  else
+    std::cerr << "loadInputDrivenWidgets: input is NULL\n";
+
+  if (input)
+  { 
+    VisModel::loadInputDrivenWidgets(input);
+    
+    std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(input);
+    
+    minrange->setText(QString::number(d->dataInfo.data_min));
+    maxrange->setText(QString::number(d->dataInfo.data_max));
+  }
 }
 
 
@@ -130,5 +137,88 @@ QString
 ParticlesVisModel::validationMessage() const
 {
   return QString("copacetic");
+}
+
+QJsonObject
+ParticlesVisModel::save() const
+{
+  loadOutput(output);
+
+  QJsonObject modelJson = VisModel::save();
+
+  loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+  output->toJson(modelJson);
+
+  return modelJson;
+}
+
+void
+ParticlesVisModel::restore(QJsonObject const &p)
+{
+  output->fromJson(p);
+  loadParameterWidgets();
+}
+
+bool
+ParticlesVisModel::isValid()
+{
+  if (input)
+    std::cerr << "isValid: " << ((long)input.get()) << "\n";
+  else
+    std::cerr << "isValid: input is NULL\n";
+
+  if (! VisModel::isValid()) std::cerr << "VisModel::isValid NO\n";
+  else std::cerr << "VisModel::isValid YES\n";
+
+  if (! input->isValid()) std::cerr << "input->isValid NO\n";
+  else std::cerr << "input->isValid YES\n";
+
+  if (! VisModel::isValid() || ! input->isValid())
+  {
+    return false;
+  }
+
+  return true;
+}
+
+void
+ParticlesVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
+{
+  VisModel::loadOutput(o);
+
+  std::shared_ptr<ParticlesVis> v = std::dynamic_pointer_cast<ParticlesVis>(o);
+
+  v->minrange = minrange->text().toDouble();
+  v->maxrange = maxrange->text().toDouble();
+  v->minradius = minradius->text().toDouble();
+  v->maxradius = maxradius->text().toDouble();
+}
+
+void
+ParticlesVisModel::loadParameterWidgets() const
+{
+  VisModel::loadParameterWidgets();
+
+  std::shared_ptr<ParticlesVis> v = std::dynamic_pointer_cast<ParticlesVis>(output);
+
+  minrange->setText(QString::number(v->minrange));
+  maxrange->setText(QString::number(v->maxrange));
+
+  minradius->setText(QString::number(v->minradius));
+  maxradius->setText(QString::number(v->maxradius));
+}
+
+void
+ParticlesVisModel::onApply()
+{
+  if (isValid())
+  {
+    std::cerr << "ParticlesVisModel::onApply\n";
+    output = std::shared_ptr<ParticlesVis>(new ParticlesVis(model_identifier));
+    loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+    output->setValid(true);
+
+    Q_EMIT dataUpdated(0);
+  }
 }
 

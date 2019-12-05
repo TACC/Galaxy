@@ -18,6 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
+#include <iostream>
 #include "OsprayObject.h"
 
 namespace gxy
@@ -27,11 +28,13 @@ OBJECT_CLASS_TYPE(OsprayObject)
 
 OsprayObject::OsprayObject()
 {
+  std::cerr << "OsprayObject::OsprayObject ctor\n";
 	theOSPRayObject = NULL;
 }
 
 OsprayObject::~OsprayObject()
 {
+  std::cerr << "OsprayObject::OsprayObject dtor\n";
 	if (theOSPRayObject)
 		ospRelease((OSPObject)theOSPRayObject);
 }

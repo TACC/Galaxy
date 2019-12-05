@@ -33,6 +33,7 @@ using namespace std;
 using namespace rapidjson;
 
 #include "GuiClientServer.h"
+#include "MHSampler.hpp"
 
 using namespace gxy;
 
@@ -43,6 +44,7 @@ extern "C" void
 init()
 {
   GuiClientServer::init();
+  MHSampler::init();
 }
 
 extern "C" GuiClientServer *
@@ -56,6 +58,10 @@ GuiClientServer::init()
 {
   Renderer::Initialize();
   ServerRendering::RegisterClass();
+}
+
+GuiClientServer::~GuiClientServer()
+{
 }
 
 bool
@@ -83,17 +89,6 @@ GuiClientServer::handle(string line, string& reply)
   }
 
   string cmd = doc["cmd"].GetString();
-
-#if 0
-  string id  = doc["id"].GetString();
-
-  GuiClient *client = clients[id];
-  if (! client)
-  {
-    client = new GuiClient;
-    clients[id] = client;
-  }
-#endif
 
   if (cmd == "gui::import")
   {
@@ -181,34 +176,26 @@ GuiClientServer::handle(string line, string& reply)
   else if (cmd == "gui::initWindow")
   {
     string id  = doc["id"].GetString();
-    GuiClient *client = clients[id];
-    if (client)
-    {
+    ClientWindow *clientWindow = getClientWindow(id);
+    if (clientWindow)
       reply = "window already initialized";
-      return true;
-    }
     else
-    {
-      if (! client)
-      {
-        client = new GuiClient;
-        clients[id] = client;
-      }
-    }
+      addClientWindow(id, new ClientWindow);
+    return true;
   }
   else if (cmd == "gui::visualization")
   {
     string id  = doc["id"].GetString();
-    GuiClient *client = clients[id];
-    if (! client)
+    ClientWindow *clientWindow = getClientWindow(id);
+    if (! clientWindow)
     {
       reply = "window has not been initialized\n";
       return true;
     }
 
-    client->visualization = Visualization::NewP();
-    client->visualization->LoadFromJSON(doc["Visualization"]);
-    client->visualization->Commit();
+    clientWindow->visualization = Visualization::NewP();
+    clientWindow->visualization->LoadFromJSON(doc["Visualization"]);
+    clientWindow->visualization->Commit();
 
     cmd = "Got a visualization";
     return true;
@@ -216,16 +203,15 @@ GuiClientServer::handle(string line, string& reply)
   else if (cmd == "gui::camera")
   {
     string id  = doc["id"].GetString();
-    GuiClient *client = clients[id];
-    if (! client)
+    ClientWindow *clientWindow = getClientWindow(id);
+    if (! clientWindow)
     {
       reply = "window has not been initialized\n";
       return true;
     }
 
-    // client->camera = Camera::NewP();
-    client->camera->LoadFromJSON(doc["Camera"]);
-    client->camera->Commit();
+    clientWindow->camera->LoadFromJSON(doc["Camera"]);
+    clientWindow->camera->Commit();
 
     cmd = "Got a camera";
     return true;
@@ -233,32 +219,111 @@ GuiClientServer::handle(string line, string& reply)
   else if (cmd == "gui::render")
   {
     string id  = doc["id"].GetString();
-    GuiClient *client = clients[id];
-    if (! client)
+    ClientWindow *clientWindow = getClientWindow(id);
+    if (! clientWindow)
     {
       reply = "window has not been initialized\n";
       return true;
     }
 
-    client->rendering->SetTheSize(client->camera->get_width(), client->camera->get_height());
-    client->rendering->SetHandler(this);
+    clientWindow->rendering->SetTheSize(clientWindow->camera->get_width(), clientWindow->camera->get_height());
+    clientWindow->rendering->SetHandler(this);
 
-    client->rendering->SetTheVisualization(client->visualization);
-    client->rendering->SetTheCamera(client->camera);
-    client->rendering->SetTheDatasets(theDatasets);
-    client->rendering->Commit();
+    clientWindow->rendering->SetTheVisualization(clientWindow->visualization);
+    clientWindow->rendering->SetTheCamera(clientWindow->camera);
+    clientWindow->rendering->SetTheDatasets(theDatasets);
+    clientWindow->rendering->Commit();
 
     RenderingSetP rs = RenderingSet::NewP();
-    rs->AddRendering(client->rendering);
+    rs->AddRendering(clientWindow->rendering);
     rs->Commit();
-    renderer->Start(client->renderingSet);
+    renderer->Start(clientWindow->renderingSet);
+    return true;
   }
   else if (cmd == "gui::sample")
   {
-    return Sample(doc, reply);
+    string id  = doc["id"].GetString();
+
+    Filter *filter = getFilter(id);
+    if (! filter)
+    {
+      filter = new MHSampler(Filter::getSource(doc));
+      addFilter(id, filter);
+    }
+
+    MHSampler *sampler = (MHSampler*)filter;
+    if (! sampler)
+      reply = std::string(cmd + ": found filter that wasn't MHSampler");
+
+    sampler->Sample(doc);
+
+    KeyedDataObjectP kdop = sampler->getResult();
+    
+    rapidjson::Document doc;
+    doc.SetObject();
+
+    int type;
+    if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
+    else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
+    else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
+    else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+    else type = -1;
+
+    int ncomp;
+    if (type == 0)
+    {
+      gxy::VolumeP v = gxy::Volume::Cast(kdop);
+      ncomp = v->get_number_of_components();
+    }
+    else
+      ncomp = -1;
+
+    float m, M;
+    kdop->get_global_minmax(m, M);
+
+    doc.AddMember("name", rapidjson::Value().SetString("(none)", 7), doc.GetAllocator());
+    doc.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), doc.GetAllocator());
+    doc.AddMember("type", rapidjson::Value().SetInt(type), doc.GetAllocator());
+    doc.AddMember("ncomp", rapidjson::Value().SetInt(ncomp), doc.GetAllocator());
+    doc.AddMember("min", rapidjson::Value().SetDouble(m), doc.GetAllocator());
+    doc.AddMember("max", rapidjson::Value().SetDouble(M), doc.GetAllocator());
+
+    Box *box = kdop->get_global_box();
+    rapidjson::Value boxv(rapidjson::kArrayType);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), doc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), doc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), doc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), doc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), doc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), doc.GetAllocator());
+    doc.AddMember("box", boxv, doc.GetAllocator());
+
+    doc.AddMember("status",  rapidjson::Value().SetString("ok", 3), doc.GetAllocator());
+
+    rapidjson::StringBuffer strbuf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+    doc.Accept(writer);
+
+    reply = strbuf.GetString();
+
+    return true;
   }
-  else
-    return false;
+  else if (cmd == "gui::remove_filter")
+  {
+    string id  = doc["id"].GetString();
+    removeFilter(id);
+    reply = "ok";
+    return true;
+  }
+  else if (cmd == "gui::remove_window")
+  {
+    string id  = doc["id"].GetString();
+    removeClientWindow(id);
+    reply = "ok";
+    return true;
+  }
+
+  return false;
 }
 
 }

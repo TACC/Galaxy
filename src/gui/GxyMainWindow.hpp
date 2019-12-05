@@ -37,7 +37,8 @@
 #include "ParticlesVisModel.hpp"
 #include "PathlinesVisModel.hpp"
 #include "RenderModel.hpp"
-#include "SamplerModel.hpp"
+#include "MHSamplerModel.hpp"
+#include "RaycastSamplerModel.hpp"
 #include "StreamTracerModel.hpp"
 #include "TraceDecoratorModel.hpp"
 #include "InterpolatorModel.hpp"
@@ -61,7 +62,8 @@ registerDataModels()
 {
   auto ret = std::make_shared<DataModelRegistry>();
   ret->registerModel<DataSourceModel>("Sources");
-  ret->registerModel<SamplerModel>("Filters");
+  ret->registerModel<MHSamplerModel>("Filters");
+  ret->registerModel<RaycastSamplerModel>("Filters");
   ret->registerModel<StreamTracerModel>("Filters");
   ret->registerModel<TraceDecoratorModel>("Filters");
   ret->registerModel<InterpolatorModel>("Filters");

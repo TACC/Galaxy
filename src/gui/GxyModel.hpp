@@ -82,7 +82,7 @@ public:
     if (label)
       modelJson["label"] = label->text();
 
-    modelJson["model_identifier"] = model_identifier.c_str();
+    modelJson["id"] = model_identifier.c_str();
 
     return modelJson;
   }

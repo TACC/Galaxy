@@ -28,8 +28,8 @@ class GxyPacket : public QtNodes::NodeData
 {
 public:
   
-  GxyPacket() { /* std::cerr << "AAAAAAA 1 " << ((long)this) << "\n"; */ }
-  GxyPacket(std::string o) { origin = o; /* std::cerr << "AAAAAAA 2 " << ((long)this) << "\n";  */ }
+  GxyPacket() { }
+  GxyPacket(std::string o) { origin = o; }
   
   QtNodes::NodeDataType type() const override
   { 
@@ -54,6 +54,7 @@ public:
   virtual void fromJson(QJsonObject o)
   {
     origin = o["origin"].toString().toStdString();
+    valid = false;
   }
 
 private:

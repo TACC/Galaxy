@@ -21,6 +21,8 @@ my_time()
 
 GxyRenderWindow::GxyRenderWindow(std::string rid)
 {
+  trackball.setSize(3);
+
   pthread_mutex_init(&lock, NULL);
   renderer_id = rid;
 
@@ -69,11 +71,16 @@ GxyRenderWindow::setCamera(Camera&c)
   camera = c; 
   trackball.reset();
 
-  current_direction = camera.getDirection();
+  gxy::vec3f p = camera.getPoint();
+  gxy::vec3f d = camera.getDirection();
+  vdist = len(d);
+
+  current_center = p + d;
+  current_direction = {-d.x, -d.y, -d.z}; normalize(current_direction);
   current_up = camera.getUp();
 
-  gxy::vec3f point = camera.getPoint();
-  current_center = point + current_direction;
+  std::cerr << "initial center: " << current_center.x << " " << current_center.y << " " << current_center.z << "\n";
+
 
   gxy::vec2i size = c.getSize();
   resize(size.x, size.y);
@@ -178,28 +185,44 @@ GxyRenderWindow::mousePressEvent(QMouseEvent *event)
     default: button = 3;
   }
 
-  x0 = x1 = -1.0 + 2.0*(float(event->x())/width);
-  y0 = y1 = -1.0 + 2.0*(float(event->y())/height);
+  x0 = x1 = 0.3 * (-1.0 + 2.0*(float(event->x())/width));
+  y0 = y1 = 0.3 * (-1.0 + 2.0*(float(event->y())/height));
+  trackball.reset();
 }
 
 void
 GxyRenderWindow::mouseMoveEvent(QMouseEvent *event) 
 {
-  x1 = -1.0 + 2.0*(float(event->x())/width);
-  y1 = -1.0 + 2.0*(float(event->y())/height);
+  x1 = 0.3 * (-1.0 + 2.0*(float(event->x())/width));
+  y1 = 0.3 * (-1.0 + 2.0*(float(event->y())/height));
+
+  if (fabs(x1 - x0) > fabs(y1 - y0))
+    y1 = y0;
+  else
+    x1 = x0;
   
   if (button == 0)
   { 
     trackball.spin(x0, y0, x1, y1);
+    y0 = y1;
+    x0 = x1;
     
-    gxy::vec3f direction = trackball.rotate_vector(current_direction);
-    gxy::vec3f up = trackball.rotate_vector(current_up);
-    gxy::vec3f point = current_center - direction;
-    
-    camera.setPoint(point);
-    camera.setDirection(direction);
-    camera.setUp(up);
+    current_direction = trackball.rotate_vector(current_direction);
+    current_up = trackball.rotate_vector(current_up);
+
+    gxy::vec3f p = current_center + scalev(vdist, current_direction);
+    camera.setPoint(p);
+    std::cerr << "point: " << p.x << " " << p.y << " " << p.z << " ";
+
+    gxy::vec3f n = neg(current_direction);
+    scale(vdist, n);
+    camera.setDirection(n);
+    std::cerr << "direction: " << n.x << " " << n.y << " " << n.z << "\n";
+
+    camera.setUp(current_up);
+
     sendCamera();
+
     render();
   }
   else if (button == 1)
@@ -259,6 +282,8 @@ GxyRenderWindow::sendCamera()
 {
   if (getTheGxyConnectionMgr()->IsConnected())
   {
+    std::cerr << "====================================\n";
+
     setSize(camera);
 
     QJsonObject cameraJson;

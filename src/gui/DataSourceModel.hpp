@@ -321,6 +321,7 @@ private Q_SLOTS:
 
   void selection(QListWidgetItem *item)
   {
+    std::cerr << "Data... selection!\n";
     current_selection = (MyQListWidgetItem *)item;
     info->setEnabled(true);
     enableIfValid();
@@ -330,10 +331,13 @@ private Q_SLOTS:
   {
     if (current_selection)
     {
+      std::cerr << "Data.... onApply... current_selection IS SET\n";
       output->dataInfo = current_selection->getDataInfo();
       output->setValid(true);
       Q_EMIT dataUpdated(0);
     }
+    else
+      std::cerr << "Data.... onApply... current_selection IS NOT SET\n";
   }
 
   void onAdd()

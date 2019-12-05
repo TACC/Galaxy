@@ -64,12 +64,6 @@ class RenderModel : public GxyModel
 public:
   static void init()
   {
-    static bool first = true;
-    if (first)
-    {
-      first = false;
-      getTheGxyConnectionMgr()->addModule("libgxy_module_gui.so");
-    }
   }
 
   RenderModel();

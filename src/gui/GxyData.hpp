@@ -70,7 +70,7 @@ struct GxyDataInfo
   }
 
   std::string name;
-  long key;
+  int key;
   int type;
   bool isVector;
   float data_min, data_max;
@@ -89,6 +89,23 @@ public:
   {
     GxyPacket::print();
     dataInfo.print();
+  }
+
+  bool isValid()
+  {
+    if (!GxyPacket::isValid()) 
+    {
+      std::cerr << "GxyPacket::isValid = NO\n";
+      return false;
+    }
+
+    if (dataInfo.name == "" && dataInfo.key == -1)
+    {
+      std::cerr << "GxyData::isValid ... dataInfo.name is NULL and dataInfo.key == -1\n";
+      return false;
+    }
+    
+    return true;
   }
 
   QtNodes::NodeDataType type() const override

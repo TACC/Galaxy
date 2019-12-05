@@ -37,10 +37,10 @@
 
 #include <QtGui/QDoubleValidator>
 
-#include "GxyModel.hpp"
+#include "VisModel.hpp"
 #include "GxyData.hpp"
 
-class ParticlesVisModel : public GxyModel
+class ParticlesVisModel : public VisModel
 {
   Q_OBJECT
 
@@ -66,36 +66,28 @@ public:
 
   QString name() const override { return QStringLiteral("ParticlesVis"); }
 
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
+
+  bool isValid() override;
+
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
+  virtual void loadParameterWidgets() const override;
+
+  virtual void loadOutput(std::shared_ptr<GxyPacket> o) const override;
+
+  void onApply() override;
+
 protected:
 
   virtual void apply();
 
 private Q_SLOTS:
 
-  void useFullRangeChanged(int s)
-  {
-    minrange->setEnabled(s == 0);
-    maxrange->setEnabled(s == 0);
-  }
-
-  void openFileSelectorDialog()
-  {
-    QFileDialog *fileDialog = new QFileDialog();
-    fileDialog->exec();
-    tf_widget->clear();
-    tf_widget->insert(fileDialog->selectedFiles().at(0));
-    delete fileDialog;
-  }
-
 private:
 
-  QLineEdit               *tf_widget;
-
-  QCheckBox               *useFullRange;
   QLineEdit               *minrange;
   QLineEdit               *maxrange;
   QLineEdit               *minradius;
   QLineEdit               *maxradius;
-
-  std::shared_ptr<GxyData> output;
 };

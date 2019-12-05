@@ -38,7 +38,34 @@ public:
   virtual void print() override
   {
     Vis::print();
+    std::cerr << "radius map range: " << minrange << " " << maxrange << "\n";
+    std::cerr << "radius map value: " << minradius << " " << maxradius << "\n";
   }
 
+  void toJson(QJsonObject& p) override
+  {
+    Vis::toJson(p);
+
+    p["type"] = "ParticlesVis";
+    p["radius0"] = minradius;
+    p["radius1"] = maxradius;
+    p["value0"] = minrange;
+    p["value1"] = maxrange;
+  }
+
+  void fromJson(QJsonObject p) override
+  {
+    Vis::fromJson(p);
+
+    minradius = p["radius0"].toDouble();
+    maxradius = p["radius1"].toDouble();
+    minrange = p["value0"].toDouble();
+    maxrange = p["value1"].toDouble();
+  }
+
+  float minrange;
+  float maxrange;
+  float minradius;
+  float maxradius;
 };
 

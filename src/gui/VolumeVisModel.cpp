@@ -23,6 +23,7 @@
 VolumeVisModel::VolumeVisModel() 
 {
   output = std::dynamic_pointer_cast<Vis>(std::shared_ptr<VolumeVis>(new VolumeVis(model_identifier)));
+  output->setValid(false);
 
   isovaluesDialog = new ScalarsDialog;
   slicesDialog = new PlanesDialog;

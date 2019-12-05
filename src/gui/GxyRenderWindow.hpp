@@ -91,6 +91,7 @@ private:
   gxy::vec3f current_direction;
   gxy::vec3f current_center;
   gxy::vec3f current_up;
+  float vdist;
 
   Camera camera;
   LightingEnvironment lighting;
