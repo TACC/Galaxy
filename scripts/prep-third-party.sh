@@ -73,21 +73,20 @@ if [ $? != 0 ]; then
 	fail
 fi
 
-report "applying patches... No patches currently necessary..."
-#PATCH_DIR=${GXY_ROOT}/third-party/patches
-#cd ${PATCH_DIR}
-#for patch in *.patch ; do
-#	PATCH_TARGET=`echo ${patch} | sed -e 's/\.patch//'`
-#	if [ ! -d ${GXY_ROOT}/third-party/${PATCH_TARGET} ]; then
-#		fail "could not find ${PATCH_TARGET} at ${GXY_ROOT}/third-party/${PATCH_TARGET}"
-#	fi
-#	report "  patching ${PATCH_TARGET} ..."
-#	cd ${GXY_ROOT}/third-party/${PATCH_TARGET}
-#	git apply ${PATCH_DIR}/${patch}
-#	if [ $? != 0 ]; then
-#		fail "patch application for ${PATCH_TARGET} returned error code $?"
-#	fi
-#done
+PATCH_DIR=${GXY_ROOT}/third-party/patches
+cd ${PATCH_DIR}
+for patch in *.patch ; do
+	PATCH_TARGET=`echo ${patch} | sed -e 's/\.patch//'`
+	if [ ! -d ${GXY_ROOT}/third-party/${PATCH_TARGET} ]; then
+		fail "could not find ${PATCH_TARGET} at ${GXY_ROOT}/third-party/${PATCH_TARGET}"
+	fi
+	report "  patching ${PATCH_TARGET} ..."
+	cd ${GXY_ROOT}/third-party/${PATCH_TARGET}
+	git apply ${PATCH_DIR}/${patch}
+	if [ $? != 0 ]; then
+		fail "patch application for ${PATCH_TARGET} returned error code $?"
+	fi
+done
 
 cd ${GXY_ROOT}
 mkdir -p ${GXY_ROOT}/.galaxy

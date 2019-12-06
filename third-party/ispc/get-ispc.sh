@@ -19,7 +19,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-VERSION="1.10.0"
+VERSION="1.12.0"
 
 if [ "x$1" != "x" ]; then
 	echo "usage: get-ispc.sh"
@@ -37,7 +37,7 @@ function fail
 OS_TYPE=$(uname)
 if [ "x${OS_TYPE}" == "xLinux" ]; then
 	TARGET_OS="linux"
-	TARGET_OS_DIR="Linux"
+	TARGET_OS_DIR="linux"
 elif [ "x${OS_TYPE}" == "xDarwin" ]; then
 	TARGET_OS="osx"
 	TARGET_OS_DIR="Darwin"
@@ -45,7 +45,7 @@ else
 	fail "Unrecognized OS type '${OS_TYPE}'"
 fi
 
-TARGET_DIR="install/ispc-${VERSION}-${TARGET_OS_DIR}"
+TARGET_DIR="install/ispc-v${VERSION}-${TARGET_OS_DIR}"
 TARBALL="ispc-v${VERSION}-${TARGET_OS}.tar.gz"
 
 if [ -x $TARGET_DIR/bin/ispc ]; then
