@@ -1,0 +1,14 @@
+diff --git a/ospray/CMakeLists.txt b/ospray/CMakeLists.txt
+index 090d70b15..d19b0ac96 100644
+--- a/ospray/CMakeLists.txt
++++ b/ospray/CMakeLists.txt
+@@ -277,6 +277,9 @@ target_link_libraries(ospray PUBLIC ospray_common)
+ 
+ target_include_directories(ospray
+   PUBLIC
++    # GALAXY BEGIN ADDED CODE - by Galaxy patch
++    ${EMBREE_INCLUDE_DIRS}
++    # GALAXY END ADDED CODE - by Galaxy patch
+     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/include>
+     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
