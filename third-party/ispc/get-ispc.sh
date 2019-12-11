@@ -39,14 +39,15 @@ if [ "x${OS_TYPE}" == "xLinux" ]; then
 	TARGET_OS="linux"
 	TARGET_OS_DIR="linux"
 elif [ "x${OS_TYPE}" == "xDarwin" ]; then
-	TARGET_OS="osx"
-	TARGET_OS_DIR="Darwin"
+	TARGET_OS="macOS"
+	TARGET_OS_DIR="macOS"
 else
 	fail "Unrecognized OS type '${OS_TYPE}'"
 fi
 
 TARGET_DIR="install/ispc-v${VERSION}-${TARGET_OS_DIR}"
 TARBALL="ispc-v${VERSION}-${TARGET_OS}.tar.gz"
+BIN_TARGET_DIR="../install"
 
 if [ -x $TARGET_DIR/bin/ispc ]; then
 	echo "ispc for ${OS_TYPE} already exists. Nothing more to do."
@@ -75,6 +76,8 @@ fi
 
 if [ -x ${TARGET_DIR}/bin/ispc ]; then
 	echo "ispc for ${OS_TYPE} successfully retrieved!"
+	mkdir -p ${BIN_TARGET_DIR}
+	cp -R ${TARGET_DIR}/bin ${BIN_TARGET_DIR}
 	rm ${TARBALL}
 else
 	fail "Executable ${TARGET_DIR}/bin/ispc not found"
