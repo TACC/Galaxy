@@ -36,7 +36,7 @@ public:
   Camera()
   {
     point = {0.0, 0.0, -5.0};
-    direction = {0.0, 0.0, 1.0};
+    direction = {0.0, 0.0, 5.0};
     up = {0.0, 1.0, 0.0};
     aov = 30.0;
     size = {512, 512};
