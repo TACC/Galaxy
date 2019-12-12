@@ -81,7 +81,6 @@ GxyRenderWindow::setCamera(Camera&c)
 
   std::cerr << "initial center: " << current_center.x << " " << current_center.y << " " << current_center.z << "\n";
 
-
   gxy::vec2i size = c.getSize();
   resize(size.x, size.y);
 
@@ -212,12 +211,12 @@ GxyRenderWindow::mouseMoveEvent(QMouseEvent *event)
 
     gxy::vec3f p = current_center + scalev(vdist, current_direction);
     camera.setPoint(p);
-    std::cerr << "point: " << p.x << " " << p.y << " " << p.z << " ";
+    // std::cerr << "point: " << p.x << " " << p.y << " " << p.z << " ";
 
     gxy::vec3f n = neg(current_direction);
     scale(vdist, n);
     camera.setDirection(n);
-    std::cerr << "direction: " << n.x << " " << n.y << " " << n.z << "\n";
+    // std::cerr << "direction: " << n.x << " " << n.y << " " << n.z << "\n";
 
     camera.setUp(current_up);
 
@@ -282,8 +281,6 @@ GxyRenderWindow::sendCamera()
 {
   if (getTheGxyConnectionMgr()->IsConnected())
   {
-    std::cerr << "====================================\n";
-
     setSize(camera);
 
     QJsonObject cameraJson;
@@ -355,8 +352,6 @@ GxyRenderWindow::paintGL()
 void
 GxyRenderWindow::resizeGL(int w, int h)
 {
-  std::cerr << "resizeGL " << w << " " << h << "\n";
-
   if (width != w || height != h)
   {
     width = w;

@@ -432,12 +432,18 @@ private Q_SLOTS:
       std::string line = strbuf.GetString();
       gxyMgr->CSendRecv(line);
 
+      std::cerr << line << "\n";
+
       std::stringstream ss(line);
 
       std::string s;
       ss >> s;
 
-      if (s != "ok")
+      rapidjson::Document rply;
+      std::getline(ss, line);
+      rply.Parse(line.c_str());
+
+      if (rply["status"] != "ok")
       {
         QMessageBox msgBox;
         msgBox.setText((std::string("Error: ") + line).c_str());
@@ -445,11 +451,6 @@ private Q_SLOTS:
       }
       else
       {
-        rapidjson::Document rply;
-        std::getline(ss, line);
-
-        rply.Parse(line.c_str());
-
         rapidjson::Value& array = rply["Datasets"];
 
         for (auto i = 0; i < array.Size(); i++)

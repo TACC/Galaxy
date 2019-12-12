@@ -37,8 +37,6 @@
 
 #include "GxyModel.hpp"
 
-#include "GxyData.hpp"
-
 class StreamTracerModel : public GxyModel
 {
   Q_OBJECT
@@ -65,15 +63,30 @@ public:
 
   QString name() const override { return QStringLiteral("StreamTracer"); }
 
+  bool isValid() override;
+
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
+
+public Q_SLOTS:
+
+  virtual void onApply() override;
+
 protected:
 
-  virtual void apply();
+  std::shared_ptr<GxyData>  vectorField;
+  std::shared_ptr<GxyData>  seeds;
 
 private:
 
+  QLineEdit               *trimtime;
+  QLineEdit               *trimdeltatime;
   QLineEdit               *maxsteps;
   QLineEdit               *stepsize;
   QLineEdit               *minvelocity;
   QLineEdit               *maxtime;
   std::shared_ptr<GxyData> output;
+
+  bool retrace = true;
+  bool retrim  = true;
 };

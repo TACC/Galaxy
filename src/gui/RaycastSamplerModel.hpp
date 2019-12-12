@@ -20,12 +20,9 @@
 
 #pragma once
 
-#include "dtypes.h"
-
-#include <vector>
-#include <string>
 
 #include <QtCore/QObject>
+#include <QtCore/QVector>
 
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
@@ -33,22 +30,28 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QCheckBox>
-#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QComboBox>
 
-#include <QtGui/QDoubleValidator>
+#include "GxyModel.hpp"
 
-#include "VisModel.hpp"
 #include "GxyData.hpp"
+#include "Camera.hpp"
+#include "CameraDialog.hpp"
 
-class PathLinesVisModel : public VisModel
+#include "Lights.hpp"
+#include "LightsDialog.hpp"
+
+#include <nodes/NodeData>
+
+class RaycastSamplerModel : public GxyModel
 {
   Q_OBJECT
 
 public:
-  PathLinesVisModel();
+  RaycastSamplerModel();
 
   virtual
-  ~PathLinesVisModel() {}
+  ~RaycastSamplerModel() {}
 
   unsigned int nPorts(QtNodes::PortType portType) const override;
 
@@ -62,26 +65,51 @@ public:
 
   QString validationMessage() const override;
 
-  QString caption() const override { return QStringLiteral("PathLinesVis"); }
+  QString caption() const override { return QStringLiteral("RaycastSampler"); }
 
-  QString name() const override { return QStringLiteral("PathLinesVis"); }
+  QString name() const override { return QStringLiteral("RaycastSampler"); }
+
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
+  bool isValid() override;
 
   QJsonObject save() const override;
   void restore(QJsonObject const &p) override;
 
-  bool isValid() override;
+public Q_SLOTS: 
 
-  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
-  virtual void loadParameterWidgets() const override;
+  virtual void onApply() override;
 
-  virtual void loadOutput(std::shared_ptr<GxyPacket> o) const override;
+private Q_SLOTS:
 
-  void onApply() override;
+  void algorithmChanged(int t)
+  {
+    gradient_properties->setVisible(t == 1);
+    isovalue_properties->setVisible(t == 0);
+  }
+
+  void openCameraDialog() 
+  {
+    CameraDialog *cameraDialog = new CameraDialog(camera);
+    cameraDialog->exec();
+    cameraDialog->get_camera(camera);
+    delete cameraDialog;
+  }
 
 private:
 
-  QLineEdit               *minrange;
-  QLineEdit               *maxrange;
-  QLineEdit               *minradius;
-  QLineEdit               *maxradius;
+  std::shared_ptr<GxyData> input;
+  std::shared_ptr<GxyData> output;
+
+  Camera camera;
+
+  QFrame *raycast_properties;
+
+  QFrame *isovalue_properties;
+  QLineEdit *isovalue;
+
+  QFrame *gradient_properties;
+  QLineEdit *tolerance;
+
+  QComboBox *type;
+  QPushButton *openCamera;
 };

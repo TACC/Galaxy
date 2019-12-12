@@ -37,19 +37,18 @@
 
 #include <QtGui/QDoubleValidator>
 
-#include "GxyModel.hpp"
-#include "PathlinesVis.hpp"
+#include "VisModel.hpp"
 #include "GxyData.hpp"
 
-class PathlinesVisModel : public GxyModel
+class PathLinesVisModel : public VisModel
 {
   Q_OBJECT
 
 public:
-  PathlinesVisModel();
+  PathLinesVisModel();
 
   virtual
-  ~PathlinesVisModel() {}
+  ~PathLinesVisModel() {}
 
   unsigned int nPorts(QtNodes::PortType portType) const override;
 
@@ -63,40 +62,26 @@ public:
 
   QString validationMessage() const override;
 
-  QString caption() const override { return QStringLiteral("PathlinesVis"); }
+  QString caption() const override { return QStringLiteral("PathLinesVis"); }
 
-  QString name() const override { return QStringLiteral("PathlinesVis"); }
+  QString name() const override { return QStringLiteral("PathLinesVis"); }
 
-protected:
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
 
-  virtual void apply();
+  bool isValid() override;
 
-private Q_SLOTS:
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
+  virtual void loadParameterWidgets() const override;
 
-  void useFullRangeChanged(int s)
-  {
-    minrange->setEnabled(s == 0);
-    maxrange->setEnabled(s == 0);
-  }
+  virtual void loadOutput(std::shared_ptr<GxyPacket> o) const override;
 
-  void openFileSelectorDialog()
-  {
-    QFileDialog *fileDialog = new QFileDialog();
-    fileDialog->exec();
-    tf_widget->clear();
-    tf_widget->insert(fileDialog->selectedFiles().at(0));
-    delete fileDialog;
-  }
+  void onApply() override;
 
 private:
 
-  QLineEdit               *tf_widget;
-
-  QCheckBox               *useFullRange;
   QLineEdit               *minrange;
   QLineEdit               *maxrange;
   QLineEdit               *minradius;
   QLineEdit               *maxradius;
-
-  std::shared_ptr<GxyData> output;
 };

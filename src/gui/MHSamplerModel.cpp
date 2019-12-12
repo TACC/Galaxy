@@ -146,7 +146,7 @@ void
 MHSamplerModel::onApply()
 {
   QJsonObject json = save();
-  json["cmd"] = "gui::sample";
+  json["cmd"] = "gui::mhsample";
 
   json["sourceKey"] = input->dataInfo.key;
 

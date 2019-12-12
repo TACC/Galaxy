@@ -138,6 +138,7 @@ VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) const
     std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(p);
     std::shared_ptr<Vis> o = std::dynamic_pointer_cast<Vis>(o);
 
+    std::cerr << "XXX " << d->dataInfo.data_min << " " << d->dataInfo.data_max << "\n";
     cmap_range_min->setText(QString::number(d->dataInfo.data_min));
     cmap_range_max->setText(QString::number(d->dataInfo.data_max));
   }

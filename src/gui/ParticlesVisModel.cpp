@@ -162,23 +162,10 @@ ParticlesVisModel::restore(QJsonObject const &p)
 bool
 ParticlesVisModel::isValid()
 {
-  if (input)
-    std::cerr << "isValid: " << ((long)input.get()) << "\n";
-  else
-    std::cerr << "isValid: input is NULL\n";
-
-  if (! VisModel::isValid()) std::cerr << "VisModel::isValid NO\n";
-  else std::cerr << "VisModel::isValid YES\n";
-
-  if (! input->isValid()) std::cerr << "input->isValid NO\n";
-  else std::cerr << "input->isValid YES\n";
-
-  if (! VisModel::isValid() || ! input->isValid())
-  {
-    return false;
-  }
-
-  return true;
+  bool a = (input != NULL);
+  bool b = (a && input->isValid()) ? true : false;
+  bool c = (b && VisModel::isValid()) ? true : false;
+  return c;
 }
 
 void

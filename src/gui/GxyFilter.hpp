@@ -19,55 +19,32 @@
 // ========================================================================== //
 
 #pragma once
-  
-#include <iostream>
-#include "Vis.hpp"
 
-class PathLinesVis : public Vis
+
+#include "GxyConnectionMgr.hpp"
+#include "GxyModel.hpp"
+
+class GxyFilter : public GxyModel
 {
+  Q_OBJECT
+
 public:
-  
-  PathLinesVis() : Vis() {}
-  PathLinesVis(std::string o) : Vis(o) {}
-
-  QtNodes::NodeDataType type() const override
-  { 
-    return QtNodes::NodeDataType {"plvis", "PLVIS"};
-  }
-
-  virtual void print() override
+  ~GxyFilter()
   {
-    Vis::print();
-    std::cerr << "radius map range: " << minrange << " " << maxrange << "\n";
-    std::cerr << "radius map value: " << minradius << " " << maxradius << "\n";
+    if (getTheGxyConnectionMgr()->IsConnected())
+    {
+      QJsonObject json;
+      json["cmd"] = "gui::remove_filter";
+      json["id"] = model_identifier.c_str();
+
+      QJsonDocument doc(json);
+      QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+      QString s = QLatin1String(bytes);
+
+      std::string msg = s.toStdString();
+      std::cerr << "request: " << msg << "\n";
+      getTheGxyConnectionMgr()->CSendRecv(msg);
+      std::cerr << "reply: " << msg << "\n";
+    }
   }
-
-  void toJson(QJsonObject& p) override
-  {
-    Vis::toJson(p);
-
-    p["type"] = "PathLinesVis";
-    p["radius0"] = minradius;
-    p["radius1"] = maxradius;
-    p["value0"] = minrange;
-    p["value1"] = maxrange;
-  }
-
-  void fromJson(QJsonObject p) override
-  {
-    Vis::fromJson(p);
-
-    minradius = p["radius0"].toDouble();
-    maxradius = p["radius1"].toDouble();
-    minrange = p["value0"].toDouble();
-    maxrange = p["value1"].toDouble();
-  }
-
-  float minrange;
-  float maxrange;
-  float minradius;
-  float maxradius;
-
-
 };
-

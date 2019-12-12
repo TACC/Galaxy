@@ -110,7 +110,7 @@ public:
 
   QtNodes::NodeDataType type() const override
   {
-    return QtNodes::NodeDataType {"gxygui", "GxyGui"};
+    return QtNodes::NodeDataType {"gxydata", "GxyData"};
   }
 
   virtual void toJson(QJsonObject& p) override

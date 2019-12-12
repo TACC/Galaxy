@@ -35,7 +35,7 @@
 
 #include "VolumeVisModel.hpp"
 #include "ParticlesVisModel.hpp"
-#include "PathlinesVisModel.hpp"
+#include "PathLinesVisModel.hpp"
 #include "RenderModel.hpp"
 #include "MHSamplerModel.hpp"
 #include "RaycastSamplerModel.hpp"
@@ -69,7 +69,7 @@ registerDataModels()
   ret->registerModel<InterpolatorModel>("Filters");
   ret->registerModel<VolumeVisModel>("Visualizations");
   ret->registerModel<ParticlesVisModel>("Visualizations");
-  ret->registerModel<PathlinesVisModel>("Visualizations");
+  ret->registerModel<PathLinesVisModel>("Visualizations");
   ret->registerModel<RenderModel>("Rendering");
   return ret;
 }
