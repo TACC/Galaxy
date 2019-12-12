@@ -82,47 +82,37 @@ include_directories(${MPI_INCLUDE_PATH})
 find_package(TBB REQUIRED)
 include_directories(${TBB_INCLUDE_DIRS})
 find_package(OpenGL REQUIRED)
+find_package(GLUT REQUIRED)
 find_package(VTK REQUIRED NO_MODULE)
-include(${VTK_USE_FILE})
 find_package(PNG REQUIRED)
 find_package(PythonInterp REQUIRED)
 
-# find third-party directory dependencies
+# find third-party local builds
+# Assumption that these have been installed to single 'third-party/install' directory
+# cmake -DCMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/ ..
 find_package(RapidJSON PATHS
-  ${PROJECT_SOURCE_DIR}/../third-party/rapidjson/install/lib64/cmake
-  ${PROJECT_SOURCE_DIR}/../third-party/rapidjson/install/lib/cmake
-  ${PROJECT_SOURCE_DIR}/../third-party/rapidjson/build
-  ${PROJECT_SOURCE_DIR}/third-party/rapidjson/install/lib64/cmake
-  ${PROJECT_SOURCE_DIR}/third-party/rapidjson/install/lib/cmake
-  ${PROJECT_SOURCE_DIR}/third-party/rapidjson/build)
+    ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
+    ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
+find_package(embree 3.6.1 QUIET PATHS
+    ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
+    ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake) # pnav: REQUIRED breaks static-linked version ¯\_(ツ)_/¯
+find_package(ospray 1.8.5 PATHS
+    ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
+    ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
+
+# Cmake definitions to handle building ISPC files
+include(ispc)
+
+# All OSPRay target libraries
+set(OSPRAY_LIBRARIES
+    ospray::ospray
+    ospray::ospray_common
+    ospray::ospray_module_ispc)
+
 include_directories(${RapidJSON_INCLUDE_DIRS})
 
-find_package(embree 3 QUIET PATHS 
-  ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib64/cmake
-  ${PROJECT_SOURCE_DIR}/../third-party/embree/install/lib/cmake
-  ${PROJECT_SOURCE_DIR}/../third-party/embree/build
-  ${PROJECT_SOURCE_DIR}/third-party/embree/install/lib64/cmake
-	${PROJECT_SOURCE_DIR}/third-party/embree/install/lib/cmake
-	${PROJECT_SOURCE_DIR}/third-party/embree/build)
-find_package(ospray PATHS 
-	${PROJECT_SOURCE_DIR}/../third-party/OSPRay/install/lib64/cmake
-  ${PROJECT_SOURCE_DIR}/../third-party/OSPRay/install/lib/cmake
-  ${PROJECT_SOURCE_DIR}/../third-party/OSPRay/build/cmake
-  ${PROJECT_SOURCE_DIR}/third-party/ospray/install/lib64/cmake
-  ${PROJECT_SOURCE_DIR}/third-party/ospray/install/lib/cmake
-	${PROJECT_SOURCE_DIR}/third-party/ospray/build/cmake)
-
-if (ospray_DIR)
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPRAY_CMAKE_ROOT})
-  include(macros)
-  include(ospray_macros)
-  include(ispc)
-else(ospray_DIR)
-  message(FATAL_ERROR "OSPRay not found. Please run ${PROJECT_SOURCE_DIR}/prep-third-party.sh and build the third-party dependencies before building Galaxy.")
-endif(ospray_DIR)
-
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-SET(CMAKE_INSTALL_RPATH 
+SET(CMAKE_INSTALL_RPATH
   "${OSPRAY_ROOT}/${CMAKE_INSTALL_LIBDIR}"
   "${EMBREE_ROOT_DIR}/${CMAKE_INSTALL_LIBDIR}"
   "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"

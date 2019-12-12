@@ -22,7 +22,7 @@ cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
 project (gxy_schlieren VERSION ${GALAXY_VERSION})
 
-include_directories_ispc(${GALAXY_INCLUDES}
+ispc_include_directories(${GALAXY_INCLUDES}
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS}
                     ${CMAKE_BINARY_DIR}/src
@@ -60,7 +60,9 @@ set (CPP_SOURCES
 )
 
 if (ospray_DIR)
-  ospray_create_library(gxy_schlieren ${CPP_SOURCES} ${ISPC_SOURCES} LINK ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_renderer gxy_framework COMPONENT lib)
+  add_library(gxy_schlieren SHARED)
+  ispc_target_add_sources(gxy_schlieren ${CPP_SOURCES} ${ISPC_SOURCES})
+  target_link_libraries(gxy_schlieren ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_renderer gxy_framework)
   set_target_properties(gxy_schlieren PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   install(TARGETS gxy_schlieren DESTINATION lib)
 endif()

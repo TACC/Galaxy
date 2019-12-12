@@ -8,8 +8,6 @@ include_directories(${gxy_framework_SOURCE_DIR}
                     ${gxy_ospray_SOURCE_DIR}
                     ${Galaxy_BINARY_DIR}/src)
 
-include(${VTK_USE_FILE})
-
 set(Galaxy_LIBRARIES
     gxy_framework
     gxy_renderer

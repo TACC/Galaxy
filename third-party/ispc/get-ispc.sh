@@ -19,7 +19,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-VERSION="1.10.0"
+VERSION="1.12.0"
 
 if [ "x$1" != "x" ]; then
 	echo "usage: get-ispc.sh"
@@ -29,34 +29,40 @@ fi
 
 function fail
 {
-	echo "ERROR: $1"
-	echo "Try downloading ispc manually at https://ispc.github.io/downloads.html"
+	echo "GALAXY: ERROR - $1"
+	echo "GALAXY: Try downloading ispc manually at https://ispc.github.io/downloads.html"
 	exit 1
+}
+
+function report
+{
+	echo "GALAXY: $1"
 }
 
 OS_TYPE=$(uname)
 if [ "x${OS_TYPE}" == "xLinux" ]; then
 	TARGET_OS="linux"
-	TARGET_OS_DIR="Linux"
+	TARGET_OS_DIR="linux"
 elif [ "x${OS_TYPE}" == "xDarwin" ]; then
-	TARGET_OS="osx"
-	TARGET_OS_DIR="Darwin"
+	TARGET_OS="macOS"
+	TARGET_OS_DIR="macOS"
 else
 	fail "Unrecognized OS type '${OS_TYPE}'"
 fi
 
-TARGET_DIR="install/ispc-${VERSION}-${TARGET_OS_DIR}"
+TARGET_DIR="install/ispc-v${VERSION}-${TARGET_OS_DIR}"
 TARBALL="ispc-v${VERSION}-${TARGET_OS}.tar.gz"
+BIN_TARGET_DIR="../install"
 
-if [ -x $TARGET_DIR/bin/ispc ]; then
-	echo "ispc for ${OS_TYPE} already exists. Nothing more to do."
+if [ -x ${TARGET_DIR}/bin/ispc ] && [ -x ${BIN_TARGET_DIR}/bin/ispc ]; then
+	report "ispc for ${OS_TYPE} already exists. Nothing more to do."
 	exit 0
 fi
 
 if [ -f ${TARBALL} ]; then
-	echo "found ${TARBALL}"
+	report "found ${TARBALL}"
 else 
-	echo "downloading ispc ${VERSION} for ${OS_TYPE}"
+	report "downloading ispc ${VERSION} for ${OS_TYPE}"
 	wget -q -O ${TARBALL} http://sourceforge.net/projects/ispcmirror/files/v${VERSION}/${TARBALL}/download
 	if [ $? != 0 ]; then
 		fail "Download for ${TARBALL} failed."
@@ -64,7 +70,7 @@ else
 fi
 
 if [ -f ${TARBALL} ]; then
-	echo "untarring ${TARBALL}"
+	report "untarring ${TARBALL}"
 	mkdir -p install
 	pushd install
 	tar xf ../${TARBALL}
@@ -74,7 +80,9 @@ else
 fi
 
 if [ -x ${TARGET_DIR}/bin/ispc ]; then
-	echo "ispc for ${OS_TYPE} successfully retrieved!"
+	report "ispc for ${OS_TYPE} successfully retrieved!"
+	mkdir -p ${BIN_TARGET_DIR}
+	cp -R ${TARGET_DIR}/bin ${BIN_TARGET_DIR}
 	rm ${TARBALL}
 else
 	fail "Executable ${TARGET_DIR}/bin/ispc not found"
