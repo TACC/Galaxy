@@ -40,6 +40,7 @@ namespace gxy
 
 SocketHandler::SocketHandler()
 {
+  is_connected = false;
   pthread_mutex_init(&c_lock, NULL);
   pthread_mutex_init(&d_lock, NULL);
 }
@@ -48,7 +49,6 @@ SocketHandler::SocketHandler(int cfd, int dfd) : SocketHandler::SocketHandler()
 {
   data_fd = dfd;
   control_fd = cfd;
-  is_connected = false;
 }
 
 bool SocketHandler::Connect(std::string host, int port)
