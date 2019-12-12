@@ -60,6 +60,7 @@ public:
     
     virtual bool Commit(DatasetsP);
     virtual bool Commit(KeyedDataObjectP);
+    virtual bool Commit(Key key);
     virtual bool Commit();
 
     //! return a pointer to the KeyedDataObject data that this Vis targets

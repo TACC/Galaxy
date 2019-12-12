@@ -89,6 +89,13 @@ Vis::Commit(DatasetsP datasets)
 }
 
 bool 
+Vis::Commit(Key key)
+{
+  datakey = key;
+  return Commit();
+}
+
+bool 
 Vis::Commit(KeyedDataObjectP kdop)
 {
   if (! kdop)
