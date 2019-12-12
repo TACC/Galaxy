@@ -93,9 +93,9 @@ find_package(PythonInterp REQUIRED)
 find_package(RapidJSON PATHS
     ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
     ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
-find_package(embree 3.6.1 PATHS
+find_package(embree 3.6.1 QUIET PATHS
     ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
-    ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
+    ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake) # pnav: REQUIRED breaks static-linked version ¯\_(ツ)_/¯
 find_package(ospray 1.8.5 PATHS
     ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
     ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)

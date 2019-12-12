@@ -49,7 +49,7 @@ TARGET_DIR="install/ispc-v${VERSION}-${TARGET_OS_DIR}"
 TARBALL="ispc-v${VERSION}-${TARGET_OS}.tar.gz"
 BIN_TARGET_DIR="../install"
 
-if [ -x $TARGET_DIR/bin/ispc ]; then
+if [ -x ${TARGET_DIR}/bin/ispc ] && [ -x ${BIN_TARGET_DIR}/bin/ispc ]; then
 	echo "ispc for ${OS_TYPE} already exists. Nothing more to do."
 	exit 0
 fi

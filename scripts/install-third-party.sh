@@ -42,8 +42,16 @@ GXY_PREP_SCRIPT=prep-third-party.sh
 GXY_DONE_TAG="gxy_third_party_installed"
 CMAKE_BIN=`which cmake`
 CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/ \
-             -Wno-undef -Wno-deprecated-declarations \
-             -DEMBREE_STATIC_LIB=ON -DEMBREE_TUTORIALS=OFF"
+             -Wno-undef -Wno-deprecated-declarations"
+EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
+						 				-DEMBREE_STATIC_LIB=ON \
+						 				-DEMBREE_TUTORIALS=OFF"
+OSPRAY_CMAKE_FLAGS="-Dembree_DIR=${GXY_ROOT}/third-party/install/lib/cmake/embree-3.6.1 \
+						  			-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
+						  			-DCMAKE_CXX_FLAGS=-I${GXY_ROOT}/third-party/install/include"
+RAPIDJSON_CMAKE_FLAGS="-DRAPIDJSON_BUILD_DOC=OFF \
+											 -DRAPIDJSON_BUILD_EXAMPLES=OFF \
+											 -DRAPIDJSON_BUILD_TESTS=OFF"
 
 if [ -f ${GXY_ROOT}/install-third-party.sh ]; then
 	# running from script dir, help a user out
@@ -77,14 +85,29 @@ fi
 
 cd ${GXY_ROOT}/third-party
 for tp_lib_dir in embree ospray rapidjson; do
-	if [ -d $tp_lib_dir/install ]; then
+	if [ -d install/include/$tp_lib_dir ] || [ -d install/include/${tp_lib_dir}3 ]; then # silly embree uses embree3
 		report "$tp_lib_dir already installed."
 	else 
 		report "building ${tp_lib_dir}..."
 		pushd $tp_lib_dir
 		mkdir -p build
 		cd build
-		${CMAKE_BIN} ${CMAKE_FLAGS} .. && make -j 4 install
+		ALL_CMAKE_FLAGS="${CMAKE_FLAGS}"
+		case $tp_lib_dir in 
+			embree)
+			ALL_CMAKE_FLAGS="${ALL_CMAKE_FLAGS} ${EMBREE_CMAKE_FLAGS}"
+			;;
+			ospray)
+			ALL_CMAKE_FLAGS="${ALL_CMAKE_FLAGS} ${OSPRAY_CMAKE_FLAGS}"
+			;;
+			rapidjson)
+			ALL_CMAKE_FLAGS="${ALL_CMAKE_FLAGS} ${RAPIDJSON_CMAKE_FLAGS}"
+			;;
+			*)
+			report "unknown tp_lib_dir '${tp_lib_dir}'"
+			;;
+		esac
+		${CMAKE_BIN} ${ALL_CMAKE_FLAGS} .. && make -j 4 install
 		if [ $? != 0 ]; then
 			fail "Build failed for ${tp_lib_dir}."
 		fi
