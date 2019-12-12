@@ -35,6 +35,7 @@ using namespace rapidjson;
 #include "GuiClientServer.h"
 #include "MHSampler.hpp"
 #include "RaycastSampler.hpp"
+#include "StreamTracer.hpp"
 
 using namespace gxy;
 
@@ -61,6 +62,7 @@ GuiClientServer::init()
   Renderer::Initialize();
   Sampler::Initialize();
   ServerRendering::RegisterClass();
+  StreamTracer::Register();
 }
 
 GuiClientServer::~GuiClientServer()
@@ -74,9 +76,43 @@ GuiClientServer::Sample(Document& params, std::string& reply)
   return true;
 }
 
+static std::string 
+DocumentToString(rapidjson::Document& doc)
+{
+  rapidjson::StringBuffer strbuf;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+  doc.Accept(writer);
+  return strbuf.GetString();
+}
+
+#define HANDLED_BUT_ERROR_RETURN(msg)                                                           \
+{                                                                                               \
+  std::string s = "error";                                                                      \
+  replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);         \
+  s = msg;                                                                                      \
+  replyDoc.AddMember("error message", Value().SetString(s.c_str(), s.length(), alloc), alloc);  \
+  reply = DocumentToString(replyDoc);                                                           \
+  std::cerr << line << "\n";                                                                    \
+  return true;                                                                                  \
+}
+
+#define HANDLED_OK                                                                              \
+{                                                                                               \
+  std::string s = "ok";                                                                         \
+  replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);         \
+  reply = DocumentToString(replyDoc);                                                           \
+  std::cerr << reply << "\n"; \
+  return true;                                                                                  \
+}
+
 bool
 GuiClientServer::handle(string line, string& reply)
 {
+  Document replyDoc;
+  replyDoc.SetObject();
+
+  Document::AllocatorType& alloc = replyDoc.GetAllocator();
+
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
@@ -86,10 +122,7 @@ GuiClientServer::handle(string line, string& reply)
 
   Document doc;
   if (doc.Parse<0>(line.c_str()).HasParseError())
-  {
-    reply = "error parsing json command";
-    return true;
-  }
+    HANDLED_BUT_ERROR_RETURN("error parsing json command");
 
   string cmd = doc["cmd"].GetString();
   std::cerr << "CMD: " << cmd << "\n";
@@ -97,28 +130,16 @@ GuiClientServer::handle(string line, string& reply)
   if (cmd == "gui::import")
   {
     if (! theDatasets->LoadFromJSON(doc))
-    {
-      reply = "error loading JSON";
-      return true;
-    }
+      HANDLED_BUT_ERROR_RETURN("import datasets: error in LoadFromJson");
 
     theDatasets->Commit();
 
-    reply = std::string("ok");
-    return true;
+    HANDLED_OK;
   }
   else if (cmd == "gui::list")
   {
     if (! theDatasets)
-    {
-      reply = std::string("unable to access global datasets");
-      exit(1);
-    }
-
-    reply = "ok ";
-
-    rapidjson::Document doc;
-    doc.SetObject();
+      HANDLED_BUT_ERROR_RETURN("list: unable to access global data");
 
     Value array(kArrayType);
 
@@ -146,89 +167,82 @@ GuiClientServer::handle(string line, string& reply)
       float m, M;
       kdop->get_global_minmax(m, M);
 
+      int key = kdop->getkey();
+
       rapidjson::Value dset(rapidjson::kObjectType);
-      dset.AddMember("name", rapidjson::Value().SetString(it->c_str(), it->length()+1), doc.GetAllocator());
-      dset.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), doc.GetAllocator());
-      dset.AddMember("type", rapidjson::Value().SetInt(type), doc.GetAllocator());
-      dset.AddMember("ncomp", rapidjson::Value().SetInt(ncomp), doc.GetAllocator());
-      dset.AddMember("min", rapidjson::Value().SetDouble(m), doc.GetAllocator());
-      dset.AddMember("max", rapidjson::Value().SetDouble(M), doc.GetAllocator());
+
+
+      dset.AddMember("name", Value().SetString(it->c_str(), it->length(), alloc), alloc);
+      dset.AddMember("type", type, alloc);
+      dset.AddMember("key", key, alloc);
+      dset.AddMember("ncomp", ncomp, alloc);
+      dset.AddMember("min", m, alloc);
+      dset.AddMember("max", M, alloc);
 
       Box *box = kdop->get_global_box();
       rapidjson::Value boxv(rapidjson::kArrayType);
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), doc.GetAllocator());
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), doc.GetAllocator());
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), doc.GetAllocator());
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), doc.GetAllocator());
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), doc.GetAllocator());
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), doc.GetAllocator());
-      dset.AddMember("box", boxv, doc.GetAllocator());
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
+      dset.AddMember("box", boxv, alloc);
 
-      array.PushBack(dset, doc.GetAllocator());
+      array.PushBack(dset, alloc);
     }
 
-    doc.AddMember("Datasets", array, doc.GetAllocator());
+    replyDoc.AddMember("Datasets", array, alloc);
 
-    rapidjson::StringBuffer strbuf;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-    doc.Accept(writer);
-
-    reply = reply + strbuf.GetString();
-
-    return true;
+    HANDLED_OK;
   }
   else if (cmd == "gui::initWindow")
   {
     string id  = doc["id"].GetString();
     ClientWindow *clientWindow = getClientWindow(id);
     if (clientWindow)
-      reply = "window already initialized";
-    else
-      addClientWindow(id, new ClientWindow);
-    return true;
+      HANDLED_BUT_ERROR_RETURN("initWindow: window already initialized")
+
+    addClientWindow(id, new ClientWindow);
+
+    HANDLED_OK;
   }
   else if (cmd == "gui::visualization")
   {
     string id  = doc["id"].GetString();
     ClientWindow *clientWindow = getClientWindow(id);
     if (! clientWindow)
-    {
-      reply = "window has not been initialized\n";
-      return true;
-    }
+      HANDLED_BUT_ERROR_RETURN("initWindow: window has not been initialized");
 
     clientWindow->visualization = Visualization::NewP();
-    clientWindow->visualization->LoadFromJSON(doc["Visualization"]);
+
+    if (! clientWindow->visualization->LoadFromJSON(doc["Visualization"]))
+      HANDLED_BUT_ERROR_RETURN("visualization: error in LoadFromJson");
+
     clientWindow->visualization->Commit();
 
-    cmd = "Got a visualization";
-    return true;
+    HANDLED_OK;
   }
   else if (cmd == "gui::camera")
   {
     string id  = doc["id"].GetString();
     ClientWindow *clientWindow = getClientWindow(id);
     if (! clientWindow)
-    {
-      reply = "window has not been initialized\n";
-      return true;
-    }
+      HANDLED_BUT_ERROR_RETURN("camera: window has not been initialized");
 
-    clientWindow->camera->LoadFromJSON(doc["Camera"]);
+    if (! clientWindow->camera->LoadFromJSON(doc["Camera"]))
+      HANDLED_BUT_ERROR_RETURN("camera: error in LoadFromJson");
+
     clientWindow->camera->Commit();
 
-    cmd = "Got a camera";
-    return true;
+    HANDLED_OK;
   }
   else if (cmd == "gui::render")
   {
     string id  = doc["id"].GetString();
     ClientWindow *clientWindow = getClientWindow(id);
     if (! clientWindow)
-    {
-      reply = "window has not been initialized\n";
-      return true;
-    }
+      HANDLED_BUT_ERROR_RETURN("render: window has not been initialized");
 
     clientWindow->rendering->SetTheSize(clientWindow->camera->get_width(), clientWindow->camera->get_height());
     clientWindow->rendering->SetHandler(this);
@@ -242,7 +256,8 @@ GuiClientServer::handle(string line, string& reply)
     rs->AddRendering(clientWindow->rendering);
     rs->Commit();
     renderer->Start(clientWindow->renderingSet);
-    return true;
+
+    HANDLED_OK;
   }
   else if (cmd == "gui::mhsample")
   {
@@ -257,15 +272,12 @@ GuiClientServer::handle(string line, string& reply)
 
     MHSampler *sampler = (MHSampler*)filter;
     if (! sampler)
-      reply = std::string(cmd + ": found filter that wasn't MHSampler");
+      HANDLED_BUT_ERROR_RETURN("mhsample: filter was not MHSampler");
 
     sampler->Sample(doc);
 
     KeyedDataObjectP kdop = sampler->getResult();
     
-    rapidjson::Document doc;
-    doc.SetObject();
-
     int type;
     if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
     else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
@@ -285,32 +297,26 @@ GuiClientServer::handle(string line, string& reply)
     float m, M;
     kdop->get_global_minmax(m, M);
 
-    doc.AddMember("name", rapidjson::Value().SetString("(none)", 7), doc.GetAllocator());
-    doc.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), doc.GetAllocator());
-    doc.AddMember("type", rapidjson::Value().SetInt(type), doc.GetAllocator());
-    doc.AddMember("ncomp", rapidjson::Value().SetInt(ncomp), doc.GetAllocator());
-    doc.AddMember("min", rapidjson::Value().SetDouble(m), doc.GetAllocator());
-    doc.AddMember("max", rapidjson::Value().SetDouble(M), doc.GetAllocator());
+    replyDoc.AddMember("name", rapidjson::Value().SetString("(none)", 7), alloc);
+    replyDoc.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), alloc);
+    replyDoc.AddMember("type", rapidjson::Value().SetInt(type), alloc);
+    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(ncomp), alloc);
+    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), alloc);
+    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), alloc);
 
     Box *box = kdop->get_global_box();
     rapidjson::Value boxv(rapidjson::kArrayType);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), doc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), doc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), doc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), doc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), doc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), doc.GetAllocator());
-    doc.AddMember("box", boxv, doc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
+    replyDoc.AddMember("box", boxv, alloc);
 
-    doc.AddMember("status",  rapidjson::Value().SetString("ok", 3), doc.GetAllocator());
+    replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), alloc);
 
-    rapidjson::StringBuffer strbuf;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-    doc.Accept(writer);
-
-    reply = strbuf.GetString();
-
-    return true;
+    HANDLED_OK;
   }
   else if (cmd == "gui::raysample")
   {
@@ -325,15 +331,12 @@ GuiClientServer::handle(string line, string& reply)
 
     RaycastSampler *sampler = (RaycastSampler*)filter;
     if (! sampler)
-      reply = std::string(cmd + ": found filter that wasn't RaycastSampler");
+      HANDLED_BUT_ERROR_RETURN("raysampler: found filter that wasn't RaycastSampler");
 
     sampler->Sample(doc);
 
     KeyedDataObjectP kdop = sampler->getResult();
     
-    rapidjson::Document rply;
-    rply.SetObject();
-
     int type;
     if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
     else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
@@ -344,47 +347,123 @@ GuiClientServer::handle(string line, string& reply)
     float m, M;
     kdop->get_global_minmax(m, M);
 
-    rply.AddMember("name", rapidjson::Value().SetString("(none)", 7), rply.GetAllocator());
-    rply.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), rply.GetAllocator());
-    rply.AddMember("type", rapidjson::Value().SetInt(type), rply.GetAllocator());
-    rply.AddMember("ncomp", rapidjson::Value().SetInt(1), rply.GetAllocator());
-    rply.AddMember("min", rapidjson::Value().SetDouble(m), rply.GetAllocator());
-    rply.AddMember("max", rapidjson::Value().SetDouble(M), rply.GetAllocator());
+    replyDoc.AddMember("name", rapidjson::Value().SetString("(none)", 7), replyDoc.GetAllocator());
+    replyDoc.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), replyDoc.GetAllocator());
+    replyDoc.AddMember("type", rapidjson::Value().SetInt(type), replyDoc.GetAllocator());
+    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), replyDoc.GetAllocator());
+    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), replyDoc.GetAllocator());
+    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), replyDoc.GetAllocator());
 
     Box *box = kdop->get_global_box();
     rapidjson::Value boxv(rapidjson::kArrayType);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), rply.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), rply.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), rply.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), rply.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), rply.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), rply.GetAllocator());
-    rply.AddMember("box", boxv, rply.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), replyDoc.GetAllocator());
+    replyDoc.AddMember("box", boxv, replyDoc.GetAllocator());
 
-    rply.AddMember("status",  rapidjson::Value().SetString("ok", 3), rply.GetAllocator());
+    replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), replyDoc.GetAllocator());
 
-    rapidjson::StringBuffer strbuf;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-    rply.Accept(writer);
+    HANDLED_OK;
+  }
+  else if (cmd == "gui::streamtracer")
+  {
+    string id  = doc["id"].GetString();
 
-    reply = strbuf.GetString();
-    std::cerr << "XYZZY " << reply << "\n";
+    StreamTracerFilter *streamtracer;
 
-    return true;
+    Filter *filter = getFilter(id);
+    if (! filter)
+    {
+      if (! doc.HasMember("vectorFieldKey"))
+        HANDLED_BUT_ERROR_RETURN("there's no vectorField");
+
+      Key key = doc["vectorFieldKey"].GetInt();
+      VolumeP vectorField = Volume::Cast(KeyedDataObject::GetByKey(key));
+
+      filter = new StreamTracerFilter();
+      streamtracer = dynamic_cast<StreamTracerFilter*>(filter);
+
+      streamtracer->SetVectorField(vectorField);
+
+      addFilter(id, filter);
+    }
+    else
+      streamtracer = dynamic_cast<StreamTracerFilter*>(filter);
+
+    Key key = doc["seedsKey"].GetInt();
+    ParticlesP seeds = Particles::Cast(KeyedDataObject::GetByKey(key));
+    if (! seeds)
+      HANDLED_BUT_ERROR_RETURN("streamtracer: couldn't find seeds");
+
+    streamtracer->set_max_steps(doc["maxsteps"].GetInt());
+    streamtracer->set_stepsize(doc["stepsize"].GetDouble());
+    streamtracer->SetMinVelocity(doc["minvelocity"].GetDouble());
+    streamtracer->SetMaxIntegrationTime(doc["maxtime"].GetDouble());
+    streamtracer->SetMaxIntegrationTime(doc["maxtime"].GetDouble());
+
+    streamtracer->Trace(seeds);
+
+    HANDLED_OK;
+  }
+  else if (cmd == "gui::trace2pathlines")
+  {
+    string id  = doc["id"].GetString();
+
+    Filter *filter = getFilter(id);
+    if (! filter)
+      HANDLED_BUT_ERROR_RETURN("trace2pathlines - got to trace first");
+
+    StreamTracerFilter *streamtracer = dynamic_cast<StreamTracerFilter*>(filter);
+
+    streamtracer->SetTStart(doc["trimtime"].GetDouble());
+    streamtracer->SetDeltaT(doc["trimdeltatime"].GetDouble());
+
+    streamtracer->TraceToPathLines();
+
+    KeyedDataObjectP kdop = streamtracer->getResult();
+    
+    int type;
+    if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
+    else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
+    else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
+    else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+    else type = -1;
+
+    float m, M;
+    kdop->get_global_minmax(m, M);
+
+    replyDoc.AddMember("name", rapidjson::Value().SetString("(none)", 7), replyDoc.GetAllocator());
+    replyDoc.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), replyDoc.GetAllocator());
+    replyDoc.AddMember("type", rapidjson::Value().SetInt(type), replyDoc.GetAllocator());
+    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), replyDoc.GetAllocator());
+    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), replyDoc.GetAllocator());
+    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), replyDoc.GetAllocator());
+
+    Box *box = kdop->get_global_box();
+    rapidjson::Value boxv(rapidjson::kArrayType);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), replyDoc.GetAllocator());
+    replyDoc.AddMember("box", boxv, replyDoc.GetAllocator());
+    HANDLED_OK;
   }
   else if (cmd == "gui::remove_filter")
   {
     string id  = doc["id"].GetString();
     removeFilter(id);
-    reply = "ok";
-    return true;
+    HANDLED_OK;
   }
   else if (cmd == "gui::remove_window")
   {
     string id  = doc["id"].GetString();
     removeClientWindow(id);
-    reply = "ok";
-    return true;
+    HANDLED_OK;
   }
 
   return false;
