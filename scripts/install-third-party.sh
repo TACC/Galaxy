@@ -45,7 +45,8 @@ CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/ \
              -Wno-undef -Wno-deprecated-declarations"
 EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
 						 				-DEMBREE_STATIC_LIB=ON \
-						 				-DEMBREE_TUTORIALS=OFF"
+						 				-DEMBREE_TUTORIALS=OFF \
+						 				-DEMBREE_ISA_SSE2=OFF"
 OSPRAY_CMAKE_FLAGS="-Dembree_DIR=${GXY_ROOT}/third-party/install/lib/cmake/embree-3.6.1 \
 						  			-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
 						  			-DCMAKE_CXX_FLAGS=-I${GXY_ROOT}/third-party/install/include"
