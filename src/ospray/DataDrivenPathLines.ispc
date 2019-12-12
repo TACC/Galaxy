@@ -241,7 +241,8 @@ static void DataDrivenPathLines_postIntersect(uniform Geometry *uniform self,
       float radius = ((1.f-ray.u) * self->vertices[index].w) + (ray.u * self->vertices[index+1].w);
 
       float dataval;
-      if (self->radius0 < self->radius1 && radius < self->radius0)      dataval = self->value0; 
+      if (self->value0 == self->value1) dataval = self->radius0;
+      else if (self->radius0 < self->radius1 && radius < self->radius0)      dataval = self->value0; 
       else if (self->radius0 < self->radius1 && radius > self->radius1) dataval = self->value1; 
       else if (self->radius0 > self->radius1 && radius < self->radius1) dataval = self->value1; 
       else if (self->radius0 > self->radius1 && radius > self->radius0) dataval = self->value0; 
