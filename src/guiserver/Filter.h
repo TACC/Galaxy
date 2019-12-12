@@ -39,6 +39,8 @@ namespace gxy
   class Filter
   {
   public:
+    virtual ~Filter() {}
+
     static KeyedDataObjectP getSource(rapidjson::Document& doc)
     {
       Key key = doc["sourceKey"].GetInt();
