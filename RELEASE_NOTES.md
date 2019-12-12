@@ -1,5 +1,11 @@
 # Galaxy Release Notes
 
+## version 0.4.0 - pending
+
+* *TODO* - reorganize `src` directory to: framework, data, filters, apps
+* *TODO* - singularity recipe for multi-node distributed testing on TACC systems
+* Added Qt-based node editor[4] graphical user interface for Galaxy workflows
+
 ## version 0.3.2 - 20191212
 
 * updated OSPRay version to 1.8.5
@@ -77,5 +83,6 @@ Initial Galaxy release!
 [1]: https://ospray.org/
 [2]: https://hub.docker.com/r/pnav/galaxy
 [3]: https://hub.docker.com/r/pnav/galaxy-base
+[4]: https://github.com/paceholder/nodeeditor
 
 
