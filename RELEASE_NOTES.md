@@ -1,9 +1,12 @@
 # Galaxy Release Notes
 
-## version 0.4.0 - pending
+## version 0.3.2 - 20191212
 
-* *TODO* - reorganize `src` directory to: framework, data, filters, apps
-* *TODO* - singularity recipe for multi-node distributed testing on TACC systems
+* updated OSPRay version to 1.8.5
+* updated Embree version to 3.6.1
+* updated ISPC version to 1.12.0
+* centralized third-party installation to third-party/install directory
+* removed patchfiles for third-party packages, moved config options to cmake arguments in `scripts/install-third-party.sh`
 
 ## version 0.3.1 - 20190930
 

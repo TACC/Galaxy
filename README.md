@@ -41,34 +41,23 @@ Prior to building Galaxy itself, you should ensure that all the general dependen
 ### Scripted build
 We recommend using the Galaxy-provided build script `scripts/install-third-party.sh`, which will configure and build all submodules with a single command (if this script does not work for your configuration, please open a [GitHub issue][19]). If you need to customize your build, please see the next section.
 
-To **download, patch, and build** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/install-third-party.sh`, which will (1) init and update the git submodules, (2) download ispc to where Galaxy expects to find it, (3) apply patches to the third-party CMake files to make them easier for Galaxy to find, and (4) build each in a `build` subdirectory and install into an `install` subdirectory. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. For example, the OSPRay install will be located in `third-party/ospray/install`.
+To **download and build** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/install-third-party.sh`, which will (1) init and update the git submodules, (2) download ispc to where Galaxy expects to find it, and (3) build each in a `build` subdirectory and install into an `install` subdirectory. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. Once built, each third-party component will be installed to a single centralized location in `third-party/install`.
 
 ### Custom build
 The third-party dependency build can also be done by hand, for example, to 
 specify custom software locations or to change the configuration of Embree or OSPRay. Note that even with a custom build, the submodules still should be patched as described below.
 
-To **download and patch** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/prep-third-party.sh`, which will (1) init and update the git submodules, (2) download ispc to where Galaxy expects to find it, and (3) apply patches to the third-party CMake files to make them easier for Galaxy to find. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories. 
+To **download and patch** the submodules: `cd` to the root directory of your local Galaxy repository and run the script `./scripts/prep-third-party.sh`, which will (1) init and update the git submodules, and (2) download ispc to where Galaxy expects to find it. This script will populate the `third-party/ispc`, `third-party/embree`, `third-party/ospray`, and `third-pary/rapidjson` subdirectories.
 
-To **build and install** the submodules, do the following in `third-party/embree`, then `third-part/ospray`, then `third-party/rapidjson` (`third-party/ispc is already installed via the script`):
+To **build and install** the submodules, do the following in `third-party/embree`, then `third-part/ospray`, then `third-party/rapidjson` (`third-party/ispc` is already installed via the script):
 
 ```bash
 mkdir build
 cd build
-cmake .. && make && make install
+cmake <cmake flags> .. && make && make install
 ```
 
-#### NOTE on patches:
-All patch updates insert the prominent header: 
-```
-NOTE: This file has been modified by a Galaxy patch.
-      See the GALAXY BEGIN / GALAXY END block(s) below.
-```
-and are bookended by prominent comment blocks of the format:
-```
-GALAXY BEGIN ADDED CODE - by Galaxy patch
-< patch >
-GALAXY END ADDED CODE - by Galaxy patch
-```
+*NOTE*: for the CMake flags used for each third-party library, see the CMAKE_FLAGS variables defined in `scripts/install-third-party.sh`.
 
 #### Local installs of Galaxy associated dependencies
 If you prefer to use local installs of any of the dependencies, you can follow instructions below. Make sure to issue `git submodule init <path>` and `git submodule update <path>` for the third-party dependencies you do *NOT* have locally installed. For example, to use the rapidjson submodule, type:
@@ -86,58 +75,41 @@ cd third-party/ispc
 ./get-ispc.sh 
 ```
 
-This will download ISPC (currently version 1.9.2) into `third-party/ispc/ispc-v<version>-<OS type>` (e.g., ispc-v1.9.2-osx). If this binary does not work for you, you will need to build ISPC by hand following the directions at the [ISPC website][10]. 
+This will download ISPC (currently version 1.12.0) into `third-party/ispc/ispc-v<version>-<OS type>` (e.g., ispc-v1.10.0-macOS), and it will install the `ispc` executable in `third-party/install/bin`. If this binary does not work on your system, you will need to build ISPC by hand following the directions at the [ISPC website][10]. 
 
 #### Embree
-After updating the git submodules as described above, the `third-party/embree` directory should contain the Embree source tree. We recommend building in `third-party/embree/build` and installing to `third-party/embree/install`, as doing so should enable OSPRay and Galaxy to find Embree automatically. The recommended install directory is configured as part of the Galaxy Embree patch.
+After updating the git submodules as described above, the `third-party/embree` directory should contain the Embree source tree. We recommend building in `third-party/embree/build` and installing to `third-party/install`, as doing so should enable Galaxy to find Embree. The recommended install directory is configured as part of the Embree cmake flags in `scripts/install-third-party.sh`.
 
-First, apply the Galaxy Embree patch to the Embree repository. From the root directory of your Galaxy repository, issue the following commands:
-```bash
-cd third-party/embree
-git apply ../patches/embree.patch
-```
-
-Now, create a build directory and build Embree. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the Embree build:
+First, create a build directory and build Embree. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the Embree build:
 ```bash
 mkdir build
 cd build
-cmake .. && make && make install
+cmake <cmake flags> .. && make && make install
 ```
-If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
+If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory. See `scripts/install-third-party.sh` for recommended cmake flags.
 
 #### OSPRay
-Before installing OSPRay, make sure you have updated the Galaxy git submodules and successfully built Embree, as described above. Once the git submodules have been updated, the `third-party/ospray` directory should contain the OSPRay source tree. We recommend building in `third-party/ospray/build` and installing to `third-party/ospray/install`, as doing so should enable Galaxy to find OSPRay automatically. The recommended install directory is configured as part of the Galaxy OSPRay patch.
+Before installing OSPRay, make sure you have updated the Galaxy git submodules and successfully built Embree, as described above. Once the git submodules have been updated, the `third-party/ospray` directory should contain the OSPRay source tree. We recommend building in `third-party/ospray/build` and installing to `third-party/install`, as doing so should enable Galaxy to find OSPRay automatically. The recommended install directory is configured as part of the OSPRay cmake flags in `scripts/install-third-party.sh`.
 
-First, apply the Galaxy OSPRay patch to the OSPRay repository. From the root directory of your Galaxy repository, issue the following commands:
-```bash
-cd third-party/ospray
-git apply ../patches/ospray.patch
-```
-
-Now, create a build directory and build OSPRay. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the OSPRay build:
+First, create a build directory and build OSPRay. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the OSPRay build:
 ```bash
 mkdir build
 cd build
-cmake .. && make && make install
+cmake <cmake flags> .. && make && make install
 ```
-If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
+If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory. See `scripts/install-third-party.sh` for recommended cmake flags.
 
 #### rapidjson
-Before installing rapidjson, make sure you have updated the Galaxy git submodules as described above. Once the git submodules have been updated, the `third-party/rapidjson` directory should contain the rapidjson source tree. We recommend building in `third-party/rapidjson/build` and installing to `third-party/rapidjson/install`, as doing so should enable Galaxy to find rapidjson automatically. The recommended install directory is configured as part of the Galaxy rapidjson patch.
+Before installing rapidjson, make sure you have updated the Galaxy git submodules as described above. Once the git submodules have been updated, the `third-party/rapidjson` directory should contain the rapidjson source tree. We recommend building in `third-party/rapidjson/build` and installing to `third-party/install`, as doing so should enable Galaxy to find rapidjson automatically. The recommended install directory is configured as part of the RapidJSON cmake flags in `scripts/install-third-party.sh`.
 
-First, apply the Galaxy rapidjson patch to the rapidjson repository. From the root directory of your Galaxy repository, issue the following commands:
-```bash
-cd third-party/rapidjson
-git apply ../patches/rapidjson.patch
-```
-Now, create a build directory and build rapidjson. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the rapidjson build:
+First, create a build directory and build rapidjson. Assuming CMake can find all required dependencies, you can use the `cmake` command to configure the makefile for the rapidjson build:
 
 ```bash
 mkdir build
 cd build
-cmake .. && make && make install
+cmake <cmake flags> .. && make && make install
 ```
-If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory.
+If cmake complains about missing dependencies, you can specify or change their locations using cmake `-D<CMAKE VAR>` command-line syntax or using the interactive `ccmake` interface with `ccmake ..` in the build directory. See `scripts/install-third-party.sh` for recommended cmake flags.
 
 ## Building Galaxy
 Before building Galaxy, make sure all assumed and third-party subdirectory dependencies have been installed as described above, which will allow the Galaxy CMake configuration to find all dependencies automatically. We recommend building in `<Galaxy root>/build` and installing to `<Galaxy root>/install`. The recommended install directory is configured as part of the Galaxy CMake configuration.
@@ -157,7 +129,7 @@ There are several ways to run Galaxy.   In this document we currently only descr
 
 ### Setting up the environment
 
-In the install root, `galaxy.env` contains the necessary environment variable settings for running Galaxy.   Iff you use the bash or sh shells, you can 'source' that file; for csh you'll need to modify it.
+In the install root, `galaxy.env` contains the necessary environment variable settings for running Galaxy.   If you use the bash or sh shells, you can 'source' that file; for csh you'll need to modify it.
 
 We currently assume that your environment has been set up to find both VTK and Intel OSPRay libraries.   
 
