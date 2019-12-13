@@ -164,6 +164,8 @@ StreamTracer::TraceToPathLines(PathLinesP plp)
 { 
   StreamTracerTraceToPathLinesMsg msg(this, plp);
   msg.Broadcast(true, true);
+
+  plp->Commit();
 }
 
 void
@@ -223,13 +225,17 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     if (min_velocity > 0 && vlen < min_velocity)
     {
       terminated = true;
+      std::cerr << "terminated on velocity\n";
       zero(velocity);
       zero(normalized_velocity);
     }
     else
     {
       if (max_integration_time >= 0  && max_integration_time < tLast)
+      {
+        std::cerr << "terminated on integration time " << max_integration_time << " " << tLast << "\n";
         terminated = true;
+      }
 
       normalized_velocity = velocity * (1.0 / vlen);
     }
@@ -249,6 +255,7 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     n ++;
     if (n > max_steps)
     {
+      std::cerr << "terminated on step count\n";
       terminated = true;
       break;
     }
@@ -393,12 +400,10 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     trajectory traj = shared_ptr<vector<segment>>(new vector<segment>);
     traj->push_back(seg);
     trajectories[id] = traj;
-    std::cerr << "new traj " << id << "\n";
   }
   else
   {
     ti->second->push_back(seg);
-    std::cerr << "added segment to traj " << id << "\n";
   }
 
   Unlock();

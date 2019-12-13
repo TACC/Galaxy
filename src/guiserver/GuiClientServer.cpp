@@ -92,7 +92,6 @@ DocumentToString(rapidjson::Document& doc)
   s = msg;                                                                                      \
   replyDoc.AddMember("error message", Value().SetString(s.c_str(), s.length(), alloc), alloc);  \
   reply = DocumentToString(replyDoc);                                                           \
-  std::cerr << line << "\n";                                                                    \
   return true;                                                                                  \
 }
 
@@ -101,7 +100,6 @@ DocumentToString(rapidjson::Document& doc)
   std::string s = "ok";                                                                         \
   replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);         \
   reply = DocumentToString(replyDoc);                                                           \
-  std::cerr << reply << "\n"; \
   return true;                                                                                  \
 }
 
@@ -125,7 +123,6 @@ GuiClientServer::handle(string line, string& reply)
     HANDLED_BUT_ERROR_RETURN("error parsing json command");
 
   string cmd = doc["cmd"].GetString();
-  std::cerr << "CMD: " << cmd << "\n";
 
   if (cmd == "gui::import")
   {

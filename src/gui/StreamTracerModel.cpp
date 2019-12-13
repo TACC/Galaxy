@@ -121,7 +121,6 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
     if (d && d->isValid() && (! vectorField || vectorField->dataInfo.key != d->dataInfo.key))
     {
       vectorField = std::dynamic_pointer_cast<GxyData>(data);
-      std::cerr << "vectorField is set to " << vectorField->dataInfo.key << "\n";
       retrace = true;
       retrim = true;
     }
@@ -133,7 +132,6 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
     if (d && d->isValid() && (! seeds || seeds->dataInfo.key != d->dataInfo.key))
     {
       seeds = std::dynamic_pointer_cast<GxyData>(data);
-      std::cerr << "setting SEEDS " << seeds->dataInfo.key << "\n";
       retrace = true;
       retrim = true;
     }
@@ -232,16 +230,12 @@ StreamTracerModel::onApply()
       std::cerr << "stream trace failed: " << rply["error message"].GetString() << "\n";
       return;
     }
-    else
-      std::cerr << "stream trace succeeded\n";
-      
 
     retrace = false;
   }
 
   if (retrim)
   {
-    std::cerr << "gui::trace2pathlines\n";
     json["cmd"] = "gui::trace2pathlines";
 
     QJsonDocument doc(json);
@@ -250,7 +244,6 @@ StreamTracerModel::onApply()
     std::string msg = s.toStdString();
 
     getTheGxyConnectionMgr()->CSendRecv(msg);
-    std::cerr << "gui::trace2pathlines reply: " << msg << "\n";
 
     rapidjson::Document rply;
     rply.Parse(msg.c_str());
@@ -265,7 +258,7 @@ StreamTracerModel::onApply()
     output->dataInfo.name = rply["name"].GetString();
     output->dataInfo.key = rply["key"].GetInt();
     output->dataInfo.type = rply["type"].GetInt();
-    output->dataInfo.isVector = rply["isVector"].GetBool();
+    output->dataInfo.isVector = (rply["ncomp"].GetInt() == 3);
     output->dataInfo.data_min = rply["min"].GetDouble();
     output->dataInfo.data_max = rply["max"].GetDouble();
     for (auto i = 0; i < 6; i++)

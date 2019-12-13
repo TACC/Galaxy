@@ -85,7 +85,7 @@ public:
   void decrement_in_flight(float t)
   {
     Lock();
-    if (t > max_integration_time) max_integration_time = t;
+    // if (t > max_integration_time) max_integration_time = t;
     in_flight --;
     if (in_flight == 0)
       Signal();
@@ -374,11 +374,6 @@ protected:
 
       std::vector<int> keys;
       stp->get_keys(keys);
-
-      std::cerr << "======== keys:\n";
-      for (auto id = keys.begin(); id != keys.end(); id++)
-        std::cerr << *id << "\n";
-      std::cerr << "========\n";
 
       plp->clear();
 

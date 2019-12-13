@@ -1,3 +1,4 @@
+          
 // ========================================================================== //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
@@ -23,12 +24,12 @@
 #include <iostream>
 #include "Vis.hpp"
 
-class PathLinesVis : public Vis
+class PathlinesVis : public Vis
 {
 public:
   
-  PathLinesVis() : Vis() {}
-  PathLinesVis(std::string o) : Vis(o) {}
+  PathlinesVis() : Vis() {}
+  PathlinesVis(std::string o) : Vis(o) {}
 
   QtNodes::NodeDataType type() const override
   { 

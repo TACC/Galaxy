@@ -240,15 +240,26 @@ static void DataDrivenPathLines_postIntersect(uniform Geometry *uniform self,
       float Z = ((1.f-ray.u) * v4[index].z) + (ray.u * v4[index+1].z);
       float radius = ((1.f-ray.u) * self->vertices[index].w) + (ray.u * self->vertices[index+1].w);
 
+// print("U: %\n", ray.u);
+// print("W0: %\n", self->vertices[index].w);
+// print("W1: %\n", self->vertices[index+1].w);
+
       float dataval;
-      if (self->value0 == self->value1) dataval = self->radius0;
-      else if (self->radius0 < self->radius1 && radius < self->radius0)      dataval = self->value0; 
+      if (self->radius0 == self->radius1) dataval = self->value0;
+      else if (self->radius0 < self->radius1 && radius < self->radius0) dataval = self->value0; 
       else if (self->radius0 < self->radius1 && radius > self->radius1) dataval = self->value1; 
       else if (self->radius0 > self->radius1 && radius < self->radius1) dataval = self->value1; 
       else if (self->radius0 > self->radius1 && radius > self->radius0) dataval = self->value0; 
       else dataval = self->value0 + ((radius - self->radius0) / (self->radius1 - self->radius0))*(self->value1 - self->value0); 
 
+// print("R: %\n", radius);
+// print("D: %\n", dataval);
+
       vec3f color = self->transferFunction->getColorForValue(self->transferFunction, dataval);
+
+// print("r: %\n", color.x);
+// print("g: %\n", color.y);
+// print("b: %\n", color.z);
 
       dg.color.x = color.x;
       dg.color.y = color.y;

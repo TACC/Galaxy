@@ -122,8 +122,6 @@ RaycastSamplerModel::onApply()
   std::string msg = s.toStdString();
   getTheGxyConnectionMgr()->CSendRecv(msg);
 
-  std::cerr << "XXXXXX reply " << msg << "\n";
-
   rapidjson::Document dset;
   dset.Parse(msg.c_str());
 

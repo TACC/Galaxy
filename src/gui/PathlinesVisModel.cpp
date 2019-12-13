@@ -18,12 +18,12 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "PathLinesVis.hpp"
-#include "PathLinesVisModel.hpp"
+#include "PathlinesVis.hpp"
+#include "PathlinesVisModel.hpp"
 
-PathLinesVisModel::PathLinesVisModel() 
+PathlinesVisModel::PathlinesVisModel() 
 {
-  output = std::dynamic_pointer_cast<Vis>(std::shared_ptr<PathLinesVis>(new PathLinesVis(model_identifier)));
+  output = std::dynamic_pointer_cast<Vis>(std::shared_ptr<PathlinesVis>(new PathlinesVis(model_identifier)));
   output->setValid(false);
 
   QFrame *frame  = new QFrame();
@@ -66,13 +66,13 @@ PathLinesVisModel::PathLinesVisModel()
 }
 
 unsigned int
-PathLinesVisModel::nPorts(QtNodes::PortType portType) const
+PathlinesVisModel::nPorts(QtNodes::PortType portType) const
 {
   return 1; // QtNodes::PortType::In or ::Out
 }
 
 QtNodes::NodeDataType
-PathLinesVisModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
+PathlinesVisModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
 {
   if (pt == QtNodes::PortType::In)
     return GxyData().type();
@@ -81,22 +81,17 @@ PathLinesVisModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
 }
 
 std::shared_ptr<QtNodes::NodeData>
-PathLinesVisModel::outData(QtNodes::PortIndex)
+PathlinesVisModel::outData(QtNodes::PortIndex)
 {
-  std::shared_ptr<PathLinesVis> result;
+  std::shared_ptr<PathlinesVis> result;
   return std::static_pointer_cast<QtNodes::NodeData>(output);
 }
 
 void
-PathLinesVisModel::
+PathlinesVisModel::
 setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
-  if (input)
-    std::cerr << "setInData: " << ((long)input.get()) << "\n";
-  else
-    std::cerr << "setInData: input is NULL\n";
-
   if (input)
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
@@ -104,13 +99,8 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 }
 
 void
-PathLinesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+PathlinesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 {
-  if (input)
-    std::cerr << "loadInputDrivenWidgets: " << ((long)input.get()) << "\n";
-  else
-    std::cerr << "loadInputDrivenWidgets: input is NULL\n";
-
   if (input)
   {
     VisModel::loadInputDrivenWidgets(input);
@@ -124,20 +114,20 @@ PathLinesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 
 
 QtNodes::NodeValidationState
-PathLinesVisModel::validationState() const
+PathlinesVisModel::validationState() const
 {
   return QtNodes::NodeValidationState::Valid;
 }
 
 
 QString
-PathLinesVisModel::validationMessage() const
+PathlinesVisModel::validationMessage() const
 {
   return QString("copacetic");
 }
 
 QJsonObject
-PathLinesVisModel::save() const
+PathlinesVisModel::save() const
 {
   loadOutput(output);
 
@@ -150,24 +140,24 @@ PathLinesVisModel::save() const
 }
 
 void
-PathLinesVisModel::restore(QJsonObject const &p)
+PathlinesVisModel::restore(QJsonObject const &p)
 {
   output->fromJson(p);
   loadParameterWidgets();
 }
 
 bool
-PathLinesVisModel::isValid()
+PathlinesVisModel::isValid()
 {
   return (input && input->isValid() && VisModel::isValid());
 }
 
 void
-PathLinesVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
+PathlinesVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
 {
   VisModel::loadOutput(o);
 
-  std::shared_ptr<PathLinesVis> v = std::dynamic_pointer_cast<PathLinesVis>(o);
+  std::shared_ptr<PathlinesVis> v = std::dynamic_pointer_cast<PathlinesVis>(o);
 
   v->minrange = minrange->text().toDouble();
   v->maxrange = maxrange->text().toDouble();
@@ -176,11 +166,11 @@ PathLinesVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
 }
 
 void
-PathLinesVisModel::loadParameterWidgets() const
+PathlinesVisModel::loadParameterWidgets() const
 {
   VisModel::loadParameterWidgets();
 
-  std::shared_ptr<PathLinesVis> v = std::dynamic_pointer_cast<PathLinesVis>(output);
+  std::shared_ptr<PathlinesVis> v = std::dynamic_pointer_cast<PathlinesVis>(output);
 
   minrange->setText(QString::number(v->minrange));
   maxrange->setText(QString::number(v->maxrange));
@@ -190,12 +180,11 @@ PathLinesVisModel::loadParameterWidgets() const
 }
 
 void
-PathLinesVisModel::onApply()
+PathlinesVisModel::onApply()
 {
   if (isValid())
   {
-    std::cerr << "PathLinesVisModel::onApply\n";
-    output = std::shared_ptr<PathLinesVis>(new PathLinesVis(model_identifier));
+    output = std::shared_ptr<PathlinesVis>(new PathlinesVis(model_identifier));
     loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
     output->setValid(true);
 

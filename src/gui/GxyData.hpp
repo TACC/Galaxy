@@ -94,16 +94,10 @@ public:
   bool isValid()
   {
     if (!GxyPacket::isValid()) 
-    {
-      std::cerr << "GxyPacket::isValid = NO\n";
       return false;
-    }
 
     if (dataInfo.name == "" && dataInfo.key == -1)
-    {
-      std::cerr << "GxyData::isValid ... dataInfo.name is NULL and dataInfo.key == -1\n";
       return false;
-    }
     
     return true;
   }

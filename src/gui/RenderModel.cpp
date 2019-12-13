@@ -125,24 +125,17 @@ RenderModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 
   if (input)
   {
-    std::cerr << "============================ RenderModel Input\n";
-    input->print();
-
     if (input->isValid())
     {
-      std::cerr << "RenderModel::setInData input IS VALID\n";
       visList[input->get_origin()] = input;
       std::shared_ptr<Vis> vis = std::dynamic_pointer_cast<Vis>(data);
       Q_EMIT visUpdated(vis);
     }
     else
     {
-      std::cerr << "RenderModel::setInData input IS NOT VALID\n";
       visList.erase(input->get_origin());
     }
   }
-  else
-      std::cerr << "RenderModel::setInData input IS NULL\n";
 
   enableIfValid();
 }
@@ -205,8 +198,6 @@ RenderModel::timeout()
 void
 RenderModel::sendVisualization()
 {
-  std::cerr << "+++++++++++++++++++++++++++++++++++++\n";
-
   QJsonObject visualizationJson;
 
   QJsonObject v;
@@ -216,10 +207,6 @@ RenderModel::sendVisualization()
   for (auto vis : visList)
   {
     QJsonObject operatorJson;
-
-    std::cerr << "=====================================\n";
-    vis.second->print();
-
     vis.second->toJson(operatorJson);
     operatorsJson.push_back(operatorJson);
   }
@@ -235,8 +222,6 @@ RenderModel::sendVisualization()
   QString s = QLatin1String(bytes);
 
   std::string msg = s.toStdString();
-
-std::cerr << "XXXXXXXXXX " << msg << "\n";
 
   getTheGxyConnectionMgr()->CSendRecv(msg);
 }

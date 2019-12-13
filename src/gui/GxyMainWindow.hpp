@@ -1,4 +1,3 @@
-// ========================================================================== //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -35,7 +34,7 @@
 
 #include "VolumeVisModel.hpp"
 #include "ParticlesVisModel.hpp"
-#include "PathLinesVisModel.hpp"
+#include "PathlinesVisModel.hpp"
 #include "RenderModel.hpp"
 #include "MHSamplerModel.hpp"
 #include "RaycastSamplerModel.hpp"
@@ -67,9 +66,9 @@ registerDataModels()
   ret->registerModel<StreamTracerModel>("Filters");
   ret->registerModel<TraceDecoratorModel>("Filters");
   ret->registerModel<InterpolatorModel>("Filters");
-  ret->registerModel<VolumeVisModel>("Visualizations");
-  ret->registerModel<ParticlesVisModel>("Visualizations");
-  ret->registerModel<PathLinesVisModel>("Visualizations");
+  ret->registerModel<VolumeVisModel>("Rendering");
+  ret->registerModel<ParticlesVisModel>("Rendering");
+  ret->registerModel<PathlinesVisModel>("Rendering");
   ret->registerModel<RenderModel>("Rendering");
   return ret;
 }

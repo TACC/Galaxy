@@ -42,7 +42,6 @@ VolumeVis::Register()
 
 VolumeVis::~VolumeVis()
 {
-  std::cerr << "XXXXXXXXXXXXXXXXXXXX VolumeVis dtor\n";
 	VolumeVis::destroy_ispc();
 }
 

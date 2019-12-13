@@ -79,8 +79,6 @@ GxyRenderWindow::setCamera(Camera&c)
   current_direction = {-d.x, -d.y, -d.z}; normalize(current_direction);
   current_up = camera.getUp();
 
-  std::cerr << "initial center: " << current_center.x << " " << current_center.y << " " << current_center.z << "\n";
-
   gxy::vec2i size = c.getSize();
   resize(size.x, size.y);
 
@@ -98,16 +96,7 @@ void
 GxyRenderWindow::onVisUpdate(std::shared_ptr<Vis> v)
 {
   if (v)
-  {
     Visualization[v->get_origin()] = v;
-#if 0
-    for (auto vis : Visualization)
-    {
-      std::cerr << vis.first << " =======================\n";
-      vis.second->print();
-    }
-#endif
-  }
 }
 
 void

@@ -207,7 +207,7 @@ public:
     typeLayout->addWidget(button);
     typeButtonGroup->addButton(button, 2);
 
-    button = new QRadioButton("PathLines");
+    button = new QRadioButton("Pathlines");
     typeLayout->addWidget(button);
     typeButtonGroup->addButton(button, 3);
 
@@ -321,7 +321,6 @@ private Q_SLOTS:
 
   void selection(QListWidgetItem *item)
   {
-    std::cerr << "Data... selection!\n";
     current_selection = (MyQListWidgetItem *)item;
     info->setEnabled(true);
     enableIfValid();
@@ -331,13 +330,10 @@ private Q_SLOTS:
   {
     if (current_selection)
     {
-      std::cerr << "Data.... onApply... current_selection IS SET\n";
       output->dataInfo = current_selection->getDataInfo();
       output->setValid(true);
       Q_EMIT dataUpdated(0);
     }
-    else
-      std::cerr << "Data.... onApply... current_selection IS NOT SET\n";
   }
 
   void onAdd()
@@ -375,7 +371,7 @@ private Q_SLOTS:
         case 0: dsets.AddMember("type", "Volume", doc.GetAllocator()); break;
         case 1: dsets.AddMember("type", "Triangles", doc.GetAllocator()); break;
         case 2: dsets.AddMember("type", "Particles", doc.GetAllocator()); break;
-        case 3: dsets.AddMember("type", "PathLines", doc.GetAllocator()); break;
+        case 3: dsets.AddMember("type", "Pathlines", doc.GetAllocator()); break;
         default: dsets.AddMember("type", "??????????", doc.GetAllocator()); break;
       }
 
@@ -386,7 +382,6 @@ private Q_SLOTS:
       doc.Accept(writer);
 
       std::string line = std::string("import ") + strbuf.GetString();
-      std::cerr << line << "\n";
 
       gxyMgr->CSendRecv(line);
 
@@ -432,8 +427,6 @@ private Q_SLOTS:
       std::string line = strbuf.GetString();
       gxyMgr->CSendRecv(line);
 
-      std::cerr << line << "\n";
-
       std::stringstream ss(line);
 
       std::string s;
@@ -460,11 +453,13 @@ private Q_SLOTS:
           datainfo.name = dset["name"].GetString();
           datainfo.key = dset["key"].GetInt();
           datainfo.type = dset["type"].GetInt();
-          datainfo.isVector = dset["isVector"].GetBool();
+          datainfo.isVector = (dset["ncomp"].GetInt() == 3);
           datainfo.data_min = dset["min"].GetDouble();
           datainfo.data_max = dset["max"].GetDouble();
           for (auto i = 0; i < 6; i++)
+          {
             datainfo.box[i] = dset["box"][i].GetDouble();
+          }
 
           MyQListWidgetItem *mlwi = new MyQListWidgetItem(datainfo);
           objectList->addItem(mlwi);

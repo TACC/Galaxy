@@ -121,12 +121,11 @@ VisModel::save() const
 bool 
 VisModel::isValid() 
 {
-  std::string msg(" "); bool valid = true;
-  if (! GxyModel::isValid()) { msg = msg + "Model invalid "; valid = false; }
-  if (! input || ! input->isValid()) { msg = "input invalid "; valid = false; }
-  if (cmap_widget->text().toStdString() == "") { msg = msg + "cmap file name invalid"; valid = false; }
-  if (!valid) std::cerr << "VisModel:: " << msg << "\n";
-  return valid;
+  bool valid = true;
+
+  return (GxyModel::isValid() &&
+          input && input->isValid() &&
+          (cmap_widget->text().toStdString() != ""));
 }
 
 void
@@ -136,9 +135,6 @@ VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) const
   {
     GxyModel::loadInputDrivenWidgets(p);
     std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(p);
-    std::shared_ptr<Vis> o = std::dynamic_pointer_cast<Vis>(o);
-
-    std::cerr << "XXX " << d->dataInfo.data_min << " " << d->dataInfo.data_max << "\n";
     cmap_range_min->setText(QString::number(d->dataInfo.data_min));
     cmap_range_max->setText(QString::number(d->dataInfo.data_max));
   }

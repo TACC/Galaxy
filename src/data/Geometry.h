@@ -59,6 +59,10 @@ class Geometry : public KeyedDataObject
   /*! This action is performed in response to a ImportMsg */
   virtual bool local_import(char *, MPI_Comm);
 
+  //! learn global and local minmax of data
+  virtual bool local_commit(MPI_Comm);
+
+
   //! load geometry from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
 

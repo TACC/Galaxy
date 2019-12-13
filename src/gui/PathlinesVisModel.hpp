@@ -40,15 +40,15 @@
 #include "VisModel.hpp"
 #include "GxyData.hpp"
 
-class PathLinesVisModel : public VisModel
+class PathlinesVisModel : public VisModel
 {
   Q_OBJECT
 
 public:
-  PathLinesVisModel();
+  PathlinesVisModel();
 
   virtual
-  ~PathLinesVisModel() {}
+  ~PathlinesVisModel() {}
 
   unsigned int nPorts(QtNodes::PortType portType) const override;
 
@@ -62,9 +62,9 @@ public:
 
   QString validationMessage() const override;
 
-  QString caption() const override { return QStringLiteral("PathLinesVis"); }
+  QString caption() const override { return QStringLiteral("PathlinesVis"); }
 
-  QString name() const override { return QStringLiteral("PathLinesVis"); }
+  QString name() const override { return QStringLiteral("PathlinesVis"); }
 
   QJsonObject save() const override;
   void restore(QJsonObject const &p) override;

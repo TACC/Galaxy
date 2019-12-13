@@ -96,11 +96,6 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
   if (input)
-    std::cerr << "setInData: " << ((long)input.get()) << "\n";
-  else
-    std::cerr << "setInData: input is NULL\n";
-
-  if (input)
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
   enableIfValid();
@@ -109,11 +104,6 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 void
 ParticlesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 { 
-  if (input)
-    std::cerr << "loadInputDrivenWidgets: " << ((long)input.get()) << "\n";
-  else
-    std::cerr << "loadInputDrivenWidgets: input is NULL\n";
-
   if (input)
   { 
     VisModel::loadInputDrivenWidgets(input);
@@ -200,7 +190,6 @@ ParticlesVisModel::onApply()
 {
   if (isValid())
   {
-    std::cerr << "ParticlesVisModel::onApply\n";
     output = std::shared_ptr<ParticlesVis>(new ParticlesVis(model_identifier));
     loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
     output->setValid(true);
