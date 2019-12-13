@@ -35,6 +35,13 @@ RUN cmake -D EMBREE_TBB_ROOT:PATH=/opt/local/tbb \
 					-D TBB_INCLUDE_DIR:PATH=/opt/local/tbb/include \
 					-D TBB_LIBRARY:FILEPATH=/opt/local/tbb/lib/intel64/gcc4.7/libtbb.so \
 	 				-D TBB_LIBRARY_MALLOC:FILEPATH=/opt/local/tbb/lib/intel64/gcc4.7/libtbb_malloc.so \
+	 				-D CMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install \
+					-D CMAKE_C_FLAGS:STRING="-Wno-undef -Wno-deprecated-declarations" \
+					-D CMAKE_CXX_FLAGS:STRING="-Wno-undef -Wno-deprecated-declarations" \
+					-D EMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
+					-D EMBREE_STATIC_LIB=ON \
+					-D EMBREE_TUTORIALS=OFF \
+					-D EMBREE_ISA_SSE2=OFF \
 					.. && make -j 2 install
 
 RUN echo "GALAXY: building Intel OSPRay"
@@ -46,14 +53,21 @@ RUN cmake -D TBB_INCLUDE_DIR:PATH=/opt/local/tbb/include \
 					-D TBB_LIBRARY_MALLOC:FILEPATH=/opt/local/tbb/lib/intel64/gcc4.7/libtbbmalloc.so \
 					-D TBB_LIBRARY_MALLOC_DEBUG:FILEPATH=/opt/local/tbb/lib/intel64/gcc4.7/libtbbmalloc_debug.so \
 					-D TBB_ROOT=/opt/local/tbb \
-						-D CMAKE_C_FLAGS:STRING="-Wno-undef -Wno-deprecated-declarations" \
-						-D CMAKE_CXX_FLAGS:STRING="-Wno-undef -Wno-deprecated-declarations" \
+	 				-D CMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install \
+					-D CMAKE_C_FLAGS:STRING="-I${GXY_ROOT}/third-party/install/include -Wno-undef -Wno-deprecated-declarations" \
+					-D CMAKE_CXX_FLAGS:STRING="-I${GXY_ROOT}/third-party/install/include -Wno-undef -Wno-deprecated-declarations" \
+					-D embree_DIR=${GXY_ROOT}/third-party/install/lib/cmake/embree-3.6.1 \
+					-D EMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
 					.. && make -j 2 install
 
 RUN echo "GALAXY: building RapidJSON"
 RUN mkdir -p ${GXY_ROOT}/third-party/rapidjson/build
 WORKDIR ${GXY_ROOT}/third-party/rapidjson/build
-RUN cmake .. && make install
+RUN cmake -D CMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install \
+					-D RAPIDJSON_BUILD_DOC=OFF \
+					-D RAPIDJSON_BUILD_EXAMPLES=OFF \
+					-D RAPIDJSON_BUILD_TESTS=OFF \
+					.. && make install
 
 RUN echo "GALAXY: done building prerequisites"
 RUN mkdir -p ${GXY_ROOT}/.galaxy
