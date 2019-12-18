@@ -72,7 +72,6 @@ public:
     p["slices"] = slicesJson;
 
     p["volume rendering"]  = volume_rendering_flag;
-    p["transfer function"] = transfer_function.c_str();
   }
 
   void fromJson(QJsonObject p) override
@@ -98,13 +97,11 @@ public:
     }
 
     volume_rendering_flag = p["volume rendering"].toBool();
-    transfer_function = p["transfer function"].toString().toStdString();
   }
 
   std::vector<gxy::vec4f> slices;
   std::vector<float> isovalues;
   bool volume_rendering_flag;
-  std::string transfer_function;
   float xfer_range_min, xfer_range_max;
 };
 

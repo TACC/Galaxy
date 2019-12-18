@@ -47,49 +47,8 @@ VolumeVisModel::VolumeVisModel()
   volumeRender->setChecked(false);
   layout->addWidget(volumeRender);
 
-  QFrame *xfunc_box = new QFrame();
-  QHBoxLayout *xfunc_box_layout = new QHBoxLayout();
-  xfunc_box->setLayout(xfunc_box_layout);
-
-  xfunc_box_layout->addWidget(new QLabel("transfer function"));
-
-  xfunc_widget = new QLineEdit();
-  xfunc_box_layout->addWidget(xfunc_widget);
-  
-  QPushButton *tfunc_browse_button = new QPushButton("...");
-  xfunc_box_layout->addWidget(tfunc_browse_button);
-  connect(tfunc_browse_button, SIGNAL(released()), this, SLOT(openFileSelectorDialog()));
-
-  layout->addWidget(xfunc_box);
-
-  QFrame *xfunc_range_w = new QFrame;
-  QHBoxLayout *xfunc_range_l = new QHBoxLayout();
-  xfunc_range_l->setSpacing(0);
-  xfunc_range_l->setContentsMargins(2, 0, 2, 0);
-  xfunc_range_w->setLayout(xfunc_range_l);
-
-  xfunc_range_l->addWidget(new QLabel("data range"));
-  
-  xfunc_range_min = new QLineEdit;
-  xfunc_range_min->setText("0");
-  xfunc_range_min->setValidator(new QDoubleValidator());
-  xfunc_range_l->addWidget(xfunc_range_min);
-  
-  xfunc_range_max = new QLineEdit;
-  xfunc_range_max->setText("0");
-  xfunc_range_max->setValidator(new QDoubleValidator());
-  xfunc_range_l->addWidget(xfunc_range_max);
-
-  QPushButton *resetDataRange = new QPushButton("reset");
-  connect(resetDataRange, SIGNAL(released()), this, SLOT(onDataRangeReset()));
-  xfunc_range_l->addWidget(resetDataRange);
-
-  layout->addWidget(xfunc_range_w);
-
   _properties->addProperties(frame);
 
-  connect(xfunc_range_max, SIGNAL(editingFinished()), this, SLOT(enableApply()));
-  connect(xfunc_range_min, SIGNAL(editingFinished()), this, SLOT(enableApply()));
   connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 }
 
@@ -100,17 +59,10 @@ VolumeVisModel::~VolumeVisModel()
 }
 
 void
-VolumeVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+VolumeVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) 
 {
   if (input)
-  {
     VisModel::loadInputDrivenWidgets(input);
-
-    std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(input);
-
-    xfunc_range_min->setText(QString::number(d->dataInfo.data_min));
-    xfunc_range_max->setText(QString::number(d->dataInfo.data_min));
-  }
 }
 
 void
@@ -125,10 +77,6 @@ VolumeVisModel::loadParameterWidgets() const
 
   isovaluesDialog->clear();
   isovaluesDialog->set_scalars(v->isovalues);
-
-  xfunc_widget->setText(v->transfer_function.c_str());
-  xfunc_range_min->setText(QString::number(v->xfer_range_min));
-  xfunc_range_max->setText(QString::number(v->xfer_range_max));
 }
 
 void
@@ -142,9 +90,6 @@ VolumeVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
   v->isovalues = isovaluesDialog->get_scalars();
   
   v->volume_rendering_flag = volumeRender->isChecked();
-  v->transfer_function = xfunc_widget->text().toStdString();
-  v->xfer_range_min = xfunc_range_min->text().toDouble();
-  v->xfer_range_min = xfunc_range_min->text().toDouble();
 }
 
 void 
@@ -193,8 +138,6 @@ VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 void 
 VolumeVisModel::onDataRangeReset()
 {
-  xfunc_range_min->setText(QString::number(input->dataInfo.data_min));
-  xfunc_range_max->setText(QString::number(input->dataInfo.data_max));
 }
 
 NodeValidationState
@@ -233,11 +176,6 @@ bool
 VolumeVisModel::isValid()
 {
   if (! VisModel::isValid() || ! input->isValid())
-  {
-    return false;
-  }
-
-  if (volumeRender->isChecked() && xfunc_widget->text().toStdString() == "")
   {
     return false;
   }

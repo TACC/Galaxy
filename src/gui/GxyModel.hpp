@@ -111,7 +111,7 @@ public:
   }
 
   
-  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) const
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) 
   {
   }
 

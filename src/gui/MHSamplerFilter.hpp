@@ -69,7 +69,7 @@ public:
 
   QString name() const override { return QStringLiteral("MHSampler"); }
 
-  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) override;
   bool isValid() override;
 
   QJsonObject save() const override;

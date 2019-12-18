@@ -80,7 +80,7 @@ public:
 
   bool isValid() override;
 
-  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) override;
   virtual void loadParameterWidgets() const override;
 
   virtual void loadOutput(std::shared_ptr<GxyPacket> o) const override;
@@ -91,7 +91,6 @@ private Q_SLOTS:
   {
     enableIfValid();
   }
-
 
   void onApply() override;
 
@@ -117,21 +116,9 @@ private Q_SLOTS:
     isovaluesDialog->exec();
   }
 
-  void openFileSelectorDialog()
-  {
-    QFileDialog *fileDialog = new QFileDialog();
-    fileDialog->exec();
-    xfunc_widget->clear();
-    xfunc_widget->insert(fileDialog->selectedFiles().at(0));
-    delete fileDialog;
-  }
-
 private:
   ScalarsDialog *isovaluesDialog;
   PlanesDialog  *slicesDialog;
 
-  QLineEdit *xfunc_widget = NULL;
   QCheckBox *volumeRender = NULL;
-  QLineEdit *xfunc_range_min = NULL;
-  QLineEdit *xfunc_range_max = NULL;
 };

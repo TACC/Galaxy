@@ -122,8 +122,6 @@ RaycastSamplerFilter::onApply()
   std::string msg = s.toStdString();
   getTheGxyConnectionMgr()->CSendRecv(msg);
 
-  std::cerr << "REPLY: " << msg << "\n";
-
   rapidjson::Document dset;
   dset.Parse(msg.c_str());
 
@@ -177,20 +175,16 @@ RaycastSamplerFilter::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes
 }
 
 void
-RaycastSamplerFilter::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+RaycastSamplerFilter::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) 
 {
 }
 
 bool
 RaycastSamplerFilter::isValid()
 {
-std::cerr << "A";
   if (! GxyFilter::isValid()) return false;
-std::cerr << "B";
   if (! input) return false;
-std::cerr << "C";
   if (! input->isValid()) return false;
-std::cerr << "D " << type->currentIndex() << isovalue->text().toStdString() << " " << tolerance->text().toStdString() << "\n";
   switch(type->currentIndex())
   {
     case 0: if (isovalue->text().toStdString() == "") return false;
@@ -199,7 +193,6 @@ std::cerr << "D " << type->currentIndex() << isovalue->text().toStdString() << "
             break;
     default: return false;
   }
-std::cerr << "E";
 
   return true;
 }

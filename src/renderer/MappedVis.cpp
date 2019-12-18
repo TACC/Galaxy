@@ -55,10 +55,10 @@ MappedVis::initialize()
 {
 	super::initialize();
 
-  colormap.push_back(vec4f(0.0, 1.0, 0.0, 0.0));
-  colormap.push_back(vec4f(1.0, 0.0, 0.0, 1.0));
+  colormap.push_back(vec4f(0.0, 0.4, 0.4, 0.4));
+  colormap.push_back(vec4f(1.0, 1.0, 1.0, 1.0));
 
-  opacitymap.push_back(vec2f(0.0, 0.0));
+  opacitymap.push_back(vec2f(0.0, 1.0));
   opacitymap.push_back(vec2f(1.0, 1.0));
   
   transferFunction = NULL;
@@ -106,62 +106,67 @@ MappedVis::LoadFromJSON(Value& v)
     if (m.IsString())
     {
       string fname = m.GetString();
-
-      ifstream ifs(fname);
-      if (! ifs)
+      
+      if (fname.length() != 0 && m != "default")
       {
-        std::cerr << "unable to open transfer function file: " << fname << "\n";
-        set_error(1);
-        return false;
-      }
-    
-      stringstream ss;
-      ss << ifs.rdbuf();
+        std::cerr << "XXXXXXXXXX " << fname << " " << fname.size() << "\n";
 
-      string s(ss.str().substr(ss.str().find('[')+1, ss.str().rfind(']') - 2));
-
-      Document doc;
-      if (doc.Parse<0>(ss.str().c_str()).HasParseError())
-      {
-        std::cerr << "JSON parse error in " << fname << "\n";
-        set_error(1);
-        return false;
-      }
-
-      doc.Parse(s.c_str());
-
-      opacitymap.clear();
-
-      if (doc.HasMember("Points"))
-      {
-        Value& oa = doc["Points"];
-        for (int i = 0; i < oa.Size(); i += 4)
+        ifstream ifs(fname);
+        if (! ifs)
         {
-          vec2f xo;
-          xo.x = oa[i+0].GetDouble();
-          xo.y = oa[i+1].GetDouble();
+          std::cerr << "unable to open transfer function file: " << fname << "\n";
+          set_error(1);
+          return false;
+        }
+    
+        stringstream ss;
+        ss << ifs.rdbuf();
+
+        string s(ss.str().substr(ss.str().find('[')+1, ss.str().rfind(']') - 2));
+
+        Document doc;
+        if (doc.Parse<0>(ss.str().c_str()).HasParseError())
+        {
+          std::cerr << "JSON parse error in " << fname << "\n";
+          set_error(1);
+          return false;
+        }
+
+        doc.Parse(s.c_str());
+
+        opacitymap.clear();
+
+        if (doc.HasMember("Points"))
+        {
+          Value& oa = doc["Points"];
+          for (int i = 0; i < oa.Size(); i += 4)
+          {
+            vec2f xo;
+            xo.x = oa[i+0].GetDouble();
+            xo.y = oa[i+1].GetDouble();
+            opacitymap.push_back(xo);
+          }
+        }
+        else
+        {
+          vec2f xo = {0.0, 1.0};
+          opacitymap.push_back(xo);
+          xo = {1.0, 1.0};
           opacitymap.push_back(xo);
         }
-      }
-      else
-      {
-        vec2f xo = {0.0, 1.0};
-        opacitymap.push_back(xo);
-        xo = {1.0, 1.0};
-        opacitymap.push_back(xo);
-      }
 
-      colormap.clear();
+        colormap.clear();
 
-      Value& rgba = doc["RGBPoints"];
-      for (int i = 0; i < rgba.Size(); i += 4)
-      {
-        vec4f xrgb;
-        xrgb.x = rgba[i+0].GetDouble();
-        xrgb.y = rgba[i+1].GetDouble();
-        xrgb.z = rgba[i+2].GetDouble();
-        xrgb.w = rgba[i+3].GetDouble();
-        colormap.push_back(xrgb);
+        Value& rgba = doc["RGBPoints"];
+        for (int i = 0; i < rgba.Size(); i += 4)
+        {
+          vec4f xrgb;
+          xrgb.x = rgba[i+0].GetDouble();
+          xrgb.y = rgba[i+1].GetDouble();
+          xrgb.z = rgba[i+2].GetDouble();
+          xrgb.w = rgba[i+3].GetDouble();
+          colormap.push_back(xrgb);
+        }
       }
     }
     else

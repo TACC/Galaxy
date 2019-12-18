@@ -28,8 +28,10 @@
 
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
+#include <QtWidgets/QSlider>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFileDialog>
 
@@ -72,7 +74,7 @@ public:
 
   QJsonObject save() const override;
 
-  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) override;
   virtual void loadParameterWidgets() const override;
 
   virtual void loadOutput(std::shared_ptr<GxyPacket> o) const override;
@@ -84,6 +86,12 @@ public Q_SLOTS:
   void onApply() override;
 
   void onDataRangeReset();
+
+  void onCmapMinTextChanged();
+  void onCmapMaxTextChanged();
+
+  void onCmapMinSliderChanged(int v);
+  void onCmapMaxSliderChanged(int v);
 
   void openCmapSelectorDialog()
   {
@@ -101,6 +109,9 @@ protected:
   std::shared_ptr<GxyPacket> output;
 
 private:
+  float     data_minimum, data_maximum;
+  QSlider   *cmap_range_min_slider = NULL;
+  QSlider   *cmap_range_max_slider = NULL;
   QLineEdit *cmap_widget = NULL;
   QLineEdit *cmap_range_min = NULL;
   QLineEdit *cmap_range_max = NULL;

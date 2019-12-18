@@ -50,7 +50,7 @@ public:
 
   PlaneWidget()
   {
-    plane = {1.0, 1.0, 1.0, 0.0};
+    plane = {0.0, 0.0, 1.0, 0.0};
     build();
   }
 

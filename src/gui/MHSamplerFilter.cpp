@@ -210,7 +210,7 @@ MHSamplerFilter::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::Por
 }
 
 void
-MHSamplerFilter::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+MHSamplerFilter::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) 
 {
   std::shared_ptr<GxyData> input = std::dynamic_pointer_cast<GxyData>(o);
   mh_linear_tf_min->setText(QString::number(input->dataInfo.data_min));

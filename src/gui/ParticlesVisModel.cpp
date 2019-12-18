@@ -111,7 +111,7 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 }
 
 void
-ParticlesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+ParticlesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) 
 { 
   if (input)
   { 

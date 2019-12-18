@@ -111,7 +111,7 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 }
 
 void
-PathlinesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+PathlinesVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) 
 {
   if (input)
   {

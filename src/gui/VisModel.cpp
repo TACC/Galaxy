@@ -19,6 +19,7 @@
 // ========================================================================== //
 
 #include "VisModel.hpp"
+#include <QSignalBlocker>
 
 VisModel::VisModel() 
 {
@@ -44,26 +45,40 @@ VisModel::VisModel()
   layout->addWidget(cmap_box);
 
   QFrame *cmap_range_w = new QFrame;
-  QHBoxLayout *cmap_range_l = new QHBoxLayout();
+  QGridLayout *cmap_range_l = new QGridLayout();
   cmap_range_l->setSpacing(0);
   cmap_range_l->setContentsMargins(2, 0, 2, 0);
   cmap_range_w->setLayout(cmap_range_l);
 
-  cmap_range_l->addWidget(new QLabel("data range"));
-  
+  cmap_range_l->addWidget(new QLabel("min"), 0, 0);
   cmap_range_min = new QLineEdit;
   cmap_range_min->setText("0");
   cmap_range_min->setValidator(new QDoubleValidator());
-  cmap_range_l->addWidget(cmap_range_min);
+  cmap_range_l->addWidget(cmap_range_min, 0, 1);
+  connect(cmap_range_min, SIGNAL(editingFinished()), this, SLOT(onCmapMinTextChanged()));
+  cmap_range_min_slider = new QSlider(Qt::Horizontal);
+  cmap_range_min_slider->setMinimum(0);
+  cmap_range_min_slider->setMaximum(1000);
+  cmap_range_min_slider->setSliderPosition(0);
+  connect(cmap_range_min_slider, SIGNAL(valueChanged(int)), this, SLOT(onCmapMinSliderChanged(int)));
+  cmap_range_l->addWidget(cmap_range_min_slider, 0, 2);
   
+  cmap_range_l->addWidget(new QLabel("max"), 1, 0);
   cmap_range_max = new QLineEdit;
   cmap_range_max->setText("0");
   cmap_range_max->setValidator(new QDoubleValidator());
-  cmap_range_l->addWidget(cmap_range_max);
-
+  cmap_range_l->addWidget(cmap_range_max, 1, 1);
+  connect(cmap_range_max, SIGNAL(editingFinished()), this, SLOT(onCmapMaxTextChanged()));
+  cmap_range_max_slider = new QSlider(Qt::Horizontal);
+  cmap_range_max_slider->setMinimum(0);
+  cmap_range_max_slider->setMaximum(1000);
+  cmap_range_max_slider->setSliderPosition(1000);
+  connect(cmap_range_max_slider, SIGNAL(valueChanged(int)), this, SLOT(onCmapMaxSliderChanged(int)));
+  cmap_range_l->addWidget(cmap_range_max_slider, 1, 2);
+  
   QPushButton *resetDataRange = new QPushButton("reset");
   connect(resetDataRange, SIGNAL(released()), this, SLOT(onDataRangeReset()));
-  cmap_range_l->addWidget(resetDataRange);
+  cmap_range_l->addWidget(resetDataRange, 2, 0);
 
   layout->addWidget(cmap_range_w);
 
@@ -88,14 +103,16 @@ VisModel::nPorts(PortType portType) const
   return 1; // PortType::In or ::Out
 }
 
-void 
+void
 VisModel::onDataRangeReset()
 {
-  if (input)
-  {
-    cmap_range_min->setText(QString::number(input->dataInfo.data_min));
-    cmap_range_max->setText(QString::number(input->dataInfo.data_max));
-  }
+  const QSignalBlocker b(this);
+
+  cmap_range_min_slider->setSliderPosition(0);
+  cmap_range_min->setText(QString::number(data_minimum));
+
+  cmap_range_max_slider->setSliderPosition(1000);
+  cmap_range_max->setText(QString::number(data_maximum));
 }
 
 QtNodes::NodeValidationState
@@ -123,20 +140,28 @@ VisModel::isValid()
 {
   bool valid = true;
 
+#if 0
   return (GxyModel::isValid() &&
           input && input->isValid() &&
           (cmap_widget->text().toStdString() != ""));
+#else
+  return (GxyModel::isValid() && input && input->isValid());
+#endif
 }
 
 void
-VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) const
+VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) 
 {
   if (p)
   {
     GxyModel::loadInputDrivenWidgets(p);
+
     std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(p);
-    cmap_range_min->setText(QString::number(d->dataInfo.data_min));
-    cmap_range_max->setText(QString::number(d->dataInfo.data_max));
+
+    data_minimum = d->dataInfo.data_min;
+    data_maximum = d->dataInfo.data_max;
+
+    onDataRangeReset();
   }
 }
 
@@ -172,4 +197,64 @@ VisModel::loadOutput(std::shared_ptr<GxyPacket> p) const
   v->cmap_range_max = cmap_range_max->text().toDouble();
 
   return;
+}
+
+void
+VisModel::onCmapMinTextChanged()
+{
+  const QSignalBlocker b(this);
+
+  float value = cmap_range_min->text().toDouble();
+  cmap_range_min_slider->setSliderPosition(int(((value - data_minimum) / (data_maximum - data_minimum)) * 1000));
+
+  if (cmap_range_max_slider->sliderPosition() < cmap_range_min_slider->sliderPosition())
+  {
+    cmap_range_max->setText(QString::number(value));
+    cmap_range_max_slider->setSliderPosition(cmap_range_min_slider->sliderPosition());
+  }
+}
+    
+void
+VisModel::onCmapMaxTextChanged()
+{
+  const QSignalBlocker b(this);
+
+  float value = cmap_range_max->text().toDouble();
+  cmap_range_max_slider->setSliderPosition(int(((value - data_minimum) / (data_maximum - data_minimum)) * 1000));
+
+  if (cmap_range_max_slider->sliderPosition() < cmap_range_max_slider->sliderPosition())
+  {
+    cmap_range_min->setText(QString::number(value));
+    cmap_range_min_slider->setSliderPosition(cmap_range_max_slider->sliderPosition());
+  }
+}
+    
+void
+VisModel::onCmapMinSliderChanged(int v)
+{
+  const QSignalBlocker b(this);
+
+  float value = data_minimum + ((cmap_range_min_slider->sliderPosition() / 1000.0) * (data_maximum - data_minimum));
+  cmap_range_min->setText(QString::number(value));
+
+  if (cmap_range_max_slider->sliderPosition() < cmap_range_min_slider->sliderPosition())
+  {
+    cmap_range_max->setText(QString::number(value));
+    cmap_range_max_slider->setSliderPosition(cmap_range_min_slider->sliderPosition());
+  }
+}
+
+void
+VisModel::onCmapMaxSliderChanged(int v)
+{
+  const QSignalBlocker b(this);
+
+  float value = data_minimum + ((cmap_range_max_slider->sliderPosition() / 1000.0) * (data_maximum - data_minimum));
+  cmap_range_max->setText(QString::number(value));
+
+  if (cmap_range_max_slider->sliderPosition() < cmap_range_min_slider->sliderPosition())
+  {
+    cmap_range_min->setText(QString::number(value));
+    cmap_range_min_slider->setSliderPosition(cmap_range_max_slider->sliderPosition());
+  }
 }
