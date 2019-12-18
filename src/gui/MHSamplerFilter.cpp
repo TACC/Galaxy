@@ -18,14 +18,14 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "MHSamplerModel.hpp"
+#include "MHSamplerFilter.hpp"
 
 #include <QtGui/QIntValidator>
 #include <QtGui/QDoubleValidator>
 
 #include "GxyMainWindow.hpp"
 
-MHSamplerModel::MHSamplerModel() 
+MHSamplerFilter::MHSamplerFilter() 
 {
   output = std::make_shared<GxyData>(getModelIdentifier());
 
@@ -128,7 +128,7 @@ MHSamplerModel::MHSamplerModel()
 }
 
 unsigned int
-MHSamplerModel::nPorts(QtNodes::PortType portType) const
+MHSamplerFilter::nPorts(QtNodes::PortType portType) const
 {
   if (portType == QtNodes::PortType::In)
     return 1;
@@ -137,13 +137,13 @@ MHSamplerModel::nPorts(QtNodes::PortType portType) const
 }
 
 QtNodes::NodeDataType
-MHSamplerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
+MHSamplerFilter::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
 {
   return GxyData().type();
 }
 
 void
-MHSamplerModel::onApply()
+MHSamplerFilter::onApply()
 {
   QJsonObject json = save();
   json["cmd"] = "gui::mhsample";
@@ -155,9 +155,9 @@ MHSamplerModel::onApply()
   QString s = QLatin1String(bytes);
 
   std::string msg = s.toStdString();
-  std::cerr << "MHSamplerModel request: " << msg << "\n";
+  std::cerr << "MHSamplerFilter request: " << msg << "\n";
   getTheGxyConnectionMgr()->CSendRecv(msg);
-  std::cerr << "MHSamplerModel reply: " << msg << "\n";
+  std::cerr << "MHSamplerFilter reply: " << msg << "\n";
 
   rapidjson::Document dset;
   dset.Parse(msg.c_str());
@@ -173,42 +173,44 @@ MHSamplerModel::onApply()
 
   output->setValid(true);
 
-  Q_EMIT dataUpdated(0);
+  GxyFilter::onApply();
 }
 
 std::shared_ptr<QtNodes::NodeData>
-MHSamplerModel::outData(QtNodes::PortIndex)
+MHSamplerFilter::outData(QtNodes::PortIndex)
 {
-  std::cerr << "MHSamplerModel::outData ===============\n"; output->print();
+  std::cerr << "MHSamplerFilter::outData ===============\n"; output->print();
   return std::static_pointer_cast<QtNodes::NodeData>(output);
 }
 
 QtNodes::NodeValidationState
-MHSamplerModel::validationState() const
+MHSamplerFilter::validationState() const
 {
   return QtNodes::NodeValidationState::Valid;
 }
 
 
 QString
-MHSamplerModel::validationMessage() const
+MHSamplerFilter::validationMessage() const
 {
   return QString("copacetic");
 }
 
 void
-MHSamplerModel::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
+MHSamplerFilter::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
   
   if (input)
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
-  enableIfValid();
+  GxyFilter::setInData(data, portIndex);
+  if (isValid())
+    Q_EMIT dataUpdated(0);
 }
 
 void
-MHSamplerModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+MHSamplerFilter::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 {
   std::shared_ptr<GxyData> input = std::dynamic_pointer_cast<GxyData>(o);
   mh_linear_tf_min->setText(QString::number(input->dataInfo.data_min));
@@ -216,18 +218,18 @@ MHSamplerModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 }
 
 bool
-MHSamplerModel::isValid()
+MHSamplerFilter::isValid()
 {
   bool r = input && input->isValid();
-  std::cerr << "MHSamplerModel::isValid :: " << r << "\n";
+  std::cerr << "MHSamplerFilter::isValid :: " << r << "\n";
   return r;
 }
 
 
 QJsonObject
-MHSamplerModel::save() const
+MHSamplerFilter::save() const
 {
-  QJsonObject modelJson = GxyModel::save();
+  QJsonObject modelJson = GxyFilter::save();
 
   modelJson["mh_tfunc"] = mh_tfunc->currentIndex();
 
@@ -246,7 +248,7 @@ MHSamplerModel::save() const
 }
 
 void
-MHSamplerModel::restore(QJsonObject const &p)
+MHSamplerFilter::restore(QJsonObject const &p)
 {
   mh_tfunc->setCurrentIndex(p["mh_tfunc"].toInt());
   mh_radius->setText(QString::number(p["mh_radius"].toDouble()));

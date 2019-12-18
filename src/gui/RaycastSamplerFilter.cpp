@@ -18,14 +18,14 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "RaycastSamplerModel.hpp"
+#include "RaycastSamplerFilter.hpp"
 
 #include <QtGui/QIntValidator>
 #include <QtGui/QDoubleValidator>
 
 #include "GxyMainWindow.hpp"
 
-RaycastSamplerModel::RaycastSamplerModel() 
+RaycastSamplerFilter::RaycastSamplerFilter() 
 {
   output = std::make_shared<GxyData>(getModelIdentifier());
 
@@ -93,7 +93,7 @@ RaycastSamplerModel::RaycastSamplerModel()
 }
 
 unsigned int
-RaycastSamplerModel::nPorts(QtNodes::PortType portType) const
+RaycastSamplerFilter::nPorts(QtNodes::PortType portType) const
 {
   if (portType == QtNodes::PortType::In)
     return 1;
@@ -102,13 +102,13 @@ RaycastSamplerModel::nPorts(QtNodes::PortType portType) const
 }
 
 QtNodes::NodeDataType
-RaycastSamplerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
+RaycastSamplerFilter::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
 {
   return GxyData().type();
 }
 
 void
-RaycastSamplerModel::onApply()
+RaycastSamplerFilter::onApply()
 {
   QJsonObject json = save();
   json["cmd"] = "gui::raysample";
@@ -122,13 +122,15 @@ RaycastSamplerModel::onApply()
   std::string msg = s.toStdString();
   getTheGxyConnectionMgr()->CSendRecv(msg);
 
+  std::cerr << "REPLY: " << msg << "\n";
+
   rapidjson::Document dset;
   dset.Parse(msg.c_str());
 
   output->dataInfo.name = dset["name"].GetString();
   output->dataInfo.key = dset["key"].GetInt();
   output->dataInfo.type = dset["type"].GetInt();
-  output->dataInfo.isVector = dset["isVector"].GetBool();
+  output->dataInfo.isVector = (dset["ncomp"].GetInt() == 3);
   output->dataInfo.data_min = dset["min"].GetDouble();
   output->dataInfo.data_max = dset["max"].GetDouble();
   for (auto i = 0; i < 6; i++)
@@ -136,49 +138,54 @@ RaycastSamplerModel::onApply()
 
   output->setValid(true);
 
-  Q_EMIT dataUpdated(0);
+  GxyFilter::onApply();
 }
 
 std::shared_ptr<QtNodes::NodeData>
-RaycastSamplerModel::outData(QtNodes::PortIndex)
+RaycastSamplerFilter::outData(QtNodes::PortIndex)
 {
   return std::static_pointer_cast<QtNodes::NodeData>(output);
 }
 
 QtNodes::NodeValidationState
-RaycastSamplerModel::validationState() const
+RaycastSamplerFilter::validationState() const
 {
   return QtNodes::NodeValidationState::Valid;
 }
 
 
 QString
-RaycastSamplerModel::validationMessage() const
+RaycastSamplerFilter::validationMessage() const
 {
   return QString("copacetic");
 }
 
 void
-RaycastSamplerModel::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
+RaycastSamplerFilter::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
   
   if (input)
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
+  GxyFilter::setInData(data, portIndex);
+
   enableIfValid();
+
+  if (isValid())
+    Q_EMIT dataUpdated(0);
 }
 
 void
-RaycastSamplerModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
+RaycastSamplerFilter::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const
 {
 }
 
 bool
-RaycastSamplerModel::isValid()
+RaycastSamplerFilter::isValid()
 {
 std::cerr << "A";
-  if (! GxyModel::isValid()) return false;
+  if (! GxyFilter::isValid()) return false;
 std::cerr << "B";
   if (! input) return false;
 std::cerr << "C";
@@ -199,9 +206,9 @@ std::cerr << "E";
 
 
 QJsonObject
-RaycastSamplerModel::save() const
+RaycastSamplerFilter::save() const
 {
-  QJsonObject modelJson = GxyModel::save();
+  QJsonObject modelJson = GxyFilter::save();
 
   modelJson["camera"] = camera.save();
 
@@ -213,7 +220,7 @@ RaycastSamplerModel::save() const
 }
 
 void
-RaycastSamplerModel::restore(QJsonObject const &p)
+RaycastSamplerFilter::restore(QJsonObject const &p)
 {
   camera.restore(p["camera"].toObject());
 

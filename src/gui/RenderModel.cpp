@@ -68,8 +68,6 @@ RenderModel::RenderModel()
   connect(open, SIGNAL(released()), renderWindow, SLOT(show()));
   _properties->addButton(open);
 
-  // connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
-
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onConnectionStateChanged(bool)));
 
   if (getTheGxyConnectionMgr()->IsConnected())

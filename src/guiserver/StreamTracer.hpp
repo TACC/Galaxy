@@ -415,7 +415,7 @@ protected:
           auto seg = *segp;
           auto k = 0, ik = -1;
           for (auto n = 0; n < seg->times.size(); n++)
-            if (seg->times[n] > (t - dt) && seg->times[n] < t)
+            if (t == -1 || (seg->times[n] > (t - dt) && seg->times[n] < t))
             {
               k++;
               if (ik < 0) ik = n;

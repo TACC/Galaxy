@@ -72,12 +72,6 @@ public:
 
   QJsonObject save() const override;
 
-  void setInData(std::shared_ptr<NodeData> data, PortIndex portIndex) override
-  {
-    std::cerr << "setInData on virtual VisModel\n";
-    exit(1);
-  }
-
   virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
   virtual void loadParameterWidgets() const override;
 
@@ -85,7 +79,7 @@ public:
 
   bool isValid() override;
 
-private Q_SLOTS:
+public Q_SLOTS:
 
   void onApply() override;
 

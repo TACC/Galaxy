@@ -19,10 +19,10 @@
 // ========================================================================== //
 
 #include "GxyMainWindow.hpp"
-#include "StreamTracerModel.hpp"
+#include "StreamTracerFilter.hpp"
 #include "GxyValue.hpp"
 
-StreamTracerModel::StreamTracerModel() 
+StreamTracerFilter::StreamTracerFilter() 
 {
   output = std::make_shared<GxyData>(getModelIdentifier());
 
@@ -83,7 +83,7 @@ StreamTracerModel::StreamTracerModel()
 }
 
 unsigned int
-StreamTracerModel::nPorts(QtNodes::PortType portType) const
+StreamTracerFilter::nPorts(QtNodes::PortType portType) const
 {
   if (portType == QtNodes::PortType::In)
     return 4;
@@ -92,7 +92,7 @@ StreamTracerModel::nPorts(QtNodes::PortType portType) const
 }
 
 QtNodes::NodeDataType
-StreamTracerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
+StreamTracerFilter::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
 {
   if (pt == QtNodes::PortType::In)
   {
@@ -106,13 +106,14 @@ StreamTracerModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex pi) const
 }
 
 std::shared_ptr<QtNodes::NodeData>
-StreamTracerModel::outData(QtNodes::PortIndex pi)
+StreamTracerFilter::outData(QtNodes::PortIndex pi)
 {
+  output->setValid(isValid());
   return std::static_pointer_cast<QtNodes::NodeData>(output);
 }
 
 void
-StreamTracerModel::
+StreamTracerFilter::
 setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
 {
   if (pi == 0)
@@ -159,27 +160,34 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
   else
     seeds = std::dynamic_pointer_cast<GxyData>(data);
 
+  GxyFilter::setInData(data, pi);
   enableIfValid();
+  if (isValid() && (retrim || retrace))
+  {
+    onApply();
+
+    Q_EMIT dataUpdated(0);
+  }
 }
 
 
 QtNodes::NodeValidationState
-StreamTracerModel::validationState() const
+StreamTracerFilter::validationState() const
 {
   return QtNodes::NodeValidationState::Valid;
 }
 
 
 QString
-StreamTracerModel::validationMessage() const
+StreamTracerFilter::validationMessage() const
 {
   return QString("copacetic");
 }
 
 QJsonObject
-StreamTracerModel::save() const
+StreamTracerFilter::save() const
 {
-  QJsonObject modelJson = GxyModel::save();
+  QJsonObject modelJson = GxyFilter::save();
 
   modelJson["maxsteps"] = maxsteps->text().toInt();
   modelJson["stepsize"] = stepsize->text().toDouble();
@@ -192,7 +200,7 @@ StreamTracerModel::save() const
 }
 
 void
-StreamTracerModel::restore(QJsonObject const &p)
+StreamTracerFilter::restore(QJsonObject const &p)
 {
   maxsteps->setText(QString::number(p["maxsteps"].toInt()));
   stepsize->setText(QString::number(p["stepsize"].toDouble()));
@@ -203,7 +211,7 @@ StreamTracerModel::restore(QJsonObject const &p)
 }
 
 void 
-StreamTracerModel::onApply()
+StreamTracerFilter::onApply()
 {
   QJsonObject json = save();
 
@@ -266,13 +274,13 @@ StreamTracerModel::onApply()
 
     retrim = true;
     output->setValid(true);
-
-    Q_EMIT dataUpdated(0);
   }
+
+  GxyFilter::onApply();
 }
 
 bool 
-StreamTracerModel::isValid()
+StreamTracerFilter::isValid()
 {
   return vectorField && vectorField->isValid() && seeds && seeds->isValid();
 }

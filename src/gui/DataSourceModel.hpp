@@ -305,8 +305,6 @@ public:
 
   std::shared_ptr<NodeData> outData(PortIndex port) override;
 
-  void setInData(std::shared_ptr<NodeData> data, PortIndex portIndex) override;
-
   NodeValidationState validationState() const override;
 
   QString validationMessage() const override;
@@ -332,7 +330,7 @@ private Q_SLOTS:
     {
       output->dataInfo = current_selection->getDataInfo();
       output->setValid(true);
-      Q_EMIT dataUpdated(0);
+      GxyModel::onApply();
     }
   }
 

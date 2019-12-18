@@ -35,13 +35,12 @@
 #include "VolumeVisModel.hpp"
 #include "ParticlesVisModel.hpp"
 #include "PathlinesVisModel.hpp"
-#include "RenderModel.hpp"
-#include "MHSamplerModel.hpp"
-#include "RaycastSamplerModel.hpp"
-#include "StreamTracerModel.hpp"
-#include "TraceDecoratorModel.hpp"
-#include "InterpolatorModel.hpp"
 #include "DataSourceModel.hpp"
+#include "RenderModel.hpp"
+#include "MHSamplerFilter.hpp"
+#include "RaycastSamplerFilter.hpp"
+#include "StreamTracerFilter.hpp"
+#include "InterpolatorFilter.hpp"
 
 #include "GxyConnectionMgr.hpp"
 
@@ -61,11 +60,10 @@ registerDataModels()
 {
   auto ret = std::make_shared<DataModelRegistry>();
   ret->registerModel<DataSourceModel>("Sources");
-  ret->registerModel<MHSamplerModel>("Filters");
-  ret->registerModel<RaycastSamplerModel>("Filters");
-  ret->registerModel<StreamTracerModel>("Filters");
-  ret->registerModel<TraceDecoratorModel>("Filters");
-  ret->registerModel<InterpolatorModel>("Filters");
+  ret->registerModel<MHSamplerFilter>("Filters");
+  ret->registerModel<RaycastSamplerFilter>("Filters");
+  ret->registerModel<StreamTracerFilter>("Filters");
+  ret->registerModel<InterpolatorFilter>("Filters");
   ret->registerModel<VolumeVisModel>("Rendering");
   ret->registerModel<ParticlesVisModel>("Rendering");
   ret->registerModel<PathlinesVisModel>("Rendering");

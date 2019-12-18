@@ -100,6 +100,7 @@ DocumentToString(rapidjson::Document& doc)
   std::string s = "ok";                                                                         \
   replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);         \
   reply = DocumentToString(replyDoc);                                                           \
+  std::cerr << "REPLY: " << reply << "\n"; \
   return true;                                                                                  \
 }
 

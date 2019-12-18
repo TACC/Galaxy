@@ -85,7 +85,7 @@ class LightingEnvironment
 public:
   LightingEnvironment()
   {
-    lights.push_back(Light(gxy::vec3f(1.0, 1.0, 0.0), 0));
+    lights.push_back(Light(gxy::vec3f(1.0, -1.0, 1.0), 0));
     shadow_flag = false;
     ao_flag = false;
     ao_count = 16;
@@ -101,7 +101,7 @@ public:
     QJsonObject modelJson;
 
     modelJson["shadows"] = shadow_flag;
-    modelJson["ao count"] = ao_count;
+    modelJson["ao count"] = ao_flag ? ao_count : 0;
     modelJson["ao radius"] = ao_radius;
     modelJson["Ka"] = Ka;
     modelJson["Kd"] = Kd;

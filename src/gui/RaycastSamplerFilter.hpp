@@ -20,12 +20,9 @@
 
 #pragma once
 
-#include "dtypes.h"
-
-#include <vector>
-#include <string>
 
 #include <QtCore/QObject>
+#include <QtCore/QVector>
 
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
@@ -33,19 +30,28 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QCheckBox>
-#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QComboBox>
 
-#include "GxyModel.hpp"
+#include "GxyFilter.hpp"
 
-class StreamTracerModel : public GxyModel
+#include "GxyData.hpp"
+#include "Camera.hpp"
+#include "CameraDialog.hpp"
+
+#include "Lights.hpp"
+#include "LightsDialog.hpp"
+
+#include <nodes/NodeData>
+
+class RaycastSamplerFilter : public GxyFilter
 {
   Q_OBJECT
 
 public:
-  StreamTracerModel();
+  RaycastSamplerFilter();
 
   virtual
-  ~StreamTracerModel() {}
+  ~RaycastSamplerFilter() {}
 
   unsigned int nPorts(QtNodes::PortType portType) const override;
 
@@ -59,34 +65,51 @@ public:
 
   QString validationMessage() const override;
 
-  QString caption() const override { return QStringLiteral("StreamTracer"); }
+  QString caption() const override { return QStringLiteral("RaycastSampler"); }
 
-  QString name() const override { return QStringLiteral("StreamTracer"); }
+  QString name() const override { return QStringLiteral("RaycastSampler"); }
 
+  virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) const override;
   bool isValid() override;
 
   QJsonObject save() const override;
   void restore(QJsonObject const &p) override;
 
-public Q_SLOTS:
+public Q_SLOTS: 
 
   virtual void onApply() override;
 
-protected:
+private Q_SLOTS:
 
-  std::shared_ptr<GxyData>  vectorField;
-  std::shared_ptr<GxyData>  seeds;
+  void algorithmChanged(int t)
+  {
+    gradient_properties->setVisible(t == 1);
+    isovalue_properties->setVisible(t == 0);
+  }
+
+  void openCameraDialog() 
+  {
+    CameraDialog *cameraDialog = new CameraDialog(camera);
+    cameraDialog->exec();
+    cameraDialog->get_camera(camera);
+    delete cameraDialog;
+  }
 
 private:
 
-  QLineEdit               *trimtime;
-  QLineEdit               *trimdeltatime;
-  QLineEdit               *maxsteps;
-  QLineEdit               *stepsize;
-  QLineEdit               *minvelocity;
-  QLineEdit               *maxtime;
+  std::shared_ptr<GxyData> input;
   std::shared_ptr<GxyData> output;
 
-  bool retrace = true;
-  bool retrim  = true;
+  Camera camera;
+
+  QFrame *raycast_properties;
+
+  QFrame *isovalue_properties;
+  QLineEdit *isovalue;
+
+  QFrame *gradient_properties;
+  QLineEdit *tolerance;
+
+  QComboBox *type;
+  QPushButton *openCamera;
 };

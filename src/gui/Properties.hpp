@@ -68,9 +68,10 @@ public:
 
     applyButton = new QPushButton("Apply");
     applyButton->setEnabled(false);
+    connect(applyButton, SIGNAL(released()), this, SLOT(close()));
     bottom_right_layout->addWidget(applyButton, 0, Qt::AlignRight);
 
-    doneButton = new QPushButton("Done");
+    doneButton = new QPushButton("Close");
     connect(doneButton, SIGNAL(released()), this, SLOT(close()));
     bottom_right_layout->addWidget(doneButton, 0, Qt::AlignRight);
 

@@ -154,7 +154,7 @@ VolumeVisModel::onApply()
   loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
   output->setValid(true);
 
-  Q_EMIT dataUpdated(0);
+  GxyModel::onApply();
 }
 
 unsigned int
@@ -187,6 +187,7 @@ VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
   enableIfValid();
+  VisModel::setInData(data, portIndex);
 }
 
 void 

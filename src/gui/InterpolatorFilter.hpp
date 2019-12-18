@@ -32,22 +32,20 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QGridLayout>
-#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFileDialog>
 
-#include "GxyModel.hpp"
-
+#include "GxyFilter.hpp"
 #include "GxyData.hpp"
 
-class TraceDecoratorModel : public GxyModel
+class InterpolatorFilter : public GxyFilter
 {
   Q_OBJECT
 
 public:
-  TraceDecoratorModel();
+  InterpolatorFilter();
 
   virtual
-  ~TraceDecoratorModel() {}
+  ~InterpolatorFilter() {}
 
   unsigned int nPorts(QtNodes::PortType portType) const override;
 
@@ -61,19 +59,14 @@ public:
 
   QString validationMessage() const override;
 
-  QString caption() const override { return QStringLiteral("TraceDecorator"); }
+  QString caption() const override { return QStringLiteral("Interpolator"); }
 
-  QString name() const override { return QStringLiteral("TraceDecorator"); }
+  QString name() const override { return QStringLiteral("Interpolator"); }
 
 protected:
 
   virtual void apply();
 
 private:
-
-  QLineEdit               *maxsteps;
-  QLineEdit               *stepsize;
-  QLineEdit               *minvelocity;
-  QLineEdit               *maxtime;
   std::shared_ptr<GxyData> output;
 };

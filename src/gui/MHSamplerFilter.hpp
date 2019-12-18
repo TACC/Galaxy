@@ -43,15 +43,15 @@
 
 #include <nodes/NodeData>
 
-class MHSamplerModel : public GxyFilter
+class MHSamplerFilter : public GxyFilter
 {
   Q_OBJECT
 
 public:
-  MHSamplerModel();
+  MHSamplerFilter();
 
   virtual
-  ~MHSamplerModel() {}
+  ~MHSamplerFilter() {}
 
   unsigned int nPorts(QtNodes::PortType portType) const override;
 

@@ -18,55 +18,65 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "InterpolatorFilter.hpp"
 
-#include "dtypes.h"
-
-#include <vector>
-#include <string>
-
-#include <QtCore/QObject>
-
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QGridLayout>
-#include <QtWidgets/QFileDialog>
-
-#include "GxyModel.hpp"
-#include "GxyData.hpp"
-
-class InterpolatorModel : public GxyModel
+InterpolatorFilter::InterpolatorFilter() 
 {
-  Q_OBJECT
+  QFrame *frame  = new QFrame();
+  QGridLayout *layout = new QGridLayout();
+  frame->setLayout(layout);
 
-public:
-  InterpolatorModel();
+  _properties->addProperties(frame);
+}
 
-  virtual
-  ~InterpolatorModel() {}
+unsigned int
+InterpolatorFilter::nPorts(QtNodes::PortType portType) const
+{
+  if (portType == QtNodes::PortType::In)
+    return 2;
+  else
+    return 1;
+}
 
-  unsigned int nPorts(QtNodes::PortType portType) const override;
+QtNodes::NodeDataType
+InterpolatorFilter::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
+{
+  if (pt == QtNodes::PortType::In)
+    return GxyData().type();
+  else
+    return GxyData().type();
+}
 
-  QtNodes::NodeDataType dataType(QtNodes::PortType portType, QtNodes::PortIndex portIndex) const override;
+void
+InterpolatorFilter::apply() { std::cerr << "Apply\n"; }
 
-  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex port) override;
+std::shared_ptr<QtNodes::NodeData>
+InterpolatorFilter::outData(QtNodes::PortIndex)
+{
+  std::shared_ptr<GxyData> result;
+  return std::static_pointer_cast<QtNodes::NodeData>(result);
+}
 
-  void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
+void
+InterpolatorFilter::
+setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
+{
+  GxyFilter::setInData(data, portIndex);
+  if (isValid())
+    Q_EMIT dataUpdated(0);
+}
 
-  QtNodes::NodeValidationState validationState() const override;
 
-  QString validationMessage() const override;
+QtNodes::NodeValidationState
+InterpolatorFilter::validationState() const
+{
+  return QtNodes::NodeValidationState::Valid;
+}
 
-  QString caption() const override { return QStringLiteral("Interpolator"); }
 
-  QString name() const override { return QStringLiteral("Interpolator"); }
+QString
+InterpolatorFilter::validationMessage() const
+{
+  return QString("copacetic");
+}
 
-protected:
-
-  virtual void apply();
-
-private:
-  std::shared_ptr<GxyData> output;
-};

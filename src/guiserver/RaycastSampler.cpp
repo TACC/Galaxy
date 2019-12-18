@@ -71,6 +71,7 @@ RaycastSampler::Sample(rapidjson::Document& doc)
 
   sampler->Commit();
   sampler->Start(rs);
+  rs->WaitForDone();
 
   result->Commit();
 }

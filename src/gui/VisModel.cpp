@@ -79,7 +79,7 @@ VisModel::VisModel()
 void 
 VisModel::onApply()
 {
-  std::cerr << "VisModel onApply should never be called (virtual)\n";
+  GxyModel::onApply();
 }
 
 unsigned int

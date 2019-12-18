@@ -225,7 +225,7 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     if (min_velocity > 0 && vlen < min_velocity)
     {
       terminated = true;
-      std::cerr << "terminated on velocity\n";
+      // std::cerr << "terminated on velocity\n";
       zero(velocity);
       zero(normalized_velocity);
     }
@@ -233,7 +233,7 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     {
       if (max_integration_time >= 0  && max_integration_time < tLast)
       {
-        std::cerr << "terminated on integration time " << max_integration_time << " " << tLast << "\n";
+        // std::cerr << "terminated on integration time " << max_integration_time << " " << tLast << "\n";
         terminated = true;
       }
 
@@ -255,7 +255,7 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     n ++;
     if (n > max_steps)
     {
-      std::cerr << "terminated on step count\n";
+      // std::cerr << "terminated on step count\n";
       terminated = true;
       break;
     }

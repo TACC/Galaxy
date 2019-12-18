@@ -145,14 +145,19 @@ Geometry::local_commit(MPI_Comm c)
   if (super::local_commit(c))
     return true;
 
-  float *dptr = data.data();
-  local_min = local_max = *dptr ++;
-
-  for (auto i = 1; i < data.size(); i++)
+  if (data.size() == 0)
+    local_min = local_max = 0;
+  else
   {
-    float d = *dptr++;
-    if (local_min > d) local_min = d;
-    if (local_max < d) local_max = d;
+    float *dptr = data.data();
+    local_min = local_max = *dptr ++;
+
+    for (auto i = 1; i < data.size(); i++)
+    {
+      float d = *dptr++;
+      if (local_min > d) local_min = d;
+      if (local_max < d) local_max = d;
+    }
   }
 
   MPI_Allreduce(&local_min, &global_min, 1, MPI_FLOAT, MPI_MIN, c);

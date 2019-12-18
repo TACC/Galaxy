@@ -85,11 +85,6 @@ DataSourceModel::outData(PortIndex)
   return std::static_pointer_cast<NodeData>(output);
 }
 
-void
-DataSourceModel::
-setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
-{}
-
 NodeValidationState
 DataSourceModel::validationState() const
 {

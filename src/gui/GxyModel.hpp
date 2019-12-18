@@ -126,6 +126,10 @@ public:
   {
   }
 
+  void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override
+  {
+  }
+
   virtual bool isValid() { return true; }
 
 public Q_SLOTS:
@@ -146,7 +150,7 @@ public Q_SLOTS:
 
   virtual void onApply() 
   {
-    std::cerr << "generic onApply\n"; 
+    Q_EMIT dataUpdated(0);
   }
 
 protected:

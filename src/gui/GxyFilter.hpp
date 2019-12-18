@@ -24,6 +24,11 @@
 #include "GxyConnectionMgr.hpp"
 #include "GxyModel.hpp"
 
+#include "rapidjson/document.h"
+
+// GxyFilters are models that have server-side state that
+// needs to be deleted when the model is destroyed
+
 class GxyFilter : public GxyModel
 {
   Q_OBJECT
@@ -42,9 +47,14 @@ public:
       QString s = QLatin1String(bytes);
 
       std::string msg = s.toStdString();
-      std::cerr << "request: " << msg << "\n";
+
       getTheGxyConnectionMgr()->CSendRecv(msg);
-      std::cerr << "reply: " << msg << "\n";
+
+      rapidjson::Document rply;
+      rply.Parse(msg.c_str());
+
+      if (strcmp(rply["status"].GetString(), "ok"))
+        std::cerr << "GxyFilter dtor - error on server side\n";
     }
   }
 };
