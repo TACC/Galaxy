@@ -49,8 +49,6 @@ using QtNodes::PortType;
 using QtNodes::PortIndex;
 using QtNodes::NodeValidationState;
 
-
-
 class VolumeVisModel : public VisModel
 {
   Q_OBJECT
@@ -89,6 +87,7 @@ private Q_SLOTS:
 
   void volume_rendering_flag_state_changed(int b) 
   {
+    geomWidgets->setEnabled(b == 0);
     enableIfValid();
   }
 
@@ -121,4 +120,5 @@ private:
   PlanesDialog  *slicesDialog;
 
   QCheckBox *volumeRender = NULL;
+  QFrame *geomWidgets = NULL;
 };

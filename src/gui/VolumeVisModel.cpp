@@ -28,24 +28,30 @@ VolumeVisModel::VolumeVisModel()
   isovaluesDialog = new ScalarsDialog;
   slicesDialog = new PlanesDialog;
 
-  QFrame *frame  = new QFrame();
-  QVBoxLayout *layout = new QVBoxLayout();
+  QFrame *frame  = new QFrame;
+  QVBoxLayout *layout = new QVBoxLayout;
   layout->setSpacing(0);
   layout->setContentsMargins(2, 0, 2, 0);
   frame->setLayout(layout);
-
-  QPushButton *openPlanes = new QPushButton("Planes");
-  connect(openPlanes, SIGNAL(released()), this, SLOT(openPlanesDialog()));
-  layout->addWidget(openPlanes);
-
-  QPushButton *openIsovalues = new QPushButton("Isovalues");
-  connect(openIsovalues, SIGNAL(released()), this, SLOT(openIsovaluesDialog()));
-  layout->addWidget(openIsovalues);
 
   volumeRender = new QCheckBox("Volume render?");
   connect(volumeRender, SIGNAL(stateChanged(int)), this, SLOT(volume_rendering_flag_state_changed(int)));
   volumeRender->setChecked(false);
   layout->addWidget(volumeRender);
+
+  geomWidgets = new QFrame;
+  QVBoxLayout *l = new QVBoxLayout;
+  geomWidgets->setLayout(l);
+
+  QPushButton *openPlanes = new QPushButton("Planes");
+  connect(openPlanes, SIGNAL(released()), this, SLOT(openPlanesDialog()));
+  l->addWidget(openPlanes);
+
+  QPushButton *openIsovalues = new QPushButton("Isovalues");
+  connect(openIsovalues, SIGNAL(released()), this, SLOT(openIsovaluesDialog()));
+  l->addWidget(openIsovalues);
+
+  layout->addWidget(geomWidgets);
 
   _properties->addProperties(frame);
 
@@ -77,6 +83,8 @@ VolumeVisModel::loadParameterWidgets() const
 
   isovaluesDialog->clear();
   isovaluesDialog->set_scalars(v->isovalues);
+
+  volumeRender->setChecked(v->volume_rendering_flag);
 }
 
 void
@@ -86,10 +94,18 @@ VolumeVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
 
   std::shared_ptr<VolumeVis> v = std::dynamic_pointer_cast<VolumeVis>(o);
 
-  v->slices = slicesDialog->get_planes();
-  v->isovalues = isovaluesDialog->get_scalars();
-  
-  v->volume_rendering_flag = volumeRender->isChecked();
+  if (volumeRender->isChecked())
+  {
+    v->slices.clear();
+    v->isovalues.clear();
+    v->volume_rendering_flag = true;
+  }
+  else
+  {
+    v->slices = slicesDialog->get_planes();
+    v->isovalues = isovaluesDialog->get_scalars();
+    v->volume_rendering_flag = false;
+  }
 }
 
 void 
