@@ -127,7 +127,11 @@ int main(int argc, char *argv[])
     if (mpis > 1 && mpir == 0)
 		{
 		  char pvti_filename[256];
-			sprintf(pvti_filename, "radial-%d.pvti", t);
+      if (nt == 1)
+        sprintf(pvti_filename, "radial.pvti");
+      else
+        sprintf(pvti_filename, "radial-%d.pvti", t);
+
 			pvti.open(pvti_filename);
 
 			pvti << "<?xml version=\"1.0\"?>" << endl;
@@ -170,10 +174,14 @@ int main(int argc, char *argv[])
 			ez = (iz == (factors[2]-1)) ? ez : ez+1;
 
 			char vti_partname[256];
-			if (mpis > 1)
-				sprintf(vti_partname, "part-%d-%d.vti", t, part);
-			else
+      if (nt == 1 && nparts == 1)
+        sprintf(vti_partname, "radial.vti");
+      else if (nt == 1)
+				sprintf(vti_partname, "part-%d.vti", part);
+			else if (nparts == 1)
 				sprintf(vti_partname, "radial-%d.vti", t);
+      else
+				sprintf(vti_partname, "part-%d-%d.vti", t, part);
 
 			if (mpis > 1 && mpir == 0)
 				pvti << "<Piece Extent=\"" << sz << " " << ez << " " << sy << " " << ey << " " << sx << " " << ex << "\" Source=\"" << vti_partname << "\"/>" << endl;
