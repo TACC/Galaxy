@@ -152,6 +152,7 @@ public:
 	void set_local_counts(int nx, int ny, int nz) 
 	{
 		local_counts.x = nx;
+  
 	 	local_counts.y = ny;
     local_counts.z = nz;
 	}
@@ -196,6 +197,12 @@ public:
 	//! get the local min and max data values for this Volume at this process
 	void get_local_minmax(float &min, float &max) { min = local_min; max = local_max; }
 
+	//! set the local min and max data values for this Volume at this process
+	void set_local_minmax(float min, float max) { local_min = min; local_max = max; }
+
+	//! set the global  min and max data values for this Volume at this process
+	void set_global_minmax(float min, float max) { global_min = min; global_max = max; }
+
   //! construct a Volume from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
 
@@ -212,6 +219,8 @@ public:
 
   //! Which process owns an arbitrary point in this global volume? -1 for outside
   int PointOwner(vec3f& p);
+
+	void set_global_partitions(int i, int j, int k) { global_partitions.x = i; global_partitions.y = j; global_partitions.z = k; }
 
   virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
 
