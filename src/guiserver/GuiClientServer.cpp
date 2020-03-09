@@ -19,8 +19,6 @@
 // ========================================================================== //
 
 #include <iostream>
-#include <vector>
-#include <sstream>
 
 using namespace std;
 
@@ -79,7 +77,7 @@ GuiClientServer::Sample(Document& params, std::string& reply)
 static std::string 
 DocumentToString(rapidjson::Document& doc)
 {
-  rapidjson::StringBuffer strbuf;
+  rapidjson::StringBuffer strbuf(0, 65536);
   rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
   doc.Accept(writer);
   return strbuf.GetString();
@@ -100,7 +98,7 @@ DocumentToString(rapidjson::Document& doc)
   std::string s = "ok";                                                                         \
   replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);         \
   reply = DocumentToString(replyDoc);                                                           \
-  std::cerr << "REPLY: " << reply << "\n"; \
+  /* std::cerr << "REPLY: " << reply << "\n"; */ \
   return true;                                                                                  \
 }
 
@@ -169,7 +167,6 @@ GuiClientServer::handle(string line, string& reply)
 
       rapidjson::Value dset(rapidjson::kObjectType);
 
-
       dset.AddMember("name", Value().SetString(it->c_str(), it->length(), alloc), alloc);
       dset.AddMember("type", type, alloc);
       dset.AddMember("key", key, alloc);
@@ -178,6 +175,10 @@ GuiClientServer::handle(string line, string& reply)
       dset.AddMember("max", M, alloc);
 
       Box *box = kdop->get_global_box();
+
+      // std::cerr << "XXXXXXXXXXXXXXXXXXXXXXXXXX\n";
+      // cerr << *box;
+
       rapidjson::Value boxv(rapidjson::kArrayType);
       boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
       boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
@@ -192,7 +193,13 @@ GuiClientServer::handle(string line, string& reply)
 
     replyDoc.AddMember("Datasets", array, alloc);
 
-    HANDLED_OK;
+    std::string s = "ok";
+    replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);        
+    reply = DocumentToString(replyDoc);                                                         
+    // std::cerr << "REPLY: " << reply << "\n";
+    return true; 
+
+    // HANDLED_OK;
   }
   else if (cmd == "gui::initWindow")
   {
@@ -250,9 +257,11 @@ GuiClientServer::handle(string line, string& reply)
     clientWindow->rendering->SetTheDatasets(theDatasets);
     clientWindow->rendering->Commit();
 
-    RenderingSetP rs = RenderingSet::NewP();
-    rs->AddRendering(clientWindow->rendering);
-    rs->Commit();
+    clientWindow->renderingSet->Commit();
+
+    // RenderingSetP rs = RenderingSet::NewP();
+    // rs->AddRendering(clientWindow->rendering);
+    // rs->Commit();
     renderer->Start(clientWindow->renderingSet);
 
     HANDLED_OK;
@@ -302,6 +311,7 @@ GuiClientServer::handle(string line, string& reply)
     replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), alloc);
     replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), alloc);
 
+#if 1
     Box *box = kdop->get_global_box();
     rapidjson::Value boxv(rapidjson::kArrayType);
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
@@ -311,6 +321,7 @@ GuiClientServer::handle(string line, string& reply)
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
     replyDoc.AddMember("box", boxv, alloc);
+#endif
 
     replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), alloc);
 
@@ -352,6 +363,7 @@ GuiClientServer::handle(string line, string& reply)
     replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), replyDoc.GetAllocator());
     replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), replyDoc.GetAllocator());
 
+#if 1
     Box *box = kdop->get_global_box();
     rapidjson::Value boxv(rapidjson::kArrayType);
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), replyDoc.GetAllocator());
@@ -361,6 +373,7 @@ GuiClientServer::handle(string line, string& reply)
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), replyDoc.GetAllocator());
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), replyDoc.GetAllocator());
     replyDoc.AddMember("box", boxv, replyDoc.GetAllocator());
+#endif
 
     replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), replyDoc.GetAllocator());
 
@@ -440,6 +453,7 @@ GuiClientServer::handle(string line, string& reply)
     replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), replyDoc.GetAllocator());
     replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), replyDoc.GetAllocator());
 
+#if 1
     Box *box = kdop->get_global_box();
     rapidjson::Value boxv(rapidjson::kArrayType);
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), replyDoc.GetAllocator());
@@ -449,6 +463,8 @@ GuiClientServer::handle(string line, string& reply)
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), replyDoc.GetAllocator());
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), replyDoc.GetAllocator());
     replyDoc.AddMember("box", boxv, replyDoc.GetAllocator());
+#endif
+
     HANDLED_OK;
   }
   else if (cmd == "gui::remove_filter")
