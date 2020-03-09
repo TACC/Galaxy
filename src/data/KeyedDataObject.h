@@ -69,6 +69,9 @@ public:
   //! returns a pointer to a Box that represents the local data extent at this process
 	Box *get_local_box() { return &local_box; }
 
+  //! install neighbors array
+  void set_neighbors(int*);
+
   //! return the data key that is the `i^th` neighbor of this process
   /*! This method uses the Box face orientation indices for neighbor indexing
    *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
@@ -115,6 +118,8 @@ public:
   void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
 
   virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP kdop);
+
+  void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 
 protected:
 	vtkClientSocket *skt;
