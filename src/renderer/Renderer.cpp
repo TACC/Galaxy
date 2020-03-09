@@ -525,6 +525,8 @@ public:
 		// RayQ) so we don't send a message upstream saying we are idle
 		// until we actually are.
 
+    // std::cerr << GetTheApplication()->GetRank() << " received raylist " << raylist->GetRayCount() << "\n";
+
 		while (raylist)
 		{
 			if (! renderingSet->IsActive(raylist->GetFrame()))
