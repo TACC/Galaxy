@@ -63,7 +63,7 @@ addons:
       - perceptualdiff
       - python-numpy
   homebrew:
-    # update: true
+    update: true
     packages: 
       - vtk
       - tbb
