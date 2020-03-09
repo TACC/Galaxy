@@ -64,12 +64,10 @@ static int Xmax, Xmin, Ymax, Ymin;
 void
 generate_permutation(vector<int>& p, int num)
 {
-  std::cerr << "generate_permutation!\n";
   std::srand (unsigned(std::time(0)));
   p.clear();
   for (int i=0; i<num; i++) p.push_back(i);
   std::random_shuffle (p.begin(), p.end() );
-  std::cerr << "XXXX " << p.size() << " " << num << "\n";
 }
 
 void
@@ -434,7 +432,10 @@ Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
     bool hit = a->gbox->intersect(vorigin, vray, gmin, gmax);
 
     float lmin, lmax;
-    if (hit) hit = a->lbox->intersect(vorigin, vray, lmin, lmax);
+    if (hit) 
+    {
+      hit = a->lbox->intersect(vorigin, vray, lmin, lmax);
+    }
 
     float d = fabs(lmin) - fabs(gmin);
     if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
@@ -536,11 +537,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
 
   permute = renderer->GetPermutePixels();
   if (permute && permutation.size() != width*height)
-  {
-    // std::cerr << "P " << ((long)this) << " " << permutation.size() << " " << width*height << "\n";
     generate_permutation(permutation, width*height);
-    // std::cerr << "P2 " << ((long)this) << " " << permutation.size() << " " << width*height << "\n";
-  }
 
   vec3f veye(eye);
   vec3f vu(up);
@@ -734,7 +731,8 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       bool hit = gbox->intersect(vorigin, vray, gmin, gmax);
 
       float lmin, lmax;
-      if (hit) hit = lbox->intersect(vorigin, vray, lmin, lmax);
+      if (hit) 
+        hit = lbox->intersect(vorigin, vray, lmin, lmax);
 
       float d = fabs(lmin) - fabs(gmin);
       if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
