@@ -88,8 +88,8 @@ public:
     gl->addWidget(new QLabel(di.type != 0 ? "n/a" : di.isVector ? "yes" : "no"), row++, 1);
     
     gl->addWidget(new QLabel("data range"), row, 0);
-    gl->addWidget(new QLabel(QString::number(di.data_max, 'g', 4)), row, 1);
-    gl->addWidget(new QLabel(QString::number(di.data_min, 'g', 4)), row++, 2);
+    gl->addWidget(new QLabel(QString::number(di.data_min, 'g', 4)), row, 1);
+    gl->addWidget(new QLabel(QString::number(di.data_max, 'g', 4)), row++, 2);
 
     gl->addWidget(new QLabel("X span"), row, 0);
     gl->addWidget(new QLabel(QString::number(di.box[0], 'g', 4)), row, 1);
