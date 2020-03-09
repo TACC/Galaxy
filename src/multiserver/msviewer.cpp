@@ -362,6 +362,8 @@ glut_loop()
 void *
 render_thread(void *d)
 {
+  sleep(1);
+
   theCamera.get_viewpoint(orig_viewpoint);
   theCamera.get_viewdirection(orig_viewdirection);
   theCamera.get_viewup(orig_viewup);
@@ -387,7 +389,6 @@ render_thread(void *d)
 	{
 		if (render_one || first || (X0 != X1) || (Y0 != Y1))
 		{
-			first = false;
 			if ((X0 != X1) || (Y0 != Y1))
 			{
 				if (mode == OBJECT_CENTER)
@@ -422,10 +423,14 @@ render_thread(void *d)
 					}
 				}
 			}
+      else
+        if (first)
+          theCamera.Send(theClientWindow);
+
+      first = false;
 
       Render();
 
-      // cerr << "reply to sending render request: " << s << "\n";
       render_one = false;
 
 			X0 = X1; Y0 = Y1;
