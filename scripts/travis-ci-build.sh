@@ -86,8 +86,8 @@ if [ -z ${GXY_BUILT_VTK} ]; then
   mkdir -p build
   pushd build
   if [ $TRAVIS_OS_NAME == "osx" ]; then 
-  	cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.0.0/include \
-          -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.0.0/lib/libglut.dylib \
+  	cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
+          -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.2.1/lib/libglut.dylib \
           -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           .. \
   		&& make install
