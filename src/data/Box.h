@@ -47,7 +47,7 @@ class Box
 	}
 
 public:
-	Box() : initialized(false) {} //!< default constructor
+	Box() : initialized(false) {} //!< default constructr
 	//! construct a box with given origin and axes
 	/*! initialization uses `min = o` and `max = o + (n-1)*d` 
 	 * \param o box origin, maps to `min` corner
@@ -235,8 +235,8 @@ public:
            (p.z >= xyz_min.z) && (p.z <= xyz_max.z);
   }
 
-	vec3f xyz_min; //!< the min point for this Box
-	vec3f xyz_max; //!< the max point for this Box
+	vec3f xyz_min = {0.0, 0.0, 0.0}; //!< the min point for this Box
+	vec3f xyz_max = {0.0, 0.0, 0.0}; //!< the max point for this Box
 
 private:
 	bool initialized;

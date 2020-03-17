@@ -42,9 +42,9 @@ init()
 }
 
 extern "C" MultiServerHandler *
-new_handler(DynamicLibraryP dlp, int cfd, int dfd)
+new_handler(SocketHandler *sh)
 {
-  return new PingClientServer(dlp, cfd, dfd);
+  return new PingClientServer(sh);
 }
 
 static pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;
@@ -92,16 +92,17 @@ Ping()
   cerr << "ping done\n";
 }
 
-std::string
-PingClientServer::handle(std::string line)
+bool
+PingClientServer::handle(std::string line, std::string& reply)
 {
   if (line == "ping")
   {
     Ping();
-    return std::string("ok");
+    reply = std::string("ok");
+    return true;
   }
   else
-    return MultiServerHandler::handle(line);
+    return false;
 }
 
 

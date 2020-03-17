@@ -302,8 +302,10 @@ RenderingSet::CheckLocalState()
   // send out a broadcast to synchronously check that everyone is done.
   //
   
+#if 0
 	if (first_async_completion_test_done)
 		cerr << GetTheApplication()->GetRank() << ": " << currently_busy << " " <<  last_busy << endl;
+#endif
 
   if (currently_busy != last_busy)
   {
@@ -390,8 +392,10 @@ RenderingSet::IncrementRayListCount(bool silent)
   int old = local_raylist_count;
   local_raylist_count++;
 
+#if 0
 	if (local_raylist_count == 1 && first_async_completion_test_done)
 		std::cerr << GetTheApplication()->GetRank() << ": lrc bumped from 0\n";
+#endif
 
   // std::cerr << "+ " << local_raylist_count << "\n";
 
@@ -435,8 +439,10 @@ RenderingSet::DecrementRayListCount()
   int old = local_raylist_count;
   local_raylist_count--;
 
+#if 0
 	if (local_raylist_count == 0 && first_async_completion_test_done)
 		std::cerr << GetTheApplication()->GetRank() << ": lrc to zero\n";
+#endif
 
 #ifdef GXY_LOGGING
 		APP_LOG(<< "RenderingSet (" << ((long)getkey()) << ")  DecrementRayListCount  " << local_raylist_count);

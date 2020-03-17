@@ -140,6 +140,33 @@ Geometry::Import(string s)
 }
 
 bool
+Geometry::local_commit(MPI_Comm c)
+{
+  if (super::local_commit(c))
+    return true;
+
+  if (data.size() == 0)
+    local_min = local_max = 0;
+  else
+  {
+    float *dptr = data.data();
+    local_min = local_max = *dptr ++;
+
+    for (auto i = 1; i < data.size(); i++)
+    {
+      float d = *dptr++;
+      if (local_min > d) local_min = d;
+      if (local_max < d) local_max = d;
+    }
+  }
+
+  MPI_Allreduce(&local_min, &global_min, 1, MPI_FLOAT, MPI_MIN, c);
+  MPI_Allreduce(&local_max, &global_max, 1, MPI_FLOAT, MPI_MAX, c);
+
+  return false;
+}
+
+bool
 Geometry::local_import(char *p, MPI_Comm c)
 {
   vtkSmartPointer<vtkPointSet> pset;

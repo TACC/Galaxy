@@ -69,4 +69,4 @@ private:
 	int max_frame;
 };
  
-} // namesapace gxy
+} // namespace gxy

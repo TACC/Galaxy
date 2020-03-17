@@ -216,8 +216,6 @@ LookForIsoHit(varying bool shadeFlag,
     float sl = sLast[major];
     float st = sThis[major];
 
-    //print("sl %\nst %\nniso %\n", sl, st, vvis->nIsovalues);
-
     for (uniform int minor = 0; minor < vvis->nIsovalues; minor++) 
     {
       uniform float isoval = vvis->isovalues[minor];
@@ -234,6 +232,8 @@ LookForIsoHit(varying bool shadeFlag,
   if (h)
   {
     hit.point = ray.org + hit.t * ray.dir;
+
+    // print("hit\nT %\nX %\nY %\nZ %\n", hit.t, hit.point.x, hit.point.y, hit.point.z);
 
     if (shadeFlag)
     {
@@ -252,8 +252,6 @@ LookForIsoHit(varying bool shadeFlag,
           hit.opacity = 1.0;
         }
     }
-
-    // hit.color = make_vec3f(0, 0, 1);
   }
 
   return h;
@@ -523,8 +521,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     }
     else if (raysIn->term[i] != RAY_OPAQUE)
     {
-      print("TE term %\nX %\nY %\n", 
-        raysIn->term[i], raysIn->x[i], raysIn->y[i]);
+      // print("TE term %\nX %\nY %\n", raysIn->term[i], raysIn->x[i], raysIn->y[i]);
       print("TERMINATION ERROR\n");
     }
   }
@@ -566,10 +563,6 @@ export void TraceRays_generateAORays(void *uniform _self,
       // Going to need the surface normal regardless of whether ambient and diffuse are 
       // added by secondary rays or right here.
         
-#if 0
-      print("SN\n%\n%\n%\n", raysIn->nx[i], raysIn->ny[i], raysIn->nz[i]);
-#endif
-
       vec3f surface_normal = make_vec3f(raysIn->nx[i], raysIn->ny[i], raysIn->nz[i]);
 
       float ambient_scale = Ka * (1.0 - raysIn->o[i]);
@@ -693,8 +686,6 @@ export void TraceRays_generateShadowRays(void *uniform _self,
   uniform float Kd = lights->Kd / lights->nLights;
 #endif
 
-	// print("KD %\n", Kd);
-
   foreach (i = 0 ... nRaysIn)
   {
     // Only cast secondary rays for primary rays that hit a surface
@@ -718,8 +709,6 @@ export void TraceRays_generateShadowRays(void *uniform _self,
       // added by secondary rays or right here.
         
       vec3f surface_normal = make_vec3f(raysIn->nx[i], raysIn->ny[i], raysIn->nz[i]);
-
-// print("SNX %\nSNY %\nSNZ %\n", surface_normal.x, surface_normal.y, surface_normal.z);
 
       // If there are shadow rays to be cast, then the Kd of the lighting 
       // model is divided among the cast rays.  Otherwise the Kd * cos(normal, light) times
@@ -749,8 +738,6 @@ export void TraceRays_generateShadowRays(void *uniform _self,
         float dff_r = dff * raysIn->sr[i];
         float dff_g = dff * raysIn->sg[i];
         float dff_b = dff * raysIn->sb[i];
-
-				// print("O %\nD %\nDFF %\nR %\nG %\nB %\n", raysIn->o[i], d, dff, dff_r, dff_g, dff_b);
 
         raysOut->ox[offset]    = surface_point.x;
         raysOut->oy[offset]    = surface_point.y;

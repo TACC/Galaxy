@@ -1,4 +1,5 @@
-
+// ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -53,7 +54,7 @@ namespace gxy
 #define TF_LINEAR   1
 #define TF_GAUSSIAN 2
 
-MHSampleClientServer::MHSampleClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd)
+MHSampleClientServer::MHSampleClientServer(SocketHandler *sh) : MultiServerHandler(sh)
 {
   args.radius       = 0.02;
   args.tf_type      = TF_NONE;
@@ -82,7 +83,6 @@ static float gaussian(float x, float m, float s)
 }
 
 #define RNDM ((float)rand() / RAND_MAX) 
-
 static vec3f get_starting_point(VolumeP v)
 {
   Box *box = v->get_local_box();
@@ -286,13 +286,13 @@ init()
 }
 
 extern "C" MultiServerHandler *
-new_handler(DynamicLibraryP dlp, int cfd, int dfd)
+new_handler(SocketHandler *sh)
 {
-  return new MHSampleClientServer(dlp, cfd, dfd);
+  return new MHSampleClientServer(sh);
 }
 
-std::string
-MHSampleClientServer::handle(std::string line)
+bool
+MHSampleClientServer::handle(std::string line, std::string& reply)
 {
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
@@ -310,110 +310,166 @@ MHSampleClientServer::handle(std::string line)
   {
     ss >> args.sigma;
     if (ss.fail())
-      return std::string("error MHSampler sigma command requires a float argument");
+    {
+      reply = "error MHSampler sigma command requires a float argument";
+      return true;
+    }
 
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "radius")
   {
     ss >> args.radius;
     if (ss.fail())
-      return std::string("error MHSampler radius command requires a float argument");
-    return string("ok");
+    {
+      reply = "error MHSampler radius command requires a float argument";
+      return true;
+    }
+    reply = "ok";
+    return true;
   }
   else if (cmd == "volume") 
   {
     string  name;
     ss >> name;
     if (ss.fail())
-      return std::string("error MHSampler volume command requires a string argument");
+    {
+      reply = "error MHSampler volume command requires a string argument";
+      return true;
+    }
 
     volume = Volume::Cast(theDatasets->Find(name));
     if (! volume)
-      return std::string("error MHSampler volume command must name a pre-existing volume");
+    {
+      reply = "error MHSampler volume command must name a pre-existing volume";
+      return true;
+    }
 
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "particles")
   {
     string name;
     ss >> name;
     if (ss.fail())
-      return std::string("error MHSampler particles command requires a string argument");
+    {
+      reply = "error MHSampler particles command requires a string argument";
+      return true;
+    }
 
     particles = Particles::NewP();
     theDatasets->Insert(name, particles);
 
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "iterations")
   {
     ss >> args.n_iterations;
     if (ss.fail())
-      return std::string("error MHSampler iterations command requires an integer argument");
+    {
+      reply = "error MHSampler iterations command requires an integer argument";
+      return true;
+    }
     
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "startup")
   {
     ss >> args.n_startup;
     if (ss.fail())
-      return std::string("error MHSampler startup command requires an integer argument");
+    {
+      reply = "error MHSampler startup command requires an integer argument";
+      return true;
+    }
     
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "skip")
   {
     ss >> args.n_skip;
     if (ss.fail())
-      return std::string("error MHSampler skip command requires an integer argument");
+    {
+      reply = "error MHSampler skip command requires an integer argument";
+      return true;
+    }
 
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "miss")
   {
     ss >> args.n_miss;
     if (ss.fail())
-      return std::string("error MHSampler miss command requires an integer argument");
+    {
+      reply = "error MHSampler miss command requires an integer argument";
+      return true;
+    }
         
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "color")
   {
     ss >> args.r >> args.g >> args.b >> args.a;
     if (ss.fail())
-      return std::string("error MHSampler color command requires four float arguments");
+    {
+      reply = "error MHSampler color command requires four float arguments";
+      return true;
+    }
         
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "tf-linear") 
   {
     args.tf_type = TF_LINEAR;
     ss >> args.tf0 >> args.tf1;
     if (ss.fail())
-      return std::string("error MHSampler tf-linear command requires two float arguments");
+    {
+      reply = "error MHSampler tf-linear command requires two float arguments";
+      return true;
+    }
         
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "tf-gaussian")
   {
     args.tf_type = TF_GAUSSIAN;
     ss >> args.tf0 >> args.tf1;
     if (ss.fail())
-      return std::string("error MHSampler tf-gaussian command requires two float arguments");
+    {
+      reply = "error MHSampler tf-gaussian command requires two float arguments";
+      return true;
+    }
         
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "tf-none")
   {
     args.tf_type = TF_NONE;
         
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "sample" || cmd == "commit")
   {
-    if (!volume) return string("error need a volume first");
-    else if (!particles) return string("error need to set a particles dataset name first");
+    if (!volume) 
+    {
+      reply = "error need a volume first";
+      return true;
+    }
+    else if (!particles) 
+    {
+      reply = "error need to set a particles dataset name first";
+      return true;
+    }
     else
     {
       args.vk = volume->getkey();
@@ -426,12 +482,17 @@ MHSampleClientServer::handle(std::string line)
       msg.Broadcast(false, false);
 
       if (! particles->Commit())
-        return string("error committing particles");
+      {
+        reply = "error committing particles";
+        return true;
+      }
     }
         
-    return string("ok");
+    reply = "ok";
+    return true;
   }
-  else return MultiServerHandler::handle(line);
+  else
+    return false;
 }
 
 }

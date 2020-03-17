@@ -84,6 +84,10 @@ KeyedDataObject::initialize()
 bool
 KeyedDataObject::local_commit(MPI_Comm c)
 {
+  // std::cerr << "KeyedDataObject::local_commit: local box\n";
+  // std::cerr << local_box;
+  // std::cerr << "KeyedDataObject::local_commit: global_box\n";
+  // std::cerr << global_box;
   return false;
 }
 
@@ -103,6 +107,12 @@ KeyedDataObject::local_import(char *s, MPI_Comm c)
 {
   std::cerr << "ERROR: generic KeyedDataObject::local_import called?" << std::endl;
   return false;
+}
+
+void
+KeyedDataObject::set_neighbors(int *n)
+{
+  memcpy(neighbors, n, 6*sizeof(int));
 }
 
 } // namespace gxy

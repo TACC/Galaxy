@@ -62,10 +62,16 @@ public:
   //! load a set of Visualization objects from a Galaxy JSON specification
   static std::vector<VisualizationP> LoadVisualizationsFromJSON(rapidjson::Value&);
 
-  //! commit this object to the global registry across all processes
+  //! commit this object to the global registry across all processes.  Each Vis contains a 'name' field that identies the data it is to be applied to; this is looked up in the DatasetsP registry to get its key.
   virtual bool Commit(DatasetsP);
+
+  //! commit this object to the global registry across all processes.  Each Vis already is associated to data through its key field.
+  virtual bool Commit();
+
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
+
+  void Clear() { vis.clear(); }
 
   //! Add a Vis object to this Visualization
   void AddVis(VisP g);

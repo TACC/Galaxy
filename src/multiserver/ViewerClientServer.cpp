@@ -45,10 +45,10 @@ init()
   ViewerClientServer::init();
 }
 
-extern "C" MultiServerHandler *
-new_handler(DynamicLibraryP dlp, int cfd, int dfd)
+extern "C" ViewerClientServer *
+new_handler(SocketHandler *sh)
 {
-  return new ViewerClientServer(dlp, cfd, dfd);
+  return new ViewerClientServer(sh);
 }
 
 
@@ -59,8 +59,8 @@ ViewerClientServer::init()
   ServerRendering::RegisterClass();
 }
 
-string
-ViewerClientServer::handle(string line)
+bool
+ViewerClientServer::handle(string line, string& reply)
 {
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
@@ -81,15 +81,20 @@ ViewerClientServer::handle(string line)
     if (ss.fail() || onoff == "on")
     {
       GetTheRenderer()->SetPermutePixels(true);
-      return string("ok");
+      reply = "ok";
+      return true;
     }
     else if (onoff == "off")
     {
       GetTheRenderer()->SetPermutePixels(false);
-      return string("ok");
+      reply = "ok";
+      return true;
     }
     else
-      return string("error non-default arg to permute_pixels must be on or off");
+    {
+      reply = "error non-default arg to permute_pixels must be on or off";
+      return true;
+    }
   }
 
   else if (cmd == "max_rays_per_packet")
@@ -97,18 +102,23 @@ ViewerClientServer::handle(string line)
     int n;
     ss >> n;
     if (ss.fail())
-      return string("max_rays_per_packet requires integer arg");
+    {
+      reply = "max_rays_per_packet requires integer arg";
+      return true;
+    }
     else
     {
       GetTheRenderer()->SetMaxRayListSize(n);
-      return string("ok");
+      reply = "ok";
+      return true;
     }
   }
 
   else if (cmd == "commit")
   {
     Commit();
-    return string("ok");
+    reply = "ok";
+    return true;
   }
 
   else if (cmd == "json")
@@ -120,52 +130,87 @@ ViewerClientServer::handle(string line)
       json = json + tmp;
 
     if (doc.Parse<0>(json.c_str()).HasParseError())
-      return string("error parsing json command");
+    {
+      reply = "error parsing json command";
+      return true;
+    }
   
     if (doc.HasMember("Datasets"))
     {
       if (!GetTheDatasets()->LoadFromJSON(doc))
-        return string("error loading datasets from json command");
+      {
+        reply = "error loading datasets from json command";
+        return true;
+      }
 
       if (! GetTheDatasets()->Commit())
-        return string("error committing datasets from json command");
+      {
+        reply = "error committing datasets from json command";
+        return true;
+      }
+      reply = "ok";
+      return true;
     }
 
     if (doc.HasMember("Visualization"))
     {
+      GetTheVisualization()->Clear();
+
       if (!GetTheVisualization()->LoadFromJSON(doc["Visualization"]))
-        return string("error loading visualization from json command");
+      {
+        reply = "error loading visualization from json command";
+        return true;
+      }
 
       if (!GetTheVisualization()->Commit(GetTheDatasets()))
-        return string("error committing visualization from json command");
+      {
+        reply = "error committing visualization from json command";
+        return true;
+      }
     }
 
     if (doc.HasMember("Camera"))
     {
       if (!GetTheCamera()->LoadFromJSON(doc["Camera"]))
-        return string("error loading camera from json command");
+      {
+        reply = "error loading camera from json command";
+        return true;
+      }
 
       if (!GetTheCamera()->Commit())
-        return string("error committing camera from json command");
+      {
+        reply = "error committing camera from json command";
+        return true;
+      }
     }
 
     if (doc.HasMember("Renderer"))
     {
       if (!GetTheRenderer()->LoadStateFromDocument(doc))
-        return string("error loading renderer from json command");
+      {
+        reply = "error loading renderer from json command";
+        return true;
+      }
 
       if (!GetTheRenderer()->Commit())
-        return string("error committing renderer from json command");
+      {
+        reply = "error committing renderer from json command";
+        return true;
+      }
     }
 
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "window")
   {
     int w, h;
     ss >> w >> h;
     if (ss.fail())
-      return string("error window command needs width and height as integers");
+    {
+      reply = "error window command needs width and height as integers";
+      return true;
+    }
 
     // DHR: not clear what to do here ...
     GetTheCamera()->set_width(w);
@@ -177,15 +222,34 @@ ViewerClientServer::handle(string line)
     GetTheRendering()->SetHandler(this);
     GetTheRendering()->Commit();
 
-    return string("ok");
+    reply = "ok";
+    return true;
   }
   else if (cmd == "render")
   {
+    // Commit();
     render();
-    return string("ok");
+    reply = "ok";
+    return true;
+  }
+  else if (cmd == "renderMany")
+  {
+    // Commit();
+    int n;
+    ss >> n;
+    for (auto i = 0; i < n; i++)
+    {
+      render();
+      struct timespec t;
+      t.tv_sec  = 0;
+      t.tv_nsec = 100000000;
+      nanosleep(&t, NULL);
+    }
+    reply = "ok";
+    return true;
   }
   else
-    return MultiServerHandler::handle(line);
+    return false;
 }
 
 }

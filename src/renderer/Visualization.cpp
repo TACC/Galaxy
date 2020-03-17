@@ -90,6 +90,19 @@ Visualization::Commit(DatasetsP datasets)
   return KeyedObject::Commit();
 }
 
+bool
+Visualization::Commit()
+{
+  for (auto s : vis)
+    if (! s->Commit())
+    {
+      set_error(1);
+      return false;
+    }
+
+  return KeyedObject::Commit();
+}
+
 vector<VisualizationP>
 Visualization::LoadVisualizationsFromJSON(Value& v)
 {
@@ -206,8 +219,10 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   // volumevis - NULL unless there's some model data
 
 
-  if (ospModel) ospRelease(ospModel);
-  ospModel = NULL;
+  if (ospModel) 
+    return;
+
+  // ospModel = NULL;
 
   void *mispc[vis.size()]; int nmispc = 0;
   void *vispc[vis.size()]; int nvispc = 0;
@@ -222,14 +237,18 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
     if (! ospModel)
       ospModel = ospNewModel();
 
-    op = kdop->GetTheOSPRayEquivalent(kdop);
+    op = v->GetTheOsprayDataObject();
     if (! op)
     {
-      cerr << "no OSPRay equivalent for this data object\n";
-      exit(1);
-    }
+      op = kdop->GetTheOSPRayEquivalent(kdop);
+      if (! op)
+      {
+        cerr << "no OSPRay equivalent for this data object\n";
+        exit(1);
+      }
   
-    v->SetTheOsprayDataObject(op);
+      v->SetTheOsprayDataObject(op);
+    }
     
     if (GeometryVis::IsA(v))
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
@@ -264,6 +283,7 @@ Visualization::LoadFromJSON(Value& v)
 
   if (v.HasMember("Lighting"))
     lighting.LoadStateFromValue(v["Lighting"]);
+
   else if (v.HasMember("lighting"))
     lighting.LoadStateFromValue(v["lighting"]);
 

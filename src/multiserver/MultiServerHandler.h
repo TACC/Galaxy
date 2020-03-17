@@ -50,31 +50,26 @@ class MultiServerHandler;
 
 OBJECT_POINTER_TYPES(MultiServerHandler);
 
-class MultiServerHandler : public SocketHandler
+class MultiServerHandler 
 {
-  //! MultiServerHandler is a specialization of SocketHandler (which provides the control/data communications across a socket) that nowd about the client's server method and the associated DL.   The DL is owned by the MSH (as well as any objects created by the client code in the server).
-  
+  //! MultiServerHandler is a command-processor that is specialized for a ClientServer module.  It contains a pointer to the SocketHandler and a command-line processing method called handle.
+
   GALAXY_OBJECT(MultiServerHandler)
 
-  typedef MultiServerHandler *(*new_handler)(DynamicLibraryP, int, int); // typedef for handler ctor from the DL
+  typedef MultiServerHandler *(*new_handler)(SocketHandler *); // typedef for handler ctor from the DL
 
 public:
   static MultiServerHandler *GetTheThreadMultiServerHandler(); //! return the thread-specific handler
   virtual ~MultiServerHandler() {}
 
-  MultiServerHandler() : SocketHandler() {}
-  MultiServerHandler(DynamicLibraryP dlp, int cfd, int dfd) : dlp(dlp), SocketHandler(cfd, dfd) {}
-  MultiServerHandler(std::string host, int port) : SocketHandler(host, port) {}
+  MultiServerHandler(SocketHandler *sh) : socketHandler(sh) {}
 
-  bool RunServer(); //! Load the DL, run its server method.
+  virtual bool handle(std::string, std::string& reply); // Handle command strings
 
-  DynamicLibraryP GetTheDynamicLibrary() { return dlp; }  //! Get the MSH's DynamicLibraryP
+  SocketHandler *getTheSocketHandler() { return socketHandler; }
 
-  virtual std::string handle(std::string); // Handle command strings
-  
 private:
-
-  DynamicLibraryP dlp;
+  SocketHandler *socketHandler;
 };
 
 }

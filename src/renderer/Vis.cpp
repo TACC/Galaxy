@@ -77,12 +77,42 @@ bool
 Vis::Commit(DatasetsP datasets)
 {
 	datakey = datasets->FindKey(name);
+
 	if (datakey == -1)
 	{
 		std::cerr << "ERROR: Unable to find data using name: " << name << endl;
 		set_error(1);
     return false;
 	}
+
+  return Commit();
+}
+
+bool 
+Vis::Commit(Key key)
+{
+  datakey = key;
+  return Commit();
+}
+
+bool 
+Vis::Commit(KeyedDataObjectP kdop)
+{
+  if (! kdop)
+  {
+    std::cerr << "ERROR: Unable to associate data object with Vis\n";
+    set_error(1);
+    return false;
+  }
+
+  datakey = kdop->getkey();
+
+  return Commit();
+}
+
+bool 
+Vis::Commit()
+{
 	return KeyedObject::Commit();
 }
 
@@ -92,6 +122,13 @@ Vis::LoadFromJSON(Value& v)
   if (v.HasMember("dataset"))
   {
 		name = string(v["dataset"].GetString());
+    datakey = -1;
+    return true;
+  }
+  else if (v.HasMember("key"))
+  {
+    datakey = v["key"].GetInt();
+    name = "none";
     return true;
   }
 	else

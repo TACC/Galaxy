@@ -47,10 +47,6 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 {
   pthread_mutex_lock(&lock);
 
-  // std::cerr << "n = " << n << " f = " << f << "\n";
-  // std::cerr << "  p[0]: " << p[0].x << " " << p[0].y << "\n";
-  // std::cerr << "  p[n-1]: " << p[n-1].x << " " << p[n-1].y << "\n";
-
   if (f >= max_frame)
 	{
 		max_frame = f;
@@ -59,12 +55,12 @@ ServerRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
     if (handler)
-      handler->DSendV(ptrs, szs);
-
-    // std::cerr << "after... n = " << n << " f = " << f << "\n";
+    {
+      handler->getTheSocketHandler()->DSendV(ptrs, szs);
+    }
+    else
+      std::cerr << "no handler\n";
 	}
-  // else
-    // std::cerr << "skipped\n";
 
   pthread_mutex_unlock(&lock);
 }

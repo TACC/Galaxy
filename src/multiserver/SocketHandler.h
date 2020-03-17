@@ -28,6 +28,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <unistd.h>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -46,12 +47,13 @@ public:
   //! \param dfd file descriptor for data socket
   SocketHandler(int cfd, int dfd);
 
-  //! Creator to attempt to open a connection to a remote server
+  ~SocketHandler();
+
+  //! Attempt to open a connection to a remote server - return false when unable to connect
   //! \param host name of host to connect to
   //! \param port port to connect to
-  SocketHandler(std::string host, int port);
-
-  ~SocketHandler();
+  virtual bool Connect(std::string host, int port);
+  virtual bool Connect(char * host, int port);
 
   //! Given a set of memory pointers and sizes, send them as a contiguous multi-part message using the control socket
   bool CSendV(char** buf, int* size)
@@ -186,6 +188,17 @@ public:
   //! Wait for the data socket to be unlocked
   //! \param sec max time to wait
   bool DWait(float sec) { bool b = Wait(data_fd, sec); return b; }
+
+  //! Disconnect
+  void Disconnect()
+  {
+    close(data_fd);
+    close(control_fd);
+    is_connected = false;
+  }
+
+  //! test whether connection exists
+  bool IsConnected() { return is_connected; }
   
 private:
   bool SendV(int fd, char** buf, int* size);
@@ -208,6 +221,7 @@ private:
 
   int data_fd;
   int control_fd;
+  bool is_connected;
   pthread_mutex_t c_lock;
   pthread_mutex_t d_lock;
 };

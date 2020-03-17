@@ -7,3 +7,6 @@
 [submodule "third-party/rapidjson"]
 	path = third-party/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
+[submodule "third-party/nodeeditor"]
+	path = third-party/nodeeditor
+	url = https://github.com/paceholder/nodeeditor.git

@@ -100,9 +100,9 @@ public:
 class TestClientServer : public MultiServerHandler
 {
 public:
-  TestClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd) {}
+  TestClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}
   static void init();
-  std::string handle(std::string line);
+  bool handle(std::string line, std::string& reply);
 };
 
 

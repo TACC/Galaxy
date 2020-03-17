@@ -40,6 +40,7 @@ namespace gxy
 
 SocketHandler::SocketHandler()
 {
+  is_connected = false;
   pthread_mutex_init(&c_lock, NULL);
   pthread_mutex_init(&d_lock, NULL);
 }
@@ -50,18 +51,29 @@ SocketHandler::SocketHandler(int cfd, int dfd) : SocketHandler::SocketHandler()
   control_fd = cfd;
 }
 
-SocketHandler::SocketHandler(std::string host, int port)
+bool SocketHandler::Connect(std::string host, int port)
 {
+  return SocketHandler::Connect((char *)host.c_str(), port);
+}
+
+bool SocketHandler::Connect(char *host, int port)
+{
+  if (is_connected)
+  {
+    std::cerr << "already connected\n";
+    return true;
+  }
+
   pthread_mutex_init(&c_lock, NULL);
   pthread_mutex_init(&d_lock, NULL);
 
   struct hostent *server;
 
-  server = gethostbyname(host.c_str());
+  server = gethostbyname(host);
   if (server == NULL)
   {
     std::cerr <<  "ERROR: no such host (" << host << ")\n";
-    exit(0);
+    return false;
   }
 
   struct sockaddr_in serv_addr;
@@ -73,14 +85,17 @@ SocketHandler::SocketHandler(std::string host, int port)
   if ((control_fd = connect_fd((struct sockaddr*)&serv_addr)) < 0)
   {
     perror("ERROR opening control socket");
-    exit(1);
+    return false;
   }
 
   if ((data_fd = connect_fd((struct sockaddr*)&serv_addr)) < 0)
   {
     perror("ERROR opening data sockets");
-    exit(1);
+    return false;
   }
+
+  is_connected = true;
+  return true;
 }
 
 SocketHandler::~SocketHandler()

@@ -35,9 +35,9 @@ namespace gxy
 class DataClientServer : public MultiServerHandler
 {
 public:
-  DataClientServer(DynamicLibraryP dlp, int cfd, int dfd) : MultiServerHandler(dlp, cfd, dfd) {}
+  DataClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}
   static void init();
-  std::string handle(std::string line);
+  bool handle(std::string line, std::string& reply);
 };
 
 

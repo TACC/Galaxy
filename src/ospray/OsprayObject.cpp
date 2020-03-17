@@ -18,6 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
+#include <iostream>
 #include "OsprayObject.h"
 
 namespace gxy

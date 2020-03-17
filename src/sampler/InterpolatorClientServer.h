@@ -41,9 +41,9 @@ namespace gxy
 class InterpolatorClientServer : public MultiServerHandler
 {
 public:
-  InterpolatorClientServer(DynamicLibraryP dlp, int cfd, int dfd);
+  InterpolatorClientServer(SocketHandler *sh);
   static void init();
-  std::string handle(std::string line);
+  bool handle(std::string line, std::string&);
 
   VolumeP volume;             // volume to be sampled
   ParticlesP src;             // particles to interpolate

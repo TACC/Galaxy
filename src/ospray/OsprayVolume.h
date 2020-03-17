@@ -44,7 +44,7 @@ class OsprayVolume : public OsprayObject
 
 public:
   static OsprayVolumeP NewP(VolumeP p) { return OsprayVolume::Cast(std::shared_ptr<OsprayVolume>(new OsprayVolume(p))); }
-  ~OsprayVolume() { }
+  ~OsprayVolume();
 
 private:
   OsprayVolume(VolumeP);

@@ -37,9 +37,13 @@ set(LIBS "")
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 include_directories(${GLUT_INCLUDE_DIR})
 
-add_library(gxy_multiserver SHARED MultiServer.cpp MultiServerHandler.cpp MultiServerObject.cpp SocketHandler.cpp DynamicLibraryManager.cpp)
-target_link_libraries(gxy_multiserver gxy_data gxy_framework)
+add_library(gxy_multiserver SHARED MultiServer.cpp ServerRendering.cpp JsonInterface.cpp MultiServerHandler.cpp ServerClientConnection.hpp SocketHandler.cpp DynamicLibraryManager.cpp)
+target_link_libraries(gxy_multiserver gxy_data gxy_framework gxy_renderer)
 set(LIBS gxy_multiserver ${LIBS})
+
+add_library(gxy_multiserver_client SHARED ClientWindow.cpp JsonInterface.cpp SocketHandler.cpp)
+target_link_libraries(gxy_multiserver_client gxy_data gxy_framework)
+set(LIBS gxy_multiserver_client ${LIBS})
 
 add_executable(msserver msserver.cpp CommandLine.cpp)
 target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework)
@@ -53,7 +57,7 @@ add_executable(msclient msclient.cpp SocketHandler.cpp CommandLine.cpp)
 target_link_libraries(msclient pthread)
 set(BINS msclient ${BINS})
 
-add_library(gxy_module_viewer MODULE ViewerClientServer.cpp ServerRendering.cpp JsonInterface.cpp)
+add_library(gxy_module_viewer MODULE ViewerClientServer.cpp)
 target_link_libraries(gxy_module_viewer gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
 set(SERVERS gxy_module_viewer ${SERVERS})
 
@@ -78,7 +82,7 @@ install(FILES
   DynamicLibraryManager.h
   MultiServer.h
   MultiServerHandler.h
-  MultiServerObject.h
+  ServerClientConnection.hpp
   SocketHandler.h
   DESTINATION include/gxy)
 

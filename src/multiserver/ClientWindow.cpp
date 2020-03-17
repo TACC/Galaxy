@@ -28,39 +28,10 @@
 namespace gxy
 {
 
-ClientWindow::ClientWindow(int width, int height, std::string host, int port) : SocketHandler(host, port)
+ClientWindow::ClientWindow(int w, int h) : SocketHandler()
 {
-  current_frame     = -1;
-	max_age           = 3.0;
-	fadeout           = 1.0;
-
-  pixels            = NULL;
-  negative_pixels   = NULL;
-  frameids          = NULL;
-  negative_frameids = NULL;
-  frame_times       = NULL;
-
-  kill_threads      = false;
-
-	t_start = my_time();
-
-	pthread_mutex_init(&lock, NULL);
-
-  save_partial_updates     = false;
-  number_of_partial_frames = -1;
-  this_frame_pixel_count   = 0;
-
-  std::string so("libgxy_module_viewer.so");
-  if (! CSendRecv(so) || so != "ok")
-  {
-    std::cerr << "Server-side library load failed: " << so << "\n";
-    exit(1);
-  }
-
-  Resize(width, height);
-
-  pthread_create(&ager_tid, NULL, rcvr_thread, (void *)this);
-  pthread_create(&rcvr_tid, NULL, ager_thread, (void *)this);
+  width = w;
+  height = h;
 }
 
 ClientWindow::~ClientWindow()
@@ -93,6 +64,47 @@ ClientWindow::~ClientWindow()
 	}
 
   pthread_mutex_unlock(&lock);
+}
+
+bool
+ClientWindow::Connect(std::string host, int port)
+{
+  if (! SocketHandler::Connect(host, port))
+    return false;
+
+  current_frame     = -1;
+	max_age           = 3.0;
+	fadeout           = 1.0;
+
+  pixels            = NULL;
+  negative_pixels   = NULL;
+  frameids          = NULL;
+  negative_frameids = NULL;
+  frame_times       = NULL;
+
+  kill_threads      = false;
+
+	t_start = my_time();
+
+	pthread_mutex_init(&lock, NULL);
+
+  save_partial_updates     = false;
+  number_of_partial_frames = -1;
+  this_frame_pixel_count   = 0;
+
+  std::string so("libgxy_module_viewer.so");
+  if (! CSendRecv(so) || so != "ok")
+  {
+    std::cerr << "Server-side library load failed: " << so << "\n";
+    exit(1);
+  }
+
+  Resize(width, height);
+
+  pthread_create(&ager_tid, NULL, rcvr_thread, (void *)this);
+  pthread_create(&rcvr_tid, NULL, ager_thread, (void *)this);
+
+  return true;
 }
 
 void

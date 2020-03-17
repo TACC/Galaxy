@@ -52,3 +52,8 @@ OsprayVolume::OsprayVolume(VolumeP v)
   
   theOSPRayObject = ospv;
 }
+
+OsprayVolume::~OsprayVolume()
+{
+}
+
