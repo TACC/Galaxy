@@ -28,10 +28,11 @@
 namespace gxy
 {
 
-ClientWindow::ClientWindow(int w, int h) : SocketHandler()
+ClientWindow::ClientWindow(std::string s, int w, int h) : SocketHandler()
 {
   width = w;
   height = h;
+  sofile = s;
 }
 
 ClientWindow::~ClientWindow()
@@ -92,10 +93,10 @@ ClientWindow::Connect(std::string host, int port)
   number_of_partial_frames = -1;
   this_frame_pixel_count   = 0;
 
-  std::string so("libgxy_module_viewer.so");
-  if (! CSendRecv(so) || so != "ok")
+  std::string cmd = std::string("load ") + sofile;
+  if (! CSendRecv(cmd) || cmd != "ok")
   {
-    std::cerr << "Server-side library load failed: " << so << "\n";
+    std::cerr << "Server-side library load failed: " << sofile << "\n";
     exit(1);
   }
 

@@ -74,9 +74,9 @@ private:
 	static void *ager_thread(void *p);
   
 public:
-  //! Creator with width and height
-  ClientWindow(int, int);
-  ClientWindow() : ClientWindow(512, 512) {}
+  //! Creator with width and height and the name of the server-side handler
+  ClientWindow(std::string, int, int);
+  ClientWindow() : ClientWindow(std::string("libgxy_module_viewer.so"), 512, 512) {}
 
   //! Attempt to open a connection to a remote server - return false when unable to connect
   //! \param host name of host to connect to
@@ -163,6 +163,8 @@ private:
 	bool 			  kill_threads;
 
 	int         current_frame;
+
+  std::string sofile = "NONE";
 
 	pthread_mutex_t lock;
 };

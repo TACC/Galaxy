@@ -594,7 +594,7 @@ main(int argc, char *argv[])
 
   Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
-  theClientWindow = new ClientWindow(width, height);
+  theClientWindow = new ClientWindow(sofile, width, height);
   if (! theClientWindow->Connect(host, port))
   {
     std::cerr << "failed to connect!\n";
