@@ -43,6 +43,7 @@ GXY_DONE_TAG="gxy_third_party_installed"
 CMAKE_BIN=`which cmake`
 CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/ \
              -Wno-undef -Wno-deprecated-declarations"
+NODEEDITOR_CMAKE_FLAGS="-DQt5_DIR=/Users/gda/Qt/5.12.5/clang_64/lib/cmake/Qt5"
 EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
 						 				-DEMBREE_STATIC_LIB=ON \
 						 				-DEMBREE_TUTORIALS=OFF \
@@ -95,6 +96,9 @@ for tp_lib_dir in embree ospray nodeeditor rapidjson; do
 		cd build
 		ALL_CMAKE_FLAGS="${CMAKE_FLAGS}"
 		case $tp_lib_dir in 
+			nodeeditor)
+			ALL_CMAKE_FLAGS="${ALL_CMAKE_FLAGS} ${NODEEDITOR_CMAKE_FLAGS}"
+			;;
 			embree)
 			ALL_CMAKE_FLAGS="${ALL_CMAKE_FLAGS} ${EMBREE_CMAKE_FLAGS}"
 			;;
