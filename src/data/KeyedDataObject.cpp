@@ -58,7 +58,7 @@ KeyedDataObject::~KeyedDataObject()
 }
 
 OsprayObjectP
-KeyedDataObject::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+KeyedDataObject::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
   return NULL;
 }

@@ -48,9 +48,6 @@ public:
 
 private:
   OsprayVolume(VolumeP);
-
-private:
-  VolumeP volume;
 };
 
 }

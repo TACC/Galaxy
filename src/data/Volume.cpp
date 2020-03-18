@@ -600,11 +600,11 @@ Volume::PointOwner(vec3f& p)
 }
 
 OsprayObjectP 
-Volume::GetTheOSPRayEquivalent(KeyedDataObjectP kdop)
+Volume::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
-  if (! ospVolume)
-    ospVolume = OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
-  return ospVolume;
+  if (! ospData)
+    ospData = OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
+  return ospData;
 }
  
 } // namespace gxy

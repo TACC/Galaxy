@@ -75,7 +75,7 @@ public:
 
     //! get the OSPRayObject for this Vis' data, if there is one.
     //! 
-    virtual OsprayObjectP  GetTheOsprayDataObject() { return odata; }
+    virtual OsprayObjectP  GetTheOsprayDataObject() { return data->GetTheOSPRayEquivalent(); }
 
     //! construct a Vis from a Galaxy JSON specification
     virtual bool LoadFromJSON(rapidjson::Value&);
@@ -98,7 +98,6 @@ protected:
     std::string name;
     Key datakey;
     KeyedDataObjectP data;
-    OsprayObjectP    odata;
 };
 
 } // namespace gxy

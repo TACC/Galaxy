@@ -141,7 +141,6 @@ Vis::LoadFromJSON(Value& v)
 void
 Vis::SetTheOsprayDataObject(OsprayObjectP o)
 {
-  odata = o;
 	ispc::Vis_set_data(GetIspc(), o->GetOSP_IE());
 }
 

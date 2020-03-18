@@ -240,15 +240,15 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
     op = v->GetTheOsprayDataObject();
     if (! op)
     {
-      op = kdop->GetTheOSPRayEquivalent(kdop);
+      op = kdop->CreateTheOSPRayEquivalent(kdop);
       if (! op)
       {
         cerr << "no OSPRay equivalent for this data object\n";
         exit(1);
       }
-  
-      v->SetTheOsprayDataObject(op);
     }
+
+    v->SetTheOsprayDataObject(op);
     
     if (GeometryVis::IsA(v))
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());

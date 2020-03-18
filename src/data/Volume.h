@@ -222,7 +222,7 @@ public:
 
 	void set_global_partitions(int i, int j, int k) { global_partitions.x = i; global_partitions.y = j; global_partitions.z = k; }
 
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
+  virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);
 
 protected:
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep
@@ -244,10 +244,7 @@ protected:
 	vec3i local_counts;
 	vec3i ghosted_local_offset;
 	vec3i ghosted_local_counts;
-
 	unsigned char *samples;
-
-  OsprayObjectP ospVolume = NULL;
 };
 
 } // namespace gxy

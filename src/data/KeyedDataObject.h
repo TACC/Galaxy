@@ -117,11 +117,13 @@ public:
   void get_global_minmax(float& min, float& max)   { min = global_min; max = global_max; }
   void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
 
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP kdop);
+  virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP kdop);
+  virtual OsprayObjectP GetTheOSPRayEquivalent() { return ospData; }
 
   void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 
 protected:
+  OsprayObjectP ospData;
 	vtkClientSocket *skt;
 	std::string filename;
 

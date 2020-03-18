@@ -69,7 +69,7 @@ public:
 
   void GetPLVertices(PLVertex*& p, int& n);
 
-  virtual OsprayObjectP GetTheOSPRayEquivalent(KeyedDataObjectP);
+  virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);
