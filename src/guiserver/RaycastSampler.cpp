@@ -19,6 +19,7 @@
 //                                                                            //
 // ========================================================================== //
 
+#include "galaxy.h"
 #include "RaycastSampler.hpp"
 
 #include "GradientSamplerVis.h"
@@ -71,7 +72,10 @@ RaycastSampler::Sample(rapidjson::Document& doc)
 
   sampler->Commit();
   sampler->Start(rs);
+
+#if defined(GXY_WRITE_IMAGES)
   rs->WaitForDone();
+#endif
 
   result->Commit();
 }
