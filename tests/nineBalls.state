@@ -4,12 +4,12 @@
       {
         "name": "oneBall",
         "type": "Volume",
-        "filename": "radial-0-oneBall.vol"
+        "filename": "radial-oneBall.vol"
       },
       {
         "name": "eightBalls",
         "type": "Volume",
-        "filename": "radial-0-eightBalls.vol"
+        "filename": "radial-eightBalls.vol"
       }
     ],
     "Renderer": {

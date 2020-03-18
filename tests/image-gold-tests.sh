@@ -121,7 +121,7 @@ fi
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
 
-report "Generating radial-0.vti with ${GXY_RADIAL}"
+report "Generating radial.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256
 if [ $? != 0 ]; then
   fail "$GXY_RADIAL exited with code $?"
@@ -132,10 +132,10 @@ ${GXY_ROOT}/tests/create_data_driven_datasets.vpy
 
 GXY_VOLS="oneBall eightBalls xramp yramp zramp"
 report "Converting vti to vol with ${GXY_VTI2VOL}"
-${GXY_VTI2VOL} radial-0.vti ${GXY_VOLS} > /dev/null 2>&1
+${GXY_VTI2VOL} radial.vti ${GXY_VOLS} > /dev/null 2>&1
 if [ $? != 0 ]; then
   fail "$GXY_VTI2VOL exited with code $?"
 fi
 
-${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 1 > partition.json
+${GXY_CREATE_PARTITION_DOC} -v radial-eightBalls.vol 1 > partition.json
 ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu

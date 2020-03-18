@@ -10,7 +10,7 @@
     ], 
     "Datasets": [
         {
-            "filename": "radial-0-oneBall.vol", 
+            "filename": "radial-oneBall.vol", 
             "name": "oneBall", 
             "type": "Volume"
         }

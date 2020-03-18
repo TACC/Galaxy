@@ -9,17 +9,17 @@
     ], 
     "Datasets": [
         {
-            "filename": "radial-0-xramp.vol", 
+            "filename": "radial-xramp.vol", 
             "name": "xramp", 
             "type": "Volume"
         },
         {
-            "filename": "radial-0-yramp.vol", 
+            "filename": "radial-yramp.vol", 
             "name": "yramp", 
             "type": "Volume"
         },
         {
-            "filename": "radial-0-zramp.vol", 
+            "filename": "radial-zramp.vol", 
             "name": "zramp", 
             "type": "Volume"
         }
