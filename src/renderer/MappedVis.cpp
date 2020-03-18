@@ -109,8 +109,6 @@ MappedVis::LoadFromJSON(Value& v)
       
       if (fname.length() != 0 && m != "default")
       {
-        std::cerr << "XXXXXXXXXX " << fname << " " << fname.size() << "\n";
-
         ifstream ifs(fname);
         if (! ifs)
         {
@@ -134,11 +132,13 @@ MappedVis::LoadFromJSON(Value& v)
 
         doc.Parse(s.c_str());
 
+        Value& cmap = doc.IsArray() ? doc[0] : doc;
+
         opacitymap.clear();
 
-        if (doc.HasMember("Points"))
+        if (cmap.HasMember("Points"))
         {
-          Value& oa = doc["Points"];
+          Value& oa = cmap["Points"];
           for (int i = 0; i < oa.Size(); i += 4)
           {
             vec2f xo;
@@ -157,7 +157,7 @@ MappedVis::LoadFromJSON(Value& v)
 
         colormap.clear();
 
-        Value& rgba = doc["RGBPoints"];
+        Value& rgba = cmap["RGBPoints"];
         for (int i = 0; i < rgba.Size(); i += 4)
         {
           vec4f xrgb;

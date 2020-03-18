@@ -115,7 +115,7 @@ static  void
 print_ospray_error_messages(const char *m)
 {
   // APP_LOG(<< m);
-  std::cerr << "XXXX" << m;
+  std::cerr << m;
 }
 
 void
