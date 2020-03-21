@@ -62,6 +62,7 @@ addons:
       - libxcursor-dev
       - perceptualdiff
       - python-numpy
+      - qt5-default
   homebrew:
     update: true
     packages: 
@@ -72,6 +73,7 @@ addons:
       - freeglut
       - perceptualdiff
       - git
+      - qt
       # - gcc@7
 
 before_install:
