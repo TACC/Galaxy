@@ -40,10 +40,12 @@ function report
 GXY_ROOT=$PWD
 GXY_PREP_SCRIPT=prep-third-party.sh
 GXY_DONE_TAG="gxy_third_party_installed"
-CMAKE_BIN=`which cmake`
+CMAKE_BIN=$(which cmake)
+QMAKE_BIN=$(which qmake)
+QMAKE_DIR=$(dirname $QMAKE_BIN)/..
 CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/ \
              -Wno-undef -Wno-deprecated-declarations"
-NODEEDITOR_CMAKE_FLAGS="-DQt5_DIR=/Users/gda/Qt/5.12.5/clang_64/lib/cmake/Qt5"
+NODEEDITOR_CMAKE_FLAGS="-DQt5_DIR=${QMAKE_DIR}"
 EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
 						 				-DEMBREE_STATIC_LIB=ON \
 						 				-DEMBREE_TUTORIALS=OFF \
@@ -71,6 +73,10 @@ fi
 
 if [ ! -x ${CMAKE_BIN} ]; then
 	fail "Could not find or run cmake. Please make sure CMake is installed and on your \$PATH."
+fi
+
+if [ ! -x ${QMAKE_BIN} ]; then
+	fail "Could not find or run qmake. Please make sure Qt5 is installed and on your \$PATH."
 fi
 
 # ensure third-party libraries are prepped
