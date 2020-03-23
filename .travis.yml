@@ -1,5 +1,5 @@
 language: cpp
-dist: xenial # get a semi-modern linux
+dist: bionic # get a semi-modern linux
 
 branches:
   only:
@@ -62,6 +62,7 @@ addons:
       - libxcursor-dev
       - perceptualdiff
       - python-numpy
+      - qt5-default
   homebrew:
     update: true
     packages: 
@@ -72,6 +73,7 @@ addons:
       - freeglut
       - perceptualdiff
       - git
+      - qt
       # - gcc@7
 
 before_install:
@@ -90,9 +92,9 @@ script:
   # - pushd third-party/ispc && rm -rf ispc-* && ./get-ispc.sh; popd
 
   # use this to update versons of embree ospray rapidjson 
-  # - rm .galaxy/gxy_third_party_prep_done .galaxy/gxy_third_party_installed ; GXY_REBUILDING_CACHE=1
-  # - rm -rf third-party/embree third-party/ospray third-party/rapidjson
-  # - scripts/install-third-party.sh
+  - rm .galaxy/gxy_third_party_prep_done .galaxy/gxy_third_party_installed ; GXY_REBUILDING_CACHE=1
+  - rm -rf third-party/embree third-party/ospray third-party/rapidjson third-party/nodeeditor
+  - scripts/install-third-party.sh
 
 
   # use this to rebuild embree and ospray
