@@ -18,24 +18,15 @@
 //                                                                            //
 // ========================================================================== //
 
-#include <iostream>
-#include "OsprayObject.h"
+#pragma once
+
+#include <memory>
 
 namespace gxy
 {
+class OsprayHandle;
+typedef std::shared_ptr<OsprayHandle> OsprayHandleP;
 
-OBJECT_CLASS_TYPE(OsprayObject)
-
-OsprayObject::OsprayObject()
-{
-	theOSPRayObject = NULL;
-  ospray = GetOspray();
+OsprayHandleP GetOspray();
 }
 
-OsprayObject::~OsprayObject()
-{
-	if (theOSPRayObject)
-		ospRelease((OSPObject)theOSPRayObject);
-}
-
-} // namespace gxy

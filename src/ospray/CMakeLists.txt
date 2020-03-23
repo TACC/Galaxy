@@ -56,6 +56,7 @@ set (CPP_SOURCES
   DataDrivenPathLines.cpp
   DataDrivenSpheres.cpp
   DataDrivenTriangleMesh.cpp
+  OsprayHandle.cpp
   OsprayObject.cpp
   OsprayTriangles.cpp
   OsprayParticles.cpp
@@ -65,6 +66,7 @@ set (CPP_SOURCES
   )
 
 install(FILES
+  OsprayHandle.h
   OsprayObject.h
   OsprayUtil.h
   DESTINATION include/gxy)

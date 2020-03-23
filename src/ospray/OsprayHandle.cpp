@@ -19,23 +19,42 @@
 // ========================================================================== //
 
 #include <iostream>
-#include "OsprayObject.h"
+#include <OsprayHandle.h>
+#include <ospray/ospray.h>
 
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(OsprayObject)
+class OsprayHandle;
+std::weak_ptr<OsprayHandle> theOSPRayHandle;
 
-OsprayObject::OsprayObject()
+class OsprayHandle
 {
-	theOSPRayObject = NULL;
-  ospray = GetOspray();
+public:
+  static auto deleter(OsprayHandle *p) { delete p; }
+  
+  OsprayHandle()
+  {
+    ospInit(0, NULL);
+  }
+
+  ~OsprayHandle()
+  {
+    ospShutdown();
+  }
+};
+
+OsprayHandleP GetOspray()
+{
+  OsprayHandleP f = theOSPRayHandle.lock();
+  if (! f)
+  {
+    f = OsprayHandleP(new OsprayHandle, OsprayHandle::deleter);
+    theOSPRayHandle = f;
+  }
+  return f;
 }
 
-OsprayObject::~OsprayObject()
-{
-	if (theOSPRayObject)
-		ospRelease((OSPObject)theOSPRayObject);
 }
 
-} // namespace gxy
+

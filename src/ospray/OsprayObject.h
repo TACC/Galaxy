@@ -29,6 +29,7 @@
 
 #include "GalaxyObject.h"
 #include "OsprayUtil.h"
+#include "OsprayHandle.h"
 
 namespace gxy
 {
@@ -57,6 +58,7 @@ public:
 
 protected:
 	OSPObject theOSPRayObject;
+  OsprayHandleP ospray;
 };
 
 } // namespace gxy

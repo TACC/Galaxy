@@ -121,6 +121,7 @@ print_ospray_error_messages(const char *m)
 void
 Renderer::initialize()
 {
+  ospray = GetOspray();
   epsilon = 0.001;
 
   frame = 0;
@@ -145,8 +146,6 @@ Renderer::initialize()
     SetPermutePixels(true);
 #endif
 
-  ospInit(0, NULL);
-
   char *ospMsgs = getenv("GXY_SHOW_OSPRAY_MESSAGES");
   if (ospMsgs && atoi(ospMsgs) > 0)
     ospDeviceSetStatusFunc(ospGetCurrentDevice(), print_ospray_error_messages);
@@ -156,9 +155,7 @@ Renderer::~Renderer()
 {
     rayQmanager->Kill();
     delete rayQmanager;
-
-    ospShutdown();
- }
+}
 
 void 
 Renderer::SetEpsilon(float e)

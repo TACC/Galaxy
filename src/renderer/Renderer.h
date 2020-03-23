@@ -27,6 +27,8 @@
 
 #include <vector>
 
+#include "OsprayHandle.h"
+
 #include "dtypes.h"
 #include "KeyedObject.h"
 #include "Datasets.h"
@@ -174,6 +176,7 @@ public:
   virtual void HandleTerminatedRays(RayList *raylist);
 
 private:
+  OsprayHandleP ospray;
 	std::vector<std::future<void>> rvec;
 
 	int frame;
