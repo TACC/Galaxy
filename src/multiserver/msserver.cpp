@@ -63,11 +63,11 @@ main(int argc, char *argv[])
   char *dbgarg;
   int port = 5001;
 
-  Application theApplication(&argc, &argv);
+  Application *theApplication = new Application(&argc, &argv);
 
   RegisterDataObjects();
   
-  theApplication.Start();
+  GetTheApplication()->Start();
 
   mpiRank = GetTheApplication()->GetRank();
   mpiSize = GetTheApplication()->GetSize();
@@ -102,4 +102,5 @@ main(int argc, char *argv[])
   }
 
   delete ms;
+  delete theApplication;
 }

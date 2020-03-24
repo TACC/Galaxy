@@ -289,7 +289,7 @@ KeyedObject::CommitMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 void
 KeyedObjectFactory::Dump()
 {
-  cerr << "STRONG keymap\n";
+  cerr << "STRONG keymap (" << smap.size() << ")\n";
 	for (int i = 0; i < smap.size(); i++)
 	{
 		KeyedObjectP kop = smap[i];
@@ -297,7 +297,7 @@ KeyedObjectFactory::Dump()
 			cerr << "key " << i << " " << GetClassName(kop->getclass()) << " count " << kop.use_count() << endl;
 	}
 
-  cerr << "WEAK keymap\n";
+  cerr << "WEAK keymap (" << wmap.size() << ")\n";
 	for (int i = 0; i < wmap.size(); i++)
 	{
 		KeyedObjectP kop = wmap[i].lock();
@@ -308,11 +308,21 @@ KeyedObjectFactory::Dump()
 
 KeyedObjectFactory::~KeyedObjectFactory() 
 {
+  void *d = wmap.data();
+  size_t s = wmap.size() * sizeof(wmap[0]);
+  memset(d, 0, s);
+
 	while (wmap.size() > 0)
 		wmap.pop_back();
 
 	while (smap.size() > 0)
 		smap.pop_back();
+
+  while (new_procs.size() > 0)
+    new_procs.pop_back();
+
+  while (class_names.size() > 0)
+    class_names.pop_back();
 
 	if (ko_count > 0)
   {
@@ -321,7 +331,6 @@ KeyedObjectFactory::~KeyedObjectFactory()
     dol();
 #endif
   }
-
 }
 
 } // namespace gxy

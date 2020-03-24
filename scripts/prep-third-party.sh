@@ -74,8 +74,8 @@ if [ $? != 0 ]; then
 	fail
 fi
 
-cd ${GXY_ROOT}/third-party/nodeeditor
-git checkout 2816c94 .
+# cd ${GXY_ROOT}/third-party/nodeeditor
+# git checkout 2816c94 .
 
 PATCH_DIR=${GXY_ROOT}/third-party/patches
 cd ${PATCH_DIR}

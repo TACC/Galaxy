@@ -59,7 +59,7 @@ GuiClientServer::init()
 {
   Renderer::Initialize();
   Sampler::Initialize();
-  ServerRendering::RegisterClass();
+  GuiRendering::RegisterClass();
   StreamTracer::Register();
 }
 

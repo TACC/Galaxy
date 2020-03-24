@@ -29,7 +29,7 @@
 
 #include "Renderer.h"
 #include "MultiServerHandler.h"
-#include "ServerRendering.h"
+#include "GuiRendering.h"
 
 #include "Filter.h"
 
@@ -44,14 +44,14 @@ class GuiClientServer : public MultiServerHandler
     {
       visualization = Visualization::NewP();
       camera = Camera::NewP();
-      rendering = ServerRendering::NewP();
+      rendering = GuiRendering::NewP();
       renderingSet = RenderingSet::NewP();
       renderingSet->AddRendering(rendering);
     }
 
     VisualizationP   visualization;
     CameraP          camera;
-    ServerRenderingP rendering;
+    GuiRenderingP    rendering;
     RenderingSetP    renderingSet;
   };
     
