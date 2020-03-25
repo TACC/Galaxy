@@ -100,8 +100,6 @@ main(int argc, char * argv[])
   bool override_windowsize = false;
   bool override_samplesize = false;
 
-  ospInit(&argc, (const char **)argv);
-
   Application theApplication(&argc, &argv);
   theApplication.Start();
 

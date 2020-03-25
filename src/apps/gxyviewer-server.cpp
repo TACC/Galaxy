@@ -25,8 +25,6 @@
 #include <pthread.h>
 #include <time.h>
 
-#include <ospray/ospray.h>
-
 #include "Socket.h"
 #include "Application.h"
 #include "Renderer.h"
@@ -223,8 +221,6 @@ main(int argc, char *argv[])
 {
   bool dbg = false, atch = false;
 	int port = 5001;
-
-  ospInit(&argc, (const char **)argv);
 
   Application theApplication(&argc, &argv);
   theApplication.Start();

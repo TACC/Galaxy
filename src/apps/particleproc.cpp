@@ -32,8 +32,6 @@
 #include <Application.h>
 #include "Renderer.h"
 
-#include <ospray/ospray.h>
-
 int mpiRank, mpiSize;
 
 #include "Debug.h"
@@ -116,8 +114,6 @@ main(int argc, char * argv[])
   char *dbgarg;
   bool dbg = false;
   bool override_windowsize = false;
-
-  ospInit(&argc, (const char **)argv);
 
   Application theApplication(&argc, &argv);
   theApplication.Start();

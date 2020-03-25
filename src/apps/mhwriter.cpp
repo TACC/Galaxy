@@ -32,8 +32,6 @@
 #include "Renderer.h"
 #include "RenderingSet.h"
 
-#include <ospray/ospray.h>
-
 #include <time.h>
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
@@ -345,8 +343,6 @@ main(int argc, char * argv[])
   while (dbg)
     sleep(1);
 #endif
-
-  ospInit(&argc, (const char **)argv);
 
 #if 0
   DDSpheres_Hello();

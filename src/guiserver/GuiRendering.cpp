@@ -18,88 +18,51 @@
 //                                                                            //
 // ========================================================================== //
 
-#include <iostream>
-#include <vector>
-#include <sstream>
-#include <regex>
+#include "GuiRendering.h"
+#include <pthread.h>
 
-using namespace std;
+namespace gxy
+{
 
-#include <string.h>
-#include <dlfcn.h>
-
-#include "Application.h"
-#include "DataObjects.h"
-#include "MultiServer.h"
-#include "CommandLine.h"
-
-using namespace gxy;
-
-int mpiRank, mpiSize;
-
-#include "Debug.h"
+KEYED_OBJECT_CLASS_TYPE(GuiRendering)
 
 void
-syntax(char *a)
+GuiRendering::initialize()
 {
-  if (mpiRank == 0)
-  {
-    cerr << "syntax: " << a << " [options]" << endl;
-    cerr << "options:" << endl;
-    cerr << "  -D         run debugger" << endl;
-    cerr << "  -A         wait for attachment" << endl;
-    cerr << "  -P port    port to use (5001)" << endl;
-  }
-  MPI_Finalize();
-  exit(1);
+  Rendering::initialize();
+  pthread_mutex_init(&lock, NULL);
+	max_frame = -1;
+  handler = NULL;
+  owner = 0;
 }
 
-extern "C" void InitializeData();
-
-int 
-main(int argc, char *argv[])
+GuiRendering::~GuiRendering()
 {
-  bool dbg = false, atch = false;
-  char *dbgarg;
-  int port = 5001;
+  handler = NULL;
+  pthread_mutex_destroy(&lock);
+}
 
-  Application theApplication(&argc, &argv);
+void
+GuiRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
+{
+  pthread_mutex_lock(&lock);
 
-  RegisterDataObjects();
-  
-  GetTheApplication()->Start();
+  if (f >= max_frame)
+	{
+		max_frame = f;
 
-  mpiRank = GetTheApplication()->GetRank();
-  mpiSize = GetTheApplication()->GetSize();
+		char* ptrs[] = {(char *)&n, (char *)&f, (char *)&s, (char *)p};
+		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
-  for (int i = 1; i < argc; i++)
-  {
-    if (!strcmp(argv[i], "-A")) dbg = true, atch = true;
-    else if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-P")) port = atoi(argv[++i]);
+    if (handler)
+    {
+      handler->getTheSocketHandler()->DSendV(ptrs, szs);
+    }
     else
-      syntax(argv[0]);
-  }
+      std::cerr << "no handler\n";
+	}
 
-  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
-
-  GetTheApplication()->Run();
-
-  MultiServer* ms = new MultiServer;
-
-  if (mpiRank == 0)
-  {
-    MultiServer::Get()->Start(port);
-
-    CommandLine c;
-    c.Run(NULL);
-
-    GetTheApplication()->QuitApplication();
-  }
-  else
-  {
-    GetTheApplication()->Wait();
-  }
-
-  delete ms;
+  pthread_mutex_unlock(&lock);
 }
+
+} // namespace gxy

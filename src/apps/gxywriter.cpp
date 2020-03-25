@@ -27,8 +27,6 @@
 #include "Renderer.h"
 #include "ClientServer.h"
 
-#include <ospray/ospray.h>
-
 using namespace gxy;
 using namespace std;
 
@@ -95,8 +93,6 @@ int main(int argc,  char *argv[])
 
   if (statefile == "")
     syntax(argv[0]);
-
-  // ospInit(&argc, (const char **)argv);
 
   Application theApplication(&argc, &argv);
   theApplication.Start();

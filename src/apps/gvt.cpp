@@ -27,8 +27,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-// #include <ospray/ospray.h>
-
 #include "galaxy.h"
 
 #include <Application.h>
@@ -93,8 +91,6 @@ public:
 int
 main(int argc, char * argv[])
 {
-  ospInit(&argc, (const char **)argv);
-
 	Application theApplication(&argc, &argv);
 	theApplication.Start(false);
 

@@ -29,8 +29,6 @@
 #include "Renderer.h"
 #include "AsyncRendering.h"
 
-#include <ospray/ospray.h>
-
 using namespace gxy;
 using namespace std;
 
@@ -53,8 +51,6 @@ main(int argc, char *argv[])
 {
   bool dbg = false, atch = false;
 	char *dbgarg;
-
-  ospInit(&argc, (const char **)argv);
 
   Application theApplication(&argc, &argv);
   theApplication.Start();

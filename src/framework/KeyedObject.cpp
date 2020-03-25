@@ -308,6 +308,9 @@ KeyedObjectFactory::Dump()
 
 KeyedObjectFactory::~KeyedObjectFactory() 
 {
+  // No idea why this is necessary.   Without it, when the wmap vector is destroyed a 
+  // segfault occurs in the weak pointer part of the shared_ptr code.
+
   void *d = wmap.data();
   size_t s = wmap.size() * sizeof(wmap[0]);
   memset(d, 0, s);
