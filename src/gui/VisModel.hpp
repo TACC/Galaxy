@@ -109,6 +109,7 @@ protected:
   std::shared_ptr<GxyPacket> output;
 
 private:
+  bool      data_range_set = false;
   float     data_minimum, data_maximum;
   QSlider   *cmap_range_min_slider = NULL;
   QSlider   *cmap_range_max_slider = NULL;

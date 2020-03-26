@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#include <unistd.h>
+
 #include "VisModel.hpp"
 #include <QSignalBlocker>
 
@@ -152,7 +154,7 @@ VisModel::isValid()
 void
 VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p) 
 {
-  if (p)
+  if (p && p->isValid())
   {
     GxyModel::loadInputDrivenWidgets(p);
 
@@ -161,7 +163,11 @@ VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p)
     data_minimum = d->dataInfo.data_min;
     data_maximum = d->dataInfo.data_max;
 
-    onDataRangeReset();
+    if (! data_range_set)
+    {
+      onDataRangeReset();
+      data_range_set = true;
+    }
   }
 }
 

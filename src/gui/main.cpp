@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#include <unistd.h>
+
 #include <nodes/NodeData>
 #include <nodes/FlowScene>
 #include <nodes/FlowView>
@@ -29,7 +31,6 @@
 
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QMenuBar>
-
 
 #include <nodes/DataModelRegistry>
 
@@ -81,6 +82,13 @@ main(int argc, char *argv[])
 
   QApplication app(argc, argv);
   GxyMainWindow mainWindow;
+
+#if 0
+  int dbg = 1;
+  std::cerr << "PID " << getpid() << "\n";
+  while(dbg)
+    sleep(1);
+#endif
 
   bool startit = false;
   for (int i = 1; i < argc; i++)
