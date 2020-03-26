@@ -83,9 +83,7 @@ SocketConnectorClientServer::handle(string line, string& reply)
     json.Parse(datadesc.c_str());
 
     connector = SocketConnector::NewP();
-    connector->set_port(1900);
-    connector->Commit();
-    connector->Open();
+    connector->set_port(1900);  // Each participant will bump this by their rank!
 
     for (auto& v: json["variables"].GetArray())
     {
@@ -97,6 +95,9 @@ SocketConnectorClientServer::handle(string line, string& reply)
 
     connector->set_wait(timeout * 1000);
     connector->Commit();
+
+    connector->Open();
+
     connector->publish(theDatasets);
 
     reply = "ok";
