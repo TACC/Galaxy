@@ -52,10 +52,7 @@ SocketConnector::Register()
 
 KEYED_OBJECT_CLASS_TYPE(SocketConnector)
 
-SocketConnector::~SocketConnector()
-{
-  std::cerr << "SocketConnector dtor " << ((long)this) << "\n";
-}
+SocketConnector::~SocketConnector() {}
 
 void
 SocketConnector::initialize()
@@ -413,7 +410,6 @@ bool SocketConnector::ConnectionMsg::CollectiveAction(MPI_Comm comm, bool is_roo
 {
   unsigned char *p = contents->get();
   SocketConnectorP c = SocketConnector::GetByKey(*(Key *)p);
-  std::cerr << "AAA c " << ((long)(c.get())) << " user_count: " << c.use_count() << "\n";
   p +=sizeof(Key);
   todo t = *(todo *)p;
 
