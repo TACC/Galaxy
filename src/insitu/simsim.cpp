@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 
@@ -23,12 +25,22 @@ using namespace rapidjson;
 
 #include "SocketHandler.h"
 
-int mpi_rank = 0, mpi_size;
+int mpiRank = 0, mpiSize;
+
+#include "Debug.h"
+
 
 void syntax(char *a)
 {
-  if (mpi_rank == 0)
-    cerr << "syntax: " << " host port layout.json data.json\n";
+  if (mpiRank == 0)
+  {
+    cerr << "syntax: " << " [options] data.json\n";
+    cerr << "options:\n";
+    cerr << "  -h host          host name (localhost)\n";
+    cerr << "  -p port          port (5001)\n";
+    cerr << "  -l layout        layout file (layout.json)\n";
+  }
+    
   MPI_Finalize();
   exit(0);
 }
@@ -36,23 +48,19 @@ void syntax(char *a)
 int
 main(int argc, char **argv)
 {
-#if 0
-  std::cerr << getpid() << "\n";
-  int dbg = 1;
-  while(dbg)
-    sleep(1);
-#endif
+  bool dbg = false, atch = false;
+  char *dbgarg = NULL;
 
   int port = 5001;
-  std::string host = "localhost";
-  std::string layout_file = "layout.json";
-  std::string datafiles[2];
+  string host = "localhost";
+  string layout_file = "layout.json";
+  string datafiles[2];
   datafiles[0] = "";
   datafiles[1] = "";
 
   MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+  MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 
   for (int i = 1; i < argc; i++)
     if (argv[i][0] == '-')
@@ -61,6 +69,7 @@ main(int argc, char **argv)
         case 'l': layout_file = argv[++i]; break;
         case 'p': port = atoi(argv[++i]); break;
         case 'h': host = argv[++i]; break;
+        case 'D': dbg = true; dbgarg = argv[i] + 2; break;
         default:
           syntax(argv[0]);
       }
@@ -70,6 +79,8 @@ main(int argc, char **argv)
       datafiles[1] = argv[i];
     else 
       syntax(argv[0]);
+
+  Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
     
   char *layout;
   int layout_sz;
@@ -77,22 +88,22 @@ main(int argc, char **argv)
   gxy::SocketHandler *master = NULL;
   int status = 1;
 
-  if (mpi_rank == 0)
+  if (mpiRank == 0)
   {
     master = new gxy::SocketHandler();
 
     if (! master->Connect(host.c_str(), port))
     {
-      std::cerr << "error: unable to connect to server (" << host << "," << port << ")\n";
+      cerr << "error: unable to connect to server (" << host << "," << port << ")\n";
       status = 0;
     }
 
     if (status)
     {
-      std::string load = std::string("load libgxy_module_insitu.so");
+      string load = string("load libgxy_module_insitu.so");
       if (! master->CSendRecv(load))
       {
-        std::cerr << "sending sofile failed\n";
+        cerr << "sending sofile failed\n";
         status = 0;
       }
     }
@@ -102,7 +113,7 @@ main(int argc, char **argv)
       FILE *fp = fopen(layout_file.c_str(), "r");
       if (! fp)
       {
-        std::cerr << "unable to read layout\n";
+        cerr << "unable to read layout\n";
         status = 0;
       }
       else
@@ -128,7 +139,7 @@ main(int argc, char **argv)
   }
 
   MPI_Bcast(&layout_sz, sizeof(layout_sz), MPI_CHAR, 0, MPI_COMM_WORLD);
-  if (mpi_rank != 0)
+  if (mpiRank != 0)
     layout = new char[layout_sz];
 
   MPI_Bcast(layout, layout_sz, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -136,7 +147,7 @@ main(int argc, char **argv)
   Document layout_doc;
   layout_doc.Parse(layout);
 
-  Value& myConnectionInfo = layout_doc["layout"][mpi_rank];
+  Value& myConnectionInfo = layout_doc["layout"][mpiRank];
 
   struct header
   {
@@ -150,27 +161,28 @@ main(int argc, char **argv)
     double spacing[3];
   } hdr;
 
-  std::vector<std::string> varnames;
-  std::vector<float *> dataptrs[2];
-  std::vector<float *> interpolated;
-  std::vector<bool> isvector;
+  vector<string> varnames;
+  vector<float *> dataptrs[2];
+  vector<float *> interpolated;
+  vector<bool> isvector;
   int point_count;
 
   for (auto t = 0; t < 2; t++)
   {
-    std::string datadesc_file = datafiles[t];
+    string datadesc_file = datafiles[t];
+    std::cerr << "loading " << datadesc_file << "\n";
 
     int datadesc_sz;
     char *datadesc;
 
     // If master, load the file and distribute its contents
 
-    if (mpi_rank == 0)
+    if (mpiRank == 0)
     {
       FILE *fp = fopen(datadesc_file.c_str(), "r");
       if (! fp)
       {
-        std::cerr << "unable to read datadesc\n";
+        cerr << "unable to read datadesc\n";
         status = 0;
       }
       else
@@ -190,18 +202,18 @@ main(int argc, char **argv)
 
     // If this is the first timestep, tell Galaxy what to expect
 
-    if (mpi_rank == 0 && t == 0)
+    if (mpiRank == 0 && t == 0)
     {
-      std::string cmd = std::string("new ") + datadesc + ";";
+      string cmd = string("new ") + datadesc + ";";
       if (! master->CSendRecv(cmd))
       {
-        std::cerr << "sending new failed... " << cmd << "\n";
+        cerr << "sending new failed... " << cmd << "\n";
         status = 0;
       }
     }
   
     MPI_Bcast(&datadesc_sz, sizeof(datadesc_sz), MPI_CHAR, 0, MPI_COMM_WORLD);
-    if (mpi_rank != 0)
+    if (mpiRank != 0)
       datadesc = new char[datadesc_sz];
 
     MPI_Bcast(datadesc, datadesc_sz, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -213,11 +225,11 @@ main(int argc, char **argv)
 
     // Where to find the data
 
-    std::string datadir;
+    string datadir;
     if (t == 0)
     {
       size_t l = datadesc_file.find_last_of('/');
-      if (l != std::string::npos)
+      if (l != string::npos)
         datadir = datadesc_file.substr(0, l+1);
       else
         datadir = "";
@@ -225,14 +237,21 @@ main(int argc, char **argv)
 
     // Load local portion
 
-    Value& myPartDoc = datadesc_doc["partitions"][mpi_rank];
+    Value& myPartDoc = datadesc_doc["partitions"][mpiRank];
 
     vtkXMLImageDataReader *rdr = vtkXMLImageDataReader::New();
-    std::string fname = datadir + std::string(myPartDoc["file"].GetString());
+    string fname = datadir + string(myPartDoc["file"].GetString());
+    std::cerr << "FNAME: " << fname << "\n";
     rdr->SetFileName(fname.c_str());
     rdr->Update();
     vtkImageData *vti = rdr->GetOutput();
-  
+
+    {
+      float *p = (float *) vti->GetPointData()->GetArray("noise")->GetVoidPointer(0);
+      for (int i = 0; i < 10; i++)
+        std::cerr << *p++ << " ";
+      std::cerr << "\n";
+    }
     
     // Only set up the header for the first time step; assumption is both 
     // datasets are defined on the same grid
@@ -276,7 +295,7 @@ main(int argc, char **argv)
     {
       auto& v = *itr;
 
-      std::string name = v["name"].GetString();
+      string name = v["name"].GetString();
 
       // Def. need this on t=0 for interplants, may need it elsetimes if double
 
@@ -300,7 +319,12 @@ main(int argc, char **argv)
         dataptrs[t].push_back(buf);
       }
       else
-        dataptrs[t].push_back((float *)(a->GetVoidPointer(0)));
+      {
+        void *buf = malloc(point_count * (v["vector"].GetBool() ? 3 : 1) * sizeof(float));
+        void *src = a->GetVoidPointer(0);
+        memcpy(buf, src, point_count * (v["vector"].GetBool() ? 3 : 1) * sizeof(float));
+        dataptrs[t].push_back((float *)buf);
+      }
     }
 
     rdr->Delete();
@@ -310,18 +334,6 @@ main(int argc, char **argv)
 
   for (int it = 0; it < 10; it++)
   {
-    // Tell Galaxy a timestep is on the way
-
-    if (mpi_rank == 0)
-    {
-      std::string cmd = std::string("accept;");
-      if (! master->CSendRecv(cmd))
-      {
-        std::cerr << "sending accept failed... " << cmd << "\n";
-        status = 0;
-      }
-    }
-  
     float t = it / 9.0;
 
     for (int i = 0; i < varnames.size(); i++)
@@ -343,15 +355,28 @@ main(int argc, char **argv)
     host = myConnectionInfo["host"].GetString();
     port = myConnectionInfo["port"].GetInt();
 
-    std::cerr << "attaching to " << host << ":" << port << "\n";
+    // Tell Galaxy a timestep is on the way
 
+    if (mpiRank == 0)
+    {
+      string cmd = string("accept;");
+      if (! master->CSendRecv(cmd))
+      {
+        cerr << "sending accept failed... " << cmd << "\n";
+        status = 0;
+      }
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+  
+    cerr << "attaching to " << host << ":" << port << "\n";
     if (0 == skt->ConnectToServer(host.c_str(), port))
     {
       skt->Send((const void *)&hdr, sizeof(hdr));
 
       for (int i = 0; i < varnames.size(); i++)
       {
-        std::string name = varnames[i];
+        string name = varnames[i];
 
         int n = name.size() + 1;
         skt->Send(&n, sizeof(n));
@@ -365,9 +390,8 @@ main(int argc, char **argv)
     }
   }
 
-  if (mpi_rank == 0)
+  if (mpiRank == 0)
     master->Disconnect();
 
-  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
 }
