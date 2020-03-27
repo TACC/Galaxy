@@ -128,6 +128,17 @@ public:
 
   void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override
   {
+    if (isValid())
+    {
+      std::cerr << "GxyModel::setInData is valid, emitting...\n";
+      enable(true);
+      Q_EMIT dataUpdated(0);
+    }
+    else
+    {
+      enable(false);
+      std::cerr << "GxyModel::setInData NOT valid, NOT emitting...\n";
+    }
   }
 
   virtual bool isValid() { return true; }

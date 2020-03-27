@@ -18,6 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
+#include <string>
+
 #include "RenderModel.hpp"
 
 #include <QJsonDocument>
@@ -126,8 +128,12 @@ RenderModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
     if (input->isValid())
     {
       visList[input->get_origin()] = input;
-      std::shared_ptr<Vis> vis = std::dynamic_pointer_cast<Vis>(data);
-      Q_EMIT visUpdated(vis);
+      if (isValid())
+      {
+        std::shared_ptr<Vis> vis = std::dynamic_pointer_cast<Vis>(data);
+        onApply();
+        Q_EMIT visUpdated(vis);
+      }
     }
     else
     {
@@ -220,8 +226,10 @@ RenderModel::sendVisualization()
   QString s = QLatin1String(bytes);
 
   std::string msg = s.toStdString();
-
+  std::cerr << "RenderModel::sendVisualization: Sending.... " << msg << "\n";
   getTheGxyConnectionMgr()->CSendRecv(msg);
+  std::cerr << "RenderModel::sendVisualization: Sent\n";
+  
 }
 
 void

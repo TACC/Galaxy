@@ -205,8 +205,6 @@ MHSamplerFilter::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::Por
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
   GxyFilter::setInData(data, portIndex);
-  if (isValid())
-    Q_EMIT dataUpdated(0);
 }
 
 void

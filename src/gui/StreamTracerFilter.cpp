@@ -161,13 +161,6 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
     seeds = std::dynamic_pointer_cast<GxyData>(data);
 
   GxyFilter::setInData(data, pi);
-  enableIfValid();
-  if (isValid() && (retrim || retrace))
-  {
-    onApply();
-
-    Q_EMIT dataUpdated(0);
-  }
 }
 
 

@@ -96,18 +96,9 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
   if (input)
-  {
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
-    if (isValid())
-    {
-      onApply();
-      Q_EMIT dataUpdated(0);
-    }
-    else
-      enable(false);
-  }
 
-  enableIfValid();
+  VisModel::setInData(data, portIndex);
 }
 
 void

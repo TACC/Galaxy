@@ -115,6 +115,9 @@ VolumeVisModel::onApply()
   loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
   output->setValid(true);
 
+  std::cerr << "VVM: onApply ===================\n";
+  output->print();
+
   GxyModel::onApply();
 }
 
@@ -143,12 +146,13 @@ void
 VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
   input = std::dynamic_pointer_cast<GxyData>(data);
-  
   if (input)
+  {
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
-
-  enableIfValid();
-  VisModel::setInData(data, portIndex);
+    loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+    output->setValid(isValid());
+    VisModel::setInData(data, portIndex);
+  }
 }
 
 void 

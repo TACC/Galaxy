@@ -156,8 +156,6 @@ VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p)
 {
   if (p && p->isValid())
   {
-    GxyModel::loadInputDrivenWidgets(p);
-
     std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(p);
 
     data_minimum = d->dataInfo.data_min;
@@ -168,6 +166,8 @@ VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p)
       onDataRangeReset();
       data_range_set = true;
     }
+
+    GxyModel::loadInputDrivenWidgets(p);
   }
 }
 

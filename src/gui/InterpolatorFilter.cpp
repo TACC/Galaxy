@@ -57,14 +57,14 @@ InterpolatorFilter::outData(QtNodes::PortIndex)
   return std::static_pointer_cast<QtNodes::NodeData>(result);
 }
 
-void
-InterpolatorFilter::
-setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
-{
-  GxyFilter::setInData(data, portIndex);
-  if (isValid())
-    Q_EMIT dataUpdated(0);
-}
+// void
+// InterpolatorFilter::
+// setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
+// {
+  // GxyFilter::setInData(data, portIndex);
+  // if (isValid())
+    // Q_EMIT dataUpdated(0);
+// }
 
 
 QtNodes::NodeValidationState
