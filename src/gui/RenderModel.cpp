@@ -226,10 +226,7 @@ RenderModel::sendVisualization()
   QString s = QLatin1String(bytes);
 
   std::string msg = s.toStdString();
-  std::cerr << "RenderModel::sendVisualization: Sending.... " << msg << "\n";
   getTheGxyConnectionMgr()->CSendRecv(msg);
-  std::cerr << "RenderModel::sendVisualization: Sent\n";
-  
 }
 
 void

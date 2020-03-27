@@ -130,14 +130,12 @@ public:
   {
     if (isValid())
     {
-      std::cerr << "GxyModel::setInData is valid, emitting...\n";
       enable(true);
       Q_EMIT dataUpdated(0);
     }
     else
     {
       enable(false);
-      std::cerr << "GxyModel::setInData NOT valid, NOT emitting...\n";
     }
   }
 

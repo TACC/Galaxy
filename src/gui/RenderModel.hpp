@@ -148,11 +148,8 @@ private Q_SLOTS:
     if (getTheGxyConnectionMgr()->IsConnected())
     {
       sendVisualization();
-      std::cerr << "sending camera\n";
       renderWindow->setCamera(camera);
-      std::cerr << "camera done... sending render\n";
       renderWindow->render();
-      std::cerr << "render done\n";
       Q_EMIT cameraChanged(camera);
     }
     else
