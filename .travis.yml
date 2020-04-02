@@ -63,6 +63,7 @@ addons:
       - perceptualdiff
       - python-numpy
       - qt5-default
+      - libqt5opengl5-dev
   homebrew:
     update: true
     packages: 
