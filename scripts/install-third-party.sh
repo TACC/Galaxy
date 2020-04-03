@@ -59,6 +59,7 @@ RAPIDJSON_CMAKE_FLAGS="-DRAPIDJSON_BUILD_DOC=OFF \
 
 if [ $TRAVIS_OS_NAME == "osx" ]; then 
 	report "setting osx cmake flags"
+	report "qmake is $(which qmake)"
 	CMAKE_MODULE_PATH="${CMAKE_MODULE_PATH}:/usr/local/opt/qt/lib/cmake/Qt5"
 	CMAKE_FLAGS="${CMAKE_FLAGS} \
 				-D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
