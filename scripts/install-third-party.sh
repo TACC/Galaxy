@@ -60,11 +60,12 @@ RAPIDJSON_CMAKE_FLAGS="-DRAPIDJSON_BUILD_DOC=OFF \
 if [ $TRAVIS_OS_NAME == "osx" ]; then 
 	report "setting osx cmake flags"
 	report "qmake is $(brew info qt)"
+	PATH="${PATH}:/usr/local/opt/qt/bin"
 	CMAKE_MODULE_PATH="${CMAKE_MODULE_PATH}:/usr/local/opt/qt/lib/cmake/Qt5"
 	CMAKE_FLAGS="${CMAKE_FLAGS} \
 				-D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
         -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.2.1/lib/libglut.dylib \
-        -D Qt5_DIR=/usr/local/opt/qt/lib/cmake/Qt5 \
+        -D Qt5_DIR:PATH=/usr/local/opt/qt/lib/cmake/Qt5 \
       	"
 elif [ $TRAVIS_OS_NAME == "linux" ]; then 
 	report "setting linux cmake flags"
@@ -73,7 +74,7 @@ elif [ $TRAVIS_OS_NAME == "linux" ]; then
 				-D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
         -D GLUT_INCLUDE_DIR:PATH=/usr/include \
         -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
-        -D Qt5_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
+        -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
         "
 fi
 
