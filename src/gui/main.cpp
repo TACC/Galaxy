@@ -30,11 +30,15 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QMenuBar>
 
-
 #include <nodes/DataModelRegistry>
 
 #include "GxyMainWindow.hpp"
 #include "GxyConnectionMgr.hpp"
+
+using namespace std;
+
+int mpiRank = 0, mpiSize = 1;
+#include "Debug.h"
 
 GxyConnectionMgr *_theGxyConnectionMgr;
 GxyConnectionMgr *getTheGxyConnectionMgr() { return  _theGxyConnectionMgr; }
@@ -67,6 +71,7 @@ syntax(char *a)
 {
   std::cerr << "syntax " << a << " [options]\n";
   std::cerr << "options:\n";
+  std::cerr << "  -D           debug\n";
   std::cerr << "  -s server    default server (localhost)\n";
   std::cerr << "  -p port      default port (5001)\n";
   std::cerr << "  -c           connect on startup\n";
@@ -83,11 +88,15 @@ main(int argc, char *argv[])
   GxyMainWindow mainWindow;
 
   bool startit = false;
+  bool dbg = false;
   for (int i = 1; i < argc; i++)
     if (! strcmp(argv[i], "-s")) getTheGxyConnectionMgr()->setServer(argv[++i]); 
     else if (! strcmp(argv[i], "-p")) getTheGxyConnectionMgr()->setPort(argv[++i]); 
+    else if (! strcmp(argv[i], "-D")) dbg = true;
     else if (! strcmp(argv[i], "-c")) startit = true;
     else syntax(argv[0]);
+
+  Debug *d = dbg ? new Debug(argv[0], false, "") : NULL;
 
   if (startit)
     getTheGxyConnectionMgr()->connectToServer();
