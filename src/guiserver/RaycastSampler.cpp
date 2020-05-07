@@ -31,8 +31,8 @@ namespace gxy
 void
 RaycastSampler::Sample(rapidjson::Document& doc)
 {
+
   Key sourceKey         = doc["sourceKey"].GetInt();
-  Key destinationKey    = result->getkey();
 
   camera->LoadFromJSON(doc["camera"]);
   camera->Commit();
@@ -70,6 +70,8 @@ RaycastSampler::Sample(rapidjson::Document& doc)
   rs->AddRendering(r);
   rs->Commit();
 
+  sampler->GetSamples()->clear();
+
   sampler->Commit();
   sampler->Start(rs);
 
@@ -77,7 +79,15 @@ RaycastSampler::Sample(rapidjson::Document& doc)
   rs->WaitForDone();
 #endif
 
+  sleep(1);
   result->Commit();
+
+  ParticlesP p = Particles::Cast(result);
+
+  if (! p) 
+    std::cerr << "samples aren't particle set?\n";
+  else
+    std::cerr << "Totals: " << p->GetVertexCount() << " vertices, " << p->GetElementCount() << " elements\n";
 }
 
 }

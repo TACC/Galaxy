@@ -103,6 +103,10 @@ class Geometry : public KeyedDataObject
   void Lock() { pthread_mutex_lock(&lock); }
   void Unlock() { pthread_mutex_unlock(&lock); }
 
+  void GetCounts(int& nv, int& ne) { nv = global_vertex_count; ne = global_element_count; }
+  int GetVertexCount() { return global_vertex_count; }
+  int GetElementCount() { return global_element_count; }
+
 protected:
   pthread_mutex_t lock;
 
@@ -126,6 +130,10 @@ protected:
   std::vector<vec3f> vertices;
   std::vector<float> data;
   std::vector<int>   connectivity;
+
+  int global_vertex_count;
+  int global_element_count;
+
 
   vtkDataSet *vtkobj; // If there is a retained VTK dataset
 };

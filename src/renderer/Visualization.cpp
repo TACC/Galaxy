@@ -218,11 +218,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   // Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
   // volumevis - NULL unless there's some model data
 
-
-  if (ospModel) 
-    return;
-
-  // ospModel = NULL;
+  OSPModel ospModel = ospNewModel();
 
   void *mispc[vis.size()]; int nmispc = 0;
   void *vispc[vis.size()]; int nvispc = 0;
@@ -234,9 +230,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 
     Key key = kdop->getkey();
 
-    if (! ospModel)
-      ospModel = ospNewModel();
-
+#if 0
     op = v->GetTheOsprayDataObject();
     if (! op)
     {
@@ -249,6 +243,10 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
     }
 
     v->SetTheOsprayDataObject(op);
+#else
+    op = kdop->CreateTheOSPRayEquivalent(kdop);
+    v->SetTheOsprayDataObject(op);
+#endif
     
     if (GeometryVis::IsA(v))
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
@@ -257,7 +255,10 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   }
 
   if (ospModel)
+  {
     ospCommit(ospModel);
+    // std::cerr << "SetOsprayObjects " << ((long)ospModel) << " :: " << ((long)ospray_util::GetIE(ospModel)) << "\n";
+  }
    
   ispc::Visualization_commit(ispc, 
           ospModel ? ospray_util::GetIE(ospModel) : NULL,

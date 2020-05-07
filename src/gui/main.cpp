@@ -74,6 +74,7 @@ syntax(char *a)
   std::cerr << "  -D           debug\n";
   std::cerr << "  -s server    default server (localhost)\n";
   std::cerr << "  -p port      default port (5001)\n";
+  std::cerr << "  -S           show conversation\n";
   std::cerr << "  -c           connect on startup\n";
   exit(1);
 }
@@ -89,10 +90,12 @@ main(int argc, char *argv[])
 
   bool startit = false;
   bool dbg = false;
+  bool show = false;
   for (int i = 1; i < argc; i++)
     if (! strcmp(argv[i], "-s")) getTheGxyConnectionMgr()->setServer(argv[++i]); 
     else if (! strcmp(argv[i], "-p")) getTheGxyConnectionMgr()->setPort(argv[++i]); 
     else if (! strcmp(argv[i], "-D")) dbg = true;
+    else if (! strcmp(argv[i], "-S")) getTheGxyConnectionMgr()->showConversation(true); 
     else if (! strcmp(argv[i], "-c")) startit = true;
     else syntax(argv[0]);
 

@@ -99,6 +99,8 @@ LookForGeometryHit(varying bool shadeFlag,
                    uniform Visualization_ispc *uniform vis,
                    varying Hit &hit)
 {
+  //print("LFGH %\n", model);
+
   traceRay(model, ray);
 
   if(ray.geomID < 0)

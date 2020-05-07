@@ -56,8 +56,8 @@ Sampler::HandleTerminatedRays(RayList *raylist)
   for (int i = 0; i < raylist->GetRayCount(); i++)
     if (raylist->get_classification(i) & RAY_SURFACE) hit_count++;
 
-  std::cerr << std::dec;
-  std::cerr << "Sampler::HandleTerminatedRays entry - " << raylist->GetRayCount() << " in, " << hit_count << " terminated\n";
+  // std::cerr << std::dec;
+  // std::cerr << "Sampler::HandleTerminatedRays entry - " << raylist->GetRayCount() << " in, " << hit_count << " terminated\n";
 
   RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
   RenderingP rendering = raylist->GetTheRendering();
@@ -85,7 +85,7 @@ Sampler::HandleTerminatedRays(RayList *raylist)
 
   samples->Unlock();
 
-  std::cerr << "Sampler::HandleTerminatedRays: " << samples->GetNumberOfVertices() << " samples stashed\n";
+  // std::cerr << "Sampler::HandleTerminatedRays: " << samples->GetNumberOfVertices() << " samples stashed\n";
 }
 
 int
