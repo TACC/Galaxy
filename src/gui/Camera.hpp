@@ -115,20 +115,20 @@ public:
 
   virtual void restore(QJsonObject const& p) 
   {
-    point.x = p["viewpoint"][0].toDouble();
-    point.y = p["viewpoint"][1].toDouble();
-    point.z = p["viewpoint"][2].toDouble();
+    point.x = p["viewpoint"].toArray()[0].toDouble();
+    point.y = p["viewpoint"].toArray()[1].toDouble();
+    point.z = p["viewpoint"].toArray()[2].toDouble();
 
-    direction.x = p["viewdirection"][0].toDouble();
-    direction.y = p["viewdirection"][1].toDouble();
-    direction.z = p["viewdirection"][2].toDouble();
+    direction.x = p["viewdirection"].toArray()[0].toDouble();
+    direction.y = p["viewdirection"].toArray()[1].toDouble();
+    direction.z = p["viewdirection"].toArray()[2].toDouble();
 
-    up.x = p["viewup"][0].toDouble();
-    up.y = p["viewup"][1].toDouble();
-    up.z = p["viewup"][2].toDouble();
+    up.x = p["viewup"].toArray()[0].toDouble();
+    up.y = p["viewup"].toArray()[1].toDouble();
+    up.z = p["viewup"].toArray()[2].toDouble();
 
-    size.x = p["dimensions"][0].toInt();
-    size.y = p["dimensions"][1].toInt();
+    size.x = p["dimensions"].toArray()[0].toInt();
+    size.y = p["dimensions"].toArray()[1].toInt();
 
     aov = p["aov"].toDouble();
   }
