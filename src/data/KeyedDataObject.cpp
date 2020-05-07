@@ -84,10 +84,7 @@ KeyedDataObject::initialize()
 bool
 KeyedDataObject::local_commit(MPI_Comm c)
 {
-  // std::cerr << "KeyedDataObject::local_commit: local box\n";
-  // std::cerr << local_box;
-  // std::cerr << "KeyedDataObject::local_commit: global_box\n";
-  // std::cerr << global_box;
+  setModified(true);
   return false;
 }
 
