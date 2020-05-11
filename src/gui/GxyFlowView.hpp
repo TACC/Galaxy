@@ -79,6 +79,30 @@ public:
     }
   }
 
+protected:
+  void wheelEvent(QWheelEvent *event) override
+  {
+    QPoint delta = event->angleDelta();
+  
+    if (delta.y() == 0)
+    { 
+      event->ignore();
+      return;
+    }
+  
+    double const d = delta.y() / std::abs(delta.y());
+  
+    if (d > 0.0)
+    {
+      QTransform t = transform();
+      if (t.m11() > 2.0)
+        return;
+      scale(1.01, 1.01);
+    }
+    else
+      scale(1.0 / 1.01, 1.0 / 1.01);
+  }
+
 private:
   QtNodes::FlowScene *__scene;
   QString pendingModel = "";
