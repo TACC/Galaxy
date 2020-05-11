@@ -32,6 +32,7 @@ using namespace rapidjson;
 
 #include "GuiClientServer.h"
 #include "MHSampler.hpp"
+#include "DensitySampler.hpp"
 #include "RaycastSampler.hpp"
 #include "StreamTracer.hpp"
 
@@ -45,6 +46,7 @@ init()
 {
   GuiClientServer::init();
   MHSampler::init();
+  DensitySampler::init();
   RaycastSampler::init();
 }
 
@@ -280,6 +282,67 @@ GuiClientServer::handle(string line, string& reply)
     MHSampler *sampler = (MHSampler*)filter;
     if (! sampler)
       HANDLED_BUT_ERROR_RETURN("mhsample: filter was not MHSampler");
+
+    sampler->Sample(doc);
+
+    KeyedDataObjectP kdop = sampler->getResult();
+    
+    int type;
+    if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
+    else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
+    else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
+    else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+    else type = -1;
+
+    int ncomp;
+    if (type == 0)
+    {
+      gxy::VolumeP v = gxy::Volume::Cast(kdop);
+      ncomp = v->get_number_of_components();
+    }
+    else
+      ncomp = -1;
+
+    float m, M;
+    kdop->get_global_minmax(m, M);
+
+    replyDoc.AddMember("name", rapidjson::Value().SetString("(none)", 7), alloc);
+    replyDoc.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), alloc);
+    replyDoc.AddMember("type", rapidjson::Value().SetInt(type), alloc);
+    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(ncomp), alloc);
+    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), alloc);
+    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), alloc);
+
+#if 1
+    Box *box = kdop->get_global_box();
+    rapidjson::Value boxv(rapidjson::kArrayType);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
+    replyDoc.AddMember("box", boxv, alloc);
+#endif
+
+    replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), alloc);
+
+    HANDLED_OK;
+  }
+  else if (cmd == "gui::dsample")
+  {
+    string id  = doc["id"].GetString();
+
+    Filter *filter = getFilter(id);
+    if (! filter)
+    {
+      filter = new DensitySampler(Filter::getSource(doc));
+      addFilter(id, filter);
+    }
+
+    DensitySampler *sampler = (DensitySampler*)filter;
+    if (! sampler)
+      HANDLED_BUT_ERROR_RETURN("densitysample: filter was not DensitySampler");
 
     sampler->Sample(doc);
 
