@@ -63,10 +63,14 @@ public:
   //! Set the socket connection (MultiServerHandler)
 	void SetHandler(MultiServerHandler *h) { handler = h; }
 
+  //! Set the window ID to associate this pixel sender with a destination GUI window
+  void SetId(std::string _id) { id = _id; }
+
 private:
   pthread_mutex_t lock;
 	MultiServerHandler *handler;
 	int max_frame;
+  std::string id;
 };
  
 } // namespace gxy

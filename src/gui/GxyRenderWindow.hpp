@@ -25,28 +25,11 @@ public:
 
   void render();
 
-  void manageThreads(bool b);
-
   void addPixels(gxy::Pixel *p, int n, int frame);
 
   void setCamera(Camera&);
 
-  void setSize(int w, int h)
-  {
-    if (w != width || h != height)
-    {
-      width = w;
-      height = h;
-
-      if (getTheGxyConnectionMgr()->IsConnected())
-      {
-        std::stringstream ss;
-        ss << "window " << width << " " << height;
-        std::string s = ss.str();
-        getTheGxyConnectionMgr()->CSendRecv(s);
-      }
-    }
-  }
+  void setSize(int w, int h);
 
   void setSize(Camera& c)
   {

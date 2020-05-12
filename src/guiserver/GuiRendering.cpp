@@ -51,8 +51,8 @@ GuiRendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 	{
 		max_frame = f;
 
-		char* ptrs[] = {(char *)&n, (char *)&f, (char *)&s, (char *)p};
-		int   szs[] = {sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
+		char* ptrs[] = {(char *)id.c_str(), (char *)&n, (char *)&f, (char *)&s, (char *)p};
+		int   szs[] = {((int)id.size()) + 1, sizeof(int), sizeof(int), sizeof(int), static_cast<int>(n*sizeof(Pixel)), 0};
 
     if (handler)
     {

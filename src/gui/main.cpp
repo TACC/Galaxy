@@ -34,14 +34,12 @@
 
 #include "GxyMainWindow.hpp"
 #include "GxyConnectionMgr.hpp"
+#include "GxyRenderWindowMgr.hpp"
 
 using namespace std;
 
 int mpiRank = 0, mpiSize = 1;
 #include "Debug.h"
-
-GxyConnectionMgr *_theGxyConnectionMgr;
-GxyConnectionMgr *getTheGxyConnectionMgr() { return  _theGxyConnectionMgr; }
 
 static void
 setStyle()
@@ -82,8 +80,10 @@ syntax(char *a)
 int
 main(int argc, char *argv[])
 {
-  _theGxyConnectionMgr = new GxyConnectionMgr();
+  new GxyConnectionMgr();
   getTheGxyConnectionMgr()->addModule("libgxy_module_gui.so");
+
+  new GxyRenderWindowMgr();
 
   QApplication app(argc, argv);
   GxyMainWindow mainWindow;

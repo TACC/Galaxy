@@ -178,9 +178,6 @@ GuiClientServer::handle(string line, string& reply)
 
       Box *box = kdop->get_global_box();
 
-      // std::cerr << "XXXXXXXXXXXXXXXXXXXXXXXXXX\n";
-      // cerr << *box;
-
       rapidjson::Value boxv(rapidjson::kArrayType);
       boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
       boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
@@ -210,7 +207,7 @@ GuiClientServer::handle(string line, string& reply)
     if (clientWindow)
       HANDLED_BUT_ERROR_RETURN("initWindow: window already initialized")
 
-    addClientWindow(id, new ClientWindow);
+    addClientWindow(id, new ClientWindow(id));
 
     HANDLED_OK;
   }

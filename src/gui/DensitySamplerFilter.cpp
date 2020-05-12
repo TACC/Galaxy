@@ -136,11 +136,8 @@ DensitySamplerFilter::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes
 bool
 DensitySamplerFilter::isValid()
 {
-  bool r = input && input->isValid();
-  std::cerr << "DensitySamplerFilter::isValid :: " << r << "\n";
-  return r;
+  return input && input->isValid();
 }
-
 
 QJsonObject
 DensitySamplerFilter::save() const

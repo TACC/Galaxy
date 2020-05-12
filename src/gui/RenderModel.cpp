@@ -70,9 +70,6 @@ RenderModel::RenderModel()
 
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onConnectionStateChanged(bool)));
 
-  if (getTheGxyConnectionMgr()->IsConnected())
-    renderWindow->manageThreads(true);
-
   connect(renderWindow, SIGNAL(characterStrike(char)), this, SLOT(characterStruck(char)));
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(initializeWindow(bool)));
 

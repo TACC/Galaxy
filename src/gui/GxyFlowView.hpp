@@ -41,7 +41,7 @@ public:
     __scene = fs;
   }
 
-  void mousePressEvent(QMouseEvent *e)
+  void mousePressEvent(QMouseEvent *e) override
   {
     if (pendingModel == "")
     {
