@@ -52,18 +52,22 @@ for var in sys.argv[2:]:
     nd.tofile(of)
     of.close()
 
+  lowerleft = [o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]
+  upperright = [o.GetOrigin()[j] + o.GetExtent()[2*j+1]*o.GetSpacing()[j] for j in range(3)]
+  size = [upperright[i] - lowerleft[i] for i in range(3)]
+  size = [(2.0 * size[i]) / max(size) for i in range(3)]
+  origin = [-size[i] / 2 for i in range(3)]
+  stepsize = [size[i] / (o.GetDimensions()[i] - 1) for i in range(3)]
+
   if isfile(jsnname):
     print ("skipping", var, "osp file")
   else:
-    sz = [o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]
-    nsz = [sz[j]/max(sz) for j in range(3)]
-    ssz = [2*nsz[j]/(o.GetExtent()[2*j+1] - o.GetExtent()[2*j]) for j in range(3)]
     of = open(jsnname, 'w')
     of.write('{\n')
     of.write('  "type": "%s",\n' % dtype)
-    of.write('  "origin": [%f, %f, %f],\n' % tuple([-nsz[j] for j in range(3)]))
+    of.write('  "origin": [%f, %f, %f],\n' % tuple(origin))
     of.write('  "counts": [%d, %d, %d],\n' % o.GetDimensions())
-    of.write('  "delta": [%f, %f, %f],\n' % tuple(ssz))
+    of.write('  "delta": [%f, %f, %f],\n' % tuple(stepsize))
     of.write('  "rawdata": "%s",\n' % rawname)
     of.write('  "number of components": %d\n' % a.GetNumberOfComponents())
     of.write('}\n')
@@ -74,12 +78,9 @@ for var in sys.argv[2:]:
   elif isfile(volname):
     print ("skipping", var, "vol file")
   else:
-    sz = [o.GetOrigin()[j] + o.GetExtent()[2*j]*o.GetSpacing()[j] for j in range(3)]
-    nsz = [sz[j]/max(sz) for j in range(3)]
-    ssz = [2*nsz[j]/(o.GetExtent()[2*j+1] - o.GetExtent()[2*j]) for j in range(3)]
     of = open(volname, 'w')
     of.write('%s\n' % dtype)
-    of.write('%f %f %f\n' % tuple([-nsz[j] for j in range(3)]))
+    of.write('%f %f %f\n' % tuple(origin))
     of.write('%d %d %d\n' % o.GetDimensions())
-    of.write('%f %f %f\n' % tuple(ssz))
+    of.write('%f %f %f\n' % tuple(stepsize))
     of.write(rawname + '\n')
