@@ -33,7 +33,6 @@ add_subdirectory(schlieren)
 add_subdirectory(apps)
 add_subdirectory(cinema)
 add_subdirectory(tracer)
-add_subdirectory(insitu)
 
 if (GXY_GUI)
   add_subdirectory(gui)

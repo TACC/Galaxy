@@ -66,6 +66,10 @@ add_library(gxy_module_mhsampler MODULE MHSampleClientServer)
 target_link_libraries(gxy_module_mhsampler gxy_multiserver gxy_data gxy_framework)
 set(SERVERS gxy_module_mhsampler ${SERVERS})
 
+add_library(gxy_module_densitysampler MODULE DensitySampleClientServer)
+target_link_libraries(gxy_module_densitysampler gxy_multiserver gxy_data gxy_framework)
+set(SERVERS gxy_module_densitysampler ${SERVERS})
+
 add_library(gxy_module_interpolator MODULE InterpolatorClientServer)
 target_link_libraries(gxy_module_interpolator gxy_multiserver gxy_data gxy_framework)
 set(SERVERS gxy_module_interpolator ${SERVERS})

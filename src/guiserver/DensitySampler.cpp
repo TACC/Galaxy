@@ -1,4 +1,5 @@
 // ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -18,32 +19,19 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "OsprayParticles.h"
+#include "DensitySampler.hpp"
 
-using namespace gxy;
-
-OsprayParticles::OsprayParticles(ParticlesP p)
+namespace gxy
 {
-  particles = p;
 
-  OSPGeometry ospg = ospNewGeometry("ddspheres");
-  if (! ospg) 
-  {
-    std::cerr << "Could not create ddspheres geometry!\n";
-    exit(1);
-  }
+WORK_CLASS_TYPE(DSamplerMsg)
 
-  OSPData centers = ospNewData(p->GetNumberOfVertices(), OSP_FLOAT3, p->GetVertices(), OSP_DATA_SHARED_BUFFER);
-  ospCommit(centers);
-  ospSetData(ospg, "centers", centers);
-
-  OSPData data = ospNewData(p->GetNumberOfVertices(), OSP_FLOAT, p->GetData(), OSP_DATA_SHARED_BUFFER);
-  ospCommit(data);
-  ospSetData(ospg, "data", data);
-  
-  ospCommit(ospg);
-
-  std::cerr << "OsprayParticles " << p->GetNumberOfVertices() << " " << ((long)ospg) << "\n";
-
-  theOSPRayObject = (OSPObject)ospg;
+bool
+DSamplerMsg::CollectiveAction(MPI_Comm c, bool is_root)
+{
+  Sample(c, (dMsg *)get());
+  return false;
 }
+
+}
+

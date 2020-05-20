@@ -158,8 +158,6 @@ private Q_SLOTS:
 
   void onConnectionStateChanged(bool state)
   {
-    renderWindow->manageThreads(state);
-
     if (state)
     {
       Q_EMIT(cameraChanged(camera));

@@ -165,6 +165,7 @@ bool
 SocketHandler::Send(int fd, const char *b, int n)
 {
   if (!_send(fd, (char *)&n, sizeof(n))) return false;
+  if (show) std::cout << b << "\n";
   return _send(fd, (char *)b, n);
 }
 
@@ -205,6 +206,8 @@ SocketHandler::Recv(int fd, char*& b, int& n)
 
   if (! _receive(fd, b, n))
     return false;
+
+  if (show) std::cout << b << "\n";
 
   return true;
 }

@@ -86,8 +86,10 @@ if [ -z ${GXY_BUILT_VTK} ]; then
   mkdir -p build
   pushd build
   if [ $TRAVIS_OS_NAME == "osx" ]; then 
+		PATH="${PATH}:/usr/local/opt/qt/bin"
   	cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.2.1/lib/libglut.dylib \
+          -D Qt5_DIR:PATH=/usr/local/opt/qt/lib/cmake/Qt5 \
           -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           .. \
   		&& make install
@@ -95,6 +97,7 @@ if [ -z ${GXY_BUILT_VTK} ]; then
   	cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
           -D GLUT_INCLUDE_DIR:PATH=/usr/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
+          -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
           -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           .. \
       && make install

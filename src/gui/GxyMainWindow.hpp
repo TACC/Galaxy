@@ -38,6 +38,7 @@
 #include "DataSourceModel.hpp"
 #include "RenderModel.hpp"
 #include "MHSamplerFilter.hpp"
+#include "DensitySamplerFilter.hpp"
 #include "RaycastSamplerFilter.hpp"
 #include "StreamTracerFilter.hpp"
 #include "InterpolatorFilter.hpp"
@@ -61,6 +62,7 @@ registerDataModels()
   auto ret = std::make_shared<DataModelRegistry>();
   ret->registerModel<DataSourceModel>("Sources");
   ret->registerModel<MHSamplerFilter>("Filters");
+  ret->registerModel<DensitySamplerFilter>("Filters");
   ret->registerModel<RaycastSamplerFilter>("Filters");
   ret->registerModel<StreamTracerFilter>("Filters");
   ret->registerModel<InterpolatorFilter>("Filters");

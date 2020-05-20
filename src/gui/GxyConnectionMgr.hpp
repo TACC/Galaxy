@@ -40,21 +40,15 @@
 #include <QtGui/QDoubleValidator>
 
 #include "SocketHandler.h"
+#include "GxyRenderWindowMgr.hpp"
 
-class GxyConnectionMgr;
-extern GxyConnectionMgr *getTheGxyConnectionMgr();
 
 class GxyConnectionMgr : public QObject, public gxy::SocketHandler
 {
   Q_OBJECT
 
 public:
-  GxyConnectionMgr()
-  {
-    server = QString("localhost");
-    port = QString("5001");
-    dlg = NULL;
-  }
+  GxyConnectionMgr();
 
   void createDialog()
   {
@@ -126,59 +120,8 @@ public:
     pset = true;
   }
 
-  bool connectToServer()
-  {
-    // if (getTheGxyConnectionMgr()->IsConnected())
-    if (IsConnected())
-    {
-      std::cerr << "cannot start a service without disconnecting from prior service first\n";
-      return false;
-    }
-    else
-    {
-      int   p = atoi(port.toStdString().c_str());
-      char *s = (char *)server.toStdString().c_str();
-
-      std::cerr << "trying to connect to " << s << ":" << p << "\n";
-
-      // getTheGxyConnectionMgr()->Connect(s, p);
-      Connect(s, p);
-
-      if (IsConnected())
-      {
-        for (auto m : modules)
-        {
-          std::string cmd = std::string("load ") + m;
-          if (! CSendRecv(cmd))
-          {
-            QMessageBox msgBox;
-            msgBox.setText("Unable to load module");
-            msgBox.exec();
-            return false;
-          }
-        }
-        
-        if (dlg) dlg->hide();
-        Q_EMIT connectionStateChanged(true);
-        return true;
-      }
-      else
-      {
-        QMessageBox msgBox;
-        msgBox.setText("Unable to make connection");
-        msgBox.exec();
-        return false;
-      }
-    }
-  }
-
-  void disconnectFromServer()
-  {
-    std::cerr << "CM: disconnect... emitting connectionStateChanged\n";
-    // getTheGxyConnectionMgr()->Disconnect();
-    Disconnect();
-    Q_EMIT connectionStateChanged(false);
-  }
+  bool connectToServer();
+  void disconnectFromServer();
 
   void addModule(std::string m)
   {
@@ -242,3 +185,4 @@ private:
   QString port;
 };
 
+GxyConnectionMgr *getTheGxyConnectionMgr();

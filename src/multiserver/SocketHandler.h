@@ -199,8 +199,12 @@ public:
 
   //! test whether connection exists
   bool IsConnected() { return is_connected; }
+
+  void showConversation(bool yn) { show = yn; }
   
 private:
+  bool show = false;
+
   bool SendV(int fd, char** buf, int* size);
   bool Send(int fd, const char *buf, int size);
   bool Send(int fd, char* buf, int size) { return Send(fd, (const char *)buf, size); }

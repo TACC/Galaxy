@@ -40,11 +40,15 @@ class GuiClientServer : public MultiServerHandler
 {
   struct ClientWindow
   {
-    ClientWindow()
+    ClientWindow(string id)
     {
       visualization = Visualization::NewP();
+
       camera = Camera::NewP();
+
       rendering = GuiRendering::NewP();
+      rendering->SetId(id);
+
       renderingSet = RenderingSet::NewP();
       renderingSet->AddRendering(rendering);
     }

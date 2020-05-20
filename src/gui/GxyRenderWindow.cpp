@@ -5,11 +5,14 @@
 static int xx = 0;
 
 #include "GxyRenderWindow.hpp"
+#include "GxyRenderWindowMgr.hpp"
 
 #include <QJsonDocument>
 #include <QSurfaceFormat>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QVBoxLayout>
+
+extern GxyRenderWindowMgr *getTheGxyRenderWindowMgr();
 
 static long
 my_time()
@@ -30,21 +33,18 @@ GxyRenderWindow::GxyRenderWindow(std::string rid)
   setFocusPolicy(Qt::StrongFocus);
 
   kill_threads = false;
-  rcvr_tid = NULL;
-  ager_tid = NULL;
+  pthread_create(&ager_tid, NULL, pixel_ager_thread, (void *)this);
+
+  getTheGxyRenderWindowMgr()->RegisterRenderWindow(rid, this);
 }
 
 GxyRenderWindow::~GxyRenderWindow()
 {
-  if (rcvr_tid)
-  {
-    kill_threads = true;
-    pthread_join(rcvr_tid, NULL);
-    rcvr_tid = NULL;
-  }
-
+  getTheGxyRenderWindowMgr()->Remove(renderer_id);
+  
   if (ager_tid)
   {
+    kill_threads = true;
     pthread_join(ager_tid, NULL);
     ager_tid = NULL;
   }
@@ -284,36 +284,7 @@ GxyRenderWindow::sendCamera()
 
     std::string msg = qs.toStdString();
 
-    // std::cerr << "cam: " << msg << "\n";
     getTheGxyConnectionMgr()->CSendRecv(msg);
-  }
-}
-
-void 
-GxyRenderWindow::manageThreads(bool state)
-{
-  if (state)
-  {
-    if (rcvr_tid != NULL)
-      std::cerr << "threads are running at time of connection\n";
-    else
-    {
-      kill_threads = false;
-      pthread_create(&rcvr_tid, NULL, pixel_receiver_thread, (void *)this);
-      pthread_create(&ager_tid, NULL, pixel_ager_thread, (void *)this);
-    }
-  }
-  else
-  {
-    if (rcvr_tid == NULL)
-      std::cerr << "threads are NOT running at time of disconnection\n";
-    else
-    {
-      kill_threads = true;
-      pthread_join(rcvr_tid, NULL);
-      pthread_join(ager_tid, NULL);
-      rcvr_tid = ager_tid = NULL;
-    }
   }
 }
 
@@ -485,43 +456,6 @@ GxyRenderWindow::addPixels(gxy::Pixel *p, int n, int frame)
 }
 
 void *
-GxyRenderWindow::pixel_receiver_thread(void *d)
-{
-  GxyRenderWindow *wndw = (GxyRenderWindow *)d;
-  GxyConnectionMgr *connection = getTheGxyConnectionMgr();
-
-  while (! wndw->kill_threads)
-  {
-    if (connection->DWait(0.1))
-    {
-      char *buf; int n;
-      connection->DRecv(buf, n);
-      // std::cerr << "window " << ((long)wndw) << " received " << ((long)buf) << " " << n << "\n";
-
-      char *ptr = buf;
-      int knt = *(int *)ptr;
-      ptr += sizeof(int);
-      int frame = *(int *)ptr;
-      ptr += sizeof(int);
-      int sndr = *(int *)ptr;
-      ptr += sizeof(int);
-      gxy::Pixel *p = (gxy::Pixel *)ptr;
-
-      // std::cerr << " wndw " << ((long)wndw) << "\n";
-      wndw->addPixels(p, knt, frame);
-      // std::cerr << "freeing " << ((long)buf) << "\n";
-
-      free(buf);
-      // std::cerr << "done\n";
-    }
-  }
-
-  std::cerr << "pixel_receiver_thread stopping\n";
-
-  pthread_exit(NULL);
-}
-
-void *
 GxyRenderWindow::pixel_ager_thread(void *d)
 {
   GxyRenderWindow *wndw = (GxyRenderWindow *)d;
@@ -573,3 +507,20 @@ GxyRenderWindow::FrameBufferAger()
   }
 }
 
+void
+GxyRenderWindow::setSize(int w, int h)
+{
+  if (w != width || h != height)
+  {
+    width = w;
+    height = h;
+
+    if (getTheGxyConnectionMgr()->IsConnected())
+    {
+      std::stringstream ss;
+      ss << "window " << width << " " << height;
+      std::string s = ss.str();
+      getTheGxyConnectionMgr()->CSendRecv(s);
+    }
+  }
+}

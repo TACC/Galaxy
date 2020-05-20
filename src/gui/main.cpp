@@ -36,9 +36,12 @@
 
 #include "GxyMainWindow.hpp"
 #include "GxyConnectionMgr.hpp"
+#include "GxyRenderWindowMgr.hpp"
 
-GxyConnectionMgr *_theGxyConnectionMgr;
-GxyConnectionMgr *getTheGxyConnectionMgr() { return  _theGxyConnectionMgr; }
+using namespace std;
+
+int mpiRank = 0, mpiSize = 1;
+#include "Debug.h"
 
 static void
 setStyle()
@@ -68,8 +71,10 @@ syntax(char *a)
 {
   std::cerr << "syntax " << a << " [options]\n";
   std::cerr << "options:\n";
+  std::cerr << "  -D           debug\n";
   std::cerr << "  -s server    default server (localhost)\n";
   std::cerr << "  -p port      default port (5001)\n";
+  std::cerr << "  -S           show conversation\n";
   std::cerr << "  -c           connect on startup\n";
   exit(1);
 }
@@ -77,8 +82,10 @@ syntax(char *a)
 int
 main(int argc, char *argv[])
 {
-  _theGxyConnectionMgr = new GxyConnectionMgr();
+  new GxyConnectionMgr();
   getTheGxyConnectionMgr()->addModule("libgxy_module_gui.so");
+
+  new GxyRenderWindowMgr();
 
   QApplication app(argc, argv);
   GxyMainWindow mainWindow;
@@ -91,11 +98,17 @@ main(int argc, char *argv[])
 #endif
 
   bool startit = false;
+  bool dbg = false;
+  bool show = false;
   for (int i = 1; i < argc; i++)
     if (! strcmp(argv[i], "-s")) getTheGxyConnectionMgr()->setServer(argv[++i]); 
     else if (! strcmp(argv[i], "-p")) getTheGxyConnectionMgr()->setPort(argv[++i]); 
+    else if (! strcmp(argv[i], "-D")) dbg = true;
+    else if (! strcmp(argv[i], "-S")) getTheGxyConnectionMgr()->showConversation(true); 
     else if (! strcmp(argv[i], "-c")) startit = true;
     else syntax(argv[0]);
+
+  Debug *d = dbg ? new Debug(argv[0], false, "") : NULL;
 
   if (startit)
     getTheGxyConnectionMgr()->connectToServer();

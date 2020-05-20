@@ -1,4 +1,3 @@
-// ========================================================================== //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -165,7 +164,7 @@ MHSamplerFilter::onApply()
   output->dataInfo.name = dset["name"].GetString();
   output->dataInfo.key = dset["key"].GetInt();
   output->dataInfo.type = dset["type"].GetInt();
-  output->dataInfo.isVector = dset["isVector"].GetBool();
+  output->dataInfo.isVector = (dset["ncomp"].GetInt() == 3);
   output->dataInfo.data_min = dset["min"].GetDouble();
   output->dataInfo.data_max = dset["max"].GetDouble();
   for (auto i = 0; i < 6; i++)
@@ -205,6 +204,10 @@ MHSamplerFilter::setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::Por
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
   GxyFilter::setInData(data, portIndex);
+  enableIfValid();
+
+  if (isValid())
+    Q_EMIT dataUpdated(0);
 }
 
 void

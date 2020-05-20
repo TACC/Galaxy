@@ -1,5 +1,4 @@
 // ========================================================================== //
-//                                                                            //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -19,76 +18,72 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "galaxy.h"
-#include "RaycastSampler.hpp"
+#pragma once
 
-#include "GradientSamplerVis.h"
-#include "IsoSamplerVis.h"
 
-namespace gxy
+#include <QtCore/QObject>
+#include <QtCore/QVector>
+
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QComboBox>
+
+#include "GxyFilter.hpp"
+
+#include "GxyData.hpp"
+#include "Camera.hpp"
+#include "CameraDialog.hpp"
+
+#include "Lights.hpp"
+#include "LightsDialog.hpp"
+
+#include <nodes/NodeData>
+
+class DensitySamplerFilter : public GxyFilter
 {
+  Q_OBJECT
 
-void
-RaycastSampler::Sample(rapidjson::Document& doc)
-{
+public:
+  DensitySamplerFilter();
 
-  Key sourceKey         = doc["sourceKey"].GetInt();
+  virtual
+  ~DensitySamplerFilter() {}
 
-  camera->LoadFromJSON(doc["camera"]);
-  camera->Commit();
+  unsigned int nPorts(QtNodes::PortType portType) const override;
 
-  int   type     = doc["type"].GetInt();
+  QtNodes::NodeDataType dataType(QtNodes::PortType portType, QtNodes::PortIndex portIndex) const override;
 
-  VisP vis;
-  if (type == 0)
-  {
-    IsoSamplerVisP iv = IsoSamplerVis::NewP();
-    iv->SetIsovalue(doc["isovalue"].GetDouble());
-    vis = Vis::Cast(iv);
-  }
-  else
-  {
-    GradientSamplerVisP gv = GradientSamplerVis::NewP();
-    gv->SetTolerance(doc["tolerance"].GetDouble());
-    vis = Vis::Cast(gv);
-  }
+  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex port) override;
 
-  vis->Commit(sourceKey);
+  void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
 
-  VisualizationP visualization = Visualization::NewP();
-  visualization->AddVis(vis);
-  visualization->Commit();
+  QtNodes::NodeValidationState validationState() const override;
 
-  RenderingP r = Rendering::NewP();
-  r->SetTheOwner(0);
-  r->SetTheDatasets(Datasets::NewP());
-  r->SetTheCamera(camera);
-  r->SetTheVisualization(visualization);
-  r->Commit();
+  QString validationMessage() const override;
 
-  RenderingSetP rs = RenderingSet::NewP();
-  rs->AddRendering(r);
-  rs->Commit();
+  QString caption() const override { return QStringLiteral("DensitySampler"); }
 
-  sampler->GetSamples()->clear();
+  QString name() const override { return QStringLiteral("DensitySampler"); }
 
-  sampler->Commit();
-  sampler->Start(rs);
+  bool isValid() override;
 
-#if defined(GXY_WRITE_IMAGES)
-  rs->WaitForDone();
-#endif
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
 
-  sleep(1);
-  result->Commit();
+public Q_SLOTS: 
 
-  ParticlesP p = Particles::Cast(result);
+  virtual void onApply() override;
 
-  if (! p) 
-    std::cerr << "samples aren't particle set?\n";
-  else
-    std::cerr << "Totals: " << p->GetVertexCount() << " vertices, " << p->GetElementCount() << " elements\n";
-}
+private:
 
-}
+  std::shared_ptr<GxyData> input;
+  std::shared_ptr<GxyData> output;
 
+  QFrame *d_properties;
+  QLineEdit *d_nSamples;
+  QLineEdit *d_power;
+};

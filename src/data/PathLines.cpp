@@ -139,8 +139,11 @@ PathLines::GetPLVertices(PLVertex*& p, int& n)
 OsprayObjectP 
 PathLines::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 { 
-  if (! ospData)
+  if (! ospData || hasBeenModified())
+  {
     ospData = OsprayObject::Cast(OsprayPathLines::NewP(PathLines::Cast(kdop)));
+    setModified(false);
+  }
   return ospData;
 } 
 

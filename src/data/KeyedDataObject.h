@@ -122,7 +122,11 @@ public:
 
   void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 
+  void setModified(bool m) { modified = m; }
+  bool hasBeenModified() { return modified; }
+
 protected:
+  bool modified;
   OsprayObjectP ospData;
 	vtkClientSocket *skt;
 	std::string filename;

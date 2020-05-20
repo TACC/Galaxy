@@ -18,32 +18,48 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "OsprayParticles.h"
+#pragma once
 
-using namespace gxy;
+#include <iostream>
 
-OsprayParticles::OsprayParticles(ParticlesP p)
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <cstdlib>
+#include <math.h>
+
+#include <dtypes.h>
+
+#include "Application.h"
+#include "Volume.h"
+#include "Particles.h"
+#include "MultiServerHandler.h"
+
+namespace gxy
 {
-  particles = p;
 
-  OSPGeometry ospg = ospNewGeometry("ddspheres");
-  if (! ospg) 
+class DensitySampleClientServer : public MultiServerHandler
+{
+public:
+  DensitySampleClientServer(SocketHandler *);
+  static void init();
+  bool handle(std::string line, std::string&);
+
+  VolumeP volume;             // volume to be sampled
+  ParticlesP particles;       // particles object to stash samples
+
+  struct Args
   {
-    std::cerr << "Could not create ddspheres geometry!\n";
-    exit(1);
-  }
+    Key   vk;                   // Volume key
+    Key   pk;                   // Particles key
+    int   nSamples;             // total number of samples
+    int   ni,  nj,  nk;         // non-ghosted counts along each local axis
+    int   gi,  gj,  gk;         // ghosted counts along each local axis
+    int   goi, goj, gok;        // offsets of non-ghosted in ghosted
+    int   istep, jstep, kstep;  // strides in ghosted space
+    float ox, oy, oz;           // local grid origin
+    float dx, dy, dz;           // grid step size
+  } args;
+};
 
-  OSPData centers = ospNewData(p->GetNumberOfVertices(), OSP_FLOAT3, p->GetVertices(), OSP_DATA_SHARED_BUFFER);
-  ospCommit(centers);
-  ospSetData(ospg, "centers", centers);
-
-  OSPData data = ospNewData(p->GetNumberOfVertices(), OSP_FLOAT, p->GetData(), OSP_DATA_SHARED_BUFFER);
-  ospCommit(data);
-  ospSetData(ospg, "data", data);
-  
-  ospCommit(ospg);
-
-  std::cerr << "OsprayParticles " << p->GetNumberOfVertices() << " " << ((long)ospg) << "\n";
-
-  theOSPRayObject = (OSPObject)ospg;
 }
