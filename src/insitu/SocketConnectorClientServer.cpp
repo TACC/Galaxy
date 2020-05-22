@@ -115,6 +115,18 @@ SocketConnectorClientServer::handle(string line, string& reply)
 
     return true;
   }
+  else if (cmd == "close;")
+  {
+    if (connector)
+    {
+      connector->Close();
+      reply = "ok";
+    }
+    else
+      reply = "connector not created";
+
+    return true;
+  }
   else if (cmd == "timeout")
   {
     ss >> timeout;

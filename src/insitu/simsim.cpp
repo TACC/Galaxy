@@ -45,11 +45,32 @@ void syntax(char *a)
   exit(0);
 }
 
+#include <signal.h>
+
+static gxy::SocketHandler *master = NULL;
+
+void
+IntHandler(int s)
+{
+  std::cerr << "interrupt\n";
+  if (master)
+  {
+    string cmd = string("close;");
+    if (! master->CSendRecv(cmd))
+      cerr << "sending accept failed... " << cmd << "\n";
+ 
+    master->Disconnect();
+  }
+  exit(0);
+}
+
 int
 main(int argc, char **argv)
 {
   bool dbg = false, atch = false;
   char *dbgarg = NULL;
+
+  signal(SIGINT, IntHandler);
 
   int port = 5001;
   string host = "localhost";
@@ -85,7 +106,6 @@ main(int argc, char **argv)
   char *layout;
   int layout_sz;
 
-  gxy::SocketHandler *master = NULL;
   int status = 1;
 
   if (mpiRank == 0)
@@ -241,18 +261,10 @@ main(int argc, char **argv)
 
     vtkXMLImageDataReader *rdr = vtkXMLImageDataReader::New();
     string fname = datadir + string(myPartDoc["file"].GetString());
-    std::cerr << "FNAME: " << fname << "\n";
     rdr->SetFileName(fname.c_str());
     rdr->Update();
     vtkImageData *vti = rdr->GetOutput();
 
-    {
-      float *p = (float *) vti->GetPointData()->GetArray("noise")->GetVoidPointer(0);
-      for (int i = 0; i < 10; i++)
-        std::cerr << *p++ << " ";
-      std::cerr << "\n";
-    }
-    
     // Only set up the header for the first time step; assumption is both 
     // datasets are defined on the same grid
 
@@ -388,10 +400,31 @@ main(int argc, char **argv)
         skt->Send(interpolated[i], point_count * (isvector[i] ? 3 : 1) * sizeof(float));
       }
     }
+
+    skt->CloseSocket();
+    skt->Delete();
+    
+    std::cerr << "sleeping ";
+    for (int i = 5; i > 0; i--)
+    {
+      if (mpiRank == 0)
+        std::cerr << i << "...";
+      sleep(1);
+    }
+
+    std::cerr << "\n";
+  }
+
+  string cmd = string("close;");
+  if (! master->CSendRecv(cmd))
+  {
+    cerr << "sending accept failed... " << cmd << "\n";
+    status = 0;
   }
 
   if (mpiRank == 0)
     master->Disconnect();
 
   MPI_Finalize();
+  exit(0);
 }
