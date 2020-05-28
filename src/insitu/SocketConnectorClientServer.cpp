@@ -115,6 +115,18 @@ SocketConnectorClientServer::handle(string line, string& reply)
 
     return true;
   }
+  else if (cmd == "commit;")
+  {
+    if (connector)
+    {
+      connector->commit_datasets();
+      reply = "ok";
+    }
+    else
+      reply = "connector not created";
+
+    return true;
+  }
   else if (cmd == "close;")
   {
     if (connector)
@@ -134,6 +146,23 @@ SocketConnectorClientServer::handle(string line, string& reply)
   }
   else
     return false;
+}
+
+void
+SocketConnectorClientServer::Notify(GalaxyObject* o, ObserverEvent id, void *cargo)
+{
+  switch(id)
+  {
+    case ObserverEvent::Updated:
+    {
+      std::cerr << "SocketConnectorClientServer has received an Updated notice\n";
+      return;
+    }
+
+    default:
+      super::Notify(o, id, cargo);
+      return;
+  }
 }
 
 }

@@ -57,7 +57,7 @@ IntHandler(int s)
   {
     string cmd = string("close;");
     if (! master->CSendRecv(cmd))
-      cerr << "sending accept failed... " << cmd << "\n";
+      cerr << "sending close failed... " << cmd << "\n";
  
     master->Disconnect();
   }
@@ -401,6 +401,17 @@ main(int argc, char **argv)
       }
     }
 
+    if (mpiRank == 0)
+    {
+      string cmd = string("commit;");
+      if (! master->CSendRecv(cmd))
+      {
+        cerr << "sending commit failed... " << cmd << "\n";
+        status = 0;
+      }
+    }
+
+
     skt->CloseSocket();
     skt->Delete();
     
@@ -418,7 +429,7 @@ main(int argc, char **argv)
   string cmd = string("close;");
   if (! master->CSendRecv(cmd))
   {
-    cerr << "sending accept failed... " << cmd << "\n";
+    cerr << "sending close failed... " << cmd << "\n";
     status = 0;
   }
 

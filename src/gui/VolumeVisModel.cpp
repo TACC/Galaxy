@@ -115,9 +115,6 @@ VolumeVisModel::onApply()
   loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
   output->setValid(true);
 
-  std::cerr << "VVM: onApply ===================\n";
-  output->print();
-
   GxyModel::onApply();
 }
 

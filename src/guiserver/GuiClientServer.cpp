@@ -69,6 +69,63 @@ GuiClientServer::~GuiClientServer()
 {
 }
 
+void
+GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
+{
+  switch(id)
+  { 
+    case ObserverEvent::Updated:
+    { 
+      if (Datasets::IsA(w))
+      {
+        std::cerr << "GuiClientServer has been notified that the datasets object has updated\n";
+
+        Datasets::DatasetsUpdate *update = (Datasets::DatasetsUpdate *)cargo;
+        if (! update)
+        {
+          std::cerr << "Null cargo?\n";
+          return;
+        }
+        else if (update->typ == Datasets::Added)
+        {
+          std::cerr << "Added " << update->name << "\n";
+          KeyedDataObjectP kdop = datasets->Find(update->name);
+          if (! kdop)
+            std::cerr << "Couldn't find " << update->name << " in datasets\n";
+          else
+            Observe(kdop);
+            
+          return;
+        }
+        else
+        {
+          std::cerr << "Unknown update type\n";
+          return;
+        }
+      }
+      else if (KeyedDataObject::IsA(w))
+      {
+        if (! datasets)
+        {
+          std::cerr << "Got an update from a KeyedDataObject but there's no global datasets object\n";
+          return;
+        }
+        std::string name = datasets->Find((KeyedDataObject*)w);
+        std::cerr << "Update from " << ((name == "") ? "unknown object" : name) << "\n";
+        return;
+      }
+      {
+        std::cerr << "Update came from a " << w->GetClassName() << " object\n";
+        return;
+      }
+    }
+      
+    default:
+      super::Notify(w, id, cargo);
+      return;
+  }
+}
+
 bool
 GuiClientServer::Sample(Document& params, std::string& reply)
 {
@@ -100,7 +157,6 @@ DocumentToString(rapidjson::Document& doc)
   std::string s = "ok";                                                                         \
   replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);         \
   reply = DocumentToString(replyDoc);                                                           \
-  /* std::cerr << "REPLY: " << reply << "\n"; */ \
   return true;                                                                                  \
 }
 
@@ -112,11 +168,39 @@ GuiClientServer::handle(string line, string& reply)
 
   Document::AllocatorType& alloc = replyDoc.GetAllocator();
 
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
-  if (! theDatasets)
+  if (! datasets)
   {
-    theDatasets = Datasets::NewP();
-    MultiServer::Get()->SetGlobal("global datasets", theDatasets);
+    std::cerr << "How are there no datasets attached to this GuiClientServer?\n";
+
+    datasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+    if (! datasets)
+    {
+      datasets = Datasets::NewP();
+      MultiServer::Get()->SetGlobal("global datasets", datasets);
+    }
+
+    std::cerr << "Adding initial observers\n";
+    Observe(datasets);
+
+    for (auto ds = datasets->begin(); ds != datasets->end(); ds++)
+    {
+      std::string name = ds->first;
+
+      auto n = watched_datasets.begin();
+      while (n != watched_datasets.end() && *n != name)
+      {
+        if (*n == name) break;
+        n++;
+      }
+
+      if (n == watched_datasets.end())
+      {
+        std::cerr << "adding observer for " << name << "\n";
+        KeyedDataObjectP kdop = datasets->Find(name);
+        Observe(kdop);
+        watched_datasets.push_back(name);
+      }
+    }
   }
 
   Document doc;
@@ -127,36 +211,46 @@ GuiClientServer::handle(string line, string& reply)
 
   if (cmd == "gui::import")
   {
-    if (! theDatasets->LoadFromJSON(doc))
+    if (! datasets->LoadFromJSON(doc))
       HANDLED_BUT_ERROR_RETURN("import datasets: error in LoadFromJson");
 
-    theDatasets->Commit();
+    datasets->Commit();
 
     HANDLED_OK;
   }
   else if (cmd == "gui::list")
   {
-    if (! theDatasets)
+    if (! datasets)
       HANDLED_BUT_ERROR_RETURN("list: unable to access global data");
 
     Value array(kArrayType);
 
-    vector<string> names = theDatasets->GetDatasetNames();
+    vector<string> names = datasets->GetDatasetNames();
     for (vector<string>::iterator it = names.begin(); it != names.end(); ++it)
     {
-      KeyedDataObjectP kdop = theDatasets->Find(std::string(*it));
-     
+      std::string name(*it);
+      KeyedDataObjectP kdop = datasets->Find(name);
+
+      auto i = watched_datasets.begin();
+      while (i != watched_datasets.end() && *i != name) i++;
+
+      if (i == watched_datasets.end())
+      {
+        Observe(kdop);
+        watched_datasets.push_back(name);
+      }
+        
       int type;
-      if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
-      else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
-      else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
-      else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+      if (kdop->getclass() ==  Volume::ClassType) type = 0;
+      else if (kdop->getclass() ==  Triangles::ClassType) type = 1;
+      else if (kdop->getclass() ==  Particles::ClassType) type = 2;
+      else if (kdop->getclass() ==  PathLines::ClassType) type = 3;
       else type = -1;
 
       int ncomp;
       if (type == 0)
       {
-        gxy::VolumeP v = gxy::Volume::Cast(kdop);
+        VolumeP v = Volume::Cast(kdop);
         ncomp = v->get_number_of_components();
       }
       else
@@ -253,7 +347,7 @@ GuiClientServer::handle(string line, string& reply)
 
     clientWindow->rendering->SetTheVisualization(clientWindow->visualization);
     clientWindow->rendering->SetTheCamera(clientWindow->camera);
-    clientWindow->rendering->SetTheDatasets(theDatasets);
+    clientWindow->rendering->SetTheDatasets(datasets);
     clientWindow->rendering->Commit();
 
     clientWindow->renderingSet->Commit();
@@ -285,16 +379,16 @@ GuiClientServer::handle(string line, string& reply)
     KeyedDataObjectP kdop = sampler->getResult();
     
     int type;
-    if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
-    else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
-    else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
-    else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+    if (kdop->getclass() ==  Volume::ClassType) type = 0;
+    else if (kdop->getclass() ==  Triangles::ClassType) type = 1;
+    else if (kdop->getclass() ==  Particles::ClassType) type = 2;
+    else if (kdop->getclass() ==  PathLines::ClassType) type = 3;
     else type = -1;
 
     int ncomp;
     if (type == 0)
     {
-      gxy::VolumeP v = gxy::Volume::Cast(kdop);
+      VolumeP v = Volume::Cast(kdop);
       ncomp = v->get_number_of_components();
     }
     else
@@ -346,16 +440,16 @@ GuiClientServer::handle(string line, string& reply)
     KeyedDataObjectP kdop = sampler->getResult();
     
     int type;
-    if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
-    else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
-    else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
-    else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+    if (kdop->getclass() ==  Volume::ClassType) type = 0;
+    else if (kdop->getclass() ==  Triangles::ClassType) type = 1;
+    else if (kdop->getclass() ==  Particles::ClassType) type = 2;
+    else if (kdop->getclass() ==  PathLines::ClassType) type = 3;
     else type = -1;
 
     int ncomp;
     if (type == 0)
     {
-      gxy::VolumeP v = gxy::Volume::Cast(kdop);
+      VolumeP v = Volume::Cast(kdop);
       ncomp = v->get_number_of_components();
     }
     else
@@ -407,10 +501,10 @@ GuiClientServer::handle(string line, string& reply)
     KeyedDataObjectP kdop = sampler->getResult();
     
     int type;
-    if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
-    else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
-    else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
-    else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+    if (kdop->getclass() ==  Volume::ClassType) type = 0;
+    else if (kdop->getclass() ==  Triangles::ClassType) type = 1;
+    else if (kdop->getclass() ==  Particles::ClassType) type = 2;
+    else if (kdop->getclass() ==  PathLines::ClassType) type = 3;
     else type = -1;
 
     float m, M;
@@ -497,10 +591,10 @@ GuiClientServer::handle(string line, string& reply)
     KeyedDataObjectP kdop = streamtracer->getResult();
     
     int type;
-    if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
-    else if (kdop->getclass() ==  gxy::Triangles::ClassType) type = 1;
-    else if (kdop->getclass() ==  gxy::Particles::ClassType) type = 2;
-    else if (kdop->getclass() ==  gxy::PathLines::ClassType) type = 3;
+    if (kdop->getclass() ==  Volume::ClassType) type = 0;
+    else if (kdop->getclass() ==  Triangles::ClassType) type = 1;
+    else if (kdop->getclass() ==  Particles::ClassType) type = 2;
+    else if (kdop->getclass() ==  PathLines::ClassType) type = 3;
     else type = -1;
 
     float m, M;

@@ -31,12 +31,14 @@
 #include "MultiServerHandler.h"
 #include "GuiRendering.h"
 
+#include "GalaxyObject.h"
+
 #include "Filter.h"
 
 namespace gxy
 {
 
-class GuiClientServer : public MultiServerHandler
+class GuiClientServer : public MultiServerHandler, public GalaxyObject
 {
   struct ClientWindow
   {
@@ -62,7 +64,7 @@ class GuiClientServer : public MultiServerHandler
   
 public:
   static void init();
-  bool handle(std::string line, std::string& reply);
+  bool handle(std::string line, std::string& reply) override;
   virtual ~GuiClientServer();
 
   GuiClientServer(SocketHandler *sh) : MultiServerHandler(sh)
@@ -75,6 +77,8 @@ public:
       datasets = Datasets::NewP();
       MultiServer::Get()->SetGlobal("global datasets", datasets);
     }
+
+    Observe(datasets);
 
     renderer = Renderer::NewP();
     renderer->Commit();
@@ -113,11 +117,15 @@ public:
   {
     clientWindows.erase(id);
   }
-    
+
+  virtual void Notify(GalaxyObject* o, ObserverEvent id, void *cargo) override;
+
 private:
   bool        first;
   RendererP   renderer;
   DatasetsP   datasets;
+
+  std::vector<std::string> watched_datasets;
 
   std::map<std::string, std::shared_ptr<ClientWindow>> clientWindows;
   std::map<std::string, std::shared_ptr<Filter>> filters;

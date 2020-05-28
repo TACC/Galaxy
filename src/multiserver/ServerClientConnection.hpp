@@ -36,11 +36,8 @@ public:
     return NULL;
   }
     
-  ServerClientConnection(int cfd, int dfd) : SocketHandler(cfd, dfd)
+  ServerClientConnection(int cfd, int dfd, int efd) : SocketHandler(cfd, dfd, efd)
   {
-    control_fd = cfd;
-    data_fd = dfd;
-
     if (pthread_create(&tid, NULL, ServerClientConnection::thread, (void *)this))
       std::cerr << "error starting client handler thread";
   }
@@ -126,7 +123,6 @@ public:
   }
 
 private:
-  int control_fd, data_fd;
   pthread_t tid;
 };
 

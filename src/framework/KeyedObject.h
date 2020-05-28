@@ -140,6 +140,9 @@ extern KeyedObjectFactory* GetTheKeyedObjectFactory();
 class KeyedObject : public GalaxyObject
 {
   friend class KeyedObjectFactory;
+
+  GALAXY_OBJECT(KeyedObject)
+
 public:
   KeyedObject(KeyedObjectClass c, Key k); //!< constructor
   virtual ~KeyedObject(); //!< destructor

@@ -38,8 +38,8 @@ using namespace gxy;
 
 MultiServerSocket::MultiServerSocket(const char *host, int port)
 {
-  pthread_mutex_init(&c_lock, NULL);
-  pthread_mutex_init(&d_lock, NULL);
+  for (int i = 0; i < 3; i++)
+    pthread_mutex_init(&locks[i], NULL);
 
   struct hostent *server;
 
@@ -56,23 +56,21 @@ MultiServerSocket::MultiServerSocket(const char *host, int port)
   bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
   serv_addr.sin_port = htons(port);
 
-  if ((control_fd = connect_fd((struct sockaddr*)&serv_addr)) < 0)
+  for (int i = 0; i < 3; i++)
   {
-    perror("ERROR opening control socket");
-    exit(1);
-  }
-
-  if ((data_fd = connect_fd((struct sockaddr*)&serv_addr)) < 0)
-  {
-    perror("ERROR opening data sockets");
-    exit(1);
+    fds[i] = connect_fd((struct sockaddr*)&serv_addr)) < 0)
+    if (fds[i] < 0)
+    {
+      perror("ERROR opening multiserver socket");
+      exit(1);
+    }
   }
 }
 
 MultiServerSocket::~MultiServerSocket()
 {
-  pthread_mutex_destroy(&c_lock);
-  pthread_mutex_destroy(&d_lock);
+  for (int i = 0; i < 3; i++)
+    pthread_mutex_destroy(&locks[i]);
 }
 
 int

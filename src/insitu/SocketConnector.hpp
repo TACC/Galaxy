@@ -27,7 +27,6 @@
 #pragma once
 
 #include <iostream>
-#include <map>
 #include <sstream>
 
 #include <string.h>
@@ -114,7 +113,7 @@ protected:
 
   int wait_time = 100000;  // msec
 
-  std::map<std::string, VolumeP> variables;
+  DatasetsP variables;
 
   vtkServerSocket *sskt = NULL;
 

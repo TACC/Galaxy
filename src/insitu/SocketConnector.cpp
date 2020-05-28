@@ -58,33 +58,25 @@ void
 SocketConnector::initialize()
 {
   super::initialize();
+  variables = Datasets::NewP();
 }
 
 VolumeP
 SocketConnector::findVariable(std::string name)
 {
-  auto it = variables.find(name);
-  if (it == variables.end())
-    return NULL;
-  else
-    return it->second;
+  return Volume::Cast(variables->Find(name));
 }
 
 int
 SocketConnector::serialSize()
 {
-  size_t size = super::serialSize() + 3*sizeof(int);
-
-  for (auto v : variables)
-    size += v.first.size() + sizeof(Key) + 1;
-
-  return size;
+  return 2 * sizeof(int) + variables->serialSize();
 }
 
 unsigned char *
 SocketConnector::serialize(unsigned char *p)
 {
-  p = super::serialize(p);
+  p = super::deserialize(p);
 
   *(int *)p = port;
   p += sizeof(int);
@@ -92,17 +84,7 @@ SocketConnector::serialize(unsigned char *p)
   *(int *)p = wait_time;
   p += sizeof(int);
 
-  *(int *)p = variables.size();
-  p += sizeof(int);
-
-  for (auto v : variables)
-  { 
-    strcpy((char *)p, v.first.c_str());
-    p += v.first.size() + 1;
-
-    *(Key *)p = v.second->getkey();
-    p += sizeof(Key);
-  }
+  p = variables->serialize(p);
 
   return p;
 }
@@ -118,17 +100,7 @@ SocketConnector::deserialize(unsigned char *p)
   wait_time = *(int *)p;
   p += sizeof(int);
 
-  int n = *(int *)p;
-  p += sizeof(int);
-
-  for (auto i = 0; i < n; i++)
-  {
-    std::string name = std::string((char *)p);
-    p += name.size() + 1;
-    VolumeP volume = Volume::GetByKey(*(Key *)p);
-    p += sizeof(Key);
-    addVariable(name, volume);
-  }
+  p = variables->deserialize(p);
 
   return p;
 }
@@ -136,15 +108,15 @@ SocketConnector::deserialize(unsigned char *p)
 void
 SocketConnector::publish(DatasetsP datasets)
 {
-  for (auto a: variables)
-    datasets->Insert(a.first, a.second);
+  for (auto a = variables->begin(); a != variables->end(); a++)
+    datasets->Insert(a->first, a->second);
 }
 
 void
 SocketConnector::commit_datasets()
 {
-  for (auto a: variables)
-    a.second->Commit();
+  for (auto a = variables->begin(); a != variables->end(); a++)
+    a->second->Commit();
 }
 
 bool
@@ -157,7 +129,7 @@ SocketConnector::local_commit(MPI_Comm c)
 void
 SocketConnector::addVariable(std::string name, VolumeP volume)
 {
-  variables[name] = volume;
+  variables->Insert(name, volume);
 }
 
 void
@@ -178,7 +150,7 @@ bool
 SocketConnector::local_open(MPI_Comm c)
 {
   sskt = vtkServerSocket::New();
-  sskt->CreateServer(local_port);
+  sskt->CreateServer(port + GetTheApplication()->GetRank()) ;
 
   return false;
 }
@@ -287,7 +259,7 @@ bool SocketConnector::local_accept(MPI_Comm c)
       exit(0);
     }
 
-    VolumeP volume = variables[name];
+    VolumeP volume = findVariable(name);
     if (! volume->get_samples())
     {
       volume->set_type(Volume::FLOAT);
@@ -322,7 +294,7 @@ bool SocketConnector::local_accept(MPI_Comm c)
       volume->set_boxes(lb, gb);
 
       volume->set_samples(malloc(gcounts[0] * gcounts[1] * gcounts[2] * nc * sizeof(float)));
-      volume->local_commit(c);
+      // volume->local_commit(c);
     }
 
     int ii, jj, kk;
@@ -336,9 +308,9 @@ bool SocketConnector::local_accept(MPI_Comm c)
     }
   }
 
-  for (auto it : variables)
+  for (auto it = variables->begin(); it != variables->end(); it++)
   {
-    VolumeP v = it.second;
+    VolumeP v = Volume::Cast(it->second);
 
     struct S
     {

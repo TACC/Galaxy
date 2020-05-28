@@ -49,9 +49,21 @@ class Datasets : public KeyedObject
 {
   KEYED_OBJECT_SUBCLASS(Datasets, KeyedObject)
 
+public:
+  enum DatasetsUpdateType
+  {
+    Added
+  };
+
+  struct DatasetsUpdate 
+  {
+    DatasetsUpdate(DatasetsUpdateType t, std::string n) : typ(t), name(n) {}
+    DatasetsUpdateType typ;
+    std::string name;
+  };
+
 	using datasets_t = std::map<std::string, KeyedDataObjectP>;
 
-public:
 	void initialize(); //!< initialize this Datasets object
 	virtual	~Datasets(); //!< default destructor
 
@@ -62,10 +74,7 @@ public:
 	/* \param name the name for the KeyedDataObject
 	 * \param val a pointer to the KeyedDataObject
 	 */
-  void Insert(std::string name, KeyedDataObjectP val) 
-  {
-  	datasets.insert(std::pair<std::string, KeyedDataObjectP>(name, val));
-  }
+  void Insert(std::string name, KeyedDataObjectP val);
 
   //! find the Key for a KeyedDataObject in this Datasets
   /*! \param name the name of the desired KeyedDataObject
@@ -102,6 +111,30 @@ public:
   	else return (*it).second;
   }
 
+  //! Search the Datasets for an KeyedDataObjectP and, if found, return its name - othersize, empty string
+  /*! \param KeyedDataObjectP to search for
+   * \returns its name, if found, or empty string otherwise
+   */
+  std::string Find(KeyedDataObjectP kdop)
+  {
+  	std::map<std::string, KeyedDataObjectP>::iterator it = datasets.begin();
+    while (((*it).second != kdop) && (it != datasets.end())) it++;
+  	if (it == datasets.end()) return std::string("");
+  	else return (*it).first;
+  }
+
+  //! Search the Datasets for an KeyedDataObject* and, if found, return its name - othersize, empty string
+  /*! \param KeyedDataObjectP to search for
+   * \returns its name, if found, or empty string otherwise
+   */
+  std::string Find(KeyedDataObject* kdo)
+  {
+  	std::map<std::string, KeyedDataObjectP>::iterator it = datasets.begin();
+    while (((*it).second.get() != kdo) && (it != datasets.end())) it++;
+  	if (it == datasets.end()) return std::string("");
+  	else return (*it).first;
+  }
+
   //! delete a data object
   /*! \param name the name of the dataset to drop
    */
@@ -115,6 +148,7 @@ public:
     else
     {
       datasets.erase(name);
+      NotifyObservers(gxy::ObserverEvent::Updated, (void *)name.c_str());
       return true;
     }
   }
@@ -139,11 +173,11 @@ public:
   //! return the i'th in this Datasets (non-primary)
   Key get_key(int i) { return keys[i]; }
 
-protected:
-
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *ptr);
   virtual unsigned char *deserialize(unsigned char *ptr);
+
+protected:
 
 	bool loadTyped(rapidjson::Value& v);
 

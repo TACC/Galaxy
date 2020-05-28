@@ -41,14 +41,15 @@ namespace gxy
 SocketHandler::SocketHandler()
 {
   is_connected = false;
-  pthread_mutex_init(&c_lock, NULL);
-  pthread_mutex_init(&d_lock, NULL);
+  for (int i = 0; i < 3; i++)
+    pthread_mutex_init(&locks[i], NULL);
 }
 
-SocketHandler::SocketHandler(int cfd, int dfd) : SocketHandler::SocketHandler() 
+SocketHandler::SocketHandler(int cfd, int dfd, int efd) : SocketHandler::SocketHandler() 
 {
-  data_fd = dfd;
-  control_fd = cfd;
+  fds[0] = cfd;
+  fds[1] = dfd;
+  fds[2] = efd;
 }
 
 bool SocketHandler::Connect(std::string host, int port)
@@ -64,8 +65,8 @@ bool SocketHandler::Connect(char *host, int port)
     return true;
   }
 
-  pthread_mutex_init(&c_lock, NULL);
-  pthread_mutex_init(&d_lock, NULL);
+  for (int i = 0; i < 3; i++)
+    pthread_mutex_init(&locks[i], NULL);
 
   struct hostent *server;
 
@@ -82,17 +83,12 @@ bool SocketHandler::Connect(char *host, int port)
   bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
   serv_addr.sin_port = htons(port);
 
-  if ((control_fd = connect_fd((struct sockaddr*)&serv_addr)) < 0)
-  {
-    perror("ERROR opening control socket");
-    return false;
-  }
-
-  if ((data_fd = connect_fd((struct sockaddr*)&serv_addr)) < 0)
-  {
-    perror("ERROR opening data sockets");
-    return false;
-  }
+  for (int i = 0; i < 3; i++)
+    if ((fds[i] = connect_fd((struct sockaddr*)&serv_addr)) < 0)
+    {
+      perror("ERROR opening SocketHandler socket");
+      return false;
+    }
 
   is_connected = true;
   return true;
@@ -100,8 +96,8 @@ bool SocketHandler::Connect(char *host, int port)
 
 SocketHandler::~SocketHandler()
 {
-  pthread_mutex_destroy(&c_lock);
-  pthread_mutex_destroy(&d_lock);
+  for (int i = 0; i < 3; i++)
+    pthread_mutex_destroy(&locks[i]);
 }
 
 int

@@ -262,6 +262,7 @@ KeyedObject::Commit()
 {
 	CommitMsg msg(this);
 	msg.Broadcast(true, true);
+  NotifyObservers(ObserverEvent::Updated, (void *)this);
   return get_error() == 0;
 }
 

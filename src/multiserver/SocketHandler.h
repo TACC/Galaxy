@@ -37,6 +37,8 @@
 namespace gxy
 {
 
+
+
 class SocketHandler
 {
 public:
@@ -45,7 +47,8 @@ public:
   //! Creator when control and data sockets are already available
   //! \param cfd file descriptor for control socket
   //! \param dfd file descriptor for data socket
-  SocketHandler(int cfd, int dfd);
+  //! \param efd file descriptor for events socket
+  SocketHandler(int cfd, int dfd, int efd);
 
   ~SocketHandler();
 
@@ -58,18 +61,18 @@ public:
   //! Given a set of memory pointers and sizes, send them as a contiguous multi-part message using the control socket
   bool CSendV(char** buf, int* size)
   {
-     pthread_mutex_lock(&c_lock);
-     bool b = SendV(control_fd, buf, size);
-     pthread_mutex_unlock(&c_lock);
+     pthread_mutex_lock(&locks[1]);
+     bool b = SendV(fds[1], buf, size);
+     pthread_mutex_unlock(&locks[1]);
      return b;
   }
 
   //! Given a memory pointer and a size, send a message using the control socket
   bool CSend(const char *buf, int size)
   {
-     pthread_mutex_lock(&c_lock);
-     bool b = Send(control_fd, buf, size);
-     pthread_mutex_unlock(&c_lock);
+     pthread_mutex_lock(&locks[1]);
+     bool b = Send(fds[1], buf, size);
+     pthread_mutex_unlock(&locks[1]);
      return b;
   } 
 
@@ -83,60 +86,60 @@ public:
   //! Given a string, send a message using the control socket
   bool CSend(std::string s)
   {
-     pthread_mutex_lock(&c_lock);
-     bool b = Send(control_fd, s);
-     pthread_mutex_unlock(&c_lock);
+     pthread_mutex_lock(&locks[1]);
+     bool b = Send(fds[1], s);
+     pthread_mutex_unlock(&locks[1]);
      return b;
   }
 
   //! Given a set of references to pointers to memory and a set of references to sizes, receive a multi-part message using the conrol socket
   bool CRecv(char*& buf, int& size)
   {
-     pthread_mutex_lock(&c_lock);
-     bool b = Recv(control_fd, buf, size);
-     pthread_mutex_unlock(&c_lock);
+     pthread_mutex_lock(&locks[1]);
+     bool b = Recv(fds[1], buf, size);
+     pthread_mutex_unlock(&locks[1]);
      return b;
   }
 
   //! Given a reference to a string, receive a message using the control socket
   bool CRecv(std::string& s)
   {
-     pthread_mutex_lock(&c_lock);
-     bool b = Recv(control_fd, s);
-     pthread_mutex_unlock(&c_lock);
+     pthread_mutex_lock(&locks[1]);
+     bool b = Recv(fds[1], s);
+     pthread_mutex_unlock(&locks[1]);
      return b;
   }
 
   //! Wait for the control socket to be unlocked
   //! \param sec max time to wait
-  bool CWait(float sec) { bool b = Wait(control_fd, sec); return b; }
+  bool CWait(float sec) { bool b = Wait(fds[1], sec); return b; }
 
   //! Atomically send a message and receive a reply using the control socket
   bool CSendRecv(std::string& s)
   {
-    pthread_mutex_lock(&c_lock);
-    bool b = Send(control_fd, s);
+    pthread_mutex_lock(&locks[1]);
+    bool b = Send(fds[1], s);
     if (b)
-      b = Recv(control_fd, s);
-    pthread_mutex_unlock(&c_lock);
+      b = Recv(fds[1], s);
+    pthread_mutex_unlock(&locks[1]);
     return b;
   }
 
   //! Given a set of memory pointers and sizes, send them as a contiguous multi-part message using the data socket
   bool DSendV(char** buf, int* size)
   {
-     pthread_mutex_lock(&d_lock);
-     bool b = SendV(data_fd, buf, size);
-     pthread_mutex_unlock(&d_lock);
+     pthread_mutex_lock(&locks[0]);
+     bool b = SendV(fds[0], buf, size);
+     pthread_mutex_unlock(&locks[0]);
      return b;
   }
 
   //! Given a memory pointer and a size, send a message using the data socket
   bool DSend(const char *buf, int size)
   {
-     pthread_mutex_lock(&d_lock);
-     bool b = Send(data_fd, buf, size);
-     pthread_mutex_unlock(&d_lock);
+     pthread_mutex_lock(&locks[0]);
+     bool b = Send(fds[0], buf, size);
+     pthread_mutex_unlock(&locks[0]);
      return b;
   } 
 
@@ -150,50 +153,50 @@ public:
   //! Given a memory pointer and a size, send a message using the data socket
   bool DSend(std::string s)
   {
-     pthread_mutex_lock(&d_lock);
-     bool b = Send(data_fd, s);
-     pthread_mutex_unlock(&d_lock);
+     pthread_mutex_lock(&locks[0]);
+     bool b = Send(fds[0], s);
+     pthread_mutex_unlock(&locks[0]);
      return b;
   }
 
   //! Given a set of references to pointers to memory and a set of references to sizes, receive a multi-part message using the data socket
   bool DRecv(char*& buf, int& size)
   {
-     pthread_mutex_lock(&d_lock);
-     bool b = Recv(data_fd, buf, size);
-     pthread_mutex_unlock(&d_lock);
+     pthread_mutex_lock(&locks[0]);
+     bool b = Recv(fds[0], buf, size);
+     pthread_mutex_unlock(&locks[0]);
      return b;
   }
 
   //! Given a reference to a string, receive a message using the data socket
   bool DRecv(std::string& s)
   {
-     pthread_mutex_lock(&d_lock);
-     bool b = Recv(data_fd, s);
-     pthread_mutex_unlock(&d_lock);
+     pthread_mutex_lock(&locks[0]);
+     bool b = Recv(fds[0], s);
+     pthread_mutex_unlock(&locks[0]);
      return b;
   }
 
   //! Atomically send a message and receive a reply usint the data socket
   bool DSendRecv(std::string& s)
   {
-    pthread_mutex_lock(&d_lock);
-    bool b = Send(data_fd, s);
+    pthread_mutex_lock(&locks[0]);
+    bool b = Send(fds[0], s);
     if (b)
-      b = Recv(data_fd, s);
-    pthread_mutex_unlock(&d_lock);
+      b = Recv(fds[0], s);
+    pthread_mutex_unlock(&locks[0]);
     return b;
   }
 
   //! Wait for the data socket to be unlocked
   //! \param sec max time to wait
-  bool DWait(float sec) { bool b = Wait(data_fd, sec); return b; }
+  bool DWait(float sec) { bool b = Wait(fds[0], sec); return b; }
 
   //! Disconnect
   void Disconnect()
   {
-    close(data_fd);
-    close(control_fd);
+    for (int i = 0; i < 3; i++)
+      close(fds[i]);
     is_connected = false;
   }
 
@@ -204,6 +207,7 @@ public:
   
 private:
   bool show = false;
+  bool is_connected = false;
 
   bool SendV(int fd, char** buf, int* size);
   bool Send(int fd, const char *buf, int size);
@@ -223,11 +227,8 @@ private:
 
   int connect_fd(struct sockaddr*);
 
-  int data_fd;
-  int control_fd;
-  bool is_connected;
-  pthread_mutex_t c_lock;
-  pthread_mutex_t d_lock;
+  int fds[3];
+  pthread_mutex_t locks[3];
 };
 
 }

@@ -112,7 +112,7 @@ MultiServer::watch(void *d)
       struct sockaddr_in cli_addr;
       unsigned int cli_len = sizeof(cli_addr);
 
-      int dfd, cfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
+      int efd, dfd, cfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
 
       tv = {1, 0};
 
@@ -121,15 +121,9 @@ MultiServer::watch(void *d)
         reply = "connection failed";
 
       dfd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
+      efd = accept(me->fd, (struct sockaddr *)&cli_addr, &cli_len);
 
-      ServerClientConnection *scc = new ServerClientConnection(cfd, dfd);
-
-      // pthread_t tid;
-      // if (pthread_create(&tid, NULL, ServerClientConnection::thread, (void *)scc))
-      // reply = "error starting client handler thread";
-      // 
-      // connection_threads.push_back(tid);
-      // cerr << reply << "\n";
+      ServerClientConnection *scc = new ServerClientConnection(cfd, dfd, efd);
     }
   }
 

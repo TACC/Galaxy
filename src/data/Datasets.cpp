@@ -73,6 +73,22 @@ Datasets::Commit()
 	return KeyedObject::Commit();
 }
 
+void
+Datasets::Insert(std::string name, KeyedDataObjectP val)
+{
+  if (datasets.find(name) != datasets.end())
+  {
+    // std::cerr << "replacing old datasets entry for " << name << "\n";
+    datasets.erase(name);
+  }
+
+  datasets.insert(std::pair<std::string, KeyedDataObjectP>(name, val));
+
+  DatasetsUpdate update(Added, name);
+  NotifyObservers(gxy::ObserverEvent::Updated, (void *)&update);
+}
+
+
 bool
 Datasets::loadTyped(Value& v)
 {

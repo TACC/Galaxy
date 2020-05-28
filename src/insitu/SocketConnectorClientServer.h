@@ -35,14 +35,16 @@
 namespace gxy
 {
 
-class SocketConnectorClientServer : public MultiServerHandler
+class SocketConnectorClientServer : public MultiServerHandler, public GalaxyObject
 {
 public:
   SocketConnectorClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}
   ~SocketConnectorClientServer() { if (connector) { connector->Wait(); connector = NULL; } }
 
   static void init();
-  bool handle(std::string line, std::string& reply);
+  bool handle(std::string line, std::string& reply) override;
+
+  virtual void Notify(GalaxyObject* o, ObserverEvent id, void *cargo) override;
 
 private:
 
