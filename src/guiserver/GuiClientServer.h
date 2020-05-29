@@ -38,7 +38,7 @@
 namespace gxy
 {
 
-class GuiClientServer : public MultiServerHandler, public GalaxyObject
+class GuiClientServer : public MultiServerHandler
 {
   struct ClientWindow
   {

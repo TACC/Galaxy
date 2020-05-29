@@ -20,9 +20,9 @@
 
 /*! \file SocketHandler.h
  *  \brief SocketHandler handles comminications between a client and a server,
- *  using two connections: one for control and the other for data.   A locking
- *  mechanism is used so that multi-part messages and send/receive pairs are
- *  safe.
+ *  using three connections: one for control, one for data and a third for
+ *  asynchronous events. A locking mechanism is used so that multi-part messages
+ *  and send/receive pairs are
  */
 
 #pragma once
@@ -36,8 +36,6 @@
 
 namespace gxy
 {
-
-
 
 class SocketHandler
 {
@@ -92,7 +90,7 @@ public:
      return b;
   }
 
-  //! Given a set of references to pointers to memory and a set of references to sizes, receive a multi-part message using the conrol socket
+  //! Given a set of references to pointers to memory and a set of references to sizes, receive a multi-part message using the control socket
   bool CRecv(char*& buf, int& size)
   {
      pthread_mutex_lock(&locks[1]);
@@ -192,19 +190,86 @@ public:
   //! \param sec max time to wait
   bool DWait(float sec) { bool b = Wait(fds[0], sec); return b; }
 
-  //! Disconnect
-  void Disconnect()
+  //! Given a set of memory pointers and sizes, send them as a contiguous multi-part message using the event socket
+  bool ESendV(char** buf, int* size)
   {
-    for (int i = 0; i < 3; i++)
-      close(fds[i]);
-    is_connected = false;
+     pthread_mutex_lock(&locks[2]);
+     bool b = SendV(fds[2], buf, size);
+     pthread_mutex_unlock(&locks[2]);
+     return b;
   }
+
+  //! Given a memory pointer and a size, send a message using the event socket
+  bool ESend(const char *buf, int size)
+  {
+     pthread_mutex_lock(&locks[2]);
+     bool b = Send(fds[2], buf, size);
+     pthread_mutex_unlock(&locks[2]);
+     return b;
+  } 
+
+  //! Given a memory pointer and a size, send a message using the event socket
+  bool ESend(char* buf, int size)
+  {
+     bool b = ESend((const char *)buf, size);
+     return b;
+  }
+
+  //! Given a string, send a message using the event socket
+  bool ESend(std::string s)
+  {
+     pthread_mutex_lock(&locks[2]);
+     bool b = Send(fds[2], s);
+     pthread_mutex_unlock(&locks[2]);
+     return b;
+  }
+
+  //! Given a set of references to pointers to memory and a set of references to sizes, receive a multi-part message using the event socket
+  bool ERecv(char*& buf, int& size)
+  {
+     pthread_mutex_lock(&locks[2]);
+     bool b = Recv(fds[2], buf, size);
+     pthread_mutex_unlock(&locks[2]);
+     return b;
+  }
+
+  //! Given a reference to a string, receive a message using the event socket
+  bool ERecv(std::string& s)
+  {
+     pthread_mutex_lock(&locks[2]);
+     bool b = Recv(fds[2], s);
+     pthread_mutex_unlock(&locks[2]);
+     return b;
+  }
+
+  //! Wait for the event socket to be unlocked
+  //! \param sec max time to wait
+  bool EWait(float sec) { bool b = Wait(fds[2], sec); return b; }
+
+  //! Atomically send a message and receive a reply using the event socket
+  bool ESendRecv(std::string& s)
+  {
+    pthread_mutex_lock(&locks[2]);
+    bool b = Send(fds[2], s);
+    if (b)
+      b = Recv(fds[2], s);
+    pthread_mutex_unlock(&locks[2]);
+    return b;
+  }
+
+  //! Default event handler
+  virtual void EventHandler(gxy::SocketHandler *);
+
+  //! Disconnect
+  void Disconnect();
 
   //! test whether connection exists
   bool IsConnected() { return is_connected; }
 
   void showConversation(bool yn) { show = yn; }
   
+  bool event_thread_quit = false;
+
 private:
   bool show = false;
   bool is_connected = false;
@@ -229,6 +294,7 @@ private:
 
   int fds[3];
   pthread_mutex_t locks[3];
+  pthread_t event_tid = (pthread_t)-1;
 };
 
 }

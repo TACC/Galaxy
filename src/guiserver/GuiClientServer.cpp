@@ -69,6 +69,15 @@ GuiClientServer::~GuiClientServer()
 {
 }
 
+static std::string 
+DocumentToString(rapidjson::Document& doc)
+{
+  rapidjson::StringBuffer strbuf(0, 65536);
+  rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+  doc.Accept(writer);
+  return strbuf.GetString();
+}
+
 void
 GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
 {
@@ -79,8 +88,9 @@ GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
       if (Datasets::IsA(w))
       {
         std::cerr << "GuiClientServer has been notified that the datasets object has updated\n";
-
         Datasets::DatasetsUpdate *update = (Datasets::DatasetsUpdate *)cargo;
+
+
         if (! update)
         {
           std::cerr << "Null cargo?\n";
@@ -89,12 +99,21 @@ GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
         else if (update->typ == Datasets::Added)
         {
           std::cerr << "Added " << update->name << "\n";
+
           KeyedDataObjectP kdop = datasets->Find(update->name);
           if (! kdop)
             std::cerr << "Couldn't find " << update->name << " in datasets\n";
           else
             Observe(kdop);
-            
+
+          Document replyDoc;
+          replyDoc.SetObject();
+          Document::AllocatorType& alloc = replyDoc.GetAllocator();
+          replyDoc.AddMember("action", rapidjson::Value().SetString("added"), alloc);
+          replyDoc.AddMember("argument", rapidjson::Value().SetString(update->name.data(), update->name.size(), alloc), alloc);
+          std::string reply = DocumentToString(replyDoc);
+
+          getTheSocketHandler()->ESend(reply);
           return;
         }
         else
@@ -111,9 +130,25 @@ GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
           return;
         }
         std::string name = datasets->Find((KeyedDataObject*)w);
-        std::cerr << "Update from " << ((name == "") ? "unknown object" : name) << "\n";
+        if (name != "")
+        {
+          std::cerr << "Modified " << name << "\n";
+
+          Document replyDoc;
+          replyDoc.SetObject();
+          Document::AllocatorType& alloc = replyDoc.GetAllocator();
+          replyDoc.AddMember("action", rapidjson::Value().SetString("modified"), alloc);
+          replyDoc.AddMember("argument", rapidjson::Value().SetString(name.data(), name.size(), alloc), alloc);
+          std::string reply = DocumentToString(replyDoc);
+
+          getTheSocketHandler()->ESend(reply);
+        }
+        else
+          std::cerr << "Update from unknown object: " << name << "\n";
+
         return;
       }
+      else
       {
         std::cerr << "Update came from a " << w->GetClassName() << " object\n";
         return;
@@ -131,15 +166,6 @@ GuiClientServer::Sample(Document& params, std::string& reply)
 {
   reply = "OK";
   return true;
-}
-
-static std::string 
-DocumentToString(rapidjson::Document& doc)
-{
-  rapidjson::StringBuffer strbuf(0, 65536);
-  rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-  doc.Accept(writer);
-  return strbuf.GetString();
 }
 
 #define HANDLED_BUT_ERROR_RETURN(msg)                                                           \
@@ -607,7 +633,6 @@ GuiClientServer::handle(string line, string& reply)
     replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), replyDoc.GetAllocator());
     replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), replyDoc.GetAllocator());
 
-#if 1
     Box *box = kdop->get_global_box();
     rapidjson::Value boxv(rapidjson::kArrayType);
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), replyDoc.GetAllocator());
@@ -617,7 +642,6 @@ GuiClientServer::handle(string line, string& reply)
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), replyDoc.GetAllocator());
     boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), replyDoc.GetAllocator());
     replyDoc.AddMember("box", boxv, replyDoc.GetAllocator());
-#endif
 
     HANDLED_OK;
   }

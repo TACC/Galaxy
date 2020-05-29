@@ -37,6 +37,8 @@ void syntax(char *a)
     cerr << "syntax: " << " [options] data.json\n";
     cerr << "options:\n";
     cerr << "  -h host          host name (localhost)\n";
+    cerr << "  -d delay         wait delay sec between timesteps (5)\n";
+    cerr << "  -n nsteps        number of timesteps (10)\n";
     cerr << "  -p port          port (5001)\n";
     cerr << "  -l layout        layout file (layout.json)\n";
   }
@@ -69,6 +71,8 @@ main(int argc, char **argv)
 {
   bool dbg = false, atch = false;
   char *dbgarg = NULL;
+  int delay = 5;
+  int nsteps = 10;
 
   signal(SIGINT, IntHandler);
 
@@ -91,6 +95,8 @@ main(int argc, char **argv)
         case 'p': port = atoi(argv[++i]); break;
         case 'h': host = argv[++i]; break;
         case 'D': dbg = true; dbgarg = argv[i] + 2; break;
+        case 'd': delay = atoi(argv[++i]); break;
+        case 'n': nsteps = atoi(argv[++i]); break;
         default:
           syntax(argv[0]);
       }
@@ -100,6 +106,12 @@ main(int argc, char **argv)
       datafiles[1] = argv[i];
     else 
       syntax(argv[0]);
+
+  if (delay < 0) delay = 0;
+  else if (delay > 100) delay = 100;
+
+  if (nsteps < 1) nsteps = 1;
+  else if (nsteps > 100) nsteps = 100;
 
   Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
     
@@ -344,9 +356,9 @@ main(int argc, char **argv)
 
   // Now for each output time step:
 
-  for (int it = 0; it < 10; it++)
+  for (int it = 0; it < nsteps; it++)
   {
-    float t = it / 9.0;
+    float t =  (nsteps == 1) ? 0.5 : it / float(nsteps - 1);
 
     for (int i = 0; i < varnames.size(); i++)
     {
@@ -415,15 +427,18 @@ main(int argc, char **argv)
     skt->CloseSocket();
     skt->Delete();
     
-    std::cerr << "sleeping ";
-    for (int i = 5; i > 0; i--)
+    if (delay > 0)
     {
-      if (mpiRank == 0)
-        std::cerr << i << "...";
-      sleep(1);
+      std::cerr << "sleeping ";
+      for (int i = delay; i > 0; i--)
+      {
+        if (mpiRank == 0)
+          std::cerr << i << "...";
+        sleep(1);
+      }
+      std::cerr << "\n";
     }
 
-    std::cerr << "\n";
   }
 
   string cmd = string("close;");

@@ -57,6 +57,27 @@ bool SocketHandler::Connect(std::string host, int port)
   return SocketHandler::Connect((char *)host.c_str(), port);
 }
 
+void
+SocketHandler::EventHandler(SocketHandler *theSocketHandler)
+{
+  char *msg = NULL; int n;
+  theSocketHandler->ERecv(msg, n);
+  if (msg != NULL)
+    std::cerr << "Event message received: " << msg << "\n";
+  free(msg);
+}
+
+static void *event_thread(void *d)
+{
+  SocketHandler *theSocketHandler = (SocketHandler *)d;
+  while(! theSocketHandler->event_thread_quit)
+  {
+    if(theSocketHandler->EWait(0.1))
+      theSocketHandler->EventHandler(theSocketHandler);
+  }
+  pthread_exit(NULL);
+}
+
 bool SocketHandler::Connect(char *host, int port)
 {
   if (is_connected)
@@ -91,11 +112,22 @@ bool SocketHandler::Connect(char *host, int port)
     }
 
   is_connected = true;
+
+  pthread_create(&event_tid, NULL, event_thread, (void *)this);
   return true;
 }
 
 SocketHandler::~SocketHandler()
 {
+  if (is_connected)
+  {
+    event_thread_quit = true;
+    pthread_join(event_tid, NULL);
+
+    for (int i = 0; i < 3; i++)
+      close(fds[i]);
+  }
+    
   for (int i = 0; i < 3; i++)
     pthread_mutex_destroy(&locks[i]);
 }
@@ -220,6 +252,19 @@ SocketHandler::Wait(int fd, float sec)
   FD_SET(fd, &fds);
 
   return select(fd+1, &fds, NULL, NULL, &tv) != 0;
+}
+
+void
+SocketHandler::Disconnect()
+{
+  if (is_connected)
+  {
+    event_thread_quit = true;
+    pthread_join(event_tid, NULL);
+    for (int i = 0; i < 3; i++)
+      close(fds[i]);
+    is_connected = false;
+  }
 }
 
 }

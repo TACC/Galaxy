@@ -35,7 +35,7 @@
 namespace gxy
 {
 
-class SocketConnectorClientServer : public MultiServerHandler, public GalaxyObject
+class SocketConnectorClientServer : public MultiServerHandler
 {
 public:
   SocketConnectorClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}

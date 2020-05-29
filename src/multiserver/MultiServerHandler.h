@@ -50,7 +50,7 @@ class MultiServerHandler;
 
 OBJECT_POINTER_TYPES(MultiServerHandler);
 
-class MultiServerHandler 
+class MultiServerHandler  : public GalaxyObject
 {
   //! MultiServerHandler is a command-processor that is specialized for a ClientServer module.  It contains a pointer to the SocketHandler and a command-line processing method called handle.
 
