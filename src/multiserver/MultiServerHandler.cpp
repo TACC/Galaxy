@@ -41,12 +41,17 @@
 namespace gxy
 {
 
+static void debug()
+{
+  std::cerr << "break\n";
+}
+
 bool
 MultiServerHandler::handle(std::string line, std::string& reply)
 {
   if (line == "break")
   {
-    std::cerr << "break\n";
+    debug();
     reply = "ok";
     return true;
   }

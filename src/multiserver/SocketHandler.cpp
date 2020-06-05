@@ -38,6 +38,17 @@
 namespace gxy
 {
 
+static void *event_thread(void *d)
+{
+  SocketHandler *theSocketHandler = (SocketHandler *)d;
+  while(! theSocketHandler->event_thread_quit)
+  {
+    if(theSocketHandler->EWait(0.1))
+      theSocketHandler->EventHandler();
+  }
+  pthread_exit(NULL);
+}
+
 SocketHandler::SocketHandler()
 {
   is_connected = false;
@@ -50,6 +61,8 @@ SocketHandler::SocketHandler(int cfd, int dfd, int efd) : SocketHandler::SocketH
   fds[0] = cfd;
   fds[1] = dfd;
   fds[2] = efd;
+
+  pthread_create(&event_tid, NULL, event_thread, (void *)this);
 }
 
 bool SocketHandler::Connect(std::string host, int port)
@@ -58,24 +71,13 @@ bool SocketHandler::Connect(std::string host, int port)
 }
 
 void
-SocketHandler::EventHandler(SocketHandler *theSocketHandler)
+SocketHandler::EventHandler()
 {
   char *msg = NULL; int n;
-  theSocketHandler->ERecv(msg, n);
+  ERecv(msg, n);
   if (msg != NULL)
     std::cerr << "Event message received: " << msg << "\n";
   free(msg);
-}
-
-static void *event_thread(void *d)
-{
-  SocketHandler *theSocketHandler = (SocketHandler *)d;
-  while(! theSocketHandler->event_thread_quit)
-  {
-    if(theSocketHandler->EWait(0.1))
-      theSocketHandler->EventHandler(theSocketHandler);
-  }
-  pthread_exit(NULL);
 }
 
 bool SocketHandler::Connect(char *host, int port)
@@ -227,13 +229,21 @@ SocketHandler::Recv(int fd, char*& b, int& n)
     exit(1);
   }
 
-  if (! _receive(fd, (char *)&n, sizeof(n)))
+  if (0 >= _receive(fd, (char *)&n, sizeof(n)))
+  {
+    n = 0;
+    b = NULL;
     return false;
+  }
 
   b = (char *)malloc(n);
 
-  if (! _receive(fd, b, n))
+  if (0 >= _receive(fd, b, n))
+  {
+    n = 0;
+    b = NULL;
     return false;
+  }
 
   if (show) std::cout << b << "\n";
 

@@ -39,11 +39,12 @@
 #include <QtGui/QIntValidator>
 #include <QtGui/QDoubleValidator>
 
+#include "Observer.h"
 #include "SocketHandler.h"
 #include "GxyRenderWindowMgr.hpp"
 
 
-class GxyConnectionMgr : public QObject, public gxy::SocketHandler
+class GxyConnectionMgr : public QObject, public gxy::SocketHandler, public Observer
 {
   Q_OBJECT
 
@@ -135,6 +136,19 @@ public:
         msgBox.setText("Unable to load module");
         msgBox.exec();
       }
+    }
+  }
+
+  void EventHandler()
+  {
+    char *msg = NULL; int n;
+    ERecv(msg, n);
+
+    if (msg != NULL)
+    {
+      std::cerr << "GxyConnectionMgr Event message received: " << msg << "\n";
+      NotifyObservers(Observer::Updated, (void *)msg);
+      free(msg);
     }
   }
 

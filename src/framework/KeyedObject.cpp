@@ -82,7 +82,7 @@ WORK_CLASS_TYPE(KeyedObjectFactory::DropMsg)
 
 KeyedObjectFactory* GetTheKeyedObjectFactory()
 {
-	return GetTheApplication()->GetTheKeyedObjectFactory();
+  return GetTheApplication()->GetTheKeyedObjectFactory();
 }
 
 int

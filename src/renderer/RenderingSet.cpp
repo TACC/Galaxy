@@ -55,6 +55,7 @@ RenderingSet::Register()
 
 RenderingSet::~RenderingSet()
 {
+  // std::cerr << "RenderingSet dtor " << std::hex << ((long)this) << "\n";
 #ifdef GXY_WRITE_IMAGES
 	pthread_mutex_destroy(&lck);
 	pthread_cond_destroy(&w8);
@@ -76,6 +77,8 @@ RenderingSet::DumpState()
 void
 RenderingSet::initialize()
 {
+  // std::cerr << "RenderingSet ctor " << std::hex << ((long)this) << "\n";
+
 	current_frame = -1;
 	next_frame = 0;
 

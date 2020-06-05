@@ -280,10 +280,8 @@ MappedVis::local_commit(MPI_Comm c)
 	if(super::local_commit(c))  
     return true;
   
-  if (transferFunction)
-    ospRelease(transferFunction);
-  
-  transferFunction = ospNewTransferFunction("piecewise_linear");
+  if (! transferFunction)
+    transferFunction = ospNewTransferFunction("piecewise_linear");
 
   int n_colors = colormap.size();
 

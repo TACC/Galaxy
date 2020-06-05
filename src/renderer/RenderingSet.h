@@ -238,6 +238,9 @@ public:
 	//! return the current frame being rendered in this RenderingSet
 	int  GetCurrentFrame() { return current_frame; }
 
+  //! set the the next frame to render
+  void SetRenderFrame(int n) { next_frame = n; }
+
 	//! returns the frame number of the next frame to render, or -1 if no next frame exists
 	/*! Called from Renderer::localRendering.  We won't generate initial rays
 	 * for is call to localRendering IF we've already seen a ray list from a 

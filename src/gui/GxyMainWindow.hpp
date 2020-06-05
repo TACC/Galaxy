@@ -91,10 +91,13 @@ public:
     auto fileMenu   = menuBar()->addMenu("&File");
     auto loadAction = fileMenu->addAction("Load");
     auto saveAction = fileMenu->addAction("Save");
+    auto debugAction = fileMenu->addAction("Debug");
 
     auto editMenu       = menuBar()->addMenu("&Edit");
     auto deleteAction   = editMenu->addAction("Delete");
     auto addLabelAction = editMenu->addAction("Add Label");
+
+    connect(debugAction, SIGNAL(triggered()), this, SLOT(debug()));
 
     auto servermenu = menuBar()->addMenu("&Server");
 
@@ -152,6 +155,10 @@ public:
   }
 
 public Q_SLOTS:
+  
+  void debug()
+  {
+  }
 
   void createNode(char *name)
   {

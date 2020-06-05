@@ -243,11 +243,13 @@ ThreadPool::stats(double wait, double choose, double work)
 	double tElapsed = tNow - tStart;
 	if (tNow - tStart > 10)
 	{
+#if 0
 		std::cerr << "wait: " << ((tWait / nPoolThreads) / tElapsed) << 
 								 " work: " << ((tWork / nPoolThreads) / tElapsed) << 
 								 " choose: " << (tChoose / tElapsed) << 
 								 " sum: " << (((tWait + tWork + tChoose) / nPoolThreads) / tElapsed) << 
 								 "\n";
+#endif
 
 		tWait = tChoose = tWork = 0;
 		tStart = tNow;

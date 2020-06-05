@@ -55,9 +55,22 @@
 
 #include "UV.ih"
 
+export void *uniform TraceRays_allocate()
+{
+    TraceRays_ispc *uniform v = uniform new uniform TraceRays_ispc;
+    return (void *)v;
+}
+
+
 export void TraceRays_initialize(void *uniform _self)
 {
+  uniform TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
+
+  for (uniform i = 0; i < 100; i++)
+    self->debug[i] = -1;
 }
+
+
 
 export void TraceRays_destroy(void *uniform ispc)
 {
@@ -128,7 +141,8 @@ LookForGeometryHit(varying bool shadeFlag,
 }
 
 inline bool
-LookForSliceHit(varying bool shadeFlag,
+LookForSliceHit(uniform int *uniform debug,
+                varying bool shadeFlag,
                 varying Ray &ray, 
                 uniform Visualization_ispc *uniform vis,
                 varying Hit &hit)
@@ -136,15 +150,26 @@ LookForSliceHit(varying bool shadeFlag,
   bool h = false;
   int vid = -1, sid = -1;
 
+  debug[6] = 0;
+
   if (vis->nVolumeVis > 0)
   {
+    debug[6] = 1;
+    debug[7] = vis->nVolumeVis;
+
     for (uniform  int major = 0; major < vis->nVolumeVis; major++)      // which volume?
     {
       uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
+      debug[8] = 1;
+      debug[9] = major;
+      debug[10] = vvis->nSlices;
 
       for (uniform int minor = 0; minor < vvis->nSlices; minor ++)
       {
+        debug[11] = 1;
+
         uniform vec4f plane = vvis->slices[minor];
+        debug[11] = 2;
 
         vec3f pnorm = make_vec3f(plane.x, plane.y, plane.z);
 
@@ -152,11 +177,15 @@ LookForSliceHit(varying bool shadeFlag,
 
         float denom = dot(ray.dir, pnorm);
 
+        debug[11] = 3;
         if (abs(denom) > 0.0001)
         {
+          debug[12] = 1;
+
           float t = (d - dot(ray.org, pnorm)) / denom;
           if (t >= ray.t0 && t <= ray.t)
           {
+            debug[13] = 1;
 
             if (denom > 0)
               hit.normal   = neg(pnorm);
@@ -169,32 +198,53 @@ LookForSliceHit(varying bool shadeFlag,
             sid          = minor;
             ray.t        = hit.t;
             h            = true;
+
+            debug[13] = 2;
           }
         }
       }
     }
   }
 
+  debug[6] = 2;
+
   if (h)
   {
+    debug[14] = 1;
 
     if (shadeFlag)
     {
+      debug[15] = 1;
+
       float s[100];
       hit.point = ray.org + hit.t * ray.dir;
  
       for (uniform int major = 0; major <= vid; major++)
         if (major == vid)
         {
+          debug[16] = 1;
           uniform VolumeVis_ispc *uniform vvis = (VolumeVis_ispc *)vis->volumeVis[major];
+          debug[16] = 2;
           uniform TransferFunction *uniform tf = (uniform TransferFunction *uniform )((MappedVis_ispc *)vvis)->transferFunction;
+          debug[16] = 3;
           uniform Volume *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
+          debug[16] = 4;
+          if (! vol)
+            print("VOL IS ZERO!\n");
           hit.sample = vol->sample(vol, hit.point);
+          debug[16] = 5;
+          if (! tf) 
+            print("TF is ZERO!\n");
           hit.color = tf->getColorForValue(tf, hit.sample);
+          debug[16] = 6;
           hit.opacity = 1.0;
         }
+
+        debug[15] = 2;
     }
   }
+
+  debug[6] = 2;
 
   return h;
 }
@@ -287,6 +337,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
+  self->debug[0] = 1;
+
   step = -1;
   for (uniform int major = 0; major < vis->nVolumeVis; major++)
   {
@@ -308,8 +360,14 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     }
   }
 
+  self->debug[1] = nRaysIn;
+
+  uniform int II = 0;
   foreach (i = 0 ... nRaysIn)
   {
+    self->debug[0] = 2;
+    self->debug[2] = II++;
+
     bool shadeFlag = raysIn->type[i] == RAY_PRIMARY;
 
     Ray ray;
@@ -343,6 +401,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // may cause it to be traced into the next partition of a partitioned dataset.
     // The entry can potentially be negative if the ray origin is inside the volume 
 
+    self->debug[0] = 3;
+
     float tEntry, tExitVolume;
     MyIntersectBox(ray, box, tEntry, tExitVolume);
 
@@ -367,15 +427,27 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // cast the secondary rays  These two routines update the ray's t if something is
     // found.
 
-    bool surface_hit = LookForSliceHit(shadeFlag, ray, vis, hit);
+    self->debug[0] = 4;
+    self->debug[5] = 0;
+
+    bool surface_hit = LookForSliceHit(self->debug, shadeFlag, ray, vis, hit);
+
+    self->debug[5] = 1;
 
     if (model)
       surface_hit |= LookForGeometryHit(shadeFlag, model, ray, vis, hit);
 
+    self->debug[5] = 2;
+
     float tTermination = ray.t;   // May be partition exit point or point at which slice/geometry is encountered
+
+    self->debug[0] = 5;
 
     if (integrate)
     {
+      self->debug[0] = 6;
+      self->debug[3] = 0;
+
       // Now iterate up the interval from tEntry to tTermination, accruing volume contributions and looking for
       // isosurfaces
 
@@ -393,15 +465,20 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
       bool opaque = (min(min(color.x, color.y), color.z) >= 1.0f || color.w > 0.999f);
 
+      self->debug[3] = 1;
+
       for (tThis = tEntry;
            tThis <= tTermination && !opaque && !hit_isosurface; 
            tThis = (tThis == tEntry) ? (tEntry + epsilon) : (((tThis + step) > tTermination) && (tThis < tTermination)) ? tTermination : tThis + step)
       {
+        self->debug[4] = 1;
+
         iterations = iterations + 1;
 
         vec3f coord = ray.org + tThis * ray.dir;
 
         SampleVolumes(coord, vis, sThis);
+        self->debug[4] = 2;
 
         // Need to adjust interval for any iso hit before integrating for volume rendering so
         // we search interval for iso hit first.
@@ -414,6 +491,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
         if (tThis > tEntry && tLast >= epsilon)
         {
+          self->debug[4] = 3;
+
           if (LookForIsoHit(shadeFlag, ray, sLast, sThis, tLast, tThis, vis, hit))
           {
             tTermination = hit.t;     // Terminate both the ray and the interval at the hit point 
@@ -425,6 +504,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
             vec3f coord = ray.org + tThis * ray.dir;
             SampleVolumes(coord, vis, sThis);
           }
+
+          self->debug[4] = 5;
 
           // Go through volumes accumulating opacity
 
@@ -461,6 +542,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
           }
         }
 
+        self->debug[4] = 6;
+
         for (uniform int major = 0; major < vis->nVolumeVis; major++)  
           sLast[major] = sThis[major];
 
@@ -469,6 +552,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
           tTermination = tThis;
         
         tLast = tThis;
+        self->debug[4] = 7;
       }
 
       // To get the above loop to terminate correctly at the termination T, the last valid step is ending T
@@ -482,7 +566,10 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       // in which case the tTermination is bumped up.   So we reset ray's t
 
       ray.t = tTermination;
+      self->debug[4] = 8;
     }
+
+    self->debug[0] = 7;
 
     raysIn->r[i] = color.x;
     raysIn->g[i] = color.y;
@@ -495,6 +582,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     raysIn->t[i]    = ray.t;
 
     // Is there a reason the ray terminated OTHER THAN OR IN ADDITION TO opacity?
+
+    self->debug[0] = 8;
 
     if (surface_hit)
     {
@@ -526,7 +615,11 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       // print("TE term %\nX %\nY %\n", raysIn->term[i], raysIn->x[i], raysIn->y[i]);
       print("TERMINATION ERROR\n");
     }
+
+    self->debug[0] = 9;
   }
+
+  self->debug[0] = 10;
 }
 
 export void TraceRays_generateAORays(void *uniform _self,

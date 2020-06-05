@@ -109,7 +109,8 @@ void
 SocketConnector::publish(DatasetsP datasets)
 {
   for (auto a = variables->begin(); a != variables->end(); a++)
-    datasets->Insert(a->first, a->second);
+    if (! datasets->Find(a->first))
+      datasets->Insert(a->first, a->second);
 }
 
 void
@@ -126,10 +127,17 @@ SocketConnector::local_commit(MPI_Comm c)
   return false;
 }
 
+bool 
+SocketConnector::has(std::string name)
+{
+  return variables->Find(name) != NULL;
+}
+
 void
 SocketConnector::addVariable(std::string name, VolumeP volume)
 {
-  variables->Insert(name, volume);
+  if (! variables->Find(name))
+    variables->Insert(name, volume);
 }
 
 void
@@ -193,6 +201,7 @@ bool SocketConnector::local_accept(MPI_Comm c)
   struct header
   {
     int nvars;
+    int ijk[3];
     int grid[3];
     int pgrid[3];
     int ghosts[6];
@@ -263,6 +272,8 @@ bool SocketConnector::local_accept(MPI_Comm c)
     if (! volume->get_samples())
     {
       volume->set_type(Volume::FLOAT);
+
+      volume->set_ijk(hdr.ijk[0], hdr.ijk[1], hdr.ijk[2]);
 
       volume->set_global_partitions(hdr.pgrid[0], hdr.pgrid[1], hdr.pgrid[2]);
       volume->set_global_counts(hdr.grid[0], hdr.grid[1], hdr.grid[2]);

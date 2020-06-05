@@ -191,6 +191,10 @@ public:
   /*! This action is performed in response to a ImportMsg */
 	virtual bool local_import(char *fname, MPI_Comm c);
 
+  //! complete the global properties of the distributed volume object
+  /*! This action is performed in response to a CommitMsg */
+  virtual bool local_commit(MPI_Comm c);
+
 	//! get the global min and max data values for this Volume
 	void get_global_minmax(float &min, float &max) { min = global_min; max = global_max; }
 
@@ -224,6 +228,8 @@ public:
 
   virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);
 
+  void set_ijk(int i, int j, int k) { ijk.x = i; ijk.y = j; ijk.z = k; }
+
 protected:
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep
 
@@ -237,6 +243,7 @@ protected:
 
   int number_of_components;
 
+  vec3i ijk;
 	vec3i global_partitions;
 	vec3f global_origin;
 	vec3i global_counts;

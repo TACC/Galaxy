@@ -206,7 +206,6 @@ Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
   int fnum = renderingSet->NeedInitialRays();
   if (fnum != -1)
   {
-    // std::cerr << GetTheApplication()->GetRank() << " starting " << frame << "\n";
 #ifdef GXY_LOGGING
   if (GetTheApplication()->GetRank() == 0)
     std:cerr << "starting ray processing\n";
@@ -515,6 +514,15 @@ public:
 		RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
 		RenderingP     rendering     = raylist->GetTheRendering();
 		VisualizationP visualization = rendering->GetTheVisualization();
+  
+#if 0
+    std::cerr << std::hex 
+          << "R " << renderer.get() 
+          << " r " << rendering.get() 
+          << " rs " << renderingSet.get() 
+          << " v " << visualization.get()  << "\n";
+#endif
+    
 
 		// This is called when a list of rays is pulled off the
 		// RayQ.  When we are done with it we decrement the 

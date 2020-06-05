@@ -61,6 +61,8 @@ SocketConnectorClientServer::init()
 bool
 SocketConnectorClientServer::handle(string line, string& reply)
 {
+  // std::cerr << "InSitu Handle: " << line << "\n";
+
   DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
@@ -83,13 +85,16 @@ SocketConnectorClientServer::handle(string line, string& reply)
     json.Parse(datadesc.c_str());
 
     connector = SocketConnector::NewP();
-    connector->set_port(1900);  // Each participant will bump this by their rank!
+    connector->set_port(1900);                      // Each participant will bump this by their rank!
+
+    // For every incoming variable, create as fresh
+    // Volume object.   Any operations that refer to
+    // a prior value will be OK (I hope)
 
     for (auto& v: json["variables"].GetArray())
     {
       std::string name = v["name"].GetString();
       VolumeP volume = Volume::NewP();
-      volume->Commit();
       connector->addVariable(name, volume);
     }
 
@@ -97,8 +102,6 @@ SocketConnectorClientServer::handle(string line, string& reply)
     connector->Commit();
 
     connector->Open();
-
-    connector->publish(theDatasets);
 
     reply = "ok";
     return true;
@@ -109,6 +112,7 @@ SocketConnectorClientServer::handle(string line, string& reply)
     {
       connector->Accept();
       reply = "ok";
+      connector->publish(theDatasets);
     }
     else
       reply = "connector not created";

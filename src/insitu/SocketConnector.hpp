@@ -85,6 +85,7 @@ public:
   void Accept();
   void Close();
 
+  bool has(std::string);
   void addVariable(std::string, VolumeP v);
   VolumeP findVariable(std::string name);
 

@@ -48,12 +48,12 @@ public:
 
   virtual void toJson(QJsonObject& o)
   {
-    o["origin"] = origin.c_str();
+    // o["origin"] = origin.c_str();
   }
 
   virtual void fromJson(QJsonObject o)
   {
-    origin = o["origin"].toString().toStdString();
+    // origin = o["origin"].toString().toStdString();
     valid = false;
   }
 

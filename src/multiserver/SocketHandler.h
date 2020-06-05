@@ -258,7 +258,7 @@ public:
   }
 
   //! Default event handler
-  virtual void EventHandler(gxy::SocketHandler *);
+  virtual void EventHandler();
 
   //! Disconnect
   void Disconnect();

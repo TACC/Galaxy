@@ -59,8 +59,11 @@ public:
   RayList *Trace(Lighting* lights, VisualizationP visualization, RayList * raysIn);
 
 protected:
-  float epsilon;
+  virtual void allocate_ispc();
+  virtual void initialize_ispc();
+  virtual void destroy_ispc();
 
+  float epsilon;
 };
 
 } // namespace gxy

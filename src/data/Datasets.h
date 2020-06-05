@@ -119,7 +119,7 @@ public:
   {
   	std::map<std::string, KeyedDataObjectP>::iterator it = datasets.begin();
     while (((*it).second != kdop) && (it != datasets.end())) it++;
-  	if (it == datasets.end()) return std::string("");
+  	if (it == datasets.end()) return nullptr;
   	else return (*it).first;
   }
 

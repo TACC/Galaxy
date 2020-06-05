@@ -119,7 +119,7 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
   if (pi == 0)
   {
     std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(data);
-    if (d && d->isValid() && (! vectorField || vectorField->dataInfo.key != d->dataInfo.key))
+    if (d && d->isValid() && (! vectorField || vectorField->dataInfo.name != d->dataInfo.name))
     {
       vectorField = std::dynamic_pointer_cast<GxyData>(data);
       retrace = true;
@@ -130,7 +130,7 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
   else if (pi == 1)
   {
     std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(data);
-    if (d && d->isValid() && (! seeds || seeds->dataInfo.key != d->dataInfo.key))
+    if (d && d->isValid() && (! seeds || seeds->dataInfo.name != d->dataInfo.name))
     {
       seeds = std::dynamic_pointer_cast<GxyData>(data);
       retrace = true;
@@ -208,8 +208,8 @@ StreamTracerFilter::onApply()
 {
   QJsonObject json = save();
 
-  json["vectorFieldKey"] = vectorField->dataInfo.key;
-  json["seedsKey"] = seeds->dataInfo.key;
+  json["vectorField"] = vectorField->dataInfo.name.c_str();
+  json["seeds"] = seeds->dataInfo.name.c_str();
 
   if (retrace)
   {
@@ -257,7 +257,6 @@ StreamTracerFilter::onApply()
     }
 
     output->dataInfo.name = rply["name"].GetString();
-    output->dataInfo.key = rply["key"].GetInt();
     output->dataInfo.type = rply["type"].GetInt();
     output->dataInfo.isVector = (rply["ncomp"].GetInt() == 3);
     output->dataInfo.data_min = rply["min"].GetDouble();

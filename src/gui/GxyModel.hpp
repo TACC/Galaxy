@@ -37,9 +37,9 @@ using QtNodes::NodeDataModel;
 
 #include "GxyData.hpp"
 #include "Properties.hpp"
+#include "Observer.h"
 
-
-class GxyModel : public NodeDataModel
+class GxyModel : public NodeDataModel, public Observer
 {
   Q_OBJECT
 

@@ -51,24 +51,28 @@ Datasets::Register()
 void
 Datasets::initialize()
 {
+  //std::cerr << "Datasets init " << std::hex << ((long)this) << "\n";
   keys = NULL;
   super::initialize();
 }
 
 Datasets::~Datasets()
 {
+  //std::cerr << "Datasets dtor " << std::hex << ((long)this) << "\n";
 	if (keys) delete[] keys;
 }
 
 bool
 Datasets::Commit()
 {
+#if 0
 	for (auto it : datasets)
 		if (! it.second->Commit())
     {
       set_error(1);
       return false;
     }
+#endif
 
 	return KeyedObject::Commit();
 }

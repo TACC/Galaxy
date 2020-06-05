@@ -47,6 +47,24 @@ TraceRays::~TraceRays()
 {
 }
 
+void
+TraceRays::allocate_ispc()
+{
+  ispc = ispc::TraceRays_allocate();
+}
+
+void
+TraceRays::initialize_ispc()
+{
+  ispc::TraceRays_initialize(GetIspc());
+}
+
+void    
+TraceRays::destroy_ispc()
+{            
+  ispc::TraceRays_destroy(GetIspc());
+}
+
 RayList *
 TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
 {

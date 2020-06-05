@@ -70,7 +70,7 @@ DensitySamplerFilter::onApply()
   QJsonObject json = save();
   json["cmd"] = "gui::dsample";
 
-  json["sourceKey"] = input->dataInfo.key;
+  json["source"] = input->dataInfo.name.c_str();
 
   QJsonDocument doc(json);
   QByteArray bytes = doc.toJson(QJsonDocument::Compact);
@@ -85,7 +85,6 @@ DensitySamplerFilter::onApply()
   dset.Parse(msg.c_str());
 
   output->dataInfo.name = dset["name"].GetString();
-  output->dataInfo.key = dset["key"].GetInt();
   output->dataInfo.type = dset["type"].GetInt();
   output->dataInfo.isVector = (dset["ncomp"].GetInt() == 3);
   output->dataInfo.data_min = dset["min"].GetDouble();

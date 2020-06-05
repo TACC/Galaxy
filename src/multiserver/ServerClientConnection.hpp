@@ -60,7 +60,10 @@ public:
       std::string line, reply;
 
       if (! CRecv(line))
+      {
+        std::cerr << "client has disconnected?\n";
         break;
+      }
 
       std::stringstream ss(line);
 

@@ -78,8 +78,8 @@ public:
     gl->addWidget(new QLabel("name"), row, 0);
     gl->addWidget(new QLabel(di.name.c_str()), row++, 1);
 
-    gl->addWidget(new QLabel("key"), row, 0);
-    gl->addWidget(new QLabel(QString::number(di.key)), row++, 1);
+    // gl->addWidget(new QLabel("key"), row, 0);
+    // gl->addWidget(new QLabel(QString::number(di.key)), row++, 1);
 
     gl->addWidget(new QLabel("type"), row, 0);
     gl->addWidget(new QLabel(di.type == 0 ? "Volume" : di.type == 1 ? "Mesh" : "Particles"), row++, 1);
@@ -288,8 +288,9 @@ public:
 
   DataSourceModel();
 
-  virtual
-  ~DataSourceModel() {}
+  virtual ~DataSourceModel() {}
+
+  virtual void Notify(Observer*, Observer::ObserverEvent, void*) override;
 
   unsigned int nPorts(PortType portType) const override;
 
@@ -321,7 +322,41 @@ private Q_SLOTS:
     if (current_selection)
     {
       output->dataInfo = current_selection->getDataInfo();
+      std::string newName = output->dataInfo.name;
+
+
+      if (currentName != newName)
+      {
+        rapidjson::Document doc;
+        doc.SetObject();
+
+        std::string cmd("gui::observe");
+        doc.AddMember("cmd", rapidjson::Value().SetString(cmd.c_str(), cmd.length()+1), doc.GetAllocator());
+
+        doc.AddMember("new", rapidjson::Value().SetString(newName.c_str(), newName.length()+1), doc.GetAllocator());
+        doc.AddMember("old", rapidjson::Value().SetString(currentName.c_str(), currentName.length()+1), doc.GetAllocator());
+  
+        rapidjson::StringBuffer strbuf;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+        doc.Accept(writer);
+
+        std::string line = strbuf.GetString();
+
+        getTheGxyConnectionMgr()->CSendRecv(line);
+
+        currentName = newName;
+
+        std::stringstream ss(line);
+        std::string status;
+        ss >> status;
+
+        if (status != "ok")
+          std::cerr << "return from gui::observe: " << status << "\n";
+      }
+
       output->setValid(true);
+
+      std::cerr << "DataSourceModel onApply\n";
       GxyModel::onApply();
     }
   }
@@ -371,7 +406,7 @@ private Q_SLOTS:
       rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
       doc.Accept(writer);
 
-      std::string line = std::string("import ") + strbuf.GetString();
+      std::string line = strbuf.GetString();
 
       gxyMgr->CSendRecv(line);
 
@@ -441,7 +476,7 @@ private Q_SLOTS:
           rapidjson::Value& dset = array[i];
           GxyDataInfo datainfo;
           datainfo.name = dset["name"].GetString();
-          datainfo.key = dset["key"].GetInt();
+          // datainfo.key = dset["key"].GetInt();
           datainfo.type = dset["type"].GetInt();
           datainfo.isVector = (dset["ncomp"].GetInt() == 3);
           datainfo.data_min = dset["min"].GetDouble();
@@ -459,6 +494,7 @@ private Q_SLOTS:
   }
 
 private:
+  std::string currentName = "none";
   MyQListWidget *objectList;
   MyQListWidgetItem *current_selection = NULL;
   QPushButton *info;

@@ -42,6 +42,7 @@ KEYED_OBJECT_CLASS_TYPE(Volume)
 void
 Volume::initialize()
 {
+  std::cerr << "Volume init " << std::hex << ((long)this) << "\n";
 	initialize_grid = false;
 	vtkobj = NULL;
 	samples = NULL;
@@ -57,6 +58,7 @@ Volume::Register()
 
 Volume::~Volume()
 {
+  std::cerr << "Volume dtor " << std::hex << ((long)this) << "\n";
 	if (vtkobj) vtkobj->Delete();
 	if (samples) free(samples);
 }
@@ -320,6 +322,9 @@ Volume::local_import(char *fname, MPI_Comm c)
   part *partitions = partition(size, global_partitions, global_counts);
   part *my_partition = partitions + rank;
 
+  ijk = my_partition->ijk;
+  //std::cerr << "XXXX size " << size << " ijk " << ijk.x << " " << ijk.y << " " << ijk.z << "\n";
+
   local_offset = my_partition->offsets;
   local_counts  = my_partition->counts;
   ghosted_local_offset = my_partition->goffsets;
@@ -349,6 +354,22 @@ Volume::local_import(char *fname, MPI_Comm c)
 			raw.read(dst, row_sz);
 			dst += row_sz;
 		}
+
+	raw.close();
+  return true;
+}
+
+bool
+Volume::local_commit(MPI_Comm c)
+{
+  if (super::local_commit(c))  
+    return true;
+
+  if (! samples)
+  {
+    std::cerr << "Volume commit before anything has been loaded\n";
+    return true;
+  }
 
 	if (type == FLOAT)
 	{
@@ -416,7 +437,6 @@ Volume::local_import(char *fname, MPI_Comm c)
     }
 	}
 
-	raw.close();
 
 	float lmin, lmax, gmin, gmax;
 	get_local_minmax(lmin, lmax);
@@ -447,13 +467,25 @@ Volume::local_import(char *fname, MPI_Comm c)
 	}
 	else
 	{
-		neighbors[0] = (my_partition->ijk.x > 0) ? ijk2rank(my_partition->ijk.x - 1, my_partition->ijk.y, my_partition->ijk.z) : -1;
-		neighbors[1] = (my_partition->ijk.x < (global_partitions.x-1)) ? ijk2rank(my_partition->ijk.x + 1, my_partition->ijk.y, my_partition->ijk.z) : -1;
-		neighbors[2] = (my_partition->ijk.y > 0) ? ijk2rank(my_partition->ijk.x, my_partition->ijk.y - 1, my_partition->ijk.z) : -1;
-		neighbors[3] = (my_partition->ijk.y < (global_partitions.y-1)) ? ijk2rank(my_partition->ijk.x, my_partition->ijk.y + 1, my_partition->ijk.z) : -1;
-		neighbors[4] = (my_partition->ijk.z > 0) ? ijk2rank(my_partition->ijk.x, my_partition->ijk.y, my_partition->ijk.z - 1) : -1;
-		neighbors[5] = (my_partition->ijk.z < (global_partitions.z-1)) ? ijk2rank(my_partition->ijk.x, my_partition->ijk.y, my_partition->ijk.z + 1) : -1;
+		neighbors[0] = (ijk.x > 0) ? ijk2rank(ijk.x - 1, ijk.y, ijk.z) : -1;
+		neighbors[1] = (ijk.x < (global_partitions.x-1)) ? ijk2rank(ijk.x + 1, ijk.y, ijk.z) : -1;
+		neighbors[2] = (ijk.y > 0) ? ijk2rank(ijk.x, ijk.y - 1, ijk.z) : -1;
+		neighbors[3] = (ijk.y < (global_partitions.y-1)) ? ijk2rank(ijk.x, ijk.y + 1, ijk.z) : -1;
+		neighbors[4] = (ijk.z > 0) ? ijk2rank(ijk.x, ijk.y, ijk.z - 1) : -1;
+		neighbors[5] = (ijk.z < (global_partitions.z-1)) ? ijk2rank(ijk.x, ijk.y, ijk.z + 1) : -1;
 	}
+
+#if 0
+  std::cerr << "ijk " << ijk.x << " " << ijk.y << " " << ijk.z << "\n";
+  std::cerr << "global_partitions " << global_partitions.x << " " << global_partitions.y << " " << global_partitions.z << "\n";
+
+  std::cerr << "VN " << neighbors[0] << " " 
+                     << neighbors[1] << " " 
+                     << neighbors[2] << " " 
+                     << neighbors[3] << " " 
+                     << neighbors[4] << " " 
+                     << neighbors[5] << "\n";
+#endif
 
   float go[] = {global_origin.x + deltas.x, global_origin.y + deltas.y, global_origin.z + deltas.z};
   int   gc[] = {global_counts.x - 2, global_counts.y - 2, global_counts.z - 2};
@@ -468,7 +500,7 @@ Volume::local_import(char *fname, MPI_Comm c)
 
   local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
 
-  return true;
+  return false;
 }
 
 #define get_sample_ptr(ijk)                                               \

@@ -86,7 +86,6 @@ public:
   }
 
   void Observe(GalaxyObjectP o) { Observe(o.get()); }
-
   void Observe(GalaxyObject *o)
   {
     for (auto i : observed)
@@ -98,6 +97,17 @@ public:
 
     observed.push_back(o);
     o->RegisterObserver(this);
+  }
+
+  void Unobserve(GalaxyObjectP o) { Unobserve(o.get()); }
+  void Unobserve(GalaxyObject *o)
+  {
+    for (auto i = observed.begin(); i != observed.end(); i++)
+      if (*i == o)
+        observed.erase(i);
+    for (auto i = o->observers.begin(); i != o->observers.end(); i++)
+      if (*i == o)
+        o->observers.erase(i);
   }
 
   virtual void Notify(GalaxyObject* o, ObserverEvent id, void *cargo)

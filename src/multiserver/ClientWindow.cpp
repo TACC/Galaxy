@@ -245,6 +245,8 @@ ClientWindow::rcvr_thread(void *p)
     {
       char *buf; int n;
       me->DRecv(buf, n);
+      if (n <= 0)
+        break;
 
       char *ptr = buf;
       int knt = *(int *)ptr;

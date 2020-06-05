@@ -26,6 +26,8 @@
 
 #include "rapidjson/document.h"
 
+#include "MultiServerHandler.h"
+#include "Datasets.h"
 #include "KeyedDataObject.h"
 
 namespace gxy
@@ -43,8 +45,9 @@ namespace gxy
 
     static KeyedDataObjectP getSource(rapidjson::Document& doc)
     {
-      Key key = doc["sourceKey"].GetInt();
-      return KeyedDataObject::GetByKey(key);
+      std::string name = doc["source"].GetString();
+      DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+      return theDatasets->Find(name);
     }
 
     KeyedDataObjectP getResult() { return result; }

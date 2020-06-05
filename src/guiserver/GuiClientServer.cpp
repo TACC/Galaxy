@@ -1,4 +1,3 @@
-// ========================================================================== //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -19,6 +18,8 @@
 // ========================================================================== //
 
 #include <iostream>
+#include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -90,7 +91,6 @@ GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
         std::cerr << "GuiClientServer has been notified that the datasets object has updated\n";
         Datasets::DatasetsUpdate *update = (Datasets::DatasetsUpdate *)cargo;
 
-
         if (! update)
         {
           std::cerr << "Null cargo?\n";
@@ -100,9 +100,12 @@ GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
         {
           std::cerr << "Added " << update->name << "\n";
 
-          KeyedDataObjectP kdop = datasets->Find(update->name);
+          KeyedDataObjectP kdop = temporaries->Find(update->name);
           if (! kdop)
-            std::cerr << "Couldn't find " << update->name << " in datasets\n";
+            kdop = globals->Find(update->name);
+
+          if (! kdop)
+            std::cerr << "Couldn't find " << update->name << " in either global or temporary datasets\n";
           else
             Observe(kdop);
 
@@ -124,13 +127,18 @@ GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
       }
       else if (KeyedDataObject::IsA(w))
       {
-        if (! datasets)
+        if (! globals)
         {
           std::cerr << "Got an update from a KeyedDataObject but there's no global datasets object\n";
           return;
         }
-        std::string name = datasets->Find((KeyedDataObject*)w);
-        if (name != "")
+
+        std::string name;
+        name = temporaries->Find((KeyedDataObject*)w);
+        if (name.size() == 0)
+          name = globals->Find((KeyedDataObject*)w);
+
+        if (name.size() > 0)
         {
           std::cerr << "Modified " << name << "\n";
 
@@ -144,7 +152,7 @@ GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
           getTheSocketHandler()->ESend(reply);
         }
         else
-          std::cerr << "Update from unknown object: " << name << "\n";
+          std::cerr << "Update from unknown object\n";
 
         return;
       }
@@ -192,42 +200,9 @@ GuiClientServer::handle(string line, string& reply)
   Document replyDoc;
   replyDoc.SetObject();
 
+  // std::cerr << "GUI Handle: " << line << "\n";
+
   Document::AllocatorType& alloc = replyDoc.GetAllocator();
-
-  if (! datasets)
-  {
-    std::cerr << "How are there no datasets attached to this GuiClientServer?\n";
-
-    datasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
-    if (! datasets)
-    {
-      datasets = Datasets::NewP();
-      MultiServer::Get()->SetGlobal("global datasets", datasets);
-    }
-
-    std::cerr << "Adding initial observers\n";
-    Observe(datasets);
-
-    for (auto ds = datasets->begin(); ds != datasets->end(); ds++)
-    {
-      std::string name = ds->first;
-
-      auto n = watched_datasets.begin();
-      while (n != watched_datasets.end() && *n != name)
-      {
-        if (*n == name) break;
-        n++;
-      }
-
-      if (n == watched_datasets.end())
-      {
-        std::cerr << "adding observer for " << name << "\n";
-        KeyedDataObjectP kdop = datasets->Find(name);
-        Observe(kdop);
-        watched_datasets.push_back(name);
-      }
-    }
-  }
 
   Document doc;
   if (doc.Parse<0>(line.c_str()).HasParseError())
@@ -237,35 +212,48 @@ GuiClientServer::handle(string line, string& reply)
 
   if (cmd == "gui::import")
   {
-    if (! datasets->LoadFromJSON(doc))
+    if (! globals->LoadFromJSON(doc))
       HANDLED_BUT_ERROR_RETURN("import datasets: error in LoadFromJson");
 
-    datasets->Commit();
+    globals->Commit();
+
+    HANDLED_OK;
+  }
+  else if (cmd == "gui::observe")
+  {
+    std::string name = doc["old"].GetString();
+    if (name != "none")
+    {
+      std::cerr << "Unobserve: " << name << "\n";
+      KeyedDataObjectP o = globals->Find(name);
+      if (o)
+        Unobserve(o);
+    }
+
+    name = doc["new"].GetString();
+    if (name != "none")
+    {
+      std::cerr << "Observe: " << name << "\n";
+      KeyedDataObjectP o = globals->Find(name);
+      if (o)
+        Observe(o);
+    }
 
     HANDLED_OK;
   }
   else if (cmd == "gui::list")
   {
-    if (! datasets)
-      HANDLED_BUT_ERROR_RETURN("list: unable to access global data");
-
     Value array(kArrayType);
 
-    vector<string> names = datasets->GetDatasetNames();
+    vector<string> names = globals->GetDatasetNames();
     for (vector<string>::iterator it = names.begin(); it != names.end(); ++it)
     {
       std::string name(*it);
-      KeyedDataObjectP kdop = datasets->Find(name);
+      KeyedDataObjectP kdop = globals->Find(name);
 
       auto i = watched_datasets.begin();
       while (i != watched_datasets.end() && *i != name) i++;
 
-      if (i == watched_datasets.end())
-      {
-        Observe(kdop);
-        watched_datasets.push_back(name);
-      }
-        
       int type;
       if (kdop->getclass() ==  Volume::ClassType) type = 0;
       else if (kdop->getclass() ==  Triangles::ClassType) type = 1;
@@ -338,18 +326,40 @@ GuiClientServer::handle(string line, string& reply)
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("initWindow: window has not been initialized");
 
-    clientWindow->visualization = Visualization::NewP();
+    clientWindow->visualization  = Visualization::NewP();
+    clientWindow->datasets       = Datasets::NewP();
 
     if (! clientWindow->visualization->LoadFromJSON(doc["Visualization"]))
       HANDLED_BUT_ERROR_RETURN("visualization: error in LoadFromJson");
 
-    clientWindow->visualization->Commit();
+    for (int i = 0; i < clientWindow->visualization->GetNumberOfVis(); i++)
+    {
+      auto v = clientWindow->visualization->GetVis(i);
+
+      KeyedDataObjectP kdop = temporaries->Find(v->GetName());
+      if (! kdop)
+        kdop = globals->Find(v->GetName());
+
+      if (! kdop)
+      {
+        std::cerr << "gui::render - can't find data referenced by a vis\n";
+        exit(1);
+      }
+
+      v->SetTheData(kdop);
+
+      clientWindow->datasets->Insert(v->GetName(), kdop);
+    }
+
+    clientWindow->datasets->Commit();
+    clientWindow->visualization->Commit(clientWindow->datasets);
 
     HANDLED_OK;
   }
   else if (cmd == "gui::camera")
   {
     string id  = doc["id"].GetString();
+
     ClientWindow *clientWindow = getClientWindow(id);
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("camera: window has not been initialized");
@@ -364,23 +374,30 @@ GuiClientServer::handle(string line, string& reply)
   else if (cmd == "gui::render")
   {
     string id  = doc["id"].GetString();
+
     ClientWindow *clientWindow = getClientWindow(id);
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("render: window has not been initialized");
+    
+    GuiRenderingP rendering = GuiRendering::NewP();
+    clientWindow->renderingSet = RenderingSet::NewP();
+    clientWindow->renderingSet->SetRenderFrame(clientWindow->frame++);
 
-    clientWindow->rendering->SetTheSize(clientWindow->camera->get_width(), clientWindow->camera->get_height());
-    clientWindow->rendering->SetHandler(this);
+    CameraP camera = clientWindow->camera;
+    rendering->SetTheSize(camera->get_width(), camera->get_height());
+    rendering->SetTheCamera(camera);
 
-    clientWindow->rendering->SetTheVisualization(clientWindow->visualization);
-    clientWindow->rendering->SetTheCamera(clientWindow->camera);
-    clientWindow->rendering->SetTheDatasets(datasets);
-    clientWindow->rendering->Commit();
+    rendering->SetHandler(this);
+    rendering->SetTheVisualization(clientWindow->visualization);
+    rendering->SetTheDatasets(clientWindow->datasets);
+    rendering->SetId(id);
+    rendering->Commit();
 
+    clientWindow->renderingSet->AddRendering(rendering);
+    clientWindow->renderingSet->SetRenderFrame(clientWindow->frame++);
     clientWindow->renderingSet->Commit();
+    
 
-    // RenderingSetP rs = RenderingSet::NewP();
-    // rs->AddRendering(clientWindow->rendering);
-    // rs->Commit();
     renderer->Start(clientWindow->renderingSet);
 
     HANDLED_OK;
@@ -568,11 +585,18 @@ GuiClientServer::handle(string line, string& reply)
     Filter *filter = getFilter(id);
     if (! filter)
     {
-      if (! doc.HasMember("vectorFieldKey"))
-        HANDLED_BUT_ERROR_RETURN("there's no vectorField");
 
-      Key key = doc["vectorFieldKey"].GetInt();
-      VolumeP vectorField = Volume::Cast(KeyedDataObject::GetByKey(key));
+      if (! doc.HasMember("vectorField"))
+        HANDLED_BUT_ERROR_RETURN("there's no vectorField name");
+
+      std::string name = doc["vectorField"].GetString();
+
+      VolumeP vectorField = Volume::Cast(temporaries->Find(name));
+      if (! vectorField)
+        vectorField = Volume::Cast(temporaries->Find(name));
+
+      if (! vectorField)
+        HANDLED_BUT_ERROR_RETURN("unable to find StreamTracer vector dataset");
 
       filter = new StreamTracerFilter();
       streamtracer = dynamic_cast<StreamTracerFilter*>(filter);
@@ -584,8 +608,12 @@ GuiClientServer::handle(string line, string& reply)
     else
       streamtracer = dynamic_cast<StreamTracerFilter*>(filter);
 
-    Key key = doc["seedsKey"].GetInt();
-    ParticlesP seeds = Particles::Cast(KeyedDataObject::GetByKey(key));
+    std::string name = doc["seeds"].GetString();
+
+    ParticlesP seeds = Particles::Cast(temporaries->Find(name));
+    if (! seeds)
+      seeds = Particles::Cast(temporaries->Find(name));
+
     if (! seeds)
       HANDLED_BUT_ERROR_RETURN("streamtracer: couldn't find seeds");
 

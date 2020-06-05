@@ -125,6 +125,9 @@ RenderModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
     if (input->isValid())
     {
       visList[input->get_origin()] = input;
+      if (visList.size() > 1)
+        std::cerr << visList.size() << " Vis in RenderModel\n";
+
       if (isValid())
       {
         std::shared_ptr<Vis> vis = std::dynamic_pointer_cast<Vis>(data);

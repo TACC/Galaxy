@@ -51,8 +51,15 @@ Vis::Register()
 	TrianglesVis::Register();
 }
 
+void
+Vis::initialize()
+{
+  //std::cerr << "Vis init " << std::hex << ((long)this) << "\n";
+}
+
 Vis::~Vis()
 {
+  //std::cerr << "Vis dtor " << std::hex << ((long)this) << "\n";
 }
 
 void 
@@ -141,6 +148,7 @@ Vis::LoadFromJSON(Value& v)
 void
 Vis::SetTheOsprayDataObject(OsprayObjectP o)
 {
+  odata = o;
 	ispc::Vis_set_data(GetIspc(), o->GetOSP_IE());
 }
 
@@ -183,7 +191,14 @@ Vis::local_commit(MPI_Comm c)
 
 	super::local_commit(c);
 
-  data = KeyedDataObject::GetByKey(datakey);
+  if (! data)
+    data = KeyedDataObject::GetByKey(datakey);
+
+  if (! data)
+  {
+    std::cerr << "Unable to get data associated with a vis\n";
+    return true;
+  }
 
 	return false;
 }

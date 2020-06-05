@@ -55,6 +55,7 @@ class Vis : public KeyedObject, public IspcObject
 
 public:
     virtual ~Vis(); //!< default destructor
+    virtual void initialize(); //!< initialize this Vis object
 
     //! commit this object to the global registry across all processes.  If by name, we need the Datasets object to dereference the dataset name.   If we give it a specific object, use it.  Otherwise, assume the datakey is already set.
     
@@ -83,6 +84,9 @@ public:
     //! set the name of this Vis
     void SetName(std::string n) { name = n; }
 
+    //! get the name of this Vis
+    std::string GetName() { return name; }
+
     //! commit this object to the local registry
     virtual bool local_commit(MPI_Comm);
 
@@ -98,6 +102,7 @@ protected:
     std::string name;
     Key datakey;
     KeyedDataObjectP data;
+    OsprayObjectP odata;
 };
 
 } // namespace gxy

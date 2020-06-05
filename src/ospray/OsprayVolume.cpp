@@ -24,6 +24,8 @@ using namespace gxy;
 
 OsprayVolume::OsprayVolume(VolumeP v)
 {
+  std::cerr << "OsprayVolume ctor " << std::hex << ((long)this) << " volume " << ((long)v.get()) << "\n";
+ 
   OSPVolume ospv = ospNewVolume("shared_structured_volume");
   
   osp::vec3i counts;
@@ -53,5 +55,6 @@ OsprayVolume::OsprayVolume(VolumeP v)
 
 OsprayVolume::~OsprayVolume()
 {
+  std::cerr << "OsprayVolume dtor " << std::hex << ((long)this) << "\n";
 }
 

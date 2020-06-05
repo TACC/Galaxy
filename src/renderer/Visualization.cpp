@@ -27,12 +27,6 @@
 
 #include <ospray/ospray.h>
 
-// #include "OsprayVolume.h"
-// #include "OsprayParticles.h"
-// #include "OsprayPathLines.h"
-// #include "OsprayTriangles.h"
-// #include "OsprayUtil.h"
-
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 
@@ -56,12 +50,14 @@ Visualization::Register()
 void
 Visualization::initialize()
 {
+  //std::cerr << "Visualization init " << std::hex << ((long)this) << "\n";
   ospModel = NULL;
   super::initialize();
 }
 
 Visualization::~Visualization()
 {
+  //std::cerr << "Visualization dtor " << std::hex << ((long)this) << "\n";
   Visualization::destroy_ispc();
 }
 
@@ -202,7 +198,19 @@ Visualization::local_commit(MPI_Comm c)
   for (auto v : vis)
     v->local_commit(c);
 
+
   CHECKBOX(vis)
+
+#if 0
+  std::cerr << "V " << std::hex << ((long)this) << std::dec << 
+      " " << neighbors[0] << 
+      " " << neighbors[1] << 
+      " " << neighbors[2] << 
+      " " << neighbors[3] << 
+      " " << neighbors[4] << 
+      " " << neighbors[5] << "\n";
+#endif
+
   return false;
 }
 
@@ -230,7 +238,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 
     Key key = kdop->getkey();
 
-#if 0
+#if 1
     op = v->GetTheOsprayDataObject();
     if (! op)
     {
@@ -255,10 +263,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   }
 
   if (ospModel)
-  {
     ospCommit(ospModel);
-    // std::cerr << "SetOsprayObjects " << ((long)ospModel) << " :: " << ((long)ospray_util::GetIE(ospModel)) << "\n";
-  }
    
   ispc::Visualization_commit(ispc, 
           ospModel ? ospray_util::GetIE(ospModel) : NULL,

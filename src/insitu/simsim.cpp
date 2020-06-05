@@ -41,6 +41,7 @@ void syntax(char *a)
     cerr << "  -n nsteps        number of timesteps (10)\n";
     cerr << "  -p port          port (5001)\n";
     cerr << "  -l layout        layout file (layout.json)\n";
+    cerr << "  -c               cycle\n";
   }
     
   MPI_Finalize();
@@ -73,6 +74,7 @@ main(int argc, char **argv)
   char *dbgarg = NULL;
   int delay = 5;
   int nsteps = 10;
+  bool cycle = false;
 
   signal(SIGINT, IntHandler);
 
@@ -97,6 +99,7 @@ main(int argc, char **argv)
         case 'D': dbg = true; dbgarg = argv[i] + 2; break;
         case 'd': delay = atoi(argv[++i]); break;
         case 'n': nsteps = atoi(argv[++i]); break;
+        case 'c': cycle = true; break;
         default:
           syntax(argv[0]);
       }
@@ -184,6 +187,7 @@ main(int argc, char **argv)
   struct header
   {
     int nvars;
+    int ijk[3];
     int grid[3];    
     int pgrid[3];  
     int ghosts[6];
@@ -356,7 +360,8 @@ main(int argc, char **argv)
 
   // Now for each output time step:
 
-  for (int it = 0; it < nsteps; it++)
+  int it = 0; bool done = false; int dir = 1;
+  while (! done)
   {
     float t =  (nsteps == 1) ? 0.5 : it / float(nsteps - 1);
 
@@ -378,6 +383,10 @@ main(int argc, char **argv)
 
     host = myConnectionInfo["host"].GetString();
     port = myConnectionInfo["port"].GetInt();
+
+    hdr.ijk[0] = myConnectionInfo["ijk"][0].GetInt();
+    hdr.ijk[1] = myConnectionInfo["ijk"][1].GetInt();
+    hdr.ijk[2] = myConnectionInfo["ijk"][2].GetInt();
 
     // Tell Galaxy a timestep is on the way
 
@@ -439,6 +448,35 @@ main(int argc, char **argv)
       std::cerr << "\n";
     }
 
+    if (nsteps == 0) done = true;
+    else
+    {
+      if (dir == 1)
+      {
+        if (it == (nsteps - 1))
+        {
+          if (cycle == false)
+            done = true;
+          else
+          {
+            dir = -1;
+            it = it - 1;
+          }
+        }
+        else
+          it = it + 1;
+      }
+      else
+      {
+        if (it == 0)
+        {
+          dir = 1;
+          it = 1;
+        }
+        else
+          it = it + 1;
+      }
+    }
   }
 
   string cmd = string("close;");

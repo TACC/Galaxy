@@ -62,7 +62,6 @@ struct GxyDataInfo
   void print()
   {
     std::cerr << "name: " << name << "\n";
-    std::cerr << "key: " << key << "\n";
     std::cerr << "type: " << type << "\n";
     std::cerr << "isVector: " << isVector << "\n";
     std::cerr << "range: " << data_min << " " << data_max << "\n";
@@ -70,7 +69,6 @@ struct GxyDataInfo
   }
 
   std::string name;
-  int key;
   int type;
   bool isVector;
   float data_min, data_max;
@@ -96,7 +94,7 @@ public:
     if (!GxyPacket::isValid()) 
       return false;
 
-    if (dataInfo.name == "" && dataInfo.key == -1)
+    if (dataInfo.name == "")
       return false;
     
     return true;

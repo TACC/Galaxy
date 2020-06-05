@@ -193,11 +193,7 @@ VisModel::loadOutput(std::shared_ptr<GxyPacket> p) const
 
   std::shared_ptr<Vis> v = std::dynamic_pointer_cast<Vis>(p);
 
-  if (input)
-    v->key = input->dataInfo.key;
-  else
-    v->key = -1;
-
+  v->source = input->dataInfo.name.c_str();
   v->colormap_file = cmap_widget->text().toStdString();
   v->cmap_range_min = cmap_range_min->text().toDouble();
   v->cmap_range_max = cmap_range_max->text().toDouble();

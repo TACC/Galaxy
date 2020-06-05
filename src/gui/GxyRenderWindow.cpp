@@ -356,6 +356,8 @@ GxyRenderWindow::addPixels(gxy::Pixel *p, int n, int frame)
 {
   pthread_mutex_lock(&lock);
 
+  std::cerr << p->r << " " << p->g << " " << p->b << "\n";
+
   long now = my_time();
 
   if (frame >= current_frame)

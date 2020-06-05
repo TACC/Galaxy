@@ -1,4 +1,4 @@
-// ========================================================================== //
+// ========================================================================== /
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -65,7 +65,49 @@ DataSourceModel::DataSourceModel()
   connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
   connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(onRefresh()));
 
+  Observe(gxyMgr);
 }
+
+void 
+DataSourceModel::Notify(Observer *sender, Observer::ObserverEvent event, void* cargo)
+{
+  rapidjson::Document msg;
+  if (cargo)
+  {
+    msg.Parse((const char *)cargo);
+    std::string action = msg["action"].GetString();
+    std::string argument = msg["argument"].GetString();
+
+    if (current_selection != NULL && current_selection->getDataInfo().name == argument)
+    {
+      if (isValid())
+      {
+        std::cerr << "onApply from Notify\n";
+        QMetaObject::invokeMethod(this, "onApply");
+        // onApply();
+      }
+      else
+        std::cerr << "didn't apply - not valid\n";
+    }
+    else
+    {
+      bool has = false;
+      for (int i = 0; !has && i < objectList->count(); i++)
+        has = (((MyQListWidgetItem *)objectList->item(i))->getDataInfo().name == argument);
+
+      if (!has)
+      {
+        std::cerr << "REFRESH\n";
+        onRefresh();
+      }
+      else
+        std::cerr << "known, but not mine\n";
+    }
+  }
+  // else
+    // std::cerr << "DataSourceModel::Notify without cargo\n";
+}
+
 
 unsigned int
 DataSourceModel::nPorts(PortType portType) const

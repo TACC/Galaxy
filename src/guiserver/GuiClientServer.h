@@ -29,6 +29,7 @@
 
 #include "Renderer.h"
 #include "MultiServerHandler.h"
+#include "Datasets.h"
 #include "GuiRendering.h"
 
 #include "GalaxyObject.h"
@@ -45,7 +46,6 @@ class GuiClientServer : public MultiServerHandler
     ClientWindow(string id)
     {
       visualization = Visualization::NewP();
-
       camera = Camera::NewP();
 
       rendering = GuiRendering::NewP();
@@ -53,12 +53,17 @@ class GuiClientServer : public MultiServerHandler
 
       renderingSet = RenderingSet::NewP();
       renderingSet->AddRendering(rendering);
+
+      frame = 0;
     }
 
     VisualizationP   visualization;
     CameraP          camera;
     GuiRenderingP    rendering;
     RenderingSetP    renderingSet;
+    DatasetsP        datasets;
+
+    int frame;
   };
     
   
@@ -71,14 +76,16 @@ public:
   {
     first = true;
 
-    datasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
-    if (! datasets)
+    globals = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+    if (! globals)
     {
-      datasets = Datasets::NewP();
-      MultiServer::Get()->SetGlobal("global datasets", datasets);
+      globals = Datasets::NewP();
+      MultiServer::Get()->SetGlobal("global datasets", globals);
     }
 
-    Observe(datasets);
+    Observe(globals);
+
+    temporaries = Datasets::NewP();
 
     renderer = Renderer::NewP();
     renderer->Commit();
@@ -123,11 +130,13 @@ public:
 private:
   bool        first;
   RendererP   renderer;
-  DatasetsP   datasets;
 
   std::vector<std::string> watched_datasets;
 
   std::map<std::string, std::shared_ptr<ClientWindow>> clientWindows;
   std::map<std::string, std::shared_ptr<Filter>> filters;
+  
+  DatasetsP temporaries;
+  DatasetsP globals;
 };
 }

@@ -29,6 +29,7 @@ KEYED_OBJECT_CLASS_TYPE(GuiRendering)
 void
 GuiRendering::initialize()
 {
+  // std::cerr << "GuiRendering ctor " << std::hex << ((long)this) << "\n";
   Rendering::initialize();
   pthread_mutex_init(&lock, NULL);
 	max_frame = -1;
@@ -38,6 +39,7 @@ GuiRendering::initialize()
 
 GuiRendering::~GuiRendering()
 {
+  // std::cerr << "GuiRendering dtor " << std::hex << ((long)this) << "\n";
   handler = NULL;
   pthread_mutex_destroy(&lock);
 }
