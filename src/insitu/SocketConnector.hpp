@@ -82,12 +82,11 @@ public:
 
   void Wait() { waiter.Wait(); }
   void Open();
-  void Accept();
+  void Accept(VolumeP);
   void Close();
 
   bool has(std::string);
-  void addVariable(std::string, VolumeP v);
-  VolumeP findVariable(std::string name);
+  Volume* findVariable(std::string name);
 
   void set_port(int p) { port = p; }
   int get_port() { return port; }
@@ -101,7 +100,6 @@ public:
 
   int getLocalPort() { return local_port; }
 
-  void publish(DatasetsP);
   void commit_datasets();
 
 protected:
@@ -110,11 +108,11 @@ protected:
 
   bool local_open(MPI_Comm c);
   bool local_close(MPI_Comm c);
-  bool local_accept(MPI_Comm c);
+  bool local_accept(MPI_Comm c, VolumeP v);
 
   int wait_time = 100000;  // msec
 
-  DatasetsP variables;
+  std::map<std::string, Volume*> variables;   // local partition
 
   vtkServerSocket *sskt = NULL;
 
@@ -129,6 +127,7 @@ protected:
     enum todo {Open, Close, Accept};
 
     ConnectionMsg(SocketConnector* s, todo t);
+    ConnectionMsg(SocketConnector* s, VolumeP v, todo t);
 
     WORK_CLASS(ConnectionMsg, true);
 

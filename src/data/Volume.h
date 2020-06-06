@@ -230,6 +230,14 @@ public:
 
   void set_ijk(int i, int j, int k) { ijk.x = i; ijk.y = j; ijk.z = k; }
 
+  void Allocate()
+  {
+    if (samples) free(samples);
+    size_t sz = global_counts.x * global_counts.y * global_counts.z * number_of_components 
+      * ((type == FLOAT) ? sizeof(float) : sizeof(unsigned char));
+    samples = (unsigned char *)malloc(sz);
+  }
+
 protected:
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep
 

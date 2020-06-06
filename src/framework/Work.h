@@ -46,6 +46,9 @@ public:
 	Work(const Work* o); //!< copy constructor
 	~Work();  //!< default destructor
 
+  //! allocate contents
+  void Allocate(int n); 
+
 	//! return the contents of this Work object 
 	void *get() { return contents->get(); }
 	//! get the size of the contents of this Work object

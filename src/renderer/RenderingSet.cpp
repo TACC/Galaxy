@@ -593,13 +593,16 @@ RenderingSet::PropagateStateMsg::Action(int sender)
 int
 RenderingSet::serialSize()
 {
-	return KeyedObject::serialSize() + sizeof(int) + renderings.size()*sizeof(Key);
+	return KeyedObject::serialSize() + 2*sizeof(int) + renderings.size()*sizeof(Key);
 }
 
 unsigned char*
 RenderingSet::deserialize(unsigned char *ptr)
 {
 	renderings.clear();
+
+	next_frame = *(int *)ptr;
+	ptr += sizeof(int);
 
 	int n = *(int *)ptr;
 	ptr += sizeof(int);
@@ -617,6 +620,9 @@ RenderingSet::deserialize(unsigned char *ptr)
 unsigned char*
 RenderingSet::serialize(unsigned char *ptr)
 {
+	*(int *)ptr = next_frame;
+	ptr += sizeof(int);
+
 	*(int *)ptr = renderings.size();
 	ptr += sizeof(int);
 

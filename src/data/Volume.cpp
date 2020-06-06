@@ -42,7 +42,6 @@ KEYED_OBJECT_CLASS_TYPE(Volume)
 void
 Volume::initialize()
 {
-  std::cerr << "Volume init " << std::hex << ((long)this) << "\n";
 	initialize_grid = false;
 	vtkobj = NULL;
 	samples = NULL;
@@ -58,7 +57,6 @@ Volume::Register()
 
 Volume::~Volume()
 {
-  std::cerr << "Volume dtor " << std::hex << ((long)this) << "\n";
 	if (vtkobj) vtkobj->Delete();
 	if (samples) free(samples);
 }
@@ -356,6 +354,40 @@ Volume::local_import(char *fname, MPI_Comm c)
 		}
 
 	raw.close();
+
+#define ijk2rank(i, j, k) ((i) + ((j) * global_partitions.x) + ((k) * global_partitions.x * global_partitions.y))
+
+	if (getenv("MPI_TEST_RANK"))
+	{
+		neighbors[0] = -1;
+		neighbors[1] = -1;
+		neighbors[2] = -1;
+		neighbors[3] = -1;
+		neighbors[4] = -1;
+		neighbors[5] = -1;
+	}
+	else
+	{
+		neighbors[0] = (ijk.x > 0) ? ijk2rank(ijk.x - 1, ijk.y, ijk.z) : -1;
+		neighbors[1] = (ijk.x < (global_partitions.x-1)) ? ijk2rank(ijk.x + 1, ijk.y, ijk.z) : -1;
+		neighbors[2] = (ijk.y > 0) ? ijk2rank(ijk.x, ijk.y - 1, ijk.z) : -1;
+		neighbors[3] = (ijk.y < (global_partitions.y-1)) ? ijk2rank(ijk.x, ijk.y + 1, ijk.z) : -1;
+		neighbors[4] = (ijk.z > 0) ? ijk2rank(ijk.x, ijk.y, ijk.z - 1) : -1;
+		neighbors[5] = (ijk.z < (global_partitions.z-1)) ? ijk2rank(ijk.x, ijk.y, ijk.z + 1) : -1;
+	}
+
+  float go[] = {global_origin.x + deltas.x, global_origin.y + deltas.y, global_origin.z + deltas.z};
+  int   gc[] = {global_counts.x - 2, global_counts.y - 2, global_counts.z - 2};
+	global_box = Box(go, gc, (float *)&deltas);
+
+  float lo[3] =
+	{
+    global_origin.x + (local_offset.x * deltas.x),
+    global_origin.y + (local_offset.y * deltas.y),
+    global_origin.z + (local_offset.z * deltas.z)
+  };
+
+  local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
   return true;
 }
 
@@ -453,52 +485,6 @@ Volume::local_commit(MPI_Comm c)
 	}
 
 	set_global_minmax(gmin, gmax);
-
-#define ijk2rank(i, j, k) ((i) + ((j) * global_partitions.x) + ((k) * global_partitions.x * global_partitions.y))
-
-	if (getenv("MPI_TEST_RANK"))
-	{
-		neighbors[0] = -1;
-		neighbors[1] = -1;
-		neighbors[2] = -1;
-		neighbors[3] = -1;
-		neighbors[4] = -1;
-		neighbors[5] = -1;
-	}
-	else
-	{
-		neighbors[0] = (ijk.x > 0) ? ijk2rank(ijk.x - 1, ijk.y, ijk.z) : -1;
-		neighbors[1] = (ijk.x < (global_partitions.x-1)) ? ijk2rank(ijk.x + 1, ijk.y, ijk.z) : -1;
-		neighbors[2] = (ijk.y > 0) ? ijk2rank(ijk.x, ijk.y - 1, ijk.z) : -1;
-		neighbors[3] = (ijk.y < (global_partitions.y-1)) ? ijk2rank(ijk.x, ijk.y + 1, ijk.z) : -1;
-		neighbors[4] = (ijk.z > 0) ? ijk2rank(ijk.x, ijk.y, ijk.z - 1) : -1;
-		neighbors[5] = (ijk.z < (global_partitions.z-1)) ? ijk2rank(ijk.x, ijk.y, ijk.z + 1) : -1;
-	}
-
-#if 0
-  std::cerr << "ijk " << ijk.x << " " << ijk.y << " " << ijk.z << "\n";
-  std::cerr << "global_partitions " << global_partitions.x << " " << global_partitions.y << " " << global_partitions.z << "\n";
-
-  std::cerr << "VN " << neighbors[0] << " " 
-                     << neighbors[1] << " " 
-                     << neighbors[2] << " " 
-                     << neighbors[3] << " " 
-                     << neighbors[4] << " " 
-                     << neighbors[5] << "\n";
-#endif
-
-  float go[] = {global_origin.x + deltas.x, global_origin.y + deltas.y, global_origin.z + deltas.z};
-  int   gc[] = {global_counts.x - 2, global_counts.y - 2, global_counts.z - 2};
-	global_box = Box(go, gc, (float *)&deltas);
-
-  float lo[3] =
-	{
-    global_origin.x + (local_offset.x * deltas.x),
-    global_origin.y + (local_offset.y * deltas.y),
-    global_origin.z + (local_offset.z * deltas.z)
-  };
-
-  local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
 
   return false;
 }

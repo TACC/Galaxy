@@ -109,7 +109,6 @@ partition(int ijk, vec3i factors, vec3i grid)
         p.ijk.y = j;
         p.ijk.z = k;
 
-
         p.offsets.x = 1 + i*di;
         p.offsets.y = 1 + j*dj;
         p.offsets.z = 1 + k*dk;
@@ -225,6 +224,7 @@ main(int argc, char **argv)
       Value var(kObjectType);
       var.AddMember("name", Value().SetString(n, root.GetAllocator()), root.GetAllocator());
       var.AddMember("vector", Value(nc == 3), root.GetAllocator());
+      var.AddMember("float", Value(vtkFloatArray::SafeDownCast(a) != NULL), root.GetAllocator());
       vars.PushBack(var, root.GetAllocator());
     }
   }

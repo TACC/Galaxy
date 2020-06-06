@@ -200,12 +200,12 @@ GxyRenderWindow::mouseMoveEvent(QMouseEvent *event)
 
     gxy::vec3f p = current_center + scalev(vdist, current_direction);
     camera.setPoint(p);
-    // std::cerr << "point: " << p.x << " " << p.y << " " << p.z << " ";
+    std::cerr << "point: " << p.x << " " << p.y << " " << p.z << " ";
 
     gxy::vec3f n = neg(current_direction);
     scale(vdist, n);
     camera.setDirection(n);
-    // std::cerr << "direction: " << n.x << " " << n.y << " " << n.z << "\n";
+    std::cerr << "direction: " << n.x << " " << n.y << " " << n.z << "\n";
 
     camera.setUp(current_up);
 
@@ -355,8 +355,6 @@ void
 GxyRenderWindow::addPixels(gxy::Pixel *p, int n, int frame)
 {
   pthread_mutex_lock(&lock);
-
-  std::cerr << p->r << " " << p->g << " " << p->b << "\n";
 
   long now = my_time();
 

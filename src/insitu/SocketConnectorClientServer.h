@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 #include <sstream>
 
 #include <string.h>
@@ -31,6 +32,8 @@
 #include "MultiServerHandler.h"
 #include "Datasets.h"
 #include "SocketConnector.hpp"
+
+#include "rapidjson/document.h"
 
 namespace gxy
 {
@@ -53,7 +56,29 @@ private:
 
   pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+  void InitializeVolumes(rapidjson::Document&);
+
+  std::map<std::string, VolumeP> variables;
+
+  class InitializeVolumesMsg : public Work
+  {
+  public:
+    enum todo {Open, Close, Accept};
+
+    InitializeVolumesMsg(std::string s) : InitializeVolumesMsg(s.size() + 1)
+    {
+      strcpy((char *)contents->get(), s.c_str());
+    }
+
+    WORK_CLASS(InitializeVolumesMsg, true);
+
+    bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+  };
+
 };
+
+
 
 }
 

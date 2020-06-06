@@ -184,19 +184,6 @@ main(int argc, char **argv)
 
   Value& myConnectionInfo = layout_doc["layout"][mpiRank];
 
-  struct header
-  {
-    int nvars;
-    int ijk[3];
-    int grid[3];    
-    int pgrid[3];  
-    int ghosts[6];
-    int neighbors[6];
-    int extent[6];
-    double origin[3];
-    double spacing[3];
-  } hdr;
-
   vector<string> varnames;
   vector<float *> dataptrs[2];
   vector<float *> interpolated;
@@ -286,31 +273,10 @@ main(int argc, char **argv)
 
     if (t == 0)
     {
-      for (int i = 0; i < 6; i++)
-      {
-        hdr.ghosts[i] = myPartDoc["ghosts"][i].GetInt();
-        hdr.neighbors[i] = myPartDoc["neighbors"][i].GetInt();
-      }
+      int extent[6];
+      vti->GetExtent(extent);
 
-      hdr.grid[0] = (datadesc_doc["extent"][1].GetInt() - datadesc_doc["extent"][0].GetInt()) + 1;
-      hdr.grid[1] = (datadesc_doc["extent"][3].GetInt() - datadesc_doc["extent"][2].GetInt()) + 1;
-      hdr.grid[2] = (datadesc_doc["extent"][5].GetInt() - datadesc_doc["extent"][4].GetInt()) + 1;
-
-      hdr.pgrid[0] = datadesc_doc["partition grid"][0].GetInt();
-      hdr.pgrid[1] = datadesc_doc["partition grid"][1].GetInt();
-      hdr.pgrid[2] = datadesc_doc["partition grid"][2].GetInt();
-
-      vti->GetExtent(hdr.extent);
-      vti->GetOrigin(hdr.origin); 
-      vti->GetSpacing(hdr.spacing);
-
-      hdr.nvars = datadesc_doc["variables"].Size();
-
-      // How many local points?
-
-      point_count = ((hdr.extent[1] - hdr.extent[0])+1)
-                    * ((hdr.extent[3] - hdr.extent[2])+1)
-                    * ((hdr.extent[5] - hdr.extent[4])+1);
+      point_count = ((extent[1] - extent[0])+1) * ((extent[3] - extent[2])+1) * ((extent[5] - extent[4])+1);
     }
 
     // get pointer to data for each var.   If double, allocate and transform.  While doing
@@ -384,44 +350,41 @@ main(int argc, char **argv)
     host = myConnectionInfo["host"].GetString();
     port = myConnectionInfo["port"].GetInt();
 
-    hdr.ijk[0] = myConnectionInfo["ijk"][0].GetInt();
-    hdr.ijk[1] = myConnectionInfo["ijk"][1].GetInt();
-    hdr.ijk[2] = myConnectionInfo["ijk"][2].GetInt();
-
     // Tell Galaxy a timestep is on the way
 
-    if (mpiRank == 0)
+    for (int i = 0; i < varnames.size(); i++)
     {
-      string cmd = string("accept;");
-      if (! master->CSendRecv(cmd))
-      {
-        cerr << "sending accept failed... " << cmd << "\n";
-        status = 0;
-      }
-    }
+      string name = varnames[i];
 
-    MPI_Barrier(MPI_COMM_WORLD);
+      if (mpiRank == 0)
+      {
+        string cmd = string("accept ") + name + ";";
+        if (! master->CSend(cmd))
+        {
+          cerr << "sending accept failed... " << cmd << "\n";
+          status = 0;
+        }
+      }
+
+      MPI_Barrier(MPI_COMM_WORLD);
   
-    cerr << "attaching to " << host << ":" << port << "\n";
-    if (0 == skt->ConnectToServer(host.c_str(), port))
-    {
-      skt->Send((const void *)&hdr, sizeof(hdr));
+      cerr << "attaching to " << host << ":" << port << " for " << name << "\n";
 
-      for (int i = 0; i < varnames.size(); i++)
+      skt->ConnectToServer(host.c_str(), port);
+      skt->Send(interpolated[i], point_count * (isvector[i] ? 3 : 1) * sizeof(float));
+
+      if (mpiRank == 0)
       {
-        string name = varnames[i];
-
-        int n = name.size() + 1;
-        skt->Send(&n, sizeof(n));
-        skt->Send((const void *)name.c_str(), n);
-
-        n = isvector[i] ? 3 : 1;
-        skt->Send(&n, sizeof(n));
-
-        skt->Send(interpolated[i], point_count * (isvector[i] ? 3 : 1) * sizeof(float));
+        string rply;
+        if (! master->CRecv(rply) || rply != "ok")
+        {
+          cerr << "accept failed... " << rply << "\n";
+          status = 0;
+        }
       }
     }
 
+#if 0
     if (mpiRank == 0)
     {
       string cmd = string("commit;");
@@ -431,7 +394,7 @@ main(int argc, char **argv)
         status = 0;
       }
     }
-
+#endif
 
     skt->CloseSocket();
     skt->Delete();
@@ -479,15 +442,17 @@ main(int argc, char **argv)
     }
   }
 
-  string cmd = string("close;");
-  if (! master->CSendRecv(cmd))
-  {
-    cerr << "sending close failed... " << cmd << "\n";
-    status = 0;
-  }
-
   if (mpiRank == 0)
+  {
+    string cmd = string("close;");
+    if (! master->CSendRecv(cmd))
+    {
+      cerr << "sending close failed... " << cmd << "\n";
+      status = 0;
+    }
+
     master->Disconnect();
+  }
 
   MPI_Finalize();
   exit(0);

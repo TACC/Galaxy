@@ -60,6 +60,12 @@ Work::RegisterSubclass(string name, Work *(*d)(SharedP))
 	return GetTheApplication()->RegisterWork(name, d);
 }
 
+void
+Work::Allocate(int n)
+{
+  contents = smem::New(n);
+}
+
 void 
 Work::Send(int i)
 {
