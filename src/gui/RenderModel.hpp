@@ -116,8 +116,9 @@ private Q_SLOTS:
   void openCameraDialog() 
   {
     CameraDialog *cameraDialog = new CameraDialog(camera);
+    cameraDialog->sync_camera_to_widgets();
     cameraDialog->exec();
-    cameraDialog->get_camera(camera);
+    cameraDialog->sync_widgets_to_camera();
 
     if (getTheGxyConnectionMgr()->IsConnected())
       renderWindow->setCamera(camera);

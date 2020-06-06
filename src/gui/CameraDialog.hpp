@@ -127,48 +127,41 @@ public:
 
   ~CameraDialog() {}
 
-  void get_camera(Camera& c)
+  void sync_widgets_to_camera()
   {
-    c.setPoint(_vp_x->text().toDouble(),
-               _vp_y->text().toDouble(),
-               _vp_z->text().toDouble());
-    c.setDirection(_vd_x->text().toDouble(),
-               _vd_y->text().toDouble(),
-               _vd_z->text().toDouble());
-    c.setUp(_vu_x->text().toDouble(),
-               _vu_y->text().toDouble(),
-               _vu_z->text().toDouble());
-    c.setSize(_w->text().toInt(),
-              _h->text().toInt());
-    c.setAOV(_aov->text().toDouble());
-    gxy::vec3f p = c.getPoint();
+    camera.setPoint(_vp_x->text().toDouble(), _vp_y->text().toDouble(), _vp_z->text().toDouble());
+    camera.setDirection(_vd_x->text().toDouble(), _vd_y->text().toDouble(), _vd_z->text().toDouble());
+    camera.setUp(_vu_x->text().toDouble(), _vu_y->text().toDouble(), _vu_z->text().toDouble());
+    camera.setSize(_w->text().toInt(), _h->text().toInt());
+    camera.setAOV(_aov->text().toDouble());
+    gxy::vec3f p = camera.getPoint();
   }
+
+  void sync_camera_to_widgets()
+  {
+    _vp_x->setText(QString::number(camera.point.x));
+    _vp_y->setText(QString::number(camera.point.y));
+    _vp_z->setText(QString::number(camera.point.z));
+    _vd_x->setText(QString::number(camera.direction.x));
+    _vd_y->setText(QString::number(camera.direction.y));
+    _vd_z->setText(QString::number(camera.direction.z));
+    _vu_x->setText(QString::number(camera.up.x));
+    _vu_y->setText(QString::number(camera.up.y));
+    _vu_z->setText(QString::number(camera.up.z));
+    _w->setText(QString::number(camera.size.x));
+    _h->setText(QString::number(camera.size.y));
+    _vu_z->setText(QString::number(camera.up.z));
+    _aov->setText(QString::number(camera.aov));
+  }
+    
 
 
 public Q_SLOTS:
 
   void reset()
   {
-    _vp_x->setText(QString::number(camera.point.x));
-    _vp_y->setText(QString::number(camera.point.y));
-    _vp_z->setText(QString::number(camera.point.z));
-
-    _vd_x->setText(QString::number(camera.direction.x));
-    _vd_y->setText(QString::number(camera.direction.y));
-    _vd_z->setText(QString::number(camera.direction.z));
-
-    _vu_x->setText(QString::number(camera.up.x));
-    _vu_y->setText(QString::number(camera.up.y));
-    _vu_z->setText(QString::number(camera.up.z));
-
-    _w->setText(QString::number(camera.size.x));
-    _h->setText(QString::number(camera.size.y));
-    _vu_z->setText(QString::number(camera.up.z));
-
-    _aov->setText(QString::number(camera.aov));
+    sync_camera_to_widgets();
   }
-
-
 
 private:
 

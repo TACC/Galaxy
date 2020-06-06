@@ -22,7 +22,8 @@ my_time()
   return 1000000000*s.tv_sec + s.tv_nsec;
 }
 
-GxyRenderWindow::GxyRenderWindow(std::string rid)
+GxyRenderWindow::GxyRenderWindow(Camera& c, std::string rid)
+  : camera(c)
 {
   trackball.setSize(3);
 
@@ -66,7 +67,7 @@ GxyRenderWindow::~GxyRenderWindow()
 }
 
 void
-GxyRenderWindow::setCamera(Camera&c)
+GxyRenderWindow::setCamera(Camera& c)
 {
   camera = c; 
   trackball.reset();

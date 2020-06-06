@@ -20,7 +20,7 @@ class GxyRenderWindow : public QOpenGLWidget, protected QOpenGLFunctions
   Q_OBJECT
 
 public:
-  GxyRenderWindow(std::string rid);
+  GxyRenderWindow(Camera&, std::string rid);
   ~GxyRenderWindow();
 
   void render();
@@ -76,7 +76,7 @@ private:
   gxy::vec3f current_up;
   float vdist;
 
-  Camera camera;
+  Camera& camera;
   LightingEnvironment lighting;
   std::map<std::string, std::shared_ptr<Vis>> Visualization;
 

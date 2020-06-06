@@ -63,7 +63,7 @@ RenderModel::RenderModel()
 
   _properties->addProperties(frame);
 
-  renderWindow = new GxyRenderWindow(getModelIdentifier());
+  renderWindow = new GxyRenderWindow(camera, getModelIdentifier());
   renderWindow->show();
 
   QPushButton *open = new QPushButton("Open");
