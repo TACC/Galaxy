@@ -437,7 +437,7 @@ main(int argc, char **argv)
           it = 1;
         }
         else
-          it = it + 1;
+          it = it - 1;
       }
     }
   }
