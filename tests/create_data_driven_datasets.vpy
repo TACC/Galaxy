@@ -162,7 +162,7 @@ def do_streamlines(id):
 
 
 rdr = vtkXMLImageDataReader()
-rdr.SetFileName('radial-0.vti')
+rdr.SetFileName('radial.vti')
 rdr.Update()
 id = rdr.GetOutput()
 
