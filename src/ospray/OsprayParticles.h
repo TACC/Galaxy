@@ -49,8 +49,6 @@ public:
 private:
   OsprayParticles(ParticlesP);
 
-private:
-  ParticlesP particles;
 };
 
 }

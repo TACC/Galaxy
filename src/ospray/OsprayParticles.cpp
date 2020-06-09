@@ -24,8 +24,6 @@ using namespace gxy;
 
 OsprayParticles::OsprayParticles(ParticlesP p)
 {
-  particles = p;
-
   OSPGeometry ospg = ospNewGeometry("ddspheres");
   if (! ospg) 
   {
@@ -42,8 +40,6 @@ OsprayParticles::OsprayParticles(ParticlesP p)
   ospSetData(ospg, "data", data);
   
   ospCommit(ospg);
-
-  std::cerr << "OsprayParticles " << p->GetNumberOfVertices() << " " << ((long)ospg) << "\n";
 
   theOSPRayObject = (OSPObject)ospg;
 }

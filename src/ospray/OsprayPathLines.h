@@ -49,8 +49,6 @@ public:
 private:
   OsprayPathLines(PathLinesP);
 
-private:
-  PathLinesP pathlines;
 };
 
 }

@@ -24,8 +24,6 @@ using namespace gxy;
 
 OsprayPathLines::OsprayPathLines(PathLinesP p)
 {
-  pathlines = p;
-
   OSPGeometry ospg = ospNewGeometry("ddpathlines");
   if (! ospg) 
   {
