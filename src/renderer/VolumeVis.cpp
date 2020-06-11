@@ -48,6 +48,7 @@ VolumeVis::~VolumeVis()
 void
 VolumeVis::initialize()
 {
+  // std::cerr << "VolVis init: " << std::hex << this << "\n";
   super::initialize();
   volume_rendering = false;
 }
@@ -63,6 +64,7 @@ void
 VolumeVis::allocate_ispc()
 {
   ispc = ispc::VolumeVis_allocate();
+  // std::cerr << "VV alloc ispc " << std::hex << ispc << "\n";
 }
 
 int 

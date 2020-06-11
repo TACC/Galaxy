@@ -18,6 +18,8 @@ WORK_CLASS_TYPE(StreamTracer::StreamTracerTraceToPathLinesMsg)
 
 KEYED_OBJECT_CLASS_TYPE(StreamTracer)
 
+int StreamTracerFilter::stfilter_index = 0;
+
 void
 StreamTracer::Register()
 {

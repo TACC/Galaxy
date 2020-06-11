@@ -97,8 +97,8 @@ private:
   pthread_t ager_tid = NULL;
 
   int current_frame = -1;
-  float max_age = 3.0;
-  float fadeout = 1.0;
+  float max_age = 1.0;
+  float fadeout = 0.5;
 
   float* pixels = NULL;
   float* negative_pixels = NULL;

@@ -201,12 +201,10 @@ GxyRenderWindow::mouseMoveEvent(QMouseEvent *event)
 
     gxy::vec3f p = current_center + scalev(vdist, current_direction);
     camera.setPoint(p);
-    std::cerr << "point: " << p.x << " " << p.y << " " << p.z << " ";
 
     gxy::vec3f n = neg(current_direction);
     scale(vdist, n);
     camera.setDirection(n);
-    std::cerr << "direction: " << n.x << " " << n.y << " " << n.z << "\n";
 
     camera.setUp(current_up);
 
@@ -471,6 +469,8 @@ GxyRenderWindow::pixel_ager_thread(void *d)
   pthread_exit(NULL);
 }
 
+static int target = -1;
+void brk(){}
 void
 GxyRenderWindow::FrameBufferAger()
 {
@@ -488,6 +488,12 @@ GxyRenderWindow::FrameBufferAger()
       {
         long tm = frame_times[offset];
         float sec = (now - tm) / 1000000000.0;
+
+        if (target == offset)
+        { 
+          std::cerr << sec << " sec\n";
+          brk();
+        }
 
         float *pix = pixels + (offset*4);
         if (sec > max_age)

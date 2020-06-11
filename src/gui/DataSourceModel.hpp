@@ -356,7 +356,6 @@ private Q_SLOTS:
 
       output->setValid(true);
 
-      std::cerr << "DataSourceModel onApply\n";
       GxyModel::onApply();
     }
   }

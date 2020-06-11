@@ -26,6 +26,8 @@ namespace gxy
 
 WORK_CLASS_TYPE(DSamplerMsg)
 
+int DensitySampler::densityfilter_index = 0;
+
 bool
 DSamplerMsg::CollectiveAction(MPI_Comm c, bool is_root)
 {

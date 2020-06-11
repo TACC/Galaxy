@@ -20,6 +20,7 @@
 // ========================================================================== //
 
 #include <iostream>
+#include <sstream>
 
 #include <unistd.h>
 #include <string.h>
@@ -45,6 +46,7 @@ using namespace std;
 namespace gxy
 {
 
+
 struct dMsg : public filterArgs
 {
   int nSamples;
@@ -53,6 +55,7 @@ struct dMsg : public filterArgs
 
 class DSamplerMsg : public Work
 {
+
 public:
   DSamplerMsg(dMsg* a) : DSamplerMsg(sizeof(dMsg))
   {
@@ -119,6 +122,8 @@ public:
   {
     VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
     ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
+
+    p->setModified(true);
 
     nSamples = a->nSamples;
     power = a->power;
@@ -234,6 +239,8 @@ private:
 
 class DensitySampler : public Filter
 {
+  static int densityfilter_index;
+
 public:
 
   static void
@@ -245,6 +252,10 @@ public:
 
   DensitySampler(KeyedDataObjectP source)
   {
+    std::stringstream ss;
+    ss << "DensityFilter_" << densityfilter_index++;
+    name = ss.str();
+
     result = KeyedDataObject::Cast(Particles::NewP());
     result->CopyPartitioning(source);
   }
@@ -252,11 +263,11 @@ public:
   ~DensitySampler() {}
 
   void
-  Sample(rapidjson::Document& doc)
+  Sample(rapidjson::Document& doc, KeyedDataObjectP scalarVolume)
   {
     dMsg args;
 
-    args.sourceKey      = doc["sourceKey"].GetInt();
+    args.sourceKey      = scalarVolume->getkey();
     args.destinationKey = result->getkey();
 
     args.nSamples       = doc["nSamples"].GetInt();

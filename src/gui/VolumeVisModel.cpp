@@ -142,7 +142,6 @@ VolumeVisModel::outData(PortIndex)
 void
 VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
-  std::cerr << "VVM setInData\n";
   input = std::dynamic_pointer_cast<GxyData>(data);
   if (input)
   {

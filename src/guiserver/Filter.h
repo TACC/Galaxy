@@ -1,4 +1,4 @@
-// ========================================================================== //
+
 //                                                                            //
 // Copyright (c) 2014-2019 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
@@ -50,9 +50,13 @@ namespace gxy
       return theDatasets->Find(name);
     }
 
+    void SetName(std::string n) { name = n; }
+    std::string GetName() { return name; }
+
     KeyedDataObjectP getResult() { return result; }
 
   protected:
     KeyedDataObjectP result;
+    std::string name;
   };
 }

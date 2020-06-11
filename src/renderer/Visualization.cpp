@@ -233,12 +233,19 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 
   for (auto v : vis)
   {
-    OsprayObjectP op;
     KeyedDataObjectP kdop = v->GetTheData();
+    OsprayObjectP op = kdop->GetTheOSPRayEquivalent();
 
-    Key key = kdop->getkey();
+    if (! op || kdop->hasBeenModified())
+    {
+      op = kdop->CreateTheOSPRayEquivalent(kdop);
+      kdop->setModified(false);
+    }
 
-#if 1
+    v->SetTheOsprayDataObject(op);
+
+#if 0
+#if 0
     op = v->GetTheOsprayDataObject();
     if (! op)
     {
@@ -252,8 +259,22 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 
     v->SetTheOsprayDataObject(op);
 #else
-    op = kdop->CreateTheOSPRayEquivalent(kdop);
-    v->SetTheOsprayDataObject(op);
+    op = v->GetTheOsprayDataObject();
+    if (!op || kdop->hasBeenModified())
+    {
+      op = kdop->CreateTheOSPRayEquivalent(kdop);
+      v->SetTheOsprayDataObject(op);
+      kdop->setModified(false);
+    }
+    else
+      op = v->GetTheOsprayDataObject();
+#endif
+#endif
+
+#if 0
+   std::cerr << "vis: " << v.get() << "\n";
+   std::cerr << "vol: " << kdop.get();
+   std::cerr << " op: " << op.get() << " vis isp: " << v->GetIspc() << " osp: " << op->GetOSP() << " IE: " << op->GetOSP_IE() << "\n";
 #endif
     
     if (GeometryVis::IsA(v))

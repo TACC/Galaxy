@@ -24,11 +24,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
 include_directories(${gxy_framework_SOURCE_DIR} 
                     ${gxy_renderer_SOURCE_DIR}
-					${gxy_sampler_SOURCE_DIR}
+					          ${gxy_sampler_SOURCE_DIR}
                     ${OSPRAY_INCLUDE_DIRS}
-					${gxy_data_SOURCE_DIR}
-					${gxy_ospray_SOURCE_DIR}
-					${Galaxy_BINARY_DIR}/src)
+					          ${gxy_data_SOURCE_DIR}
+					          ${gxy_ospray_SOURCE_DIR}
+					          ${gxy_multiserver_SOURCE_DIR}
+					          ${Galaxy_BINARY_DIR}/src)
 
 set(GALAXY_LIBRARIES 
     gxy_framework 
@@ -44,6 +45,13 @@ set(BINS "")
 find_package(X11)
 find_package(OpenGL)
 find_package(GLUT)
+find_package(VTK)
+
+add_executable(simsim simsim.cpp)
+target_link_libraries(simsim gxy_multiserver_client ${VTK_LIBRARIES} ${MPI_C_LIBRARIES})
+
+add_executable(partition_vti partition_vti.cpp)
+target_link_libraries(partition_vti ${VTK_LIBRARIES})
 
 if (GXY_WRITE_IMAGES)
 

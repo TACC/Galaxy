@@ -28,12 +28,11 @@
 namespace gxy
 {
 
+int RaycastSampler::rcsfilter_index = 0;
+
 void
-RaycastSampler::Sample(rapidjson::Document& doc)
+RaycastSampler::Sample(rapidjson::Document& doc, KeyedDataObjectP scalarVolume)
 {
-
-  Key sourceKey         = doc["sourceKey"].GetInt();
-
   camera->LoadFromJSON(doc["camera"]);
   camera->Commit();
 
@@ -53,7 +52,7 @@ RaycastSampler::Sample(rapidjson::Document& doc)
     vis = Vis::Cast(gv);
   }
 
-  vis->Commit(sourceKey);
+  vis->Commit(scalarVolume->getkey());
 
   VisualizationP visualization = Visualization::NewP();
   visualization->AddVis(vis);

@@ -146,7 +146,6 @@ public:
 
     if (msg != NULL)
     {
-      std::cerr << "GxyConnectionMgr Event message received: " << msg << "\n";
       NotifyObservers(Observer::Updated, (void *)msg);
       free(msg);
     }

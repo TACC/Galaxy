@@ -440,10 +440,15 @@ protected:
 
 class StreamTracerFilter : public Filter
 {
+  static int stfilter_index;
 public:
 
   StreamTracerFilter() 
   {
+    std::stringstream ss;
+    ss << "StreamTracerFilter_" << stfilter_index++;
+    name = ss.str();
+
     streamTracer = StreamTracer::NewP();
     result = KeyedDataObject::Cast(PathLines::NewP());
   }
@@ -468,6 +473,8 @@ public:
 
   float GetDeltaT() { return deltaT; }
   void SetDeltaT(float t) { deltaT = t; }
+
+  StreamTracerP GetTheStreamlines() { return streamTracer; }
 
   void Trace(ParticlesP seeds)
   {

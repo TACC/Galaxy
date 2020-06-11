@@ -20,6 +20,7 @@
 // ========================================================================== //
 
 #include <iostream>
+#include <sstream>
 
 #include <unistd.h>
 #include <string.h>
@@ -89,6 +90,8 @@ public:
 
 class MHSampler : public Filter
 {
+  static int mhfilter_index;
+
 // Two types of functions map volume samples to a probability distribution: a 
 // linear transformation that maps linearly with 0 at some data value and 1 at some
 // other data value, with 0 everywhere else, and a gaussian transformation with a
@@ -106,18 +109,23 @@ public:
 
   MHSampler(KeyedDataObjectP source)
   {
+    std::stringstream ss;
+    ss << "MHFilter_" << mhfilter_index++;
+    name = ss.str();
+
     result = KeyedDataObject::Cast(Particles::NewP());
     result->CopyPartitioning(source);
+
   }
 
   ~MHSampler() { std::cerr << "MHSampler dtor\n"; }
 
   void
-  Sample(rapidjson::Document& doc)
+  Sample(rapidjson::Document& doc, KeyedDataObjectP scalarVolume)
   {
     mhArgs args;
-
-    args.sourceKey         = doc["sourceKey"].GetInt();
+    
+    args.sourceKey         = scalarVolume->getkey();
     args.destinationKey    = result->getkey();
 
     args.radius         = doc["mh_radius"].GetDouble();
@@ -246,9 +254,9 @@ public:
   
     VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
     ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
-  
+
+    p->setModified(true);
     p->clear();
-  
     p->CopyPartitioning(v);
   
     p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);

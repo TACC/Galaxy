@@ -1,3 +1,5 @@
+## ========================================================================== ##
+##                                                                            ##
 ## Copyright (c) 2014-2019 The University of Texas at Austin.                 ##
 ## All rights reserved.                                                       ##
 ##                                                                            ##
@@ -18,6 +20,7 @@
 ## ========================================================================== ##
 
 cmake_minimum_required (VERSION 3.9)
+project (gxy_insitu VERSION ${GALAXY_VERSION})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
@@ -29,16 +32,9 @@ include_directories(${gxy_multiserver_SOURCE_DIR}
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS} )
 
-add_executable(simsim simsim.cpp VTISerializer.cpp)
-target_link_libraries(simsim gxy_multiserver_client ${VTK_LIBRARIES} ${MPI_C_LIBRARIES})
-
-add_executable(partition_vti partition_vti.cpp)
-target_link_libraries(partition_vti ${VTK_LIBRARIES})
-
 add_library(gxy_module_insitu MODULE SocketConnector.cpp SocketConnectorClientServer.cpp)
 target_link_libraries(gxy_module_insitu gxy_multiserver gxy_framework ${VTK_LIBRARIES} ${MPI_C_LIBRARIES})
 set(SERVERS gxy_module_insitu ${SERVERS})
 
-install(PROGRAMS mklayout DESTINATION bin)
 install(TARGETS simsim partition_vti DESTINATION bin)
 install(TARGETS gxy_module_insitu DESTINATION ${CMAKE_INSTALL_LIBDIR})

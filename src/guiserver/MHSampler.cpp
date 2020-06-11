@@ -26,6 +26,8 @@ namespace gxy
 
 WORK_CLASS_TYPE(MHSamplerMsg)
 
+int MHSampler::mhfilter_index = 0;
+
 bool
 MHSamplerMsg::Action(int s)
 {

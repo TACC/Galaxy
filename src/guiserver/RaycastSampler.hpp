@@ -47,6 +47,7 @@ namespace gxy
 
 class RaycastSampler : public Filter
 {
+  static int rcsfilter_index;
 public:
 
   static void
@@ -54,6 +55,10 @@ public:
 
   RaycastSampler(KeyedDataObjectP source)
   {
+    std::stringstream ss;
+    ss << "RaycastSampleFilter_" << rcsfilter_index++;
+    name = ss.str();
+
     camera = Camera::NewP();
     sampler = Sampler::NewP();
 
@@ -68,7 +73,7 @@ public:
   ~RaycastSampler() { std::cerr << "RaycastSampler dtor\n"; }
 
   void
-  Sample(rapidjson::Document& doc);
+  Sample(rapidjson::Document& doc, KeyedDataObjectP);
 
 private:
   SamplerP sampler = NULL;

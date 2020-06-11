@@ -33,7 +33,7 @@ main(int argc, char **argv)
 	ClientServer cs;
 
 	if (argc == 1)
-		cs.setup_client("localhost");
+		cs.setup_client((char *)"localhost");
 	else
 		cs.setup_client(argv[1]);
 		

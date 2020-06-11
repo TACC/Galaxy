@@ -81,11 +81,7 @@ DataSourceModel::Notify(Observer *sender, Observer::ObserverEvent event, void* c
     if (current_selection != NULL && current_selection->getDataInfo().name == argument)
     {
       if (isValid())
-      {
-        std::cerr << "onApply from Notify\n";
         QMetaObject::invokeMethod(this, "onApply");
-        // onApply();
-      }
       else
         std::cerr << "didn't apply - not valid\n";
     }

@@ -118,10 +118,9 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
 {
   if (pi == 0)
   {
-    std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(data);
-    if (d && d->isValid() && (! vectorField || vectorField->dataInfo.name != d->dataInfo.name))
+    vectorField = std::dynamic_pointer_cast<GxyData>(data);
+    if (isValid())
     {
-      vectorField = std::dynamic_pointer_cast<GxyData>(data);
       retrace = true;
       retrim = true;
     }
@@ -129,10 +128,9 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
 
   else if (pi == 1)
   {
-    std::shared_ptr<GxyData> d = std::dynamic_pointer_cast<GxyData>(data);
-    if (d && d->isValid() && (! seeds || seeds->dataInfo.name != d->dataInfo.name))
+    seeds = std::dynamic_pointer_cast<GxyData>(data);
+    if (isValid())
     {
-      seeds = std::dynamic_pointer_cast<GxyData>(data);
       retrace = true;
       retrim = true;
     }
@@ -141,6 +139,7 @@ setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex pi)
   else if (pi == 2)
   {
     std::shared_ptr<GxyDouble> d = std::dynamic_pointer_cast<GxyDouble>(data);
+      seeds = std::dynamic_pointer_cast<GxyData>(data);
     if (trimtime->text().toDouble() != d->getValue())
     {
       trimtime->setText(QString::number(d->getValue()));
