@@ -186,6 +186,13 @@ bool SocketConnector::local_accept(MPI_Comm c, VolumeP volume)
     exit(0);
   }
 
+  int one = 1;
+  if (! cskt->Send(&one, sizeof(one)))
+  {
+    std::cerr << "error... sending ack\n";
+    exit(0);
+  }
+
   cskt->CloseSocket();
   cskt->Delete();
 

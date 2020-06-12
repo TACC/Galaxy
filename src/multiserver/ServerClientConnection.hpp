@@ -72,6 +72,8 @@ public:
         std::string libname;
         ss >> libname;
 
+        std::cerr << line << "\n";
+
         DynamicLibraryP dlp = MultiServer::Get()->getTheDynamicLibraryManager()->Load(libname);
         if (! dlp)
           reply = std::string("error loading ") + libname;

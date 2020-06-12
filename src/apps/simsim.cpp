@@ -87,66 +87,11 @@ IntHandler(int s)
   exit(0);
 }
 
-struct header
-{
-  size_t datasize;
-  int extent[6];
-  double origin[3];
-  double spacing[3];
-};
-
-void
-SerializeVTI(vtkSocket *skt, vtkImageData* vti, std::vector<std::string> vars)
-{
-  struct header hdr;
-
-  vti->GetExtent(hdr.extent);
-  vti->GetOrigin(hdr.origin);
-  vti->GetSpacing(hdr.spacing);
-
-  int point_count = ((hdr.extent[1] - hdr.extent[0])+1) 
-                  * ((hdr.extent[3] - hdr.extent[2])+1)
-                  * ((hdr.extent[5] - hdr.extent[4])+1);
-
-  vtkPointData *pd = vti->GetPointData();
-
-  hdr.datasize = 0;
-  for (auto v : vars)
-  {
-    vtkAbstractArray *a = pd->GetArray(v.c_str());
-
-    if (! vtkFloatArray::SafeDownCast(a))
-    {
-      std::cerr << "can't handle " << v << "... not float\n";
-      exit(0);
-    }
-
-    int nc = a->GetNumberOfComponents();
-
-    if (nc != 1 && nc != 3)
-    {
-      std::cerr << "can't handle " << v << "... gotta be scalar or 3-vector\n";
-      exit(0);
-    }
-
-    hdr.datasize += v.size() + 1;
-    hdr.datasize += point_count * nc * sizeof(float);
-  }
-
-  skt->Send((const void *)&hdr, sizeof(hdr));
-
-  for (auto v : vars)
-  {
-    vtkAbstractArray *a = pd->GetArray(v.c_str());
-    int nc = a->GetNumberOfComponents();
-    skt->Send((const void *)v.c_str(), v.size()+1);
-    skt->Send(a->GetVoidPointer(0), point_count * nc * sizeof(float));
-  }
-}
 
 int
 main(int argc, char **argv)
 {
+  std::cerr << "XXXXXXXXXX\n";
   bool dbg = false, atch = false;
   char *dbgarg = NULL;
   int delay = 5;
@@ -365,8 +310,8 @@ main(int argc, char **argv)
     for (Value::ConstValueIterator itr = variables.Begin(); itr != variables.End(); ++itr)
     {
       auto& v = *itr;
-
       string name = v["name"].GetString();
+
 
       // Def. need this on t=0 for interplants, may need it elsetimes if double
 
@@ -388,6 +333,22 @@ main(int argc, char **argv)
         for (int i = 0; i < point_count * (v["vector"].GetBool() ? 3 : 1); i++)
           *dst++ = float(*src++);
         dataptrs[t].push_back(buf);
+
+        if (name == "PDF")
+        {
+          src = (double *)a->GetVoidPointer(0);
+          float a = buf[0], b = buf[0], c = src[0], d = src[0];
+          for (int i = 0; i < point_count * (v["vector"].GetBool() ? 3 : 1); i++)
+        {
+            if (a > buf[i]) a = buf[i];
+            if (b < buf[i]) b = buf[i];
+            if (c > src[i]) c = src[i];
+            if (d < src[i]) d = src[i];
+            if (d > 1)
+            std::cerr << "D " << i << " " << buf[i] << " " << src[i] << "\n";
+          }
+          std::cerr << name << ": " << a << " " << b << " " << c << " " << d << "\n";
+        }
       }
       else
       {
@@ -435,6 +396,7 @@ main(int argc, char **argv)
 
       if (mpiRank == 0)
       {
+        std::cerr << "sending " << name << "\n";
         string cmd = string("accept ") + name + ";";
         if (! master->CSend(cmd))
         {
@@ -447,6 +409,10 @@ main(int argc, char **argv)
   
       skt->ConnectToServer(host.c_str(), port);
       skt->Send(interpolated[i], point_count * (isvector[i] ? 3 : 1) * sizeof(float));
+
+      int rply;
+      skt->Receive(&rply, sizeof(rply), 1);
+      std::cerr << mpiRank << ": received ack for " << name << "\n";
 
       if (mpiRank == 0)
       {

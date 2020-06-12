@@ -224,7 +224,9 @@ main(int argc, char **argv)
       Value var(kObjectType);
       var.AddMember("name", Value().SetString(n, root.GetAllocator()), root.GetAllocator());
       var.AddMember("vector", Value(nc == 3), root.GetAllocator());
-      var.AddMember("float", Value(vtkFloatArray::SafeDownCast(a) != NULL), root.GetAllocator());
+      //
+      // For now, all vars will be sent as float
+      var.AddMember("float", Value(1 == 1), root.GetAllocator());
       vars.PushBack(var, root.GetAllocator());
     }
   }

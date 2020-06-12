@@ -23,8 +23,19 @@
 #include <ospray/SDK/common/Managed.h>
 #include <ospray/SDK/api/Device.h>
 
+#if 0
+namespace ospray
+{
+
+void postStatusMsg(const std::string &s, unsigned int i) {}
+
+}
+#endif
+
 namespace gxy
 {
+
+
 namespace ospray_util
 {
 	void *

@@ -83,6 +83,7 @@ GxyRenderWindow::setCamera(Camera& c)
   gxy::vec2i size = c.getSize();
   resize(size.x, size.y);
 
+  std::cerr << p.x << " " << p.y << " " << p.z << " :: " << d.x << " " << d.y << " " << d.z << "\n";
   sendCamera();
 }
 
@@ -282,6 +283,7 @@ GxyRenderWindow::sendCamera()
     QString qs = QLatin1String(bytes);
 
     std::string msg = qs.toStdString();
+std::cerr << msg << "\n";
 
     getTheGxyConnectionMgr()->CSendRecv(msg);
   }

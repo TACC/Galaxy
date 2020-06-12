@@ -386,6 +386,12 @@ GuiClientServer::handle(string line, string& reply)
 
     CameraP camera = clientWindow->camera;
     rendering->SetTheSize(camera->get_width(), camera->get_height());
+
+    float px, py, pz, dx, dy, dz;
+    camera->get_viewpoint(px, py, pz);
+    camera->get_viewdirection(dx, dy, dz);
+    std::cerr << px << " " << py << " " << pz << " :: " << dx << " " << dy << " " << dz << "\n";
+
     rendering->SetTheCamera(camera);
 
     rendering->SetHandler(this);
