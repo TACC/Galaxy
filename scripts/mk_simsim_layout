@@ -7,32 +7,12 @@ if len(sys.argv) == 1:
 else:
   n = int(sys.argv[1])
 
-def factor(ijk):
-  # If ijk is prime, 1, 1, ijk will be chosen, i+j+k == ijk+2
-  factors = [1, 1, 1]
-  if ijk == 1:
-    return factors
-  mm = ijk + 3
-  for i in range(1, int(ijk/2) + 1):
-    jk = int(ijk / i)
-    if ijk == (i * jk):
-      for j in range(1, int(jk/2) + 1):
-        k = int(jk / j)
-        if jk == (j * k):
-          m = i + j + k
-          if m < mm:
-            mm = m
-            factors = [i, j, k]
-  return factors
-
-factors = factor(n)
-
 d = []
 port = 1900
 for i in range(factors[0]):
   for j in range(factors[1]):
     for k in range(factors[2]):
-      d.append({'ijk': [i, j, k], 'host': 'localhost', 'port': port})
+      d.append({'host': 'localhost', 'port': port})
       port = port + 1
 
 print( json.dumps({'layout': d}) )
