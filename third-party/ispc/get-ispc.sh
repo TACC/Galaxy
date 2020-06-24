@@ -19,7 +19,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-VERSION="1.12.0"
+VERSION="1.13.0"
 
 if [ "x$1" != "x" ]; then
 	echo "usage: get-ispc.sh"
@@ -63,7 +63,7 @@ if [ -f ${TARBALL} ]; then
 	report "found ${TARBALL}"
 else 
 	report "downloading ispc ${VERSION} for ${OS_TYPE}"
-	wget -q -O ${TARBALL} http://sourceforge.net/projects/ispcmirror/files/v${VERSION}/${TARBALL}/download
+	wget -q -O ${TARBALL} https://github.com/ispc/ispc/releases/download/v${VERSION}/${TARBALL}
 	if [ $? != 0 ]; then
 		fail "Download for ${TARBALL} failed."
 	fi

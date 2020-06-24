@@ -532,23 +532,23 @@ GuiClientServer::handle(string line, string& reply)
     samples->get_global_minmax(m, M);
 
     replyDoc.AddMember("name", rapidjson::Value().SetString(sampler->GetName().data(), sampler->GetName().size()+1), alloc);
-    replyDoc.AddMember("key", rapidjson::Value().SetInt(samples->getkey()), replyDoc.GetAllocator());
-    replyDoc.AddMember("type", rapidjson::Value().SetInt(2), replyDoc.GetAllocator());
-    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), replyDoc.GetAllocator());
-    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), replyDoc.GetAllocator());
-    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), replyDoc.GetAllocator());
+    replyDoc.AddMember("key", rapidjson::Value().SetInt(samples->getkey()), alloc);
+    replyDoc.AddMember("type", rapidjson::Value().SetInt(2), alloc);
+    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), alloc);
+    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), alloc);
+    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), alloc);
 
     Box *box = samples->get_global_box();
     rapidjson::Value boxv(rapidjson::kArrayType);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), replyDoc.GetAllocator());
-    replyDoc.AddMember("box", boxv, replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
+    replyDoc.AddMember("box", boxv, alloc);
 
-    replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), replyDoc.GetAllocator());
+    replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), alloc);
 
     HANDLED_OK;
   }
@@ -602,8 +602,14 @@ GuiClientServer::handle(string line, string& reply)
 
     streamtracer->Trace(seeds);
 
-    replyDoc.AddMember("name", rapidjson::Value().SetString(streamtracer->GetName().data(), streamtracer->GetName().size()+1), alloc);
-    replyDoc.AddMember("key", rapidjson::Value().SetInt(streamtracer->GetTheStreamlines()->getkey()), replyDoc.GetAllocator());
+    name = streamtracer->GetName();
+    replyDoc.AddMember("name", rapidjson::Value().SetString(name.data(), name.size()+1), alloc);
+    std::cerr << "In Trace: " << name << replyDoc["name"].GetString() << "\n";
+    
+    replyDoc.AddMember("key", rapidjson::Value().SetInt(streamtracer->GetTheStreamlines()->getkey()), alloc);
+
+    std::string x = DocumentToString(replyDoc);                                                           \
+    std::cerr << "Reply: " << x << "\n";
 
     HANDLED_OK;
   }
@@ -634,22 +640,28 @@ GuiClientServer::handle(string line, string& reply)
     float m, M;
     kdop->get_global_minmax(m, M);
 
-    replyDoc.AddMember("name", rapidjson::Value().SetString(streamtracer->GetName().data(), streamtracer->GetName().size()+1), alloc);
-    replyDoc.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), replyDoc.GetAllocator());
-    replyDoc.AddMember("type", rapidjson::Value().SetInt(type), replyDoc.GetAllocator());
-    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), replyDoc.GetAllocator());
-    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), replyDoc.GetAllocator());
-    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), replyDoc.GetAllocator());
+    std::string name = streamtracer->GetName();
+    replyDoc.AddMember("name", rapidjson::Value().SetString(name.data(), name.size()+1), alloc);
+    std::cerr << "In Trim: " << name << replyDoc["name"].GetString() << "\n";
+
+    replyDoc.AddMember("key", rapidjson::Value().SetInt(kdop->getkey()), alloc);
+    replyDoc.AddMember("type", rapidjson::Value().SetInt(type), alloc);
+    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), alloc);
+    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), alloc);
+    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), alloc);
 
     Box *box = kdop->get_global_box();
     rapidjson::Value boxv(rapidjson::kArrayType);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), replyDoc.GetAllocator());
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), replyDoc.GetAllocator());
-    replyDoc.AddMember("box", boxv, replyDoc.GetAllocator());
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
+    replyDoc.AddMember("box", boxv, alloc);
+
+    std::string x = DocumentToString(replyDoc);                                                           \
+    std::cerr << "Reply: " << x << "\n";
 
     HANDLED_OK;
   }
