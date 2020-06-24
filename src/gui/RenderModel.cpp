@@ -123,25 +123,38 @@ RenderModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
   if (input)
   {
     if (input->isValid())
-    {
       visList[input->get_origin()] = input;
-      if (visList.size() > 1)
-        std::cerr << visList.size() << " Vis in RenderModel\n";
-
-      if (isValid())
-      {
-        std::shared_ptr<Vis> vis = std::dynamic_pointer_cast<Vis>(data);
-        onApply();
-        Q_EMIT visUpdated(vis);
-      }
-    }
     else
-    {
       visList.erase(input->get_origin());
-    }
+  }
+
+  if (visList.size() > 0)
+  {
+    bool first = true;
+    for (auto it = visList.begin(); it != visList.end(); it++)
+      if (first)
+      {
+        camera.setBox(it->second->dataInfo.box);
+        first = false;
+      }
+      else
+      {
+        float *b = it->second->dataInfo.box;
+        float *c = camera.getBox();
+        if (c[0] > b[0]) c[0] = b[0];
+        if (c[1] < b[1]) c[1] = b[1];
+        if (c[2] > b[2]) c[2] = b[2];
+        if (c[3] < b[3]) c[3] = b[3];
+        if (c[4] > b[4]) c[4] = b[4];
+        if (c[5] < b[5]) c[5] = b[5];
+      }
   }
 
   enableIfValid();
+  if (isValid())
+  {
+    Q_EMIT visUpdated();
+  }
 }
 
 NodeValidationState

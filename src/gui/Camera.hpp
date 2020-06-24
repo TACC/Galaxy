@@ -81,6 +81,9 @@ public:
 
   void setSize(int w, int h) { size.x = w; size.y = h; }
 
+  void setBox(float* b) { for (int i = 0; i < 6; i++) box[i] = b[i]; }
+  float *getBox() { return box; }
+
   virtual QJsonObject save() const
   {
     QJsonObject modelJson;
@@ -138,5 +141,6 @@ protected:
   gxy::vec3f direction;
   gxy::vec3f up;
   gxy::vec2i size;
+  float box[6];
   float aov;
 };

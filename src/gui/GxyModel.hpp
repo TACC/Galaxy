@@ -122,8 +122,9 @@ public:
   {
   }
 
-  virtual void loadOutput(std::shared_ptr<GxyPacket> p) const 
+  virtual void loadOutput(std::shared_ptr<GxyData> p) const 
   {
+    p->dataInfo = input->dataInfo;
   }
 
   void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override
@@ -169,4 +170,5 @@ protected:
   Properties *_properties;
   QFrame *frame;
   std::string model_identifier;
+  std::shared_ptr<GxyData> input;
 };

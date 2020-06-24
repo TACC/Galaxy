@@ -94,11 +94,18 @@ void
 ParticlesVisModel::
 setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
-  input = std::dynamic_pointer_cast<GxyData>(data);
+  VisModel::setInData(data, portIndex);
+
   if (input)
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
-  VisModel::setInData(data, portIndex);
+  if (isValid())
+  {
+    enable(true);
+    onApply();
+  }
+  else
+    enable(false);
 }
 
 void
@@ -136,7 +143,7 @@ ParticlesVisModel::save() const
 
   QJsonObject modelJson = VisModel::save();
 
-  loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+  loadOutput(std::dynamic_pointer_cast<GxyData>(output));
   output->toJson(modelJson);
 
   return modelJson;
@@ -159,7 +166,7 @@ ParticlesVisModel::isValid()
 }
 
 void
-ParticlesVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
+ParticlesVisModel::loadOutput(std::shared_ptr<GxyData> o) const
 {
   VisModel::loadOutput(o);
 
@@ -191,7 +198,7 @@ ParticlesVisModel::onApply()
   if (isValid())
   {
     output = std::shared_ptr<ParticlesVis>(new ParticlesVis(model_identifier));
-    loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+    loadOutput(std::dynamic_pointer_cast<GxyData>(output));
     output->setValid(true);
 
     VisModel::onApply();

@@ -141,14 +141,7 @@ bool
 VisModel::isValid() 
 {
   bool valid = true;
-
-#if 0
-  return (GxyModel::isValid() &&
-          input && input->isValid() &&
-          (cmap_widget->text().toStdString() != ""));
-#else
   return (GxyModel::isValid() && input && input->isValid());
-#endif
 }
 
 void
@@ -187,7 +180,7 @@ VisModel::loadParameterWidgets() const
 }
 
 void
-VisModel::loadOutput(std::shared_ptr<GxyPacket> p) const
+VisModel::loadOutput(std::shared_ptr<GxyData> p) const
 {
   GxyModel::loadOutput(p);
 
@@ -260,3 +253,14 @@ VisModel::onCmapMaxSliderChanged(int v)
     cmap_range_min_slider->setSliderPosition(cmap_range_max_slider->sliderPosition());
   }
 }
+
+void
+VisModel::
+setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
+{
+  input = std::dynamic_pointer_cast<GxyData>(data);
+  if (input && output)
+    output->dataInfo = input->dataInfo;
+}
+
+
