@@ -92,12 +92,17 @@ PathlinesVisModel::
 setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
 {
   VisModel::setInData(data, portIndex);
-
-  input = std::dynamic_pointer_cast<GxyData>(data);
+  
   if (input)
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
 
-  VisModel::setInData(data, portIndex);
+  if (isValid())
+  {
+    enable(true);
+    onApply();
+  }
+  else
+    enable(false);
 }
 
 void
@@ -135,7 +140,7 @@ PathlinesVisModel::save() const
 
   QJsonObject modelJson = VisModel::save();
 
-  loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+  loadOutput(std::dynamic_pointer_cast<GxyData>(output));
   output->toJson(modelJson);
 
   return modelJson;
@@ -158,7 +163,7 @@ PathlinesVisModel::isValid()
 }
 
 void
-PathlinesVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
+PathlinesVisModel::loadOutput(std::shared_ptr<GxyData> o) const
 {
   VisModel::loadOutput(o);
 
@@ -192,7 +197,7 @@ PathlinesVisModel::onApply()
   {
     std::cerr << "PLVM isValid is true\n";
     output = std::shared_ptr<PathlinesVis>(new PathlinesVis(model_identifier));
-    loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+    loadOutput(std::dynamic_pointer_cast<GxyData>(output));
     output->setValid(true);
 
     VisModel::onApply();

@@ -39,8 +39,9 @@ public:
 
   void Update() { update(); }
 
-protected:
   void sendCamera();
+
+protected:
 
   void resizeGL(int w, int h) override;
   void paintGL() override;

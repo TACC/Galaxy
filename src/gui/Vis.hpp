@@ -22,16 +22,16 @@
 #pragma once
   
 #include <iostream>
-#include "GxyPacket.hpp"
+#include "GxyData.hpp"
 
 #include <QJsonArray>
 
-class Vis : public GxyPacket
+class Vis : public GxyData
 {
 public:
   
-  Vis() : GxyPacket() {}
-  Vis(std::string o) : GxyPacket(o) {}
+  Vis() : GxyData() {}
+  Vis(std::string o) : GxyData(o) {}
 
   QtNodes::NodeDataType type() const override
   { 

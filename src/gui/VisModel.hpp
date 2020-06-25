@@ -74,10 +74,12 @@ public:
 
   QJsonObject save() const override;
 
+  void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
+
   virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) override;
   virtual void loadParameterWidgets() const override;
 
-  virtual void loadOutput(std::shared_ptr<GxyPacket> o) const override;
+  virtual void loadOutput(std::shared_ptr<GxyData> o) const override;
 
   bool isValid() override;
 
@@ -105,8 +107,7 @@ public Q_SLOTS:
   }
 
 protected:
-  std::shared_ptr<GxyData> input;
-  std::shared_ptr<GxyPacket> output;
+  std::shared_ptr<Vis> output;
 
 private:
   bool      data_range_set = false;

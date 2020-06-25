@@ -95,7 +95,7 @@ public:
 
 signals:
 
-  void visUpdated(std::shared_ptr<Vis>);
+  void visUpdated();
   void lightingChanged(LightingEnvironment&);
   void cameraChanged(Camera&);
 
@@ -116,12 +116,15 @@ private Q_SLOTS:
   void openCameraDialog() 
   {
     CameraDialog *cameraDialog = new CameraDialog(camera);
-    cameraDialog->sync_camera_to_widgets();
     cameraDialog->exec();
-    cameraDialog->sync_widgets_to_camera();
+    cameraDialog->get_camera(camera);
 
     if (getTheGxyConnectionMgr()->IsConnected())
+    {
       renderWindow->setCamera(camera);
+      renderWindow->sendCamera();
+      renderWindow->render();
+    }
 
     delete cameraDialog;
     Q_EMIT cameraChanged(camera);

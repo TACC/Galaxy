@@ -90,9 +90,8 @@ private Q_SLOTS:
   void openCameraDialog() 
   {
     CameraDialog *cameraDialog = new CameraDialog(camera);
-    cameraDialog->sync_camera_to_widgets();
     cameraDialog->exec();
-    cameraDialog->sync_widgets_to_camera();
+    cameraDialog->get_camera(camera);
     delete cameraDialog;
   }
 

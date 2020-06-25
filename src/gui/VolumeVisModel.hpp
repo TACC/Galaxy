@@ -81,7 +81,7 @@ public:
   virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) override;
   virtual void loadParameterWidgets() const override;
 
-  virtual void loadOutput(std::shared_ptr<GxyPacket> o) const override;
+  virtual void loadOutput(std::shared_ptr<GxyData> o) const override;
 
 private Q_SLOTS:
 

@@ -88,7 +88,7 @@ VolumeVisModel::loadParameterWidgets() const
 }
 
 void
-VolumeVisModel::loadOutput(std::shared_ptr<GxyPacket> o) const
+VolumeVisModel::loadOutput(std::shared_ptr<GxyData> o) const
 {
   VisModel::loadOutput(o);
 
@@ -112,7 +112,7 @@ void
 VolumeVisModel::onApply()
 {
   output = std::shared_ptr<VolumeVis>(new VolumeVis(model_identifier));
-  loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+  loadOutput(std::dynamic_pointer_cast<GxyData>(output));
   output->setValid(true);
 
   GxyModel::onApply();
@@ -142,15 +142,20 @@ VolumeVisModel::outData(PortIndex)
 void
 VolumeVisModel::setInData(std::shared_ptr<NodeData> data, PortIndex portIndex)
 {
-  input = std::dynamic_pointer_cast<GxyData>(data);
+  VisModel::setInData(data, portIndex);
+
   if (input)
   {
     loadInputDrivenWidgets(std::dynamic_pointer_cast<GxyPacket>(input));
-    loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+    loadOutput(std::dynamic_pointer_cast<GxyData>(output));
     output->setValid(isValid());
-    VisModel::setInData(data, portIndex);
     if (isValid())
+    {
+      enable(true);
       onApply();
+    }
+    else
+      enable(false);
   }
 }
 
@@ -178,7 +183,7 @@ VolumeVisModel::save() const
 
   QJsonObject modelJson = VisModel::save();
 
-  loadOutput(std::dynamic_pointer_cast<GxyPacket>(output));
+  loadOutput(std::dynamic_pointer_cast<GxyData>(output));
   output->toJson(modelJson);
 
   return modelJson;

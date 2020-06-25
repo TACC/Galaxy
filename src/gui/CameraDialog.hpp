@@ -110,10 +110,15 @@ public:
     QGridLayout *button_box_layout = new QGridLayout();
     button_box->setLayout(button_box_layout);
 
-    QPushButton *reset = new QPushButton("Reset");
-    reset->setAutoDefault(false);
-    connect(reset, SIGNAL(released()), this, SLOT(reset()));
-    button_box_layout->addWidget(reset, 0, 2);
+    QPushButton *default_camera = new QPushButton("Default");
+    default_camera->setAutoDefault(false);
+    connect(default_camera, SIGNAL(released()), this, SLOT(set_default_camera()));
+    button_box_layout->addWidget(default_camera, 0, 1);
+
+    QPushButton *revert = new QPushButton("Revert");
+    revert->setAutoDefault(false);
+    connect(revert, SIGNAL(released()), this, SLOT(revert_camera()));
+    button_box_layout->addWidget(revert, 0, 2);
 
     QPushButton *ok = new QPushButton("OK");
     ok->setDefault(true);
@@ -127,17 +132,16 @@ public:
 
   ~CameraDialog() {}
 
-  void sync_widgets_to_camera()
+  void get_camera(Camera& c)
   {
-    camera.setPoint(_vp_x->text().toDouble(), _vp_y->text().toDouble(), _vp_z->text().toDouble());
-    camera.setDirection(_vd_x->text().toDouble(), _vd_y->text().toDouble(), _vd_z->text().toDouble());
-    camera.setUp(_vu_x->text().toDouble(), _vu_y->text().toDouble(), _vu_z->text().toDouble());
-    camera.setSize(_w->text().toInt(), _h->text().toInt());
-    camera.setAOV(_aov->text().toDouble());
-    gxy::vec3f p = camera.getPoint();
+    c.setPoint(_vp_x->text().toDouble(), _vp_y->text().toDouble(), _vp_z->text().toDouble());
+    c.setDirection(_vd_x->text().toDouble(), _vd_y->text().toDouble(), _vd_z->text().toDouble());
+    c.setUp(_vu_x->text().toDouble(), _vu_y->text().toDouble(), _vu_z->text().toDouble());
+    c.setSize(_w->text().toInt(), _h->text().toInt());
+    c.setAOV(_aov->text().toDouble());
   }
 
-  void sync_camera_to_widgets()
+  void set_widgets_from_camera()
   {
     _vp_x->setText(QString::number(camera.point.x));
     _vp_y->setText(QString::number(camera.point.y));
@@ -152,15 +156,41 @@ public:
     _h->setText(QString::number(camera.size.y));
     _vu_z->setText(QString::number(camera.up.z));
     _aov->setText(QString::number(camera.aov));
+    memcpy((void *)box, camera.box, sizeof(box));
   }
     
 
 
 public Q_SLOTS:
 
-  void reset()
+  void revert_camera()
   {
-    sync_camera_to_widgets();
+    set_widgets_from_camera();
+  }
+
+  void set_default_camera()
+  {
+    float cx = (camera.box[0] + camera.box[1]) / 2;
+    float cy = (camera.box[2] + camera.box[3]) / 2;
+    float cz = (camera.box[4] + camera.box[5]) / 2;
+
+    float dx = camera.box[1] - camera.box[0];
+    float dy = camera.box[3] - camera.box[2];
+    float dz = camera.box[5] - camera.box[4];
+
+    float l = sqrt(dx*dx + dy*dy + dz*dz);
+    float theta = 2 * 3.1416926 * camera.aov / 360.0;
+    float d = l / tan(theta);
+
+    _vp_x->setText(QString::number(cx));
+    _vp_y->setText(QString::number(cx));
+    _vp_z->setText(QString::number(cz - d));
+    _vd_x->setText(QString::number(0));
+    _vd_y->setText(QString::number(0));
+    _vd_z->setText(QString::number(d));
+    _vu_x->setText(QString::number(0.0));
+    _vu_y->setText(QString::number(1.0));
+    _vu_z->setText(QString::number(0.0));
   }
 
 private:
@@ -173,4 +203,5 @@ private:
   QLineEdit *_vd_x, *_vd_y, *_vd_z;
   QLineEdit *_vu_x, *_vu_y, *_vu_z;
   QLineEdit *_aov;
+  float box[6];
 };

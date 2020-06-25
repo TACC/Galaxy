@@ -83,7 +83,6 @@ GxyRenderWindow::setCamera(Camera& c)
   gxy::vec2i size = c.getSize();
   resize(size.x, size.y);
 
-  std::cerr << p.x << " " << p.y << " " << p.z << " :: " << d.x << " " << d.y << " " << d.z << "\n";
   sendCamera();
 }
 
@@ -247,7 +246,6 @@ GxyRenderWindow::keyPressEvent(QKeyEvent *event)
   {
     std::string msg("renderMany 10");
     getTheGxyConnectionMgr()->CSendRecv(msg);
-    std::cerr << "got reply: " << msg << "\n";
   }
   else if (key == "C")
   {
@@ -256,7 +254,6 @@ GxyRenderWindow::keyPressEvent(QKeyEvent *event)
       sendCamera();
       std::string msg("render");
       getTheGxyConnectionMgr()->CSendRecv(msg);
-      std::cerr << "got reply: " << msg << "\n";
     }
   }
   else
@@ -283,7 +280,6 @@ GxyRenderWindow::sendCamera()
     QString qs = QLatin1String(bytes);
 
     std::string msg = qs.toStdString();
-std::cerr << msg << "\n";
 
     getTheGxyConnectionMgr()->CSendRecv(msg);
   }
