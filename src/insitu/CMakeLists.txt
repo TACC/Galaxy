@@ -36,5 +36,4 @@ add_library(gxy_module_insitu MODULE SocketConnector.cpp SocketConnectorClientSe
 target_link_libraries(gxy_module_insitu gxy_multiserver gxy_framework ${VTK_LIBRARIES} ${MPI_C_LIBRARIES})
 set(SERVERS gxy_module_insitu ${SERVERS})
 
-install(TARGETS simsim partition_vti DESTINATION bin)
 install(TARGETS gxy_module_insitu DESTINATION ${CMAKE_INSTALL_LIBDIR})
