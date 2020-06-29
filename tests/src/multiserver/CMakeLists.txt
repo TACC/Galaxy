@@ -65,10 +65,6 @@ add_executable(gxytest-multiserver-MultiServerObject MultiServerObject.cpp)
 target_link_libraries(gxytest-multiserver-MultiServerObject  ${GALAXY_LIBRARIES})
 set(BINS gxytest-multiserver-MultiServerObject ${BINS})
 
-add_executable(gxytest-multiserver-MultiServerSocket MultiServerSocket.cpp)
-target_link_libraries(gxytest-multiserver-MultiServerSocket  ${GALAXY_LIBRARIES})
-set(BINS gxytest-multiserver-MultiServerSocket ${BINS})
-
 add_executable(gxytest-multiserver-PingClientServer PingClientServer.cpp)
 target_link_libraries(gxytest-multiserver-PingClientServer  ${GALAXY_LIBRARIES})
 set(BINS gxytest-multiserver-PingClientServer ${BINS})
