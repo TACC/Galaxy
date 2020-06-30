@@ -40,10 +40,10 @@ function report
 }
 
 OS_TYPE=$(uname)
-if [ "x${OS_TYPE}" == "xLinux" ]; then
+if [ "${OS_TYPE}" == "Linux" ]; then
 	TARGET_OS="linux"
 	TARGET_OS_DIR="linux"
-elif [ "x${OS_TYPE}" == "xDarwin" ]; then
+elif [ "${OS_TYPE}" == "Darwin" ]; then
 	TARGET_OS="macOS"
 	TARGET_OS_DIR="macOS"
 else
