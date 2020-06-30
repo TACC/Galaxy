@@ -61,7 +61,7 @@ if [ $TRAVIS_OS_NAME == "linux" ]; then
   report "checking for VTK python wrapper..."
   if [ -d third-party/VTK-8.1.2/install/lib/python2.7/site-packages/vtk ]; then
     report "  found python wrappers in VTK install."
-  elif [ ${GXY_BUILT_VTK} ]; then
+  elif [ ${GXY_BUILT_VTK} ] && [ -z ${TRAVIS_FAKING} ]; then
   	report "  seems VTK was built this run, no time to build the python wrapper too"
   else
     GXY_BUILT_VTK=1
@@ -78,7 +78,7 @@ if [ $TRAVIS_OS_NAME == "linux" ]; then
 fi
 
 
-if [ -z ${GXY_BUILT_VTK} ]; then
+if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
 	report "ensuring third-party libraries are built..."
 	scripts/install-third-party.sh
 

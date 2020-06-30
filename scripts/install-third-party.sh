@@ -38,7 +38,7 @@ function report
 }
 
 GXY_ROOT=$PWD
-GXY_PREP_SCRIPT=prep-third-party.sh
+GXY_PREP_SCRIPT="scripts/prep-third-party.sh"
 GXY_DONE_TAG="gxy_third_party_installed"
 CMAKE_BIN=$(which cmake)
 QMAKE_BIN=$(which qmake)
@@ -52,7 +52,15 @@ EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin
 						 				-DEMBREE_ISA_SSE2=OFF"
 OSPRAY_CMAKE_FLAGS="-Dembree_DIR=${GXY_ROOT}/third-party/install/lib/cmake/embree-3.6.1 \
 						  			-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
-						  			-DCMAKE_CXX_FLAGS=-I${GXY_ROOT}/third-party/install/include"
+						  			-DCMAKE_CXX_FLAGS=-I${GXY_ROOT}/third-party/install/include \
+						  			-DOSPRAY_ENABLE_TUTORIALS=OFF \
+						  			-DOSPRAY_ENABLE_TESTING=OFF \
+						  			-DOSPRAY_APPS_BENCHMARK=OFF \
+						  			-DOSPRAY_APPS_ENABLE_DENOISER=OFF \
+						  			-DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
+						  			-DOSPRAY_APPS_PARAVIEW_TFN_CVT=OFF \
+						  			-DOSPRAY_APPS_UTILITIES=OFF \
+						  			-DOSPRAY_AUTO_DOWNLOAD_TEST_IMAGES=OFF"
 RAPIDJSON_CMAKE_FLAGS="-DRAPIDJSON_BUILD_DOC=OFF \
 											 -DRAPIDJSON_BUILD_EXAMPLES=OFF \
 											 -DRAPIDJSON_BUILD_TESTS=OFF"
@@ -101,10 +109,10 @@ fi
 
 # ensure third-party libraries are prepped
 # the prep script should bail if libs are already prepped
-if [ ! -x ${GXY_ROOT}/scripts/${GXY_PREP_SCRIPT} ]; then 
+if [ ! -x ${GXY_ROOT}/${GXY_PREP_SCRIPT} ]; then 
 	fail "Could not run the third-pary prep script. Please make sure ${GXY_PREP_SCRIPT} is present and executable."
 else
-	${GXY_ROOT}/scripts/${GXY_PREP_SCRIPT}
+	${GXY_ROOT}/${GXY_PREP_SCRIPT}
 fi
 
 if [ $? != 0 ]; then
