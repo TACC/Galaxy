@@ -34,8 +34,8 @@ report "running $0"
 
 if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then
 	report "checking for linux VTK build..."
-	if [ -d third-party/VTK-8.1.2/install ]; then
-		report "  found VTK-8.1.2 in third-party."
+	if [ -d third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 ]; then
+		report "  found VTK-8.1.2 install in third-party."
 	else
 		GXY_BUILT_VTK=1
 		report "  VTK not found, building and caching for this run"
