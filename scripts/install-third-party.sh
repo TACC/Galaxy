@@ -1,6 +1,6 @@
 #!/bin/bash
 ## ========================================================================== ##
-## Copyright (c) 2014-2019 The University of Texas at Austin.                 ##
+## Copyright (c) 2014-2020 The University of Texas at Austin.                 ##
 ## All rights reserved.                                                       ##
 ##                                                                            ##
 ## Licensed under the Apache License, Version 2.0 (the "License");            ##
@@ -44,7 +44,7 @@ CMAKE_BIN=$(which cmake)
 QMAKE_BIN=$(which qmake)
 QMAKE_DIR=$(dirname $QMAKE_BIN)/..
 CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/ \
-             -Wno-undef -Wno-deprecated-declarations"
+             -Wno-dev"
 NODEEDITOR_CMAKE_FLAGS="-DQt5_DIR=${QMAKE_DIR}"
 EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
 						 				-DEMBREE_STATIC_LIB=ON \
