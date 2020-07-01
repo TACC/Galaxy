@@ -61,7 +61,7 @@ addons:
       - libxinerama-dev
       - libxcursor-dev
       - perceptualdiff
-      - python-numpy
+      - python3-numpy
       - qt5-default
       - libqt5opengl5-dev
       # - libvtk7-qt-dev
