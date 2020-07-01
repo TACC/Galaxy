@@ -45,8 +45,8 @@ cache:
   directories:
     - .galaxy
     - third-party/install
-    - third-party/VTK-8.1.2  # use for VTK rebuild
-    # - third-party/VTK-8.1.2/install  # use for production
+    # - third-party/VTK-8.1.2  # use for VTK rebuild
+    - third-party/VTK-8.1.2/install  # use for production
 
 addons:
   apt:
@@ -87,9 +87,10 @@ before_install:
 
 script:
   # use to rebuild VTK cache
-  - export GXY_REBUILDING_CACHE=1
-  # - rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh # do this first; run once to build VTK
-  - scripts/travis-ci-build.sh # run once more to build python bindinds (can't do both within time limits)
+  # do this first; run once to build VTK
+  # - GXY_REBUILDING_CACHE=1; rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh 
+  # run once more to build python bindinds (can't do both within time limits)
+  # - GXY_REBUILDING_CACHE=1; scripts/travis-ci-build.sh 
 
   # use this to (re-)patch embree and ospray
   # - pushd third-party/embree && patch -p1 -N < ../patches/embree.patch ; popd
@@ -100,9 +101,10 @@ script:
   # - pushd third-party/ispc && rm -rf ispc-* && ./get-ispc.sh; popd
 
   # use this to update versons of embree ospray rapidjson 
-  # - rm .galaxy/gxy_third_party_prep_done .galaxy/gxy_third_party_installed ; GXY_REBUILDING_CACHE=1
-  # - rm -rf third-party/embree third-party/ospray third-party/rapidjson third-party/nodeeditor
-  # - scripts/install-third-party.sh
+  - GXY_REBUILDING_CACHE=1
+  - rm .galaxy/gxy_third_party_prep_done .galaxy/gxy_third_party_installed 
+  - rm -rf third-party/embree third-party/ospray third-party/rapidjson third-party/nodeeditor
+  - scripts/install-third-party.sh
 
 
   # use this to rebuild embree and ospray
@@ -117,7 +119,7 @@ script:
   # 2. build Galaxy image writing interface
   # 3. run gold image tests
   - if [ -z ${GXY_REBUILDING_CACHE} ]; then scripts/travis-ci-build.sh; fi
-  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/gxywriter ] && [ "${TRAVIS_OS_NAME}" == "linux" ]; then tests/image-gold-tests.sh; fi
+  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/gxywriter ]; then tests/image-gold-tests.sh; fi
   - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -d install/tests ]; then tests/unit-tests.sh; fi
   - echo $(date) > .galaxy/last_build
 
