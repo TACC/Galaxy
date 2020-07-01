@@ -86,10 +86,10 @@ before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
-  # use this line only to rebuild VTK cache for linux
+  # use to rebuild VTK cache
   - export GXY_REBUILDING_CACHE=1
-  - rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh # do this first; run once to build VTK
-  # - scripts/travis-ci-build.sh # run once more to build python bindinds (can't do both within time limits)
+  # - rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh # do this first; run once to build VTK
+  - scripts/travis-ci-build.sh # run once more to build python bindinds (can't do both within time limits)
 
   # use this to (re-)patch embree and ospray
   # - pushd third-party/embree && patch -p1 -N < ../patches/embree.patch ; popd
