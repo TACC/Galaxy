@@ -45,7 +45,7 @@ cache:
   directories:
     - .galaxy
     - third-party/install
-    - third-party/VTK-8.1.2/install
+    - third-party/VTK-8.1.2 #/install
 
 addons:
   apt:
