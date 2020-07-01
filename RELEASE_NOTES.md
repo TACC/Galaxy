@@ -1,10 +1,19 @@
 # Galaxy Release Notes
 
-## version 0.4.0 - pending
-
-* *TODO* - reorganize `src` directory to: framework, data, filters, apps
-* *TODO* - singularity recipe for multi-node distributed testing on TACC systems
-* Added Qt-based node editor[4] graphical user interface for Galaxy workflows
+## version 0.4.0 - 20200630
+* Added `gui` and `guiserver`
+  - a Qt-based node editor[4] graphical user interface for Galaxy workflows
+  - added `nodeeditor` submodule
+  - added Qt5 dependency
+* Added `insitu` socket connectivity for in situ workflows
+* Added `tracer` streamline generation and rendering
+* Added `sampler` methods
+  - Gradient-based sampling
+  - Isovalue-based sampling
+* Added demonstration codes for new features in `apps` 
+* Updated to python3
+  - python scripts
+  - travis-ci VTK-8.1 build
 
 ## version 0.3.2 - 20191212
 
