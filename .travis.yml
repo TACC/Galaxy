@@ -61,6 +61,7 @@ addons:
       - libxinerama-dev
       - libxcursor-dev
       - perceptualdiff
+      - python3
       - python3-numpy
       - qt5-default
       - libqt5opengl5-dev
@@ -74,6 +75,8 @@ addons:
       - open-mpi
       - freeglut
       - perceptualdiff
+      - python3
+      - numpy
       - git
       - qt
       # - gcc@7

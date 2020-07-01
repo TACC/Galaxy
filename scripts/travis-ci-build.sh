@@ -50,6 +50,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
 		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
                -D CMAKE_C_FLAGS:STRING="-Wno-deprecated-register" \
                -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-register" \
+               -D VTK_PYTHON_VERSION=3 \
 		           .. \
 		  && make -j 4 install 
 		if [ $? != 0 ]; then
@@ -59,7 +60,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
 	fi
 
   report "checking for VTK python wrapper..."
-  if [ -d third-party/VTK-8.1.2/install/lib/python2.7/site-packages/vtk ]; then
+  if [ -d third-party/VTK-8.1.2/install/lib/python3.6/site-packages/vtk ]; then
     report "  found python wrappers in VTK install."
   elif [ ${GXY_BUILT_VTK} ] && [ -z ${TRAVIS_FAKING} ]; then
   	report "  seems VTK was built this run, no time to build the python wrapper too"

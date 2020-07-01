@@ -13,6 +13,7 @@
 * Added demonstration codes for new features in `apps` 
 * Updated to python3
   - python scripts
+  - travis-ci config
   - travis-ci VTK-8.1 build
 
 ## version 0.3.2 - 20191212
