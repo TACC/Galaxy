@@ -32,51 +32,50 @@ function fail
 
 report "running $0"
 
-# if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-# 	report "checking for linux VTK build..."
-# 	if [ -d third-party/VTK-8.1.2/install ]; then
-# 		report "  found VTK-8.1.2 in third-party."
-# 	else
-# 		GXY_BUILT_VTK=1
-# 		report "  VTK not found, building and caching for this run"
-# 		report "  that's all we can do within travis-ci time limits, skipping full build"
-# 		pushd third-party
-# 		wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz \
-# 		  && tar xf VTK-8.1.2.tar.gz \
-# 		  && cd VTK-8.1.2 \
-# 		  && mkdir build \
-# 		  && cd build \
-# 		  && cmake -D CMAKE_BUILD_TYPE:STRING=MinSizeRel \
-# 		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
-#                -D CMAKE_C_FLAGS:STRING="-Wno-deprecated-register" \
-#                -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-register" \
-# 		           .. \
-# 		  && make -j 4 install 
-# 		if [ $? != 0 ]; then
-# 			fail "VTK build failed with code $?"
-# 		fi
-# 		popd
-# 	fi
+if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+	report "checking for linux VTK build..."
+	if [ -d third-party/VTK-8.1.2/install ]; then
+		report "  found VTK-8.1.2 in third-party."
+	else
+		GXY_BUILT_VTK=1
+		report "  VTK not found, building and caching for this run"
+		report "  that's all we can do within travis-ci time limits, skipping full build"
+		pushd third-party
+		wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz \
+		  && tar xf VTK-8.1.2.tar.gz \
+		  && cd VTK-8.1.2 \
+		  && mkdir build \
+		  && cd build \
+		  && cmake -D CMAKE_BUILD_TYPE:STRING=MinSizeRel \
+		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
+               -D CMAKE_C_FLAGS:STRING="-Wno-deprecated-register" \
+               -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-register" \
+		           .. \
+		  && make -j 4 install 
+		if [ $? != 0 ]; then
+			fail "VTK build failed with code $?"
+		fi
+		popd
+	fi
 
-#   report "checking for VTK python wrapper..."
-#   if [ -d third-party/VTK-8.1.2/install/lib/python2.7/site-packages/vtk ]; then
-#     report "  found python wrappers in VTK install."
-#   elif [ ${GXY_BUILT_VTK} ] && [ -z ${TRAVIS_FAKING} ]; then
-#   	report "  seems VTK was built this run, no time to build the python wrapper too"
-#   else
-#     GXY_BUILT_VTK=1
-#     report "  VTK python wrappers not found, building and caching for this run"
-#     report "  that's all we can do within travis-ci time limits, skipping full build"
-#     pushd third-party/VTK-8.1.2/build \
-#       && cmake -D VTK_WRAP_PYTHON:BOOL=ON .. \
-#       && make -j 4 install
-#     if [ $? != 0 ]; then
-#       fail "VTK python wrapper failed with code $?"
-#     fi
-#     popd
-#   fi
-# fi
-
+  report "checking for VTK python wrapper..."
+  if [ -d third-party/VTK-8.1.2/install/lib/python2.7/site-packages/vtk ]; then
+    report "  found python wrappers in VTK install."
+  elif [ ${GXY_BUILT_VTK} ] && [ -z ${TRAVIS_FAKING} ]; then
+  	report "  seems VTK was built this run, no time to build the python wrapper too"
+  else
+    GXY_BUILT_VTK=1
+    report "  VTK python wrappers not found, building and caching for this run"
+    report "  that's all we can do within travis-ci time limits, skipping full build"
+    pushd third-party/VTK-8.1.2/build \
+      && cmake -D VTK_WRAP_PYTHON:BOOL=ON .. \
+      && make -j 4 install
+    if [ $? != 0 ]; then
+      fail "VTK python wrapper failed with code $?"
+    fi
+    popd
+  fi
+fi
 
 if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
 	report "ensuring third-party libraries are built..."
@@ -94,20 +93,13 @@ if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
           .. \
   		&& make install
   elif [ "$TRAVIS_OS_NAME" == "linux" ]; then 
-    # cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
-    #       -D GLUT_INCLUDE_DIR:PATH=/usr/include \
-    #       -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
-    #       -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
-    #       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-    #       .. \
-    #   && make install   
     cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
           -D GLUT_INCLUDE_DIR:PATH=/usr/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
           -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
           -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           .. \
-      && make install
+      && make install   
 	fi
 	if [ $? != 0 ]; then
 		fail "interactive interface build failed!"

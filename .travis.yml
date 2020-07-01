@@ -64,7 +64,7 @@ addons:
       - python-numpy
       - qt5-default
       - libqt5opengl5-dev
-      - libvtk7-qt-dev
+      # - libvtk7-qt-dev
   homebrew:
     update: true
     packages: 

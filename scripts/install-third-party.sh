@@ -77,15 +77,11 @@ if [ "$TRAVIS_OS_NAME" == "osx" ]; then
 elif [ "$TRAVIS_OS_NAME" == "linux" ]; then 
 	report "setting linux cmake flags"
 	CMAKE_MODULE_PATH="${CMAKE_MODULE_PATH}:/usr/lib/x86_64-linux-gnu/cmake/Qt5"
-	# CMAKE_FLAGS="${CMAKE_FLAGS} \
-	# 			-D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
- #        -D GLUT_INCLUDE_DIR:PATH=/usr/include \
- #        -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
- #        -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
- #        "
 	CMAKE_FLAGS="${CMAKE_FLAGS} \
+				-D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
         -D GLUT_INCLUDE_DIR:PATH=/usr/include \
         -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
+        -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
         "
 fi
 
