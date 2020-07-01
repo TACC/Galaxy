@@ -45,7 +45,8 @@ cache:
   directories:
     - .galaxy
     - third-party/install
-    - third-party/VTK-8.1.2 #/install
+    - third-party/VTK-8.1.2  # use for VTK rebuild
+    # - third-party/VTK-8.1.2/install  # use for production
 
 addons:
   apt:
@@ -87,8 +88,7 @@ before_install:
 script:
   # use this line only to rebuild VTK cache for linux
   - export GXY_REBUILDING_CACHE=1
-  # - rm -rf third-party/VTK-8.1.2 # do this first
-  - scripts/travis-ci-build.sh # run once to build VTK
+  - rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh # do this first; run once to build VTK
   # - scripts/travis-ci-build.sh # run once more to build python bindinds (can't do both within time limits)
 
   # use this to (re-)patch embree and ospray
