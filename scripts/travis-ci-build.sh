@@ -32,7 +32,7 @@ function fail
 
 report "running $0"
 
-if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then
 	report "checking for linux VTK build..."
 	if [ -d third-party/VTK-8.1.2/install ]; then
 		report "  found VTK-8.1.2 in third-party."
@@ -87,7 +87,8 @@ if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
   pushd build
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
 		PATH="${PATH}:/usr/local/opt/qt/bin"
-  	cmake -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
+  	cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
+          -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.2.1/lib/libglut.dylib \
           -D Qt5_DIR:PATH=/usr/local/opt/qt/lib/cmake/Qt5 \
           -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \

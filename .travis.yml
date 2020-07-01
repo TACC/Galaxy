@@ -17,7 +17,7 @@ matrix:
         - MATRIX_EVAL=""
         # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
         # - PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH}
-        - PYTHONPATH=/usr/local/Cellar/vtk/8.1.2_3/lib/python3.7/site-packages:${PYTHONPATH}
+        # - PYTHONPATH=/usr/local/Cellar/vtk/8.1.2_3/lib/python3.7/site-packages:${PYTHONPATH}
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
     #       since cmake detects mac/clang and gcc barfs rather than ignores
@@ -45,7 +45,7 @@ cache:
   directories:
     - .galaxy
     - third-party/install
-    - third-party/VTK-8.1.2
+    - third-party/VTK-8.1.2/install
 
 addons:
   apt:
@@ -69,7 +69,7 @@ addons:
   homebrew:
     update: true
     packages: 
-      - vtk
+      # - vtk
       - tbb
       - boost
       - open-mpi
@@ -86,7 +86,7 @@ before_install:
 
 script:
   # use this line only to rebuild VTK cache for linux
-  # - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
+  - rm -rf third-party/VTK-8.1.2 ; GXY_REBUILDING_CACHE=1
 
   # use this to (re-)patch embree and ospray
   # - pushd third-party/embree && patch -p1 -N < ../patches/embree.patch ; popd
