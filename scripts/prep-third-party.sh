@@ -67,16 +67,6 @@ if [ $? != 0 ]; then
 	fail "submodule update returned error code $?"
 fi
 
-report "checking ispc..."
-cd ${GXY_ROOT}/third-party/ispc
-./get-ispc.sh
-if [ $? != 0 ]; then
-	fail
-fi
-
-# cd ${GXY_ROOT}/third-party/nodeeditor
-# git checkout 2816c94 .
-
 PATCH_DIR=${GXY_ROOT}/third-party/patches
 cd ${PATCH_DIR}
 for patch in *.patch ; do
