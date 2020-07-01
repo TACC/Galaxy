@@ -55,8 +55,8 @@ set (CPP_SOURCES
 set(SERVERS "")
 
 if (ospray_DIR)
-  add_library(gxy_sampler SHARED)
-  ispc_target_add_sources(gxy_sampler ${CPP_SOURCES} ${ISPC_SOURCES})
+  add_library(gxy_sampler SHARED ${CPP_SOURCES})
+  ispc_target_add_sources(gxy_sampler ${ISPC_SOURCES})
   target_link_libraries(gxy_sampler ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_renderer gxy_framework)
   set_target_properties(gxy_sampler PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   install(TARGETS gxy_sampler DESTINATION lib)

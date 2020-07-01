@@ -88,8 +88,8 @@ set (CPP_SOURCES
   VolumeVis.cpp)
 
 if (ospray_DIR)
-  add_library(gxy_renderer SHARED)
-  ispc_target_add_sources(gxy_renderer ${CPP_SOURCES} ${ISPC_SOURCES})
+  add_library(gxy_renderer SHARED ${CPP_SOURCES})
+  ispc_target_add_sources(gxy_renderer ${ISPC_SOURCES})
   target_link_libraries(gxy_renderer ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE})
   set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   install(TARGETS gxy_renderer DESTINATION lib)
