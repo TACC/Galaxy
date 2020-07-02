@@ -60,7 +60,9 @@ if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then
 	fi
 
   report "checking for VTK python wrapper..."
-  if [ -d third-party/VTK-8.1.2/install/lib/python3.6/site-packages/vtk ]; then
+  # travis-ci linux has python3.6, osx has python3.7
+  if [ -d third-party/VTK-8.1.2/install/lib/python3.6/site-packages/vtk ] || [ -d third-party/VTK-8.1.2/install/lib/python3.6/site-packages/vtk ]
+  then
     report "  found python wrappers in VTK install."
   elif [ ${GXY_BUILT_VTK} ] && [ -z ${TRAVIS_FAKING} ]; then
   	report "  seems VTK was built this run, no time to build the python wrapper too"
