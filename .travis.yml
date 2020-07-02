@@ -88,9 +88,9 @@ before_install:
 script:
   # use to rebuild VTK cache
   # do this first; run once to build VTK
-  # - GXY_REBUILDING_CACHE=1; rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh 
+  # - export GXY_REBUILDING_CACHE=1; rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh 
   # run once more to build python bindinds (can't do both within time limits)
-  - GXY_REBUILDING_CACHE=1; scripts/travis-ci-build.sh 
+  # - export GXY_REBUILDING_CACHE=1; scripts/travis-ci-build.sh 
 
   # use this to (re-)patch embree and ospray
   # - pushd third-party/embree && patch -p1 -N < ../patches/embree.patch ; popd
@@ -101,14 +101,13 @@ script:
   # - pushd third-party/ispc && rm -rf ispc-* && ./get-ispc.sh; popd
 
   # use this to update versons of all third-party (embree ospray rapidjson nodeeditor)
-  # - GXY_REBUILDING_CACHE=1
-  # - rm -f .galaxy/gxy_third_party_prep_done .galaxy/gxy_third_party_installed 
-  # - rm -rf third-party/embree third-party/ospray third-party/rapidjson third-party/nodeeditor third-party/install
-  # - scripts/install-third-party.sh
-
+  - export GXY_REBUILDING_CACHE=1
+  - rm -f .galaxy/gxy_third_party_prep_done .galaxy/gxy_third_party_installed 
+  - rm -rf third-party/embree third-party/ospray third-party/rapidjson third-party/nodeeditor third-party/install
+  - scripts/install-third-party.sh
 
   # use this to rebuild embree and ospray
-  # - GXY_REBUILDING_CACHE=1
+  # - export GXY_REBUILDING_CACHE=1
   # - pushd third-party/embree && rm -rf build/* && cd build && cmake -D EMBREE_STATIC_LIB:BOOL=ON .. && make -j 4 install; popd
   # - pushd third-party/ospray && rm -rf build/* && cd build && cmake .. && make -j 4 install; popd
 
