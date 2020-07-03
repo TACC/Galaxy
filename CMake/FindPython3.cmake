@@ -1,39 +1,3 @@
-
-Skip to content
-Pull requests
-Issues
-Marketplace
-Explore
-@pnav
-Kitware /
-CMake
-
-149
-3.2k
-
-    1.6k
-
-Code
-Pull requests
-Actions
-Projects
-Security
-
-    Insights
-
-CMake/Modules/FindPython3.cmake
-@MarkaPola
-MarkaPola FindPython: Add IronPython support on all platforms
-Latest commit e8ffc60 on May 7
-History
-6 contributors
-@MarkaPola
-@miurahr
-@KyleFromKitware
-@sbmueller
-@craigscott-crascit
-@bradking
-397 lines (308 sloc) 14.3 KB
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
 
