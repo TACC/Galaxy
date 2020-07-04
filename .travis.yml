@@ -16,8 +16,7 @@ matrix:
       env:
         - MATRIX_EVAL=""
         # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
-        # - PYTHONPATH=/usr/local/Cellar/vtk/8.2.0/lib/python3.7/site-packages:${PYTHONPATH}
-        # - PYTHONPATH=/usr/local/Cellar/vtk/8.1.2_3/lib/python3.7/site-packages:${PYTHONPATH}
+        - PYTHONPATH=/Users/travis/build/TACC/Galaxy/third-party/VTK-8.1.2/install/lib/python3.7/site-packages:${PYTHONPATH}
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
     #       since cmake detects mac/clang and gcc barfs rather than ignores
@@ -62,7 +61,7 @@ addons:
       - libxinerama-dev
       - libxcursor-dev
       - perceptualdiff
-      - python3.6-dev
+      - python3
       - python3-numpy
       - qt5-default
       - libqt5opengl5-dev
