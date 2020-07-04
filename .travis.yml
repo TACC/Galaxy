@@ -10,13 +10,13 @@ branches:
 
 matrix:
   include:
-    - os: osx
-      osx_image: xcode11.3 # get a modern-enough mac environment
-      compiler: clang
-      env:
-        - MATRIX_EVAL=""
-        # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
-        - PYTHONPATH=/Users/travis/build/TACC/Galaxy/third-party/VTK-8.1.2/install/lib/python3.7/site-packages:${PYTHONPATH}
+    # - os: osx
+    #   osx_image: xcode11.3 # get a modern-enough mac environment
+    #   compiler: clang
+    #   env:
+    #     - MATRIX_EVAL=""
+    #     # - MATRIX_EVAL="find /usr/local/Cellar/vtk"
+    #     - PYTHONPATH=/Users/travis/build/TACC/Galaxy/third-party/VTK-8.1.2/install/lib/python3.7/site-packages:${PYTHONPATH}
 
     # TODO: currently fails due to --std=c++11 flag inclusion 
     #       since cmake detects mac/clang and gcc barfs rather than ignores
@@ -28,12 +28,12 @@ matrix:
     - os: linux
       compiler: clang
       env:
-        - MATRIX_EVAL=" "
+        - MATRIX_EVAL="pyenv global 3.6.9"
 
     - os: linux
       compiler: gcc
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && pyenv global 3.6.9"
 
 
 
