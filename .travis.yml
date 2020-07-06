@@ -85,7 +85,10 @@ before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
-  - export GXY_REBUILDING_CACHE=1; ls -l /Users/travis/build/TACC/Galaxy/third-party/VTK-8.1.2/install/lib/python3.7/site-packages/vtk
+  - export GXY_REBUILDING_CACHE=1
+  - ls -l /Users/travis/build/TACC/Galaxy/third-party/VTK-8.1.2/install/lib/python3.7/site-packages/vtk
+  - cat /Users/travis/build/TACC/Galaxy/install/galaxy.env
+  
   # use to rebuild VTK cache
   # do this first; run once to build VTK
   # - export GXY_REBUILDING_CACHE=1; rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh 
