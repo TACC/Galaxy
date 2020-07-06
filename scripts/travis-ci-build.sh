@@ -46,7 +46,8 @@ if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then
 		  && cd VTK-8.1.2 \
 		  && mkdir build \
 		  && cd build \
-		  && cmake -D CMAKE_BUILD_TYPE:STRING=MinSizeRel \
+		  && cmake -Wno-dev \
+               -D CMAKE_BUILD_TYPE:STRING=MinSizeRel \
 		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
                -D CMAKE_C_FLAGS:STRING="-Wno-deprecated-register" \
                -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-register" \
@@ -71,7 +72,8 @@ if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then
     report "  VTK python wrappers not found, building and caching for this run"
     report "  that's all we can do within travis-ci time limits, skipping full build"
     pushd third-party/VTK-8.1.2/build \
-      && cmake -D VTK_WRAP_PYTHON:BOOL=ON .. \
+      && cmake -Wno-dev \
+               -D VTK_WRAP_PYTHON:BOOL=ON .. \
       && make -j 4 install
     if [ $? != 0 ]; then
       fail "VTK python wrapper failed with code $?"
@@ -89,7 +91,8 @@ if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
   pushd build
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
 		PATH="${PATH}:/usr/local/opt/qt/bin"
-  	cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
+  	cmake -Wno-dev \
+          -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
           -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.2.1/lib/libglut.dylib \
           -D Qt5_DIR:PATH=/usr/local/opt/qt/lib/cmake/Qt5 \
@@ -97,7 +100,8 @@ if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
           .. \
   		&& make install
   elif [ "$TRAVIS_OS_NAME" == "linux" ]; then 
-    cmake -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
+    cmake -Wno-dev \
+          -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
           -D GLUT_INCLUDE_DIR:PATH=/usr/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
           -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
@@ -111,14 +115,14 @@ if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
 
 	report "building image-writing interface..."
 	# this should work for both osx and linux, since cmake was configured above
-	cmake -D GXY_WRITE_IMAGES:BOOL=ON . && make install 
+	cmake -Wno-dev -D GXY_WRITE_IMAGES:BOOL=ON . && make install 
 	if [ $? != 0 ]; then
 		fail "image-writing interface build failed!"
 	fi
 
 	report "building unit tests..."
 	# this should work for both osx and linux, since cmake was configured above
-	cmake -D GXY_UNIT_TESTING:BOOL=ON . && make install 
+	cmake -Wno-dev -D GXY_UNIT_TESTING:BOOL=ON . && make install 
 	if [ $? != 0 ]; then
 		fail "unit testing build failed!"
 	fi	
