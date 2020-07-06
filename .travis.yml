@@ -28,12 +28,12 @@ matrix:
     - os: linux
       compiler: clang
       env:
-        - MATRIX_EVAL="pyenv versions && pyenv global"
+        - MATRIX_EVAL="pyenv global 3.8"
 
     - os: linux
       compiler: gcc
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && pyenv versions && pyenv global"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && pyenv global 3.8"
 
 
 
