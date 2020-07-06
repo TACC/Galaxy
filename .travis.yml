@@ -28,12 +28,12 @@ matrix:
     - os: linux
       compiler: clang
       env:
-        - MATRIX_EVAL="pyenv global 3.8"
+        - MATRIX_EVAL=""
 
     - os: linux
       compiler: gcc
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && pyenv global 3.8"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
@@ -87,9 +87,9 @@ before_install:
 script:
   # use to rebuild VTK cache
   # do this first; run once to build VTK
-  # - export GXY_REBUILDING_CACHE=1; rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh 
+  - export GXY_REBUILDING_CACHE=1; rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh 
   # run once more to build python bindinds (can't do both within time limits)
-  - export GXY_REBUILDING_CACHE=1; scripts/travis-ci-build.sh 
+  # - export GXY_REBUILDING_CACHE=1; scripts/travis-ci-build.sh 
 
   # use this to (re-)patch embree and ospray
   # - pushd third-party/embree && patch -p1 -N < ../patches/embree.patch ; popd
