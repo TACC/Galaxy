@@ -86,7 +86,7 @@ find_package(GLUT REQUIRED)
 find_package(VTK REQUIRED NO_MODULE)
 find_package(PNG REQUIRED)
 # find_package(Python3 COMPONENTS Interpreter NumPy REQUIRED)
-set(Python_ADDITIONAL_VERSIONS 3.7 3.6)
+set(Python_ADDITIONAL_VERSIONS 3.6 3.7)
 find_package(PythonInterp)
 
 # find third-party local builds
