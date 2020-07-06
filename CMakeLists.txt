@@ -85,7 +85,8 @@ find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(VTK REQUIRED NO_MODULE)
 find_package(PNG REQUIRED)
-find_package(Python3 COMPONENTS Interpreter NumPy REQUIRED)
+# find_package(Python3 COMPONENTS Interpreter NumPy REQUIRED)
+find_package(PythonInterp Python_ADDITIONAL_VERSIONS 3.6)
 
 # find third-party local builds
 # Assumption that these have been installed to single 'third-party/install' directory
