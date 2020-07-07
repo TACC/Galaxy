@@ -85,11 +85,6 @@ before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
-  - export GXY_REBUILDING_CACHE=1
-  - ls -l /Users/travis/build/TACC/Galaxy/third-party/VTK-8.1.2/install/lib/python3.7/site-packages/vtk
-  - scripts/travis-ci-build.sh
-  - cat /Users/travis/build/TACC/Galaxy/install/galaxy.env
-
   # use to rebuild VTK cache
   # do this first; run once to build VTK
   # - export GXY_REBUILDING_CACHE=1; rm -rf third-party/VTK-8.1.2; scripts/travis-ci-build.sh 
@@ -111,7 +106,7 @@ script:
   # 3. run gold image tests
   # 4. run unit tests
   - if [ -z ${GXY_REBUILDING_CACHE} ]; then scripts/travis-ci-build.sh; fi
-  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/gxywriter ]; then tests/image-gold-tests.sh; fi
+  - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -f install/bin/gxywriter ] && [ "${TRAVIS_OS_NAME}" == "linux" ]; then tests/image-gold-tests.sh; fi
   - if [ -z ${GXY_REBUILDING_CACHE} ] && [ -d install/tests ]; then tests/unit-tests.sh; fi
   - echo $(date) > .galaxy/last_build
 
