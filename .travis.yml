@@ -25,15 +25,15 @@ matrix:
     #   env:
     #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - MATRIX_EVAL=""
+    - os: linux
+      compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - os: linux
+      compiler: gcc
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 
 
