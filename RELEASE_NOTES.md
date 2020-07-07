@@ -1,5 +1,10 @@
 # Galaxy Release Notes
 
+## version 0.5.0 - pending
+
+* *TODO* - centralize data filtering codes currently in `src` to `src/filters`
+* *TODO* - scripts to launch singularity-based multi-node distributed testing on TACC systems
+
 ## version 0.4.0 - 20200630
 * Added `gui` and `guiserver`
   - a Qt-based node editor[4] graphical user interface for Galaxy workflows
