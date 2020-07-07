@@ -26,6 +26,7 @@ Galaxy assumes the following are already installed on your system in an accessib
   * [CMake cross-platform build utility][9]
   * [GLFW][14] (required by OSPRay build)
   * [Python][18] (required for testing and using python scripts in `scripts`)
+  * [Qt5][20] (at least v5.9, tested against v5.14)
 
 Galaxy has the following components associated in the `third-party` subdirectory:
   * [Intel ISPC][10]
@@ -448,5 +449,6 @@ The following environment variables affect Galaxy behavior:
 [17]: https://cinemascience.org/
 [18]: https://www.python.org/
 [19]: https://github.com/TACC/Galaxy/issues
+[20]: https://www.qt.io/download
 
 
