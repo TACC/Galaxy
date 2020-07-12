@@ -2,6 +2,8 @@
 
 ## version 0.5.0 - pending
 
+* *TODO* - migrate volume rendering from OSPRay to OpenVKL[5]
+* *TODO* - add OpenImageDenoise cleaning for asynchronous rendering[6]
 * *TODO* - centralize data filtering codes currently in `src` to `src/filters`
 * *TODO* - scripts to launch singularity-based multi-node distributed testing on TACC systems
 
@@ -99,5 +101,7 @@ Initial Galaxy release!
 [2]: https://hub.docker.com/r/pnav/galaxy
 [3]: https://hub.docker.com/r/pnav/galaxy-base
 [4]: https://github.com/paceholder/nodeeditor
+[5]: https://www.openvkl.org/
+[6]: https://www.openimagedenoise.org/
 
 
