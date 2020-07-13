@@ -32,26 +32,39 @@ function fail
 
 report "running $0"
 
+VTK_VERSION="9.0.1"
+VTK_RELEASE="9.0"
+
+# make sure to use the system-level python3, not strange things in other dirs
+if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+  VTK_PYTHON_BIN="/usr/bin/python3"
+elif [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+  VTK_PYTHON_BIN="/usr/local/bin/python3"
+else
+  VTK_PYTHON_BIN=""
+fi
+
 if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then
 	report "checking for linux VTK build..."
-	if [ -d third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 ]; then
-		report "  found VTK-8.1.2 install in third-party."
+	if [ -d third-party/VTK-${VTK_VERSION}/install/lib/cmake/vtk-${VTK_RELEASE} ]; then
+		report "  found VTK-${VTK_VERSION} install in third-party."
 	else
 		GXY_BUILT_VTK=1
 		report "  VTK not found, building and caching for this run"
 		report "  that's all we can do within travis-ci time limits, skipping full build"
 		pushd third-party
-		wget https://www.vtk.org/files/release/8.1/VTK-8.1.2.tar.gz \
-		  && tar xf VTK-8.1.2.tar.gz \
-		  && cd VTK-8.1.2 \
+		wget https://www.vtk.org/files/release/${VTK_RELEASE}/VTK-${VTK_VERSION}.tar.gz \
+		  && tar xf VTK-${VTK_VERSION}.tar.gz \
+		  && cd VTK-${VTK_VERSION} \
 		  && mkdir build \
 		  && cd build \
 		  && cmake -Wno-dev \
-               -D CMAKE_BUILD_TYPE:STRING=MinSizeRel \
+               -D CMAKE_BUILD_TYPE:STRING=Release \
 		           -D CMAKE_INSTALL_PREFIX:PATH=$PWD/../install \
                -D CMAKE_C_FLAGS:STRING="-Wno-deprecated-register" \
                -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-register" \
                -D VTK_PYTHON_VERSION=3 \
+               -D Python3_EXECUTABLE="${VTK_PYTHON_BIN}" \
 		           .. \
 		  && make -j 4 install 
 		if [ $? != 0 ]; then
@@ -61,8 +74,8 @@ if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then
 	fi
 
   report "checking for VTK python wrapper..."
-  # travis-ci linux has python3.6, osx has python3.7
-  if [ -d third-party/VTK-8.1.2/install/lib/python3.6/site-packages/vtk ] || [ -d third-party/VTK-8.1.2/install/lib/python3.7/site-packages/vtk ]
+  # travis-ci linux has python3.6, osx has python3.8
+  if [ -d third-party/VTK-${VTK_VERSION}/install/lib/python3.6/site-packages/vtk ] || [ -d third-party/VTK-${VTK_VERSION}/install/lib/python3.8/site-packages/vtk ]
   then
     report "  found python wrappers in VTK install."
   elif [ ${GXY_BUILT_VTK} ] && [ -z ${TRAVIS_FAKING} ]; then
@@ -71,7 +84,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then
     GXY_BUILT_VTK=1
     report "  VTK python wrappers not found, building and caching for this run"
     report "  that's all we can do within travis-ci time limits, skipping full build"
-    pushd third-party/VTK-8.1.2/build \
+    pushd third-party/VTK-${VTK_VERSION}/build \
       && cmake -Wno-dev \
                -D VTK_WRAP_PYTHON:BOOL=ON .. \
       && make -j 4 install
@@ -92,7 +105,7 @@ if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
 		PATH="${PATH}:/usr/local/opt/qt/bin"
   	cmake -Wno-dev \
-          -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
+          -D VTK_DIR:PATH=$PWD/../third-party/VTK-${VTK_VERSION}/install/lib/cmake/vtk-${VTK_RELEASE} \
           -D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.2.1/lib/libglut.dylib \
           -D Qt5_DIR:PATH=/usr/local/opt/qt/lib/cmake/Qt5 \
@@ -101,7 +114,7 @@ if [ -z ${GXY_BUILT_VTK} ] || [ ${TRAVIS_FAKING} ]; then
   		&& make install
   elif [ "$TRAVIS_OS_NAME" == "linux" ]; then 
     cmake -Wno-dev \
-          -D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
+          -D VTK_DIR:PATH=$PWD/../third-party/VTK-${VTK_VERSION}/install/lib/cmake/vtk-${VTK_RELEASE} \
           -D GLUT_INCLUDE_DIR:PATH=/usr/include \
           -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
           -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
