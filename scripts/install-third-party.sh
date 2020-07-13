@@ -37,6 +37,8 @@ function report
 	echo "GALAXY: $1"
 }
 
+VTK_VERSION="9.0.1"
+VTK_RELEASE="9.0"
 GXY_ROOT=$PWD
 GXY_PREP_SCRIPT="scripts/prep-third-party.sh"
 GXY_DONE_TAG="gxy_third_party_installed"
@@ -70,7 +72,7 @@ if [ "$TRAVIS_OS_NAME" == "osx" ]; then
 	PATH="${PATH}:/usr/local/opt/qt/bin"
 	CMAKE_MODULE_PATH="${CMAKE_MODULE_PATH}:/usr/local/opt/qt/lib/cmake/Qt5"
 	CMAKE_FLAGS="${CMAKE_FLAGS} \
-				-D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
+				-D VTK_DIR:PATH=$PWD/../third-party/VTK-${VTK_VERSION}/install/lib/cmake/vtk-${VTK_RELEASE} \
 				-D GLUT_INCLUDE_DIR:PATH=/usr/local/Cellar/freeglut/3.2.1/include \
         -D GLUT_glut_LIBRARY:FILEPATH=/usr/local/Cellar/freeglut/3.2.1/lib/libglut.dylib \
         -D Qt5_DIR:PATH=/usr/local/opt/qt/lib/cmake/Qt5 \
@@ -79,7 +81,7 @@ elif [ "$TRAVIS_OS_NAME" == "linux" ]; then
 	report "setting linux cmake flags"
 	CMAKE_MODULE_PATH="${CMAKE_MODULE_PATH}:/usr/lib/x86_64-linux-gnu/cmake/Qt5"
 	CMAKE_FLAGS="${CMAKE_FLAGS} \
-				-D VTK_DIR:PATH=$PWD/../third-party/VTK-8.1.2/install/lib/cmake/vtk-8.1 \
+				-D VTK_DIR:PATH=$PWD/../third-party/VTK-${VTK_VERSION}/install/lib/cmake/vtk-${VTK_RELEASE} \
         -D GLUT_INCLUDE_DIR:PATH=/usr/include \
         -D GLUT_glut_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libglut.so \
         -D Qt5_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
