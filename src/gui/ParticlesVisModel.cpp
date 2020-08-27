@@ -179,7 +179,7 @@ ParticlesVisModel::loadOutput(std::shared_ptr<GxyData> o) const
 }
 
 void
-ParticlesVisModel::loadParameterWidgets() const
+ParticlesVisModel::loadParameterWidgets() 
 {
   VisModel::loadParameterWidgets();
 

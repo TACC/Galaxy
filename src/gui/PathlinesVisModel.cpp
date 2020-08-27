@@ -176,7 +176,7 @@ PathlinesVisModel::loadOutput(std::shared_ptr<GxyData> o) const
 }
 
 void
-PathlinesVisModel::loadParameterWidgets() const
+PathlinesVisModel::loadParameterWidgets() 
 {
   VisModel::loadParameterWidgets();
 

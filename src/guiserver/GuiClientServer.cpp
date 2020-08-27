@@ -272,6 +272,7 @@ GuiClientServer::handle(string line, string& reply)
 
       float m, M;
       kdop->get_global_minmax(m, M);
+      std::cerr << "got minmax from server: " << m << " " << M << "\n";
 
       int key = kdop->getkey();
 

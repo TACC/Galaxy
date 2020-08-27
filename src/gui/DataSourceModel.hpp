@@ -395,7 +395,7 @@ private Q_SLOTS:
         case 0: dsets.AddMember("type", "Volume", doc.GetAllocator()); break;
         case 1: dsets.AddMember("type", "Triangles", doc.GetAllocator()); break;
         case 2: dsets.AddMember("type", "Particles", doc.GetAllocator()); break;
-        case 3: dsets.AddMember("type", "Pathlines", doc.GetAllocator()); break;
+        case 3: dsets.AddMember("type", "PathLines", doc.GetAllocator()); break;
         default: dsets.AddMember("type", "??????????", doc.GetAllocator()); break;
       }
 

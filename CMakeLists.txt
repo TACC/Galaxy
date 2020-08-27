@@ -151,3 +151,4 @@ if (GXY_UNIT_TESTING)
   add_subdirectory(tests/src)
 endif(GXY_UNIT_TESTING)
 
+add_subdirectory(colormaps)

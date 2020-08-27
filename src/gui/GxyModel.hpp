@@ -118,7 +118,7 @@ public:
   // This is used to set widgets from internal state.   Only necessary if the
   // internal state is not held in the widgets in the first place.
 
-  virtual void loadParameterWidgets() const
+  virtual void loadParameterWidgets() 
   {
   }
 

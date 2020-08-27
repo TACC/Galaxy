@@ -124,6 +124,8 @@ Datasets::loadTyped(Value& v)
 
 	if (! kop->LoadFromJSON(v))
     return false;
+
+  kop->Commit();
 		
 	if (v.HasMember("name"))
 		name = v["name"].GetString();
