@@ -143,7 +143,7 @@ MappedVis::LoadFromJSON(Value& v)
           {
             vec2f xo;
             xo.x = oa[i+0].GetDouble();
-            xo.y = oa[i+1].GetDouble();
+            xo.y = oa[i+2].GetDouble();
             opacitymap.push_back(xo);
           }
         }

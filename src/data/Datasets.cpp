@@ -137,14 +137,10 @@ Datasets::loadTyped(Value& v)
 bool
 Datasets::LoadFromJSON(Value& v)
 {
-	if (! v.HasMember("Datasets"))
-	{
-		std::cerr << "JSON has no Datasets clause\n";
-    set_error(1);
-		return false;
-	}
+  Value& ds = v;
 
-	Value& ds = v["Datasets"];
+	if (ds.HasMember("Datasets"))
+    ds = ds["Datasets"];
 
 	if (ds.IsArray())
 	{

@@ -380,6 +380,25 @@ private Q_SLOTS:
       rapidjson::Document doc;
       doc.SetObject();
 
+#if 1
+      std::string cmd("gui::import");
+      doc.AddMember("cmd", rapidjson::Value().SetString(cmd.c_str(), cmd.length()+1), doc.GetAllocator());
+
+      std::string dataName = dlg->getDataName().c_str();
+      std::string fileName = dlg->getFileName().c_str();
+
+      doc.AddMember("name", rapidjson::Value().SetString(dataName.c_str(), dataName.length()+1), doc.GetAllocator());
+      doc.AddMember("filename", rapidjson::Value().SetString(fileName.c_str(), fileName.length()+1), doc.GetAllocator());
+
+      switch (dlg->getDataType())
+      {
+        case 0: doc.AddMember("type", "Volume", doc.GetAllocator()); break;
+        case 1: doc.AddMember("type", "Triangles", doc.GetAllocator()); break;
+        case 2: doc.AddMember("type", "Particles", doc.GetAllocator()); break;
+        case 3: doc.AddMember("type", "PathLines", doc.GetAllocator()); break;
+        default: doc.AddMember("type", "??????????", doc.GetAllocator()); break;
+      }
+#else
       rapidjson::Value dsets(rapidjson::kObjectType);
       std::string cmd("gui::import");
       dsets.AddMember("cmd", rapidjson::Value().SetString(cmd.c_str(), cmd.length()+1), doc.GetAllocator());
@@ -400,6 +419,7 @@ private Q_SLOTS:
       }
 
       doc.AddMember("Datasets", dsets, doc.GetAllocator());
+#endif
 
       rapidjson::StringBuffer strbuf;
       rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
