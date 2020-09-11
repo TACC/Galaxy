@@ -31,6 +31,7 @@ namespace gxy
 {
 
 WORK_CLASS_TYPE(KeyedDataObject::ImportMsg);
+WORK_CLASS_TYPE(KeyedDataObject::CopyMsg);
 
 void
 KeyedDataObject::Register()
@@ -38,6 +39,7 @@ KeyedDataObject::Register()
   RegisterClass();
 
   ImportMsg::Register();
+  CopyMsg::Register();
 
   Datasets::Register();
   Geometry::Register();
@@ -49,12 +51,27 @@ KEYED_OBJECT_CLASS_TYPE(KeyedDataObject)
 
 KeyedDataObject::~KeyedDataObject()
 {
-  //std::cerr << "~KeyedDataObject: " << this << " skt " << skt << std::endl;
   if (skt)          
   {
     skt->CloseSocket();
     skt->Delete();
   }
+}
+
+KeyedDataObjectP
+KeyedDataObject::Copy()
+{
+  KeyedDataObjectP dst = Cast(GetTheKeyedObjectFactory()->NewP(GetClassType()));
+  CopyMsg msg(getkey(), dst->getkey());
+  msg.Broadcast(true, true);
+  return dst;
+}
+
+bool
+KeyedDataObject::local_copy(KeyedDataObjectP src)
+{
+  CopyPartitioning(src);
+  return true;
 }
 
 OsprayObjectP
@@ -64,7 +81,7 @@ KeyedDataObject::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 }
 
 void 
-KeyedDataObject::CopyPartitioning(KeyedDataObjectP o)
+KeyedDataObject::CopyPartitioning(KeyedDataObject* o)
 {
 	local_box = *o->get_local_box();
 	global_box = *o->get_global_box();
@@ -111,5 +128,6 @@ KeyedDataObject::set_neighbors(int *n)
 {
   memcpy(neighbors, n, 6*sizeof(int));
 }
+
 
 } // namespace gxy

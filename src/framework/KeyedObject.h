@@ -286,7 +286,7 @@ public:
   /*! \param c the KeyedObject class id, which is created using the OBJECT_CLASS_TYPE macro
    * \sa OBJECT_CLASS_TYPE
    */
-  KeyedObjectP New(KeyedObjectClass c)
+  KeyedObjectP NewP(KeyedObjectClass c)
   {
     Key k = keygen();
     KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
@@ -446,7 +446,7 @@ public:                                                                         
                                                                                                 \
   static typ ## P NewP()                                                                        \
   {                                                                                             \
-    KeyedObjectP kop = GetTheKeyedObjectFactory()->New(ClassType);                              \
+    KeyedObjectP kop = GetTheKeyedObjectFactory()->NewP(ClassType);                             \
     aol(kop);                                                                                   \
     return Cast(kop);                                                                           \
   }                                                                                             \

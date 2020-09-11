@@ -62,6 +62,7 @@ public:                                                                         
   static bool IsA(GalaxyObjectP a) { return dynamic_cast<typ *>(a.get()) != NULL; }         \
   static bool IsA(GalaxyObject* a) { return dynamic_cast<typ *>(a) != NULL; }               \
   std::string GetClassName() { return std::string(#typ); }                                  \
+  int         GetClassType() { return ClassType; }                                          \
   static int  ClassType;
 
 enum ObserverEvent

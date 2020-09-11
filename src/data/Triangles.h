@@ -58,13 +58,13 @@ public:
   //! Allocate space for vertices(data) and connectivity
   virtual void allocate_vertices(int nv);
 
-  vec3f* GetNormals() { return (vec3f *)normals.data(); }
+  vec3f* GetNormals() { return (vec3f *)normals->data(); }
 
   virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);
-  std::vector<vec3f> normals;
+  std::shared_ptr< std::vector<vec3f> > normals;
 };
 
 } // namespace gxy

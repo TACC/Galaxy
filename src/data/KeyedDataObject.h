@@ -61,6 +61,9 @@ public:
 	virtual ~KeyedDataObject(); //!< destructor
 	virtual void initialize(); //!< initialize this KeyedDataObject
 
+  virtual KeyedDataObjectP Copy();
+  virtual bool local_copy(KeyedDataObjectP src);
+
   //! commit this object to the local registry
 	virtual bool local_commit(MPI_Comm);
 
@@ -106,7 +109,7 @@ public:
 	virtual bool Import(std::string, void *args, int argsSize);
 
   //! copy the data partitioning of the given KeyedDataObject
-	void CopyPartitioning(KeyedDataObjectP o);
+	void CopyPartitioning(KeyedDataObjectP o) { CopyPartitioning(o.get()); };
 
   float local_min, local_max;
   float global_min, global_max;
@@ -118,7 +121,6 @@ public:
   void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
 
   virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP kdop);
-  virtual OsprayObjectP GetTheOSPRayEquivalent() { return ospData; }
 
   void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 
@@ -126,8 +128,9 @@ public:
   bool hasBeenModified() { return modified; }
 
 protected:
+	void CopyPartitioning(KeyedDataObject* o);
+
   bool modified;
-  OsprayObjectP ospData;
 	vtkClientSocket *skt;
 	std::string filename;
 
@@ -170,6 +173,45 @@ protected:
 
 			if (!o->local_import(p, c))
         o->set_error(1);
+
+			return false;
+		}
+  };
+
+  //! tell a Galaxy processes to copy the guts of src to dst
+
+  class CopyMsg : public Work
+  {
+  public:
+    CopyMsg(Key src, Key dst) : CopyMsg(2*sizeof(Key))
+    {
+      unsigned char *p = contents->get();
+
+      *(Key *)p = src;
+      p += sizeof(Key);
+
+      *(Key *)p = dst;
+      p += sizeof(Key);
+    }
+
+    WORK_CLASS(CopyMsg, true);
+
+  public:
+    bool CollectiveAction(MPI_Comm c, bool isRoot)
+		{
+			char *p = (char *)contents->get();
+
+			Key k = *(Key *)p;
+			p += sizeof(Key);
+			KeyedDataObjectP src = KeyedDataObject::GetByKey(k);
+
+			k = *(Key *)p;
+			p += sizeof(Key);
+			KeyedDataObjectP dst = KeyedDataObject::GetByKey(k);
+
+
+			if (!dst->local_copy(src))
+        dst->set_error(1);
 
 			return false;
 		}

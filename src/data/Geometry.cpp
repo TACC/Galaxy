@@ -66,22 +66,33 @@ Geometry::Register()
 void
 Geometry::initialize()
 {
+  vertices = std::shared_ptr< std::vector<vec3f> >(new std::vector<vec3f>);
+  data = std::shared_ptr< std::vector<float> >(new std::vector<float>);
+  connectivity = std::shared_ptr< std::vector<int> >(new std::vector<int>);
+
   vtkobj = nullptr;
   super::initialize();
   pthread_mutex_init(&lock, NULL);
 }
 
+KeyedDataObjectP
+Geometry::Copy()
+{
+  KeyedDataObjectP kop = super::Copy();
+  return kop;
+}
+
 void
 Geometry::allocate_vertices(int nv)
 {
-  vertices.resize(nv);
-  data.resize(nv);
+  vertices->resize(nv);
+  data->resize(nv);
 }
 
 void
 Geometry::allocate_connectivity(int nc)
 {
-  connectivity.resize(nc);
+  connectivity->resize(nc);
 }
 
 bool
@@ -145,14 +156,14 @@ Geometry::local_commit(MPI_Comm c)
   if (super::local_commit(c))
     return true;
 
-  if (data.size() == 0)
+  if (data->size() == 0)
     local_min = local_max = 0;
   else
   {
-    float *dptr = data.data();
+    float *dptr = data->data();
     local_min = local_max = *dptr ++;
 
-    for (auto i = 1; i < data.size(); i++)
+    for (auto i = 1; i < data->size(); i++)
     {
       float d = *dptr++;
       if (local_min > d) local_min = d;
@@ -163,7 +174,7 @@ Geometry::local_commit(MPI_Comm c)
   MPI_Allreduce(&local_min, &global_min, 1, MPI_FLOAT, MPI_MIN, c);
   MPI_Allreduce(&local_max, &global_max, 1, MPI_FLOAT, MPI_MAX, c);
 
-  int local_counts[2] = {(int)vertices.size(), (int)connectivity.size()};
+  int local_counts[2] = {(int)vertices->size(), (int)connectivity->size()};
   int global_counts[2];
 
   MPI_Allreduce(local_counts, global_counts, 2, MPI_INT, MPI_SUM, c);

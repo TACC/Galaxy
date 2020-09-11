@@ -86,18 +86,18 @@ class Geometry : public KeyedDataObject
     a = default_color.w;
   }
 
-  int GetNumberOfVertices() { return vertices.size(); }
-  int GetConnectivitySize() { return connectivity.size(); }
+  int GetNumberOfVertices() { return vertices->size(); }
+  int GetConnectivitySize() { return connectivity->size(); }
 
-  vec3f* GetVertices() { return (vec3f *)vertices.data(); }
-  float* GetData() { return (float *)data.data(); }
-  int*   GetConnectivity() { return (int *)connectivity.data(); }
+  vec3f* GetVertices() { return (vec3f *)vertices->data(); }
+  float* GetData() { return (float *)data->data(); }
+  int*   GetConnectivity() { return (int *)connectivity->data(); }
 
   void clear()
   {
-    vertices.clear();
-    data.clear();
-    connectivity.clear();
+    vertices->clear();
+    data->clear();
+    connectivity->clear();
   }
 
   void Lock() { pthread_mutex_lock(&lock); }
@@ -120,6 +120,8 @@ protected:
 
   void initialize(); //!< initialize this Geometry objec
 
+  virtual KeyedDataObjectP Copy();
+
   //! Get partitioning info from JSON object
   bool get_partitioning(rapidjson::Value&);
 
@@ -127,9 +129,9 @@ protected:
   bool get_partitioning_from_file(char *);
 
   //! vertex, data and connectivity storage
-  std::vector<vec3f> vertices;
-  std::vector<float> data;
-  std::vector<int>   connectivity;
+  std::shared_ptr<std::vector<vec3f>> vertices;
+  std::shared_ptr<std::vector<float>> data;
+  std::shared_ptr<std::vector<int>>   connectivity;
 
   int global_vertex_count;
   int global_element_count;

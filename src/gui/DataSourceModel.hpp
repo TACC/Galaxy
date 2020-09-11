@@ -262,12 +262,20 @@ private Q_SLOTS:
 
   void onFileSelectorOpen()
   {
+    QString f = QFileDialog::getOpenFileName(this, tr("Open Dataset"), getenv("HOME"), tr("data files (*.json *.vol *.part)"));
+    fileName->insert(f);
+
+#if 0
+
     QFileDialog *fileDialog = new QFileDialog();
     if (fileDialog->exec())
     {
       fileName->insert(fileDialog->selectedFiles().at(0));
     }
+
     delete fileDialog;
+#endif
+
     validateOpen();
   }
 

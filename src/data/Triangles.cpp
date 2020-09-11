@@ -60,6 +60,7 @@ Triangles::Register()
 void
 Triangles::initialize()
 {
+  normals = std::shared_ptr< std::vector<vec3f> >(new std::vector<vec3f>);
   super::initialize();
 };
 
@@ -71,7 +72,7 @@ void
 Triangles::allocate_vertices(int nv)
 {
   Geometry::allocate_vertices(nv);
-  normals.resize(nv);
+  normals->resize(nv);
 }
 
 
@@ -96,19 +97,19 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
       exit(1);
     }
 
-    memcpy(vertices.data(), parray->GetVoidPointer(0), 3*nv*sizeof(float));
+    memcpy(vertices->data(), parray->GetVoidPointer(0), 3*nv*sizeof(float));
 
     vtkFloatArray *narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals"));
     if (! narray)
       narray = vtkFloatArray::SafeDownCast(pset->GetPointData()->GetArray("Normals_"));
 
     if (narray)
-      memcpy(normals.data(), narray->GetVoidPointer(0), 3*nv*sizeof(float));
+      memcpy(normals->data(), narray->GetVoidPointer(0), 3*nv*sizeof(float));
     else
     {
       std::cerr << "triangle set has no normals\n";
 
-      float *nptr = (float *)normals.data();
+      float *nptr = (float *)normals->data();
       for (int i = 0; i < nv; i++)
       {
         *nptr++ = 1.0;
@@ -121,14 +122,14 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
 
     vtkFloatArray *farray = vtkFloatArray::SafeDownCast(array);
     if (farray)
-      memcpy(data.data(), farray->GetVoidPointer(0), nv*sizeof(float));
+      memcpy(data->data(), farray->GetVoidPointer(0), nv*sizeof(float));
     else
     {
       vtkDoubleArray *darray = vtkDoubleArray::SafeDownCast(array);
       double *ddata = (darray) ? (double *)darray->GetVoidPointer(0) : NULL;
 
       for (int i = 0; i < nv; i++)
-        data[i] = (float)(ddata ? ddata[i] : 0.0);
+        (*data)[i] = (float)(ddata ? ddata[i] : 0.0);
     }
 
     int i = 0;
@@ -138,7 +139,7 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
       for (int j = 0; j < ids->GetNumberOfIds(); j++)
       {
         int id = ids->GetId(j);
-        connectivity[i++] = id;
+        (*connectivity)[i++] = id;
       }
     }
   }
@@ -149,13 +150,7 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
 OsprayObjectP
 Triangles::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
-  if (! ospData || hasBeenModified())
-  {
-    ospData = OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
-    setModified(false);
-  }
-
-  return ospData;
+  return OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
 }
 
 

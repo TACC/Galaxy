@@ -76,7 +76,7 @@ public:
 
     //! get the OSPRayObject for this Vis' data, if there is one.
     //! 
-    virtual OsprayObjectP  GetTheOsprayDataObject() { return data->GetTheOSPRayEquivalent(); }
+    virtual OsprayObjectP  GetTheOsprayDataObject() { return odata; }
 
     //! construct a Vis from a Galaxy JSON specification
     virtual bool LoadFromJSON(rapidjson::Value&);

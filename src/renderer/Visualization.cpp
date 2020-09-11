@@ -234,49 +234,15 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   for (auto v : vis)
   {
     KeyedDataObjectP kdop = v->GetTheData();
-    OsprayObjectP op = kdop->GetTheOSPRayEquivalent();
+    OsprayObjectP op = v->GetTheOsprayDataObject();
 
     if (! op || kdop->hasBeenModified())
-    {
-      op = kdop->CreateTheOSPRayEquivalent(kdop);
-      kdop->setModified(false);
-    }
-
-    v->SetTheOsprayDataObject(op);
-
-#if 0
-#if 0
-    op = v->GetTheOsprayDataObject();
-    if (! op)
-    {
-      op = kdop->CreateTheOSPRayEquivalent(kdop);
-      if (! op)
-      {
-        cerr << "no OSPRay equivalent for this data object\n";
-        exit(1);
-      }
-    }
-
-    v->SetTheOsprayDataObject(op);
-#else
-    op = v->GetTheOsprayDataObject();
-    if (!op || kdop->hasBeenModified())
     {
       op = kdop->CreateTheOSPRayEquivalent(kdop);
       v->SetTheOsprayDataObject(op);
       kdop->setModified(false);
     }
-    else
-      op = v->GetTheOsprayDataObject();
-#endif
-#endif
 
-#if 0
-   std::cerr << "vis: " << v.get() << "\n";
-   std::cerr << "vol: " << kdop.get();
-   std::cerr << " op: " << op.get() << " vis isp: " << v->GetIspc() << " osp: " << op->GetOSP() << " IE: " << op->GetOSP_IE() << "\n";
-#endif
-    
     if (GeometryVis::IsA(v))
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
     else

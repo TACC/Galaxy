@@ -34,7 +34,7 @@ function report
 function fail
 {
   echo "GALAXY: ERROR - $1"
-  exit 1
+  eGXY_CREATE_PARTITION_DOCxit 1
 }
 
 function run_tests()
