@@ -79,7 +79,7 @@ public:
     float *d = cellValues;
     if (v->get_type() == Volume::FLOAT)
     {
-      float *s = (float *)v->get_samples();
+      float *s = (float *)v->get_samples().get();
       for (int i = 1; i < gni-2; i++)
         for (int j = 1; j < gnj-2; j++)
           for (int k = 1; k < gnk-2; k++)
@@ -97,7 +97,7 @@ public:
     }
     else
     {
-      double *s = (double *)v->get_samples();
+      double *s = (double *)v->get_samples().get();
       for (int i = 1; i < gni-2; i++)
         for (int j = 1; j < gnj-2; j++)
           for (int k = 1; k < gnk-2; k++)

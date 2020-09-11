@@ -75,11 +75,21 @@ Geometry::initialize()
   pthread_mutex_init(&lock, NULL);
 }
 
-KeyedDataObjectP
-Geometry::Copy()
+bool
+Geometry::local_copy(KeyedDataObjectP src)
 {
-  KeyedDataObjectP kop = super::Copy();
-  return kop;
+  if (! super::local_copy(src))
+    return false;
+
+  GeometryP g = Cast(src);
+
+  vertices             = g->vertices;
+  data                 = g->data;
+  connectivity         = g->connectivity;
+  global_vertex_count  = g->global_vertex_count;
+  global_element_count = g->global_element_count;
+
+  return true;
 }
 
 void

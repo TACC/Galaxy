@@ -58,7 +58,7 @@ Volume::Register()
 Volume::~Volume()
 {
 	if (vtkobj) vtkobj->Delete();
-	if (samples) free(samples);
+	if (samples) samples = NULL;
 }
 
 bool
@@ -334,13 +334,13 @@ Volume::local_import(char *fname, MPI_Comm c)
 	size_t row_sz = ghosted_local_counts.x * sample_sz;
 	size_t tot_sz = row_sz * ghosted_local_counts.y * ghosted_local_counts.z;
 
-	samples = (unsigned char *)malloc(tot_sz);
+	set_samples(malloc(tot_sz));
 
 	string rawname = data_fname[0] == '/' ? data_fname : (dir + data_fname);
 	ifstream raw;
   raw.open(rawname.c_str(), ios::in | ios::binary);
 
-	char *dst = (char *)samples;
+	char *dst = (char *)samples.get();
 	for (int z = 0; z < ghosted_local_counts.z; z++)
 		for (int y = 0; y < ghosted_local_counts.y; y++)
 		{
@@ -405,7 +405,7 @@ Volume::local_commit(MPI_Comm c)
 
 	if (type == FLOAT)
 	{
-		float *ptr = (float *)samples;
+		float *ptr = (float *)samples.get();
     if (number_of_components == 1)
     {
       local_min = local_max = *ptr++;
@@ -436,7 +436,7 @@ Volume::local_commit(MPI_Comm c)
 	}
 	else
 	{
-		unsigned char *ptr = (unsigned char *)samples;
+		unsigned char *ptr = (unsigned char *)samples.get();
     if (number_of_components == 1)
     {
       local_min = local_max = *ptr++;
@@ -489,10 +489,10 @@ Volume::local_commit(MPI_Comm c)
   return false;
 }
 
-#define get_sample_ptr(ijk)                                               \
-  (samples + ((ijk.z * ghosted_local_counts.y * ghosted_local_counts.x)   \
-              +  (ijk.y * ghosted_local_counts.x)                         \
-              +  ijk.x) * number_of_components * (isFloat() ? 4 : 1))
+#define get_sample_ptr(ijk)                                                     \
+  (samples.get() + ((ijk.z * ghosted_local_counts.y * ghosted_local_counts.x)   \
+                 +  (ijk.y * ghosted_local_counts.x)                            \
+                 +  ijk.x) * number_of_components * (isFloat() ? 4 : 1))
 
 #define interp1(T, t, a, b, d)                      \
   float t[number_of_components];                    \
@@ -621,6 +621,33 @@ OsprayObjectP
 Volume::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
   return OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
+}
+
+bool
+Volume::local_copy(KeyedDataObjectP src)
+{
+  if (! super::local_copy(src))
+    return false;
+
+  VolumeP v = Cast(src);
+
+  vtkobj               = NULL;
+  filename             = "";
+  type                 = v->type;
+  deltas               = v->deltas;
+  number_of_components = v->number_of_components;
+  ijk                  = v->ijk;
+  global_partitions    = v->global_partitions;
+  global_origin        = v->global_origin;
+  global_counts        = v->global_counts;
+  local_offset         = v->local_offset;
+  local_counts         = v->local_counts;
+  ghosted_local_offset = v->ghosted_local_offset;
+  ghosted_local_counts = v->ghosted_local_counts;
+
+  samples              = v->samples;
+
+  return true;
 }
  
 } // namespace gxy

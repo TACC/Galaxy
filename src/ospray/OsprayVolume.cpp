@@ -32,9 +32,11 @@ OsprayVolume::OsprayVolume(VolumeP v)
   osp::vec3f origin, spacing;
   v->get_ghosted_local_origin(origin.x, origin.y, origin.z);
   v->get_deltas(spacing.x, spacing.y, spacing.z);
+
+  samples = v->get_samples();
+  size_t sz = counts.x*counts.y*counts.z;
   
-  OSPData data = ospNewData(counts.x*counts.y*counts.z, 
-    v->isFloat() ? OSP_FLOAT : OSP_UCHAR, (void *)v->get_samples(), OSP_DATA_SHARED_BUFFER);
+  OSPData data = ospNewData(sz, v->isFloat() ? OSP_FLOAT : OSP_UCHAR, (void *)samples.get(), OSP_DATA_SHARED_BUFFER);
   ospCommit(data);
   
   ospSetObject(ospv, "voxelData", data);

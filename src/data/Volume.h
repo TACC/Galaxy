@@ -61,13 +61,14 @@ public:
 	};
 
 	//! get the samples (i.e. data value) array for this Volume
-	unsigned char *get_samples() { return samples; }
+	std::shared_ptr<unsigned char> get_samples() { return samples; }
+
 	//! set the samples (i.e. data value) array for this Volume
 	void set_samples(void * s) 
 	{ 
 		if (samples != NULL) 
 	  { std::cerr << "WARNING: overwriting (and leaking) Galaxy samples array!" << std::endl;} 
-	  samples = (unsigned char*)s; 
+	  samples = std::shared_ptr<unsigned char>((unsigned char*)s); 
 	}
 
 	//! get the deltas (grid step size) for this Volume
@@ -195,6 +196,9 @@ public:
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm c);
 
+  //! copy local part
+  virtual bool local_copy(KeyedDataObjectP);
+
 	//! get the global min and max data values for this Volume
 	void get_global_minmax(float &min, float &max) { min = global_min; max = global_max; }
 
@@ -232,10 +236,8 @@ public:
 
   void Allocate()
   {
-    if (samples) free(samples);
-    size_t sz = global_counts.x * global_counts.y * global_counts.z * number_of_components 
-      * ((type == FLOAT) ? sizeof(float) : sizeof(unsigned char));
-    samples = (unsigned char *)malloc(sz);
+    size_t sz = global_counts.x * global_counts.y * global_counts.z * number_of_components * ((type == FLOAT) ? sizeof(float) : sizeof(unsigned char));
+    set_samples(malloc(sz));
   }
 
 protected:
@@ -259,7 +261,8 @@ protected:
 	vec3i local_counts;
 	vec3i ghosted_local_offset;
 	vec3i ghosted_local_counts;
-	unsigned char *samples;
+
+  std::shared_ptr<unsigned char> samples;
 };
 
 } // namespace gxy

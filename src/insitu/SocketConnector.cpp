@@ -180,7 +180,7 @@ bool SocketConnector::local_accept(MPI_Comm c, VolumeP volume)
 
   int sz = i*j*k * (volume->isFloat() ? sizeof(float) : sizeof(unsigned char)) * volume->get_number_of_components();
 
-  if (! cskt->Receive(volume->get_samples(), sz, 1))
+  if (! cskt->Receive(volume->get_samples().get(), sz, 1))
   {
     std::cerr << "error... unable to read time step\n";
     exit(0);

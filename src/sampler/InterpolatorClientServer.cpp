@@ -81,13 +81,13 @@ static float interpolate(InterpolatorClientServer::Args *a, VolumeP v, float x, 
 
   if (v->get_type() == Volume::FLOAT)
   {
-    float *p = (float *)v->get_samples();
+    float *p = (float *)v->get_samples().get();
     return p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
            p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
   }
   else
   {
-    unsigned char *p = (unsigned char *)v->get_samples();
+    unsigned char *p = (unsigned char *)v->get_samples().get();
     return p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
            p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
   }

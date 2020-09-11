@@ -58,6 +58,9 @@ public:
   //! Allocate space for vertices(data) and connectivity
   virtual void allocate_vertices(int nv);
 
+  //! Copy local part
+  virtual bool local_copy(KeyedDataObjectP);
+
   vec3f* GetNormals() { return (vec3f *)normals->data(); }
 
   virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);

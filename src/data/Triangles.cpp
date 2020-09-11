@@ -1,4 +1,5 @@
 // ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -66,6 +67,19 @@ Triangles::initialize()
 
 Triangles::~Triangles()
 {
+}
+
+bool
+Triangles::local_copy(KeyedDataObjectP src)
+{
+  if (! super::local_copy(src))
+    return false;
+
+  TrianglesP t = Cast(src);
+
+  normals = t->normals;
+
+  return true;
 }
 
 void

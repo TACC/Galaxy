@@ -48,6 +48,7 @@ public:
 
 private:
   OsprayVolume(VolumeP);
+  std::shared_ptr<unsigned char> samples;
 };
 
 }

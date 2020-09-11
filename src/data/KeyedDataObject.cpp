@@ -71,6 +71,11 @@ bool
 KeyedDataObject::local_copy(KeyedDataObjectP src)
 {
   CopyPartitioning(src);
+  modified = false;
+  skt = NULL;
+  filename = "";
+  time_varying = false;
+  attached = false;
   return true;
 }
 

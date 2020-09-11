@@ -62,6 +62,8 @@ class Geometry : public KeyedDataObject
   //! learn global and local minmax of data
   virtual bool local_commit(MPI_Comm);
 
+  //! copy local part
+  virtual bool local_copy(KeyedDataObjectP);
 
   //! load geometry from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
@@ -120,7 +122,6 @@ protected:
 
   void initialize(); //!< initialize this Geometry objec
 
-  virtual KeyedDataObjectP Copy();
 
   //! Get partitioning info from JSON object
   bool get_partitioning(rapidjson::Value&);

@@ -53,7 +53,7 @@ CellValues(VolumeP v, DensitySampleClientServer::Args *a)
   float *d = cellValues;
   if (v->get_type() == Volume::FLOAT)
   {
-    float *s = (float *)v->get_samples();
+    float *s = (float *)v->get_samples().get();
     for (int i = 0; i < a->nj-1; i++)
       for (int j = 0; i < a->nj-1; j++)
         for (int k = 0; k < a->nk-1; k++)
@@ -71,7 +71,7 @@ CellValues(VolumeP v, DensitySampleClientServer::Args *a)
   }
   else
   {
-    double *s = (double *)v->get_samples();
+    double *s = (double *)v->get_samples().get();
     for (int i = 0; i < a->nj-1; i++)
       for (int j = 0; i < a->nj-1; j++)
         for (int k = 0; k < a->nk-1; k++)
