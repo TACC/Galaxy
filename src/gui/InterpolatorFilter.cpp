@@ -1,4 +1,5 @@
 // ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -22,11 +23,14 @@
 
 InterpolatorFilter::InterpolatorFilter() 
 {
+  output = std::make_shared<GxyData>(getModelIdentifier());
+
   QFrame *frame  = new QFrame();
   QGridLayout *layout = new QGridLayout();
   frame->setLayout(layout);
 
   _properties->addProperties(frame);
+  connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 }
 
 unsigned int
@@ -41,31 +45,73 @@ InterpolatorFilter::nPorts(QtNodes::PortType portType) const
 QtNodes::NodeDataType
 InterpolatorFilter::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
 {
-  if (pt == QtNodes::PortType::In)
-    return GxyData().type();
-  else
-    return GxyData().type();
+  return GxyData().type();
 }
 
 void
-InterpolatorFilter::apply() { std::cerr << "Apply\n"; }
-
-std::shared_ptr<QtNodes::NodeData>
-InterpolatorFilter::outData(QtNodes::PortIndex)
+InterpolatorFilter::onApply()
 {
-  std::shared_ptr<GxyData> result;
-  return std::static_pointer_cast<QtNodes::NodeData>(result);
+  QJsonObject json = save();
+  json["cmd"] = "gui::interpolate";
+
+  json["volume"] = volume->dataInfo.name.c_str();
+  json["pointset"] = pset->dataInfo.name.c_str();
+
+  QJsonDocument doc(json);
+  QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+  QString s = QLatin1String(bytes);
+
+  std::string msg = s.toStdString();
+  std::cerr << "InterpolatorFilter request: " << msg << "\n";
+  getTheGxyConnectionMgr()->CSendRecv(msg);
+  std::cerr << "InterpolatorFilter reply: " << msg << "\n";
+
+  rapidjson::Document rply;
+  rply.Parse(msg.c_str());
+
+  QString status = rply["status"].GetString();
+  if (status.toStdString() != "ok")
+  {
+    std::cerr << "interpolation failed: " << rply["error message"].GetString() << "\n";
+    return;
+  }
+
+
+  output->dataInfo.name = rply["name"].GetString();
+  output->dataInfo.type = rply["type"].GetInt();
+  output->dataInfo.isVector = (rply["ncomp"].GetInt() == 3);
+  output->dataInfo.data_min = rply["min"].GetDouble();
+  output->dataInfo.data_max = rply["max"].GetDouble();
+  for (auto i = 0; i < 6; i++)
+    output->dataInfo.box[i] = rply["box"][i].GetDouble();
+
+  output->setValid(true);
+
+  GxyFilter::onApply();
 }
 
-// void
-// InterpolatorFilter::
-// setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
-// {
-  // GxyFilter::setInData(data, portIndex);
-  // if (isValid())
-    // Q_EMIT dataUpdated(0);
-// }
+void
+InterpolatorFilter::
+setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
+{
+  if (portIndex == 0)
+    volume = std::dynamic_pointer_cast<GxyData>(data);
+  else if (portIndex == 1)
+    pset = std::dynamic_pointer_cast<GxyData>(data);
+  else
+    std::cerr << "more than 2 input ports?\n";
 
+  GxyFilter::setInData(data, portIndex);
+
+  if (isValid())
+    Q_EMIT dataUpdated(0);
+}
+
+bool 
+InterpolatorFilter::isValid()
+{
+  return volume && volume->isValid() && pset && pset->isValid();
+}
 
 QtNodes::NodeValidationState
 InterpolatorFilter::validationState() const

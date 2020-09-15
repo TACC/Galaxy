@@ -80,13 +80,6 @@ PathlinesVisModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
     return Vis().type();
 }
 
-std::shared_ptr<QtNodes::NodeData>
-PathlinesVisModel::outData(QtNodes::PortIndex)
-{
-  std::shared_ptr<PathlinesVis> result;
-  return std::static_pointer_cast<QtNodes::NodeData>(output);
-}
-
 void
 PathlinesVisModel::
 setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)

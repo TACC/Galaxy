@@ -51,9 +51,8 @@ public:
 
   QtNodes::NodeDataType dataType(QtNodes::PortType portType, QtNodes::PortIndex portIndex) const override;
 
-  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex port) override;
-
-  // void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
+  void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
+  bool isValid() override;
 
   QtNodes::NodeValidationState validationState() const override;
 
@@ -65,8 +64,10 @@ public:
 
 protected:
 
-  virtual void apply();
+  virtual void onApply() override;
 
 private:
-  std::shared_ptr<GxyData> output;
+  std::shared_ptr<GxyData>  volume;
+  std::shared_ptr<GxyData>  pset;
+  // std::shared_ptr<GxyData> output;
 };

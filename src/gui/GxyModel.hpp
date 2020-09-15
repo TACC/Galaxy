@@ -74,6 +74,11 @@ public:
   QWidget *embeddedWidget() override { return frame; }
   std::string getModelIdentifier() { return model_identifier; }
 
+  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex) override
+  {
+    return std::static_pointer_cast<QtNodes::NodeData>(output);
+  }
+
   QJsonObject
   save() const override
   {
@@ -171,4 +176,5 @@ protected:
   QFrame *frame;
   std::string model_identifier;
   std::shared_ptr<GxyData> input;
+  std::shared_ptr<GxyData> output;
 };

@@ -304,8 +304,6 @@ public:
 
   NodeDataType dataType(PortType portType, PortIndex portIndex) const override;
 
-  std::shared_ptr<NodeData> outData(PortIndex port) override;
-
   NodeValidationState validationState() const override;
 
   QString validationMessage() const override;
@@ -525,5 +523,4 @@ private:
   MyQListWidget *objectList;
   MyQListWidgetItem *current_selection = NULL;
   QPushButton *info;
-  std::shared_ptr<GxyData> output;
 };

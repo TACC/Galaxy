@@ -117,12 +117,6 @@ DataSourceModel::dataType(PortType, PortIndex) const
   return GxyData().type();
 }
 
-std::shared_ptr<NodeData>
-DataSourceModel::outData(PortIndex)
-{
-  return std::static_pointer_cast<NodeData>(output);
-}
-
 NodeValidationState
 DataSourceModel::validationState() const
 {

@@ -1,3 +1,4 @@
+// ========================================================================== //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -73,7 +74,7 @@ registerDataModels()
   return ret;
 }
 
-class GxyMainWindow : QMainWindow
+class GxyMainWindow : public QMainWindow
 {
   Q_OBJECT
 
@@ -84,9 +85,6 @@ public:
     setCentralWidget(mainWidget);
 
     std::shared_ptr<QtNodes::DataModelRegistry> registry = registerDataModels();
-
-    flowScene = new FlowScene(registry, mainWidget);
-    flowView = new GxyFlowView(flowScene);
 
     auto fileMenu   = menuBar()->addMenu("&File");
     auto loadAction = fileMenu->addAction("Load");
@@ -112,6 +110,9 @@ public:
     connect(disconnectAction, SIGNAL(triggered()), this, SLOT(disconnect()));
 
     connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(enableConnectAction(bool)));
+
+    flowScene = new FlowScene(registry, mainWidget);
+    flowView = new GxyFlowView(flowScene);
 
     QVBoxLayout *l = new QVBoxLayout(mainWidget);
     l->setContentsMargins(0, 0, 0, 0);
@@ -144,7 +145,6 @@ public:
 
     setWindowTitle("Galaxy");
     resize(1200, 900);
-    showNormal();
   }
 
   void 

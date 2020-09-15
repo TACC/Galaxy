@@ -97,12 +97,6 @@ DensitySamplerFilter::onApply()
   GxyFilter::onApply();
 }
 
-std::shared_ptr<QtNodes::NodeData>
-DensitySamplerFilter::outData(QtNodes::PortIndex)
-{
-  std::cerr << "DensitySamplerFilter::outData ===============\n"; output->print();
-  return std::static_pointer_cast<QtNodes::NodeData>(output);
-}
 
 QtNodes::NodeValidationState
 DensitySamplerFilter::validationState() const

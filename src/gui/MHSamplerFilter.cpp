@@ -174,13 +174,6 @@ MHSamplerFilter::onApply()
   GxyFilter::onApply();
 }
 
-std::shared_ptr<QtNodes::NodeData>
-MHSamplerFilter::outData(QtNodes::PortIndex)
-{
-  std::cerr << "MHSamplerFilter::outData ===============\n"; output->print();
-  return std::static_pointer_cast<QtNodes::NodeData>(output);
-}
-
 QtNodes::NodeValidationState
 MHSamplerFilter::validationState() const
 {

@@ -111,7 +111,7 @@ public Q_SLOTS:
   }
 
 protected:
-  std::shared_ptr<Vis> output;
+  // std::shared_ptr<Vis> output;
 
   void load_cmap(std::string s)
   {

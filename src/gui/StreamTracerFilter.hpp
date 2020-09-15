@@ -85,7 +85,7 @@ private:
   QLineEdit               *stepsize;
   QLineEdit               *minvelocity;
   QLineEdit               *maxtime;
-  std::shared_ptr<GxyData> output;
+  // std::shared_ptr<GxyData> output;
 
   bool retrace = true;
   bool retrim  = true;

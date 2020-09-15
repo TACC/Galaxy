@@ -138,12 +138,6 @@ RaycastSamplerFilter::onApply()
   GxyFilter::onApply();
 }
 
-std::shared_ptr<QtNodes::NodeData>
-RaycastSamplerFilter::outData(QtNodes::PortIndex)
-{
-  return std::static_pointer_cast<QtNodes::NodeData>(output);
-}
-
 QtNodes::NodeValidationState
 RaycastSamplerFilter::validationState() const
 {

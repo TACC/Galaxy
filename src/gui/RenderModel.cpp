@@ -106,9 +106,6 @@ RenderModel::dataType(PortType pt, PortIndex pi) const
   return Vis().type();
 }
 
-std::shared_ptr<NodeData>
-RenderModel::outData(PortIndex) { return NULL; } 
-
 bool 
 RenderModel::isValid()
 {

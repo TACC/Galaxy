@@ -89,6 +89,7 @@ main(int argc, char *argv[])
 
   QApplication app(argc, argv);
   GxyMainWindow mainWindow;
+  mainWindow.show();
 
 #if 0
   int dbg = 1;
