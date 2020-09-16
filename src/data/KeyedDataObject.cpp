@@ -61,7 +61,7 @@ KeyedDataObject::~KeyedDataObject()
 KeyedDataObjectP
 KeyedDataObject::Copy()
 {
-  KeyedDataObjectP dst = Cast(GetTheKeyedObjectFactory()->NewP(GetClassType()));
+  KeyedDataObjectP dst = Cast(GetTheKeyedObjectFactory()->NewP(getclass()));
   CopyMsg msg(getkey(), dst->getkey());
   msg.Broadcast(true, true);
   return dst;

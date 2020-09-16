@@ -22,6 +22,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <unistd.h>
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QVBoxLayout>
@@ -33,6 +34,7 @@
 #include <QtWidgets/QScrollArea>
 #include <QDialog>
 #include <QPixmap>
+#include <QMessageBox>
 
 class CMapDialog : public QDialog
 {
@@ -49,17 +51,25 @@ public:
 
     row = 0;
 
-    std::string root(getenv("GALAXY_ROOT"));
-
-    char dirname[1024];
-    sprintf(dirname, "%s/colormaps", root.c_str());
-
-    load_from_dir(dirname, gl);
+#if __APPLE__
+    char buf[1024];
+    getcwd(buf, 1024);
+    QString dirname((std::string(buf) + "/../colormaps").c_str());
+    QMessageBox b;
+    b.setText(dirname);
+    b.exec();
+#else
+    QString dirname((std::string(getenv("GALAXY_ROOT")) + "/colormaps").c_str());
+    QMessageBox b;
+    b.setText(std::string("NOT APPLE: ") + dirname);
+    b.exec();
+#endif
+  
+    load_from_dir(dirname.toStdString(), gl);
 
     std::string home(getenv("HOME"));
-    sprintf(dirname, "%s/galaxy_colormaps", home.c_str());
 
-    load_from_dir(dirname, gl);
+    load_from_dir(home + "/galaxy_colormaps", gl);
 
     QScrollArea *sa = new QScrollArea;
     sa->setWidgetResizable(true);
@@ -110,9 +120,9 @@ private Q_SLOTS:
 
 private:
 
-    void load_from_dir(char *dirname, QGridLayout *gl)
+    void load_from_dir(std::string dirname, QGridLayout *gl)
     {
-      DIR *dir = opendir(dirname);
+      DIR *dir = opendir(dirname.c_str());
       if (! dir) 
         return;
     
@@ -128,7 +138,7 @@ private:
           QLabel *name = new QLabel(base);
           gl->addWidget(name, row, 0);
           
-          sprintf(base, "%s/%s", dirname, ff->d_name);
+          sprintf(base, "%s/%s", dirname.c_str(), ff->d_name);
           names.push_back(base);
           QPixmap *pm = new QPixmap(base);
           QLabel *img = new QLabel;

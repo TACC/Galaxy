@@ -95,6 +95,9 @@ class Geometry : public KeyedDataObject
   float* GetData() { return (float *)data->data(); }
   int*   GetConnectivity() { return (int *)connectivity->data(); }
 
+  void SetData(std::shared_ptr<std::vector<float>> d) { data = d; };
+  void SetData(std::vector<float>* d) { SetData(std::shared_ptr<std::vector<float>>(d)); }
+
   void clear()
   {
     vertices->clear();

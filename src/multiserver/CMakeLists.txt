@@ -42,7 +42,7 @@ target_link_libraries(gxy_multiserver gxy_data gxy_framework)
 set(LIBS gxy_multiserver ${LIBS})
 
 add_library(gxy_multiserver_client SHARED ClientWindow.cpp JsonInterface.cpp SocketHandler.cpp)
-target_link_libraries(gxy_multiserver_client gxy_data gxy_framework)
+# target_link_libraries(gxy_multiserver_client gxy_data gxy_framework)
 set(LIBS gxy_multiserver_client ${LIBS})
 
 add_executable(msserver msserver.cpp CommandLine.cpp)

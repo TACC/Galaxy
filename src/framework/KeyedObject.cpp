@@ -191,6 +191,7 @@ KeyedObject::Drop()
 KeyedObject::KeyedObject(KeyedObjectClass c, Key k) : keyedObjectClass(c), key(k)
 {  
 	ko_count++;
+  std::cerr << " + " << ko_count;
   error = 0;
 	initialize();
 }
@@ -202,6 +203,7 @@ KeyedObject::~KeyedObject()
     Drop();
 
 	ko_count--;
+  std::cerr << " - " << ko_count;
 }
 
 bool

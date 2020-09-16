@@ -38,6 +38,7 @@ using namespace rapidjson;
 #include "DensitySampler.hpp"
 #include "RaycastSampler.hpp"
 #include "StreamTracer.hpp"
+#include "Interpolator.hpp"
 
 using namespace gxy;
 
@@ -51,6 +52,7 @@ init()
   MHSampler::init();
   DensitySampler::init();
   RaycastSampler::init();
+  Interpolator::init();
 }
 
 extern "C" GuiClientServer *
@@ -193,6 +195,8 @@ GuiClientServer::Sample(Document& params, std::string& reply)
   reply = DocumentToString(replyDoc);                                                           \
   return true;                                                                                  \
 }
+
+static void brk() { std::cerr << "brk\n"; };
 
 bool
 GuiClientServer::handle(string line, string& reply)
@@ -375,6 +379,7 @@ GuiClientServer::handle(string line, string& reply)
   }
   else if (cmd == "gui::render")
   {
+    brk();
     string id  = doc["id"].GetString();
 
     ClientWindow *clientWindow = getClientWindow(id);
@@ -676,6 +681,83 @@ GuiClientServer::handle(string line, string& reply)
   {
     string id  = doc["id"].GetString();
     removeClientWindow(id);
+    HANDLED_OK;
+  }
+  else if (cmd == "gui::interpolate")
+  {
+    string id  = doc["id"].GetString();
+
+    if (! doc.HasMember("volume"))
+      HANDLED_BUT_ERROR_RETURN("there's no volume name");
+
+    std::string name = doc["volume"].GetString();
+
+    VolumeP vfield = Volume::Cast(globals->Find(name));
+    if (! vfield)
+      vfield = Volume::Cast(temporaries->Find(name));
+
+    if (! vfield)
+      HANDLED_BUT_ERROR_RETURN("unable to find Interpolator volume dataset");
+
+    if (! doc.HasMember("pointset"))
+      HANDLED_BUT_ERROR_RETURN("there's no pointset name");
+
+    name = doc["pointset"].GetString();
+
+    GeometryP pset = Geometry::Cast(globals->Find(name));
+    if (! pset)
+      pset = Geometry::Cast(temporaries->Find(name));
+
+    if (! pset)
+      HANDLED_BUT_ERROR_RETURN("unable to find Interpolator pointset");
+
+    Interpolator *interpolator;
+
+    Filter *filter = getFilter(id);
+    if (! filter)
+    {
+      filter = new Interpolator();
+      interpolator = dynamic_cast<Interpolator*>(filter);
+      addFilter(id, filter);
+    }
+    else 
+      interpolator = dynamic_cast<Interpolator*>(filter);
+
+    interpolator->SetVolume(vfield);
+    interpolator->SetPointSet(pset);
+
+    temporaries->Insert(filter->GetName(), filter->getResult());
+
+    interpolator->Interpolate();
+
+    KeyedDataObjectP res = interpolator->getResult();
+    
+    float m, M;
+    res->get_global_minmax(m, M);
+
+    replyDoc.AddMember("name", rapidjson::Value().SetString(interpolator->GetName().data(), interpolator->GetName().size()+1), alloc);
+
+    replyDoc.AddMember("key", rapidjson::Value().SetInt(res->getkey()), alloc);
+    replyDoc.AddMember("type", rapidjson::Value().SetInt(2), alloc);
+    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), alloc);
+    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), alloc);
+    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), alloc);
+
+    Box *box = res->get_global_box();
+    rapidjson::Value boxv(rapidjson::kArrayType);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
+    replyDoc.AddMember("box", boxv, alloc);
+
+    replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), alloc);
+
+    std::string x = DocumentToString(replyDoc);                                                           \
+    std::cerr << "Reply: " << x << "\n";
+
     HANDLED_OK;
   }
 

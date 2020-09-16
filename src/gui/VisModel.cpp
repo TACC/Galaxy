@@ -94,9 +94,19 @@ VisModel::VisModel()
   connect(cmap_range_min, SIGNAL(editingFinished()), this, SLOT(enableIfValid()));
   connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 
-  std::string cmap_string = std::string(getenv("GALAXY_ROOT")) + "/colormaps/default.png";
-  std::cerr << "LOADING " << cmap_string << "\n";
+#if __APPLE__
+  char buf[1024];
+  getcwd(buf, 1024);
+  std::string cmap_string = std::string(buf) + "/../colormaps/default.png";
+  QMessageBox b;
+  b.setText((std::string("APPLE: ") + cmap_string).c_str());
+  b.exec();
   load_cmap(cmap_string);
+#else
+  std::string cmap_string = std::string(getenv("GALAXY_ROOT")) + "/colormaps/default.png";
+  b.setText(std::string("NOT APPLE: ") + cmap_string);
+  load_cmap(cmap_string);
+#endif
 
   enableIfValid();
 }
