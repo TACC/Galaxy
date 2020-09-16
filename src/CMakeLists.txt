@@ -37,7 +37,6 @@ add_subdirectory(insitu)
 
 if (GXY_GUI)
   add_subdirectory(gui)
-  add_subdirectory(test)
   add_subdirectory(guiserver)
 endif(GXY_GUI)
 
