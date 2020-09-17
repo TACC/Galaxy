@@ -735,8 +735,8 @@ GuiClientServer::handle(string line, string& reply)
     float m, M;
     res->get_global_minmax(m, M);
 
-    replyDoc.AddMember("name", rapidjson::Value().SetString(interpolator->GetName().data(), interpolator->GetName().size()+1), alloc);
-
+    name  = interpolator->GetName();
+    replyDoc.AddMember("name", rapidjson::Value().SetString(name.data(), name.size()+1), alloc);
     replyDoc.AddMember("key", rapidjson::Value().SetInt(res->getkey()), alloc);
     replyDoc.AddMember("type", rapidjson::Value().SetInt(2), alloc);
     replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), alloc);
