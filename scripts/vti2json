@@ -72,7 +72,7 @@ for var in sys.argv[2:]:
     of.write('}\n')
     of.close()
 
-  if a.GetNumberOfComponents != 1:
+  if a.GetNumberOfComponents() != 1:
     print ("Can't create .vol file for vector data (use json)")
   elif isfile(volname):
     print ("skipping", var, "vol file")
