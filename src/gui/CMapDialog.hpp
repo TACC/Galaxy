@@ -55,14 +55,8 @@ public:
     char buf[1024];
     getcwd(buf, 1024);
     QString dirname((std::string(buf) + "/../colormaps").c_str());
-    QMessageBox b;
-    b.setText(dirname);
-    b.exec();
 #else
     QString dirname((std::string(getenv("GALAXY_ROOT")) + "/colormaps").c_str());
-    QMessageBox b;
-    b.setText(std::string("NOT APPLE: ") + dirname);
-    b.exec();
 #endif
   
     load_from_dir(dirname.toStdString(), gl);
