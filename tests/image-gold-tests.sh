@@ -139,3 +139,36 @@ fi
 
 ${GXY_CREATE_PARTITION_DOC} -v radial-eightBalls.vol 1 > partition.json
 ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
+
+# reasonable settings for Travis-CI VM environment
+export GXY_APP_NTHREADS=1
+export GXY_NTHREADS=4
+RESOLUTION="-s 512 512"
+PDIFF_OPTIONS="-fov 85"
+TESTS=0
+FAILS=0
+
+if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+  MPI_COMMAND=""
+  report "Running single process tests..."
+  ${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 1 > partition.json
+  ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
+  run_tests
+
+  MPI_COMMAND="mpirun -np 2"
+  report "Running MPI tests with command '${MPI_COMMAND}'..."
+  ${GXY_CREATE_PARTITION_DOC} -v radial-0-eightBalls.vol 2 > partition.json
+  ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
+  run_tests
+fi
+
+if [ ${FAILS} == 0 ]; then
+  report "${TESTS}/${TESTS} image comparison tests passed"
+else
+  fail "${FAILS}/${TESTS} image comparisons FAILED"
+fi
+
+report "done!"
+cd ${GXY_ROOT}
+exit 0
+
