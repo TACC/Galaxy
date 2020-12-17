@@ -69,9 +69,9 @@ public:
         vec3f *normals = tp->GetNormals();
 
         normals[0].x = s0; normals[0].y = 0.f; normals[0].z = -c0;
-        normals[1].x = s1; normals[1].y = 0.f; normals[1].z = -c0;
-        normals[2].x = s1; normals[2].y = 0.f; normals[2].z = -c0;
-        normals[3].x = s0; normals[3].y = 0.f; normals[3].z = -c1;
+        normals[1].x = s1; normals[1].y = 0.f; normals[1].z = -c1;
+        normals[2].x = s1; normals[2].y = 0.f; normals[2].z = -c1;
+        normals[3].x = s0; normals[3].y = 0.f; normals[3].z = -c0;
 
         int *indices = tp->GetConnectivity();
 
@@ -135,49 +135,11 @@ public:
         void *rbase; RTCRayHit8 *raypkt;
         rbase = aligned_alloc(8, sizeof(RTCRayHit8), (void *&)raypkt);
 
-        for (int i = 0; i < 8; i++)
-        {
-            raypkt->ray.org_x[i] = i + p[0];
-            raypkt->ray.org_y[i] = p[1];
-            raypkt->ray.org_z[i] = p[2];
-            raypkt->ray.dir_x[i] = 0;
-            raypkt->ray.dir_y[i] = 0;
-            raypkt->ray.dir_z[i] = 1;
-            raypkt->ray.tnear[i] = 0;
-            raypkt->ray.tfar[i] = std::numeric_limits<float>::infinity();
-            raypkt->ray.mask[i] = -1;
-            raypkt->ray.flags[i] = 0;
-            raypkt->hit.geomID[i] = RTC_INVALID_GEOMETRY_ID;
-            raypkt->hit.instID[0][i] = RTC_INVALID_GEOMETRY_ID;
-        }
-
         void *vbase; int *valid;
         vbase = aligned_alloc(8, 8*sizeof(int), (void *&)valid);
 
         for (int i = 0; i < 8; i++)
             valid[i] = -1;
-
-        struct RTCIntersectContext context;
-        rtcInitIntersectContext(&context);
-
-        rtcIntersect8(valid, (RTCScene)GetEmbree()->Scene(), &context, raypkt);
-
-        if (mpiRank == 0)
-            std::cout << "Direct call into Embree\n";
-
-        for (int i = 0; i < 8; i++)
-        {
-            if (i == mpiRank && raypkt->hit.geomID[i] != RTC_INVALID_GEOMETRY_ID)
-            { 
-               std::cout 
-                   << "proc " << mpiRank 
-                   << "g " << raypkt->hit.geomID[i] 
-                   << "p " << raypkt->hit.primID[i] 
-                   << "t " << raypkt->ray.tfar[i] 
-                   << "u " << raypkt->hit.u[i] 
-                   << "v " << raypkt->hit.v[i];
-            }
-        }
 
         for (int i = 0; i < 8; i++)
         {
