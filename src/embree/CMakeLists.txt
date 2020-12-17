@@ -20,7 +20,7 @@
 
 cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
-project (gxy_ospray VERSION ${GALAXY_VERSION})
+project (gxy_embree VERSION ${GALAXY_VERSION})
 
 if (COMMAND cmake_policy)
   # use rpath on MacOS
@@ -33,66 +33,36 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
+ispc_include_directories(${EMBREE_INCLUDE_DIRS} XXXXX)
 
-ispc_include_directories(${EMBREE_INCLUDE_DIRS}
-                         ${OSPRAY_INCLUDE_DIRS}
-                         ${Galaxy_SOURCE_DIR}/src/math
-                         )
+include_directories( 
+    ${Galaxy_BINARY_DIR}/src 
+    ${Galaxy_SOURCE_DIR}/src/framework
+    ${Galaxy_SOURCE_DIR}/src/data
+    ${EMBREE_INCLUDE_DIRS})
 
-include_directories(${Galaxy_BINARY_DIR}/src
-                    ${Galaxy_SOURCE_DIR}/src/framework
-                    ${Galaxy_SOURCE_DIR}/src/data
-                    ${Galaxy_SOURCE_DIR}/src/ospray
-                    ${Galaxy_SOURCE_DIR}/src/math
-                    ${OSPRAY_INCLUDE_DIRS}
-                    ${EMBREE_INCLUDE_DIRS})
+set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_embree ${EMBREE_LIBRARIES} ${MPI_C_LIBRARIES})
 
-set(GALAXY_LIBRARIES
-    gxy_framework
-    gxy_renderer
-    gxy_sampler
-    gxy_data
-    gxy_ospray
-    ${OSPRAY_LIBRARIES}
-    ${MPI_C_LIBRARIES})
-
-set (ISPC_SOURCES 
-  DataDrivenPathLines.ispc 
-  DataDrivenSpheres.ispc 
-  DataDrivenTriangleMesh.ispc
-  TransferFunction.ispc
-  )
+set (ISPC_SOURCES Embree.ispc)
 
 set (CPP_SOURCES 
-  force_ospray_library_load.cpp
-  DataDrivenPathLines.cpp
-  DataDrivenSpheres.cpp
-  DataDrivenTriangleMesh.cpp
-  OsprayHandle.cpp
-  OsprayObject.cpp
-  OsprayTriangles.cpp
-  OsprayParticles.cpp
-  OsprayPathLines.cpp
-  OsprayVolume.cpp
-  OsprayUtil.cpp
-  TransferFunction.cpp
+  Embree.cpp
+  EmbreeGeometry.cpp
+  EmbreeTriangles.cpp
   )
 
 install(FILES
-  OsprayHandle.h
-  OsprayObject.h
-  OsprayUtil.h
-  TransferFunction.h
+  Embree.h
+  EmbreeGeometry.h
+  EmbreeTriangles.h
   DESTINATION include/gxy)
 
-if (ospray_DIR)
-  add_library(gxy_ospray SHARED ${CPP_SOURCES})
-  ispc_target_add_sources(gxy_ospray ${ISPC_SOURCES})
-  target_link_libraries(gxy_ospray gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
-  set_target_properties(gxy_ospray PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_ospray DESTINATION lib)
-endif()
+add_library(gxy_embree SHARED ${CPP_SOURCES})
+ispc_target_add_sources(gxy_embree ${ISPC_SOURCES})
+target_link_libraries(gxy_embree gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
+set_target_properties(gxy_embree PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+install(TARGETS gxy_embree DESTINATION lib)
 
-add_executable(tf_test tf_test.cpp)
-target_link_libraries(tf_test ${GALAXY_LIBRARIES})
-install(TARGETS tf_test DESTINATION tests)
+add_executable(em_test em_test.cpp)
+target_link_libraries(em_test ${GALAXY_LIBRARIES})
+install(TARGETS em_test DESTINATION tests)

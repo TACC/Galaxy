@@ -79,8 +79,8 @@ KeyedDataObject::local_copy(KeyedDataObjectP src)
   return true;
 }
 
-OsprayObjectP
-KeyedDataObject::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
+GalaxyObjectP
+KeyedDataObject::CreateTheDeviceEquivalent(KeyedDataObjectP kdop)
 {
   return NULL;
 }

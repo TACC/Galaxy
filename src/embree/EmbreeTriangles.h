@@ -1,3 +1,4 @@
+// ========================================================================== //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -19,62 +20,29 @@
 
 #pragma once
 
-/*! \file PathLines.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
+#include "EmbreeGeometry.h"
+#include "Triangles.h"
 
-#include <string>
-#include <string.h>
-#include <memory.h>
-
-#include <vtkUnstructuredGrid.h>
-
-#include "Application.h"
-#include "Box.h"
-#include "dtypes.h"
-#include "Geometry.h"
-
-#include "rapidjson/document.h"
-
-namespace gxy
+namespace gxy 
 {
 
-OBJECT_POINTER_TYPES(PathLines)
+OBJECT_POINTER_TYPES(EmbreeTriangles)
 
-//! a pathline vertex within Galaxy
-/*! \ingroup data */
-
-struct PLVertex
+class EmbreeTriangles : public EmbreeGeometry
 {
-  PLVertex(float x, float y, float z, float v) { xyz.x = x, xyz.y = y, xyz.z = z, value = v; };
-  PLVertex(const  PLVertex& a) {xyz.x = a.xyz.x, xyz.y = a.xyz.y, xyz.z = a.xyz.z, value = a.value; }
-  PLVertex() {xyz.x = 0, xyz.y = 0, xyz.z = 0, value = 0; }
-  vec3f xyz;
-  float value;
-};
-
-
-//! a pathline dataset within Galaxy consists of three parts: a set of vertices, a set of indices and a set or pointers into that set of indices indicating where the individual pathlines begin.  Data is per-vertex.
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
- */
-class PathLines : public Geometry
-{
-  KEYED_OBJECT_SUBCLASS(PathLines, Geometry)
+    GALAXY_OBJECT(EmbreeTriangles)
 
 public:
-	void initialize(); //!< initialize this PathLines object
-	virtual ~PathLines(); //!< default destructor 
+    ~EmbreeTriangles() {};
 
-  void GetPLVertices(PLVertex*& p, int& n);
-
-  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
+    static EmbreeTrianglesP NewP(TrianglesP p) { return EmbreeTriangles::Cast(std::shared_ptr<EmbreeTriangles>(new EmbreeTriangles(p))); }
 
 protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
+    EmbreeTriangles();
+    EmbreeTriangles(TrianglesP t);
 
-private:
+private: 
+    TrianglesP triangles;
 };
 
-} // namespace gxy
+}

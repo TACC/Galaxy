@@ -238,7 +238,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 
     if (! op || kdop->hasBeenModified())
     {
-      op = kdop->CreateTheOSPRayEquivalent(kdop);
+      op = OsprayObject::Cast(kdop->CreateTheDeviceEquivalent(kdop));
       v->SetTheOsprayDataObject(op);
       kdop->setModified(false);
     }

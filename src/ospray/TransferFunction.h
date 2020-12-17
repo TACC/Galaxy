@@ -1,3 +1,4 @@
+// ========================================================================== //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -19,62 +20,56 @@
 
 #pragma once
 
-/*! \file PathLines.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
-
-#include <string>
-#include <string.h>
-#include <memory.h>
-
-#include <vtkUnstructuredGrid.h>
+#include <iostream>
 
 #include "Application.h"
-#include "Box.h"
-#include "dtypes.h"
-#include "Geometry.h"
+#include "KeyedObject.h"
 
-#include "rapidjson/document.h"
+#include "TransferFunction_ispc.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(PathLines)
-
-//! a pathline vertex within Galaxy
-/*! \ingroup data */
-
-struct PLVertex
+struct TF       // Must agree with TF_ispc in TransferFunction.ispc
 {
-  PLVertex(float x, float y, float z, float v) { xyz.x = x, xyz.y = y, xyz.z = z, value = v; };
-  PLVertex(const  PLVertex& a) {xyz.x = a.xyz.x, xyz.y = a.xyz.y, xyz.z = a.xyz.z, value = a.value; }
-  PLVertex() {xyz.x = 0, xyz.y = 0, xyz.z = 0, value = 0; }
-  vec3f xyz;
-  float value;
+    int   length;
+    int   width;
+    float minV;
+    float maxV;
+    float denom;
+    float *data;
 };
 
+OBJECT_POINTER_TYPES(TransferFunction)
 
-//! a pathline dataset within Galaxy consists of three parts: a set of vertices, a set of indices and a set or pointers into that set of indices indicating where the individual pathlines begin.  Data is per-vertex.
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
+/*! \File TransferFunction.cpp
+ * TransformFunction is an ISPC implementation of a 1D lookup into a table of 1, 3, or 4-tuples.   Linear interpolation, arbitrary length.  Capped.
  */
-class PathLines : public Geometry
+
+class TransferFunction : public KeyedObject
 {
-  KEYED_OBJECT_SUBCLASS(PathLines, Geometry)
+    KEYED_OBJECT(TransferFunction)
 
-public:
-	void initialize(); //!< initialize this PathLines object
-	virtual ~PathLines(); //!< default destructor 
+public: 
+    virtual ~TransferFunction();
+    virtual void initialize();
 
-  void GetPLVertices(PLVertex*& p, int& n);
+    void Set(int len, int wid, float m, float M, float *data);
 
-  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
+    TF *GetISPC() { return &ispc; }
 
-protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
+    int GetWidth() { return ispc.width; }
+    int GetLength() { return ispc.length; }
+    int GetMinV() { return ispc.minV; }
+    int GetMaxV() { return ispc.maxV; }
+    float *GetData() { return ispc.data; }
+
+    virtual int serialSize();
+    virtual unsigned char *serialize(unsigned char *);
+    virtual unsigned char *deserialize(unsigned char *);
 
 private:
+    TF ispc;
 };
 
-} // namespace gxy
+}

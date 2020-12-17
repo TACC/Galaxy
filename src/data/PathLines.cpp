@@ -136,10 +136,10 @@ PathLines::GetPLVertices(PLVertex*& p, int& n)
   }
 }
 
-OsprayObjectP 
-PathLines::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
+GalaxyObjectP 
+PathLines::CreateTheDeviceEquivalent(KeyedDataObjectP kdop)
 { 
-  return OsprayObject::Cast(OsprayPathLines::NewP(PathLines::Cast(kdop)));
+  return GalaxyObject::Cast(OsprayPathLines::NewP(PathLines::Cast(kdop)));
 } 
 
 

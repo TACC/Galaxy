@@ -36,8 +36,8 @@ struct vec2f {
 	vec2f() {};
 	vec2f(float X, float Y) : x(X), y(Y) {};
 	vec2f(float *xy) : x(xy[0]), y(xy[1]) {};
-  vec2f operator+(const vec2f& o) { return vec2f(x + o.x, y + o.y); }
-  vec2f operator-(const vec2f& o) { return vec2f(x - o.x, y - o.y); }
+    vec2f operator+(const vec2f& o) { return vec2f(x + o.x, y + o.y); }
+    vec2f operator-(const vec2f& o) { return vec2f(x - o.x, y - o.y); }
 	bool operator==(const vec2f& o) { return (x == o.x) && (y == o.y); }
 	bool operator!=(const vec2f& o) { return (x != o.x) || (y != o.y); }
 	float x, y;
@@ -49,8 +49,8 @@ struct vec2i {
 	vec2i() {};
 	vec2i(int X, int Y) : x(X), y(Y) {};
 	vec2i(int *xy) : x(xy[0]), y(xy[1]) {};
-  vec2i operator+(const vec2i& o) { return vec2i(x + o.x, y + o.y); }
-  vec2i operator-(const vec2i& o) { return vec2i(x - o.x, y - o.y); }
+    vec2i operator+(const vec2i& o) { return vec2i(x + o.x, y + o.y); }
+    vec2i operator-(const vec2i& o) { return vec2i(x - o.x, y - o.y); }
 	bool operator==(const vec2i& o) { return (x == o.x) && (y == o.y); }
 	bool operator!=(const vec2i& o) { return (x != o.x) || (y != o.y); }
 	int x, y;
@@ -62,10 +62,10 @@ struct vec3f {
 	vec3f() {};
 	vec3f(float X, float Y, float Z) : x(X), y(Y), z(Z) {};
 	vec3f(float *xyz) : x(xyz[0]), y(xyz[1]), z(xyz[2]) {};
-  float operator*(const vec3f& o) { return x * o.x + y * o.y + z * o.z; }
-  vec3f operator*(const float& o) { return vec3f(x * o, y * o,  z * o); }
-  vec3f operator+(const vec3f& o) { return vec3f(x + o.x, y + o.y, z + o.z); }
-  vec3f operator-(const vec3f& o) { return vec3f(x - o.x, y - o.y, z - o.z); }
+    float operator*(const vec3f& o) { return x * o.x + y * o.y + z * o.z; }
+    vec3f operator*(const float& o) { return vec3f(x * o, y * o,  z * o); }
+    vec3f operator+(const vec3f& o) { return vec3f(x + o.x, y + o.y, z + o.z); }
+    vec3f operator-(const vec3f& o) { return vec3f(x - o.x, y - o.y, z - o.z); }
 	bool operator==(const vec3f& o) { return (x == o.x) && (y == o.y) && (z == o.z); }
 	bool operator!=(const vec3f& o) { return (x != o.x) || (y != o.y) || (z != o.z); }
 	float x, y, z;
@@ -77,8 +77,8 @@ struct vec3i {
 	vec3i() {};
 	vec3i(int X, int Y, int Z) : x(X), y(Y), z(Z) {};
 	vec3i(int *xyz) : x(xyz[0]), y(xyz[1]), z(xyz[2]) {};
-  vec3i operator+(const vec3i& o) { return vec3i(x + o.x, y + o.y, z + o.z); }
-  vec3i operator-(const vec3i& o) { return vec3i(x - o.x, y - o.y, z - o.z); }
+    vec3i operator+(const vec3i& o) { return vec3i(x + o.x, y + o.y, z + o.z); }
+    vec3i operator-(const vec3i& o) { return vec3i(x - o.x, y - o.y, z - o.z); }
 	bool operator==(const vec3i& o) { return (x == o.x) && (y == o.y) && (z == o.z); }
 	bool operator!=(const vec3i& o) { return (x != o.x) || (y != o.y) || (z != o.z); }
 	int x, y, z;
@@ -90,8 +90,8 @@ struct vec4f {
 	vec4f() {};
 	vec4f(float X, float Y, float Z, float W) : x(X), y(Y), z(Z), w(W) {};
 	vec4f(float *xyzw) : x(xyzw[0]), y(xyzw[1]), z(xyzw[2]), w(xyzw[3]) {};
-  vec4f operator+(const vec4f& o) { return vec4f(x + o.x, y + o.y, z + o.z, w + o.w); }
-  vec4f operator-(const vec4f& o) { return vec4f(x - o.x, y - o.y, z - o.z, w - o.w); }
+    vec4f operator+(const vec4f& o) { return vec4f(x + o.x, y + o.y, z + o.z, w + o.w); }
+    vec4f operator-(const vec4f& o) { return vec4f(x - o.x, y - o.y, z - o.z, w - o.w); }
 	bool operator==(const vec4f& o) { return (x == o.x) && (y == o.y) && (z == o.z) && (w == o.w); }
 	bool operator!=(const vec4f& o) { return (x != o.x) || (y != o.y) || (z != o.z) || (w != o.w); }
 	float x, y, z, w;
@@ -103,8 +103,8 @@ struct vec4i {
 	vec4i() {};
 	vec4i(int X, int Y, int Z, int W) : x(X), y(Y), z(Z), w(W) {};
 	vec4i(int *xyzw) : x(xyzw[0]), y(xyzw[1]), z(xyzw[2]), w(xyzw[3]) {};
-  vec4i operator+(const vec4i& o) { return vec4i(x + o.x, y + o.y, z + o.z, w + o.w); }
-  vec4i operator-(const vec4i& o) { return vec4i(x - o.x, y - o.y, z - o.z, w - o.w); }
+    vec4i operator+(const vec4i& o) { return vec4i(x + o.x, y + o.y, z + o.z, w + o.w); }
+    vec4i operator-(const vec4i& o) { return vec4i(x - o.x, y - o.y, z - o.z, w - o.w); }
 	bool operator==(const vec4i& o) { return (x == o.x) && (y == o.y) && (z == o.z) && (w == o.w); }
 	bool operator!=(const vec4i& o) { return (x != o.x) || (y != o.y) || (z != o.z) || (w != o.w); }
 	int x, y, z, w;

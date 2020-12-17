@@ -1,3 +1,4 @@
+// ========================================================================== //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -19,62 +20,21 @@
 
 #pragma once
 
-/*! \file PathLines.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
+typedef unsigned int64 uint64;
+typedef unsigned int32 uint32;
+typedef unsigned int16 uint16;
+typedef unsigned int8  uint8;
 
-#include <string>
-#include <string.h>
-#include <memory.h>
+#include "vec.ih"
 
-#include <vtkUnstructuredGrid.h>
-
-#include "Application.h"
-#include "Box.h"
-#include "dtypes.h"
-#include "Geometry.h"
-
-#include "rapidjson/document.h"
-
-namespace gxy
+struct TF_ispc
 {
-
-OBJECT_POINTER_TYPES(PathLines)
-
-//! a pathline vertex within Galaxy
-/*! \ingroup data */
-
-struct PLVertex
-{
-  PLVertex(float x, float y, float z, float v) { xyz.x = x, xyz.y = y, xyz.z = z, value = v; };
-  PLVertex(const  PLVertex& a) {xyz.x = a.xyz.x, xyz.y = a.xyz.y, xyz.z = a.xyz.z, value = a.value; }
-  PLVertex() {xyz.x = 0, xyz.y = 0, xyz.z = 0, value = 0; }
-  vec3f xyz;
-  float value;
+    uniform int   length;
+    uniform int   width;
+    uniform float minV;
+    uniform float maxV;
+    uniform float denom;
+    uniform float *data;
 };
 
-
-//! a pathline dataset within Galaxy consists of three parts: a set of vertices, a set of indices and a set or pointers into that set of indices indicating where the individual pathlines begin.  Data is per-vertex.
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
- */
-class PathLines : public Geometry
-{
-  KEYED_OBJECT_SUBCLASS(PathLines, Geometry)
-
-public:
-	void initialize(); //!< initialize this PathLines object
-	virtual ~PathLines(); //!< default destructor 
-
-  void GetPLVertices(PLVertex*& p, int& n);
-
-  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
-
-protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
-
-private:
-};
-
-} // namespace gxy
+typedef uniform TF_ispc *uniform pTF_ispc;

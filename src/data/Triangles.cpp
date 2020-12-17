@@ -161,10 +161,10 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
   return true;
 }
 
-OsprayObjectP
-Triangles::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
+GalaxyObjectP
+Triangles::CreateTheDeviceEquivalent(KeyedDataObjectP kdop)
 {
-  return OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
+  return GalaxyObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
 }
 
 

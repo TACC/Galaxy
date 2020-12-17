@@ -1,3 +1,4 @@
+// ========================================================================== //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -17,64 +18,75 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include <embree3/rtcore.h>
+#include <iostream>
 
-/*! \file PathLines.h 
- * \brief a triangle (tessellated) dataset within Galaxy
- * \ingroup data
- */
-
-#include <string>
-#include <string.h>
-#include <memory.h>
-
-#include <vtkUnstructuredGrid.h>
-
-#include "Application.h"
-#include "Box.h"
-#include "dtypes.h"
-#include "Geometry.h"
-
-#include "rapidjson/document.h"
+#include "Embree.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(PathLines)
+KEYED_OBJECT_CLASS_TYPE(Embree)
 
-//! a pathline vertex within Galaxy
-/*! \ingroup data */
+static Embree *theEmbree;
+Embree *GetEmbree() { return theEmbree; }
 
-struct PLVertex
+void
+Embree::Register()
 {
-  PLVertex(float x, float y, float z, float v) { xyz.x = x, xyz.y = y, xyz.z = z, value = v; };
-  PLVertex(const  PLVertex& a) {xyz.x = a.xyz.x, xyz.y = a.xyz.y, xyz.z = a.xyz.z, value = a.value; }
-  PLVertex() {xyz.x = 0, xyz.y = 0, xyz.z = 0, value = 0; }
-  vec3f xyz;
-  float value;
-};
+    RegisterClass();
+}
 
-
-//! a pathline dataset within Galaxy consists of three parts: a set of vertices, a set of indices and a set or pointers into that set of indices indicating where the individual pathlines begin.  Data is per-vertex.
-/* \ingroup data 
- * \sa KeyedObject, KeyedDataObject
- */
-class PathLines : public Geometry
+Embree::~Embree()
 {
-  KEYED_OBJECT_SUBCLASS(PathLines, Geometry)
+    rtcReleaseScene(scene);
+    rtcReleaseDevice(device);
+}
 
-public:
-	void initialize(); //!< initialize this PathLines object
-	virtual ~PathLines(); //!< default destructor 
+void
+Embree::initialize()
+{
+    super::initialize();
 
-  void GetPLVertices(PLVertex*& p, int& n);
+    device = rtcNewDevice(NULL);
+    rtcSetDeviceErrorFunction(device, embreeError, (void *)this);
 
-  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
+    scene = rtcNewScene(device);
 
-protected:
-  virtual bool load_from_vtkPointSet(vtkPointSet *);
+    theEmbree = this;
+}
 
-private:
-};
+int
+Embree::serialSize()
+{
+    return super::serialSize();
+}
 
-} // namespace gxy
+unsigned char *
+Embree::serialize(unsigned char *p)
+{
+    p = super::serialize(p);
+    return p;
+}
+
+unsigned char *
+Embree::deserialize(unsigned char *p)
+{
+    p = super::deserialize(p);
+    return p;
+}
+
+bool 
+Embree::local_commit(MPI_Comm c)
+{
+    rtcCommitScene(scene);
+    return false;
+}
+
+int
+Embree::AddGeometry(EmbreeGeometryP geom)
+{
+    return rtcAttachGeometry(scene, geom->GetDeviceGeometry());
+}
+
+}

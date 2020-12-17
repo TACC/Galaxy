@@ -230,7 +230,7 @@ public:
 
 	void set_global_partitions(int i, int j, int k) { global_partitions.x = i; global_partitions.y = j; global_partitions.z = k; }
 
-  virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);
+  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
 
   void set_ijk(int i, int j, int k) { ijk.x = i; ijk.y = j; ijk.z = k; }
 

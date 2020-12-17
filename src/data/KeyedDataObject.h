@@ -35,7 +35,6 @@
 
 #include "Box.h"
 #include "KeyedObject.h"
-#include "OsprayObject.h"
 
 namespace gxy
 {
@@ -120,7 +119,7 @@ public:
   void get_global_minmax(float& min, float& max)   { min = global_min; max = global_max; }
   void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
 
-  virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP kdop);
+  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP kdop);
 
   void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 

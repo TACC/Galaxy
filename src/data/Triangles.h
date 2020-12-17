@@ -63,7 +63,7 @@ public:
 
   vec3f* GetNormals() { return (vec3f *)normals->data(); }
 
-  virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);
+  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);

@@ -617,10 +617,10 @@ Volume::PointOwner(vec3f& p)
   return K*(global_partitions.x * global_partitions.y) + (J * global_partitions.x) + I;
 }
 
-OsprayObjectP 
-Volume::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
+GalaxyObjectP 
+Volume::CreateTheDeviceEquivalent(KeyedDataObjectP kdop)
 {
-  return OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
+  return GalaxyObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
 }
 
 bool

@@ -23,6 +23,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galaxy.h.in ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h DESTINATION include/gxy)
 
+add_subdirectory(embree)
 add_subdirectory(framework)
 add_subdirectory(ospray)
 add_subdirectory(data)
