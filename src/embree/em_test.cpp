@@ -160,7 +160,7 @@ public:
         for (int i = 0; i < 8; i++)
             valid[i] = -1;
 
-        ispc::em_Intersect((RTCScene)GetEmbree()->Scene(), valid, (void *)raypkt);
+        ispc::em_Intersect((RTCScene)GetEmbree()->Scene(), valid, 1, (void *)raypkt);
 
         if (mpiRank == 0)
             std::cout << "Indirect call through ISPC\n";
