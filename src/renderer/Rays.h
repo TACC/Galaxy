@@ -91,8 +91,9 @@ public:
     dstRayList->set_classification(dstRayIndex, srcRayList->get_classification(srcRayIndex));
 	}
 
-	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type); //!< constructur
+	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type); //!< constructor
 	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, RayListType type); //!< constructor
+    RayList(int n); //!< constructor
 	RayList(SharedP contents); //!< constructor from ISPC serialization
 
 	RayListType  GetType() { return ((struct hdr *)contents->get())->type; } //!< get the type of rays in this RayList

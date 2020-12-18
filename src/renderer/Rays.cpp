@@ -61,10 +61,10 @@ RayList::RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, 
 	h->frame        		= frame;
 	h->rendererKey			= renderer->getkey();
 	h->renderingKey			= r->getkey();
-	h->renderingSetKey	= rs->getkey();
-	h->size 						= nrays;
+	h->renderingSetKey	    = rs->getkey();
+	h->size 				= nrays;
 	h->aligned_size 		= nn;
-	h->type 						= type;
+	h->type 				= type;
 
 	ispc = malloc(sizeof(ispc::RayList_ispc));
 	setup_ispc_pointers();
@@ -73,6 +73,32 @@ RayList::RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, 
 	h->id = raylist_id++;
 	pthread_mutex_unlock(&raylist_lock);
 };
+
+RayList::RayList(int n)
+{
+    theRenderer = NULL;
+    theRenderingSet = NULL;
+    theRendering = NULL;
+
+    int nn = ROUND_UP_TO_MULTIPLE_OF_16(n);
+    contents = smem::New(HDRSZ + nn * (20*sizeof(float) + 5*sizeof(int)));
+
+	hdr *h  = (hdr *)contents->get();
+	h->frame        		= -1;
+	h->rendererKey			= -1;
+	h->renderingKey			= -1;
+	h->renderingSetKey	    = -1;
+	h->size 				= n;
+	h->aligned_size 		= nn;
+	h->type 				= PRIMARY;
+
+	ispc = malloc(sizeof(ispc::RayList_ispc));
+	setup_ispc_pointers();
+
+	pthread_mutex_lock(&raylist_lock);
+	h->id = raylist_id++;
+	pthread_mutex_unlock(&raylist_lock);
+}
 
 RayList::RayList(SharedP c)
 {
