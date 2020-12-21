@@ -53,8 +53,6 @@ public:
 
     EmbreeModelP *NewModel();
 
-    void Intersect(EmbreeModelP, int, RayList*);
-
 private:
 
     RTCDevice   device;

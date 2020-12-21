@@ -48,8 +48,29 @@ EmbreeGeometry::~EmbreeGeometry()
     if (device_geometry) 
     {
         rtcReleaseGeometry(device_geometry);
-        device_geometry = NULL;
+        device_geometry   = NULL;
+        ispc.vertices     = NULL;
+        ispc.normals      = NULL;
+        ispc.connectivity = NULL;
+        ispc.data       = NULL;
     }
+}
+
+void
+EmbreeGeometry::SetGeometry(GeometryP g)
+{
+    geometry = g;
+
+    ispc.vertices     = (ispc::vec3f*)geometry->GetVertices();
+    ispc.normals      = (ispc::vec3f*)geometry->GetNormals();
+    ispc.connectivity = geometry->GetConnectivity();
+    ispc.data         = geometry->GetData();
+}
+
+GeometryP 
+EmbreeGeometry::GetGeometry()
+{
+    return geometry;
 }
 
 }

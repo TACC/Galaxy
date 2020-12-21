@@ -51,28 +51,17 @@ public:
 
         vec3f *vertices = tp->GetVertices();
 
-        vertices[0].x = mpiRank + 0.f; vertices[0].y = 0.f; vertices[0].z  = 0.f;
-        vertices[1].x = mpiRank + 1.f; vertices[1].y = 0.f; vertices[1].z  = 0.f;
-        vertices[2].x = mpiRank + 1.f; vertices[2].y = 1.f; vertices[2].z  = 0.f;
+        vertices[0].x = mpiRank + 0.f; vertices[0].y = 0.f; vertices[0].z = 0.f;
+        vertices[1].x = mpiRank + 1.f; vertices[1].y = 0.f; vertices[1].z = 0.f;
+        vertices[2].x = mpiRank + 1.f; vertices[2].y = 1.f; vertices[2].z = 0.f;
         vertices[3].x = mpiRank + 0.f; vertices[3].y = 1.f; vertices[3].z = 0.f;
 
-        float hpi = 3.1415926 / 2.0;
-        float qpi = 3.1415926 / 4.0;
-
-        float d0 = -qpi + (float(mpiRank) / mpiSize)*hpi;
-        float c0 = cos(d0);
-        float s0 = sin(d0);
-
-        float d1 = -qpi + (float(mpiRank+1) / mpiSize)*hpi;
-        float c1 = cos(d1);
-        float s1 = sin(d1);
-        
         vec3f *normals = tp->GetNormals();
 
-        normals[0].x = s0; normals[0].y = 0.f; normals[0].z = -c0;
-        normals[1].x = s1; normals[1].y = 0.f; normals[1].z = -c1;
-        normals[2].x = s1; normals[2].y = 0.f; normals[2].z = -c1;
-        normals[3].x = s0; normals[3].y = 0.f; normals[3].z = -c0;
+        normals[0].x = mpiRank + 0.f; normals[0].y = 1.f; normals[0].z = 0.f;
+        normals[1].x = mpiRank + 1.f; normals[1].y = 0.f; normals[1].z = 0.f;
+        normals[2].x = mpiRank + 1.f; normals[2].y = 0.f; normals[2].z = 0.f;
+        normals[3].x = mpiRank + 0.f; normals[3].y = 1.f; normals[3].z = 0.f;
 
         int *indices = tp->GetConnectivity();
 
@@ -143,8 +132,6 @@ public:
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
-        std::cerr << "XXXXXXXX " << mpiRank << "\n";
-
         Key *k = (Key *)get();
         EmbreeP ep = Embree::GetByKey(k[0]);
         EmbreeModelP emp = EmbreeModel::GetByKey(k[1]);
@@ -166,7 +153,7 @@ public:
             rays->get_tMax_base()[i] = std::numeric_limits<float>::infinity();
         }
 
-        ep->Intersect(emp, 100, rays);
+        emp->Intersect(rays);
 
         if (mpiRank == 0)
             std::cerr << "Indirect call through ISPC\n";
@@ -183,7 +170,9 @@ public:
                 std::cerr << "\n";
                 for (int i = 0; i < 100; i++)
                     if (rays->get_term_base()[i] != -1)
-                        std::cerr << i << ": " << rays->get_t_base()[i] << "\n";
+                        std::cerr << i << ": " << 
+                            "(" << rays->get_ox_base()[i] << " " << rays->get_oy_base()[i] << " " << rays->get_oz_base()[i] << ") (" 
+                            << rays->get_nx_base()[i] << " " << rays->get_ny_base()[i] << " " << rays->get_nz_base()[i] << ")\n";
             }
 
             sleep(1);
@@ -248,30 +237,24 @@ main(int argc, char *argv[])
         ep->Commit();
 
         theApplication.SyncApplication();
-        std::cerr << "11111111\n";
 
         EmbreeModelP emp = EmbreeModel::NewP();
         emp->SetEmbree(ep);
         emp->Commit();
 
         theApplication.SyncApplication();
-        std::cerr << "222222222\n";
 
         TrianglesP tp = Triangles::NewP();
 
         SetupGeometry sg(tp);
         sg.Broadcast(true, true);
 
-        std::cerr << "33333333\n";
-
         GeomToEmbree g2e(emp, tp);
         g2e.Broadcast(true, true);
 
-        std::cerr << "4444444444\n";
-
         emp->Commit();
 
-        IntersectMsg i = IntersectMsg(ep, emp, 0.1, 0.1, -1);
+        IntersectMsg i = IntersectMsg(ep, emp, 0.1, 0.5, -1);
         i.Broadcast(true, true);
 
         theApplication.QuitApplication();

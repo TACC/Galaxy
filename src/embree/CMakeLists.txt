@@ -33,7 +33,10 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
-ispc_include_directories(${EMBREE_INCLUDE_DIRS} ${gxy_renderer_SOURCE_DIR})
+ispc_include_directories(
+    ${EMBREE_INCLUDE_DIRS} 
+    ${Galaxy_SOURCE_DIR}/src/math
+    ${gxy_renderer_SOURCE_DIR})
 
 include_directories( 
     ${Galaxy_BINARY_DIR}/src 
@@ -46,7 +49,7 @@ include_directories(
 
 set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_embree ${EMBREE_LIBRARIES} ${MPI_C_LIBRARIES})
 
-set (ISPC_SOURCES Embree.ispc EmbreeModel.ispc)
+set (ISPC_SOURCES EmbreeModel.ispc)
 
 set (CPP_SOURCES 
   Embree.cpp

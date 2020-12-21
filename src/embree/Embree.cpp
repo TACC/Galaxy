@@ -22,7 +22,6 @@
 #include <iostream>
 
 #include "Embree.h"
-#include "Embree_ispc.h"
 
 namespace gxy
 {
@@ -78,12 +77,6 @@ bool
 Embree::local_commit(MPI_Comm c)
 {
     return false;
-}
-
-void
-Embree::Intersect(EmbreeModelP emp, int n, RayList* rays)
-{
-    ispc::Embree_Intersect(emp->GetDevice(), n, rays->GetIspc());
 }
 
 }
