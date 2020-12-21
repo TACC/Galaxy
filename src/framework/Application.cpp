@@ -57,7 +57,7 @@ static Application *theApplication = NULL;
 Application *
 GetTheApplication()
 {
-	return theApplication;
+  return theApplication;
 }
 
 Application::Application(int *a, char ***b) : Application()
@@ -78,26 +78,26 @@ Application::Application()
   threadManager = new ThreadManager;
   threadPool = new ThreadPool(n_threads);
 
-	theMessageManager = new MessageManager; 
-	theKeyedObjectFactory = new KeyedObjectFactory; 
+  theMessageManager = new MessageManager; 
+  theKeyedObjectFactory = new KeyedObjectFactory; 
 
 #if 0
-	if (getenv("GXY_APP_NTHREADS"))
-	{
-		int nthreads = atoi(getenv("GXY_APP_NTHREADS"));
-		tbb::task_scheduler_init init(nthreads);
-		std::cerr << "using " << nthreads << " TBB threads for application." << std::endl;
-	}
-	else
-	{
-		int n = tbb::task_scheduler_init::default_num_threads();
-		std::cerr << "using " << n << " TBB threads for application." << std::endl;
-	}
+  if (getenv("GXY_APP_NTHREADS"))
+  {
+    int nthreads = atoi(getenv("GXY_APP_NTHREADS"));
+    tbb::task_scheduler_init init(nthreads);
+    std::cerr << "using " << nthreads << " TBB threads for application." << std::endl;
+  }
+  else
+  {
+    int n = tbb::task_scheduler_init::default_num_threads();
+    std::cerr << "using " << n << " TBB threads for application." << std::endl;
+  }
 #endif
 
-	pid = getpid();
+  pid = getpid();
 
-	register_thread("Application");
+  register_thread("Application");
 
   application_done = false;
 
@@ -109,17 +109,17 @@ Application::Application()
 
   pthread_mutex_lock(&lock);
 
-	QuitMsg::Register();
-	SyncMsg::Register();
+  QuitMsg::Register();
+  SyncMsg::Register();
   PrintMsg::Register();
 
-	KeyedObject::Register();
-	KeyedObjectFactory::Register();
+  KeyedObject::Register();
+  KeyedObjectFactory::Register();
 
   pthread_mutex_unlock(&lock);
 }
 
-	
+  
 static pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
 
 void
@@ -135,39 +135,39 @@ Application::Log(string s)
 void
 Application::DumpLog()
 {
-	if (log.size() > 0)
-	{
-		std::stringstream fname;
-		int rank = GetTheMessageManager()->GetRank();
-		fname << "gxy_log_" << rank;
+  if (log.size() > 0)
+  {
+    std::stringstream fname;
+    int rank = GetTheMessageManager()->GetRank();
+    fname << "gxy_log_" << rank;
 
-		std::fstream fs;
-		fs.open(fname.str().c_str(), std::fstream::out | std::fstream::app);
+    std::fstream fs;
+    fs.open(fname.str().c_str(), std::fstream::out | std::fstream::app);
 
-		for (auto s: log)
-			fs << s << "\n";
+    for (auto s: log)
+      fs << s << "\n";
 
-		fs.close();
-	}
+    fs.close();
+  }
 }
 
 void
 Application::Print(std::string s)
 {
-	Application::PrintMsg msg(s);
-	msg.Send(0);
+  Application::PrintMsg msg(s);
+  msg.Send(0);
 }
 
 Application::~Application()
 {
-	DumpLog();
-	
+  DumpLog();
+  
   pthread_mutex_unlock(&lock);
 
   delete threadPool;
-	delete theMessageManager;
-	delete theKeyedObjectFactory;
-	delete threadManager;
+  delete theMessageManager;
+  delete theKeyedObjectFactory;
+  delete threadManager;
 
   theApplication = NULL;
 }
@@ -178,16 +178,16 @@ void Application::QuitApplication()
 
   quitting = true;
 
-	QuitMsg q;
-	q.Broadcast(true, true);
+  QuitMsg q;
+  q.Broadcast(true, true);
 
-	Application::Wait();
+  Application::Wait();
 }
 
 void Application::SyncApplication()
 {
-	SyncMsg *q = new SyncMsg(0);
-	q->Broadcast(true, true);
+  SyncMsg *q = new SyncMsg(0);
+  q->Broadcast(true, true);
 }
 
 void Application::Start(bool with_mpi)
@@ -197,7 +197,7 @@ void Application::Start(bool with_mpi)
 
 void Application::Kill()
 {
-	pthread_mutex_lock(&lock);
+  pthread_mutex_lock(&lock);
   application_done = true;
   pthread_cond_broadcast(&cond);
   pthread_mutex_unlock(&lock);
@@ -212,35 +212,35 @@ Application::QuitMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 bool
 Application::SyncMsg::CollectiveAction(MPI_Comm coll_comm, bool isRoot)
 {
-	MPI_Barrier(coll_comm);
-	return false;
+  MPI_Barrier(coll_comm);
+  return false;
 }
 
 Work *
 Application::Deserialize(Message *msg)
 {
-	return deserializers[msg->GetType()](msg->ShareContent());
+  return deserializers[msg->GetType()](msg->ShareContent());
 }
 
 const char *
 Application::Identify(Message *msg)
 {
-	return class_table[msg->GetType()].c_str();
+  return class_table[msg->GetType()].c_str();
 }
 
 void
 Application::Wait()
 {
-	while (! application_done)
-		pthread_cond_wait(&cond, &lock);
+  while (! application_done)
+    pthread_cond_wait(&cond, &lock);
 
-	pthread_mutex_unlock(&lock);
+  pthread_mutex_unlock(&lock);
 }
 
 Application::PrintMsg::PrintMsg(string &str) : Application::PrintMsg::PrintMsg(str.length() + 1)
 {
-	unsigned char *ptr = (unsigned char *)get();
-	memcpy(ptr, str.c_str(), str.length() + 1);
+  unsigned char *ptr = (unsigned char *)get();
+  memcpy(ptr, str.c_str(), str.length() + 1);
 }
 
 bool 
@@ -250,7 +250,7 @@ Application::PrintMsg::Action(int sender)
   std::cerr << sender << ": " << (char *)ptr << "\n";
   return false;
 }
-	
+  
 Document *
 Application::OpenJSONFile(string s)
 {
@@ -282,9 +282,9 @@ Application::OpenJSONFile(string s)
 Document *
 Application::NewJSONDocument()
 {
-	Document *doc = new Document;
+  Document *doc = new Document;
   doc->Parse("{}");
-	return doc;
+  return doc;
 }
 
 void

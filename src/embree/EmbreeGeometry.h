@@ -21,6 +21,7 @@
 #pragma once
 
 #include "GalaxyObject.h"
+#include "Geometry.h"
 
 namespace gxy { OBJECT_POINTER_TYPES(EmbreeGeometry) }
 
@@ -30,18 +31,23 @@ namespace gxy { OBJECT_POINTER_TYPES(EmbreeGeometry) }
 namespace gxy 
 {
 
-class EmbreeGeometry : public GalaxyObject
+class EmbreeGeometry : public KeyedObject
 {
-    GALAXY_OBJECT(EmbreeGeometry)
-
-    RTCGeometry GetDeviceGeometry() { return geom; }
+    KEYED_OBJECT(EmbreeGeometry)
 
 public:
     virtual ~EmbreeGeometry();
+    virtual void initialize();
+
+    virtual void SetGeometry(GeometryP g) { geometry = g; }
+    GeometryP GetGeometry() { return geometry; }
+    
+    RTCGeometry GetDeviceGeometry() { return device_geometry; }
 
 protected:
-    EmbreeGeometry();
-    RTCGeometry geom;
+
+    GeometryP geometry;
+    RTCGeometry device_geometry;
 };
 
 }

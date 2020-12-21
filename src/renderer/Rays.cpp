@@ -196,13 +196,19 @@ void RayList::set_type(int i, int v)           { ((ispc::RayList_ispc *)ispc)->t
 void RayList::set_term(int i, int v)           { ((ispc::RayList_ispc *)ispc)->term[i] = v; }
 void RayList::set_classification(int i, int v) { ((ispc::RayList_ispc *)ispc)->classification[i] = v; }
 
+void *
+RayList::get_base()
+{
+    return (void *)(contents->get() + HDRSZ);
+}
+
 void
 RayList::setup_ispc_pointers()
 {
 	hdr *h = (hdr *)contents->get();
-  int nn = h->aligned_size;
+    int nn = h->aligned_size;
 
-	((ispc::RayList_ispc *)ispc)->ox             = (float *)(contents->get() + HDRSZ); // Skipping first 64 bytes for header
+	((ispc::RayList_ispc *)ispc)->ox             = (float *)get_base();
 	((ispc::RayList_ispc *)ispc)->oy             = ((ispc::RayList_ispc *)ispc)->ox + nn;
 	((ispc::RayList_ispc *)ispc)->oz             = ((ispc::RayList_ispc *)ispc)->oy + nn;
 	((ispc::RayList_ispc *)ispc)->dx             = ((ispc::RayList_ispc *)ispc)->oz + nn;

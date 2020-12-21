@@ -258,44 +258,75 @@ public:
    */
   int register_class(KeyedObject *(*n)(Key), std::string s);
 
-  KeyedObjectP 
-  NewP(std::string classname)
+  //! create a new instance of a KeyedObject-derived class.   This is a local-only object; use NewP to create a global object
+  /*! \param classname the KeyedObject class name, which is created using the OBJECT_CLASS_TYPE macro
+   * \sa OBJECT_CLASS_TYPE
+   */
+
+  KeyedObjectL
+  NewL(std::string classname)
   {
     for (auto i = 0; i < class_names.size(); i++)
       if (class_names[i] == classname)
-      {
-        Key k = keygen();
-        KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[i](k));
-        kop->primary = true;
-        aol(kop);
-        add_weak(kop);
-        NewMsg msg(i, k);
-        msg.Broadcast(true, true);
-        return kop;
-      }
+        return NewL(i);
+
     return NULL;
   }
-
-  //! commit all new and dropped keys to the local registry on each process
-	static void Register()
-	{
-		NewMsg::Register();
-		DropMsg::Register();
-	}
 
   //! create a new instance of a KeyedObject-derived class 
   /*! \param c the KeyedObject class id, which is created using the OBJECT_CLASS_TYPE macro
    * \sa OBJECT_CLASS_TYPE
    */
-  KeyedObjectP NewP(KeyedObjectClass c)
+
+  KeyedObjectL
+  NewL(KeyedObjectClass c)
   {
     Key k = keygen();
     KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
+
     kop->primary = true;
     aol(kop);
     add_weak(kop);
 
-    NewMsg msg(c, k);
+    return kop;
+  }
+
+  //! create a new instance of a KeyedObject-derived class.   This is a global object
+  /*! \param classname the KeyedObject class name, which is created using the OBJECT_CLASS_TYPE macro
+   * \sa OBJECT_CLASS_TYPE
+   */
+  
+  KeyedObjectP 
+  NewP(std::string classname)
+  {
+    KeyedObjectP kop = NewL(classname);
+
+    if (kop)
+    {
+        NewMsg msg(kop->getclass(), kop->getkey());
+        msg.Broadcast(true, true);
+    }
+
+    return kop;
+  }
+
+  //! commit all new and dropped keys to the local registry on each process
+  static void Register()
+  {
+    NewMsg::Register();
+    DropMsg::Register();
+  }
+
+  //! create a new instance of a KeyedObject-derived class 
+  /*! \param c the KeyedObject class id, which is created using the OBJECT_CLASS_TYPE macro
+   * \sa OBJECT_CLASS_TYPE
+   */
+
+  KeyedObjectP NewP(KeyedObjectClass c)
+  {
+    KeyedObjectP kop = NewL(c);
+
+    NewMsg msg(c, kop->getkey());
     msg.Broadcast(true, true);
 
     return kop;
@@ -443,11 +474,19 @@ private:                                                                        
                                                                                                 \
 public:                                                                                         \
   static typ ## P GetByKey(Key k) { return Cast(GetTheKeyedObjectFactory()->get(k)); }          \
+  static typ ## L GetByKeyLocal(Key k) { return (typ ## L)GetByKey(k); }                        \
   static void Register();                                                                       \
                                                                                                 \
   static typ ## P NewP()                                                                        \
   {                                                                                             \
     KeyedObjectP kop = GetTheKeyedObjectFactory()->NewP(ClassType);                             \
+    aol(kop);                                                                                   \
+    return Cast(kop);                                                                           \
+  }                                                                                             \
+                                                                                                \
+  static typ ## P NewL()                                                                        \
+  {                                                                                             \
+    KeyedObjectP kop = GetTheKeyedObjectFactory()->NewL(ClassType);                             \
     aol(kop);                                                                                   \
     return Cast(kop);                                                                           \
   }                                                                                             \

@@ -61,7 +61,6 @@ Triangles::Register()
 void
 Triangles::initialize()
 {
-  normals = std::shared_ptr< std::vector<vec3f> >(new std::vector<vec3f>);
   super::initialize();
 };
 

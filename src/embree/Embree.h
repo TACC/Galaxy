@@ -20,15 +20,15 @@
 
 #pragma once
 
+#include "Application.h"
 #include <embree3/rtcore.h>
 
-#include "Application.h"
-#include "EmbreeGeometry.h"
+namespace gxy { OBJECT_POINTER_TYPES(Embree) }
+
+#include "EmbreeModel.h"
 
 namespace gxy 
 {
-
-OBJECT_POINTER_TYPES(Embree)
 
 static void embreeError(void *ptr, enum RTCError error, const char* msg)
 {
@@ -43,10 +43,7 @@ public:
     virtual ~Embree();
     virtual void initialize();
 
-    void *Device() { return (void *)device; }
-    void *Scene() { return (void *)scene; }
-
-    int  AddGeometry(EmbreeGeometryP);
+    RTCDevice Device() { return device; }
     
     virtual int serialSize();
     virtual unsigned char *serialize(unsigned char *);
@@ -54,10 +51,13 @@ public:
 
     virtual bool local_commit(MPI_Comm);
 
+    EmbreeModelP *NewModel();
+
+    void Intersect(EmbreeModelP, int, RayList*);
+
 private:
 
     RTCDevice   device;
-    RTCScene    scene;
 };
 
 Embree *GetEmbree();

@@ -18,23 +18,37 @@
 //                                                                            //
 // ========================================================================== //
 
+#include "Geometry.h"
 #include "EmbreeGeometry.h"
+
 #include <embree3/rtcore.h>
 
 namespace gxy
 {
 
-EmbreeGeometry::EmbreeGeometry()
+KEYED_OBJECT_CLASS_TYPE(EmbreeGeometry)
+
+void
+EmbreeGeometry::Register()
 {
-    geom = NULL;
+    RegisterClass();
+}
+
+void
+EmbreeGeometry::initialize()
+{
+    super::initialize();
+
+    geometry = NULL;
+    device_geometry = NULL;
 }
 
 EmbreeGeometry::~EmbreeGeometry()
 {
-    if (geom) 
+    if (device_geometry) 
     {
-        rtcReleaseGeometry(geom);
-        geom = NULL;
+        rtcReleaseGeometry(device_geometry);
+        device_geometry = NULL;
     }
 }
 

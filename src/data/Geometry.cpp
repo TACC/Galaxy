@@ -67,6 +67,7 @@ void
 Geometry::initialize()
 {
   vertices = std::shared_ptr< std::vector<vec3f> >(new std::vector<vec3f>);
+  normals = std::shared_ptr< std::vector<vec3f> >(new std::vector<vec3f>);
   data = std::shared_ptr< std::vector<float> >(new std::vector<float>);
   connectivity = std::shared_ptr< std::vector<int> >(new std::vector<int>);
 

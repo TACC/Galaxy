@@ -1,9 +1,10 @@
 #include <Application.h>
+#include <Rays.h>
 
 #include "Embree.h"
+#include "EmbreeModel.h"
 #include "Triangles.h"
 #include "EmbreeTriangles.h"
-#include "Embree_ispc.h"
 
 #include <memory>
 #include <cstdlib>
@@ -87,9 +88,12 @@ public:
 class GeomToEmbree : public Work
 {
 public:
-    GeomToEmbree(TrianglesP tp) : GeomToEmbree(sizeof(Key))
+    GeomToEmbree(EmbreeModelP emp, GeometryP tp) : GeomToEmbree(2*sizeof(Key))
     {
         unsigned char *p = (unsigned char *)get();
+
+        *(Key *)p = emp->getkey();
+        p = p + sizeof(Key);
 
         *(Key *)p = tp->getkey();
         p = p + sizeof(Key);
@@ -101,11 +105,16 @@ public:
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
-        unsigned char *p = (unsigned char *)get();
-        TrianglesP tp = Triangles::GetByKey(*(Key *)p);
+        Key *p = (Key *)get();
+        EmbreeModelP emp = EmbreeModel::GetByKey(p[0]);
+        GeometryP gp = Geometry::GetByKey(p[1]);
 
-        EmbreeTrianglesP etp = EmbreeTriangles::NewP(tp);
-        GetEmbree()->AddGeometry(etp);
+        if (Triangles::Cast(gp))
+        {
+            EmbreeTrianglesP etp = EmbreeTriangles::NewL();
+            etp->SetGeometry(gp);
+            emp->AddGeometry(etp);
+        }
 
         MPI_Barrier(c);
         
@@ -116,9 +125,13 @@ public:
 class IntersectMsg : public Work
 {
 public:
-    IntersectMsg(float x, float y, float z) : IntersectMsg(3*sizeof(float))
+    IntersectMsg(EmbreeP ep, EmbreeModelP emp, float x, float y, float z) : IntersectMsg(2*sizeof(Key) + 3*sizeof(float))
     {
-        float *p = (float *)get();
+        Key *k = (Key *)get();
+        k[0] = ep->getkey();
+        k[1] = emp->getkey();
+        float *p = (float *)(k + 2);
+        
         p[0] = x;
         p[1] = y;
         p[2] = z;
@@ -130,60 +143,51 @@ public:
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
-        float *p = (float *)get();
+        std::cerr << "XXXXXXXX " << mpiRank << "\n";
 
-        void *rbase; RTCRayHit8 *raypkt;
-        rbase = aligned_alloc(8, sizeof(RTCRayHit8), (void *&)raypkt);
+        Key *k = (Key *)get();
+        EmbreeP ep = Embree::GetByKey(k[0]);
+        EmbreeModelP emp = EmbreeModel::GetByKey(k[1]);
 
-        void *vbase; int *valid;
-        vbase = aligned_alloc(8, 8*sizeof(int), (void *&)valid);
+        float *p = (float *)(k + 2);
 
-        for (int i = 0; i < 8; i++)
-            valid[i] = -1;
+        RayList *rays = new RayList(100);
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 100; i++)
         {
-            raypkt->ray.org_x[i] = i + p[0];
-            raypkt->ray.org_y[i] = p[1];
-            raypkt->ray.org_z[i] = p[2];
-            raypkt->ray.dir_x[i] = 0;
-            raypkt->ray.dir_y[i] = 0;
-            raypkt->ray.dir_z[i] = 1;
-            raypkt->ray.tnear[i] = 0;
-            raypkt->ray.tfar[i] = std::numeric_limits<float>::infinity();
-            raypkt->ray.mask[i] = -1;
-            raypkt->ray.flags[i] = 0;
-            raypkt->hit.geomID[i] = RTC_INVALID_GEOMETRY_ID;
-            raypkt->hit.instID[0][i] = RTC_INVALID_GEOMETRY_ID;
+            rays->get_ox_base()[i]   = (0.1)*i + p[0];
+            rays->get_oy_base()[i]   = p[1];
+            rays->get_oz_base()[i]   = p[2];
+            rays->get_dx_base()[i]   = 0;
+            rays->get_dy_base()[i]   = 0;
+            rays->get_dz_base()[i]   = 1;
+            rays->get_t_base()[i]    = 0;
+            rays->get_term_base()[i] = -1;
+            rays->get_tMax_base()[i] = std::numeric_limits<float>::infinity();
         }
 
-        for (int i = 0; i < 8; i++)
-            valid[i] = -1;
-
-        ispc::em_Intersect((RTCScene)GetEmbree()->Scene(), valid, 1, (void *)raypkt);
+        ep->Intersect(emp, 100, rays);
 
         if (mpiRank == 0)
-            std::cout << "Indirect call through ISPC\n";
+            std::cerr << "Indirect call through ISPC\n";
 
-        for (int i = 0; i < 8; i++)
+        for (int j = 0; j < mpiSize; j++)
         {
-            if (i == mpiRank && raypkt->hit.geomID[i] != RTC_INVALID_GEOMETRY_ID)
-            { 
-               std::cout 
-                   << "proc " << mpiRank 
-                   << "g " << raypkt->hit.geomID[i] 
-                   << "p " << raypkt->hit.primID[i] 
-                   << "t " << raypkt->ray.tfar[i] 
-                   << "u " << raypkt->hit.u[i] 
-                   << "v " << raypkt->hit.v[i];
-            }
-        }
-        
-        free(vbase);
-        free(rbase);
+            MPI_Barrier(c);
 
-        MPI_Barrier(c);
-        
+            if (j == mpiRank)
+            {
+                std::cerr << "proc " << mpiRank << "\n";
+                for (int i = 0; i < 100; i++)
+                    std::cerr << (rays->get_term_base()[i] ? " " : "X");
+                std::cerr << "\n";
+                for (int i = 0; i < 100; i++)
+                    if (rays->get_term_base()[i] != -1)
+                        std::cerr << i << ": " << rays->get_t_base()[i] << "\n";
+            }
+
+            sleep(1);
+        }
         return false;
     }
 };
@@ -224,9 +228,16 @@ main(int argc, char *argv[])
     Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
     theApplication.Run();
+    std::cerr << "r " << mpiRank << "\n";
+
 
     Embree::Register();
+    EmbreeModel::Register();
+    EmbreeGeometry::Register();
+    EmbreeTriangles::Register();
+
     KeyedDataObject::Register();
+
     SetupGeometry::Register();
     GeomToEmbree::Register();
     IntersectMsg::Register();
@@ -234,17 +245,33 @@ main(int argc, char *argv[])
     if (mpiRank == 0)
     {
         EmbreeP ep = Embree::NewP();
+        ep->Commit();
+
+        theApplication.SyncApplication();
+        std::cerr << "11111111\n";
+
+        EmbreeModelP emp = EmbreeModel::NewP();
+        emp->SetEmbree(ep);
+        emp->Commit();
+
+        theApplication.SyncApplication();
+        std::cerr << "222222222\n";
+
         TrianglesP tp = Triangles::NewP();
 
         SetupGeometry sg(tp);
         sg.Broadcast(true, true);
 
-        GeomToEmbree g2e(tp);
+        std::cerr << "33333333\n";
+
+        GeomToEmbree g2e(emp, tp);
         g2e.Broadcast(true, true);
 
-        ep->Commit();
+        std::cerr << "4444444444\n";
 
-        IntersectMsg i = IntersectMsg(0.1, 0.1, -1);
+        emp->Commit();
+
+        IntersectMsg i = IntersectMsg(ep, emp, 0.1, 0.1, -1);
         i.Broadcast(true, true);
 
         theApplication.QuitApplication();

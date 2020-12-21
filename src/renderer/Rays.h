@@ -61,6 +61,8 @@ private:
 public:
 	~RayList(); //!< default destructor
 
+    void *get_base(); //!< get pointer to start of ray data (skip past header)
+
 	//! deep copy the ray at the given position in the source RayList to the given position in the destination RayList
 	static void CopyRay(RayList *srcRayList, int srcRayIndex, RayList *dstRayList, int dstRayIndex)
 	{

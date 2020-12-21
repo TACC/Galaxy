@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include "Embree.h"
+#include "Embree_ispc.h"
 
 namespace gxy
 {
@@ -39,7 +40,6 @@ Embree::Register()
 
 Embree::~Embree()
 {
-    rtcReleaseScene(scene);
     rtcReleaseDevice(device);
 }
 
@@ -50,8 +50,6 @@ Embree::initialize()
 
     device = rtcNewDevice(NULL);
     rtcSetDeviceErrorFunction(device, embreeError, (void *)this);
-
-    scene = rtcNewScene(device);
 
     theEmbree = this;
 }
@@ -79,14 +77,13 @@ Embree::deserialize(unsigned char *p)
 bool 
 Embree::local_commit(MPI_Comm c)
 {
-    rtcCommitScene(scene);
     return false;
 }
 
-int
-Embree::AddGeometry(EmbreeGeometryP geom)
+void
+Embree::Intersect(EmbreeModelP emp, int n, RayList* rays)
 {
-    return rtcAttachGeometry(scene, geom->GetDeviceGeometry());
+    ispc::Embree_Intersect(emp->GetDevice(), n, rays->GetIspc());
 }
 
 }

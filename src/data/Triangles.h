@@ -61,13 +61,10 @@ public:
   //! Copy local part
   virtual bool local_copy(KeyedDataObjectP);
 
-  vec3f* GetNormals() { return (vec3f *)normals->data(); }
-
   virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);
-  std::shared_ptr< std::vector<vec3f> > normals;
 };
 
 } // namespace gxy

@@ -41,6 +41,7 @@ namespace gxy
 #define OBJECT_POINTER_TYPES(typ)                                                         \
 class typ;                                                                                \
 typedef std::shared_ptr<typ> typ ## P;                                                    \
+typedef std::shared_ptr<typ> typ ## L;                                                    \
 typedef std::weak_ptr<typ> typ ## W;                                                      \
 void Delete(typ ## P& p);
 

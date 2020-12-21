@@ -91,9 +91,10 @@ class Geometry : public KeyedDataObject
   int GetNumberOfVertices() { return vertices->size(); }
   int GetConnectivitySize() { return connectivity->size(); }
 
-  vec3f* GetVertices() { return (vec3f *)vertices->data(); }
-  float* GetData() { return (float *)data->data(); }
-  int*   GetConnectivity() { return (int *)connectivity->data(); }
+  vec3f* GetVertices() { return (vec3f *)(vertices ? vertices->data() : NULL); }
+  float* GetData() { return (float *)(data ? data->data() : NULL); }
+  int*   GetConnectivity() { return (int *)(connectivity ? connectivity->data() : NULL); }
+  vec3f* GetNormals() { return (vec3f *)(normals ? normals->data() : NULL); }
 
   void SetData(std::shared_ptr<std::vector<float>> d) { data = d; };
   void SetData(std::vector<float>* d) { SetData(std::shared_ptr<std::vector<float>>(d)); }
@@ -125,17 +126,17 @@ protected:
 
   void initialize(); //!< initialize this Geometry objec
 
-
   //! Get partitioning info from JSON object
   bool get_partitioning(rapidjson::Value&);
 
   //! Load partitioning info from JSON file
   bool get_partitioning_from_file(char *);
 
-  //! vertex, data and connectivity storage
+  //! vertex, data and connectivity, normals... storage
   std::shared_ptr<std::vector<vec3f>> vertices;
   std::shared_ptr<std::vector<float>> data;
   std::shared_ptr<std::vector<int>>   connectivity;
+  std::shared_ptr<std::vector<vec3f>> normals;
 
   int global_vertex_count;
   int global_element_count;

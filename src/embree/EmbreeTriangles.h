@@ -30,19 +30,12 @@ OBJECT_POINTER_TYPES(EmbreeTriangles)
 
 class EmbreeTriangles : public EmbreeGeometry
 {
-    GALAXY_OBJECT(EmbreeTriangles)
+    KEYED_OBJECT_SUBCLASS(EmbreeTriangles, EmbreeGeometry)
 
 public:
     ~EmbreeTriangles() {};
 
-    static EmbreeTrianglesP NewP(TrianglesP p) { return EmbreeTriangles::Cast(std::shared_ptr<EmbreeTriangles>(new EmbreeTriangles(p))); }
-
-protected:
-    EmbreeTriangles();
-    EmbreeTriangles(TrianglesP t);
-
-private: 
-    TrianglesP triangles;
+    virtual void SetGeometry(GeometryP);
 };
 
 }

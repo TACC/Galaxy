@@ -24,26 +24,42 @@
 namespace gxy 
 {
 
-EmbreeTriangles::EmbreeTriangles(TrianglesP t)
-{
-    triangles = t;
+KEYED_OBJECT_CLASS_TYPE(EmbreeTriangles)
 
+void
+EmbreeTriangles::Register()
+{
+    RegisterClass();
+}
+
+void
+EmbreeTriangles::SetGeometry(GeometryP g)
+{
+    TrianglesP t = Triangles::Cast(g);
+    if (! t)
+    {
+        std::cerr << "EmbreeTriangles::SetGeometry called with something other than Triangles\n";
+        exit(1);
+    }
+
+    super::SetGeometry(g);
+    
     int nv = t->GetNumberOfVertices();
     int nc = t->GetConnectivitySize();
 
     if (nv && nc)
     {
-        geom = rtcNewGeometry((RTCDevice)GetEmbree()->Device(), RTC_GEOMETRY_TYPE_TRIANGLE);
+        device_geometry = rtcNewGeometry((RTCDevice)GetEmbree()->Device(), RTC_GEOMETRY_TYPE_TRIANGLE);
 
-        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX,
+        rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_VERTEX,
                              0, RTC_FORMAT_FLOAT3, (void *)t->GetVertices(),
                              0, 3*sizeof(float), nv);
 
-        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX,
+        rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_INDEX,
                              0, RTC_FORMAT_UINT3, (void *)t->GetConnectivity(),
                              0, 3*sizeof(int), nc);
 
-        rtcCommitGeometry(geom);
+        rtcCommitGeometry(device_geometry);
      }
 }
 
