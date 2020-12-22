@@ -36,14 +36,14 @@ endif(COMMAND cmake_policy)
 
 ispc_include_directories(${EMBREE_INCLUDE_DIRS}
                          ${OSPRAY_INCLUDE_DIRS}
-                         ${Galaxy_SOURCE_DIR}/src/math
+                         ${Galaxy_SOURCE_DIR}/src/ispc
                          )
 
 include_directories(${Galaxy_BINARY_DIR}/src
                     ${Galaxy_SOURCE_DIR}/src/framework
                     ${Galaxy_SOURCE_DIR}/src/data
                     ${Galaxy_SOURCE_DIR}/src/ospray
-                    ${Galaxy_SOURCE_DIR}/src/math
+                    ${Galaxy_SOURCE_DIR}/src/ispc
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS})
 
@@ -60,7 +60,6 @@ set (ISPC_SOURCES
   DataDrivenPathLines.ispc 
   DataDrivenSpheres.ispc 
   DataDrivenTriangleMesh.ispc
-  TransferFunction.ispc
   )
 
 set (CPP_SOURCES 
@@ -75,14 +74,12 @@ set (CPP_SOURCES
   OsprayPathLines.cpp
   OsprayVolume.cpp
   OsprayUtil.cpp
-  TransferFunction.cpp
   )
 
 install(FILES
   OsprayHandle.h
   OsprayObject.h
   OsprayUtil.h
-  TransferFunction.h
   DESTINATION include/gxy)
 
 if (ospray_DIR)
@@ -92,7 +89,3 @@ if (ospray_DIR)
   set_target_properties(gxy_ospray PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
   install(TARGETS gxy_ospray DESTINATION lib)
 endif()
-
-add_executable(tf_test tf_test.cpp)
-target_link_libraries(tf_test ${GALAXY_LIBRARIES})
-install(TARGETS tf_test DESTINATION tests)

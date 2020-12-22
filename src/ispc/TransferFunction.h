@@ -30,16 +30,6 @@
 namespace gxy
 {
 
-struct TF       // Must agree with TF_ispc in TransferFunction.ispc
-{
-    int   length;
-    int   width;
-    float minV;
-    float maxV;
-    float denom;
-    float *data;
-};
-
 OBJECT_POINTER_TYPES(TransferFunction)
 
 /*! \File TransferFunction.cpp
@@ -56,7 +46,7 @@ public:
 
     void Set(int len, int wid, float m, float M, float *data);
 
-    TF *GetISPC() { return &ispc; }
+    ispc::TransferFunction_ispc *GetISPC() { return &ispc; }
 
     int GetWidth() { return ispc.width; }
     int GetLength() { return ispc.length; }
@@ -69,7 +59,7 @@ public:
     virtual unsigned char *deserialize(unsigned char *);
 
 private:
-    TF ispc;
+    ispc::TransferFunction_ispc ispc;
 };
 
 }
