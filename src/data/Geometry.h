@@ -113,6 +113,10 @@ class Geometry : public KeyedDataObject
   int GetVertexCount() { return global_vertex_count; }
   int GetElementCount() { return global_element_count; }
 
+  void GetLocalCounts(int& nv, int& ne) { nv = local_vertex_count; ne = local_element_count; }
+  int GetLocalVertexCount() { return local_vertex_count; }
+  int GetLocalElementCount() { return local_element_count; }
+
 protected:
   pthread_mutex_t lock;
 
@@ -141,6 +145,8 @@ protected:
   int global_vertex_count;
   int global_element_count;
 
+  int local_vertex_count;
+  int local_element_count;
 
   vtkDataSet *vtkobj; // If there is a retained VTK dataset
 };

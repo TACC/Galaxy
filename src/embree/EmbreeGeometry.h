@@ -21,33 +21,35 @@
 #pragma once
 
 #include "GalaxyObject.h"
-#include "Geometry.h"
 
 namespace gxy { OBJECT_POINTER_TYPES(EmbreeGeometry) }
 
-#include <embree3/rtcore.h>
+#include "Geometry.h"
 #include "Embree.h"
 #include "EmbreeGeometry_ispc.h"
+
+#include <embree3/rtcore.h>
 
 namespace gxy 
 {
 
-class EmbreeGeometry : public KeyedObject
+class EmbreeGeometry
 {
-    KEYED_OBJECT(EmbreeGeometry)
-
 public:
+    static EmbreeGeometryP New() { return std::shared_ptr<EmbreeGeometry>(new EmbreeGeometry); }
     virtual ~EmbreeGeometry();
-    virtual void initialize();
 
-    virtual void SetGeometry(GeometryP g);
-    virtual void SetupIspc();
+    void SetGeometry(GeometryP g);
+
+    virtual void CreateIspc();
+    virtual void FinalizeIspc();
 
     GeometryP GetGeometry();
     RTCGeometry GetDeviceGeometry() { return device_geometry; }
     void *GetIspc() { return ispc; }
 
 protected:
+    EmbreeGeometry();
 
     GeometryP geometry;
     RTCGeometry device_geometry;

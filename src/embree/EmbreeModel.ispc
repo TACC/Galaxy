@@ -61,8 +61,8 @@ EmbreeModel_Intersect(RTCScene scene,  void **uniform _geom, const uniform int n
         int gid = rayhit.hit.geomID;
         if (gid != RTC_INVALID_GEOMETRY_ID && geom[gid]->connectivity && geom[gid]->normals)
         {
-            print("GID %\n", gid);
-            print("PID %\n", rayhit.hit.primID);
+            // print("GID %\n", gid);
+            // print("PID %\n", rayhit.hit.primID);
             // print("X %\nY %\nZ %\n", rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
             vec3f bary = make_vec3f(1.0f - rayhit.hit.u - rayhit.hit.v, rayhit.hit.u, rayhit.hit.v);
             // print("BX %\nBY %\nBZ %\n", bary.x, bary.y, bary.z);

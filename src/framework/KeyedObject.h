@@ -264,11 +264,11 @@ public:
    */
 
   KeyedObjectL
-  NewL(std::string classname)
+  NewP(std::string classname)
   {
     for (auto i = 0; i < class_names.size(); i++)
       if (class_names[i] == classname)
-        return NewL(i);
+        return NewP(i);
 
     return NULL;
   }
@@ -279,27 +279,13 @@ public:
    */
 
   KeyedObjectL
-  NewL(KeyedObjectClass c)
+  NewP(KeyedObjectClass c)
   {
     Key k = keygen();
     KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
-
     kop->primary = true;
     aol(kop);
     add_weak(kop);
-
-    return kop;
-  }
-
-  //! create a new instance of a KeyedObject-derived class.   This is a global object
-  /*! \param classname the KeyedObject class name, which is created using the OBJECT_CLASS_TYPE macro
-   * \sa OBJECT_CLASS_TYPE
-   */
-  
-  KeyedObjectP 
-  NewP(std::string classname)
-  {
-    KeyedObjectP kop = NewL(classname);
 
     if (kop)
     {
@@ -315,21 +301,6 @@ public:
   {
     NewMsg::Register();
     DropMsg::Register();
-  }
-
-  //! create a new instance of a KeyedObject-derived class 
-  /*! \param c the KeyedObject class id, which is created using the OBJECT_CLASS_TYPE macro
-   * \sa OBJECT_CLASS_TYPE
-   */
-
-  KeyedObjectP NewP(KeyedObjectClass c)
-  {
-    KeyedObjectP kop = NewL(c);
-
-    NewMsg msg(c, kop->getkey());
-    msg.Broadcast(true, true);
-
-    return kop;
   }
 
   //! create a new instance of a KeyedObject-derived class with a given Key
@@ -474,19 +445,11 @@ private:                                                                        
                                                                                                 \
 public:                                                                                         \
   static typ ## P GetByKey(Key k) { return Cast(GetTheKeyedObjectFactory()->get(k)); }          \
-  static typ ## L GetByKeyLocal(Key k) { return (typ ## L)GetByKey(k); }                        \
   static void Register();                                                                       \
                                                                                                 \
   static typ ## P NewP()                                                                        \
   {                                                                                             \
     KeyedObjectP kop = GetTheKeyedObjectFactory()->NewP(ClassType);                             \
-    aol(kop);                                                                                   \
-    return Cast(kop);                                                                           \
-  }                                                                                             \
-                                                                                                \
-  static typ ## P NewL()                                                                        \
-  {                                                                                             \
-    KeyedObjectP kop = GetTheKeyedObjectFactory()->NewL(ClassType);                             \
     aol(kop);                                                                                   \
     return Cast(kop);                                                                           \
   }                                                                                             \

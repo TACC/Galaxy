@@ -185,10 +185,14 @@ Geometry::local_commit(MPI_Comm c)
   MPI_Allreduce(&local_min, &global_min, 1, MPI_FLOAT, MPI_MIN, c);
   MPI_Allreduce(&local_max, &global_max, 1, MPI_FLOAT, MPI_MAX, c);
 
-  int local_counts[2] = {(int)vertices->size(), (int)connectivity->size()};
+  local_vertex_count = vertices->size();
+  local_element_count = connectivity->size();
+
+  int local_counts[2] = {local_vertex_count, local_element_count};
   int global_counts[2];
 
   MPI_Allreduce(local_counts, global_counts, 2, MPI_INT, MPI_SUM, c);
+
   global_vertex_count = global_counts[0];
   global_element_count = global_counts[0];
 

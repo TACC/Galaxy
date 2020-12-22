@@ -24,23 +24,19 @@
 namespace gxy 
 {
 
-KEYED_OBJECT_CLASS_TYPE(EmbreeTriangles)
-
-void
-EmbreeTriangles::Register()
+EmbreeTriangles::EmbreeTriangles() : EmbreeGeometry()
 {
-    RegisterClass();
 }
 
 void
-EmbreeTriangles::SetupIspc()
+EmbreeTriangles::FinalizeIspc()
 {
-    super::SetupIspc();
+    EmbreeGeometry::FinalizeIspc();
 
     TrianglesP t = Triangles::Cast(geometry);
     if (! t)
     {
-        std::cerr << "EmbreeTriangles::SetupIspc called with something other than Triangles\n";
+        std::cerr << "EmbreeTriangles::FinalizeIspc called with something other than Triangles\n";
         exit(1);
     }
 

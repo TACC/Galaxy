@@ -20,22 +20,25 @@
 
 #pragma once
 
+#include "GalaxyObject.h"
+
+namespace gxy { OBJECT_POINTER_TYPES(EmbreeTriangles) }
+
 #include "EmbreeGeometry.h"
 #include "Triangles.h"
 
 namespace gxy 
 {
-
-OBJECT_POINTER_TYPES(EmbreeTriangles)
-
 class EmbreeTriangles : public EmbreeGeometry
 {
-    KEYED_OBJECT_SUBCLASS(EmbreeTriangles, EmbreeGeometry)
-
 public:
+    static EmbreeTrianglesP New() { return std::shared_ptr<EmbreeTriangles>(new EmbreeTriangles); }
     ~EmbreeTriangles() {};
 
-    virtual void SetupIspc();
+    virtual void FinalizeIspc();
+
+protected:
+    EmbreeTriangles();
 };
 
 }

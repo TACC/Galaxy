@@ -26,19 +26,8 @@
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(EmbreeGeometry)
-
-void
-EmbreeGeometry::Register()
+EmbreeGeometry::EmbreeGeometry()
 {
-    RegisterClass();
-}
-
-void
-EmbreeGeometry::initialize()
-{
-    super::initialize();
-
     geometry = NULL;
     device_geometry = NULL;
     ispc = NULL;
@@ -58,14 +47,21 @@ void
 EmbreeGeometry::SetGeometry(GeometryP g)
 {
     geometry = g;
-    ispc = malloc(sizeof(ispc::EmbreeGeometry_ispc));
-    SetupIspc();
 }
 
 void
-EmbreeGeometry::SetupIspc()
+EmbreeGeometry::CreateIspc()
+{
+    if (! ispc)
+        ispc = malloc(sizeof(ispc::EmbreeGeometry_ispc));
+}
+
+void
+EmbreeGeometry::FinalizeIspc()
 {
     ispc::EmbreeGeometry_ispc *iptr = (ispc::EmbreeGeometry_ispc*)ispc;
+
+    geometry->GetLocalCounts(iptr->nv, iptr->nc);
 
     iptr->vertices     = (ispc::vec3f*)geometry->GetVertices();
     iptr->normals      = (ispc::vec3f*)geometry->GetNormals();

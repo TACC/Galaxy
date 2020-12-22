@@ -54,6 +54,7 @@ set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_embree ${EMBREE_LIB
 set (ISPC_SOURCES 
     EmbreeGeometry.ispc
     EmbreeSpheres.ispc
+    EmbreePathLines.ispc
     EmbreeModel.ispc
     )
 
@@ -63,6 +64,7 @@ set (CPP_SOURCES
   EmbreeModel.cpp
   EmbreeTriangles.cpp
   EmbreeSpheres.cpp
+  EmbreePathLines.cpp
   )
 
 install(FILES

@@ -5,12 +5,17 @@
 #include "EmbreeModel.h"
 #include "Triangles.h"
 #include "Particles.h"
+#include "PathLines.h"
 #include "EmbreeTriangles.h"
 #include "EmbreeSpheres.h"
+#include "EmbreePathLines.h"
 
 #include <memory>
 #include <cstdlib>
 #include <cmath>
+
+int test_element_types = 0;
+bool show_Z = false;
 
 void *
 aligned_alloc(int bytes, int size, void* &ptr)
@@ -27,25 +32,23 @@ using namespace std;
 int mpiRank = 0, mpiSize = 1;
 #include "Debug.h"
 
-class SetupGeometry : public Work
+class SetupTriangles : public Work
 {
 public:
-    SetupGeometry(TrianglesP tp, ParticlesP pp) : SetupGeometry(2*sizeof(Key))
+    SetupTriangles(TrianglesP tp) : SetupTriangles(sizeof(Key))
     {
         Key *p = (Key *)get();
-
         p[0] = tp->getkey();
-        p[1] = pp->getkey();
     }
 
-    ~SetupGeometry() {}
-    WORK_CLASS(SetupGeometry, true)
+    ~SetupTriangles() {}
+    WORK_CLASS(SetupTriangles, true)
 
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
         Key *p = (Key *)get();
-
+        
         TrianglesP tp = Triangles::GetByKey(p[0]);
 
         tp->allocate_vertices(4);
@@ -53,10 +56,10 @@ public:
 
         vec3f *vertices = tp->GetVertices();
 
-        vertices[0].x = mpiRank + 0.f; vertices[0].y = 0.f; vertices[0].z = 0.f;
-        vertices[1].x = mpiRank + 1.f; vertices[1].y = 0.f; vertices[1].z = 0.f;
-        vertices[2].x = mpiRank + 1.f; vertices[2].y = 1.f; vertices[2].z = 0.f;
-        vertices[3].x = mpiRank + 0.f; vertices[3].y = 1.f; vertices[3].z = 0.f;
+        vertices[0].x = mpiRank + 0.1f; vertices[0].y = 0.1f; vertices[0].z = 0.f;
+        vertices[1].x = mpiRank + 0.9f; vertices[1].y = 0.1f; vertices[1].z = 0.f;
+        vertices[2].x = mpiRank + 0.9f; vertices[2].y = 0.9f; vertices[2].z = 0.f;
+        vertices[3].x = mpiRank + 0.1f; vertices[3].y = 0.9f; vertices[3].z = 0.f;
 
         vec3f *normals = tp->GetNormals();
 
@@ -70,19 +73,93 @@ public:
         indices[0] = 0; indices[1] = 1; indices[2] = 3;
         indices[3] = 1; indices[4] = 2; indices[5] = 3;
 
-        ParticlesP pp = Particles::GetByKey(p[1]);
+        return false;
+    }
+}; 
 
-        pp->allocate_vertices(1);
-        pp->allocate_connectivity(1);
+class SetupSpheres : public Work
+{
+public:
+    SetupSpheres(ParticlesP pp) : SetupSpheres(sizeof(Key))
+    {
+        Key *p = (Key *)get();
 
-        vertices = pp->GetVertices();
+        p[0] = pp->getkey();
+    }
+
+    ~SetupSpheres() {}
+    WORK_CLASS(SetupSpheres, true)
+
+public:
+    bool CollectiveAction(MPI_Comm c, bool isRoot)
+    {   
+        Key *p = (Key *)get();
+        
+        ParticlesP pp = Particles::GetByKey(p[0]);
+
+        pp->allocate_vertices(4);
+        pp->allocate_connectivity(4);
+
+        vec3f *vertices = pp->GetVertices();
         float *data = pp->GetData();
 
-        vertices[0].x = mpiRank + 0.5; vertices[0].y = 0.5; vertices[0].z = 0.0;
-        data[0] = 0.4 - ((float)mpiRank/mpiSize) * 0.2;
+        vertices[0].x = mpiRank + 0.25; vertices[0].y = 0.25; vertices[0].z = 0.0;
+        vertices[1].x = mpiRank + 0.25; vertices[1].y = 0.75; vertices[1].z = 0.0;
+        vertices[2].x = mpiRank + 0.75; vertices[2].y = 0.75; vertices[2].z = 0.0;
+        vertices[3].x = mpiRank + 0.75; vertices[3].y = 0.25; vertices[3].z = 0.0;
+        data[0] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
+        data[1] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
+        data[2] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
+        data[3] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
 
         MPI_Barrier(c);
         
+        return false;
+    }
+}; 
+
+class SetupPathLines : public Work
+{
+public:
+    SetupPathLines(PathLinesP plp) : SetupPathLines(sizeof(Key))
+    {
+        Key *p = (Key *)get();
+        p[0] = plp->getkey();
+    }
+
+    ~SetupPathLines() {}
+    WORK_CLASS(SetupPathLines, true)
+
+public:
+    bool CollectiveAction(MPI_Comm c, bool isRoot)
+    {   
+        Key *p = (Key *)get();
+        
+        PathLinesP plp = PathLines::GetByKey(p[0]);
+
+        plp->allocate_vertices(4);
+        plp->allocate_connectivity(3);
+
+        vec3f *vertices = plp->GetVertices();
+
+        vertices[0].x = mpiRank + 0.0f; vertices[0].y = 1.f; vertices[0].z = 0.f;
+        vertices[1].x = mpiRank + 0.3f; vertices[1].y = 0.f; vertices[1].z = 0.f;
+        vertices[2].x = mpiRank + 0.7f; vertices[2].y = 0.f; vertices[2].z = 0.f;
+        vertices[3].x = mpiRank + 1.0f; vertices[3].y = 1.f; vertices[3].z = 0.f;
+
+        int *indices = plp->GetConnectivity();
+
+        indices[0] = 0; 
+        indices[1] = 1; 
+        indices[2] = 2;
+
+        float *data = plp->GetData();
+
+        data[0] = 0.10;
+        data[1] = 0.15;
+        data[2] = 0.20;
+        data[3] = 0.25;
+
         return false;
     }
 }; 
@@ -113,15 +190,28 @@ public:
 
         if (Triangles::Cast(gp))
         {
-            EmbreeTrianglesP etp = EmbreeTriangles::NewL();
+            EmbreeTrianglesP etp = EmbreeTriangles::New();
             etp->SetGeometry(gp);
+            etp->CreateIspc();
+            etp->FinalizeIspc();
             emp->AddGeometry(etp);
+
         }
         else if (Particles::Cast(gp))
         {
-            EmbreeSpheresP etp = EmbreeSpheres::NewL();
-            etp->SetGeometry(gp);
-            emp->AddGeometry(etp);
+            EmbreeSpheresP esp = EmbreeSpheres::New();
+            esp->SetGeometry(gp);
+            esp->CreateIspc();
+            esp->FinalizeIspc();
+            emp->AddGeometry(esp);
+        }
+        else if (PathLines::Cast(gp))
+        {
+            EmbreePathLinesP plp = EmbreePathLines::New();
+            plp->SetGeometry(gp);
+            plp->CreateIspc();
+            plp->FinalizeIspc();
+            emp->AddGeometry(plp);
         }
 
         MPI_Barrier(c);
@@ -174,34 +264,54 @@ public:
 
         emp->Intersect(rays);
 
-        if (mpiRank == 0)
-            std::cerr << "Indirect call through ISPC\n";
-
         for (int j = 0; j < mpiSize; j++)
         {
             MPI_Barrier(c);
 
             if (j == mpiRank)
             {
-                std::cerr << "proc " << mpiRank << "\n";
                 for (int i = 0; i < 50*mpiSize; i++)
-                    std::cerr << (rays->get_term_base()[i] ? " " : "X");
+                {
+                    char c;
+                    switch (rays->get_term_base()[i])
+                    {
+                        case 0: c = '0'; break;
+                        case 1: c = '1'; break;
+                        case 2: c = '2'; break;
+                        case 3: c = '3'; break;
+                        default: c = ' ';
+                    }
+                    std::cerr << c;
+                }
                 std::cerr << "\n";
+                if (show_Z)
+                {
                 for (int i = 0; i < 50*mpiSize; i++)
                     if (rays->get_term_base()[i] != -1)
-                        std::cerr << i << ": " << 
-                            "(" << rays->get_ox_base()[i] << " " << rays->get_oy_base()[i] << " " << rays->get_oz_base()[i] << ") (" 
-                            << rays->get_nx_base()[i] << " " << rays->get_ny_base()[i] << " " << rays->get_nz_base()[i] << ") " 
-                            << rays->get_tMax_base()[i] << "\n";
+                    {
+                        float t = rays->get_tMax_base()[i];
+                        std::cerr << i << ": " 
+                            << "(" << (rays->get_ox_base()[i] + t*(rays->get_dx_base()[i]))
+                            << " " << (rays->get_oy_base()[i] + t*(rays->get_dy_base()[i]))
+                            << " " << (rays->get_oz_base()[i] + t*(rays->get_dz_base()[i]))
+                            << ") (" << rays->get_nx_base()[i] 
+                            << " " << rays->get_ny_base()[i] 
+                            << " " << rays->get_nz_base()[i] 
+                            << ") " << rays->get_tMax_base()[i] << "\n";
+                    }
+                }
             }
 
             sleep(1);
         }
+
         return false;
     }
 };
 
-WORK_CLASS_TYPE(SetupGeometry)
+WORK_CLASS_TYPE(SetupTriangles)
+WORK_CLASS_TYPE(SetupSpheres)
+WORK_CLASS_TYPE(SetupPathLines)
 WORK_CLASS_TYPE(GeomToEmbree)
 WORK_CLASS_TYPE(IntersectMsg)
 
@@ -213,6 +323,9 @@ syntax(char *a)
     std::cerr << "syntax: " << a << " [options] " << endl;
     std::cerr << "options:" << endl;
     std::cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
+    std::cerr << "  -t types   test element types,   bitfield 1 for triangles, 2 for spheres, 4 for pathlines.  Multiple -t's are OR'd" << endl;
+    std::cerr << "  -y y       vertical position of samples (0.5)" << endl;
+    std::cerr << "  -z         show hit points, normals, T" << endl;
   }
   exit(1);
 }
@@ -223,12 +336,16 @@ main(int argc, char *argv[])
     char *dbgarg;
     bool dbg = false;
     bool atch = false;
+    float y = 0.5;
 
     Application theApplication(&argc, &argv);
     theApplication.Start();
 
     for (int i = 1; i < argc; i++)
-        if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
+        if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
+        else if (!strcmp(argv[i], "-t")) test_element_types |= atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-y")) y = atof(argv[++i]);
+        else if (!strcmp(argv[i], "-z")) show_Z = true;
         else syntax(argv[0]);
 
     mpiRank = theApplication.GetRank();
@@ -237,53 +354,73 @@ main(int argc, char *argv[])
     Debug *d = dbg ? new Debug(argv[0], atch, dbgarg) : NULL;
 
     theApplication.Run();
-    std::cerr << "r " << mpiRank << "\n";
-
 
     Embree::Register();
     EmbreeModel::Register();
-    EmbreeGeometry::Register();
-    EmbreeTriangles::Register();
-    EmbreeSpheres::Register();
 
     KeyedDataObject::Register();
 
-    SetupGeometry::Register();
+    SetupTriangles::Register();
+    SetupSpheres::Register();
+    SetupPathLines::Register();
     GeomToEmbree::Register();
     IntersectMsg::Register();
 
     if (mpiRank == 0)
     {
-        EmbreeP ep = Embree::NewP();
-        ep->Commit();
+        {
+            EmbreeP ep = Embree::NewP();
+            ep->Commit();
 
-        theApplication.SyncApplication();
+            theApplication.SyncApplication();
 
-        EmbreeModelP emp = EmbreeModel::NewP();
-        emp->SetEmbree(ep);
-        emp->Commit();
+            EmbreeModelP emp = EmbreeModel::NewP();
+            emp->SetEmbree(ep);
+            emp->Commit();
 
-        theApplication.SyncApplication();
+            theApplication.SyncApplication();
 
-        TrianglesP tp = Triangles::NewP();
-        ParticlesP pp = Particles::NewP();
+            TrianglesP tp;
+            if (test_element_types & 0x1)
+            {
+                tp = Triangles::NewP();
+                SetupTriangles s(tp);
+                s.Broadcast(true, true);
+                tp->Commit();
 
-        SetupGeometry sg(tp, pp);
-        sg.Broadcast(true, true);
+                GeomToEmbree t2e(emp, tp);
+                t2e.Broadcast(true, true);
+            }
+                   
+            ParticlesP pp;
+            if (test_element_types & 0x2)
+            {
+                pp = Particles::NewP();
+                SetupSpheres s(pp);
+                s.Broadcast(true, true);
+                pp->Commit();
 
-        tp->Commit();
-        pp->Commit();
+                GeomToEmbree t2e(emp, pp);
+                t2e.Broadcast(true, true);
+            }
+               
+            PathLinesP plp;
+            if (test_element_types & 0x4)
+            {
+                plp = PathLines::NewP();
+                SetupPathLines s(plp);
+                s.Broadcast(true, true);
+                plp->Commit();
 
-        GeomToEmbree t2e(emp, tp);
-        t2e.Broadcast(true, true);
+                GeomToEmbree t2e(emp, plp);
+                t2e.Broadcast(true, true);
+            }
 
-        GeomToEmbree p2e(emp, pp);
-        p2e.Broadcast(true, true);
+            emp->Commit();
 
-        emp->Commit();
-
-        IntersectMsg i = IntersectMsg(ep, emp, 0.0, 0.5, -1);
-        i.Broadcast(true, true);
+            IntersectMsg i = IntersectMsg(ep, emp, 0.0, y, -1);
+            i.Broadcast(true, true);
+        }
 
         theApplication.QuitApplication();
     }
