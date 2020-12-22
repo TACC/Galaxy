@@ -32,8 +32,9 @@ EmbreeModel_IntersectSOA(RTCScene scene, void *uniform rayhit)
 // bridges the gap from C++ to ISPC.
 
 export void
-EmbreeModel_Intersect(RTCScene scene,  EmbreeGeometry_ispc **uniform geom, const uniform int n, void *uniform _rays)
+EmbreeModel_Intersect(RTCScene scene,  void **uniform _geom, const uniform int n, void *uniform _rays)
 {
+    EmbreeGeometry_ispc **uniform geom = (EmbreeGeometry_ispc **uniform)_geom;
     uniform RayList_ispc *uniform rays = (uniform RayList_ispc *)_rays;
     RTCRayHit rayhit;
 
@@ -60,8 +61,8 @@ EmbreeModel_Intersect(RTCScene scene,  EmbreeGeometry_ispc **uniform geom, const
         int gid = rayhit.hit.geomID;
         if (gid != RTC_INVALID_GEOMETRY_ID && geom[gid]->connectivity && geom[gid]->normals)
         {
-            // print("GID %\n", gid);
-            // print("PID %\n", rayhit.hit.primID);
+            print("GID %\n", gid);
+            print("PID %\n", rayhit.hit.primID);
             // print("X %\nY %\nZ %\n", rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
             vec3f bary = make_vec3f(1.0f - rayhit.hit.u - rayhit.hit.v, rayhit.hit.u, rayhit.hit.v);
             // print("BX %\nBY %\nBZ %\n", bary.x, bary.y, bary.z);
@@ -78,7 +79,14 @@ EmbreeModel_Intersect(RTCScene scene,  EmbreeGeometry_ispc **uniform geom, const
             rays->ny[i] = normal.y;
             rays->nz[i] = normal.z;
         }
+        else
+        {
+            rays->nx[i] = rayhit.hit.Ng_x;
+            rays->ny[i] = rayhit.hit.Ng_y;
+            rays->nz[i] = rayhit.hit.Ng_z;
+        }
 
+        rays->tMax[i] = rayhit.ray.tfar;
         rays->term[i] = rayhit.hit.geomID;
         rays->t[i]    = rayhit.ray.tfar;
     }

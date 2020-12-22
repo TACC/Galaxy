@@ -35,7 +35,7 @@ class EmbreeTriangles : public EmbreeGeometry
 public:
     ~EmbreeTriangles() {};
 
-    virtual void SetGeometry(GeometryP);
+    virtual void SetupIspc();
 };
 
 }

@@ -4,7 +4,9 @@
 #include "Embree.h"
 #include "EmbreeModel.h"
 #include "Triangles.h"
+#include "Particles.h"
 #include "EmbreeTriangles.h"
+#include "EmbreeSpheres.h"
 
 #include <memory>
 #include <cstdlib>
@@ -28,12 +30,12 @@ int mpiRank = 0, mpiSize = 1;
 class SetupGeometry : public Work
 {
 public:
-    SetupGeometry(TrianglesP tp) : SetupGeometry(sizeof(Key))
+    SetupGeometry(TrianglesP tp, ParticlesP pp) : SetupGeometry(2*sizeof(Key))
     {
-        unsigned char *p = (unsigned char *)get();
+        Key *p = (Key *)get();
 
-        *(Key *)p = tp->getkey();
-        p = p + sizeof(Key);
+        p[0] = tp->getkey();
+        p[1] = pp->getkey();
     }
 
     ~SetupGeometry() {}
@@ -42,9 +44,9 @@ public:
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
-        unsigned char *p = (unsigned char *)get();
+        Key *p = (Key *)get();
 
-        TrianglesP tp = Triangles::GetByKey(*(Key *)p);
+        TrianglesP tp = Triangles::GetByKey(p[0]);
 
         tp->allocate_vertices(4);
         tp->allocate_connectivity(2*3);
@@ -67,6 +69,17 @@ public:
 
         indices[0] = 0; indices[1] = 1; indices[2] = 3;
         indices[3] = 1; indices[4] = 2; indices[5] = 3;
+
+        ParticlesP pp = Particles::GetByKey(p[1]);
+
+        pp->allocate_vertices(1);
+        pp->allocate_connectivity(1);
+
+        vertices = pp->GetVertices();
+        float *data = pp->GetData();
+
+        vertices[0].x = mpiRank + 0.5; vertices[0].y = 0.5; vertices[0].z = 0.0;
+        data[0] = 0.4 - ((float)mpiRank/mpiSize) * 0.2;
 
         MPI_Barrier(c);
         
@@ -104,6 +117,12 @@ public:
             etp->SetGeometry(gp);
             emp->AddGeometry(etp);
         }
+        else if (Particles::Cast(gp))
+        {
+            EmbreeSpheresP etp = EmbreeSpheres::NewL();
+            etp->SetGeometry(gp);
+            emp->AddGeometry(etp);
+        }
 
         MPI_Barrier(c);
         
@@ -138,11 +157,11 @@ public:
 
         float *p = (float *)(k + 2);
 
-        RayList *rays = new RayList(100);
+        RayList *rays = new RayList(50*mpiSize);
 
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 50*mpiSize; i++)
         {
-            rays->get_ox_base()[i]   = (0.1)*i + p[0];
+            rays->get_ox_base()[i]   = (1/50.0)*i + p[0];
             rays->get_oy_base()[i]   = p[1];
             rays->get_oz_base()[i]   = p[2];
             rays->get_dx_base()[i]   = 0;
@@ -165,14 +184,15 @@ public:
             if (j == mpiRank)
             {
                 std::cerr << "proc " << mpiRank << "\n";
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 50*mpiSize; i++)
                     std::cerr << (rays->get_term_base()[i] ? " " : "X");
                 std::cerr << "\n";
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 50*mpiSize; i++)
                     if (rays->get_term_base()[i] != -1)
                         std::cerr << i << ": " << 
                             "(" << rays->get_ox_base()[i] << " " << rays->get_oy_base()[i] << " " << rays->get_oz_base()[i] << ") (" 
-                            << rays->get_nx_base()[i] << " " << rays->get_ny_base()[i] << " " << rays->get_nz_base()[i] << ")\n";
+                            << rays->get_nx_base()[i] << " " << rays->get_ny_base()[i] << " " << rays->get_nz_base()[i] << ") " 
+                            << rays->get_tMax_base()[i] << "\n";
             }
 
             sleep(1);
@@ -224,6 +244,7 @@ main(int argc, char *argv[])
     EmbreeModel::Register();
     EmbreeGeometry::Register();
     EmbreeTriangles::Register();
+    EmbreeSpheres::Register();
 
     KeyedDataObject::Register();
 
@@ -245,16 +266,23 @@ main(int argc, char *argv[])
         theApplication.SyncApplication();
 
         TrianglesP tp = Triangles::NewP();
+        ParticlesP pp = Particles::NewP();
 
-        SetupGeometry sg(tp);
+        SetupGeometry sg(tp, pp);
         sg.Broadcast(true, true);
 
-        GeomToEmbree g2e(emp, tp);
-        g2e.Broadcast(true, true);
+        tp->Commit();
+        pp->Commit();
+
+        GeomToEmbree t2e(emp, tp);
+        t2e.Broadcast(true, true);
+
+        GeomToEmbree p2e(emp, pp);
+        p2e.Broadcast(true, true);
 
         emp->Commit();
 
-        IntersectMsg i = IntersectMsg(ep, emp, 0.1, 0.5, -1);
+        IntersectMsg i = IntersectMsg(ep, emp, 0.0, 0.5, -1);
         i.Broadcast(true, true);
 
         theApplication.QuitApplication();

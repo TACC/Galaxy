@@ -33,30 +33,31 @@ EmbreeTriangles::Register()
 }
 
 void
-EmbreeTriangles::SetGeometry(GeometryP g)
+EmbreeTriangles::SetupIspc()
 {
-    TrianglesP t = Triangles::Cast(g);
+    super::SetupIspc();
+
+    TrianglesP t = Triangles::Cast(geometry);
     if (! t)
     {
-        std::cerr << "EmbreeTriangles::SetGeometry called with something other than Triangles\n";
+        std::cerr << "EmbreeTriangles::SetupIspc called with something other than Triangles\n";
         exit(1);
     }
 
-    super::SetGeometry(g);
-    
     int nv = t->GetNumberOfVertices();
     int nc = t->GetConnectivitySize();
 
+    ispc::EmbreeGeometry_ispc *iptr = (ispc::EmbreeGeometry_ispc *)GetIspc();
     if (nv && nc)
     {
         device_geometry = rtcNewGeometry((RTCDevice)GetEmbree()->Device(), RTC_GEOMETRY_TYPE_TRIANGLE);
 
         rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_VERTEX,
-                             0, RTC_FORMAT_FLOAT3, (void *)t->GetVertices(),
+                             0, RTC_FORMAT_FLOAT3, (void *)iptr->vertices,
                              0, 3*sizeof(float), nv);
 
         rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_INDEX,
-                             0, RTC_FORMAT_UINT3, (void *)t->GetConnectivity(),
+                             0, RTC_FORMAT_UINT3, (void *)iptr->connectivity,
                              0, 3*sizeof(int), nc);
 
         rtcCommitGeometry(device_geometry);

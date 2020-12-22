@@ -35,8 +35,10 @@ endif(COMMAND cmake_policy)
 
 ispc_include_directories(
     ${EMBREE_INCLUDE_DIRS} 
-    ${Galaxy_SOURCE_DIR}/src/math
-    ${gxy_renderer_SOURCE_DIR})
+    ${Galaxy_BINARY_DIR}/src/embree
+    ${Galaxy_SOURCE_DIR}/src/ispc
+    ${Galaxy_SOURCE_DIR}/src/renderer
+)
 
 include_directories( 
     ${Galaxy_BINARY_DIR}/src 
@@ -49,13 +51,18 @@ include_directories(
 
 set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_embree ${EMBREE_LIBRARIES} ${MPI_C_LIBRARIES})
 
-set (ISPC_SOURCES EmbreeModel.ispc)
+set (ISPC_SOURCES 
+    EmbreeGeometry.ispc
+    EmbreeSpheres.ispc
+    EmbreeModel.ispc
+    )
 
 set (CPP_SOURCES 
   Embree.cpp
   EmbreeGeometry.cpp
   EmbreeModel.cpp
   EmbreeTriangles.cpp
+  EmbreeSpheres.cpp
   )
 
 install(FILES

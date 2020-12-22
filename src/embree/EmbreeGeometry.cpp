@@ -41,6 +41,7 @@ EmbreeGeometry::initialize()
 
     geometry = NULL;
     device_geometry = NULL;
+    ispc = NULL;
 }
 
 EmbreeGeometry::~EmbreeGeometry()
@@ -48,11 +49,8 @@ EmbreeGeometry::~EmbreeGeometry()
     if (device_geometry) 
     {
         rtcReleaseGeometry(device_geometry);
-        device_geometry   = NULL;
-        ispc.vertices     = NULL;
-        ispc.normals      = NULL;
-        ispc.connectivity = NULL;
-        ispc.data       = NULL;
+        free(ispc);
+        ispc = NULL;
     }
 }
 
@@ -60,11 +58,19 @@ void
 EmbreeGeometry::SetGeometry(GeometryP g)
 {
     geometry = g;
+    ispc = malloc(sizeof(ispc::EmbreeGeometry_ispc));
+    SetupIspc();
+}
 
-    ispc.vertices     = (ispc::vec3f*)geometry->GetVertices();
-    ispc.normals      = (ispc::vec3f*)geometry->GetNormals();
-    ispc.connectivity = geometry->GetConnectivity();
-    ispc.data         = geometry->GetData();
+void
+EmbreeGeometry::SetupIspc()
+{
+    ispc::EmbreeGeometry_ispc *iptr = (ispc::EmbreeGeometry_ispc*)ispc;
+
+    iptr->vertices     = (ispc::vec3f*)geometry->GetVertices();
+    iptr->normals      = (ispc::vec3f*)geometry->GetNormals();
+    iptr->connectivity = geometry->GetConnectivity();
+    iptr->data         = geometry->GetData();
 }
 
 GeometryP 
