@@ -19,7 +19,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-VERSION="1.12.0"
+VERSION="1.14.1"
 
 if [ "x$1" != "x" ]; then
 	echo "usage: get-ispc.sh"
@@ -53,11 +53,6 @@ fi
 TARGET_DIR="install/ispc-v${VERSION}-${TARGET_OS_DIR}"
 TARBALL="ispc-v${VERSION}-${TARGET_OS}.tar.gz"
 BIN_TARGET_DIR="../install"
-
-# ispc v1.12 linux download has a 'b' appended
-if [ "x${OS_TYPE}" == "xLinux" ]; then
-	TARBALL="ispc-v${VERSION}b-${TARGET_OS}.tar.gz"  
-fi
 
 if [ -x ${TARGET_DIR}/bin/ispc ] && [ -x ${BIN_TARGET_DIR}/bin/ispc ]; then
 	report "ispc for ${OS_TYPE} already exists. Nothing more to do."

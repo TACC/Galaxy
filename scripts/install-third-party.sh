@@ -45,15 +45,37 @@ GXY_DONE_TAG="gxy_third_party_installed"
 CMAKE_BIN=$(which cmake)
 QMAKE_BIN=$(which qmake)
 QMAKE_DIR=$(dirname $QMAKE_BIN)/..
+
+ISPC_EXEC=`which ispc`
+if test X$ISPC_EXEC != X ; then 
+    AA=`$ISPC_EXEC --version | sed -e "s/^.*ISPC), //" -e "s/ .*//"`
+    maj=`echo $AA | sed "s/\..*//"`
+    min=`echo $AA | sed -e "s/[^.].//" -e "s/\..*//"`
+    if maj != 1 -o min -lt 14 ; then
+        ISPC_EXEC=
+    fi
+fi
+
+
+if test X$ISPC_EXEC == X ; then 
+    report "checking ispc..."
+    cd ${GXY_ROOT}/third-party/ispc
+    ./get-ispc.sh
+    if [ $? != 0 ]; then
+        fail "could not install ispc"
+    fi
+    ISPC_EXEC=${GXY_ROOT}/third-party/install/bin/ispc 
+fi
+
 CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/ \
              -Wno-dev"
 NODEEDITOR_CMAKE_FLAGS="-DQt5_DIR=${QMAKE_DIR}"
-EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
+EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${ISPC_EXEC} \
 						 				-DEMBREE_STATIC_LIB=ON \
 						 				-DEMBREE_TUTORIALS=OFF \
 						 				-DEMBREE_ISA_SSE2=OFF"
 OSPRAY_CMAKE_FLAGS="-Dembree_DIR=${GXY_ROOT}/third-party/install/lib/cmake/embree-3.6.1 \
-						  			-DEMBREE_ISPC_EXECUTABLE=${GXY_ROOT}/third-party/install/bin/ispc \
+						  			-DEMBREE_ISPC_EXECUTABLE=${ISPC_EXEC} \
 						  			-DCMAKE_CXX_FLAGS=-I${GXY_ROOT}/third-party/install/include \
 						  			-DOSPRAY_ENABLE_TUTORIALS=OFF \
 						  			-DOSPRAY_ENABLE_TESTING=OFF \
@@ -122,12 +144,6 @@ if [ $? != 0 ]; then
 	fail "Could not prep the third-party libraries. Bailing out."
 fi
 
-report "checking ispc..."
-cd ${GXY_ROOT}/third-party/ispc
-./get-ispc.sh
-if [ $? != 0 ]; then
-	fail "could not install ispc"
-fi
 
 cd ${GXY_ROOT}/third-party
 for tp_lib_dir in embree ospray nodeeditor rapidjson; do
