@@ -129,7 +129,10 @@ void EmbreeSpheres_intersect_kernel(const RTCIntersectFunctionNArguments *unifor
     
   if (h) {
     hit->primID = primID;
+
     // OLD (third-part) VERSION OF EMBREE DOESN'T HAVE THIS! hit->geomID = args->geomID;
+    hit->geomID = 0;
+
     if (isOcclusionTest) {
       ray->tfar = neg_inf;
     } else {
