@@ -104,7 +104,7 @@ class SampleMsg : public Work
     };
 
 public:
-  SampleMsg(VolumeP v, ParticlesP p, int tf_type, float tf0, float tf1, float step, int niterations, int nstart, int nskip, int nmiss)
+  SampleMsg(VolumeDPtr v, ParticlesDPtr p, int tf_type, float tf0, float tf1, float step, int niterations, int nstart, int nskip, int nmiss)
             : SampleMsg(sizeof(args))
   {
         args *a = (args *)contents->get();
@@ -127,7 +127,7 @@ public:
 private: 
   float istep, jstep, kstep;
 
-    vec3f get_starting_point(VolumeP v)
+    vec3f get_starting_point(VolumeDPtr v)
     {
         Box *box = v->get_local_box();
         return vec3f(box->xyz_min.x + RNDM*(box->xyz_max.x - box->xyz_min.x),
@@ -135,7 +135,7 @@ private:
                      box->xyz_min.z + RNDM*(box->xyz_max.z - box->xyz_min.z));
     }
 
-  float Q(VolumeP v, float s, args *a)
+  float Q(VolumeDPtr v, float s, args *a)
   {
     float q;
 
@@ -162,9 +162,9 @@ private:
     return q;
   }
 
-  float sample(VolumeP v, Particle& p) { return sample(v, p.xyz.x, p.xyz.y, p.xyz.z); }
-  float sample(VolumeP v, vec3f xyz) { return sample(v, xyz.x, xyz.y, xyz.z); }
-  float sample(VolumeP v, float x, float y, float z)
+  float sample(VolumeDPtr v, Particle& p) { return sample(v, p.xyz.x, p.xyz.y, p.xyz.z); }
+  float sample(VolumeDPtr v, vec3f xyz) { return sample(v, xyz.x, xyz.y, xyz.z); }
+  float sample(VolumeDPtr v, float x, float y, float z)
   {
     float dx, dy, dz;
     v->get_deltas(dx, dy, dz);
@@ -204,13 +204,13 @@ private:
 
     if (v->get_type() == Volume::FLOAT)
     {
-      float *p = (float *)v->get_samples();
+      float *p = (float *)v->get_samples().get();
       return p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
              p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
     }
     else
     {
-      unsigned char *p = (unsigned char *)v->get_samples();
+      unsigned char *p = (unsigned char *)v->get_samples().get();
       return p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
              p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
     }
@@ -221,8 +221,8 @@ public:
   {
     args *a = (args *)contents->get();
 
-    VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-    ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
+    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
+    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
 
     p->CopyPartitioning(v);
 
@@ -395,7 +395,7 @@ main(int argc, char * argv[])
   Renderer::Initialize();
   theApplication.Run();
 
-  RendererP theRenderer = Renderer::NewP();
+  RendererDPtr theRenderer = Renderer::NewDistributed();
 
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
@@ -410,30 +410,30 @@ main(int argc, char * argv[])
   {
     theRenderer->Commit();
 
-    VolumeP volume = Volume::NewP();
+    VolumeDPtr volume = Volume::NewDistributed();
     volume->Import(data);
 
     if (tf_type == TF_NONE)
       volume->get_global_minmax(tf0, tf1), tf_type = TF_LINEAR;
 
-    ParticlesP samples = Particles::NewP();
+    ParticlesDPtr samples = Particles::NewDistributed();
 
     SampleMsg *smsg = new SampleMsg(volume, samples, tf_type, tf0, tf1, scaling, iteration_limit, hot_start, skip, max_consecutive_misses);
     smsg->Broadcast(true, true);
 
     samples->Commit();
 
-    DatasetsP theDatasets = Datasets::NewP();
+    DatasetsDPtr theDatasets = Datasets::NewDistributed();
     theDatasets->Insert("samples", samples);
     theDatasets->Insert("volume", volume);
     theDatasets->Commit();
 
-    vector<CameraP> theCameras;
+    vector<CameraDPtr> theCameras;
 
 #if 1
     for (int i = 0; i < 20; i++)
     {
-      CameraP cam = Camera::NewP();
+      CameraDPtr cam = Camera::NewDistributed();
 
       cam->set_viewup(0.0, 1.0, 0.0);
       cam->set_angle_of_view(30.0);
@@ -450,7 +450,7 @@ main(int argc, char * argv[])
       theCameras.push_back(cam);
     }
 #else
-    CameraP cam = Camera::NewP();
+    CameraDPtr cam = Camera::NewDistributed();
     cam->set_viewup(0.0, 1.0, 0.0);
     cam->set_angle_of_view(45.0);
     cam->set_viewpoint(4.0, 0.0, 0.0);
@@ -459,11 +459,11 @@ main(int argc, char * argv[])
     theCameras.push_back(cam);
 #endif
 
-    ParticlesVisP pvis = ParticlesVis::NewP();
+    ParticlesVisDPtr pvis = ParticlesVis::NewDistributed();
     pvis->SetName("samples");
     pvis->Commit(theDatasets);
 
-    VolumeVisP vvis = VolumeVis::NewP();
+    VolumeVisDPtr vvis = VolumeVis::NewDistributed();
     vvis->SetName("volume");
 
     vec4f cmap[] = {
@@ -485,7 +485,7 @@ main(int argc, char * argv[])
     vvis->SetVolumeRendering(true);
     vvis->Commit(theDatasets);
 
-    VisualizationP v = Visualization::NewP();
+    VisualizationDPtr v = Visualization::NewDistributed();
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
     v->get_the_lights()->SetLights(1, light, &t);
     v->get_the_lights()->SetK(0.4, 0.6);
@@ -495,12 +495,12 @@ main(int argc, char * argv[])
     v->AddVis(vvis);
     v->Commit(theDatasets);
 
-    RenderingSetP theRenderingSet = RenderingSet::NewP();
+    RenderingSetDPtr theRenderingSet = RenderingSet::NewDistributed();
 
     int indx = 0;
     for (auto c : theCameras)
     {
-      RenderingP theRendering = Rendering::NewP();
+      RenderingDPtr theRendering = Rendering::NewDistributed();
       theRendering->SetTheOwner((indx++) % mpiSize);
       if (override_windowsize)
       {

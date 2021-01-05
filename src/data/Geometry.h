@@ -63,7 +63,7 @@ class Geometry : public KeyedDataObject
   virtual bool local_commit(MPI_Comm);
 
   //! copy local part
-  virtual bool local_copy(KeyedDataObjectP);
+  virtual bool local_copy(KeyedDataObjectDPtr);
 
   //! load geometry from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);

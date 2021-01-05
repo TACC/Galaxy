@@ -71,10 +71,10 @@ SocketConnectorClientServer::handle(string line, string& reply)
 {
   // std::cerr << "InSitu Handle: " << line << "\n";
 
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
-    theDatasets = Datasets::NewP();
+    theDatasets = Datasets::NewDistributed();
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 
@@ -92,7 +92,7 @@ SocketConnectorClientServer::handle(string line, string& reply)
     rapidjson::Document json;
     json.Parse(datadesc.c_str());
 
-    connector = SocketConnector::NewP();
+    connector = SocketConnector::NewDistributed();
     connector->set_port(1900);                      // Each participant will bump this by their rank!
 
     // For every incoming variable, create as fresh
@@ -102,7 +102,7 @@ SocketConnectorClientServer::handle(string line, string& reply)
     for (auto& v: json["variables"].GetArray())
     {
       std::string name = v["name"].GetString();
-      VolumeP volume = Volume::NewP();
+      VolumeDPtr volume = Volume::NewDistributed();
       v.AddMember("key", rapidjson::Value().SetInt(volume->getkey()), json.GetAllocator());
       variables[name] = volume;
     }
@@ -219,7 +219,7 @@ SocketConnectorClientServer::InitializeVolumesMsg::CollectiveAction(MPI_Comm com
     Key key = (Key)v["key"].GetInt();
     std::string name = std::string(v["name"].GetString());
 
-    VolumeP volume = Volume::GetByKey(key);
+    VolumeDPtr volume = Volume::GetByKey(key);
     
     volume->set_number_of_components(v["vector"].GetBool() ? 3 : 1);
     volume->set_type(v["float"].GetBool() ? Volume::FLOAT : Volume::UCHAR);

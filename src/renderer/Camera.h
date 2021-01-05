@@ -35,7 +35,7 @@
 
 #include "Box.h"
 #include "dtypes.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "Threading.h"
 #include "Work.h"
 
@@ -61,7 +61,7 @@ class Camera : public KeyedObject
   { 
     spawn_rays_args(int fnum, float pixel_scaling, int iw, int ixmin, int iymin, float ox, float oy,
        vec3f& vr, vec3f& vu, vec3f& veye, vec3f center,
-       Box *lb, Box *gb, RendererP rndr, RenderingSetP rs, RenderingP r, Camera *c) :
+       Box *lb, Box *gb, RendererDPtr rndr, RenderingSetDPtr rs, RenderingDPtr r, Camera *c) :
        fnum(fnum), iwidth(iw), ixmin(ixmin), iymin(iymin),
        scaling(1.0 / pixel_scaling), off_x(ox), off_y(oy),
        vr(vr), vu(vu), veye(veye), center(center), lbox(lb), gbox(gb),
@@ -74,9 +74,9 @@ class Camera : public KeyedObject
     float off_x, off_y;
     vec3f vr, vu, veye, center;
     Box *lbox, *gbox;
-    RendererP renderer;
-    RenderingSetP rs;
-    RenderingP r;
+    RendererDPtr renderer;
+    RenderingSetDPtr rs;
+    RenderingDPtr r;
     Camera *camera;
   };
 
@@ -98,7 +98,7 @@ class Camera : public KeyedObject
 public:
 
 	//! construct a set of Cameras from a Galaxy JSON specification
-	static bool LoadCamerasFromJSON(rapidjson::Value&, std::vector<CameraP>&);
+	static bool LoadCamerasFromJSON(rapidjson::Value&, std::vector<CameraDPtr>&);
 	
 	//! construct a Camera from a Galaxy JSON specification
 	virtual bool LoadFromJSON(rapidjson::Value&);
@@ -180,7 +180,7 @@ public:
 	 * @param rvec a vector of return values for worker threads processing RayLists of these primary rays
 	 * @param fnum the frame number for these rays
 	 */
-	void generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, std::vector<std::future<int>>& rvec, int fnum);
+	void generate_initial_rays(RendererDPtr renderer, RenderingSetDPtr renderingSet, RenderingDPtr rendering, Box* lbox, Box *gbox, std::vector<std::future<int>>& rvec, int fnum);
 
 	//! the size in bytes for the serialization of this Camera object
   virtual int serialSize();

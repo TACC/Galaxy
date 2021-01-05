@@ -28,7 +28,7 @@
 #include "Application.h"
 #include "Datasets.h"
 #include "dtypes.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "MappedVis.h"
 #include "Volume.h"
 

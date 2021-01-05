@@ -617,19 +617,19 @@ Volume::PointOwner(vec3f& p)
   return K*(global_partitions.x * global_partitions.y) + (J * global_partitions.x) + I;
 }
 
-GalaxyObjectP 
-Volume::CreateTheDeviceEquivalent(KeyedDataObjectP kdop)
+GalaxyObjectDPtr 
+Volume::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
 {
-  return GalaxyObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
+  return GalaxyObject::Cast(OsprayVolume::NewDistributed(Volume::Cast(kdop)));
 }
 
 bool
-Volume::local_copy(KeyedDataObjectP src)
+Volume::local_copy(KeyedDataObjectDPtr src)
 {
   if (! super::local_copy(src))
     return false;
 
-  VolumeP v = Cast(src);
+  VolumeDPtr v = Cast(src);
 
   vtkobj               = NULL;
   filename             = "";

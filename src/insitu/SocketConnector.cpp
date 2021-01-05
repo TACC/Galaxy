@@ -30,7 +30,7 @@ using namespace std;
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "SocketConnector.hpp"
 #include "Volume.h"
 
@@ -154,7 +154,7 @@ SocketConnector::local_close(MPI_Comm c)
 }
 
 void
-SocketConnector::Accept(VolumeP var)
+SocketConnector::Accept(VolumeDPtr var)
 {
   waiter.busy = true;
   
@@ -162,7 +162,7 @@ SocketConnector::Accept(VolumeP var)
   msg.Broadcast(true, false);
 }
 
-bool SocketConnector::local_accept(MPI_Comm c, VolumeP volume)
+bool SocketConnector::local_accept(MPI_Comm c, VolumeDPtr volume)
 {
   vtkClientSocket *cskt = sskt->WaitForConnection(wait_time);
 
@@ -199,7 +199,7 @@ bool SocketConnector::local_accept(MPI_Comm c, VolumeP volume)
   return false;
 }
 
-SocketConnector::ConnectionMsg::ConnectionMsg(SocketConnector* s, VolumeP v, todo t) : ConnectionMsg(2*sizeof(Key) + sizeof(todo))
+SocketConnector::ConnectionMsg::ConnectionMsg(SocketConnector* s, VolumeDPtr v, todo t) : ConnectionMsg(2*sizeof(Key) + sizeof(todo))
 {
   unsigned char *p = contents->get();
 
@@ -229,13 +229,13 @@ bool SocketConnector::ConnectionMsg::CollectiveAction(MPI_Comm comm, bool is_roo
 {
   unsigned char *p = contents->get();
 
-  SocketConnectorP c = SocketConnector::GetByKey(*(Key *)p);
+  SocketConnectorDPtr c = SocketConnector::GetByKey(*(Key *)p);
   p +=sizeof(Key);
 
   Key vkey = *(Key *)p;
   p +=sizeof(Key);
 
-  VolumeP v;
+  VolumeDPtr v;
   if (vkey != -1)
     v = Volume::GetByKey(vkey);
 

@@ -107,13 +107,13 @@ public:
     MHSamplerMsg::Register();
   }
 
-  MHSampler(KeyedDataObjectP source)
+  MHSampler(KeyedDataObjectDPtr source)
   {
     std::stringstream ss;
     ss << "MHFilter_" << mhfilter_index++;
     name = ss.str();
 
-    result = KeyedDataObject::Cast(Particles::NewP());
+    result = KeyedDataObject::Cast(Particles::NewDistributed());
     result->CopyPartitioning(source);
 
   }
@@ -121,7 +121,7 @@ public:
   ~MHSampler() { std::cerr << "MHSampler dtor\n"; }
 
   void
-  Sample(rapidjson::Document& doc, KeyedDataObjectP scalarVolume)
+  Sample(rapidjson::Document& doc, KeyedDataObjectDPtr scalarVolume)
   {
     mhArgs args;
     
@@ -158,7 +158,7 @@ public:
 
 #define RNDM ((float)rand() / RAND_MAX) 
 
-  static vec3f get_starting_point(VolumeP v)
+  static vec3f get_starting_point(VolumeDPtr v)
   {
     Box *box = v->get_local_box();
     return vec3f(box->xyz_min.x + RNDM*(box->xyz_max.x - box->xyz_min.x),
@@ -166,7 +166,7 @@ public:
                box->xyz_min.z + RNDM*(box->xyz_max.z - box->xyz_min.z));
   }
 
-  static float Q(VolumeP v, float s, mhArgs *a)
+  static float Q(VolumeDPtr v, float s, mhArgs *a)
   {
     float q;
 
@@ -192,7 +192,7 @@ public:
     return q;
   }
 
-  static float sample(mhArgs *args, VolumeP v, float x, float y, float z)
+  static float sample(mhArgs *args, VolumeDPtr v, float x, float y, float z)
   {
     float dx, dy, dz;
     v->get_deltas(dx, dy, dz);
@@ -244,16 +244,16 @@ public:
     }
   }
 
-  static float sample(mhArgs *args, VolumeP v, Particle& p) { return sample(args, v, p.xyz.x, p.xyz.y, p.xyz.z); }
-  static float sample(mhArgs *args, VolumeP v, vec3f xyz) { return sample(args, v, xyz.x, xyz.y, xyz.z); }
+  static float sample(mhArgs *args, VolumeDPtr v, Particle& p) { return sample(args, v, p.xyz.x, p.xyz.y, p.xyz.z); }
+  static float sample(mhArgs *args, VolumeDPtr v, vec3f xyz) { return sample(args, v, xyz.x, xyz.y, xyz.z); }
 
   static void
   Metropolis_Hastings(mhArgs *a)
   {
     variate_generator<mt19937, normal_distribution<> > generator(mt19937(time(0)), normal_distribution<>(0.0, a->sigma));
   
-    VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
-    ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
+    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
+    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
 
     p->setModified(true);
     p->clear();

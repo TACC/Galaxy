@@ -61,9 +61,9 @@ Schlieren2::initialize()
 void
 Schlieren2::HandleTerminatedRays(RayList *raylist)
 {
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-  RenderingP rendering = raylist->GetTheRendering();
-  CameraP camera = rendering->GetTheCamera();
+  RenderingSetDPtr  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingDPtr rendering = raylist->GetTheRendering();
+  CameraDPtr camera = rendering->GetTheCamera();
 
   vec3f vp, vd, vu; float aov;
 
@@ -260,10 +260,10 @@ Schlieren2::Deserialize(unsigned char *p)
 void
 Schlieren2::Trace(RayList *raylist)
 {
-  RendererP      renderer  = raylist->GetTheRenderer();
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-  RenderingP     rendering     = raylist->GetTheRendering();
-  VisualizationP visualization = rendering->GetTheVisualization();
+  RendererDPtr      renderer  = raylist->GetTheRenderer();
+  RenderingSetDPtr  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingDPtr     rendering     = raylist->GetTheRendering();
+  VisualizationDPtr visualization = rendering->GetTheVisualization();
 
   // This is called when a list of rays is pulled off the
   // RayQ.  When we are done with it we decrement the
@@ -317,11 +317,11 @@ Schlieren2::NormalizeSchlieren2ImagesMsg::CollectiveAction(MPI_Comm c, bool is_r
 
   char *ptr = (char *)contents->get();
   Key key = *(Key *)ptr;
-  RenderingSetP rs = RenderingSet::GetByKey(key);
+  RenderingSetDPtr rs = RenderingSet::GetByKey(key);
 
   for (int i = 0; i < rs->GetNumberOfRenderings(); i++)
   {
-    RenderingP r = rs->GetRendering(i);
+    RenderingDPtr r = rs->GetRendering(i);
     if (r->IsLocal())
     {
       int width, height;
@@ -358,14 +358,14 @@ Schlieren2::NormalizeSchlieren2ImagesMsg::CollectiveAction(MPI_Comm c, bool is_r
 }
 
 void
-Schlieren2::NormalizeImages(RenderingSetP rs)
+Schlieren2::NormalizeImages(RenderingSetDPtr rs)
 {
   NormalizeSchlieren2ImagesMsg msg(rs);
   msg.Broadcast(true, true);
 }
 
 void
-Schlieren2::local_render(RendererP renderer, RenderingSetP renderingSet)
+Schlieren2::local_render(RendererDPtr renderer, RenderingSetDPtr renderingSet)
 {
   // NeedInitialRays tells us whether we need to generate initial rays
   // for the current frame.  It is possible that this RenderingSet has
@@ -398,11 +398,11 @@ Schlieren2::local_render(RendererP renderer, RenderingSetP renderingSet)
     vector<future<int>> rvec;
     for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
     {
-      RenderingP rendering = renderingSet->GetRendering(i);
+      RenderingDPtr rendering = renderingSet->GetRendering(i);
       rendering->resolve_lights(renderer);
 
-      CameraP camera = rendering->GetTheCamera();
-      VisualizationP visualization = rendering->GetTheVisualization();
+      CameraDPtr camera = rendering->GetTheCamera();
+      VisualizationDPtr visualization = rendering->GetTheVisualization();
 
       Box *gBox = visualization->get_global_box();
       Box *lBox = visualization->get_local_box();
@@ -423,7 +423,7 @@ Schlieren2::local_render(RendererP renderer, RenderingSetP renderingSet)
 #endif
 
 #ifdef GXY_EVENT_TRACKING
-    GetTheEventTracker()->Add(new CameraLoopEndEvent);
+    GetTheEventTracker()->Add(new CameraLPtroopEndEvent);
 #endif
 
 #ifdef GXY_WRITE_IMAGES

@@ -50,7 +50,7 @@ float radius = 0.02;
 class SampleMsg : public Work
 {
 public:
-  SampleMsg(VolumeP v, ParticlesP p) : SampleMsg(2*sizeof(Key))
+  SampleMsg(VolumeDPtr v, ParticlesDPtr p) : SampleMsg(2*sizeof(Key))
   {
     ((Key *)contents->get())[0] = v->getkey();
     ((Key *)contents->get())[1] = p->getkey();
@@ -63,8 +63,8 @@ public:
   bool CollectiveAction(MPI_Comm c, bool s)
   {
     Key* keys = (Key *)contents->get();
-    VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(keys[0]));
-    ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(keys[1]));
+    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(keys[0]));
+    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(keys[1]));
 
     p->CopyPartitioning(v);
 
@@ -81,14 +81,8 @@ public:
     int ystep = nx;
     int zstep = nx * ny;
 
-    float *fsamples = (float *)v->get_samples();
-
-#if 0
-    p->allocate(samples_per_partition);
-    Particle *particle = p->get_samples();
-#else
+    float *fsamples = (float *)v->get_samples().get();
     Particle particle;
-#endif
 
     for (int i = 0; i < samples_per_partition; i++)
     {
@@ -218,7 +212,7 @@ main(int argc, char * argv[])
   Renderer::Initialize();
   theApplication.Run();
 
-  RendererP theRenderer = Renderer::NewP();
+  RendererDPtr theRenderer = Renderer::NewDistributed();
 
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
@@ -234,7 +228,7 @@ main(int argc, char * argv[])
     theRenderer->Commit();
 
     // create empty distributed container for volume data
-    VolumeP volume = Volume::NewP();
+    VolumeDPtr volume = Volume::NewDistributed();
     // import data to all processes, smartly distributes volume across processses
     // this import defines the partitioning of the data across processses
     // if subsequent Import commands have a different partition, an error will be thrown
@@ -242,7 +236,7 @@ main(int argc, char * argv[])
 
     // create empty distributed container for particles
     // particle partitioning will match volume partition
-    ParticlesP samples = Particles::NewP();
+    ParticlesDPtr samples = Particles::NewDistributed();
 
     // define action to perform on volume (see SampleMsg above)
     SampleMsg *smsg = new SampleMsg(volume, samples);
@@ -250,16 +244,16 @@ main(int argc, char * argv[])
 
     samples->Commit();
 
-    DatasetsP theDatasets = Datasets::NewP();
+    DatasetsDPtr theDatasets = Datasets::NewDistributed();
     theDatasets->Insert("samples", samples);
     theDatasets->Commit();
 
-    vector<CameraP> theCameras;
+    vector<CameraDPtr> theCameras;
 
 #if 0
     for (int i = 0; i < 20; i++)
     {
-      CameraP cam = Camera::NewP();
+      CameraDPtr cam = Camera::NewDistributed();
 
       cam->set_viewup(0.0, 1.0, 0.0);
       cam->set_angle_of_view(45.0);
@@ -276,7 +270,7 @@ main(int argc, char * argv[])
       theCameras.push_back(cam);
     }
 #else
-    CameraP cam = Camera::NewP();
+    CameraDPtr cam = Camera::NewDistributed();
     cam->set_viewup(0.0, 1.0, 0.0);
     cam->set_angle_of_view(45.0);
     cam->set_viewpoint(4.0, 0.0, 0.0);
@@ -285,11 +279,11 @@ main(int argc, char * argv[])
     theCameras.push_back(cam);
 #endif
 
-    ParticlesVisP pvis = ParticlesVis::NewP();
+    ParticlesVisDPtr pvis = ParticlesVis::NewDistributed();
     pvis->SetName("samples");
     pvis->Commit(theDatasets);
 
-    VisualizationP v = Visualization::NewP();
+    VisualizationDPtr v = Visualization::NewDistributed();
     v->AddVis(pvis);
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
     v->get_the_lights()->SetLights(1, light, &t);
@@ -298,12 +292,12 @@ main(int argc, char * argv[])
     v->get_the_lights()->SetAO(0, 0.0);
     v->Commit(theDatasets);
 
-    RenderingSetP theRenderingSet = RenderingSet::NewP();
+    RenderingSetDPtr theRenderingSet = RenderingSet::NewDistributed();
 
     int indx = 0;
     for (auto c : theCameras)
     {
-      RenderingP theRendering = Rendering::NewP();
+      RenderingDPtr theRendering = Rendering::NewDistributed();
       theRendering->SetTheOwner((indx++) % mpiSize);
       if (override_windowsize)
       {

@@ -80,15 +80,15 @@ string volfile("");
 
 ImageWriter image_writer("gyxviewer");
 
-AsyncRenderingP	theRendering = NULL;
-RenderingSetP 	theRenderingSet = NULL;
-CameraP 				theCamera = NULL;
-VisualizationP 	theVisualization = NULL;
-DatasetsP 			theDatasets = NULL;
-ParticlesP			theParticles = NULL;
-VolumeP					theVolume = NULL;
-ParticlesVisP   theParticlesVis = NULL;
-VolumeVisP    	theVolumeVis = NULL;
+AsyncRenderingDPtr	theRendering = NULL;
+RenderingSetDPtr 	theRenderingSet = NULL;
+CameraDPtr 				theCamera = NULL;
+VisualizationDPtr 	theVisualization = NULL;
+DatasetsDPtr 			theDatasets = NULL;
+ParticlesDPtr			theParticles = NULL;
+VolumeDPtr					theVolume = NULL;
+ParticlesVisDPtr   theParticlesVis = NULL;
+VolumeVisDPtr    	theVolumeVis = NULL;
 
 float *pixels = NULL;
 bool  render_one = false;
@@ -115,7 +115,7 @@ Sample()
 
 void SetupVolume()
 {
-	theVolume = Volume::NewP();
+	theVolume = Volume::NewDistributed();
 	theVolume->Import(volfile);
 
 	if (! data_minmax_from_argument)
@@ -124,17 +124,17 @@ void SetupVolume()
 
 void SetupParticles()
 {
-	theParticles = Particles::NewP();
+	theParticles = Particles::NewDistributed();
 }
 
 void 
 SetupVisualization()
 {
-	theParticlesVis = ParticlesVis::NewP();
+	theParticlesVis = ParticlesVis::NewDistributed();
 	theParticlesVis->SetName("samples");
 	theParticlesVis->Commit(theDatasets);
 
-	theVolumeVis = VolumeVis::NewP();
+	theVolumeVis = VolumeVis::NewDistributed();
 	theVolumeVis->SetName("volume");
 
 	vec4f cmap[] = {
@@ -156,7 +156,7 @@ SetupVisualization()
 	theVolumeVis->SetVolumeRendering(true);
 	theVolumeVis->Commit(theDatasets);
 
-	theVisualization = Visualization::NewP();
+	theVisualization = Visualization::NewDistributed();
 	theVisualization->AddVis(theParticlesVis);
 	theVisualization->AddVis(theVolumeVis);
 	theVisualization->Commit(theDatasets);
@@ -374,12 +374,12 @@ glut_loop()
 void *
 render_thread(void *d)
 {
-  RendererP theRenderer = Renderer::NewP();
+  RendererDPtr theRenderer = Renderer::NewDistributed();
 
   Document *doc = GetTheApplication()->OpenJSONFile(statefile);
   theRenderer->LoadStateFromDocument(*doc);
 
-  vector<CameraP> theCameras;
+  vector<CameraDPtr> theCameras;
   Camera::LoadCamerasFromJSON(*doc, theCameras);
   theCamera = theCameras[0];
 
@@ -408,18 +408,18 @@ render_thread(void *d)
 	SetupVolume();
 	SetupParticles();
 
-	theDatasets = Datasets::NewP();
+	theDatasets = Datasets::NewDistributed();
 	theDatasets->Insert("samples", theParticles);
 	theDatasets->Insert("volume", theVolume);
 	theDatasets->Commit();
 
-	theRendering = AsyncRendering::NewP();
+	theRendering = AsyncRendering::NewDistributed();
 	theRendering->SetMaxAge(age, fadeout);
 	theRendering->SetTheOwner(0);
 	theRendering->SetTheDatasets(theDatasets);
 	theRendering->SetTheCamera(theCamera);
 
-	theRenderingSet = RenderingSet::NewP();
+	theRenderingSet = RenderingSet::NewDistributed();
 	theRenderingSet->AddRendering(theRendering);
 
 	Sample();

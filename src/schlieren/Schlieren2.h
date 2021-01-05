@@ -63,7 +63,7 @@ public:
 
   virtual void Trace(RayList *);
 
-  void NormalizeImages(RenderingSetP);
+  void NormalizeImages(RenderingSetDPtr);
 
   float GetFar() { return far; }
   void  SetFar(float f) { far = f; }
@@ -77,7 +77,7 @@ public:
   float GetCutoffType() { return cutoff_type; }
   void SetCutoffType(int t) { cutoff_type = t; }
   
-  virtual void local_render(RendererP, RenderingSetP);
+  virtual void local_render(RendererDPtr, RenderingSetDPtr);
 
 private:
   float far;
@@ -89,7 +89,7 @@ private:
   class NormalizeSchlieren2ImagesMsg : public Work
   {
   public:
-    NormalizeSchlieren2ImagesMsg(RenderingSetP rs) : NormalizeSchlieren2ImagesMsg(sizeof(Key))
+    NormalizeSchlieren2ImagesMsg(RenderingSetDPtr rs) : NormalizeSchlieren2ImagesMsg(sizeof(Key))
     {
       unsigned char *p = (unsigned char *)contents->get();
       *(Key *)p = rs->getkey();

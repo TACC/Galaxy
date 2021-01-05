@@ -26,9 +26,7 @@
 
 #include <dtypes.h>
 
-
-
-include "Interpolator.h"
+#include "Interpolator.h"
 
 using namespace gxy;
 using namespace std;
@@ -39,7 +37,7 @@ namespace gxy
 class InterpolateVolumeOntoGeometryMsg : public Work
 {
 public:
-  InterpolateVolumeOntoGeometryMsg(GeometryP s, VolumeP v, GeometryP d) : InterpolateVolumeOntoGeometryMsg(3 * sizeof(Key))
+  InterpolateVolumeOntoGeometryMsg(GeometryDPtr s, VolumeDPtr v, GeometryDPtr d) : InterpolateVolumeOntoGeometryMsg(3 * sizeof(Key))
   {
     Key *keys = (Key *)contents->get();
     keys[0] = s->getkey();
@@ -53,9 +51,9 @@ public:
   {
     Key *keys = (Key *)get();
 
-    GeometryP src = Geometry::GetByKey(keys[0]);
-    VolumeP   vol = Volume::GetByKey(keys[1]);
-    GeometryP dst = Geometry::GetByKey(keys[2]);
+    GeometryDPtr src = Geometry::GetByKey(keys[0]);
+    VolumeDPtr   vol = Volume::GetByKey(keys[1]);
+    GeometryDPtr dst = Geometry::GetByKey(keys[2]);
 
     if (src != dst)
     {
@@ -115,13 +113,13 @@ public:
       
       if (vol->get_type() == Volume::FLOAT)
       {
-        float *s = (float *)vol->get_samples();
+        float *s = (float *)vol->get_samples().get();
         *d = s[v000]*b000 + s[v001]*b001 + s[v010]*b010 + s[v011]*b011 +
              s[v100]*b100 + s[v101]*b101 + s[v110]*b110 + s[v111]*b111;
       }        
       else
       {
-        unsigned char *s = (unsigned char *)vol->get_samples();
+        unsigned char *s = (unsigned char *)vol->get_samples().get();
         *d = s[v000]*b000 + s[v001]*b001 + s[v010]*b010 + s[v011]*b011 +
              s[v100]*b100 + s[v101]*b101 + s[v110]*b110 + s[v111]*b111;
       }        
@@ -149,14 +147,14 @@ InitializeInterpolateVolumeOntoGeometry()
 }
 
 void
-InterpolateVolumeOntoGeometry(GeometryP s, VolumeP v)
+InterpolateVolumeOntoGeometry(GeometryDPtr s, VolumeDPtr v)
 {
   InterpolateVolumeOntoGeometryMsg msg(s, v, s);
   msg.Broadcast(true, true);
 }
 
 void
-InterpolateVolumeOntoGeometry(GeometryP s, VolumeP v, GeometryP d)
+InterpolateVolumeOntoGeometry(GeometryDPtr s, VolumeDPtr v, GeometryDPtr d)
 {
   InterpolateVolumeOntoGeometryMsg msg(s, v, d);
   msg.Broadcast(true, true);

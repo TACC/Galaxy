@@ -64,7 +64,7 @@ EmbreeSpheres::FinalizeIspc()
 
     ispc::EmbreeSpheres_ispc *iptr = (ispc::EmbreeSpheres_ispc*)GetIspc();
 
-    ParticlesP p = Particles::Cast(geometry);
+    ParticlesDPtr p = Particles::Cast(geometry);
     if (! p)
     {
         std::cerr << "EmbreeSpheres::FinalizeIspc called with something other than Particles\n";

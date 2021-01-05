@@ -33,7 +33,7 @@ EmbreeTriangles::FinalizeIspc()
 {
     EmbreeGeometry::FinalizeIspc();
 
-    TrianglesP t = Triangles::Cast(geometry);
+    TrianglesDPtr t = Triangles::Cast(geometry);
     if (! t)
     {
         std::cerr << "EmbreeTriangles::FinalizeIspc called with something other than Triangles\n";

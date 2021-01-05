@@ -23,7 +23,7 @@
 #include <iostream>
 
 #include "Application.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 
 #include "TransferFunction_ispc.h"
 

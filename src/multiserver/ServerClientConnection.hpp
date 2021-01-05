@@ -47,10 +47,10 @@ public:
   {
     std::vector<MultiServerHandler*> handlers;
 
-    DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+    DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
     if (! theDatasets)
     {
-      theDatasets = Datasets::NewP();
+      theDatasets = Datasets::NewDistributed();
       MultiServer::Get()->SetGlobal("global datasets", theDatasets);
     }
 
@@ -74,7 +74,7 @@ public:
 
         std::cerr << line << "\n";
 
-        DynamicLibraryP dlp = MultiServer::Get()->getTheDynamicLibraryManager()->Load(libname);
+        DynamicLibraryDPtr dlp = MultiServer::Get()->getTheDynamicLibraryManager()->Load(libname);
         if (! dlp)
           reply = std::string("error loading ") + libname;
         else

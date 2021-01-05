@@ -483,7 +483,7 @@ bool
 RenderingSet::SynchronousCheckMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 {
 	Key rsk = *(Key *)contents->get();
-	RenderingSetP rs = GetByKey(rsk);
+	RenderingSetDPtr rs = GetByKey(rsk);
 
 	rs->first_async_completion_test_done = true;
 
@@ -561,7 +561,7 @@ RenderingSet::PropagateStateMsg::Action(int sender)
   unsigned char *ptr = contents->get();
 
 	Key rsk = *(Key *)ptr;
-	RenderingSetP rs = GetByKey(rsk);
+	RenderingSetDPtr rs = GetByKey(rsk);
 
 	if (! rs || rs->IsDone())
 	{
@@ -609,7 +609,7 @@ RenderingSet::deserialize(unsigned char *ptr)
 
 	for (int i = 0; i < n; i++)
 	{
-		RenderingP r = Rendering::GetByKey(*(Key *)ptr);
+		RenderingDPtr r = Rendering::GetByKey(*(Key *)ptr);
 		AddRendering(r);
 		ptr += sizeof(Key);
 	}
@@ -663,7 +663,7 @@ RenderingSet::SaveImagesMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   ptr += sizeof(bool);
 	string basename(ptr);
 
-	RenderingSetP rs = GetByKey(key);
+	RenderingSetDPtr rs = GetByKey(key);
 	
 	for (int i = 0; i < rs->GetNumberOfRenderings(); i++)
 		if (rs->GetRendering(i)->IsLocal())
@@ -690,7 +690,7 @@ RenderingSet::ResetMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 #if LOGGING
 APP_LOG(<< "RenderingSet::ResetMsg::CollectiveActionResetMsg : " << key);
 #endif
-	RenderingSetP rs = GetByKey(key);
+	RenderingSetDPtr rs = GetByKey(key);
 	rs->local_reset();
 	return false;
 }
@@ -698,7 +698,7 @@ APP_LOG(<< "RenderingSet::ResetMsg::CollectiveActionResetMsg : " << key);
 #endif // GXY_WRITE_IMAGES
 
 void
-RenderingSet::AddRendering(RenderingP r)
+RenderingSet::AddRendering(RenderingDPtr r)
 {
 	renderings.push_back(r);
 }
@@ -709,7 +709,7 @@ RenderingSet::GetNumberOfRenderings()
 	return renderings.size();
 }
 
-RenderingP
+RenderingDPtr
 RenderingSet::GetRendering(int i)
 {
 	return renderings[i];
@@ -809,7 +809,7 @@ bool
 RenderingSet::DumpStateMsg::CollectiveAction(MPI_Comm c, bool root)
 {
 	Key rsk = *(Key *)contents->get();
-	RenderingSetP rs = GetByKey(rsk);
+	RenderingSetDPtr rs = GetByKey(rsk);
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
 	rs->_dumpState(c, "status");
 #endif

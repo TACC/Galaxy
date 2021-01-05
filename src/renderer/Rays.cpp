@@ -39,13 +39,13 @@ using namespace std;
 namespace gxy
 {
 
-RayList::RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, RayListType type) 
+RayList::RayList(RendererDPtr renderer, RenderingSetDPtr rs, RenderingDPtr r, int nrays, RayListType type) 
 	: RayList(renderer, rs, r, nrays, rs->GetCurrentFrame(), type) {}
 
 static pthread_mutex_t raylist_lock = PTHREAD_MUTEX_INITIALIZER;
 static int raylist_id = 0;
 
-RayList::RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type)
+RayList::RayList(RendererDPtr renderer, RenderingSetDPtr rs, RenderingDPtr r, int nrays, int frame, RayListType type)
 {
 	theRenderer = renderer;
 	theRenderingSet = rs;

@@ -46,7 +46,7 @@ DensitySampleClientServer::DensitySampleClientServer(SocketHandler *sh) : MultiS
 #define RNDM ((float)rand() / RAND_MAX) 
 
 static float *
-CellValues(VolumeP v, DensitySampleClientServer::Args *a)
+CellValues(VolumeDPtr v, DensitySampleClientServer::Args *a)
 {
   float *cellValues = new float((a->ni-1) * (a->nj-1) * (a->nk-1));
 
@@ -94,8 +94,8 @@ CellValues(VolumeP v, DensitySampleClientServer::Args *a)
 static void
 DensitySample(MPI_Comm c, DensitySampleClientServer::Args *a)
 {
-  VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-  ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
+  VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
+  ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
 
   p->clear();
   p->CopyPartitioning(v);
@@ -195,10 +195,10 @@ DensitySampleClientServer::handle(std::string line, std::string& reply)
 {
   int nSamples = 1000;
 
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
-    theDatasets = Datasets::NewP();
+    theDatasets = Datasets::NewDistributed();
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 
@@ -237,7 +237,7 @@ DensitySampleClientServer::handle(std::string line, std::string& reply)
       return true;
     }
 
-    particles = Particles::NewP();
+    particles = Particles::NewDistributed();
     theDatasets->Insert(name, particles);
 
     reply = "ok";

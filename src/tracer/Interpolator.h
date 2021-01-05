@@ -24,7 +24,7 @@
 namespace gxy
 {
   void InitializeInterpolateVolumeOntoGeometry();
-  void InterpolateVolumeOntoGeometry(GeometryP s, VolumeP v, GeometryP d);
-  void InterpolateVolumeOntoGeometry(GeometryP s, VolumeP v);
+  void InterpolateVolumeOntoGeometry(GeometryDPtr s, VolumeDPtr v, GeometryDPtr d);
+  void InterpolateVolumeOntoGeometry(GeometryDPtr s, VolumeDPtr v);
 }
 

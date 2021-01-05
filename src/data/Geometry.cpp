@@ -77,12 +77,12 @@ Geometry::initialize()
 }
 
 bool
-Geometry::local_copy(KeyedDataObjectP src)
+Geometry::local_copy(KeyedDataObjectDPtr src)
 {
   if (! super::local_copy(src))
     return false;
 
-  GeometryP g = Cast(src);
+  GeometryDPtr g = Cast(src);
 
   vertices             = g->vertices;
   data                 = g->data;

@@ -177,7 +177,7 @@ Renderer::local_commit(MPI_Comm c)
 }
 
 void
-Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
+Renderer::local_render(RendererDPtr renderer, RenderingSetDPtr renderingSet)
 {
 #ifdef GXY_EVENT_TRACKING
   GetTheEventTracker()->Add(new StartRenderingEvent);
@@ -238,11 +238,11 @@ Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
     vector<future<int>> rvec;
     for (int i = 0; i < renderingSet->GetNumberOfRenderings(); i++)
     {
-      RenderingP rendering = renderingSet->GetRendering(i);
+      RenderingDPtr rendering = renderingSet->GetRendering(i);
       rendering->resolve_lights(renderer);
 
-      CameraP camera = rendering->GetTheCamera();
-      VisualizationP visualization = rendering->GetTheVisualization();
+      CameraDPtr camera = rendering->GetTheCamera();
+      VisualizationDPtr visualization = rendering->GetTheVisualization();
 
       Box *gBox = visualization->get_global_box();
       Box *lBox = visualization->get_local_box();
@@ -255,7 +255,7 @@ Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
 #endif
 
 #ifdef GXY_EVENT_TRACKING
-    GetTheEventTracker()->Add(new CameraLoopEndEvent);
+    GetTheEventTracker()->Add(new CameraLPtroopEndEvent);
 #endif
 
 #ifdef GXY_WRITE_IMAGES
@@ -423,7 +423,7 @@ Renderer::Classify(RayList *raylist)
 void
 Renderer::AssignDestinations(RayList *raylist)
 {
-  VisualizationP visualization = raylist->GetTheRendering()->GetTheVisualization();
+  VisualizationDPtr visualization = raylist->GetTheRendering()->GetTheVisualization();
   Box *box = visualization->get_local_box();
 
   for (int i = 0; i < raylist->GetRayCount(); i++)
@@ -461,8 +461,8 @@ Renderer::HandleTerminatedRays(RayList *raylist)
   for (int i = 0; i < raylist->GetRayCount(); i++)
     if (raylist->get_classification(i) == Renderer::TERMINATED) terminated_count++;
 
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-  RenderingP rendering = raylist->GetTheRendering();
+  RenderingSetDPtr  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingDPtr rendering = raylist->GetTheRendering();
 
   if (terminated_count == 0) return;
 
@@ -510,10 +510,10 @@ public:
 
 	int work() { 
 
-		RendererP      renderer      = raylist->GetTheRenderer();
-		RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-		RenderingP     rendering     = raylist->GetTheRendering();
-		VisualizationP visualization = rendering->GetTheVisualization();
+		RendererDPtr      renderer      = raylist->GetTheRenderer();
+		RenderingSetDPtr  renderingSet  = raylist->GetTheRenderingSet();
+		RenderingDPtr     rendering     = raylist->GetTheRendering();
+		VisualizationDPtr visualization = rendering->GetTheVisualization();
   
 #if 0
     std::cerr << std::hex 
@@ -658,10 +658,10 @@ private:
 void
 Renderer::Trace(RayList *raylist)
 {
-  RendererP      renderer  = raylist->GetTheRenderer();
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-  RenderingP     rendering     = raylist->GetTheRendering();
-  VisualizationP visualization = rendering->GetTheVisualization();
+  RendererDPtr      renderer  = raylist->GetTheRenderer();
+  RenderingSetDPtr  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingDPtr     rendering     = raylist->GetTheRendering();
+  VisualizationDPtr visualization = rendering->GetTheVisualization();
 
   // This is called when a list of rays is pulled off the
   // RayQ.  When we are done with it we decrement the 
@@ -724,7 +724,7 @@ Renderer::StatisticsMsg::CollectiveAction(MPI_Comm c, bool is_root)
 {
   char *ptr = (char *)contents->get();
   Key key = *(Key *)ptr;
-  RendererP r = GetByKey(key);
+  RendererDPtr r = GetByKey(key);
   r->_dumpStats();
   return false;
 }
@@ -751,8 +751,8 @@ Renderer::SendRaysMsg::Action(int sender)
   int nReceived = rayList->GetRayCount();
   rayList->GetTheRenderer()->_received_from(sender, nReceived);
 
-  RenderingP rendering = rayList->GetTheRendering();
-  RenderingSetP renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
+  RenderingDPtr rendering = rayList->GetTheRendering();
+  RenderingSetDPtr renderingSet = rendering ? rayList->GetTheRenderingSet() : NULL;
   if (! renderingSet)
   {
     cerr << "WARNING: ray list arrived before rendering/renderingSet" << endl;
@@ -821,7 +821,7 @@ Renderer::Deserialize(unsigned char *p)
 }
 
 #ifdef GXY_WRITE_IMAGES
-Renderer::AckRaysMsg::AckRaysMsg(RenderingSetP rs) : AckRaysMsg(sizeof(Key))
+Renderer::AckRaysMsg::AckRaysMsg(RenderingSetDPtr rs) : AckRaysMsg(sizeof(Key))
 {
   *(Key *)contents->get() = rs->getkey();
 }
@@ -829,7 +829,7 @@ Renderer::AckRaysMsg::AckRaysMsg(RenderingSetP rs) : AckRaysMsg(sizeof(Key))
 bool
 Renderer::AckRaysMsg::Action(int sender)
 {
-  RenderingSetP rs = RenderingSet::GetByKey(*(Key *)contents->get());
+  RenderingSetDPtr rs = RenderingSet::GetByKey(*(Key *)contents->get());
   rs->DecrementInFlightCount();
   rs->DecrementRayListCount();
   return false;
@@ -837,7 +837,7 @@ Renderer::AckRaysMsg::Action(int sender)
 #endif // GXY_WRITE_IMAGES
 
 void
-Renderer::Start(RenderingSetP rs)
+Renderer::Start(RenderingSetDPtr rs)
 {
   static int render_frame = 0;
 #ifdef GXY_EVENT_TRACKING
@@ -875,7 +875,7 @@ Renderer::RenderMsg::~RenderMsg()
 {
 }
 
-Renderer::RenderMsg::RenderMsg(Renderer* r, RenderingSetP rs) :
+Renderer::RenderMsg::RenderMsg(Renderer* r, RenderingSetDPtr rs) :
   Renderer::RenderMsg(sizeof(Key) + r->SerialSize() + sizeof(Key))
 {
   unsigned char *p = contents->get();
@@ -892,10 +892,10 @@ Renderer::RenderMsg::Action(int sender)
   Key renderer_key = *(Key *)p;
   p += sizeof(Key);
 
-  RendererP renderer = Renderer::GetByKey(renderer_key);
+  RendererDPtr renderer = Renderer::GetByKey(renderer_key);
   p = renderer->Deserialize(p);
 
-  RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
+  RenderingSetDPtr rs = RenderingSet::GetByKey(*(Key *)p);
 
   renderer->local_render(renderer, rs);
 

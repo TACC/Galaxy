@@ -104,7 +104,7 @@ GuiClientServer::Notify(GalaxyObject *w, ObserverEvent id, void *cargo)
         {
           std::cerr << "Added " << update->name << "\n";
 
-          KeyedDataObjectP kdop = temporaries->Find(update->name);
+          KeyedDataObjectDPtr kdop = temporaries->Find(update->name);
           if (! kdop)
             kdop = globals->Find(update->name);
 
@@ -229,7 +229,7 @@ GuiClientServer::handle(string line, string& reply)
     if (name != "none")
     {
       std::cerr << "Unobserve: " << name << "\n";
-      KeyedDataObjectP o = globals->Find(name);
+      KeyedDataObjectDPtr o = globals->Find(name);
       if (o)
         Unobserve(o);
     }
@@ -238,7 +238,7 @@ GuiClientServer::handle(string line, string& reply)
     if (name != "none")
     {
       std::cerr << "Observe: " << name << "\n";
-      KeyedDataObjectP o = globals->Find(name);
+      KeyedDataObjectDPtr o = globals->Find(name);
       if (o)
         Observe(o);
     }
@@ -253,7 +253,7 @@ GuiClientServer::handle(string line, string& reply)
     for (vector<string>::iterator it = names.begin(); it != names.end(); ++it)
     {
       std::string name(*it);
-      KeyedDataObjectP kdop = globals->Find(name);
+      KeyedDataObjectDPtr kdop = globals->Find(name);
 
       auto i = watched_datasets.begin();
       while (i != watched_datasets.end() && *i != name) i++;
@@ -268,7 +268,7 @@ GuiClientServer::handle(string line, string& reply)
       int ncomp;
       if (type == 0)
       {
-        VolumeP v = Volume::Cast(kdop);
+        VolumeDPtr v = Volume::Cast(kdop);
         ncomp = v->get_number_of_components();
       }
       else
@@ -331,8 +331,8 @@ GuiClientServer::handle(string line, string& reply)
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("initWindow: window has not been initialized");
 
-    clientWindow->visualization  = Visualization::NewP();
-    clientWindow->datasets       = Datasets::NewP();
+    clientWindow->visualization  = Visualization::NewDistributed();
+    clientWindow->datasets       = Datasets::NewDistributed();
 
     if (! clientWindow->visualization->LoadFromJSON(doc["Visualization"]))
       HANDLED_BUT_ERROR_RETURN("visualization: error in LoadFromJson");
@@ -341,7 +341,7 @@ GuiClientServer::handle(string line, string& reply)
     {
       auto v = clientWindow->visualization->GetVis(i);
 
-      KeyedDataObjectP kdop = temporaries->Find(v->GetName());
+      KeyedDataObjectDPtr kdop = temporaries->Find(v->GetName());
       if (! kdop)
         kdop = globals->Find(v->GetName());
 
@@ -386,11 +386,11 @@ GuiClientServer::handle(string line, string& reply)
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("render: window has not been initialized");
     
-    GuiRenderingP rendering = GuiRendering::NewP();
-    clientWindow->renderingSet = RenderingSet::NewP();
+    GuiRenderingDPtr rendering = GuiRendering::NewDistributed();
+    clientWindow->renderingSet = RenderingSet::NewDistributed();
     clientWindow->renderingSet->SetRenderFrame(clientWindow->frame++);
 
-    CameraP camera = clientWindow->camera;
+    CameraDPtr camera = clientWindow->camera;
     rendering->SetTheSize(camera->get_width(), camera->get_height());
 
     float px, py, pz, dx, dy, dz;
@@ -430,13 +430,13 @@ GuiClientServer::handle(string line, string& reply)
     if (! sampler)
       HANDLED_BUT_ERROR_RETURN("mhsample: filter was not MHSampler");
 
-    KeyedDataObjectP scalarVolume = temporaries->Find(doc["source"].GetString());
+    KeyedDataObjectDPtr scalarVolume = temporaries->Find(doc["source"].GetString());
     if (! scalarVolume)
       scalarVolume = globals->Find(doc["source"].GetString());
 
     sampler->Sample(doc, scalarVolume);
 
-    KeyedDataObjectP samples = sampler->getResult();
+    KeyedDataObjectDPtr samples = sampler->getResult();
     
     float m, M;
     samples->get_global_minmax(m, M);
@@ -478,13 +478,13 @@ GuiClientServer::handle(string line, string& reply)
     if (! sampler)
       HANDLED_BUT_ERROR_RETURN("densitysample: filter was not DensitySampler");
 
-    KeyedDataObjectP scalarVolume = temporaries->Find(doc["source"].GetString());
+    KeyedDataObjectDPtr scalarVolume = temporaries->Find(doc["source"].GetString());
     if (! scalarVolume)
       scalarVolume = globals->Find(doc["source"].GetString());
 
     sampler->Sample(doc, scalarVolume);
 
-    KeyedDataObjectP samples = sampler->getResult();
+    KeyedDataObjectDPtr samples = sampler->getResult();
     
     float m, M;
     samples->get_global_minmax(m, M);
@@ -526,13 +526,13 @@ GuiClientServer::handle(string line, string& reply)
     if (! sampler)
       HANDLED_BUT_ERROR_RETURN("raysampler: found filter that wasn't RaycastSampler");
 
-    KeyedDataObjectP scalarVolume = temporaries->Find(doc["source"].GetString());
+    KeyedDataObjectDPtr scalarVolume = temporaries->Find(doc["source"].GetString());
     if (! scalarVolume)
       scalarVolume = globals->Find(doc["source"].GetString());
 
     sampler->Sample(doc, scalarVolume);
 
-    KeyedDataObjectP samples = sampler->getResult();
+    KeyedDataObjectDPtr samples = sampler->getResult();
     
     float m, M;
     samples->get_global_minmax(m, M);
@@ -573,7 +573,7 @@ GuiClientServer::handle(string line, string& reply)
 
       std::string name = doc["vectorField"].GetString();
 
-      VolumeP vectorField = Volume::Cast(globals->Find(name));
+      VolumeDPtr vectorField = Volume::Cast(globals->Find(name));
       if (! vectorField)
         vectorField = Volume::Cast(temporaries->Find(name));
 
@@ -593,7 +593,7 @@ GuiClientServer::handle(string line, string& reply)
 
     std::string name = doc["seeds"].GetString();
 
-    ParticlesP seeds = Particles::Cast(temporaries->Find(name));
+    ParticlesDPtr seeds = Particles::Cast(temporaries->Find(name));
     if (! seeds)
       seeds = Particles::Cast(temporaries->Find(name));
 
@@ -634,7 +634,7 @@ GuiClientServer::handle(string line, string& reply)
 
     streamtracer->TraceToPathLines();
 
-    KeyedDataObjectP kdop = streamtracer->getResult();
+    KeyedDataObjectDPtr kdop = streamtracer->getResult();
     
     int type;
     if (kdop->getclass() ==  Volume::ClassType) type = 0;
@@ -692,7 +692,7 @@ GuiClientServer::handle(string line, string& reply)
 
     std::string name = doc["volume"].GetString();
 
-    VolumeP vfield = Volume::Cast(globals->Find(name));
+    VolumeDPtr vfield = Volume::Cast(globals->Find(name));
     if (! vfield)
       vfield = Volume::Cast(temporaries->Find(name));
 
@@ -704,7 +704,7 @@ GuiClientServer::handle(string line, string& reply)
 
     name = doc["pointset"].GetString();
 
-    GeometryP pset = Geometry::Cast(globals->Find(name));
+    GeometryDPtr pset = Geometry::Cast(globals->Find(name));
     if (! pset)
       pset = Geometry::Cast(temporaries->Find(name));
 
@@ -730,7 +730,7 @@ GuiClientServer::handle(string line, string& reply)
 
     interpolator->Interpolate();
 
-    KeyedDataObjectP res = interpolator->getResult();
+    KeyedDataObjectDPtr res = interpolator->getResult();
     
     float m, M;
     res->get_global_minmax(m, M);

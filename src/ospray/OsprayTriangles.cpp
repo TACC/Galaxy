@@ -22,7 +22,7 @@
 
 using namespace gxy;
 
-OsprayTriangles::OsprayTriangles(TrianglesP t)
+OsprayTriangles::OsprayTriangles(TrianglesDPtr t)
 {
   int nv = t->GetNumberOfVertices();
   int nc = t->GetConnectivitySize();

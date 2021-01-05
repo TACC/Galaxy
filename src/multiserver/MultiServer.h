@@ -60,13 +60,13 @@ public:
   /*! \param name the name under which the object is saved
    *  \param obj the object to save
    */
-  void SetGlobal(std::string name, KeyedObjectP obj) { globals[name] = obj; }
+  void SetGlobal(std::string name, KeyedObjectDPtr obj) { globals[name] = obj; }
 
   //! retrieve a global KeyedObject.  NULL if it isn't there
   /*! \param name the name under which the object is saved
    *  \param obj the object to save
    */
-  KeyedObjectP GetGlobal(std::string name) { return globals[name]; }
+  KeyedObjectDPtr GetGlobal(std::string name) { return globals[name]; }
 
   //! delete global reference to a global KeyedObject.
   /*! \param name the name under which the object is saved
@@ -100,7 +100,7 @@ private:
 
   DynamicLibraryManager *dynamicLibraryManager;
 
-  std::map<std::string, KeyedObjectP> globals;
+  std::map<std::string, KeyedObjectDPtr> globals;
 };
 
 }

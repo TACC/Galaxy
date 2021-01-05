@@ -55,7 +55,7 @@ public:
    * \param visualization a pointer to the Visualization to trace
    * \param raysIn a pointer to the RayList of rays to trace
    */
-  RayList *Trace(Lighting* lights, VisualizationP visualization, RayList * raysIn);
+  RayList *Trace(Lighting* lights, VisualizationDPtr visualization, RayList * raysIn);
 
 
 protected:

@@ -46,7 +46,7 @@ SamplerTraceRays::~SamplerTraceRays()
 }
 
 RayList *
-SamplerTraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
+SamplerTraceRays::Trace(Lighting* lights, VisualizationDPtr visualization, RayList *raysIn)
 {
   ispc::SamplerTraceRays_SamplerTraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 	return NULL;

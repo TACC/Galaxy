@@ -46,7 +46,7 @@ main(int argc, char * argv[])
 	if (theApplication.GetRank() == 0)
 	{
 		{
-			TestObjectP top = TestObject::NewP();
+			TestObjectDPtr top = TestObject::NewDistributed();
 			top->doit();
 		}
 

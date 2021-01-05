@@ -20,7 +20,7 @@
 
 
 #include "Application.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 
 using namespace rapidjson;
 using namespace std;
@@ -35,10 +35,10 @@ namespace gxy
 // of each type.   You can call dol() to print out a row for each non-empty type and shows the number of
 // references on each existing object of that type.   This data structure itself has a reference on each.
 // 
-// aol(KeyedObjectP&) adds a newly created object to the data structure
+// aol(KeyedObjectDPtr&) adds a newly created object to the data structure
 // rmol(int type) removes the data structure's reference to each object of type 
 //
-std::vector<KeyedObjectP> object_lists[32];
+std::vector<KeyedObjectDPtr> object_lists[32];
 extern void rmol(int);
 void dol()
 {
@@ -48,7 +48,7 @@ void dol()
     auto ol = object_lists[i];
     if (ol.size() > 0)
     {
-      std::cerr << GetTheKeyedObjectFactory()->GetClassName(i) << " (" << i << ") :";
+      std::cerr << GetTheObjectFactory()->GetClassName(i) << " (" << i << ") :";
       for (auto j = 0; j < ol.size(); j++)
         std::cerr << " " << (ol[j].use_count() - 1);  // -1 to ignore this local reference
       std::cerr << "\n";
@@ -56,9 +56,9 @@ void dol()
   }
   std::cerr << "\n";
 }
-void aol(KeyedObjectP& p)
+void aol(KeyedObjectDPtr& p)
 {
-  std::vector<KeyedObjectP>::iterator it;
+  std::vector<KeyedObjectDPtr>::iterator it;
   for (it = object_lists[p->getclass()].begin(); it != object_lists[p->getclass()].end(); it++)
     if (*it == p)
       break;
@@ -77,16 +77,16 @@ static int ko_count = 0;
 static int get_ko_count() { return ko_count; }
 
 WORK_CLASS_TYPE(KeyedObject::CommitMsg)
-WORK_CLASS_TYPE(KeyedObjectFactory::NewMsg)
-WORK_CLASS_TYPE(KeyedObjectFactory::DropMsg)
+WORK_CLASS_TYPE(ObjectFactory::NewMsg)
+WORK_CLASS_TYPE(ObjectFactory::DropMsg)
 
-KeyedObjectFactory* GetTheKeyedObjectFactory()
+ObjectFactory* GetTheObjectFactory()
 {
-  return GetTheApplication()->GetTheKeyedObjectFactory();
+  return GetTheApplication()->GetTheObjectFactory();
 }
 
 int
-KeyedObjectFactory::register_class(KeyedObject *(*n)(Key), std::string s)
+ObjectFactory::register_class(KeyedObject *(*n)(Key), std::string s)
 {
   for (auto i = 0; i < class_names.size(); i++)
     if (class_names[i] == s)
@@ -103,7 +103,7 @@ KeyedObjectFactory::register_class(KeyedObject *(*n)(Key), std::string s)
 }
 
 bool
-KeyedObjectFactory::NewMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
+ObjectFactory::NewMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 {
 	if (!isRoot)
 	{
@@ -111,7 +111,7 @@ KeyedObjectFactory::NewMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 		KeyedObjectClass c = *(KeyedObjectClass *)p;
 		p += sizeof(KeyedObjectClass);
 		Key k = *(Key *)p;
-		KeyedObjectP kop = shared_ptr<KeyedObject>(GetTheKeyedObjectFactory()->New(c, k));
+		KeyedObjectDPtr kop = shared_ptr<KeyedObject>(GetTheObjectFactory()->New(c, k));
 	}
 
 	return false;
@@ -119,7 +119,7 @@ KeyedObjectFactory::NewMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 
 // Remove any objects references from the key map.
 void
-KeyedObjectFactory::Clear()
+ObjectFactory::Clear()
 {
   // Delete remote dependents of local *primary* objects.
 
@@ -129,7 +129,7 @@ KeyedObjectFactory::Clear()
 }
 
 void
-KeyedObjectFactory::Drop(Key k)
+ObjectFactory::Drop(Key k)
 {
 #ifdef GXY_LOGGING
 	APP_LOG(<< "DROP " << k);
@@ -139,19 +139,19 @@ KeyedObjectFactory::Drop(Key k)
 }
 
 bool 
-KeyedObjectFactory::DropMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
+ObjectFactory::DropMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 {
 	unsigned char *p = (unsigned char *)get();
 	Key k = *(Key *)p;
-	GetTheKeyedObjectFactory()->erase(k);
+	GetTheObjectFactory()->erase(k);
 	return false;
 }
 
 // Get an object by key... could be in either keymap
-KeyedObjectP
-KeyedObjectFactory::get(Key k)
+KeyedObjectDPtr
+ObjectFactory::get(Key k)
 {
-	KeyedObjectP kop = k >= smap.size() ? nullptr : smap[k];
+	KeyedObjectDPtr kop = k >= smap.size() ? nullptr : smap[k];
   if (kop == nullptr)
 		return k >= wmap.size() ? nullptr : wmap[k].lock();
 	else
@@ -159,22 +159,22 @@ KeyedObjectFactory::get(Key k)
 }
 
 void
-KeyedObjectFactory::erase(Key k)
+ObjectFactory::erase(Key k)
 {
 	if (k < smap.size()) smap[k] = nullptr;
 }
 
 void
-KeyedObjectFactory::add_weak(KeyedObjectP& p)
+ObjectFactory::add_weak(KeyedObjectDPtr& p)
 {
   for (int i = wmap.size(); i <= p->getkey(); i++)
-		wmap.push_back(KeyedObjectW());
+		wmap.push_back(KeyedObjectWPtr());
 
 	wmap[p->getkey()] = p;
 }
 
 void
-KeyedObjectFactory::add_strong(KeyedObjectP& p)
+ObjectFactory::add_strong(KeyedObjectDPtr& p)
 {
   for (int i = smap.size(); i <= p->getkey(); i++)
 		smap.push_back(NULL);
@@ -185,7 +185,7 @@ KeyedObjectFactory::add_strong(KeyedObjectP& p)
 void
 KeyedObject::Drop()
 {
-	GetTheKeyedObjectFactory()->Drop(getkey());
+	GetTheObjectFactory()->Drop(getkey());
 }
 
 KeyedObject::KeyedObject(KeyedObjectClass c, Key k) : keyedObjectClass(c), key(k)
@@ -212,13 +212,13 @@ KeyedObject::local_commit(MPI_Comm c)
 	return false;
 }
 
-KeyedObjectP
+KeyedObjectDPtr
 KeyedObject::Deserialize(unsigned char *p)
 {
 	Key k = *(Key *)p;
 	p += sizeof(Key);
 
-	KeyedObjectP kop = GetTheKeyedObjectFactory()->get(k);
+	KeyedObjectDPtr kop = GetTheObjectFactory()->get(k);
 	p = kop->deserialize(p);
 
 	if (*(int *)p != 12345)
@@ -281,7 +281,7 @@ KeyedObject::CommitMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   Key k = *(Key *)p;
   p += sizeof(Key);
 
-  KeyedObjectP kop = GetTheKeyedObjectFactory()->get(k);
+  KeyedObjectDPtr kop = GetTheObjectFactory()->get(k);
 
   if (! isRoot)
     kop->deserialize(p);
@@ -290,12 +290,12 @@ KeyedObject::CommitMsg::CollectiveAction(MPI_Comm c, bool isRoot)
 }
 
 void
-KeyedObjectFactory::Dump()
+ObjectFactory::Dump()
 {
   cerr << "STRONG keymap (" << smap.size() << ")\n";
 	for (int i = 0; i < smap.size(); i++)
 	{
-		KeyedObjectP kop = smap[i];
+		KeyedObjectDPtr kop = smap[i];
 		if (kop != NULL)
 			cerr << "key " << i << " " << GetClassName(kop->getclass()) << " count " << kop.use_count() << endl;
 	}
@@ -303,13 +303,13 @@ KeyedObjectFactory::Dump()
   cerr << "WEAK keymap (" << wmap.size() << ")\n";
 	for (int i = 0; i < wmap.size(); i++)
 	{
-		KeyedObjectP kop = wmap[i].lock();
+		KeyedObjectDPtr kop = wmap[i].lock();
 		if (kop != NULL)
 			cerr << "key " << i << " " << GetClassName(kop->getclass()) << " count " << kop.use_count() << endl;
 	}
 }
 
-KeyedObjectFactory::~KeyedObjectFactory() 
+ObjectFactory::~ObjectFactory() 
 {
   // No idea why this is necessary.   Without it, when the wmap vector is destroyed a 
   // segfault occurs in the weak pointer part of the shared_ptr code.

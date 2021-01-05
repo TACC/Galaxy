@@ -48,7 +48,7 @@
 #include <vector>
 #include <memory>
 
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 
 namespace gxy
 {
@@ -71,7 +71,7 @@ public:
   std::string GetName() { return name; }
 
   //! Cause the library to be loaded on all server processes
-  DynamicLibraryP Load();
+  DynamicLibraryDPtr Load();
 
   //! Access a particular symbol from the DL
   void *GetSym(std::string);
@@ -99,13 +99,13 @@ private:
 
 };
 
-typedef std::shared_ptr<DynamicLibrary> DynamicLibraryP;
+typedef std::shared_ptr<DynamicLibrary> DynamicLibraryDPtr;
 
 class DynamicLibraryManager
 {
 public:
   DynamicLibraryManager();
-  DynamicLibraryP Load(std::string);
+  DynamicLibraryDPtr Load(std::string);
 
   static void Register();
   
@@ -113,13 +113,13 @@ public:
   void Show();
 
   //! LOCAL: add a DynamicLibrary object to the load map
-  void post(DynamicLibraryP dlp) { loadmap.push_back(dlp); }
+  void post(DynamicLibraryDPtr dlp) { loadmap.push_back(dlp); }
 
   //! LOCAL: flush unneeded DynamicLibraries
   void flush(int, Key *);
 
 private:
-  std::vector<DynamicLibraryP> loadmap;
+  std::vector<DynamicLibraryDPtr> loadmap;
 
   class FlushMsg : public Work
   {

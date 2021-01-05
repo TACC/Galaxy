@@ -32,8 +32,7 @@
 #include "Application.h"
 #include "Camera.h"
 #include "Datasets.h"
-#include "KeyedObject.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "Lighting.h"
 #include "Pixel.h"
 #include "RenderingSet.h"
@@ -65,14 +64,14 @@ public:
   //! (re-)initialize the local framebuffer and image buffers to zero, if owned by this process
   virtual void local_reset();
 
-	CameraP GetTheCamera(); //!< returns a pointer to the Camera used for this Rendering
-	void SetTheCamera(CameraP c); //!< set the Camera to use for this Rendering
+	CameraDPtr GetTheCamera(); //!< returns a pointer to the Camera used for this Rendering
+	void SetTheCamera(CameraDPtr c); //!< set the Camera to use for this Rendering
 
-	DatasetsP GetTheDatasets(); //!< returns a pointer to the Datasets used in this Rendering
-	void SetTheDatasets(DatasetsP c); //!< set the Datasets to use for this Rendering
+	DatasetsDPtr GetTheDatasets(); //!< returns a pointer to the Datasets used in this Rendering
+	void SetTheDatasets(DatasetsDPtr c); //!< set the Datasets to use for this Rendering
 
-	VisualizationP GetTheVisualization(); //!< returns a pointer to the Visualization used in this Rendering
-	void SetTheVisualization(VisualizationP v); //!< set the Visualization to use for this Rendering
+	VisualizationDPtr GetTheVisualization(); //!< returns a pointer to the Visualization used in this Rendering
+	void SetTheVisualization(VisualizationDPtr v); //!< set the Visualization to use for this Rendering
 
 	int GetTheOwner() { return owner; } //!< returns the rank of the process that owns the framebuffer for this Rendering
 	void SetTheOwner(int o) { owner = o; } //!< set the rank of the process that owns this Rendering
@@ -114,15 +113,15 @@ public:
 	//! return a pointer to the Lighting singleton for this rendering
 	Lighting *GetLighting() { return &lights; }
 	//! set lights for this Rendering using the given Renderer
-	void resolve_lights(RendererP);
+	void resolve_lights(RendererDPtr);
 	
 protected:
 	Lighting lights;
 	int frame;
 
-	VisualizationP visualization;
-	CameraP    		 camera;
-	DatasetsP  		 datasets;
+	VisualizationDPtr visualization;
+	CameraDPtr    		 camera;
+	DatasetsDPtr  		 datasets;
 
 	int owner;
 	int accumulation_knt;

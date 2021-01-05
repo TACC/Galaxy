@@ -128,10 +128,10 @@ Particles::load_from_vtkPointSet(vtkPointSet *pset)
   return true;
 }
 
-GalaxyObjectP 
-Particles::CreateTheDeviceEquivalent(KeyedDataObjectP kdop)
+GalaxyObjectDPtr 
+Particles::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
 { 
-  return GalaxyObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
+  return GalaxyObject::Cast(OsprayParticles::NewDistributed(Particles::Cast(kdop)));
 } 
 
 

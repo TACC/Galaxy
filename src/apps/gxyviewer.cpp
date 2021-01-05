@@ -70,11 +70,11 @@ string statefile("");
 
 ImageWriter image_writer("gxyviewer");
 
-AsyncRenderingP	theRendering = NULL;
-RenderingSetP 	theRenderingSet = NULL;
-CameraP 				theCamera = NULL;
-VisualizationP 	theVisualization = NULL;
-DatasetsP 			theDatasets = NULL;
+AsyncRenderingDPtr	theRendering = NULL;
+RenderingSetDPtr 	theRenderingSet = NULL;
+CameraDPtr 				theCamera = NULL;
+VisualizationDPtr 	theVisualization = NULL;
+DatasetsDPtr 			theDatasets = NULL;
 
 float *pixels = NULL;
 bool  render_one = false;
@@ -308,11 +308,11 @@ glut_loop()
 void *
 render_thread(void *d)
 {
-  RendererP theRenderer = Renderer::NewP();
+  RendererDPtr theRenderer = Renderer::NewDistributed();
   Document *doc = GetTheApplication()->OpenJSONFile(statefile);
   theRenderer->LoadStateFromDocument(*doc);
 
-  vector<CameraP> theCameras;
+  vector<CameraDPtr> theCameras;
   Camera::LoadCamerasFromJSON(*doc, theCameras);
   theCamera = theCameras[0];
 
@@ -338,15 +338,15 @@ render_thread(void *d)
     theCamera->set_height(height);
 	theCamera->Commit();
 
-  theDatasets = Datasets::NewP();
+  theDatasets = Datasets::NewDistributed();
   theDatasets->LoadFromJSON(*doc);
   theDatasets->Commit();
 
-  vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
+  vector<VisualizationDPtr> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
   theVisualization = theVisualizations[0];
 	theVisualization->Commit(theDatasets);
 
-	theRendering = AsyncRendering::NewP();
+	theRendering = AsyncRendering::NewDistributed();
 	theRendering->SetMaxAge(age, fadeout);
 	theRendering->SetTheOwner(0);
 	theRendering->SetTheDatasets(theDatasets);
@@ -358,7 +358,7 @@ render_thread(void *d)
 
 	pixels = theRendering->GetPixels();
 
-	theRenderingSet = RenderingSet::NewP();
+	theRenderingSet = RenderingSet::NewDistributed();
 	theRenderingSet->AddRendering(theRendering);
 	theRenderingSet->Commit();
 

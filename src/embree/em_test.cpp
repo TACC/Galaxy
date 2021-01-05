@@ -35,7 +35,7 @@ int mpiRank = 0, mpiSize = 1;
 class SetupTriangles : public Work
 {
 public:
-    SetupTriangles(TrianglesP tp) : SetupTriangles(sizeof(Key))
+    SetupTriangles(TrianglesDPtr tp) : SetupTriangles(sizeof(Key))
     {
         Key *p = (Key *)get();
         p[0] = tp->getkey();
@@ -49,7 +49,7 @@ public:
     {   
         Key *p = (Key *)get();
         
-        TrianglesP tp = Triangles::GetByKey(p[0]);
+        TrianglesDPtr tp = Triangles::GetByKey(p[0]);
 
         tp->allocate_vertices(4);
         tp->allocate_connectivity(2*3);
@@ -80,7 +80,7 @@ public:
 class SetupSpheres : public Work
 {
 public:
-    SetupSpheres(ParticlesP pp) : SetupSpheres(sizeof(Key))
+    SetupSpheres(ParticlesDPtr pp) : SetupSpheres(sizeof(Key))
     {
         Key *p = (Key *)get();
 
@@ -95,7 +95,7 @@ public:
     {   
         Key *p = (Key *)get();
         
-        ParticlesP pp = Particles::GetByKey(p[0]);
+        ParticlesDPtr pp = Particles::GetByKey(p[0]);
 
         pp->allocate_vertices(4);
         pp->allocate_connectivity(4);
@@ -121,7 +121,7 @@ public:
 class SetupPathLines : public Work
 {
 public:
-    SetupPathLines(PathLinesP plp) : SetupPathLines(sizeof(Key))
+    SetupPathLines(PathLinesDPtr plp) : SetupPathLines(sizeof(Key))
     {
         Key *p = (Key *)get();
         p[0] = plp->getkey();
@@ -135,7 +135,7 @@ public:
     {   
         Key *p = (Key *)get();
         
-        PathLinesP plp = PathLines::GetByKey(p[0]);
+        PathLinesDPtr plp = PathLines::GetByKey(p[0]);
 
         plp->allocate_vertices(4);
         plp->allocate_connectivity(3);
@@ -167,7 +167,7 @@ public:
 class GeomToEmbree : public Work
 {
 public:
-    GeomToEmbree(EmbreeModelP emp, GeometryP tp) : GeomToEmbree(2*sizeof(Key))
+    GeomToEmbree(EmbreeModelDPtr emp, GeometryDPtr tp) : GeomToEmbree(2*sizeof(Key))
     {
         unsigned char *p = (unsigned char *)get();
 
@@ -185,12 +185,12 @@ public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
         Key *p = (Key *)get();
-        EmbreeModelP emp = EmbreeModel::GetByKey(p[0]);
-        GeometryP gp = Geometry::GetByKey(p[1]);
+        EmbreeModelDPtr emp = EmbreeModel::GetByKey(p[0]);
+        GeometryDPtr gp = Geometry::GetByKey(p[1]);
 
         if (Triangles::Cast(gp))
         {
-            EmbreeTrianglesP etp = EmbreeTriangles::New();
+            EmbreeTrianglesDPtr etp = EmbreeTriangles::New();
             etp->SetGeometry(gp);
             etp->CreateIspc();
             etp->FinalizeIspc();
@@ -199,7 +199,7 @@ public:
         }
         else if (Particles::Cast(gp))
         {
-            EmbreeSpheresP esp = EmbreeSpheres::New();
+            EmbreeSpheresDPtr esp = EmbreeSpheres::New();
             esp->SetGeometry(gp);
             esp->CreateIspc();
             esp->FinalizeIspc();
@@ -207,7 +207,7 @@ public:
         }
         else if (PathLines::Cast(gp))
         {
-            EmbreePathLinesP plp = EmbreePathLines::New();
+            EmbreePathLinesDPtr plp = EmbreePathLines::New();
             plp->SetGeometry(gp);
             plp->CreateIspc();
             plp->FinalizeIspc();
@@ -223,7 +223,7 @@ public:
 class IntersectMsg : public Work
 {
 public:
-    IntersectMsg(EmbreeP ep, EmbreeModelP emp, float x, float y, float z) : IntersectMsg(2*sizeof(Key) + 3*sizeof(float))
+    IntersectMsg(EmbreeDPtr ep, EmbreeModelDPtr emp, float x, float y, float z) : IntersectMsg(2*sizeof(Key) + 3*sizeof(float))
     {
         Key *k = (Key *)get();
         k[0] = ep->getkey();
@@ -242,8 +242,8 @@ public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
         Key *k = (Key *)get();
-        EmbreeP ep = Embree::GetByKey(k[0]);
-        EmbreeModelP emp = EmbreeModel::GetByKey(k[1]);
+        EmbreeDPtr ep = Embree::GetByKey(k[0]);
+        EmbreeModelDPtr emp = EmbreeModel::GetByKey(k[1]);
 
         float *p = (float *)(k + 2);
 
@@ -369,21 +369,21 @@ main(int argc, char *argv[])
     if (mpiRank == 0)
     {
         {
-            EmbreeP ep = Embree::NewP();
+            EmbreeDPtr ep = Embree::NewDistributed();
             ep->Commit();
 
             theApplication.SyncApplication();
 
-            EmbreeModelP emp = EmbreeModel::NewP();
+            EmbreeModelDPtr emp = EmbreeModel::NewDistributed();
             emp->SetEmbree(ep);
             emp->Commit();
 
             theApplication.SyncApplication();
 
-            TrianglesP tp;
+            TrianglesDPtr tp;
             if (test_element_types & 0x1)
             {
-                tp = Triangles::NewP();
+                tp = Triangles::NewDistributed();
                 SetupTriangles s(tp);
                 s.Broadcast(true, true);
                 tp->Commit();
@@ -392,10 +392,10 @@ main(int argc, char *argv[])
                 t2e.Broadcast(true, true);
             }
                    
-            ParticlesP pp;
+            ParticlesDPtr pp;
             if (test_element_types & 0x2)
             {
-                pp = Particles::NewP();
+                pp = Particles::NewDistributed();
                 SetupSpheres s(pp);
                 s.Broadcast(true, true);
                 pp->Commit();
@@ -404,10 +404,10 @@ main(int argc, char *argv[])
                 t2e.Broadcast(true, true);
             }
                
-            PathLinesP plp;
+            PathLinesDPtr plp;
             if (test_element_types & 0x4)
             {
-                plp = PathLines::NewP();
+                plp = PathLines::NewDistributed();
                 SetupPathLines s(plp);
                 s.Broadcast(true, true);
                 plp->Commit();

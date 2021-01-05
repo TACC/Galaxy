@@ -55,7 +55,7 @@ class SocketConnector : public KeyedObject
   struct variable
   {
     std::string name;
-    VolumeP volume;
+    VolumeDPtr volume;
   };
 
   struct Waiter
@@ -82,7 +82,7 @@ public:
 
   void Wait() { waiter.Wait(); }
   void Open();
-  void Accept(VolumeP);
+  void Accept(VolumeDPtr);
   void Close();
 
   bool has(std::string);
@@ -108,7 +108,7 @@ protected:
 
   bool local_open(MPI_Comm c);
   bool local_close(MPI_Comm c);
-  bool local_accept(MPI_Comm c, VolumeP v);
+  bool local_accept(MPI_Comm c, VolumeDPtr v);
 
   int wait_time = 100000;  // msec
 
@@ -127,7 +127,7 @@ protected:
     enum todo {Open, Close, Accept};
 
     ConnectionMsg(SocketConnector* s, todo t);
-    ConnectionMsg(SocketConnector* s, VolumeP v, todo t);
+    ConnectionMsg(SocketConnector* s, VolumeDPtr v, todo t);
 
     WORK_CLASS(ConnectionMsg, true);
 

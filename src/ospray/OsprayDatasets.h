@@ -33,7 +33,7 @@
 
 // Note: the source object is a distributed keyed data object
 
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "Box.h"
 
 namespace gxy
@@ -50,13 +50,13 @@ class OsprayDatasets : public OsprayObject
   GALAXY_OBJECT(OsprayDatasets)
 
 public:
-  static OsprayDatasetsP NewP(DatasetsP p) { return OsprayDatasets::Cast(std::shared_ptr<OsprayDatasets>(new OsprayDatasets(p))); }
+  static OsprayDatasetsDPtr NewDistributed(DatasetsDPtr p) { return OsprayDatasets::Cast(std::shared_ptr<OsprayDatasets>(new OsprayDatasets(p))); }
 
   OsprayObject GetByKey(Key);
   void Add(Key k, OsprayObject);
 
 private:
-  OsprayDatasets(DatasetsP);
+  OsprayDatasets(DatasetsDPtr);
 
   std::map<Key, OsprayObject> ospray_data;
 };

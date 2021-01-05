@@ -36,22 +36,22 @@ namespace gxy
 class EmbreeGeometry
 {
 public:
-    static EmbreeGeometryP New() { return std::shared_ptr<EmbreeGeometry>(new EmbreeGeometry); }
+    static EmbreeGeometryDPtr New() { return std::shared_ptr<EmbreeGeometry>(new EmbreeGeometry); }
     virtual ~EmbreeGeometry();
 
-    void SetGeometry(GeometryP g);
+    void SetGeometry(GeometryDPtr g);
 
     virtual void CreateIspc();
     virtual void FinalizeIspc();
 
-    GeometryP GetGeometry();
+    GeometryDPtr GetGeometry();
     RTCGeometry GetDeviceGeometry() { return device_geometry; }
     void *GetIspc() { return ispc; }
 
 protected:
     EmbreeGeometry();
 
-    GeometryP geometry;
+    GeometryDPtr geometry;
     RTCGeometry device_geometry;
     void *ispc;
 };

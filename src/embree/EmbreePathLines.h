@@ -36,7 +36,7 @@ namespace gxy
 class EmbreePathLines : public EmbreeGeometry
 {
 public:
-    static EmbreePathLinesP New() { return std::shared_ptr<EmbreePathLines>(new EmbreePathLines); }
+    static EmbreePathLinesDPtr New() { return std::shared_ptr<EmbreePathLines>(new EmbreePathLines); }
     ~EmbreePathLines() {};
 
     void SetMap(float, float, float, float);

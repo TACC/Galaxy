@@ -43,7 +43,7 @@ int
 StreamTracer::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int) + 5*sizeof(float); }
 
 bool
-StreamTracerFilter::SetVectorField(VolumeP v)
+StreamTracerFilter::SetVectorField(VolumeDPtr v)
 {
   if (!v || 
       v->get_number_of_components() != 3 || 
@@ -123,7 +123,7 @@ StreamTracer::Trace(int n, vec3f* p)
 }
 
 void
-StreamTracer::Trace(ParticlesP p)
+StreamTracer::Trace(ParticlesDPtr p)
 {
   Lock();
 
@@ -162,7 +162,7 @@ StreamTracer::local_commit(MPI_Comm c)
 }
 
 void
-StreamTracer::TraceToPathLines(PathLinesP plp)
+StreamTracer::TraceToPathLines(PathLinesDPtr plp)
 { 
   StreamTracerTraceToPathLinesMsg msg(this, plp);
   msg.Broadcast(true, true);
@@ -178,7 +178,7 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
   float tLast;
   int me = GetTheApplication()->GetRank();
 
-  VolumeP v = GetVectorField();
+  VolumeDPtr v = GetVectorField();
 
   // h will be the step size
 

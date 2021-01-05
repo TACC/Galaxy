@@ -34,7 +34,7 @@
 #include "Datasets.h"
 #include "dtypes.h"
 #include "IspcObject.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "OsprayObject.h"
 
 namespace gxy
@@ -59,24 +59,24 @@ public:
 
     //! commit this object to the global registry across all processes.  If by name, we need the Datasets object to dereference the dataset name.   If we give it a specific object, use it.  Otherwise, assume the datakey is already set.
     
-    virtual bool Commit(DatasetsP);
-    virtual bool Commit(KeyedDataObjectP);
+    virtual bool Commit(DatasetsDPtr);
+    virtual bool Commit(KeyedDataObjectDPtr);
     virtual bool Commit(Key key);
     virtual bool Commit();
 
     //! return a pointer to the KeyedDataObject data that this Vis targets
-    KeyedDataObjectP GetTheData() { return data; }
+    KeyedDataObjectDPtr GetTheData() { return data; }
 
     //! set the KeyedDataObject data that this Vis should target.
-    void SetTheData( KeyedDataObjectP d ) { data = d; }
+    void SetTheData( KeyedDataObjectDPtr d ) { data = d; }
 
     //! set the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.   This is the opportunity to set any Vis options on the OSPRay object itself.
     //! 
-    virtual void SetTheOsprayDataObject(OsprayObjectP o);
+    virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
 
     //! get the OSPRayObject for this Vis' data, if there is one.
     //! 
-    virtual OsprayObjectP  GetTheOsprayDataObject() { return odata; }
+    virtual OsprayObjectDPtr  GetTheOsprayDataObject() { return odata; }
 
     //! construct a Vis from a Galaxy JSON specification
     virtual bool LoadFromJSON(rapidjson::Value&);
@@ -101,8 +101,8 @@ protected:
 
     std::string name;
     Key datakey;
-    KeyedDataObjectP data;
-    OsprayObjectP odata;
+    KeyedDataObjectDPtr data;
+    OsprayObjectDPtr odata;
 };
 
 } // namespace gxy

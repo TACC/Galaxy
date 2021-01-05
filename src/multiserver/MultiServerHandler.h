@@ -38,7 +38,7 @@
 #include <string>
 
 #include "GalaxyObject.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "SocketHandler.h"
 #include "MultiServer.h"
 #include "DynamicLibraryManager.h"

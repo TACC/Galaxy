@@ -32,7 +32,7 @@
 #include "Application.h"
 #include "ClientServer.h"
 #include "Events.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "Message.h"
 #include "MessageManager.h"
 #include "MessageQ.h"

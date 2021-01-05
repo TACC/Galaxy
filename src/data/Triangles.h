@@ -59,9 +59,9 @@ public:
   virtual void allocate_vertices(int nv);
 
   //! Copy local part
-  virtual bool local_copy(KeyedDataObjectP);
+  virtual bool local_copy(KeyedDataObjectDPtr);
 
-  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
+  virtual GalaxyObjectDPtr CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);

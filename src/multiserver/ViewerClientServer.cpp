@@ -62,10 +62,10 @@ ViewerClientServer::init()
 bool
 ViewerClientServer::handle(string line, string& reply)
 {
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
-    theDatasets = Datasets::NewP();
+    theDatasets = Datasets::NewDistributed();
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 

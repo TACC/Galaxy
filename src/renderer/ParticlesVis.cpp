@@ -133,7 +133,7 @@ ParticlesVis::local_commit(MPI_Comm c)
 }
 
 void
-ParticlesVis::SetTheOsprayDataObject(OsprayObjectP o)
+ParticlesVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
 {
   super::SetTheOsprayDataObject(o);
 

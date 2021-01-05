@@ -93,7 +93,7 @@ public:
   
   void GetParticles(Particle*& p, int& n);
 
-  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
+  virtual GalaxyObjectDPtr CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);

@@ -66,7 +66,7 @@ syntax(char *a)
 class ParticleMsg : public Work
 {
 public:
-  ParticleMsg(ParticlesP p) : ParticleMsg(sizeof(Key))
+  ParticleMsg(ParticlesDPtr p) : ParticleMsg(sizeof(Key))
   {
     ((Key *)contents->get())[0] = p->getkey();
   }
@@ -76,7 +76,7 @@ public:
   bool CollectiveAction(MPI_Comm c, bool s)
    {
     Key* keys = (Key *)contents->get();
-    ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(*keys));
+    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(*keys));
     // this method creates some particles and sets the value to the
     // local rank. The particles are randomly placed inside a
     // unit cube centered at the origin. 
@@ -140,7 +140,7 @@ main(int argc, char * argv[])
   Renderer::Initialize();
   theApplication.Run();
 
-  RendererP theRenderer = Renderer::NewP();
+  RendererDPtr theRenderer = Renderer::NewDistributed();
 
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
@@ -155,7 +155,7 @@ main(int argc, char * argv[])
 
     // create empty distributed container for particles
     // particle partitioning will match volume partition
-    ParticlesP samples = Particles::NewP();
+    ParticlesDPtr samples = Particles::NewDistributed();
 
     // define action to perform on volume (see SampleMsg above)
     // not sampleing so comment this bit out
@@ -164,16 +164,16 @@ main(int argc, char * argv[])
     //
     samples->Commit();
 
-    DatasetsP theDatasets = Datasets::NewP();
+    DatasetsDPtr theDatasets = Datasets::NewDistributed();
     theDatasets->Insert("samples", samples);
     theDatasets->Commit();
 
-    vector<CameraP> theCameras;
+    vector<CameraDPtr> theCameras;
 
 #if 0
     for (int i = 0; i < 20; i++)
     {
-      CameraP cam = Camera::NewP();
+      CameraDPtr cam = Camera::NewDistributed();
 
       cam->set_viewup(0.0, 1.0, 0.0);
       cam->set_angle_of_view(45.0);
@@ -190,7 +190,7 @@ main(int argc, char * argv[])
       theCameras.push_back(cam);
     }
 #else
-    CameraP cam = Camera::NewP();
+    CameraDPtr cam = Camera::NewDistributed();
     cam->set_viewup(0.0, 1.0, 0.0);
     cam->set_angle_of_view(45.0);
     cam->set_viewpoint(4.0, 0.0, 0.0);
@@ -199,11 +199,11 @@ main(int argc, char * argv[])
     theCameras.push_back(cam);
 #endif
 
-    ParticlesVisP pvis = ParticlesVis::NewP();
+    ParticlesVisDPtr pvis = ParticlesVis::NewDistributed();
     pvis->SetName("samples");
     pvis->Commit(theDatasets);
 
-    VisualizationP v = Visualization::NewP();
+    VisualizationDPtr v = Visualization::NewDistributed();
     v->AddVis(pvis);
     float light[] = {1.0, 2.0, 3.0}; int t = 1;
     v->get_the_lights()->SetLights(1, light, &t);
@@ -212,12 +212,12 @@ main(int argc, char * argv[])
     v->get_the_lights()->SetAO(0, 0.0);
     v->Commit(theDatasets);
 
-    RenderingSetP theRenderingSet = RenderingSet::NewP();
+    RenderingSetDPtr theRenderingSet = RenderingSet::NewDistributed();
 
     int indx = 0;
     for (auto c : theCameras)
     {
-      RenderingP theRendering = Rendering::NewP();
+      RenderingDPtr theRendering = Rendering::NewDistributed();
       theRendering->SetTheOwner((indx++) % mpiSize);
       if (override_windowsize)
       {

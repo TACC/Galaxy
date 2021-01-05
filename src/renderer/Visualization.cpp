@@ -74,7 +74,7 @@ Visualization::initialize_ispc()
 }
 
 bool
-Visualization::Commit(DatasetsP datasets)
+Visualization::Commit(DatasetsDPtr datasets)
 {
   for (auto s : vis)
     if (! s->Commit(datasets))
@@ -99,10 +99,10 @@ Visualization::Commit()
   return KeyedObject::Commit();
 }
 
-vector<VisualizationP>
+vector<VisualizationDPtr>
 Visualization::LoadVisualizationsFromJSON(Value& v)
 {
-  vector<VisualizationP> visualizations;
+  vector<VisualizationDPtr> visualizations;
 
   if (v.HasMember("Visualization") || v.HasMember("Visualizations"))
   {
@@ -111,7 +111,7 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
     {
       for (int i = 0; i < c.Size(); i++)
       {
-        VisualizationP v = Visualization::NewP();
+        VisualizationDPtr v = Visualization::NewDistributed();
         if (v->LoadFromJSON(c[i]))
           visualizations.push_back(v);
         else
@@ -120,7 +120,7 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
     }
     else
     {
-      VisualizationP v = Visualization::NewP();
+      VisualizationDPtr v = Visualization::NewDistributed();
       if (v->LoadFromJSON(c))
         visualizations.push_back(v);
       else
@@ -132,12 +132,12 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
 }
 
 #define CHECKBOX(XX)                                                            \
-  for (vector<VisP>::iterator it = XX.begin(); it != XX.end(); it++)            \
+  for (vector<VisDPtr>::iterator it = XX.begin(); it != XX.end(); it++)            \
   {                                                                              \
-    VisP v = *it;                                                                \
+    VisDPtr v = *it;                                                                \
                                                                                  \
-    KeyedDataObjectP kdop = v->GetTheData();                                    \
-    if (! kdop) std::cerr << "WARNING: NULL KeyedDataObjectP" << endl;          \
+    KeyedDataObjectDPtr kdop = v->GetTheData();                                    \
+    if (! kdop) std::cerr << "WARNING: NULL KeyedDataObjectDPtr" << endl;          \
                                                                                 \
     Box *l = kdop->get_local_box();                                              \
     Box *g = kdop->get_global_box();                                            \
@@ -215,7 +215,7 @@ Visualization::local_commit(MPI_Comm c)
 }
 
 void
-Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
+Visualization::SetOsprayObjects(std::map<Key, OsprayObjectDPtr>& ospray_object_map)
 {
   if (! ispc)
   {
@@ -233,8 +233,8 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 
   for (auto v : vis)
   {
-    KeyedDataObjectP kdop = v->GetTheData();
-    OsprayObjectP op = v->GetTheOsprayDataObject();
+    KeyedDataObjectDPtr kdop = v->GetTheData();
+    OsprayObjectDPtr op = v->GetTheOsprayDataObject();
 
     if (! op || kdop->hasBeenModified())
     {
@@ -261,7 +261,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 }
 
 void
-Visualization::AddVis(VisP o)
+Visualization::AddVis(VisDPtr o)
 {
   vis.push_back(o);
 }
@@ -295,7 +295,7 @@ Visualization::LoadFromJSON(Value& v)
     if (t.substr(t.size() - 3) != "Vis")
       t = t + "Vis";
 
-    VisP vp = Vis::Cast(GetTheKeyedObjectFactory()->NewP(t));
+    VisDPtr vp = Vis::Cast(GetTheObjectFactory()->NewDistributed(t));
     if (vp)
     {
       if (! vp->LoadFromJSON(vv))

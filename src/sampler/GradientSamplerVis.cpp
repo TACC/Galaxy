@@ -68,7 +68,7 @@ GradientSamplerVis::allocate_ispc()
 }
 
 bool 
-GradientSamplerVis::Commit(DatasetsP datasets)
+GradientSamplerVis::Commit(DatasetsDPtr datasets)
 {
 	return super::Commit(datasets);
 }
@@ -85,7 +85,7 @@ GradientSamplerVis::LoadFromJSON(Value& v)
 }
 
 void
-GradientSamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
+GradientSamplerVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
 {
   super::SetTheOsprayDataObject(o);
 }

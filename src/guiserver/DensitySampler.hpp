@@ -67,7 +67,7 @@ public:
   bool CollectiveAction(MPI_Comm, bool);
 
   float *
-  CellValues(VolumeP v)
+  CellValues(VolumeDPtr v)
   {
     // Note: the 3 here is the point count of the partition 
     // minus 2, for the ghost points, minus 1 for the point-to-cell
@@ -120,8 +120,8 @@ public:
   void
   Sample(MPI_Comm c, dMsg *a)
   {
-    VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
-    ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
+    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
+    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
 
     p->setModified(true);
 
@@ -250,20 +250,20 @@ public:
     DSamplerMsg::Register();
   }
 
-  DensitySampler(KeyedDataObjectP source)
+  DensitySampler(KeyedDataObjectDPtr source)
   {
     std::stringstream ss;
     ss << "DensityFilter_" << densityfilter_index++;
     name = ss.str();
 
-    result = KeyedDataObject::Cast(Particles::NewP());
+    result = KeyedDataObject::Cast(Particles::NewDistributed());
     result->CopyPartitioning(source);
   }
 
   ~DensitySampler() {}
 
   void
-  Sample(rapidjson::Document& doc, KeyedDataObjectP scalarVolume)
+  Sample(rapidjson::Document& doc, KeyedDataObjectDPtr scalarVolume)
   {
     dMsg args;
 

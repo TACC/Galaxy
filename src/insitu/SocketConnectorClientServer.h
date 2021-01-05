@@ -51,7 +51,7 @@ public:
 
 private:
 
-  SocketConnectorP connector = NULL;
+  SocketConnectorDPtr connector = NULL;
   int timeout = 60;
 
   pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -59,7 +59,7 @@ private:
 
   void InitializeVolumes(rapidjson::Document&);
 
-  std::map<std::string, VolumeP> variables;
+  std::map<std::string, VolumeDPtr> variables;
 
   class InitializeVolumesMsg : public Work
   {

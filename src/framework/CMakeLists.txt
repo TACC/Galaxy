@@ -45,7 +45,7 @@ set (CPP_SOURCES
 			Threading.cpp
 			ClientServer.cpp
 			Events.cpp
-			KeyedObject.cpp
+			GalaxyObject.cpp
 			Message.cpp
 			MessageManager.cpp 
 			MessageQ.cpp 
@@ -64,8 +64,7 @@ install(FILES
 	Debug.h 
 	Events.h
 	framework.h
-  GalaxyObject.h
-	KeyedObject.h
+    GalaxyObject.h
 	Message.h 
 	MessageManager.h 
 	MessageQ.h 

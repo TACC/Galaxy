@@ -33,7 +33,7 @@
 #include "dtypes.h"
 #include "SamplerVis.h"
 #include "Datasets.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 
 #include "rapidjson/document.h"
 
@@ -57,7 +57,7 @@ public:
   virtual void initialize(); //!< initialize this GradientSamplerVis object
 
   //! commit this object to the global registry across all processes
-  virtual bool Commit(DatasetsP);
+  virtual bool Commit(DatasetsDPtr);
 
   //! set the tolerance for this GradientSamplerVis
   void SetTolerance(float t);
@@ -69,7 +69,7 @@ public:
   virtual bool LoadFromJSON(rapidjson::Value&);
 
   //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
-  virtual void SetTheOsprayDataObject(OsprayObjectP o);
+  virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
 
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);

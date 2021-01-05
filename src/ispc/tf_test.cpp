@@ -10,7 +10,7 @@ int mpiRank = 0, mpiSize = 1;
 class TestMsg : public Work
 {
 public:
-    TestMsg(TransferFunctionP tfp, int n, float *v) : TestMsg(sizeof(Key) + sizeof(int) + n*sizeof(float*))
+    TestMsg(TransferFunctionDPtr tfp, int n, float *v) : TestMsg(sizeof(Key) + sizeof(int) + n*sizeof(float*))
     {
         unsigned char *p = (unsigned char *)get();
 
@@ -32,7 +32,7 @@ public:
     {   
         unsigned char *p = (unsigned char *)get();
 
-        TransferFunctionP tfp = TransferFunction::GetByKey(*(Key *)p);
+        TransferFunctionDPtr tfp = TransferFunction::GetByKey(*(Key *)p);
         p = p + sizeof(Key);
 
         int n = *(int *)p;
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
         for (int i = 0; i < 100; i++)
             values[i] = -1.0 + (mpiSize + 2)*(i / 99.0);
 
-        TransferFunctionP tf = TransferFunction::NewP();
+        TransferFunctionDPtr tf = TransferFunction::NewDistributed();
 
         int widths[] = {1, 3, 4};
         for (int i = 0; i < 3; i++)

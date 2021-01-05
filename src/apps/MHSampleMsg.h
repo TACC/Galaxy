@@ -57,7 +57,7 @@ class MHSampleMsg : public Work
     };
 
 public:
-  MHSampleMsg(VolumeP v, ParticlesP p, float p0, float p1, float step, int niterations, int nstart, int nskip, int nmiss)
+  MHSampleMsg(VolumeDPtr v, ParticlesDPtr p, float p0, float p1, float step, int niterations, int nstart, int nskip, int nmiss)
             : MHSampleMsg(sizeof(args))
   {
         args *a = (args *)contents->get();
@@ -94,7 +94,7 @@ private:
 	}
 
 
-	vec3f get_starting_point(VolumeP v)
+	vec3f get_starting_point(VolumeDPtr v)
 	{
 			Box *box = v->get_local_box();
 			return vec3f(box->xyz_min.x + RNDM()*(box->xyz_max.x - box->xyz_min.x),
@@ -102,7 +102,7 @@ private:
 									 box->xyz_min.z + RNDM()*(box->xyz_max.z - box->xyz_min.z));
 	}
 
-  float Q(VolumeP v, float s, args *a)
+  float Q(VolumeDPtr v, float s, args *a)
   {
       if (a->p0_value < a->p1_value)
       {
@@ -119,9 +119,9 @@ private:
   }
 
 
-  float sample(VolumeP v, Particle& p) { return sample(v, p.xyz.x, p.xyz.y, p.xyz.z); }
-  float sample(VolumeP v, vec3f xyz) { return sample(v, xyz.x, xyz.y, xyz.z); }
-  float sample(VolumeP v, float x, float y, float z)
+  float sample(VolumeDPtr v, Particle& p) { return sample(v, p.xyz.x, p.xyz.y, p.xyz.z); }
+  float sample(VolumeDPtr v, vec3f xyz) { return sample(v, xyz.x, xyz.y, xyz.z); }
+  float sample(VolumeDPtr v, float x, float y, float z)
   {
     float dx, dy, dz;
     v->get_deltas(dx, dy, dz);
@@ -178,8 +178,8 @@ public:
   {
     args *a = (args *)contents->get();
 
-    VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-    ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
+    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
+    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
 
 		p->clear();
 

@@ -83,7 +83,7 @@ static float gaussian(float x, float m, float s)
 }
 
 #define RNDM ((float)rand() / RAND_MAX) 
-static vec3f get_starting_point(VolumeP v)
+static vec3f get_starting_point(VolumeDPtr v)
 {
   Box *box = v->get_local_box();
   return vec3f(box->xyz_min.x + RNDM*(box->xyz_max.x - box->xyz_min.x),
@@ -91,7 +91,7 @@ static vec3f get_starting_point(VolumeP v)
                box->xyz_min.z + RNDM*(box->xyz_max.z - box->xyz_min.z));
 }
 
-static float Q(VolumeP v, float s, MHSampleClientServer::Args *a)
+static float Q(VolumeDPtr v, float s, MHSampleClientServer::Args *a)
 {
   float q;
 
@@ -118,7 +118,7 @@ static float Q(VolumeP v, float s, MHSampleClientServer::Args *a)
   return q;
 }
 
-static float sample(MHSampleClientServer::Args *args, VolumeP v, float x, float y, float z)
+static float sample(MHSampleClientServer::Args *args, VolumeDPtr v, float x, float y, float z)
 {
   float dx, dy, dz;
   v->get_deltas(dx, dy, dz);
@@ -170,16 +170,16 @@ static float sample(MHSampleClientServer::Args *args, VolumeP v, float x, float 
   }
 }
 
-float sample(MHSampleClientServer::Args *args, VolumeP v, Particle& p) { return sample(args, v, p.xyz.x, p.xyz.y, p.xyz.z); }
-float sample(MHSampleClientServer::Args *args, VolumeP v, vec3f xyz) { return sample(args, v, xyz.x, xyz.y, xyz.z); }
+float sample(MHSampleClientServer::Args *args, VolumeDPtr v, Particle& p) { return sample(args, v, p.xyz.x, p.xyz.y, p.xyz.z); }
+float sample(MHSampleClientServer::Args *args, VolumeDPtr v, vec3f xyz) { return sample(args, v, xyz.x, xyz.y, xyz.z); }
 
 static void
 Metropolis_Hastings(MHSampleClientServer::Args *a)
 {
   generator = new variate_generator<mt19937, normal_distribution<> >(mt19937(time(0)), normal_distribution<>(0.0, a->sigma));
 
-  VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-  ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
+  VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
+  ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
 
   p->clear();
 
@@ -294,10 +294,10 @@ new_handler(SocketHandler *sh)
 bool
 MHSampleClientServer::handle(std::string line, std::string& reply)
 {
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
-    theDatasets = Datasets::NewP();
+    theDatasets = Datasets::NewDistributed();
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 
@@ -359,7 +359,7 @@ MHSampleClientServer::handle(std::string line, std::string& reply)
       return true;
     }
 
-    particles = Particles::NewP();
+    particles = Particles::NewDistributed();
     theDatasets->Insert(name, particles);
 
     reply = "ok";

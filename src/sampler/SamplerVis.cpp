@@ -72,7 +72,7 @@ SamplerVis::allocate_ispc()
 }
 
 bool 
-SamplerVis::Commit(DatasetsP datasets)
+SamplerVis::Commit(DatasetsDPtr datasets)
 {
 	return Vis::Commit(datasets);
 }
@@ -86,7 +86,7 @@ SamplerVis::LoadFromJSON(Value& v)
 }
 
 void
-SamplerVis::SetTheOsprayDataObject(OsprayObjectP o)
+SamplerVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
 {
   super::SetTheOsprayDataObject(o);
 }

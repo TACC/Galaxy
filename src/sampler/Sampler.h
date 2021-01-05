@@ -55,8 +55,8 @@ public:
   virtual void HandleTerminatedRays(RayList *);
   virtual void Trace(RayList *);
 
-  void SetSamples(ParticlesP p) {mSamples = p;}
-  ParticlesP GetSamples()
+  void SetSamples(ParticlesDPtr p) {mSamples = p;}
+  ParticlesDPtr GetSamples()
   {
     return mSamples;
   }
@@ -66,7 +66,7 @@ public:
   virtual unsigned char *Deserialize(unsigned char *);
 
 private:
-  ParticlesP mSamples = NULL;
+  ParticlesDPtr mSamples = NULL;
   pthread_mutex_t lock;
 
 };

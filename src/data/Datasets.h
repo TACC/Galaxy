@@ -30,7 +30,7 @@
 #include <vector>
 #include <memory>
 
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "KeyedDataObject.h"
 #include "Box.h"
 
@@ -62,7 +62,7 @@ public:
     std::string name;
   };
 
-	using datasets_t = std::map<std::string, KeyedDataObjectP>;
+	using datasets_t = std::map<std::string, KeyedDataObjectDPtr>;
 
 	void initialize(); //!< initialize this Datasets object
 	virtual	~Datasets(); //!< default destructor
@@ -74,7 +74,7 @@ public:
 	/* \param name the name for the KeyedDataObject
 	 * \param val a pointer to the KeyedDataObject
 	 */
-  void Insert(std::string name, KeyedDataObjectP val);
+  void Insert(std::string name, KeyedDataObjectDPtr val);
 
   //! find the Key for a KeyedDataObject in this Datasets
   /*! \param name the name of the desired KeyedDataObject
@@ -83,7 +83,7 @@ public:
    */
 	Key FindKey(std::string name)
 	{
-		KeyedDataObjectP kdop = Find(name);
+		KeyedDataObjectDPtr kdop = Find(name);
 		if (kdop != NULL)
 			return kdop->getkey();
 		else
@@ -104,32 +104,32 @@ public:
    * \returns a pointer to the KeyedDataObject with the given name, 
    *          or `NULL` if no such object exists
    */
-  KeyedDataObjectP Find(std::string name)
+  KeyedDataObjectDPtr Find(std::string name)
   {
-  	std::map<std::string, KeyedDataObjectP>::iterator it = datasets.find(name);
+  	std::map<std::string, KeyedDataObjectDPtr>::iterator it = datasets.find(name);
   	if (it == datasets.end()) return NULL;
   	else return (*it).second;
   }
 
-  //! Search the Datasets for an KeyedDataObjectP and, if found, return its name - othersize, empty string
-  /*! \param KeyedDataObjectP to search for
+  //! Search the Datasets for an KeyedDataObjectDPtr and, if found, return its name - othersize, empty string
+  /*! \param KeyedDataObjectDPtr to search for
    * \returns its name, if found, or empty string otherwise
    */
-  std::string Find(KeyedDataObjectP kdop)
+  std::string Find(KeyedDataObjectDPtr kdop)
   {
-  	std::map<std::string, KeyedDataObjectP>::iterator it = datasets.begin();
+  	std::map<std::string, KeyedDataObjectDPtr>::iterator it = datasets.begin();
     while (((*it).second != kdop) && (it != datasets.end())) it++;
   	if (it == datasets.end()) return nullptr;
   	else return (*it).first;
   }
 
   //! Search the Datasets for an KeyedDataObject* and, if found, return its name - othersize, empty string
-  /*! \param KeyedDataObjectP to search for
+  /*! \param KeyedDataObjectDPtr to search for
    * \returns its name, if found, or empty string otherwise
    */
   std::string Find(KeyedDataObject* kdo)
   {
-  	std::map<std::string, KeyedDataObjectP>::iterator it = datasets.begin();
+  	std::map<std::string, KeyedDataObjectDPtr>::iterator it = datasets.begin();
     while (((*it).second.get() != kdo) && (it != datasets.end())) it++;
   	if (it == datasets.end()) return std::string("");
   	else return (*it).first;

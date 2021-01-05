@@ -26,7 +26,7 @@
 #include "Datasets.h"
 
 #include "Application.h"
-#include "KeyedDataObject.h"
+#include "GalaxyObject.h"
 #include "Volume.h"
 #include "Particles.h"
 #include "Triangles.h"
@@ -39,7 +39,7 @@ using namespace std;
 
 namespace gxy
 {
-	
+  
 KEYED_OBJECT_CLASS_TYPE(Datasets)
 
 void
@@ -59,26 +59,26 @@ Datasets::initialize()
 Datasets::~Datasets()
 {
   //std::cerr << "Datasets dtor " << std::hex << ((long)this) << "\n";
-	if (keys) delete[] keys;
+  if (keys) delete[] keys;
 }
 
 bool
 Datasets::Commit()
 {
 #if 0
-	for (auto it : datasets)
-		if (! it.second->Commit())
+  for (auto it : datasets)
+    if (! it.second->Commit())
     {
       set_error(1);
       return false;
     }
 #endif
 
-	return KeyedObject::Commit();
+  return KeyedObject::Commit();
 }
 
 void
-Datasets::Insert(std::string name, KeyedDataObjectP val)
+Datasets::Insert(std::string name, KeyedDataObjectDPtr val)
 {
   if (datasets.find(name) != datasets.end())
   {
@@ -86,7 +86,7 @@ Datasets::Insert(std::string name, KeyedDataObjectP val)
     datasets.erase(name);
   }
 
-  datasets.insert(std::pair<std::string, KeyedDataObjectP>(name, val));
+  datasets.insert(std::pair<std::string, KeyedDataObjectDPtr>(name, val));
 
   DatasetsUpdate update(Added, name);
   NotifyObservers(gxy::ObserverEvent::Updated, (void *)&update);
@@ -96,60 +96,62 @@ Datasets::Insert(std::string name, KeyedDataObjectP val)
 bool
 Datasets::loadTyped(Value& v)
 {
-	if (! v.HasMember("filename") || ! v.HasMember("type"))
-	{
-		std::cerr << "Dataset must have name and type\n";
+  if (! v.HasMember("filename") || ! v.HasMember("type"))
+  {
+    std::cerr << "Dataset must have name and type\n";
     set_error(1);
     return false;
-	}
+  }
 
-	string name(v["filename"].GetString());
-	string type(v["type"].GetString());
+  string name(v["filename"].GetString());
+  string type(v["type"].GetString());
 
-	KeyedDataObjectP kop;
-	if (type == "Particles")
-		kop = Particles::NewP();
-	else if (type == "Volume")
-    kop = Volume::NewP();
-	else if (type == "Triangles")
-    kop = Triangles::NewP();
-	else if (type == "PathLines")
-    kop = PathLines::NewP();
-	else
-	{
-		std::cerr << "invalid Dataset type: " << type << "\n";
-		set_error(1);
+  KeyedDataObjectDPtr kop;
+  if (type == "Particles")
+    kop = Particles::NewDistributed();
+  else if (type == "Volume")
+    kop = Volume::NewDistributed();
+  else if (type == "Triangles")
+    kop = Triangles::NewDistributed();
+  else if (type == "PathLines")
+    kop = PathLines::NewDistributed();
+  else
+  {
+    std::cerr << "invalid Dataset type: " << type << "\n";
+    set_error(1);
     return false;
-	}
+  }
 
-	if (! kop->LoadFromJSON(v))
+  if (! kop->LoadFromJSON(v))
     return false;
 
   kop->Commit();
-		
-	if (v.HasMember("name"))
-		name = v["name"].GetString();
+    
+  if (v.HasMember("name"))
+    name = v["name"].GetString();
 
-	Insert(name.c_str(), kop);
+  Insert(name.c_str(), kop);
   return true;
 }
 
 bool
 Datasets::LoadFromJSON(Value& v)
 {
-  Value& ds = v;
+  Value ds;
 
-	if (ds.HasMember("Datasets"))
-    ds = ds["Datasets"];
+  // if (v.HasMember("Datasets"))
+    // return false;
 
-	if (ds.IsArray())
-	{
-		for (int i = 0; i < ds.Size(); i++)
-			if (! loadTyped(ds[i])) return false;
+  ds = v["Datasets"];
+
+  if (ds.IsArray())
+  {
+    for (int i = 0; i < ds.Size(); i++)
+      if (! loadTyped(ds[i])) return false;
     return true;
-	}
-	else
-		return loadTyped(ds);
+  }
+  else
+    return loadTyped(ds);
 }
 
 bool
@@ -182,35 +184,35 @@ Datasets::LoadFromJSONFile(std::string fname)
 int
 Datasets::serialSize()
 {
-	return KeyedObject::serialSize() + sizeof(int) + size()*sizeof(Key);
+  return KeyedObject::serialSize() + sizeof(int) + size()*sizeof(Key);
 }
 
 unsigned char * 
 Datasets::serialize(unsigned char *p)
 {
-	*(int *)p = size();
-	p += sizeof(int);
+  *(int *)p = size();
+  p += sizeof(int);
 
-	for (auto i : datasets)
-	{
-		*(Key *)p = i.second->getkey();
-		p += sizeof(Key);
-	}
+  for (auto i : datasets)
+  {
+    *(Key *)p = i.second->getkey();
+    p += sizeof(Key);
+  }
 
-	return p;
+  return p;
 }
 
 unsigned char * 
 Datasets::deserialize(unsigned char *p)
 {
-	nkeys = *(int *)p;
-	p += sizeof(int);
-	
-	keys = new Key[nkeys];
-	memcpy((void *)keys, (void *)p, nkeys*sizeof(Key));
-	p += nkeys*sizeof(Key);
+  nkeys = *(int *)p;
+  p += sizeof(int);
+  
+  keys = new Key[nkeys];
+  memcpy((void *)keys, (void *)p, nkeys*sizeof(Key));
+  p += nkeys*sizeof(Key);
 
-	return p;
+  return p;
 }
 
 }  // namespace gxy

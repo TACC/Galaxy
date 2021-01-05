@@ -30,7 +30,7 @@
 #include "OsprayHandle.h"
 
 #include "dtypes.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "Datasets.h"
 #include "pthread.h"
 #include "Rays.h"
@@ -87,14 +87,14 @@ public:
   virtual void SaveStateToValue(rapidjson::Value&, rapidjson::Document&);
 
   //! render the given RenderingSet at this process, in response to a received RenderMsg
-  virtual void local_render(RendererP, RenderingSetP);
+  virtual void local_render(RendererDPtr, RenderingSetDPtr);
 
   virtual int SerialSize(); //!< return the size in bytes for the serialization of this Renderer
   virtual unsigned char *Serialize(unsigned char *); //!< serialize this Renderer to the given byte array
   virtual unsigned char *Deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
 
   //! broadcasts a RenderMsg to all processes to begin rendering via each localRendering method
-	virtual void Start(RenderingSetP);
+	virtual void Start(RenderingSetDPtr);
   //! return the frame number for the current render
 	int GetFrame() { return frame; }
 
@@ -232,7 +232,7 @@ public:
   class AckRaysMsg : public Work
   {
   public:
-    AckRaysMsg(RenderingSetP rs);
+    AckRaysMsg(RenderingSetDPtr rs);
     
     WORK_CLASS(AckRaysMsg, false);
 
@@ -261,10 +261,10 @@ public:
 			int source;
 		};
 
-		RenderingSetP rset;
+		RenderingSetDPtr rset;
     
   public:
-    SendPixelsMsg(RenderingP r, RenderingSetP rs, int frame, int n) : SendPixelsMsg(sizeof(hdr) + (n * sizeof(Pixel)))
+    SendPixelsMsg(RenderingDPtr r, RenderingSetDPtr rs, int frame, int n) : SendPixelsMsg(sizeof(hdr) + (n * sizeof(Pixel)))
     {
 			rset = rs;
 
@@ -313,11 +313,11 @@ public:
 			hdr *h = (hdr *)contents->get();
       Pixel *pixels = (Pixel *)(((unsigned char *)contents->get()) + sizeof(hdr));
 
-      RenderingP r = Rendering::GetByKey(h->rkey);
+      RenderingDPtr r = Rendering::GetByKey(h->rkey);
       if (! r)
         return false;
 
-      RenderingSetP rs = RenderingSet::GetByKey(h->rskey);
+      RenderingSetDPtr rs = RenderingSet::GetByKey(h->rskey);
       if (! rs)
         return false;
 
@@ -343,7 +343,7 @@ public:
   class RenderMsg : public Work
   {
   public:
-    RenderMsg(Renderer *, RenderingSetP);
+    RenderMsg(Renderer *, RenderingSetDPtr);
     ~RenderMsg();
 
     WORK_CLASS(RenderMsg, true);

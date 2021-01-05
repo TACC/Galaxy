@@ -96,7 +96,7 @@ EmbreePathLines::SetMap(float v0, float r0, float v1, float r1)
 void 
 EmbreePathLines::FinalizeIspc()
 {
-    PathLinesP p = PathLines::Cast(geometry);
+    PathLinesDPtr p = PathLines::Cast(geometry);
     if (! p)
     {
         std::cerr << "EmbreePathLines::FinalizeIspc called with something other than PathLines\n";

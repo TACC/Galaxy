@@ -53,16 +53,16 @@ public:
   static void
   init() {}
 
-  RaycastSampler(KeyedDataObjectP source)
+  RaycastSampler(KeyedDataObjectDPtr source)
   {
     std::stringstream ss;
     ss << "RaycastSampleFilter_" << rcsfilter_index++;
     name = ss.str();
 
-    camera = Camera::NewP();
-    sampler = Sampler::NewP();
+    camera = Camera::NewDistributed();
+    sampler = Sampler::NewDistributed();
 
-    ParticlesP samples = Particles::NewP();
+    ParticlesDPtr samples = Particles::NewDistributed();
     samples->CopyPartitioning(source);
     sampler->SetSamples(samples);
     std::cerr << "SAMPLES KEY " << samples->getkey() << "\n";
@@ -73,11 +73,11 @@ public:
   ~RaycastSampler() { std::cerr << "RaycastSampler dtor\n"; }
 
   void
-  Sample(rapidjson::Document& doc, KeyedDataObjectP);
+  Sample(rapidjson::Document& doc, KeyedDataObjectDPtr);
 
 private:
-  SamplerP sampler = NULL;
-  CameraP  camera = NULL;
+  SamplerDPtr sampler = NULL;
+  CameraDPtr  camera = NULL;
 
 };
 

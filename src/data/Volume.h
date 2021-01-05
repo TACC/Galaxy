@@ -197,7 +197,7 @@ public:
   virtual bool local_commit(MPI_Comm c);
 
   //! copy local part
-  virtual bool local_copy(KeyedDataObjectP);
+  virtual bool local_copy(KeyedDataObjectDPtr);
 
 	//! get the global min and max data values for this Volume
 	void get_global_minmax(float &min, float &max) { min = global_min; max = global_max; }
@@ -230,7 +230,7 @@ public:
 
 	void set_global_partitions(int i, int j, int k) { global_partitions.x = i; global_partitions.y = j; global_partitions.z = k; }
 
-  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP);
+  virtual GalaxyObjectDPtr CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
 
   void set_ijk(int i, int j, int k) { ijk.x = i; ijk.y = j; ijk.z = k; }
 

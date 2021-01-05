@@ -51,7 +51,7 @@ public:
 
     virtual bool local_commit(MPI_Comm);
 
-    EmbreeModelP *NewModel();
+    EmbreeModelDPtr *NewModel();
 
 private:
 

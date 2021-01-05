@@ -59,12 +59,12 @@ Sampler::HandleTerminatedRays(RayList *raylist)
   // std::cerr << std::dec;
   // std::cerr << "Sampler::HandleTerminatedRays entry - " << raylist->GetRayCount() << " in, " << hit_count << " terminated\n";
 
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-  RenderingP rendering = raylist->GetTheRendering();
+  RenderingSetDPtr  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingDPtr rendering = raylist->GetTheRendering();
 
   if (hit_count == 0) return;
 
-  ParticlesP samples = this->GetSamples();
+  ParticlesDPtr samples = this->GetSamples();
 
   samples->Lock();
 
@@ -116,9 +116,9 @@ Sampler::Deserialize(unsigned char *p)
 void
 Sampler::Trace(RayList *raylist)
 {
-  RendererP      renderer      = raylist->GetTheRenderer();
-  RenderingP     rendering     = raylist->GetTheRendering();
-  VisualizationP visualization = rendering->GetTheVisualization();
+  RendererDPtr      renderer      = raylist->GetTheRenderer();
+  RenderingDPtr     rendering     = raylist->GetTheRendering();
+  VisualizationDPtr visualization = rendering->GetTheVisualization();
 
   // This is called when a list of rays is pulled off the
   // RayQ.  When we are done with it we decrement the 

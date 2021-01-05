@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "Rays.h"
 #include "Embree.h"
 #include "EmbreeGeometry.h"
@@ -37,11 +37,11 @@ public:
     virtual void initialize();
     virtual ~EmbreeModel();
 
-    void SetEmbree(EmbreeP);
+    void SetEmbree(EmbreeDPtr);
 
-    int  AddGeometry(EmbreeGeometryP);
+    int  AddGeometry(EmbreeGeometryDPtr);
     void RemoveGeometry(int);
-    void RemoveGeometry(EmbreeGeometryP);
+    void RemoveGeometry(EmbreeGeometryDPtr);
 
     void Intersect(RayList *);
 
@@ -55,10 +55,10 @@ public:
 
 protected:
 
-    std::vector<EmbreeGeometryP> geometries;
+    std::vector<EmbreeGeometryDPtr> geometries;
     std::vector<int> free_ids;
 
-    EmbreeP     embree;
+    EmbreeDPtr     embree;
     RTCScene    scene;
 };
 

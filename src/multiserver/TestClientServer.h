@@ -40,7 +40,7 @@ class TestObject : public KeyedDataObject
 {
   KEYED_OBJECT_SUBCLASS(TestObject, KeyedDataObject)
 
-  void SetDynamicLibrary(DynamicLibraryP d) { dlp = d; }
+  void SetDynamicLibrary(DynamicLibraryDPtr d) { dlp = d; }
 
   void SetString(string s) { str = s; }
   string GetString() { return str; }
@@ -69,13 +69,13 @@ public:
 
 private:
   string str;
-  DynamicLibraryP dlp;
+  DynamicLibraryDPtr dlp;
 };
 
 class ShowDatasetsMsg : public Work
 {
 public:
-  ShowDatasetsMsg(DatasetsP dsp) : ShowDatasetsMsg(sizeof(Key))
+  ShowDatasetsMsg(DatasetsDPtr dsp) : ShowDatasetsMsg(sizeof(Key))
   {
     *(Key *)get() = dsp->getkey();
   }

@@ -54,12 +54,12 @@ cam_mode mode;
 float *buf = NULL;
 bool quit = false;
 
-ServerRenderingP 	theRendering = NULL;
-RenderingSetP   	theRenderingSet = NULL;
-CameraP         	theCamera = NULL;
-VisualizationP  	theVisualization = NULL;
+ServerRenderingDPtr 	theRendering = NULL;
+RenderingSetDPtr   	theRenderingSet = NULL;
+CameraDPtr         	theCamera = NULL;
+VisualizationDPtr  	theVisualization = NULL;
 
-RendererP theRenderer;
+RendererDPtr theRenderer;
 
 float viewdistance, aov;
 vec3f viewpoint, viewdirection, viewup;
@@ -84,13 +84,13 @@ render_thread(void *buf)
 	int height = start->height;
 	string statefile = string(start->name);
 
-  theRenderer = Renderer::NewP();
+  theRenderer = Renderer::NewDistributed();
   Document *doc = GetTheApplication()->OpenJSONFile(statefile);
   theRenderer->LoadStateFromDocument(*doc);
 
 	free(buf);
 
-  vector<CameraP> theCameras;
+  vector<CameraDPtr> theCameras;
   Camera::LoadCamerasFromJSON(*doc, theCameras);
   theCamera = theCameras[0];
 
@@ -113,15 +113,15 @@ render_thread(void *buf)
   orig_viewup = cross(viewright, orig_viewdirection);
   theCamera->set_viewup(orig_viewup);
 
-  DatasetsP theDatasets = Datasets::NewP();
+  DatasetsDPtr theDatasets = Datasets::NewDistributed();
   theDatasets->LoadFromJSON(*doc);
   theDatasets->Commit();
 
-  vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
+  vector<VisualizationDPtr> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
   theVisualization = theVisualizations[0];
 	theVisualization->Commit(theDatasets);
 
-  theRendering = ServerRendering::NewP();
+  theRendering = ServerRendering::NewDistributed();
 
   theRendering->SetSocket(skt);
   theRendering->SetTheOwner(0);
@@ -132,7 +132,7 @@ render_thread(void *buf)
   theRendering->SetTheCamera(theCamera);
   theRendering->Commit();
 
-  RenderingSetP theRenderingSet = RenderingSet::NewP();
+  RenderingSetDPtr theRenderingSet = RenderingSet::NewDistributed();
   theRenderingSet->AddRendering(theRendering);
   theRenderingSet->Commit();
 

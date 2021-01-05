@@ -53,16 +53,16 @@ protected:
 /* \sa Event, Camera
  * \ingroup render
  */
-class CameraLoopEndEvent : public Event
+class CameraLPtroopEndEvent : public Event
 {
 public:
- CameraLoopEndEvent() {}
+ CameraLPtroopEndEvent() {}
 
 protected:
   void print(std::ostream& o)
   {
     Event::print(o);
-    o << "CameraLoopEnd";
+    o << "CameraLPtroopEnd";
   }
 };
 
@@ -235,7 +235,7 @@ protected:
 class LocalPixelContributionsEvent : public Event
 {
 public:
-  LocalPixelContributionsEvent(int c, RenderingSetP r) : count(c), rset(r->getkey()) { }
+  LocalPixelContributionsEvent(int c, RenderingSetDPtr r) : count(c), rset(r->getkey()) { }
 
 protected:
   void print(ostream& o)
@@ -252,7 +252,7 @@ private:
 class RemotePixelContributionsEvent : public Event
 {
 public:
-  RemotePixelContributionsEvent(int c, int owner, RenderingSetP rs) : count(c), dest(owner),  rset(rs->getkey()) {}
+  RemotePixelContributionsEvent(int c, int owner, RenderingSetDPtr rs) : count(c), dest(owner),  rset(rs->getkey()) {}
 
 protected:
   void print(ostream& o)

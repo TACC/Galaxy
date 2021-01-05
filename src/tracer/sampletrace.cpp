@@ -193,8 +193,8 @@ main(int argc, char * argv[])
   RungeKutta::RegisterRK();
   RegisterTraceToPathLines();
 
-  SamplerP  theSampler  = Sampler::NewP();
-  RendererP theRenderer = Renderer::NewP();
+  SamplerDPtr  theSampler  = Sampler::NewDistributed();
+  RendererDPtr theRenderer = Renderer::NewDistributed();
 
   InitializeInterpolateVolumeOntoGeometry();
 
@@ -227,30 +227,30 @@ main(int argc, char * argv[])
     theSampler->LoadStateFromDocument(*sdoc);
 
     // load datasets 
-    DatasetsP theDatasets = Datasets::NewP();
+    DatasetsDPtr theDatasets = Datasets::NewDistributed();
     theDatasets->LoadFromJSON(*ddoc);
     theDatasets->Commit();
     
     // Create a list of sampling Visualizations that specifies how the volume is to be sampled...
-    vector<VisualizationP> theSamplingVisualizations = Visualization::LoadVisualizationsFromJSON(*sdoc);
+    vector<VisualizationDPtr> theSamplingVisualizations = Visualization::LoadVisualizationsFromJSON(*sdoc);
 
     for (auto i : theSamplingVisualizations)
       i->Commit(theDatasets);
   
     // read in a set of cameras which are used to sample the data
-    vector<CameraP> theSamplingCameras;
+    vector<CameraDPtr> theSamplingCameras;
     Camera::LoadCamerasFromJSON(*sdoc, theSamplingCameras);
     for (auto c : theSamplingCameras)
       c->Commit();
 
     // Create a rendering set for the sampling pass...
-    RenderingSetP theSamplingRenderingSet = RenderingSet::NewP();
+    RenderingSetDPtr theSamplingRenderingSet = RenderingSet::NewDistributed();
 
     for (auto v : theSamplingVisualizations)
       for (auto c : theSamplingCameras)
       {
-        RenderingP r = Rendering::NewP();
-        r = Rendering::NewP();
+        RenderingDPtr r = Rendering::NewDistributed();
+        r = Rendering::NewDistributed();
         r->SetTheOwner(0);
         r->SetTheDatasets(theDatasets);
         if (override_samplesize)
@@ -273,9 +273,9 @@ main(int argc, char * argv[])
     // 'Sampler' renderer.   
 
     vector<string> datasets = theDatasets->GetDatasetNames(); 
-    VolumeP volume = Volume::Cast(theDatasets->Find(datasets[0]));
+    VolumeDPtr volume = Volume::Cast(theDatasets->Find(datasets[0]));
 
-    ParticlesP samples = Particles::NewP();
+    ParticlesDPtr samples = Particles::NewDistributed();
     samples->CopyPartitioning(volume);
     samples->SetDefaultColor(0.5, 0.5, 0.5, 1.0);
     theSampler->SetSamples(samples);
@@ -289,7 +289,7 @@ main(int argc, char * argv[])
 
     if (sdata != "")
     {
-      VolumeP vdata = Volume::Cast(theDatasets->Find(sdata));
+      VolumeDPtr vdata = Volume::Cast(theDatasets->Find(sdata));
       InterpolateVolumeOntoGeometry(samples, vdata);
       samples->Commit();
     }
@@ -308,7 +308,7 @@ main(int argc, char * argv[])
         std::cout << p[i].xyz.x << "," << p[i].xyz.y << "," << p[i].xyz.z << "\n";
     }
 
-    RungeKuttaP rkp = RungeKutta::NewP();
+    RungeKuttaDPtr rkp = RungeKutta::NewDistributed();
     rkp->set_max_steps(maxsteps);
     rkp->set_stepsize(h);
     rkp->SetMinVelocity(z);
@@ -337,29 +337,29 @@ main(int argc, char * argv[])
     theDatasets->Commit();
 
     // Create a list of sampling Visualizations that specifies how the volume is to be sampled...
-    vector<VisualizationP> theRenderingVisualizations = Visualization::LoadVisualizationsFromJSON(*rdoc);
+    vector<VisualizationDPtr> theRenderingVisualizations = Visualization::LoadVisualizationsFromJSON(*rdoc);
     // read in a set of cameras which are used to sample the data
-    vector<CameraP> theRenderingCameras;
+    vector<CameraDPtr> theRenderingCameras;
     Camera::LoadCamerasFromJSON(*rdoc, theRenderingCameras);
 
     for (auto c : theRenderingCameras)
       c->Commit();
 
-    PathLinesP plp = PathLines::NewP();
+    PathLinesDPtr plp = PathLines::NewDistributed();
 
     for (auto f = 0; f < nf; f ++)
     {
       float head_time = (nf == 1) ? max_i : (max_i * (f + 1)) / nf;
 
       // Create a rendering set for the rendering pass...
-      RenderingSetP rs = RenderingSet::NewP();
+      RenderingSetDPtr rs = RenderingSet::NewDistributed();
     
       TraceToPathLines(rkp, plp, head_time, dt);
       plp->Commit();
 
       if (pdata != "")
       {
-        VolumeP vdata = Volume::Cast(theDatasets->Find(pdata));
+        VolumeDPtr vdata = Volume::Cast(theDatasets->Find(pdata));
         InterpolateVolumeOntoGeometry(plp, vdata);
         plp->Commit();
       }
@@ -371,7 +371,7 @@ main(int argc, char * argv[])
       {
         for (auto i = 0; i < v->GetNumberOfVis(); i++)
         {
-          MappedVisP mvp = MappedVis::Cast(v->GetVis(i));
+          MappedVisDPtr mvp = MappedVis::Cast(v->GetVis(i));
           if (mvp)
             mvp->ScaleMaps(0.0, max_i);
         }
@@ -381,7 +381,7 @@ main(int argc, char * argv[])
       for (auto v : theRenderingVisualizations)
         for (auto c : theRenderingCameras)
         {
-          RenderingP r = Rendering::NewP();
+          RenderingDPtr r = Rendering::NewDistributed();
           r->SetTheOwner(0);
           r->SetTheDatasets(theDatasets);
           if (override_windowsize)

@@ -13,7 +13,7 @@ class TraceToPathLinesMsg : public Work
 {
 public:
 
-  TraceToPathLinesMsg(RungeKuttaP rkp, PathLinesP plp, float t, float dt)
+  TraceToPathLinesMsg(RungeKuttaDPtr rkp, PathLinesDPtr plp, float t, float dt)
     : TraceToPathLinesMsg(2*sizeof(Key) + 2*sizeof(float))
   {
     unsigned char *g = (unsigned char *)get();
@@ -35,9 +35,9 @@ public:
   bool CollectiveAction(MPI_Comm c, bool is_root)
   {
     unsigned char *g = (unsigned char *)get();
-    RungeKuttaP rkp = RungeKutta::GetByKey(*(Key *)g);
+    RungeKuttaDPtr rkp = RungeKutta::GetByKey(*(Key *)g);
     g += sizeof(Key);
-    PathLinesP plp = PathLines::GetByKey(*(Key *)g);
+    PathLinesDPtr plp = PathLines::GetByKey(*(Key *)g);
     g += sizeof(Key);
     float t = *(float *)g;
     g += sizeof(float);
@@ -121,7 +121,7 @@ RegisterTraceToPathLines()
 }
 
 void
-TraceToPathLines(RungeKuttaP rkp, PathLinesP plp, float t, float dt)
+TraceToPathLines(RungeKuttaDPtr rkp, PathLinesDPtr plp, float t, float dt)
 {
   TraceToPathLinesMsg msg(rkp, plp, t, dt);
   msg.Broadcast(true, true);

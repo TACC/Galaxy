@@ -51,7 +51,7 @@ if test X$ISPC_EXEC != X ; then
     AA=`$ISPC_EXEC --version | sed -e "s/^.*ISPC), //" -e "s/ .*//"`
     maj=`echo $AA | sed "s/\..*//"`
     min=`echo $AA | sed -e "s/[^.].//" -e "s/\..*//"`
-    if maj != 1 -o min -lt 14 ; then
+    if $maj != 1 -o $min -lt 14 ; then
         ISPC_EXEC=
     fi
 fi

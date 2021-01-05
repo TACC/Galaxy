@@ -34,7 +34,7 @@
 #include <map>
 
 #include "galaxy.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "MessageManager.h"
 #include "Work.h"
 
@@ -100,8 +100,8 @@ public:
 
   //! returns the application's MessageManager object.
   MessageManager *GetTheMessageManager() { return theMessageManager; }
-  //! returns the KeyedObjectFactory object, used to register data
-  KeyedObjectFactory *GetTheKeyedObjectFactory() { return theKeyedObjectFactory; }
+  //! returns the ObjectFactory object, used to register data
+  ObjectFactory *GetTheObjectFactory() { return theObjectFactory; }
   //! returns the ThreadPool object, used to manage all threads created by the Application
   ThreadManager *GetTheThreadManager() { return threadManager; }
   //! returns the ThreadPool object, used to manage a pool of threads waiting for work tasks
@@ -229,11 +229,11 @@ public:
 
 private:
 
-  std::map<std::string, KeyedObjectP> globals;      // Globally-known variables
+  std::map<std::string, KeyedObjectDPtr> globals;      // Globally-known variables
 
 	std::vector<std::string> log;
 	MessageManager *theMessageManager;
-	KeyedObjectFactory *theKeyedObjectFactory;
+	ObjectFactory *theObjectFactory;
 
   std::vector<Work *(*)(SharedP)> deserializers;
   std::vector<std::string> class_table;

@@ -22,7 +22,7 @@
 
 using namespace gxy;
 
-OsprayPathLines::OsprayPathLines(PathLinesP p)
+OsprayPathLines::OsprayPathLines(PathLinesDPtr p)
 {
   OSPGeometry ospg = ospNewGeometry("ddpathlines");
   if (! ospg) 

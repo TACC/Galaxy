@@ -47,7 +47,7 @@ Schlieren2TraceRays::~Schlieren2TraceRays()
 }
 
 RayList *
-Schlieren2TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
+Schlieren2TraceRays::Trace(Lighting* lights, VisualizationDPtr visualization, RayList *raysIn)
 {
   ispc::Schlieren2TraceRays_Schlieren2TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 	return NULL;

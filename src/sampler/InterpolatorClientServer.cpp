@@ -47,7 +47,7 @@ InterpolatorClientServer::InterpolatorClientServer(SocketHandler *sh) : MultiSer
   dst = NULL;
 };
 
-static float interpolate(InterpolatorClientServer::Args *a, VolumeP v, float x, float y, float z)
+static float interpolate(InterpolatorClientServer::Args *a, VolumeDPtr v, float x, float y, float z)
 {
   x = (x - a->ox) / a->dx;
   y = (y - a->oy) / a->dy;
@@ -93,16 +93,16 @@ static float interpolate(InterpolatorClientServer::Args *a, VolumeP v, float x, 
   }
 }
 
-float interpolate(InterpolatorClientServer::Args *args, VolumeP v, Particle& p) { return interpolate(args, v, p.xyz.x, p.xyz.y, p.xyz.z); }
-float interpolate(InterpolatorClientServer::Args *args, VolumeP v, vec3f xyz) { return interpolate(args, v, xyz.x, xyz.y, xyz.z); }
-float interpolate(InterpolatorClientServer::Args *args, VolumeP v, vec3f *xyz) { return interpolate(args, v, xyz->x, xyz->y, xyz->z); }
+float interpolate(InterpolatorClientServer::Args *args, VolumeDPtr v, Particle& p) { return interpolate(args, v, p.xyz.x, p.xyz.y, p.xyz.z); }
+float interpolate(InterpolatorClientServer::Args *args, VolumeDPtr v, vec3f xyz) { return interpolate(args, v, xyz.x, xyz.y, xyz.z); }
+float interpolate(InterpolatorClientServer::Args *args, VolumeDPtr v, vec3f *xyz) { return interpolate(args, v, xyz->x, xyz->y, xyz->z); }
 
 static void
 Interpolate(InterpolatorClientServer::Args *a)
 {
-  VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-  ParticlesP s = Particles::Cast(KeyedDataObject::GetByKey(a->sk));
-  ParticlesP d = Particles::Cast(KeyedDataObject::GetByKey(a->dk));
+  VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
+  ParticlesDPtr s = Particles::Cast(KeyedDataObject::GetByKey(a->sk));
+  ParticlesDPtr d = Particles::Cast(KeyedDataObject::GetByKey(a->dk));
 
   d->CopyPartitioning(s);
 
@@ -164,10 +164,10 @@ new_handler(SocketHandler *sh)
 bool
 InterpolatorClientServer::handle(std::string line, std::string &reply)
 {
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
-    theDatasets = Datasets::NewP();
+    theDatasets = Datasets::NewDistributed();
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 
@@ -200,7 +200,7 @@ InterpolatorClientServer::handle(std::string line, std::string &reply)
       return true;
     }
 
-    dst = Particles::NewP();
+    dst = Particles::NewDistributed();
     theDatasets->Insert(dname, dst);
 
     InterpolatorMsg msg(this);

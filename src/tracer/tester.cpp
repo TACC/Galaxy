@@ -127,7 +127,7 @@ int main(int argc,  char *argv[])
 
   if (mpiRank == 0)
   {
-    RendererP theRenderer = Renderer::NewP();
+    RendererDPtr theRenderer = Renderer::NewDistributed();
 
     rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
     if (! doc)
@@ -138,7 +138,7 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    DatasetsP theDatasets = Datasets::NewP();
+    DatasetsDPtr theDatasets = Datasets::NewDistributed();
     if (! theDatasets->LoadFromJSON(*doc))
     {
       std::cerr << "error loading theDatasets\n";
@@ -155,7 +155,7 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    RungeKuttaP rkp = RungeKutta::NewP();
+    RungeKuttaDPtr rkp = RungeKutta::NewDistributed();
     rkp->set_max_steps(nsteps);
     rkp->set_stepsize(h);
     rkp->SetMinVelocity(z);
@@ -225,7 +225,7 @@ int main(int argc,  char *argv[])
         }
     }
 
-    PathLinesP plp = PathLines::NewP();
+    PathLinesDPtr plp = PathLines::NewDistributed();
 
     TraceToPathLines(rkp, plp, 1e10, 1e10);
     plp->Commit();
@@ -233,29 +233,29 @@ int main(int argc,  char *argv[])
     theDatasets->Insert("pathlines", plp);
     theDatasets->Commit();
 
-    vector<CameraP> theCameras;
+    vector<CameraDPtr> theCameras;
     Camera::LoadCamerasFromJSON(*doc, theCameras);
     for (auto c : theCameras)
       c->Commit();
 
-    vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
+    vector<VisualizationDPtr> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
     for (auto v : theVisualizations)
     {
       for (auto i = 0; i < v->GetNumberOfVis(); i++)
       {
-        MappedVisP mvp = MappedVis::Cast(v->GetVis(i));
+        MappedVisDPtr mvp = MappedVis::Cast(v->GetVis(i));
         if (mvp)
           mvp->ScaleMaps(0.0, max_i);
       }
       v->Commit(theDatasets);
     }
 
-    RenderingSetP theRenderingSet = RenderingSet::NewP();
+    RenderingSetDPtr theRenderingSet = RenderingSet::NewDistributed();
     for (auto v : theVisualizations)
       for (auto c : theCameras)
       {
-        RenderingP r = Rendering::NewP();
-        r = Rendering::NewP();
+        RenderingDPtr r = Rendering::NewDistributed();
+        r = Rendering::NewDistributed();
         r->SetTheOwner(0);
         if (override_windowsize)
         {

@@ -62,9 +62,9 @@ public:
   void Trace(vec3f& pt, int id = 0);
   void Trace(int n, vec3f* pts);
   void _Trace(int where, int id, int n, vec3f& pt, vec3f& up, float time);
-  void Trace(ParticlesP pp);
+  void Trace(ParticlesDPtr pp);
 
-  void TraceToPathLines(PathLinesP plp);
+  void TraceToPathLines(PathLinesDPtr plp);
   
   virtual void local_trace(int id, int n, vec3f& pt, vec3f& up, float time);
 
@@ -106,8 +106,8 @@ public:
   void Signal() { pthread_cond_signal(&signal); }
   void Wait() { pthread_cond_wait(&signal, &lock); }
 
-  void SetVectorField(VolumeP v) { vectorField = v; }
-  VolumeP GetVectorField() { return vectorField; }
+  void SetVectorField(VolumeDPtr v) { vectorField = v; }
+  VolumeDPtr GetVectorField() { return vectorField; }
 
   int  get_max_steps() { return max_steps; }
   void set_max_steps(int n) { max_steps = n; }
@@ -128,7 +128,7 @@ public:
   void SetDeltaT(float t) { deltaT = t; }
 
 protected:
-  VolumeP vectorField;
+  VolumeDPtr vectorField;
 
   pthread_mutex_t lock;
   pthread_cond_t signal;
@@ -176,7 +176,7 @@ protected:
     bool Action(int s)
     {
       unsigned char *g = (unsigned char *)get();
-      StreamTracerP stp = StreamTracer::GetByKey(*(Key *)g);
+      StreamTracerDPtr stp = StreamTracer::GetByKey(*(Key *)g);
       g += sizeof(Key);
       int n = *(int *)g;
       g += sizeof(int);
@@ -214,7 +214,7 @@ protected:
     bool Action(int s)
     {
       unsigned char *g = (unsigned char *)get();
-      StreamTracerP stp = StreamTracer::GetByKey(*(Key *)g);
+      StreamTracerDPtr stp = StreamTracer::GetByKey(*(Key *)g);
       g += sizeof(Key);
       float t = *(float *)g;
 
@@ -227,7 +227,7 @@ protected:
   class StreamTracerFromParticleSetMsg : public Work
   {
   public:
-    StreamTracerFromParticleSetMsg(Key rkk, ParticlesP pp, int n) :
+    StreamTracerFromParticleSetMsg(Key rkk, ParticlesDPtr pp, int n) :
        StreamTracerFromParticleSetMsg(2*sizeof(Key) + sizeof(int))
     {
       unsigned char *g = (unsigned char *)get();
@@ -246,7 +246,7 @@ protected:
   class trace_task : public ThreadPoolTask
   {
   public: 
-    trace_task(StreamTracerP _stp, vec3f _p, int _id) : 
+    trace_task(StreamTracerDPtr _stp, vec3f _p, int _id) : 
       ThreadPoolTask(3), stp(_stp), p(_p), id(_id) {}
 
     int work()
@@ -256,7 +256,7 @@ protected:
       return 0;
     }
   private:
-    StreamTracerP stp;
+    StreamTracerDPtr stp;
     vec3f p;
     int id;
   };
@@ -272,8 +272,8 @@ protected:
       int n = *(int *)g;
       g += sizeof(int);
 
-      StreamTracerP stp = StreamTracer::GetByKey(rkk);
-      ParticlesP pp = Particles::GetByKey(pk);
+      StreamTracerDPtr stp = StreamTracer::GetByKey(rkk);
+      ParticlesDPtr pp = Particles::GetByKey(pk);
       
       int rank = GetTheApplication()->GetRank();
       int size = GetTheApplication()->GetSize();
@@ -335,7 +335,7 @@ protected:
     bool Action(int s)
     {
       unsigned char *g = (unsigned char *)get();
-      StreamTracerP stp = StreamTracer::GetByKey(*(Key *)g);
+      StreamTracerDPtr stp = StreamTracer::GetByKey(*(Key *)g);
       g += sizeof(Key);
       int n = *(int *)g;
 
@@ -348,7 +348,7 @@ protected:
   class StreamTracerTraceToPathLinesMsg : public Work
   {
   public:
-    StreamTracerTraceToPathLinesMsg(StreamTracer* st, PathLinesP plp)
+    StreamTracerTraceToPathLinesMsg(StreamTracer* st, PathLinesDPtr plp)
       : StreamTracerTraceToPathLinesMsg(2*sizeof(Key))
     {
       unsigned char *g = (unsigned char *)get();
@@ -364,8 +364,8 @@ protected:
     bool CollectiveAction(MPI_Comm c, bool is_root)
     {
       unsigned char *g = (unsigned char *)get();
-      StreamTracerP stp = StreamTracer::GetByKey(*(Key *)g); g += sizeof(Key);
-      PathLinesP plp = PathLines::GetByKey(*(Key *)g); g += sizeof(Key);
+      StreamTracerDPtr stp = StreamTracer::GetByKey(*(Key *)g); g += sizeof(Key);
+      PathLinesDPtr plp = PathLines::GetByKey(*(Key *)g); g += sizeof(Key);
 
       plp->CopyPartitioning(stp->GetVectorField());
 
@@ -449,12 +449,12 @@ public:
     ss << "StreamTracerFilter_" << stfilter_index++;
     name = ss.str();
 
-    streamTracer = StreamTracer::NewP();
-    result = KeyedDataObject::Cast(PathLines::NewP());
+    streamTracer = StreamTracer::NewDistributed();
+    result = KeyedDataObject::Cast(PathLines::NewDistributed());
   }
 
-  bool SetVectorField(VolumeP v);
-  VolumeP GetVectorField() { return vectorField; }
+  bool SetVectorField(VolumeDPtr v);
+  VolumeDPtr GetVectorField() { return vectorField; }
 
   int  get_max_steps() { return max_steps; }
   void set_max_steps(int n) { max_steps = n; }
@@ -474,9 +474,9 @@ public:
   float GetDeltaT() { return deltaT; }
   void SetDeltaT(float t) { deltaT = t; }
 
-  StreamTracerP GetTheStreamlines() { return streamTracer; }
+  StreamTracerDPtr GetTheStreamlines() { return streamTracer; }
 
-  void Trace(ParticlesP seeds)
+  void Trace(ParticlesDPtr seeds)
   {
     streamTracer->SetVectorField(vectorField);
     streamTracer->set_max_steps(max_steps);
@@ -493,14 +493,14 @@ public:
     streamTracer->SetDeltaT(deltaT);
     streamTracer->Commit();
 
-    PathLinesP plp = PathLines::Cast(result);
+    PathLinesDPtr plp = PathLines::Cast(result);
     streamTracer->TraceToPathLines(plp);
   }
   
 private:
-  StreamTracerP streamTracer;
+  StreamTracerDPtr streamTracer;
 
-  VolumeP vectorField;
+  VolumeDPtr vectorField;
 
   int   max_steps            = 1000;
   float stepsize             = 0.2;

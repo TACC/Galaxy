@@ -46,7 +46,7 @@ EmbreeModel::initialize()
 }
 
 void
-EmbreeModel::SetEmbree(EmbreeP e)
+EmbreeModel::SetEmbree(EmbreeDPtr e)
 {
     embree = e;
 }
@@ -94,7 +94,7 @@ EmbreeModel::~EmbreeModel()
 }
 
 int
-EmbreeModel::AddGeometry(EmbreeGeometryP g)
+EmbreeModel::AddGeometry(EmbreeGeometryDPtr g)
 {
     int id;
 
@@ -117,7 +117,7 @@ EmbreeModel::AddGeometry(EmbreeGeometryP g)
 }
 
 void
-EmbreeModel::RemoveGeometry(EmbreeGeometryP g)
+EmbreeModel::RemoveGeometry(EmbreeGeometryDPtr g)
 {
     for (int id = 0; id < geometries.size() ; id++)
         if (geometries[id] == g)

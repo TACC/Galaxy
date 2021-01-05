@@ -31,41 +31,41 @@ namespace gxy
 int RaycastSampler::rcsfilter_index = 0;
 
 void
-RaycastSampler::Sample(rapidjson::Document& doc, KeyedDataObjectP scalarVolume)
+RaycastSampler::Sample(rapidjson::Document& doc, KeyedDataObjectDPtr scalarVolume)
 {
   camera->LoadFromJSON(doc["camera"]);
   camera->Commit();
 
   int   type     = doc["type"].GetInt();
 
-  VisP vis;
+  VisDPtr vis;
   if (type == 0)
   {
-    IsoSamplerVisP iv = IsoSamplerVis::NewP();
+    IsoSamplerVisDPtr iv = IsoSamplerVis::NewDistributed();
     iv->SetIsovalue(doc["isovalue"].GetDouble());
     vis = Vis::Cast(iv);
   }
   else
   {
-    GradientSamplerVisP gv = GradientSamplerVis::NewP();
+    GradientSamplerVisDPtr gv = GradientSamplerVis::NewDistributed();
     gv->SetTolerance(doc["tolerance"].GetDouble());
     vis = Vis::Cast(gv);
   }
 
   vis->Commit(scalarVolume->getkey());
 
-  VisualizationP visualization = Visualization::NewP();
+  VisualizationDPtr visualization = Visualization::NewDistributed();
   visualization->AddVis(vis);
   visualization->Commit();
 
-  RenderingP r = Rendering::NewP();
+  RenderingDPtr r = Rendering::NewDistributed();
   r->SetTheOwner(0);
-  r->SetTheDatasets(Datasets::NewP());
+  r->SetTheDatasets(Datasets::NewDistributed());
   r->SetTheCamera(camera);
   r->SetTheVisualization(visualization);
   r->Commit();
 
-  RenderingSetP rs = RenderingSet::NewP();
+  RenderingSetDPtr rs = RenderingSet::NewDistributed();
   rs->AddRendering(r);
   rs->Commit();
 
@@ -81,7 +81,7 @@ RaycastSampler::Sample(rapidjson::Document& doc, KeyedDataObjectP scalarVolume)
   sleep(1);
   result->Commit();
 
-  ParticlesP p = Particles::Cast(result);
+  ParticlesDPtr p = Particles::Cast(result);
 
   if (! p) 
     std::cerr << "samples aren't particle set?\n";

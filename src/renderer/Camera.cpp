@@ -77,7 +77,7 @@ Camera::Register()
 }
 
 bool
-Camera::LoadCamerasFromJSON(Value& v, vector<CameraP>& cameras)
+Camera::LoadCamerasFromJSON(Value& v, vector<CameraDPtr>& cameras)
 {
   if (v.HasMember("Camera") || v.HasMember("Cameras"))
   {
@@ -86,7 +86,7 @@ Camera::LoadCamerasFromJSON(Value& v, vector<CameraP>& cameras)
     {
       for (int i = 0; i < c.Size(); i++)
       {
-        CameraP cam = Camera::NewP();
+        CameraDPtr cam = Camera::NewDistributed();
         if (! cam->LoadFromJSON(c[i]))
         {
           std::cerr << "unable to load " << i << "th camera from JSON\n";
@@ -98,7 +98,7 @@ Camera::LoadCamerasFromJSON(Value& v, vector<CameraP>& cameras)
     }
     else
     {
-      CameraP cam = Camera::NewP();
+      CameraDPtr cam = Camera::NewDistributed();
       if (! cam->LoadFromJSON(c))
       {
         std::cerr << "unable to load camera from JSON\n";
@@ -139,7 +139,7 @@ Camera::LoadFromPVCC(const char *filename)
             values[indx] = val;
           }
         }
-        if (propertyName == "CameraPosition")
+        if (propertyName == "CameraDPtrosition")
           for (int i = 0; i < 3; i++)
             eye[i] = values[i];
         else if (propertyName == "CameraFocalPoint")
@@ -208,7 +208,7 @@ Camera::LoadFromJSON(Value& v)
       if (p.HasMember("@name"))
       {
         string name = p["@name"].GetString();
-        if (name == "CameraPosition")
+        if (name == "CameraDPtrosition")
         {
           eye[0] = atof(p["Element"][0]["@value"].GetString());
           eye[1] = atof(p["Element"][1]["@value"].GetString());
@@ -492,7 +492,7 @@ Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
   return 0;
 }
 
-void check_env(RendererP renderer, int width, int height)
+void check_env(RendererDPtr renderer, int width, int height)
 {
   static bool first = true;
 
@@ -526,7 +526,7 @@ void check_env(RendererP renderer, int width, int height)
 }
     
 void
-Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, RenderingP rendering, Box* lbox, Box *gbox, std::vector<std::future<int>>& rvec, int fnum)
+Camera::generate_initial_rays(RendererDPtr renderer, RenderingSetDPtr renderingSet, RenderingDPtr rendering, Box* lbox, Box *gbox, std::vector<std::future<int>>& rvec, int fnum)
 {
   int rays_per_packet = renderer->GetMaxRayListSize();
 

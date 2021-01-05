@@ -66,7 +66,7 @@ TraceRays::destroy_ispc()
 }
 
 RayList *
-TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
+TraceRays::Trace(Lighting* lights, VisualizationDPtr visualization, RayList *raysIn)
 {
   ispc::TraceRays_TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), epsilon);
 	RayList *raysOut = NULL;

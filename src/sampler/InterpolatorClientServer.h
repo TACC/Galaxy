@@ -45,9 +45,9 @@ public:
   static void init();
   bool handle(std::string line, std::string&);
 
-  VolumeP volume;             // volume to be sampled
-  ParticlesP src;             // particles to interpolate
-  ParticlesP dst;             // result
+  VolumeDPtr volume;             // volume to be sampled
+  ParticlesDPtr src;             // particles to interpolate
+  ParticlesDPtr dst;             // result
 
   struct Args
   {

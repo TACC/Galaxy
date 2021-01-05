@@ -40,8 +40,8 @@ bool
 InterpolatorMsg::CollectiveAction(MPI_Comm c, bool is_root)
 {
   Key *keys = (Key *)get();
-  VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(keys[0]));
-  GeometryP p = Geometry::Cast(KeyedDataObject::GetByKey(keys[1]));
+  VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(keys[0]));
+  GeometryDPtr p = Geometry::Cast(KeyedDataObject::GetByKey(keys[1]));
 
   float ox, oy, oz;
   v->get_ghosted_local_origin(ox, oy, oz);

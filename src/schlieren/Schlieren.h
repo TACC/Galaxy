@@ -61,7 +61,7 @@ public:
 
   virtual void Trace(RayList *);
 
-  void NormalizeImages(RenderingSetP);
+  void NormalizeImages(RenderingSetDPtr);
 
 protected:
   float GetFar() { return far; }
@@ -74,7 +74,7 @@ private:
   class NormalizeSchlierenImagesMsg : public Work
   {
   public:
-    NormalizeSchlierenImagesMsg(RenderingSetP rs) : NormalizeSchlierenImagesMsg(sizeof(Key))
+    NormalizeSchlierenImagesMsg(RenderingSetDPtr rs) : NormalizeSchlierenImagesMsg(sizeof(Key))
     {
       unsigned char *p = (unsigned char *)contents->get();
       *(Key *)p = rs->getkey();

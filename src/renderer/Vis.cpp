@@ -81,7 +81,7 @@ Vis::destroy_ispc()
 }
 
 bool 
-Vis::Commit(DatasetsP datasets)
+Vis::Commit(DatasetsDPtr datasets)
 {
 	datakey = datasets->FindKey(name);
 
@@ -103,7 +103,7 @@ Vis::Commit(Key key)
 }
 
 bool 
-Vis::Commit(KeyedDataObjectP kdop)
+Vis::Commit(KeyedDataObjectDPtr kdop)
 {
   if (! kdop)
   {
@@ -146,7 +146,7 @@ Vis::LoadFromJSON(Value& v)
 }
 
 void
-Vis::SetTheOsprayDataObject(OsprayObjectP o)
+Vis::SetTheOsprayDataObject(OsprayObjectDPtr o)
 {
   odata = o;
 	ispc::Vis_set_data(GetIspc(), o->GetOSP_IE());

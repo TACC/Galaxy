@@ -93,8 +93,8 @@ public:
     dstRayList->set_classification(dstRayIndex, srcRayList->get_classification(srcRayIndex));
 	}
 
-	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, int frame, RayListType type); //!< constructor
-	RayList(RendererP renderer, RenderingSetP rs, RenderingP r, int nrays, RayListType type); //!< constructor
+	RayList(RendererDPtr renderer, RenderingSetDPtr rs, RenderingDPtr r, int nrays, int frame, RayListType type); //!< constructor
+	RayList(RendererDPtr renderer, RenderingSetDPtr rs, RenderingDPtr r, int nrays, RayListType type); //!< constructor
     RayList(int n); //!< constructor
 	RayList(SharedP contents); //!< constructor from ISPC serialization
 
@@ -216,14 +216,14 @@ public:
 	void set_term(int i, int v); //!< set whether the ray has terminated for the ith ray in the RayList
 	void set_classification(int i, int c); //!< set the classification of the ray
 
-	RendererP     GetTheRenderer() { return theRenderer; } //!< get a pointer to the Renderer for this RayList
-	RenderingSetP GetTheRenderingSet() { return theRenderingSet; } //!< get a pointer to the RenderingSet for this RayList
-	RenderingP    GetTheRendering() { return theRendering; } //!< get a pointer to the Rendering for this RayList
+	RendererDPtr     GetTheRenderer() { return theRenderer; } //!< get a pointer to the Renderer for this RayList
+	RenderingSetDPtr GetTheRenderingSet() { return theRenderingSet; } //!< get a pointer to the RenderingSet for this RayList
+	RenderingDPtr    GetTheRendering() { return theRendering; } //!< get a pointer to the Rendering for this RayList
 
 private:
-	RendererP theRenderer;
-	RenderingP theRendering;
-	RenderingSetP theRenderingSet;
+	RendererDPtr theRenderer;
+	RenderingDPtr theRendering;
+	RenderingSetDPtr theRenderingSet;
 
 	SharedP contents;
 	void* ispc;

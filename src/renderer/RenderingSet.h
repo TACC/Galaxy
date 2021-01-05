@@ -30,7 +30,7 @@
 #include <vector>
 #include <map>
 
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "OsprayObject.h"
 #include "Datasets.h"
 #include "Rays.h"
@@ -64,12 +64,12 @@ public:
 	virtual void initialize(); //!< initialize this RenderingSet
 	virtual ~RenderingSet(); //!< default destructor
 
-	void AddRendering(RenderingP r); //!< add a Rendering to this RenderingSet
+	void AddRendering(RenderingDPtr r); //!< add a Rendering to this RenderingSet
 	int  GetNumberOfRenderings(); //!< return the number of Renderings in this RenderingSet
 	//! return a pointer to the Rendering at the requested index
 	/*! \warning currently not range-checked, behavior of an out-of-range request is not defined
 	 */
-	RenderingP GetRendering(int i);
+	RenderingDPtr GetRendering(int i);
 
 	//! save images for this RenderingSet using the supplied base name for the image files.  If asFLoat is true, then save four-channel fload images in fits format; otherwise, write a png color image.
 	void SaveImages(std::string basename, bool asFloat=false); 
@@ -188,7 +188,7 @@ public:
 
 protected:
 
-	std::vector<RenderingP> renderings;
+	std::vector<RenderingDPtr> renderings;
 
 #ifdef GXY_WRITE_IMAGES
 
@@ -260,15 +260,15 @@ public:
 	bool IsActive(int fnum);
 
   //! Set the datasets this rendering set will refer to
-  void SetTheDatasets(DatasetsP d) { datasets = d; }
+  void SetTheDatasets(DatasetsDPtr d) { datasets = d; }
   
   //! Get the datasets this rendering set will refer to
-  DatasetsP getTheDatasets() { return datasets; }
+  DatasetsDPtr getTheDatasets() { return datasets; }
 
 private:
 
-  DatasetsP datasets;
-  std::map<Key, OsprayObjectP> ospray_object_map;
+  DatasetsDPtr datasets;
+  std::map<Key, OsprayObjectDPtr> ospray_object_map;
 
 	int current_frame;
 	int next_frame;

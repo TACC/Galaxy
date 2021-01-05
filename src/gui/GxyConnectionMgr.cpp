@@ -30,11 +30,10 @@ GxyConnectionMgr::connectToServer()
   else
   {
     int   p = atoi(port.toStdString().c_str());
-    char *s = (char *)server.toStdString().c_str();
 
-    std::cerr << "trying to connect to " << s << ":" << p << "\n";
+    std::cerr << "trying to connect to " << server.toStdString().c_str() << ":" << p << "\n";
 
-    Connect(s, p);
+    Connect((char *)server.toStdString().c_str(), p);
 
     if (IsConnected())
     {

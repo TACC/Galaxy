@@ -78,7 +78,7 @@ MappedVis::allocate_ispc()
 }
 
 bool 
-MappedVis::Commit(DatasetsP datasets)
+MappedVis::Commit(DatasetsDPtr datasets)
 {
 	return Vis::Commit(datasets);
 }
@@ -203,7 +203,7 @@ MappedVis::LoadFromJSON(Value& v)
 }
 
 void
-MappedVis::SetTheOsprayDataObject(OsprayObjectP o)
+MappedVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
 {
   super::SetTheOsprayDataObject(o);
 

@@ -103,13 +103,13 @@ main(int argc, char * argv[])
 
 	theApplication.Run();
 
-  RendererP theRenderer = Renderer::NewP();
+  RendererDPtr theRenderer = Renderer::NewDistributed();
 
 	if (theApplication.GetRank() == 0)
 	{
 		theRenderer->Commit();
 
-		CameraP c = Camera::NewP();
+		CameraDPtr c = Camera::NewDistributed();
 		c->set_viewpoint(3.0, 3.0,3.0);
 		c->set_viewdirection(-4.0, -4.0, -4.0);
 
@@ -120,18 +120,18 @@ main(int argc, char * argv[])
 		c->set_angle_of_view(30.0);
 		c->Commit();
 
-		// VolumeP v = Volume::NewP();
+		// VolumeDPtr v = Volume::NewDistributed();
 		// v->Import("oneBall-0.vol");
         
-		AmrVolumeP v = AmrVolume::NewP();
+		AmrVolumeDPtr v = AmrVolume::NewDistributed();
 		v->Import("ballinthecorner.amrvol");
 		v->Commit();
 
-		DatasetsP d = Datasets::NewP();
+		DatasetsDPtr d = Datasets::NewDistributed();
 	        d->Insert("oneBall", v);
 		d->Commit();
 
-		VolumeVisP vv = VolumeVis::NewP();
+		VolumeVisDPtr vv = VolumeVis::NewDistributed();
 		vv->SetName("oneBall");
 		//vec4f slice(0.0,0.0, 1.0, 0.25);
 		//vv->AddSlice(slice);
@@ -168,7 +168,7 @@ main(int argc, char * argv[])
 		vv->Commit(d);
 
 
-		VisualizationP vis = Visualization::NewP();
+		VisualizationDPtr vis = Visualization::NewDistributed();
 		vis->AddVis(vv);
     Lighting *l = vis->get_the_lights();
     float camera_relative[] = {5.0, 5.0, 0.0};
@@ -176,7 +176,7 @@ main(int argc, char * argv[])
     l->SetLights(1, camera_relative, type);
 		vis->Commit(d);
 
-		RenderingP r = Rendering::NewP();
+		RenderingDPtr r = Rendering::NewDistributed();
 		r->SetTheOwner(0);
         c->set_width(512);
         c->set_height(512);
@@ -185,7 +185,7 @@ main(int argc, char * argv[])
 		r->SetTheVisualization(vis);
 		r->Commit();
 
-		RenderingSetP rs = RenderingSet::NewP();
+		RenderingSetDPtr rs = RenderingSet::NewDistributed();
 		rs->AddRendering(r);
 		rs->Commit();
 

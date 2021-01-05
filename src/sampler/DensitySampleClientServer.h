@@ -45,8 +45,8 @@ public:
   static void init();
   bool handle(std::string line, std::string&);
 
-  VolumeP volume;             // volume to be sampled
-  ParticlesP particles;       // particles object to stash samples
+  VolumeDPtr volume;             // volume to be sampled
+  ParticlesDPtr particles;       // particles object to stash samples
 
   struct Args
   {

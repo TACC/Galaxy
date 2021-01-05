@@ -44,7 +44,7 @@ EmbreeGeometry::~EmbreeGeometry()
 }
 
 void
-EmbreeGeometry::SetGeometry(GeometryP g)
+EmbreeGeometry::SetGeometry(GeometryDPtr g)
 {
     geometry = g;
 }
@@ -69,7 +69,7 @@ EmbreeGeometry::FinalizeIspc()
     iptr->data         = geometry->GetData();
 }
 
-GeometryP 
+GeometryDPtr 
 EmbreeGeometry::GetGeometry()
 {
     return geometry;

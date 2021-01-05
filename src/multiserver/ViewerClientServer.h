@@ -45,26 +45,26 @@ public:
     datasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
     if (! datasets)
     {
-      datasets = Datasets::NewP();
+      datasets = Datasets::NewDistributed();
       MultiServer::Get()->SetGlobal("global datasets", datasets);
     }
 
-    renderer = Renderer::NewP();
+    renderer = Renderer::NewDistributed();
     renderer->Commit();
 
-    visualization = Visualization::NewP();
+    visualization = Visualization::NewDistributed();
     visualization->Commit(datasets);
 
-    camera = Camera::NewP();
+    camera = Camera::NewDistributed();
     camera->Commit();
 
-    rendering = ServerRendering::NewP();
+    rendering = ServerRendering::NewDistributed();
     rendering->SetTheVisualization(visualization);
     rendering->SetTheCamera(camera);
     rendering->SetTheDatasets(datasets);
     rendering->Commit();
 
-    renderingSet = RenderingSet::NewP();
+    renderingSet = RenderingSet::NewDistributed();
     renderingSet->AddRendering(rendering);
     renderingSet->Commit();
   }
@@ -78,12 +78,12 @@ public:
     // renderingSet->Commit();
   }
 
-  DatasetsP        GetTheDatasets() { return datasets; }
-  RendererP        GetTheRenderer() { return renderer; }
-  VisualizationP   GetTheVisualization() { return visualization; }
-  CameraP          GetTheCamera() { return camera; }
-  ServerRenderingP GetTheRendering() { return rendering; }
-  RenderingSetP    GetTheRenderingSet() { return renderingSet; }
+  DatasetsDPtr        GetTheDatasets() { return datasets; }
+  RendererDPtr        GetTheRenderer() { return renderer; }
+  VisualizationDPtr   GetTheVisualization() { return visualization; }
+  CameraDPtr          GetTheCamera() { return camera; }
+  ServerRenderingDPtr GetTheRendering() { return rendering; }
+  RenderingSetDPtr    GetTheRenderingSet() { return renderingSet; }
 
   void render()
   {
@@ -103,12 +103,12 @@ public:
 private:
   bool first;
 
-  DatasetsP        datasets;
-  RendererP        renderer;
-  VisualizationP   visualization;
-  CameraP          camera;
-  ServerRenderingP rendering;
-  RenderingSetP    renderingSet;
+  DatasetsDPtr        datasets;
+  RendererDPtr        renderer;
+  VisualizationDPtr   visualization;
+  CameraDPtr          camera;
+  ServerRenderingDPtr rendering;
+  RenderingSetDPtr    renderingSet;
 };
 
 }

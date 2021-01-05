@@ -47,7 +47,7 @@ public:
   void Trace(vec3f& pt, int id = 0);
   void Trace(int n, vec3f* pts);
   void _Trace(int where, int id, int n, vec3f& pt, vec3f& up, float time);
-  void Trace(ParticlesP pp);
+  void Trace(ParticlesDPtr pp);
   
   virtual void local_trace(int id, int n, vec3f& pt, vec3f& up, float time);
 
@@ -69,8 +69,8 @@ public:
 
   trajectory get_trajectory(int id) { return trajectories[id]; }
 
-  bool SetVectorField(VolumeP v);
-  VolumeP GetVectorField() { return vectorField; }
+  bool SetVectorField(VolumeDPtr v);
+  VolumeDPtr GetVectorField() { return vectorField; }
 
   virtual bool local_commit(MPI_Comm);
 
@@ -105,7 +105,7 @@ public:
   void SetMaxIntegrationTime(float t) { max_integration_time = t; }
 
 protected:
-  VolumeP vectorField;
+  VolumeDPtr vectorField;
 
   pthread_mutex_t lock;
   pthread_cond_t signal;
@@ -152,7 +152,7 @@ protected:
     bool Action(int s)
     {
       unsigned char *g = (unsigned char *)get();
-      RungeKuttaP rkp = RungeKutta::GetByKey(*(Key *)g);
+      RungeKuttaDPtr rkp = RungeKutta::GetByKey(*(Key *)g);
       g += sizeof(Key);
       int n = *(int *)g;
       g += sizeof(int);
@@ -190,7 +190,7 @@ protected:
     bool Action(int s)
     {
       unsigned char *g = (unsigned char *)get();
-      RungeKuttaP rkp = RungeKutta::GetByKey(*(Key *)g);
+      RungeKuttaDPtr rkp = RungeKutta::GetByKey(*(Key *)g);
       g += sizeof(Key);
       float t = *(float *)g;
 
@@ -203,7 +203,7 @@ protected:
   class RKTraceFromParticleSetMsg : public Work
   {
   public:
-    RKTraceFromParticleSetMsg(Key rkk, ParticlesP pp, int n) :
+    RKTraceFromParticleSetMsg(Key rkk, ParticlesDPtr pp, int n) :
        RKTraceFromParticleSetMsg(2*sizeof(Key) + sizeof(int))
     {
       unsigned char *g = (unsigned char *)get();
@@ -222,7 +222,7 @@ protected:
   class trace_task : public ThreadPoolTask
   {
   public: 
-    trace_task(RungeKuttaP _rkp, vec3f _p, int _id) : 
+    trace_task(RungeKuttaDPtr _rkp, vec3f _p, int _id) : 
       ThreadPoolTask(3), rkp(_rkp), p(_p), id(_id) {}
 
     int work()
@@ -232,7 +232,7 @@ protected:
       return 0;
     }
   private:
-    RungeKuttaP rkp;
+    RungeKuttaDPtr rkp;
     vec3f p;
     int id;
   };
@@ -248,8 +248,8 @@ protected:
       int n = *(int *)g;
       g += sizeof(int);
 
-      RungeKuttaP rkp = RungeKutta::GetByKey(rkk);
-      ParticlesP pp = Particles::GetByKey(pk);
+      RungeKuttaDPtr rkp = RungeKutta::GetByKey(rkk);
+      ParticlesDPtr pp = Particles::GetByKey(pk);
       
       int rank = GetTheApplication()->GetRank();
       int size = GetTheApplication()->GetSize();
@@ -309,7 +309,7 @@ protected:
     bool Action(int s)
     {
       unsigned char *g = (unsigned char *)get();
-      RungeKuttaP rkp = RungeKutta::GetByKey(*(Key *)g);
+      RungeKuttaDPtr rkp = RungeKutta::GetByKey(*(Key *)g);
       g += sizeof(Key);
       int n = *(int *)g;
 

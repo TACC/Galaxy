@@ -34,7 +34,7 @@
 #include <vtkImageData.h>
 
 #include "Box.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 
 namespace gxy
 {
@@ -48,7 +48,7 @@ OBJECT_POINTER_TYPES(KeyedDataObject)
  * KEYED_OBJECT or KEYED_OBJECT_SUBCLASS macro in its class definition.
  *
  * \ingroup data
- * \sa KeyedObject, KeyedObjectFactory, Work
+ * \sa KeyedObject, ObjectFactory, Work
  */
 class KeyedDataObject : public KeyedObject
 {
@@ -60,8 +60,8 @@ public:
 	virtual ~KeyedDataObject(); //!< destructor
 	virtual void initialize(); //!< initialize this KeyedDataObject
 
-  virtual KeyedDataObjectP Copy();
-  virtual bool local_copy(KeyedDataObjectP src);
+  virtual KeyedDataObjectDPtr Copy();
+  virtual bool local_copy(KeyedDataObjectDPtr src);
 
   //! commit this object to the local registry
 	virtual bool local_commit(MPI_Comm);
@@ -108,7 +108,7 @@ public:
 	virtual bool Import(std::string, void *args, int argsSize);
 
   //! copy the data partitioning of the given KeyedDataObject
-	void CopyPartitioning(KeyedDataObjectP o) { CopyPartitioning(o.get()); };
+	void CopyPartitioning(KeyedDataObjectDPtr o) { CopyPartitioning(o.get()); };
 
   float local_min, local_max;
   float global_min, global_max;
@@ -119,7 +119,7 @@ public:
   void get_global_minmax(float& min, float& max)   { min = global_min; max = global_max; }
   void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
 
-  virtual GalaxyObjectP CreateTheDeviceEquivalent(KeyedDataObjectP kdop);
+  virtual GalaxyObjectDPtr CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop);
 
   void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 
@@ -168,7 +168,7 @@ protected:
 			Key k = *(Key *)p;
 			p += sizeof(Key);
 
-			KeyedDataObjectP o = KeyedDataObject::GetByKey(k);
+			KeyedDataObjectDPtr o = KeyedDataObject::GetByKey(k);
 
 			if (!o->local_import(p, c))
         o->set_error(1);
@@ -202,11 +202,11 @@ protected:
 
 			Key k = *(Key *)p;
 			p += sizeof(Key);
-			KeyedDataObjectP src = KeyedDataObject::GetByKey(k);
+			KeyedDataObjectDPtr src = KeyedDataObject::GetByKey(k);
 
 			k = *(Key *)p;
 			p += sizeof(Key);
-			KeyedDataObjectP dst = KeyedDataObject::GetByKey(k);
+			KeyedDataObjectDPtr dst = KeyedDataObject::GetByKey(k);
 
 
 			if (!dst->local_copy(src))

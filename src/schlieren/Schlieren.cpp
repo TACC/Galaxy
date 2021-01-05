@@ -52,9 +52,9 @@ Schlieren::Initialize()
 void
 Schlieren::HandleTerminatedRays(RayList *raylist)
 {
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-  RenderingP rendering = raylist->GetTheRendering();
-  CameraP camera = rendering->GetTheCamera();
+  RenderingSetDPtr  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingDPtr rendering = raylist->GetTheRendering();
+  CameraDPtr camera = rendering->GetTheCamera();
 
   vec3f vp, vd, vu; float aov;
 
@@ -224,10 +224,10 @@ Schlieren::Deserialize(unsigned char *p)
 void
 Schlieren::Trace(RayList *raylist)
 {
-  RendererP      renderer  = raylist->GetTheRenderer();
-  RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
-  RenderingP     rendering     = raylist->GetTheRendering();
-  VisualizationP visualization = rendering->GetTheVisualization();
+  RendererDPtr      renderer  = raylist->GetTheRenderer();
+  RenderingSetDPtr  renderingSet  = raylist->GetTheRenderingSet();
+  RenderingDPtr     rendering     = raylist->GetTheRendering();
+  VisualizationDPtr visualization = rendering->GetTheVisualization();
 
   // This is called when a list of rays is pulled off the
   // RayQ.  When we are done with it we decrement the
@@ -276,11 +276,11 @@ Schlieren::NormalizeSchlierenImagesMsg::CollectiveAction(MPI_Comm c, bool is_roo
 {
   char *ptr = (char *)contents->get();
   Key key = *(Key *)ptr;
-  RenderingSetP rs = RenderingSet::GetByKey(key);
+  RenderingSetDPtr rs = RenderingSet::GetByKey(key);
 
   for (int i = 0; i < rs->GetNumberOfRenderings(); i++)
   {
-    RenderingP r = rs->GetRendering(i);
+    RenderingDPtr r = rs->GetRendering(i);
     if (r->IsLocal())
     {
       int width, height;
@@ -330,7 +330,7 @@ Schlieren::NormalizeSchlierenImagesMsg::CollectiveAction(MPI_Comm c, bool is_roo
 }
 
 void
-Schlieren::NormalizeImages(RenderingSetP rs)
+Schlieren::NormalizeImages(RenderingSetDPtr rs)
 {
   NormalizeSchlierenImagesMsg msg(rs);
   msg.Broadcast(true, true);

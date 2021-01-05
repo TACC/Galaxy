@@ -50,7 +50,7 @@ class InterpolatorMsg : public Work
 {
 
 public:
-  InterpolatorMsg(VolumeP v, GeometryP g) : InterpolatorMsg(2*sizeof(Key))
+  InterpolatorMsg(VolumeDPtr v, GeometryDPtr g) : InterpolatorMsg(2*sizeof(Key))
   {
     Key *keys = (Key *)contents->get();
     keys[0] = v->getkey();
@@ -81,14 +81,14 @@ public:
     name = ss.str();
   }
 
-  void SetVolume(VolumeP v) { volume = v; }
-  void SetPointSet(GeometryP p) { result = p->Copy(); }
+  void SetVolume(VolumeDPtr v) { volume = v; }
+  void SetPointSet(GeometryDPtr p) { result = p->Copy(); }
 
   void Interpolate();
 
   ~Interpolator() {}
 
-  VolumeP volume;
+  VolumeDPtr volume;
 };
 
 }

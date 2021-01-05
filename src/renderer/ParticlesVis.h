@@ -31,7 +31,7 @@
 #include "Particles.h"
 #include "Datasets.h"
 
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 
 #include "rapidjson/document.h"
 
@@ -56,7 +56,7 @@ public:
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
-  virtual void SetTheOsprayDataObject(OsprayObjectP o);
+  virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
 
   //! Set a constant radius
   void SetRadius(float r0) { SetRadiusTransform(0.0, r0, 0.0, 0.0); }

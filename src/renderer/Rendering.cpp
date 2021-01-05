@@ -23,7 +23,7 @@
 #include "Application.h"
 #include "Camera.h"
 #include "ImageWriter.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "Rays.h"
 #include "Renderer.h"
 #include "RenderingEvents.h"
@@ -155,11 +155,11 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 vec3f scale1(float s, vec3f v) { return vec3f(s*v.x, s*v.y, s*v.z); }
 
 void
-Rendering::resolve_lights(RendererP renderer)
+Rendering::resolve_lights(RendererDPtr renderer)
 {
 	Lighting *srcLights = GetTheVisualization()->get_the_lights();
 
-	CameraP  theCamera = GetTheCamera();
+	CameraDPtr  theCamera = GetTheCamera();
 
 	vec3f viewpoint, viewup, viewdir;
 	theCamera->get_viewpoint(viewpoint);
@@ -256,18 +256,18 @@ Rendering::local_reset()
   }
 }
 
-CameraP Rendering::GetTheCamera() { return camera; }
-void Rendering::SetTheCamera(CameraP c) 
+CameraDPtr Rendering::GetTheCamera() { return camera; }
+void Rendering::SetTheCamera(CameraDPtr c) 
 { 
   camera = c;
   SetTheSize(c->get_width(), c->get_height());
 }
 
-DatasetsP Rendering::GetTheDatasets() { return datasets; }
-void Rendering::SetTheDatasets(DatasetsP ds) { datasets = ds; }
+DatasetsDPtr Rendering::GetTheDatasets() { return datasets; }
+void Rendering::SetTheDatasets(DatasetsDPtr ds) { datasets = ds; }
 
-VisualizationP Rendering::GetTheVisualization() { return visualization; }
-void Rendering::SetTheVisualization(VisualizationP dm) { visualization = dm; }
+VisualizationDPtr Rendering::GetTheVisualization() { return visualization; }
+void Rendering::SetTheVisualization(VisualizationDPtr dm) { visualization = dm; }
 
 void Rendering::SaveImage(string filename, int indx, bool asFloat)
 {

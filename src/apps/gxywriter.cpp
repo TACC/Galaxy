@@ -119,7 +119,7 @@ int main(int argc,  char *argv[])
       cerr << "connection ok" << endl;
     }
 
-    RendererP theRenderer = Renderer::NewP();
+    RendererDPtr theRenderer = Renderer::NewDistributed();
 
     rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
     if (! doc)
@@ -132,7 +132,7 @@ int main(int argc,  char *argv[])
 
     theRenderer->LoadStateFromDocument(*doc);
 
-    vector<CameraP> theCameras;
+    vector<CameraDPtr> theCameras;
     if (! Camera::LoadCamerasFromJSON(*doc, theCameras))
     {
       std::cerr << "error loading cameras\n";
@@ -151,7 +151,7 @@ int main(int argc,  char *argv[])
         }
 
 
-    DatasetsP theDatasets = Datasets::NewP();
+    DatasetsDPtr theDatasets = Datasets::NewDistributed();
     if (! theDatasets->LoadFromJSON(*doc))
     {
       std::cerr << "error loading theDatasets\n";
@@ -168,7 +168,7 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
+    vector<VisualizationDPtr> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
     for (auto v : theVisualizations)
       if (! v->Commit(theDatasets))
       {
@@ -178,8 +178,8 @@ int main(int argc,  char *argv[])
         exit(1);
       }
 
-    vector<RenderingSetP> theRenderingSets;
-    theRenderingSets.push_back(RenderingSet::NewP());
+    vector<RenderingSetDPtr> theRenderingSets;
+    theRenderingSets.push_back(RenderingSet::NewDistributed());
 
 		int k = 0, index = 0;
     for (auto c : theCameras)
@@ -192,9 +192,9 @@ int main(int argc,  char *argv[])
         }
 
         if (theRenderingSets.back()->GetNumberOfRenderings() >= maxConcurrentRenderings)
-          theRenderingSets.push_back(RenderingSet::NewP());
+          theRenderingSets.push_back(RenderingSet::NewDistributed());
 
-        RenderingP theRendering = Rendering::NewP();
+        RenderingDPtr theRendering = Rendering::NewDistributed();
 
         theRendering->SetTheOwner(index++ % mpiSize );
         if (override_windowsize)

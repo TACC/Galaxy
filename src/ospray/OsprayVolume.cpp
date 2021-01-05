@@ -22,7 +22,7 @@
 
 using namespace gxy;
 
-OsprayVolume::OsprayVolume(VolumeP v)
+OsprayVolume::OsprayVolume(VolumeDPtr v)
 {
   OSPVolume ospv = ospNewVolume("shared_structured_volume");
   

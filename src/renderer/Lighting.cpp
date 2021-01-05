@@ -21,7 +21,7 @@
 #include <math.h>
 
 #include "Application.h"
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 #include "Lighting.h"
 #include "Lighting_ispc.h"
 

@@ -45,23 +45,23 @@ class GuiClientServer : public MultiServerHandler
   {
     ClientWindow(string id)
     {
-      visualization = Visualization::NewP();
-      camera = Camera::NewP();
+      visualization = Visualization::NewDistributed();
+      camera = Camera::NewDistributed();
 
-      rendering = GuiRendering::NewP();
+      rendering = GuiRendering::NewDistributed();
       rendering->SetId(id);
 
-      renderingSet = RenderingSet::NewP();
+      renderingSet = RenderingSet::NewDistributed();
       renderingSet->AddRendering(rendering);
 
       frame = 0;
     }
 
-    VisualizationP   visualization;
-    CameraP          camera;
-    GuiRenderingP    rendering;
-    RenderingSetP    renderingSet;
-    DatasetsP        datasets;
+    VisualizationDPtr   visualization;
+    CameraDPtr          camera;
+    GuiRenderingDPtr    rendering;
+    RenderingSetDPtr    renderingSet;
+    DatasetsDPtr        datasets;
 
     int frame;
   };
@@ -79,15 +79,15 @@ public:
     globals = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
     if (! globals)
     {
-      globals = Datasets::NewP();
+      globals = Datasets::NewDistributed();
       MultiServer::Get()->SetGlobal("global datasets", globals);
     }
 
     Observe(globals);
 
-    temporaries = Datasets::NewP();
+    temporaries = Datasets::NewDistributed();
 
-    renderer = Renderer::NewP();
+    renderer = Renderer::NewDistributed();
     renderer->Commit();
   }
 
@@ -129,14 +129,14 @@ public:
 
 private:
   bool        first;
-  RendererP   renderer;
+  RendererDPtr   renderer;
 
   std::vector<std::string> watched_datasets;
 
   std::map<std::string, std::shared_ptr<ClientWindow>> clientWindows;
   std::map<std::string, std::shared_ptr<Filter>> filters;
   
-  DatasetsP temporaries;
-  DatasetsP globals;
+  DatasetsDPtr temporaries;
+  DatasetsDPtr globals;
 };
 }

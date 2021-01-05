@@ -126,7 +126,7 @@ PathLinesVis::local_commit(MPI_Comm c)
 }
 
 void
-PathLinesVis::SetTheOsprayDataObject(OsprayObjectP o)
+PathLinesVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
 {
   super::SetTheOsprayDataObject(o);
 

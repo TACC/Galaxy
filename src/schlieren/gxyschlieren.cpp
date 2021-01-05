@@ -133,18 +133,18 @@ int main(int argc,  char *argv[])
       cerr << "connection ok" << endl;
     }
 
-    RendererP theRenderer;
+    RendererDPtr theRenderer;
 
     if (original_algorithm)
     {
       Schlieren::Initialize();
-      theRenderer = Schlieren::NewP();
+      theRenderer = Schlieren::NewDistributed();
     }
     else
     {
       Schlieren2::Initialize();
       Schlieren2Rendering::Register();
-      theRenderer = Schlieren2::NewP();
+      theRenderer = Schlieren2::NewDistributed();
     }
 
 
@@ -159,7 +159,7 @@ int main(int argc,  char *argv[])
 
     theRenderer->LoadStateFromDocument(*doc);
 
-    vector<CameraP> theCameras;
+    vector<CameraDPtr> theCameras;
     if (! Camera::LoadCamerasFromJSON(*doc, theCameras))
     {
       std::cerr << "error loading cameras\n";
@@ -178,7 +178,7 @@ int main(int argc,  char *argv[])
         }
 
 
-    DatasetsP theDatasets = Datasets::NewP();
+    DatasetsDPtr theDatasets = Datasets::NewDistributed();
     if (! theDatasets->LoadFromJSON(*doc))
     {
       std::cerr << "error loading theDatasets\n";
@@ -195,7 +195,7 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
+    vector<VisualizationDPtr> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
     for (auto v : theVisualizations)
       if (! v->Commit(theDatasets))
       {
@@ -205,25 +205,25 @@ int main(int argc,  char *argv[])
         exit(1);
       }
 
-    vector<RenderingSetP> theRenderingSets;
-    theRenderingSets.push_back(RenderingSet::NewP());
+    vector<RenderingSetDPtr> theRenderingSets;
+    theRenderingSets.push_back(RenderingSet::NewDistributed());
 
 		int k = 0, index = 0;
     for (auto c : theCameras)
       for (auto v : theVisualizations)
       {
         if (theRenderingSets.back()->GetNumberOfRenderings() >= maxConcurrentRenderings)
-          theRenderingSets.push_back(RenderingSet::NewP());
+          theRenderingSets.push_back(RenderingSet::NewDistributed());
 
-        RenderingP theRendering;
+        RenderingDPtr theRendering;
 
         if (original_algorithm)
         {
-          theRendering = Rendering::NewP();
+          theRendering = Rendering::NewDistributed();
         }
         else
         {
-          theRendering = Schlieren2Rendering::NewP();
+          theRendering = Schlieren2Rendering::NewDistributed();
         }
 
         theRendering->SetTheOwner(index++ % mpiSize );

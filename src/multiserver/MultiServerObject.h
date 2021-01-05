@@ -35,7 +35,7 @@ public:
   MultiServerObject();
   ~MultiServerObject();
 private:
-  DynamicLibraryP dlp;
+  DynamicLibraryDPtr dlp;
 };
 
 }

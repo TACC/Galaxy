@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 #include <Application.h>
-#include <KeyedObject.h>
+#include <GalaxyObject.h>
 
 namespace gxy
 {

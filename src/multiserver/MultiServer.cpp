@@ -133,7 +133,7 @@ MultiServer::watch(void *d)
 void
 MultiServer::DropGlobal(string name)
 {
-  KeyedObjectP kop = globals[name];
+  KeyedObjectDPtr kop = globals[name];
   if (kop)
     globals.erase(name);
 }

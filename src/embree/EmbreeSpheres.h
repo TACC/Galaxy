@@ -32,7 +32,7 @@ namespace gxy
 class EmbreeSpheres : public EmbreeGeometry
 {
 public:
-    static EmbreeSpheresP New() { return std::shared_ptr<EmbreeSpheres>(new EmbreeSpheres); }
+    static EmbreeSpheresDPtr New() { return std::shared_ptr<EmbreeSpheres>(new EmbreeSpheres); }
     ~EmbreeSpheres() {};
 
     void SetMap(float, float, float, float);

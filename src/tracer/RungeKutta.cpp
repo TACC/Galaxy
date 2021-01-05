@@ -31,7 +31,7 @@ int
 RungeKutta::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int) + 3*sizeof(float); }
 
 bool
-RungeKutta::SetVectorField(VolumeP v)
+RungeKutta::SetVectorField(VolumeDPtr v)
 {
   if (!v || v->get_number_of_components() != 3 || v->get_type() != Volume::FLOAT)
   {
@@ -104,7 +104,7 @@ RungeKutta::Trace(int n, vec3f* p)
 }
 
 void
-RungeKutta::Trace(ParticlesP p)
+RungeKutta::Trace(ParticlesDPtr p)
 {
   Lock();
 
@@ -150,7 +150,7 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
   float tLast;
   int me = GetTheApplication()->GetRank();
 
-  VolumeP v = GetVectorField();
+  VolumeDPtr v = GetVectorField();
 
   // h will be the step size
 

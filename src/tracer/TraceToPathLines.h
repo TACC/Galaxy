@@ -2,6 +2,6 @@ namespace gxy
 {
 
 void RegisterTraceToPathLines();
-void TraceToPathLines(RungeKuttaP rkp, PathLinesP plp, float t, float dt);
+void TraceToPathLines(RungeKuttaDPtr rkp, PathLinesDPtr plp, float t, float dt);
 
 }

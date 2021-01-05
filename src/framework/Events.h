@@ -31,7 +31,7 @@
 #include <pthread.h>
 #include <vector>
 
-#include "KeyedObject.h"
+#include "GalaxyObject.h"
 
 namespace gxy
 {

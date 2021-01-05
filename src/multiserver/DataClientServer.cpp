@@ -64,10 +64,10 @@ DataClientServer::init()
 bool
 DataClientServer::handle(std::string line, std::string& reply)
 {
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
-    theDatasets = Datasets::NewP();
+    theDatasets = Datasets::NewDistributed();
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 
@@ -100,7 +100,7 @@ DataClientServer::handle(std::string line, std::string& reply)
   {
     string objName;
     ss >> objName;
-    KeyedDataObjectP kop = theDatasets->Find(objName);
+    KeyedDataObjectDPtr kop = theDatasets->Find(objName);
     if (kop)
     {
       float gmin, gmax;
@@ -122,7 +122,7 @@ DataClientServer::handle(std::string line, std::string& reply)
   {
     string objName;
     ss >> objName;
-    KeyedDataObjectP kop = theDatasets->Find(objName);
+    KeyedDataObjectDPtr kop = theDatasets->Find(objName);
     if (kop)
     {
       kop->Commit();
@@ -171,7 +171,7 @@ DataClientServer::handle(std::string line, std::string& reply)
     vector<string> names = theDatasets->GetDatasetNames();
     for (vector<string>::iterator it = names.begin(); it != names.end(); ++it)
     {
-      KeyedDataObjectP kdop = theDatasets->Find(std::string(*it));
+      KeyedDataObjectDPtr kdop = theDatasets->Find(std::string(*it));
      
       int type;
       if (kdop->getclass() ==  gxy::Volume::ClassType) type = 0;
@@ -183,7 +183,7 @@ DataClientServer::handle(std::string line, std::string& reply)
       int ncomp;
       if (type == 0)
       {
-        gxy::VolumeP v = gxy::Volume::Cast(kdop);
+        gxy::VolumeDPtr v = gxy::Volume::Cast(kdop);
         ncomp = v->get_number_of_components();
       }
       else
@@ -229,7 +229,7 @@ DataClientServer::handle(std::string line, std::string& reply)
   {
     string objName;
     ss >> objName;
-    KeyedDataObjectP kop = theDatasets->Find(objName);
+    KeyedDataObjectDPtr kop = theDatasets->Find(objName);
     if (kop)
     {
       theDatasets->DropDataset(objName);

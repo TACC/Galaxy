@@ -69,12 +69,12 @@ Triangles::~Triangles()
 }
 
 bool
-Triangles::local_copy(KeyedDataObjectP src)
+Triangles::local_copy(KeyedDataObjectDPtr src)
 {
   if (! super::local_copy(src))
     return false;
 
-  TrianglesP t = Cast(src);
+  TrianglesDPtr t = Cast(src);
 
   normals = t->normals;
 
@@ -160,10 +160,10 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
   return true;
 }
 
-GalaxyObjectP
-Triangles::CreateTheDeviceEquivalent(KeyedDataObjectP kdop)
+GalaxyObjectDPtr
+Triangles::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
 {
-  return GalaxyObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
+  return GalaxyObject::Cast(OsprayTriangles::NewDistributed(Triangles::Cast(kdop)));
 }
 
 

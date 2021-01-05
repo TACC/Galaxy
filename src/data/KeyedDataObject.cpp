@@ -58,17 +58,17 @@ KeyedDataObject::~KeyedDataObject()
   }
 }
 
-KeyedDataObjectP
+KeyedDataObjectDPtr
 KeyedDataObject::Copy()
 {
-  KeyedDataObjectP dst = Cast(GetTheKeyedObjectFactory()->NewP(getclass()));
+  KeyedDataObjectDPtr dst = Cast(GetTheObjectFactory()->NewDistributed(getclass()));
   CopyMsg msg(getkey(), dst->getkey());
   msg.Broadcast(true, true);
   return dst;
 }
 
 bool
-KeyedDataObject::local_copy(KeyedDataObjectP src)
+KeyedDataObject::local_copy(KeyedDataObjectDPtr src)
 {
   CopyPartitioning(src);
   modified = false;
@@ -79,8 +79,8 @@ KeyedDataObject::local_copy(KeyedDataObjectP src)
   return true;
 }
 
-GalaxyObjectP
-KeyedDataObject::CreateTheDeviceEquivalent(KeyedDataObjectP kdop)
+GalaxyObjectDPtr
+KeyedDataObject::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
 {
   return NULL;
 }

@@ -117,7 +117,7 @@ DynamicLibrary::CommitMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   Key k = *(Key *)p;
   p += sizeof(Key);
 
-  KeyedObjectP kdl = GetTheKeyedObjectFactory()->get(k);
+  KeyedObjectDPtr kdl = GetTheObjectFactory()->get(k);
 
   if (! isRoot)
     kdl->deserialize(p);
@@ -144,7 +144,7 @@ DynamicLibraryManager::Flush()
   {
     if (i->use_count() == 1)
     {
-      GetTheKeyedObjectFactory()->Drop((*i)->getkey());
+      GetTheObjectFactory()->Drop((*i)->getkey());
       loadmap.erase(i);
       i = loadmap.begin();
     }
@@ -178,7 +178,7 @@ DynamicLibraryManager::flush(int n, Key *keys)
   for (auto i = 0; i < n; i++)
   {
     Key key = keys[i];
-    // GetTheKeyedObjectFactory()->erase(key);
+    // GetTheObjectFactory()->erase(key);
     for (auto i = loadmap.begin(); i != loadmap.end(); i++)
       if ((*i)->getkey() == key)
       {
@@ -208,7 +208,7 @@ DynamicLibraryManager::Register()
   FlushMsg::Register();
 };
 
-DynamicLibraryP
+DynamicLibraryDPtr
 DynamicLibraryManager::Load(string name)
 {
   std::cerr << "load " << name << "\n";
@@ -216,7 +216,7 @@ DynamicLibraryManager::Load(string name)
     if (i->GetName() == name)
       return i;
 
-  DynamicLibraryP dlp = DynamicLibrary::NewP();
+  DynamicLibraryDPtr dlp = DynamicLibrary::NewDistributed();
   dlp->SetName(name);
   dlp->Commit();
 

@@ -58,7 +58,7 @@ ShowKeyedObjectsMsg::Action(int s)
   int size = GetTheApplication()->GetSize();
 
   std::cerr << "Rank " << rank << ":\n";
-  GetTheApplication()->GetTheKeyedObjectFactory()->Dump();
+  GetTheApplication()->GetTheObjectFactory()->Dump();
 
   if (rank != 0)
   { 
@@ -82,7 +82,7 @@ ShowDatasetsMsg::Action(int s)
   int rank = GetTheApplication()->GetRank();
   int size = GetTheApplication()->GetSize();
   
-  DatasetsP dsp = Datasets::GetByKey(*(Key *)get());
+  DatasetsDPtr dsp = Datasets::GetByKey(*(Key *)get());
   if (! dsp)
   { 
     cerr << "Process " << rank << ": No datasets object?\n";
@@ -99,7 +99,7 @@ ShowDatasetsMsg::Action(int s)
       cerr << "Process 0: name, key, string:\n";
       for (auto i : ds_names)
       { 
-        TestObjectP top = TestObject::Cast(dsp->Find(i));
+        TestObjectDPtr top = TestObject::Cast(dsp->Find(i));
         cerr << i << " " << top->getkey() << " " << top->GetString() << "\n";
       }
     }
@@ -109,7 +109,7 @@ ShowDatasetsMsg::Action(int s)
       for (int i = 0; i < dsp->get_number_of_keys(); i++)
       {
         Key k = dsp->get_key(i);
-        TestObjectP top = TestObject::GetByKey(k);
+        TestObjectDPtr top = TestObject::GetByKey(k);
           cerr << k << " " << top->GetString() << "\n";
       }
     }
@@ -141,10 +141,10 @@ TestClientServer::init()
 bool
 TestClientServer::handle(string line, string& reply)
 {
-  DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
-    theDatasets = Datasets::NewP();
+    theDatasets = Datasets::NewDistributed();
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 
@@ -157,7 +157,7 @@ TestClientServer::handle(string line, string& reply)
     string name;
     ss >> name;
 
-    TestObjectP to = TestObject::NewP();
+    TestObjectDPtr to = TestObject::NewDistributed();
     to->SetString(name);
     to->Commit();
 
@@ -186,7 +186,7 @@ TestClientServer::handle(string line, string& reply)
     string name, newstring;
     ss >> name >> newstring;
 
-    TestObjectP to = TestObject::Cast(theDatasets->Find(name));
+    TestObjectDPtr to = TestObject::Cast(theDatasets->Find(name));
 
     if (! to)
     {
@@ -209,7 +209,7 @@ TestClientServer::handle(string line, string& reply)
     string name;
     ss >> name;
 
-    TestObjectP to = TestObject::Cast(theDatasets->Find(name));
+    TestObjectDPtr to = TestObject::Cast(theDatasets->Find(name));
 
     if (! to)
     {

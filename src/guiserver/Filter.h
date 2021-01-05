@@ -43,20 +43,20 @@ namespace gxy
   public:
     virtual ~Filter() {}
 
-    static KeyedDataObjectP getSource(rapidjson::Document& doc)
+    static KeyedDataObjectDPtr getSource(rapidjson::Document& doc)
     {
       std::string name = doc["source"].GetString();
-      DatasetsP theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+      DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
       return theDatasets->Find(name);
     }
 
     void SetName(std::string n) { name = n; }
     std::string GetName() { return name; }
 
-    KeyedDataObjectP getResult() { return result; }
+    KeyedDataObjectDPtr getResult() { return result; }
 
   protected:
-    KeyedDataObjectP result;
+    KeyedDataObjectDPtr result;
     std::string name;
   };
 }
