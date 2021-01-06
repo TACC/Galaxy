@@ -20,7 +20,7 @@
 
 cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
-project (gxy_embree VERSION ${GALAXY_VERSION})
+project (gxy_intel VERSION ${GALAXY_VERSION})
 
 if (COMMAND cmake_policy)
   # use rpath on MacOS
@@ -35,7 +35,7 @@ endif(COMMAND cmake_policy)
 
 ispc_include_directories(
     ${EMBREE_INCLUDE_DIRS} 
-    ${Galaxy_BINARY_DIR}/src/embree
+    ${Galaxy_BINARY_DIR}/src/intel
     ${Galaxy_SOURCE_DIR}/src/ispc
     ${Galaxy_SOURCE_DIR}/src/renderer
 )
@@ -47,9 +47,11 @@ include_directories(
     ${Galaxy_SOURCE_DIR}/src/data
     ${Galaxy_SOURCE_DIR}/src/renderer
     ${Galaxy_SOURCE_DIR}/src/ospray
-    ${EMBREE_INCLUDE_DIRS})
+    ${EMBREE_INCLUDE_DIRS}
+    ${openvkl_DIR}/../../../include
+)
 
-set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_embree ${EMBREE_LIBRARIES} ${MPI_C_LIBRARIES})
+set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_intel ${EMBREE_LIBRARIES} ${MPI_C_LIBRARIES})
 
 set (ISPC_SOURCES 
     EmbreeGeometry.ispc
@@ -74,11 +76,11 @@ install(FILES
   EmbreeTriangles.h
   DESTINATION include/gxy)
 
-add_library(gxy_embree SHARED ${CPP_SOURCES})
-ispc_target_add_sources(gxy_embree ${ISPC_SOURCES})
-target_link_libraries(gxy_embree gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
-set_target_properties(gxy_embree PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-install(TARGETS gxy_embree DESTINATION lib)
+add_library(gxy_intel SHARED ${CPP_SOURCES})
+ispc_target_add_sources(gxy_intel ${ISPC_SOURCES})
+target_link_libraries(gxy_intel gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
+set_target_properties(gxy_intel PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+install(TARGETS gxy_intel DESTINATION lib)
 
 add_executable(em_test em_test.cpp)
 target_link_libraries(em_test ${GALAXY_LIBRARIES})

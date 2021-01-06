@@ -102,6 +102,9 @@ find_package(ospray 1.8.5 PATHS
     ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
     ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
 
+find_package(openvkl 0.11.0 PATHS
+    /opt/intel/oneapi/openvkl/0.11.0/lib/cmake/openvkl-0.11.0 REQUIRED)
+
 # Cmake definitions to handle building ISPC files
 include(ispc)
 
