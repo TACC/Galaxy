@@ -41,7 +41,7 @@ KEYED_OBJECT_CLASS_TYPE(MappedVis)
 void
 MappedVis::Register()
 {
-	RegisterClass();
+  RegisterClass();
 }
 
 MappedVis::~MappedVis()
@@ -53,7 +53,7 @@ MappedVis::~MappedVis()
 void
 MappedVis::initialize()
 {
-	super::initialize();
+  super::initialize();
 
   colormap.push_back(vec4f(0.0, 0.4, 0.4, 0.4));
   colormap.push_back(vec4f(1.0, 1.0, 1.0, 1.0));
@@ -67,7 +67,7 @@ MappedVis::initialize()
 void 
 MappedVis::initialize_ispc()
 {
-	super::initialize_ispc();
+  super::initialize_ispc();
   ispc::MappedVis_initialize(ispc);
 }
 
@@ -80,15 +80,15 @@ MappedVis::allocate_ispc()
 bool 
 MappedVis::Commit(DatasetsDPtr datasets)
 {
-	return Vis::Commit(datasets);
+  return Vis::Commit(datasets);
 }
 
 bool
 MappedVis::LoadFromJSON(Value& v)
 {
-	Vis::LoadFromJSON(v);
+  Vis::LoadFromJSON(v);
 
-	if (v.HasMember("data range"))
+  if (v.HasMember("data range"))
     {
       data_range_min = v["data range"][0].GetDouble();
       data_range_max = v["data range"][1].GetDouble();
@@ -99,8 +99,8 @@ MappedVis::LoadFromJSON(Value& v)
         data_range = false;
     }
 
-	if (v.HasMember("transfer function") || v.HasMember("colormap"))
-	{
+  if (v.HasMember("transfer function") || v.HasMember("colormap"))
+  {
     const Value& m = v.HasMember("transfer function") ? v["transfer function"] : v["colormap"];
 
     if (m.IsString())
@@ -171,17 +171,17 @@ MappedVis::LoadFromJSON(Value& v)
     }
     else
     {
-			colormap.clear();
+      colormap.clear();
 
-			for (int i = 0; i < m.Size(); i++)
-			{
-				vec4f xrgb;
-				xrgb.x = m[i][0].GetDouble();
-				xrgb.y = m[i][1].GetDouble();
-				xrgb.z = m[i][2].GetDouble();
-				xrgb.w = m[i][3].GetDouble();
-				colormap.push_back(xrgb);
-			}
+      for (int i = 0; i < m.Size(); i++)
+      {
+        vec4f xrgb;
+        xrgb.x = m[i][0].GetDouble();
+        xrgb.y = m[i][1].GetDouble();
+        xrgb.z = m[i][2].GetDouble();
+        xrgb.w = m[i][3].GetDouble();
+        colormap.push_back(xrgb);
+      }
 
       if (v.HasMember("opacitymap"))
       {
@@ -202,6 +202,7 @@ MappedVis::LoadFromJSON(Value& v)
   return true;
 }
 
+#if 0
 void
 MappedVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
 {
@@ -210,13 +211,14 @@ MappedVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
   ospSetObject(o->GetOSP(), "transferFunction", transferFunction);
   ospCommit(o->GetOSP());
 }
+#endif
 
 int
 MappedVis::serialSize() 
 {
-	return super::serialSize() + sizeof(Key) +
-				 sizeof(int) + colormap.size()*sizeof(vec4f) +
-				 sizeof(int) + opacitymap.size()*sizeof(vec2f) +
+  return super::serialSize() + sizeof(Key) +
+         sizeof(int) + colormap.size()*sizeof(vec4f) +
+         sizeof(int) + opacitymap.size()*sizeof(vec2f) +
                  sizeof(float) + sizeof(float) + sizeof(bool);
 }
 
@@ -277,7 +279,7 @@ MappedVis::serialize(unsigned char *ptr)
 bool 
 MappedVis::local_commit(MPI_Comm c)
 {
-	if(super::local_commit(c))  
+  if(super::local_commit(c))  
     return true;
   
   if (! transferFunction)
@@ -333,24 +335,25 @@ MappedVis::local_commit(MPI_Comm c)
       ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
   ospCommit(transferFunction);
   
-  ispc::MappedVis_set_transferFunction(ispc, ospray_util::GetIE(transferFunction));
+  // ispc::MappedVis_set_transferFunction(ispc, ospray_util::GetIE(transferFunction));
+
   return false;
 }
 
 void 
 MappedVis::SetColorMap(int n, vec4f *ptr)
 {
-	colormap.clear();
-	for (int i = 0; i < n; i++)
-		colormap.push_back(ptr[i]);
+  colormap.clear();
+  for (int i = 0; i < n; i++)
+    colormap.push_back(ptr[i]);
 }      
-			 
+       
 void 
 MappedVis::SetOpacityMap(int n, vec2f *ptr)
 {      
-	opacitymap.clear();
-	for (int i = 0; i < n; i++)
-		opacitymap.push_back(ptr[i]);
+  opacitymap.clear();
+  for (int i = 0; i < n; i++)
+    opacitymap.push_back(ptr[i]);
 }
 
 void

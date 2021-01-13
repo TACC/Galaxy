@@ -20,52 +20,54 @@
 
 #pragma once
 
-/*! \file GeometryVis.h 
- * \brief a visualization element operating on a triangle (tessellated) dataset within Galaxy
- * \ingroup render
- */
-
-#include "Application.h"
-#include "Datasets.h"
-#include "dtypes.h"
 #include "GalaxyObject.h"
+
+namespace gxy { OBJECT_POINTER_TYPES(Model); }
+
+#include "Rays.h"
 #include "Geometry.h"
-#include "MappedVis.h"
+#include "Volume.h"
 
-namespace gxy
+#include <vector>
+
+namespace gxy 
 {
 
-KEYED_OBJECT_POINTER_TYPES(GeometryVis)
-
-//! a visualization element operating on a triangle (tessellated) dataset within Galaxy
-/* \ingroup render 
- * \sa Vis, KeyedObject, IspcObject
- */
-class GeometryVis : public MappedVis
+class Model : public GalaxyObject
 {
-  KEYED_OBJECT_SUBCLASS(GeometryVis, MappedVis) 
+    GALAXY_OBJECT_SUBCLASS(Model, GalaxyObject)
 
 public:
-	~GeometryVis(); //!< default destructor
-  
+    virtual void initialize();
+    virtual ~Model();
+    
+    virtual int  AddGeometry(GeometryDPtr);
+    virtual void RemoveGeometry(int);
+    virtual int  RemoveGeometry(GeometryDPtr);
+
+    virtual int  AddVolume(VolumeDPtr);
+    virtual void RemoveVolume(int);
+    virtual int  RemoveVolume(VolumeDPtr);
+
+    virtual void Build();
+    
+    virtual void Intersect(RayList *);
+
 protected:
+    std::vector<GeometryDPtr> geometries;
+    std::vector<int> free_geometry_ids;
 
-  //! initialize this GeometryVis object
+    std::vector<VolumeDPtr> volumes;
+    std::vector<int> free_volume_ids;
 
-  virtual void initialize();
-
-  virtual void initialize_ispc();
-  virtual void allocate_ispc();
-  virtual void destroy_ispc();
-
-  //! commit this object to the local registry
-  virtual bool local_commit(MPI_Comm);
-
-  virtual bool LoadFromJSON(rapidjson::Value&);
-
-  virtual int serialSize();
-  virtual unsigned char* serialize(unsigned char *ptr);
-  virtual unsigned char* deserialize(unsigned char *ptr);
 };
 
-} // namespace gxy
+}
+
+
+
+
+
+    
+
+

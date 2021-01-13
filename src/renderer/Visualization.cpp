@@ -22,10 +22,10 @@
 #include "Renderer.h"
 
 #include "Rendering.h"
+#include "Device.h"
+#include "Model.h"
 #include "Visualization.h"
 #include "Visualization_ispc.h"
-
-#include <ospray/ospray.h>
 
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
@@ -33,6 +33,7 @@
 using namespace rapidjson;
 
 #include <map>
+#include <vector>
 
 using namespace std;
 
@@ -50,8 +51,6 @@ Visualization::Register()
 void
 Visualization::initialize()
 {
-  //std::cerr << "Visualization init " << std::hex << ((long)this) << "\n";
-  ospModel = NULL;
   super::initialize();
 }
 
@@ -198,24 +197,13 @@ Visualization::local_commit(MPI_Comm c)
   for (auto v : vis)
     v->local_commit(c);
 
-
   CHECKBOX(vis)
-
-#if 0
-  std::cerr << "V " << std::hex << ((long)this) << std::dec << 
-      " " << neighbors[0] << 
-      " " << neighbors[1] << 
-      " " << neighbors[2] << 
-      " " << neighbors[3] << 
-      " " << neighbors[4] << 
-      " " << neighbors[5] << "\n";
-#endif
 
   return false;
 }
 
 void
-Visualization::SetOsprayObjects(std::map<Key, OsprayObjectDPtr>& ospray_object_map)
+Visualization::SetDeviceObjects()
 {
   if (! ispc)
   {
@@ -226,38 +214,47 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectDPtr>& ospray_object_m
   // Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
   // volumevis - NULL unless there's some model data
 
-  OSPModel ospModel = ospNewModel();
-
-  void *mispc[vis.size()]; int nmispc = 0;
-  void *vispc[vis.size()]; int nvispc = 0;
+  model = GetTheDevice()->NewModel();
 
   for (auto v : vis)
   {
     KeyedDataObjectDPtr kdop = v->GetTheData();
-    OsprayObjectDPtr op = v->GetTheOsprayDataObject();
+
+    if (! kdop)
+    {
+      std::cerr << "Visualization::SetDeviceObjects : no data associated with vis\n";
+      exit(1);
+    }
+
+    GalaxyObjectPtr op = kdop->GetTheDeviceEquivalent();
 
     if (! op || kdop->hasBeenModified())
     {
-      op = OsprayObject::Cast(kdop->CreateTheDeviceEquivalent(kdop));
-      v->SetTheOsprayDataObject(op);
+      GalaxyObjectPtr de = GetTheDevice()->CreateTheDeviceEquivalent(kdop);
+      if (! op)
+      {
+        std::cerr << "Visualization::SetDeviceObjects : failed to create device equivalent\n";
+        exit(1);
+      }
+
+      kdop->SetTheDeviceEquivalent(de);
       kdop->setModified(false);
     }
 
-    if (GeometryVis::IsA(v))
-      ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
+    if (Volume::IsA(kdop))
+      model->AddVolume(Volume::Cast(kdop));
     else
-      vispc[nvispc++] = v->GetIspc();
+      model->AddGeometry(Geometry::Cast(kdop));
   }
 
-  if (ospModel)
-    ospCommit(ospModel);
-   
+/*
   ispc::Visualization_commit(ispc, 
           ospModel ? ospray_util::GetIE(ospModel) : NULL,
           nvispc, vispc,
           nmispc, mispc,
           global_box.get_min(), global_box.get_max(),
           local_box.get_min(), local_box.get_max());
+*/
 }
 
 void
@@ -295,7 +292,15 @@ Visualization::LoadFromJSON(Value& v)
     if (t.substr(t.size() - 3) != "Vis")
       t = t + "Vis";
 
-    VisDPtr vp = Vis::Cast(GetTheObjectFactory()->NewDistributed(t));
+    GalaxyObjectClass c = GetTheObjectFactory()->GetGalaxyObjectClass(t);
+    if (c == -1)
+    {
+      cerr << "ERROR: unknown type: " << " in json Visualization element (" << t << ")" << endl;
+      set_error(1);
+      return false;
+    }
+
+    VisDPtr vp = Vis::DCast(GetTheKeyedObjectMap()->NewDistributed(c));
     if (vp)
     {
       if (! vp->LoadFromJSON(vv))

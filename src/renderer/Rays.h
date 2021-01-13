@@ -33,8 +33,8 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Rendering)
-OBJECT_POINTER_TYPES(RenderingSet)
+KEYED_OBJECT_POINTER_TYPES(Rendering)
+KEYED_OBJECT_POINTER_TYPES(RenderingSet)
 
 //! a list of rays, the primary work unit in Galaxy's renderer
 /*! \sa KeyedObject, Rendering, RenderingSet

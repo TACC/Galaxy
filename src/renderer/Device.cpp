@@ -18,54 +18,41 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include <embree3/rtcore.h>
+#include <iostream>
 
-/*! \file GeometryVis.h 
- * \brief a visualization element operating on a triangle (tessellated) dataset within Galaxy
- * \ingroup render
- */
-
-#include "Application.h"
-#include "Datasets.h"
-#include "dtypes.h"
-#include "GalaxyObject.h"
-#include "Geometry.h"
-#include "MappedVis.h"
+#include "Device.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER_TYPES(GeometryVis)
+KEYED_OBJECT_CLASS_TYPE(Device)
 
-//! a visualization element operating on a triangle (tessellated) dataset within Galaxy
-/* \ingroup render 
- * \sa Vis, KeyedObject, IspcObject
- */
-class GeometryVis : public MappedVis
+DevicePtr theDevice;
+DevicePtr GetTheDevice() { return theDevice; }
+
+void Device::InitDevice() { theDevice = Device::New(); }
+void Device::SetDevice(DevicePtr d) { theDevice = d; }
+
+void
+Device::initialize()
 {
-  KEYED_OBJECT_SUBCLASS(GeometryVis, MappedVis) 
+    super::initialize();
+}
 
-public:
-	~GeometryVis(); //!< default destructor
-  
-protected:
+ModelPtr
+Device::NewModel()
+{
+  std::cerr << "NULL device";
+  return Model::New();
+}
 
-  //! initialize this GeometryVis object
+GalaxyObjectPtr
+Device::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kop)
+{
+  std::cerr << "NULL device";
+  return NULL;
+}
 
-  virtual void initialize();
 
-  virtual void initialize_ispc();
-  virtual void allocate_ispc();
-  virtual void destroy_ispc();
-
-  //! commit this object to the local registry
-  virtual bool local_commit(MPI_Comm);
-
-  virtual bool LoadFromJSON(rapidjson::Value&);
-
-  virtual int serialSize();
-  virtual unsigned char* serialize(unsigned char *ptr);
-  virtual unsigned char* deserialize(unsigned char *ptr);
-};
-
-} // namespace gxy
+}

@@ -38,11 +38,11 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(ParticlesVis)
+KEYED_OBJECT_POINTER_TYPES(ParticlesVis)
 
 //!  a visualization element operating on a particle dataset within Galaxy
 /* \ingroup render 
- * \sa Vis, KeyedObject, IspcObject, OsprayObject
+ * \sa Vis, KeyedObject, IspcObject
  */
 class ParticlesVis : public GeometryVis
 {
@@ -56,7 +56,9 @@ public:
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
+#if 0
   virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
+#endif
 
   //! Set a constant radius
   void SetRadius(float r0) { SetRadiusTransform(0.0, r0, 0.0, 0.0); }

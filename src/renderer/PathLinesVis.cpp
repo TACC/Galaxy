@@ -125,6 +125,7 @@ PathLinesVis::local_commit(MPI_Comm c)
 	return super::local_commit(c);
 }
 
+#if 0
 void
 PathLinesVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
 {
@@ -136,6 +137,7 @@ PathLinesVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
   ospSet1f(o->GetOSP(), "value1", v1);
   ospSet1f(o->GetOSP(), "radius1", r1);
 }
+#endif
 
 void
 PathLinesVis::ScaleMaps(float xmin, float xmax)

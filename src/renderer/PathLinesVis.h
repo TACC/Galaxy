@@ -38,11 +38,11 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(PathLinesVis)
+KEYED_OBJECT_POINTER_TYPES(PathLinesVis)
 
 //!  a visualization element operating on a PathLine dataset within Galaxy
 /* \ingroup render 
- * \sa Vis, KeyedObject, IspcObject, OsprayObject
+ * \sa Vis, KeyedObject, IspcObject
  */
 class PathLinesVis : public GeometryVis
 {
@@ -56,7 +56,9 @@ public:
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
+#if 0
   virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
+#endif
 
   //! Set the transformation from data values to radius - linear between (v0,r0) and (v1,r1)
   void SetRadiusTransform(float _v0, float _r0, float _v1, float _r1) { v0 = _v0; r0 = _r0; v1 = _v1; r1 = _r1;}

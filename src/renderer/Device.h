@@ -18,54 +18,37 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
-
-/*! \file GeometryVis.h 
- * \brief a visualization element operating on a triangle (tessellated) dataset within Galaxy
- * \ingroup render
- */
-
-#include "Application.h"
-#include "Datasets.h"
-#include "dtypes.h"
 #include "GalaxyObject.h"
-#include "Geometry.h"
-#include "MappedVis.h"
+#include "Model.h"
 
-namespace gxy
+namespace gxy 
 {
 
-KEYED_OBJECT_POINTER_TYPES(GeometryVis)
+OBJECT_POINTER_TYPES(Device)
 
-//! a visualization element operating on a triangle (tessellated) dataset within Galaxy
-/* \ingroup render 
- * \sa Vis, KeyedObject, IspcObject
- */
-class GeometryVis : public MappedVis
+extern DevicePtr GetTheDevice();
+
+class Device : public GalaxyObject
 {
-  KEYED_OBJECT_SUBCLASS(GeometryVis, MappedVis) 
+    GALAXY_OBJECT_SUBCLASS(Device, GalaxyObject)
 
 public:
-	~GeometryVis(); //!< default destructor
-  
+    static void InitDevice();
+    virtual void initialize();
+
+    virtual ModelPtr NewModel();
+    virtual GalaxyObjectPtr CreateTheDeviceEquivalent(KeyedDataObjectPtr);
+
 protected:
-
-  //! initialize this GeometryVis object
-
-  virtual void initialize();
-
-  virtual void initialize_ispc();
-  virtual void allocate_ispc();
-  virtual void destroy_ispc();
-
-  //! commit this object to the local registry
-  virtual bool local_commit(MPI_Comm);
-
-  virtual bool LoadFromJSON(rapidjson::Value&);
-
-  virtual int serialSize();
-  virtual unsigned char* serialize(unsigned char *ptr);
-  virtual unsigned char* deserialize(unsigned char *ptr);
+    static void SetDevice(DevicePtr);
 };
 
-} // namespace gxy
+}
+
+
+
+
+
+    
+
+

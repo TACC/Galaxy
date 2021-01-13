@@ -23,7 +23,6 @@
 #include "Application.h"
 #include "KeyedDataObject.h"
 #include "MappedVis.h"
-#include "OsprayUtil.h"
 #include "ParticlesVis.h"
 #include "PathLinesVis.h"
 #include "TrianglesVis.h"
@@ -143,13 +142,6 @@ Vis::LoadFromJSON(Value& v)
 		cerr << "ERROR: json Vis block has no dataset" << endl;
 		return false;
 	}
-}
-
-void
-Vis::SetTheOsprayDataObject(OsprayObjectDPtr o)
-{
-  odata = o;
-	ispc::Vis_set_data(GetIspc(), o->GetOSP_IE());
 }
 
 int

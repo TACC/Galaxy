@@ -122,10 +122,8 @@ RenderingSet::local_commit(MPI_Comm c)
 {
   if (super::local_commit(c)) return true;
 
-  ospray_object_map.clear();
-
   for (auto r : renderings)
-    r->GetTheVisualization()->SetOsprayObjects(this->ospray_object_map);
+    r->GetTheVisualization()->SetDeviceObjects();
 
   return false;
 }

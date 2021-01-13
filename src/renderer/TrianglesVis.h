@@ -35,7 +35,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(TrianglesVis)
+KEYED_OBJECT_POINTER_TYPES(TrianglesVis)
 
 //! a visualization element operating on a triangle (tessellated) dataset within Galaxy
 /* \ingroup render 

@@ -27,8 +27,6 @@
 
 #include <vector>
 
-#include "OsprayHandle.h"
-
 #include "dtypes.h"
 #include "GalaxyObject.h"
 #include "Datasets.h"
@@ -47,7 +45,7 @@ class RayQManager;
 class Pixel;
 class RayList;
 
-OBJECT_POINTER_TYPES(Renderer)
+KEYED_OBJECT_POINTER_TYPES(Renderer)
 
 //! the primary class controlling rendering within Galaxy
 /*! \sa KeyedObject
@@ -94,45 +92,45 @@ public:
   virtual unsigned char *Deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
 
   //! broadcasts a RenderMsg to all processes to begin rendering via each localRendering method
-	virtual void Start(RenderingSetDPtr);
+  virtual void Start(RenderingSetDPtr);
   //! return the frame number for the current render
-	int GetFrame() { return frame; }
+  int GetFrame() { return frame; }
 
-	void DumpStatistics(); //!< broadcast a StatisticsMsg to all processes to write rendering stats to local file via _dumpStats()
-	void _dumpStats(); //!< write local rendering statistics to file via APP_LOG()
+  void DumpStatistics(); //!< broadcast a StatisticsMsg to all processes to write rendering stats to local file via _dumpStats()
+  void _dumpStats(); //!< write local rendering statistics to file via APP_LOG()
 
   //! log that n rays were sent to process d
-	void _sent_to(int d, int n)
-	{
-		pthread_mutex_lock(&lock);
-		sent_to[d] += n;
-		pthread_mutex_unlock(&lock);
-	}
+  void _sent_to(int d, int n)
+  {
+    pthread_mutex_lock(&lock);
+    sent_to[d] += n;
+    pthread_mutex_unlock(&lock);
+  }
 
   //! log that n rays were received from process d
-	void _received_from(int d, int n)
-	{
-		pthread_mutex_lock(&lock);
-		received_from[d] += n;
-		pthread_mutex_unlock(&lock);
-	}
+  void _received_from(int d, int n)
+  {
+    pthread_mutex_lock(&lock);
+    received_from[d] += n;
+    pthread_mutex_unlock(&lock);
+  }
 
   //! log that n rays originated at this process
-	void add_originated_ray_count(int n)
-	{
-		pthread_mutex_lock(&lock);
-		originated_ray_count += n;
-		pthread_mutex_unlock(&lock);
-	}
+  void add_originated_ray_count(int n)
+  {
+    pthread_mutex_lock(&lock);
+    originated_ray_count += n;
+    pthread_mutex_unlock(&lock);
+  }
 
   //! Set the maximum number of rays allowed in each RayList
-	void SetMaxRayListSize(int s) { max_rays_per_packet = s; }
+  void SetMaxRayListSize(int s) { max_rays_per_packet = s; }
 
   //! return the maximum number of rays allowed in each RayList
-	int GetMaxRayListSize() { return max_rays_per_packet; }
+  int GetMaxRayListSize() { return max_rays_per_packet; }
 
   //! turn permute_pixels on/off
-	void SetPermutePixels(bool p) { permute_pixels = p; }
+  void SetPermutePixels(bool p) { permute_pixels = p; }
 
   //! get permute_pixels
   bool GetPermutePixels() { return permute_pixels; }
@@ -150,7 +148,7 @@ public:
   //! process the given RayList using the current Rendering, RenderingSet, and Visualization.   This assigns
   //  the ray 'term' field with a application-specific termination type
 
-	virtual void Trace(RayList *);
+  virtual void Trace(RayList *);
 
   //! classify traced rays based on what happened when they were traced.  Possibile results are DROP_ON_FLOOR
   // (eg. AO ray that timed out for subtractive shading or hit something for additive shading); BOUNDARY - that 
@@ -176,23 +174,22 @@ public:
   virtual void HandleTerminatedRays(RayList *raylist);
 
 private:
-  OsprayHandleP ospray;
-	std::vector<std::future<void>> rvec;
+  std::vector<std::future<void>> rvec;
 
-	int frame;
+  int frame;
 
-	int max_rays_per_packet;
+  int max_rays_per_packet;
   bool permute_pixels;
 
-	int sent_ray_count;
-	int terminated_ray_count;
-	int originated_ray_count;
-	int secondary_ray_count;
-	int sent_pixels_count;
-	int ProcessRays_input_count;
-	int ProcessRays_continued_count;
-	int *sent_to;
-	int *received_from;
+  int sent_ray_count;
+  int terminated_ray_count;
+  int originated_ray_count;
+  int secondary_ray_count;
+  int sent_pixels_count;
+  int ProcessRays_input_count;
+  int ProcessRays_continued_count;
+  int *sent_to;
+  int *received_from;
 
   float epsilon;
   RayQManager *rayQmanager;
@@ -204,15 +201,15 @@ private:
   {
   public:
     StatisticsMsg(Renderer *r) : StatisticsMsg(sizeof(Key))
-		{
-			unsigned char *p = (unsigned char *)contents->get();
-			*(Key *)p = r->getkey();
-		}
+    {
+      unsigned char *p = (unsigned char *)contents->get();
+      *(Key *)p = r->getkey();
+    }
 
     WORK_CLASS(StatisticsMsg, true);
 
   public:
-		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+    bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
   };
 
 public:
@@ -252,46 +249,46 @@ public:
       float r, g, b, o;
     };
 
-		struct hdr
-		{
-			Key rkey;
-			Key rskey;
-			int count;
-			int frame;
-			int source;
-		};
+    struct hdr
+    {
+      Key rkey;
+      Key rskey;
+      int count;
+      int frame;
+      int source;
+    };
 
-		RenderingSetDPtr rset;
+    RenderingSetDPtr rset;
     
   public:
     SendPixelsMsg(RenderingDPtr r, RenderingSetDPtr rs, int frame, int n) : SendPixelsMsg(sizeof(hdr) + (n * sizeof(Pixel)))
     {
-			rset = rs;
+      rset = rs;
 
       hdr *h    = (hdr *)contents->get();
-			h->rkey   = r->getkey();
-			h->rskey  = rs->getkey();
-			h->frame  = frame;
-			h->count  = n;
-			h->source = GetTheApplication()->GetRank();
+      h->rkey   = r->getkey();
+      h->rskey  = rs->getkey();
+      h->frame  = frame;
+      h->count  = n;
+      h->source = GetTheApplication()->GetRank();
 
       nxt = 0;
     }
 
-		void Send(int i)
-		{
+    void Send(int i)
+    {
       hdr *h    = (hdr *)contents->get();
 
 #ifdef GXY_EVENT_TRACKING
-			GetTheEventTracker()->Add(new SendPixelsEvent(h->count, h->rkey, h->frame, i));
+      GetTheEventTracker()->Add(new SendPixelsEvent(h->count, h->rkey, h->frame, i));
 #endif
 
-			Work::Send(i);
+      Work::Send(i);
 
 #ifdef GXY_WRITE_IMAGES
       rset->SentPixels(h->count);
 #endif
-		}
+    }
 
     void StashPixel(RayList *rl, int i) 
     {
@@ -310,7 +307,7 @@ public:
   public:
     bool Action(int s)
     {
-			hdr *h = (hdr *)contents->get();
+      hdr *h = (hdr *)contents->get();
       Pixel *pixels = (Pixel *)(((unsigned char *)contents->get()) + sizeof(hdr));
 
       RenderingDPtr r = Rendering::GetByKey(h->rkey);
@@ -326,11 +323,11 @@ public:
 #endif
 
 #ifdef GXY_EVENT_TRACKING
-			GetTheEventTracker()->Add(new RcvPixelsEvent(h->count, h->rkey, h->frame, s));
+      GetTheEventTracker()->Add(new RcvPixelsEvent(h->count, h->rkey, h->frame, s));
 #endif
 
-			if (rs->IsActive(h->frame))
-				r->AddLocalPixels(pixels, h->count, h->frame, h->source);
+      if (rs->IsActive(h->frame))
+        r->AddLocalPixels(pixels, h->count, h->frame, h->source);
 
       return false;
     }
@@ -350,8 +347,8 @@ public:
 
     bool Action(int sender);
 
-	private:
-		int frame;
+  private:
+    int frame;
   };
 };
 

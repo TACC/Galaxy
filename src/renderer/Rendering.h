@@ -42,7 +42,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Rendering)
+KEYED_OBJECT_POINTER_TYPES(Rendering)
 
 class Ray;
 

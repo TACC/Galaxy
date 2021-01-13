@@ -27,11 +27,12 @@
 #include <vector>
 #include <math.h>
 
-#include <ospray/ospray.h>
+// #include <ospray/ospray.h>
 
 #include "galaxy.h"
 
 #include "Application.h"
+#include "Device.h"
 #include "Camera.h"
 #include "DataObjects.h"
 #include "Pixel.h"
@@ -46,9 +47,11 @@
 #include "TraceRays_ispc.h"
 #include "Visualization_ispc.h"
 
+#if 0
 #include "OsprayVolume.h"
 #include "OsprayTriangles.h"
 #include "OsprayParticles.h"
+#endif
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -84,13 +87,16 @@ int Renderer::NO_NEIGHBOR   = -1;
 void
 Renderer::Initialize()
 {
-  extern void force_ospray_library_load();
-  force_ospray_library_load();
+  // extern void force_ospray_library_load();
+  // force_ospray_library_load();
 
 
   RegisterClass();
   
   RegisterDataObjects();
+
+  Device::RegisterClass();
+  Model::RegisterClass();
   
   Camera::Register();
   Rendering::Register();
@@ -111,17 +117,19 @@ Renderer::Initialize()
 #endif // GXY_WRITE_IMAGES
 }
 
+#if 0
 static  void
 print_ospray_error_messages(const char *m)
 {
   // APP_LOG(<< m);
   std::cerr << m;
 }
+#endif
 
 void
 Renderer::initialize()
 {
-  ospray = GetOspray();
+  // ospray = GetOspray();
   epsilon = 0.001;
 
   frame = 0;
@@ -146,9 +154,11 @@ Renderer::initialize()
     SetPermutePixels(true);
 #endif
 
+#if 0
   char *ospMsgs = getenv("GXY_SHOW_OSPRAY_MESSAGES");
   if (ospMsgs && atoi(ospMsgs) > 0)
     ospDeviceSetStatusFunc(ospGetCurrentDevice(), print_ospray_error_messages);
+#endif
 }
 
 Renderer::~Renderer()

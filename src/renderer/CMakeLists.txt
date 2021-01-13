@@ -40,32 +40,32 @@ include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_D
 ispc_include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
 
 include_directories(${gxy_framework_SOURCE_DIR}
-										${gxy_renderer_SOURCE_DIR}
-										${gxy_data_SOURCE_DIR}
-										${gxy_ospray_SOURCE_DIR}
-										${gxy_data_BINARY_DIR}
+                    ${gxy_renderer_SOURCE_DIR}
+                    ${gxy_data_SOURCE_DIR}
+                    ${gxy_data_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src)
 
-link_directories(${Galaxy_BINARY_DIR}/src/ospray
-                 ${Galaxy_BINARY_DIR}/src/data 
+link_directories(${Galaxy_BINARY_DIR}/src/data 
                  ${Galaxy_BINARY_DIR}/src/framework)
 
 set (ISPC_SOURCES 
   IspcObject.ispc
- 	MappedVis.ispc
-	Rays.ispc
-	TrianglesVis.ispc
+  MappedVis.ispc
+  Rays.ispc
+  TrianglesVis.ispc
   Visualization.ispc
   Lighting.ispc
-	ParticlesVis.ispc
-	PathLinesVis.ispc
+  ParticlesVis.ispc
+  PathLinesVis.ispc
   TraceRays.ispc
-	Vis.ispc
-	VolumeVis.ispc
+  Vis.ispc
+  VolumeVis.ispc
   Rays.ispc
   TraceRays.ispc)
 
 set (CPP_SOURCES 
+  Device.cpp
+  Model.cpp
   mypng.cpp
   Camera.cpp 
   IspcObject.cpp
@@ -87,15 +87,15 @@ set (CPP_SOURCES
   Visualization.cpp
   VolumeVis.cpp)
 
-if (ospray_DIR)
-  add_library(gxy_renderer SHARED ${CPP_SOURCES})
-  ispc_target_add_sources(gxy_renderer ${ISPC_SOURCES})
-  target_link_libraries(gxy_renderer ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE})
-  set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_renderer DESTINATION lib)
-endif()
+add_library(gxy_renderer SHARED ${CPP_SOURCES})
+ispc_target_add_sources(gxy_renderer ${ISPC_SOURCES})
+target_link_libraries(gxy_renderer ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE})
+set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+install(TARGETS gxy_renderer DESTINATION lib)
 
 install(FILES 
+  Model.h 
+  Device.h
   Camera.h 
   ImageWriter.h 
   Lighting.h

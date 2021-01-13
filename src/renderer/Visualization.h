@@ -28,7 +28,7 @@
 #include "Box.h"
 #include "Datasets.h"
 #include "KeyedDataObject.h"
-#include "GalaxyObject.h"
+#include "Model.h"
 #include "Lighting.h"
 #include "MappedVis.h"
 #include "ParticlesVis.h"
@@ -36,18 +36,18 @@
 #include "TrianglesVis.h"
 #include "VolumeVis.h"
 
-#include <ospray/ospray.h>
+// #include <ospray/ospray.h>
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Visualization)
+KEYED_OBJECT_POINTER_TYPES(Visualization)
 
 //! a visualization of one or more visualization elements (Vis objects) in Galaxy
 /* This object represents a combination of one or more visualization elements (Vis objects)
  * combined with lighting information for use in rendering
  * \ingroup render 
- * \sa Vis, KeyedObject, IspcObject, OsprayObject
+ * \sa Vis, KeyedObject, IspcObject
  */
 class Visualization : public KeyedObject, public IspcObject
 {
@@ -62,7 +62,10 @@ public:
   //! load a set of Visualization objects from a Galaxy JSON specification
   static std::vector<VisualizationDPtr> LoadVisualizationsFromJSON(rapidjson::Value&);
 
-  //! commit this object to the global registry across all processes.  Each Vis contains a 'name' field that identies the data it is to be applied to; this is looked up in the DatasetsDPtr registry to get its key.
+  //! commit this object to the global registry across all processes.  Each Vis 
+  //! contains a 'name' field that identies the data it is to be applied to; this is 
+  //! looked up in the DatasetsDPtr registry to get its key.
+
   virtual bool Commit(DatasetsDPtr);
 
   //! commit this object to the global registry across all processes.  Each Vis already is associated to data through its key field.
@@ -85,7 +88,7 @@ public:
   const char *GetAnnotation() { return annotation.c_str(); }
 
   //! get the Ospray OSPModel for this Visualization
-  OSPModel GetTheModel() { return ospModel; }
+  ModelPtr GetTheModel() { return model; }
 
   //! get the Box that represents the global data extent for this Visualization
   Box *get_global_box() { return &global_box; }
@@ -114,7 +117,8 @@ public:
   VisDPtr GetVis(int i) { return vis[i]; }
 
   //! Set Ospray-side data for each attached Vis
-  void SetOsprayObjects(std::map<Key, OsprayObjectDPtr>&);
+  // void SetOsprayObjects(std::map<Key, OsprayObjectDPtr>&);
+  void SetDeviceObjects();
 
 protected:
 	Lighting lighting;
@@ -123,7 +127,7 @@ protected:
   virtual void initialize_ispc();
   virtual void destroy_ispc();
 
-  OSPModel ospModel;
+  ModelPtr model;
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *);

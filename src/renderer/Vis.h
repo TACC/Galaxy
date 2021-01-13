@@ -35,19 +35,18 @@
 #include "dtypes.h"
 #include "IspcObject.h"
 #include "GalaxyObject.h"
-#include "OsprayObject.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Vis)
+KEYED_OBJECT_POINTER_TYPES(Vis)
   
 //! the parent class for visualization elements that operate on a dataset within Galaxy
 /* This object represents a single visualization element, namely a set of filters applied to data. 
  * In contrast, a Visualization object combines one or more Vis objects with
  * with lighting information.
  * \ingroup render 
- * \sa Visualization, KeyedObject, IspcObject, OsprayObject
+ * \sa Visualization, KeyedObject, IspcObject
  */
 class Vis : public KeyedObject, public IspcObject
 {
@@ -69,14 +68,6 @@ public:
 
     //! set the KeyedDataObject data that this Vis should target.
     void SetTheData( KeyedDataObjectDPtr d ) { data = d; }
-
-    //! set the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.   This is the opportunity to set any Vis options on the OSPRay object itself.
-    //! 
-    virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
-
-    //! get the OSPRayObject for this Vis' data, if there is one.
-    //! 
-    virtual OsprayObjectDPtr  GetTheOsprayDataObject() { return odata; }
 
     //! construct a Vis from a Galaxy JSON specification
     virtual bool LoadFromJSON(rapidjson::Value&);
@@ -102,7 +93,6 @@ protected:
     std::string name;
     Key datakey;
     KeyedDataObjectDPtr data;
-    OsprayObjectDPtr odata;
 };
 
 } // namespace gxy
