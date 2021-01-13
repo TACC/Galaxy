@@ -32,7 +32,6 @@ namespace gxy
 class EmbreeTriangles : public EmbreeGeometry
 {
 public:
-    static EmbreeTrianglesDPtr New() { return std::shared_ptr<EmbreeTriangles>(new EmbreeTriangles); }
     ~EmbreeTriangles() {};
 
     virtual void FinalizeIspc();

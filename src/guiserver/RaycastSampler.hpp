@@ -67,7 +67,7 @@ public:
     sampler->SetSamples(samples);
     std::cerr << "SAMPLES KEY " << samples->getkey() << "\n";
 
-    result = KeyedDataObject::Cast(samples);
+    result = KeyedDataObject::DCast(samples);
   }
 
   ~RaycastSampler() { std::cerr << "RaycastSampler dtor\n"; }

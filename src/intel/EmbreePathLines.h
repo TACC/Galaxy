@@ -28,7 +28,7 @@ namespace gxy { OBJECT_POINTER_TYPES(EmbreePathLines) }
 #include "EmbreeGeometry.h"
 #include "Particles.h"
 
-#include "EmbreePathLines_ispc.h"
+// #include "EmbreePathLines_ispc.h"
 
 namespace gxy 
 {
@@ -36,7 +36,6 @@ namespace gxy
 class EmbreePathLines : public EmbreeGeometry
 {
 public:
-    static EmbreePathLinesDPtr New() { return std::shared_ptr<EmbreePathLines>(new EmbreePathLines); }
     ~EmbreePathLines() {};
 
     void SetMap(float, float, float, float);

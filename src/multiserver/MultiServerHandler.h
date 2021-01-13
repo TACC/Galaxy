@@ -56,9 +56,9 @@ class MultiServerHandler  : public GalaxyObject
 
   GALAXY_OBJECT(MultiServerHandler)
 
+public:
   typedef MultiServerHandler *(*new_handler)(SocketHandler *); // typedef for handler ctor from the DL
 
-public:
   static MultiServerHandler *GetTheThreadMultiServerHandler(); //! return the thread-specific handler
   virtual ~MultiServerHandler() {}
 

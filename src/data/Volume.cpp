@@ -22,7 +22,7 @@
 
 #include "Application.h"
 #include "Volume.h"
-#include "OsprayVolume.h"
+// #include "VklVolume.h"
 
 #include <vtkNew.h>
 #include <vtkDataSetReader.h>
@@ -617,10 +617,11 @@ Volume::PointOwner(vec3f& p)
   return K*(global_partitions.x * global_partitions.y) + (J * global_partitions.x) + I;
 }
 
-GalaxyObjectDPtr 
+bool 
 Volume::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
 {
-  return GalaxyObject::Cast(OsprayVolume::NewDistributed(Volume::Cast(kdop)));
+  // return GalaxyObject::DCast(OsprayVolume::NewDistributed(Volume::DCast(kdop)));
+  return false;
 }
 
 bool
@@ -629,7 +630,7 @@ Volume::local_copy(KeyedDataObjectDPtr src)
   if (! super::local_copy(src))
     return false;
 
-  VolumeDPtr v = Cast(src);
+  VolumeDPtr v = DCast(src);
 
   vtkobj               = NULL;
   filename             = "";

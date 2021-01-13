@@ -54,25 +54,26 @@ include_directories(
 set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_intel ${EMBREE_LIBRARIES} ${MPI_C_LIBRARIES})
 
 set (ISPC_SOURCES 
+    IntelModel.ispc
     EmbreeGeometry.ispc
     EmbreeSpheres.ispc
     EmbreePathLines.ispc
-    EmbreeModel.ispc
     )
 
 set (CPP_SOURCES 
-  Embree.cpp
+  IntelDevice.cpp
+  IntelModel.cpp
   EmbreeGeometry.cpp
-  EmbreeModel.cpp
   EmbreeTriangles.cpp
   EmbreeSpheres.cpp
   EmbreePathLines.cpp
+  VklVolume.cpp
   )
 
 install(FILES
-  Embree.h
+  IntelDevice.h
+  IntelModel.h
   EmbreeGeometry.h
-  EmbreeModel.h
   EmbreeTriangles.h
   DESTINATION include/gxy)
 
@@ -82,6 +83,10 @@ target_link_libraries(gxy_intel gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIE
 set_target_properties(gxy_intel PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 install(TARGETS gxy_intel DESTINATION lib)
 
-add_executable(em_test em_test.cpp)
-target_link_libraries(em_test ${GALAXY_LIBRARIES})
-install(TARGETS em_test DESTINATION tests)
+# add_executable(em_test em_test.cpp)
+# target_link_libraries(em_test ${GALAXY_LIBRARIES})
+# install(TARGETS em_test DESTINATION tests)
+
+# add_executable(vkl_test vkl_test.cpp)
+# target_link_libraries(vkl_test ${GALAXY_LIBRARIES})
+# install(TARGETS vkl_test DESTINATION tests)

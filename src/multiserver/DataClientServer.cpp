@@ -64,7 +64,7 @@ DataClientServer::init()
 bool
 DataClientServer::handle(std::string line, std::string& reply)
 {
-  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::DCast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
     theDatasets = Datasets::NewDistributed();
@@ -183,7 +183,7 @@ DataClientServer::handle(std::string line, std::string& reply)
       int ncomp;
       if (type == 0)
       {
-        gxy::VolumeDPtr v = gxy::Volume::Cast(kdop);
+        gxy::VolumeDPtr v = gxy::Volume::DCast(kdop);
         ncomp = v->get_number_of_components();
       }
       else

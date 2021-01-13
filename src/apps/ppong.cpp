@@ -49,6 +49,8 @@ public:
 		int rank = GetTheApplication()->GetRank();
 		int size = GetTheApplication()->GetSize();
 
+    std::cerr << rank << ": ping\n";
+
 		if (rank != 0)
 		{ 
 			PPongMsg m("ppong");

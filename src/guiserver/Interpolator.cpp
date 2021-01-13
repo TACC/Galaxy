@@ -31,7 +31,7 @@ int Interpolator::interpolator_index = 0;
 void 
 Interpolator::Interpolate()
 {
-  InterpolatorMsg msg(volume, Geometry::Cast(result));
+  InterpolatorMsg msg(volume, Geometry::DCast(result));
   msg.Broadcast(true, true);
   result->Commit();
 }
@@ -40,8 +40,8 @@ bool
 InterpolatorMsg::CollectiveAction(MPI_Comm c, bool is_root)
 {
   Key *keys = (Key *)get();
-  VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(keys[0]));
-  GeometryDPtr p = Geometry::Cast(KeyedDataObject::GetByKey(keys[1]));
+  VolumeDPtr v = Volume::DCast(KeyedDataObject::GetByKey(keys[0]));
+  GeometryDPtr p = Geometry::DCast(KeyedDataObject::GetByKey(keys[1]));
 
   float ox, oy, oz;
   v->get_ghosted_local_origin(ox, oy, oz);

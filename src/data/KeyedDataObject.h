@@ -34,12 +34,13 @@
 #include <vtkImageData.h>
 
 #include "Box.h"
-#include "GalaxyObject.h"
+#include "KeyedObject.h"
+#include "ObjectFactory.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(KeyedDataObject)
+KEYED_OBJECT_POINTER_TYPES(KeyedDataObject)
 
 //! base class for registered (i.e. tracked) data objects within Galaxy
 /*! Galaxy maintains a global registry of objects in order to route data to the appropriate process. 
@@ -52,24 +53,24 @@ OBJECT_POINTER_TYPES(KeyedDataObject)
  */
 class KeyedDataObject : public KeyedObject
 {
-	KEYED_OBJECT_SUBCLASS(KeyedDataObject, KeyedObject)
+  KEYED_OBJECT_SUBCLASS(KeyedDataObject, KeyedObject)
 
-	friend class ImportMsg;
+  friend class ImportMsg;
 
 public:
-	virtual ~KeyedDataObject(); //!< destructor
-	virtual void initialize(); //!< initialize this KeyedDataObject
+  virtual ~KeyedDataObject(); //!< destructor
+  virtual void initialize(); //!< initialize this KeyedDataObject
 
   virtual KeyedDataObjectDPtr Copy();
   virtual bool local_copy(KeyedDataObjectDPtr src);
 
   //! commit this object to the local registry
-	virtual bool local_commit(MPI_Comm);
+  virtual bool local_commit(MPI_Comm);
 
   //! returns a pointer to a Box that represents the global data extent across all processes
-	Box *get_global_box() { return &global_box; }
+  Box *get_global_box() { return &global_box; }
   //! returns a pointer to a Box that represents the local data extent at this process
-	Box *get_local_box() { return &local_box; }
+  Box *get_local_box() { return &local_box; }
 
   //! install neighbors array
   void set_neighbors(int*);
@@ -80,7 +81,7 @@ public:
    *          - xz-face neighbors - `2` for the lower (left) `y`, `3` for the higher (right) `y`
    *          - xy-face neighbors - `4` for the lower (left) `z`, `5` for the higher (right) `z`
    */
-	int get_neighbor(int i) { return neighbors[i]; }
+  int get_neighbor(int i) { return neighbors[i]; }
 
   //! return true if the requested neighbor exists
   /*! This method uses the Box face orientation indices for neighbor indexing
@@ -91,24 +92,24 @@ public:
   bool has_neighbor(unsigned int face) { return neighbors[face] >= 0; }
 
   //! is this KeyedDataObject time varying?
-	bool is_time_varying() { return time_varying; }
+  bool is_time_varying() { return time_varying; }
 
   //! set whether this KeyedDataObject is time varying
-	void set_time_varying(bool t = true) { time_varying = t; }
+  void set_time_varying(bool t = true) { time_varying = t; }
 
   //! is this KeyedDataObject attached to a dynamic data source (e.g. a running simulation in an in situ context)?
-	bool is_attached() { return attached; }
+  bool is_attached() { return attached; }
   //! set whether this KeyedDataObject is attached to a dynamic data source 
-	void set_attached(bool t = true) { attached = t; }
+  void set_attached(bool t = true) { attached = t; }
 
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file
-	virtual bool Import(std::string);
+  virtual bool Import(std::string);
 
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file using the given arguments
-	virtual bool Import(std::string, void *args, int argsSize);
+  virtual bool Import(std::string, void *args, int argsSize);
 
   //! copy the data partitioning of the given KeyedDataObject
-	void CopyPartitioning(KeyedDataObjectDPtr o) { CopyPartitioning(o.get()); };
+  void CopyPartitioning(KeyedDataObjectDPtr o) { CopyPartitioning(o.get()); };
 
   float local_min, local_max;
   float global_min, global_max;
@@ -119,7 +120,8 @@ public:
   void get_global_minmax(float& min, float& max)   { min = global_min; max = global_max; }
   void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
 
-  virtual GalaxyObjectDPtr CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop);
+  virtual void SetTheDeviceEquivalent(GalaxyObjectPtr de) { device_equivalent = de; }
+  GalaxyObjectPtr GetTheDeviceEquivalent() { return device_equivalent; }
 
   void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 
@@ -127,18 +129,19 @@ public:
   bool hasBeenModified() { return modified; }
 
 protected:
-	void CopyPartitioning(KeyedDataObject* o);
+  void CopyPartitioning(KeyedDataObject* o);
+  GalaxyObjectPtr device_equivalent;
 
   bool modified;
-	vtkClientSocket *skt;
-	std::string filename;
+  vtkClientSocket *skt;
+  std::string filename;
 
-	bool time_varying, attached;
+  bool time_varying, attached;
 
   virtual bool local_import(char *, MPI_Comm c);
 
-	Box global_box, local_box;
-	int neighbors[6];
+  Box global_box, local_box;
+  int neighbors[6];
 
   //! tell a Galaxy processes to import a given data file
   class ImportMsg : public Work
@@ -162,19 +165,19 @@ protected:
 
   public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
-		{
-			char *p = (char *)contents->get();
+    {
+      char *p = (char *)contents->get();
 
-			Key k = *(Key *)p;
-			p += sizeof(Key);
+      Key k = *(Key *)p;
+      p += sizeof(Key);
 
-			KeyedDataObjectDPtr o = KeyedDataObject::GetByKey(k);
+      KeyedDataObjectDPtr o = KeyedDataObject::GetByKey(k);
 
-			if (!o->local_import(p, c))
+      if (!o->local_import(p, c))
         o->set_error(1);
 
-			return false;
-		}
+      return false;
+    }
   };
 
   //! tell a Galaxy processes to copy the guts of src to dst
@@ -197,23 +200,23 @@ protected:
 
   public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
-		{
-			char *p = (char *)contents->get();
+    {
+      char *p = (char *)contents->get();
 
-			Key k = *(Key *)p;
-			p += sizeof(Key);
-			KeyedDataObjectDPtr src = KeyedDataObject::GetByKey(k);
+      Key k = *(Key *)p;
+      p += sizeof(Key);
+      KeyedDataObjectDPtr src = KeyedDataObject::GetByKey(k);
 
-			k = *(Key *)p;
-			p += sizeof(Key);
-			KeyedDataObjectDPtr dst = KeyedDataObject::GetByKey(k);
+      k = *(Key *)p;
+      p += sizeof(Key);
+      KeyedDataObjectDPtr dst = KeyedDataObject::GetByKey(k);
 
 
-			if (!dst->local_copy(src))
+      if (!dst->local_copy(src))
         dst->set_error(1);
 
-			return false;
-		}
+      return false;
+    }
   };
 };
 

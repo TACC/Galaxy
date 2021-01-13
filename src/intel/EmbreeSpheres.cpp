@@ -18,6 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
+#include "IntelDevice.h"
 #include "EmbreeSpheres.h"
 #include <embree3/rtcore.h>
 
@@ -64,14 +65,15 @@ EmbreeSpheres::FinalizeIspc()
 
     ispc::EmbreeSpheres_ispc *iptr = (ispc::EmbreeSpheres_ispc*)GetIspc();
 
-    ParticlesDPtr p = Particles::Cast(geometry);
+    ParticlesDPtr p = Particles::DCast(geometry);
     if (! p)
     {
         std::cerr << "EmbreeSpheres::FinalizeIspc called with something other than Particles\n";
         exit(1);
     }
 
-    device_geometry = rtcNewGeometry((RTCDevice)GetEmbree()->Device(), RTC_GEOMETRY_TYPE_USER);
+    IntelDevicePtr intel_device = IntelDevice::Cast(GetTheDevice());
+    device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_USER);
 
     rtcSetGeometryUserData(device_geometry, GetIspc());
     rtcSetGeometryUserPrimitiveCount(device_geometry, p->GetNumberOfVertices());

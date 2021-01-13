@@ -30,7 +30,7 @@
 #include <map>
 
 #include "Application.h"
-#include "GalaxyObject.h"
+#include "KeyedObjectMap.h"
 #include "Threading.h"
 #include "Events.h"
 
@@ -79,7 +79,6 @@ Application::Application()
   threadPool = new ThreadPool(n_threads);
 
   theMessageManager = new MessageManager; 
-  theObjectFactory = new ObjectFactory; 
 
 #if 0
   if (getenv("GXY_APP_NTHREADS"))
@@ -114,7 +113,6 @@ Application::Application()
   PrintMsg::Register();
 
   KeyedObject::Register();
-  ObjectFactory::Register();
 
   pthread_mutex_unlock(&lock);
 }
@@ -166,7 +164,6 @@ Application::~Application()
 
   delete threadPool;
   delete theMessageManager;
-  delete theObjectFactory;
   delete threadManager;
 
   theApplication = NULL;
@@ -174,7 +171,7 @@ Application::~Application()
 
 void Application::QuitApplication()
 {
-  GetTheObjectFactory()->Clear();
+  GetTheKeyedObjectMap()->Clear();
 
   quitting = true;
 

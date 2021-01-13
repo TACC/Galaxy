@@ -84,12 +84,6 @@ IsoSamplerVis::LoadFromJSON(Value& v)
   return true;
 }
 
-void
-IsoSamplerVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
-{
-  super::SetTheOsprayDataObject(o);
-}
-
 int
 IsoSamplerVis::serialSize() 
 {

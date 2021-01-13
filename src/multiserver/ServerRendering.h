@@ -22,6 +22,7 @@
 
 #include "Application.h"
 #include "Rendering.h"
+#include "KeyedObject.h"
 #include "MultiServerHandler.h"
 #include "pthread.h"
 
@@ -45,7 +46,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(ServerRendering)
+KEYED_OBJECT_POINTER_TYPES(ServerRendering)
 
 class ServerRendering : public Rendering
 { 

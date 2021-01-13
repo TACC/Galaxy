@@ -22,7 +22,7 @@
 #include <iostream>
 #include "vtkerror.h"
 #include "Triangles.h"
-#include "OsprayTriangles.h"
+#include "EmbreeTriangles.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -74,7 +74,7 @@ Triangles::local_copy(KeyedDataObjectDPtr src)
   if (! super::local_copy(src))
     return false;
 
-  TrianglesDPtr t = Cast(src);
+  TrianglesDPtr t = DCast(src);
 
   normals = t->normals;
 
@@ -160,10 +160,11 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
   return true;
 }
 
-GalaxyObjectDPtr
+bool
 Triangles::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
 {
-  return GalaxyObject::Cast(OsprayTriangles::NewDistributed(Triangles::Cast(kdop)));
+  // return GalaxyObject::DCast(OsprayTriangles::NewDistributed(Triangles::DCast(kdop)));
+  return false;
 }
 
 

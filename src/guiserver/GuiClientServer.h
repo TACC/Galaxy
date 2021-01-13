@@ -76,7 +76,7 @@ public:
   {
     first = true;
 
-    globals = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+    globals = Datasets::DCast(MultiServer::Get()->GetGlobal("global datasets"));
     if (! globals)
     {
       globals = Datasets::NewDistributed();

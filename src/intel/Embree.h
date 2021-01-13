@@ -35,12 +35,12 @@ static void embreeError(void *ptr, enum RTCError error, const char* msg)
     std::cerr << "Embree error: " << error << " :: " << msg << "\n";
 }
 
-class Embree : public KeyedObject
+class Device : public KeyedObject
 {
-    KEYED_OBJECT(Embree)
+    KEYED_OBJECT(Device)
 
 public:
-    virtual ~Embree();
+    virtual ~Device();
     virtual void initialize();
 
     RTCDevice Device() { return device; }

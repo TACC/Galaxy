@@ -34,7 +34,7 @@
 #include <map>
 
 #include "galaxy.h"
-#include "GalaxyObject.h"
+#include "KeyedObject.h"
 #include "MessageManager.h"
 #include "Work.h"
 
@@ -53,12 +53,12 @@ class ThreadPool;
  * \warning argument must begin with stream operator `<<`
  * \sa gxy::Application::Print
  */
-#define APP_PRINT(x)																				\
-{																														\
-  std::stringstream ss;																			\
-	ss x;																											\
+#define APP_PRINT(x)                                        \
+{                                                            \
+  std::stringstream ss;                                      \
+  ss x;                                                      \
   if (GetTheApplication())                                  \
-    GetTheApplication()->Print(ss.str());										\
+    GetTheApplication()->Print(ss.str());                    \
 }
 
 /*!
@@ -71,13 +71,13 @@ class ThreadPool;
  * \warning argument must begin with stream operator `<<`
  * \sa gxy::Application::Log
  */
-#define APP_LOG(x)																					                            \
-{																														                            \
+#define APP_LOG(x)                                                                      \
+{                                                                                        \
   if (GetTheApplication())                                                              \
   {                                                                                     \
-    std::stringstream ss;																			                          \
-    ss << my_gettid() << " " << my_threadname() << " " <<  __FUNCTION__ << ": " x;			\
-    GetTheApplication()->Log(ss.str());												                          \
+    std::stringstream ss;                                                                \
+    ss << my_gettid() << " " << my_threadname() << " " <<  __FUNCTION__ << ": " x;      \
+    GetTheApplication()->Log(ss.str());                                                  \
   }                                                                                     \
 }
 
@@ -100,27 +100,27 @@ public:
 
   //! returns the application's MessageManager object.
   MessageManager *GetTheMessageManager() { return theMessageManager; }
-  //! returns the ObjectFactory object, used to register data
-  ObjectFactory *GetTheObjectFactory() { return theObjectFactory; }
+
   //! returns the ThreadPool object, used to manage all threads created by the Application
   ThreadManager *GetTheThreadManager() { return threadManager; }
+
   //! returns the ThreadPool object, used to manage a pool of threads waiting for work tasks
   ThreadPool *GetTheThreadPool() { return threadPool; }
 
   //! print a std::string to std::cerr in a distributed parallel friendly way
-	void Print(std::string);
-	//! log a std::string to the log in a distributed parallel friendly way
-	void Log(std::string);
-	//! dump the accumulated log 
-	/*! dumps the accumulated log to per-process log files `gxy_log_{i}` 
-	 * where `{i}` is the process rank.
-	 */
-	void DumpLog();
+  void Print(std::string);
+  //! log a std::string to the log in a distributed parallel friendly way
+  void Log(std::string);
+  //! dump the accumulated log 
+  /*! dumps the accumulated log to per-process log files `gxy_log_{i}` 
+   * where `{i}` is the process rank.
+   */
+  void DumpLog();
 
-	//! broadcast a 'Quit' message to all processes
-	/*! Broadcasts a special 'Quit' Work object which instructs all processes
-	 * to stop processing Work and terminate.
-	 */
+  //! broadcast a 'Quit' message to all processes
+  /*! Broadcasts a special 'Quit' Work object which instructs all processes
+   * to stop processing Work and terminate.
+   */
   void QuitApplication();
   //! broadcast a 'Sync' message to all processes
   /*! Broadcasts a special 'Sync' Work object which acts as a barrier to 
@@ -128,13 +128,13 @@ public:
    */
   void SyncApplication();
 
-	//! returns a pointer to the argc initialization argument
-	/*! \warning will return NULL if default constructor was used
-	 */
+  //! returns a pointer to the argc initialization argument
+  /*! \warning will return NULL if default constructor was used
+   */
   int *GetPArgC() { return argcp; }
-	//! returns a pointer to the argv initialization argument
-	/*! \warning will return NULL if default constructor was used
-	 */
+  //! returns a pointer to the argv initialization argument
+  /*! \warning will return NULL if default constructor was used
+   */
   char ***GetPArgV() { return argvp; }
 
   //! returns the number of processes in the messaging MPI communicator
@@ -164,24 +164,24 @@ public:
    * the Application.
    * \sa Kill, QuitApplication
    */
-	void Wait();
-	//! returns true from initializtaion until Kill is called
-	/* \sa Pause, Run */
+  void Wait();
+  //! returns true from initializtaion until Kill is called
+  /* \sa Pause, Run */
   bool Running() { return !application_done; }
 
   //! temporarily stop processing Message objects
   /*! \sa Run 
    */
-	void Pause() { GetTheMessageManager()->Pause(); }
-	//! begin (or resume) processing Message objects
-	/* \sa Pause 
-	 */
-	void Run() { GetTheMessageManager()->Run(); }
+  void Pause() { GetTheMessageManager()->Pause(); }
+  //! begin (or resume) processing Message objects
+  /* \sa Pause 
+   */
+  void Run() { GetTheMessageManager()->Run(); }
 
-	//! convert a Message into a corresponding Work object
-	/*! \returns a pointer to a Work object represented by the Message 
-	 * \sa Message, MessageManager, Work
-	 */
+  //! convert a Message into a corresponding Work object
+  /*! \returns a pointer to a Work object represented by the Message 
+   * \sa Message, MessageManager, Work
+   */
   Work *Deserialize(Message *msg);
 
   //! return the name of the Work object contained in the Message
@@ -203,26 +203,26 @@ public:
 
     int n = deserializers.size();
     deserializers.push_back(f);
-		class_table.emplace_back(name);
+    class_table.emplace_back(name);
     return n;
   }
 
   //! is the application done (i.e. has a Kill notification been issued)?
   bool IsDoneSet() { return application_done; }
   //! return the process id of the Application
-	pid_t get_pid() { return pid; }
+  pid_t get_pid() { return pid; }
 
-	//! read the specified Galaxy input file in JSON format
-	rapidjson::Document *OpenJSONFile(std::string s);
-	//! initialize the output state file using JSON format
-	/*! \returns a rapidjson::Document object pointer
-	 */
-	rapidjson::Document *NewJSONDocument();
-	//! write the output state file to the specified file
-	/*! \param doc a pointer to the output state document
-	 *  \param s the filename to create with the output state
-	 */
-	void SaveOutputState(rapidjson::Document *doc, std::string s);
+  //! read the specified Galaxy input file in JSON format
+  rapidjson::Document *OpenJSONFile(std::string s);
+  //! initialize the output state file using JSON format
+  /*! \returns a rapidjson::Document object pointer
+   */
+  rapidjson::Document *NewJSONDocument();
+  //! write the output state file to the specified file
+  /*! \param doc a pointer to the output state document
+   *  \param s the filename to create with the output state
+   */
+  void SaveOutputState(rapidjson::Document *doc, std::string s);
 
   //! Check whether the app is in the process of quitting
   bool IsQuitting() { return quitting; }
@@ -231,14 +231,13 @@ private:
 
   std::map<std::string, KeyedObjectDPtr> globals;      // Globally-known variables
 
-	std::vector<std::string> log;
-	MessageManager *theMessageManager;
-	ObjectFactory *theObjectFactory;
+  std::vector<std::string> log;
+  MessageManager *theMessageManager;
 
   std::vector<Work *(*)(SharedP)> deserializers;
   std::vector<std::string> class_table;
 
-	ThreadManager *threadManager;
+  ThreadManager *threadManager;
   ThreadPool *threadPool;
 
   bool application_done;
@@ -246,7 +245,7 @@ private:
   int *argcp;
   char ***argvp;
 
-	pid_t pid;
+  pid_t pid;
 
   pthread_mutex_t lock;
   pthread_cond_t cond;
@@ -254,31 +253,31 @@ private:
   bool quitting;
 
 private:
-	class QuitMsg : public Work
-	{
-	public:
-		WORK_CLASS(QuitMsg, true)
+  class QuitMsg : public Work
+  {
+  public:
+    WORK_CLASS(QuitMsg, true)
 
-	public:
-		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
-	};
+  public:
+    bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+  };
 
-	class SyncMsg : public Work
-	{
-	public:
-		WORK_CLASS(SyncMsg, true)
+  class SyncMsg : public Work
+  {
+  public:
+    WORK_CLASS(SyncMsg, true)
 
-	public:
-		bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
-	};
+  public:
+    bool CollectiveAction(MPI_Comm coll_comm, bool isRoot);
+  };
 
-	class PrintMsg : public Work
-	{
-		WORK_CLASS(PrintMsg, false);
-	public:
-		PrintMsg(std::string &);
-		bool Action(int sender);
-	};
+  class PrintMsg : public Work
+  {
+    WORK_CLASS(PrintMsg, false);
+  public:
+    PrintMsg(std::string &);
+    bool Action(int sender);
+  };
 };
 
 /*! \ingroup framework

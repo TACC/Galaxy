@@ -25,10 +25,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
 include_directories(${gxy_framework_SOURCE_DIR} 
 									  ${gxy_data_SOURCE_DIR}
-									  ${gxy_ospray_SOURCE_DIR}
+									  ${gxy_intel_SOURCE_DIR}
 									  ${Galaxy_BINARY_DIR}/src)
 
-set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${MPI_C_LIBRARIES})
+set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_intel ${MPI_C_LIBRARIES})
 
 set(BINS "")
 set(SERVERS "")

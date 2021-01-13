@@ -28,6 +28,7 @@ using namespace std;
 #include <pthread.h>
 
 #include "TestClientServer.h"
+#include "KeyedObjectMap.h"
 
 namespace gxy
 {
@@ -58,7 +59,7 @@ ShowKeyedObjectsMsg::Action(int s)
   int size = GetTheApplication()->GetSize();
 
   std::cerr << "Rank " << rank << ":\n";
-  GetTheApplication()->GetTheObjectFactory()->Dump();
+  GetTheKeyedObjectMap()->Dump();
 
   if (rank != 0)
   { 
@@ -99,7 +100,7 @@ ShowDatasetsMsg::Action(int s)
       cerr << "Process 0: name, key, string:\n";
       for (auto i : ds_names)
       { 
-        TestObjectDPtr top = TestObject::Cast(dsp->Find(i));
+        TestObjectDPtr top = TestObject::DCast(dsp->Find(i));
         cerr << i << " " << top->getkey() << " " << top->GetString() << "\n";
       }
     }
@@ -141,7 +142,7 @@ TestClientServer::init()
 bool
 TestClientServer::handle(string line, string& reply)
 {
-  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::DCast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
     theDatasets = Datasets::NewDistributed();
@@ -186,7 +187,7 @@ TestClientServer::handle(string line, string& reply)
     string name, newstring;
     ss >> name >> newstring;
 
-    TestObjectDPtr to = TestObject::Cast(theDatasets->Find(name));
+    TestObjectDPtr to = TestObject::DCast(theDatasets->Find(name));
 
     if (! to)
     {
@@ -209,7 +210,7 @@ TestClientServer::handle(string line, string& reply)
     string name;
     ss >> name;
 
-    TestObjectDPtr to = TestObject::Cast(theDatasets->Find(name));
+    TestObjectDPtr to = TestObject::DCast(theDatasets->Find(name));
 
     if (! to)
     {

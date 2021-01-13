@@ -39,7 +39,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Datasets)
+KEYED_OBJECT_POINTER_TYPES(Datasets)
 
 //! container for KeyedDataObjects within Galaxy
 /*! \ingroup data 

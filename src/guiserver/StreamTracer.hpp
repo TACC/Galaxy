@@ -34,7 +34,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(StreamTracer)
+KEYED_OBJECT_POINTER_TYPES(StreamTracer)
 
 struct _segment
 {
@@ -450,7 +450,7 @@ public:
     name = ss.str();
 
     streamTracer = StreamTracer::NewDistributed();
-    result = KeyedDataObject::Cast(PathLines::NewDistributed());
+    result = KeyedDataObject::DCast(PathLines::NewDistributed());
   }
 
   bool SetVectorField(VolumeDPtr v);
@@ -493,7 +493,7 @@ public:
     streamTracer->SetDeltaT(deltaT);
     streamTracer->Commit();
 
-    PathLinesDPtr plp = PathLines::Cast(result);
+    PathLinesDPtr plp = PathLines::DCast(result);
     streamTracer->TraceToPathLines(plp);
   }
   

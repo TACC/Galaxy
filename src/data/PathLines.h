@@ -40,7 +40,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(PathLines)
+KEYED_OBJECT_POINTER_TYPES(PathLines)
 
 //! a pathline vertex within Galaxy
 /*! \ingroup data */
@@ -69,7 +69,7 @@ public:
 
   void GetPLVertices(PLVertex*& p, int& n);
 
-  virtual GalaxyObjectDPtr CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
+  virtual bool CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);

@@ -28,12 +28,6 @@ namespace gxy
 KEYED_OBJECT_CLASS_TYPE(TransferFunction)
 
 void
-TransferFunction::Register()
-{
-    RegisterClass();
-}
-
-void
 TransferFunction::initialize()
 {
     super::initialize();

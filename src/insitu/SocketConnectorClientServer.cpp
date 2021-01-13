@@ -71,7 +71,7 @@ SocketConnectorClientServer::handle(string line, string& reply)
 {
   // std::cerr << "InSitu Handle: " << line << "\n";
 
-  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::DCast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
     theDatasets = Datasets::NewDistributed();

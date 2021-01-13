@@ -221,8 +221,8 @@ public:
   {
     args *a = (args *)contents->get();
 
-    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
+    VolumeDPtr v = Volume::DCast(KeyedDataObject::GetByKey(a->vk));
+    ParticlesDPtr p = Particles::DCast(KeyedDataObject::GetByKey(a->pk));
 
     p->CopyPartitioning(v);
 

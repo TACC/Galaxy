@@ -22,7 +22,8 @@
 
 using namespace gxy;
 
-VklVolume::VklVolume(VolumeDPtr v)
+void
+VklVolume::SetVolume(VolumePtr v)
 {
   vec3i counts;
   v->get_ghosted_local_counts(counts.x, counts.y, counts.z);

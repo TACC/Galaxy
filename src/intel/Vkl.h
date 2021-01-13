@@ -28,18 +28,15 @@ namespace gxy { OBJECT_POINTER_TYPES(Vkl) }
 namespace gxy 
 {
 
-static void vklError(void *ptr, VKLError error, const char* msg)
+class Vkl : public GalaxyObject
 {
-    std::cerr << "Vkl error: " << error << " :: " << msg << "\n";
-}
-
-class Vkl : public KeyedObject
-{
-    KEYED_OBJECT(Vkl)
+    GALAXY_OBJECT(Vkl)
 
 public:
     virtual ~Vkl();
     virtual void initialize();
+
+    void Register();
 
     VKLDriver Device() { return device; }
     

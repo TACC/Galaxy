@@ -38,15 +38,16 @@ namespace gxy
 //! translation class for Galaxy Volume to Vkl Volume
 /*! \ingroup render 
  */
-class VklVolume 
+class VklVolume : public GalaxyObject
 {
+  GALAXY_OBJECT_SUBCLASS(VklVolume, GalaxyObject)
+
 public:
-  static VklVolumeDPtr NewL(VolumeDPtr v) { return std::shared_ptr<VklVolume>(new VklVolume(v)); }
   ~VklVolume();
 
-private:
-  VklVolume(VolumeDPtr);
+  void SetVolume(VolumePtr);
 
+private:
   VKLVolume volume;
 };
 

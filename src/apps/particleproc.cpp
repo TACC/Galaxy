@@ -76,7 +76,7 @@ public:
   bool CollectiveAction(MPI_Comm c, bool s)
    {
     Key* keys = (Key *)contents->get();
-    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(*keys));
+    ParticlesDPtr p = Particles::DCast(KeyedDataObject::GetByKey(*keys));
     // this method creates some particles and sets the value to the
     // local rank. The particles are randomly placed inside a
     // unit cube centered at the origin. 

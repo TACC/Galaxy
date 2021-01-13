@@ -21,7 +21,7 @@
 #include <iostream>
 #include "vtkerror.h"
 #include "PathLines.h"
-#include "OsprayPathLines.h"
+#include "EmbreePathLines.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -136,10 +136,11 @@ PathLines::GetPLVertices(PLVertex*& p, int& n)
   }
 }
 
-GalaxyObjectDPtr 
+bool 
 PathLines::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
 { 
-  return GalaxyObject::Cast(OsprayPathLines::NewDistributed(PathLines::Cast(kdop)));
+  // return GalaxyObject::DCast(OsprayPathLines::NewDistributed(PathLines::DCast(kdop)));
+  return false;
 } 
 
 

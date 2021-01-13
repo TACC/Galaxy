@@ -36,7 +36,7 @@ endif(COMMAND cmake_policy)
 
 include_directories(${GALAXY_INCLUDES}
                     ${Galaxy_SOURCE_DIR}/src/framework
-                    ${Galaxy_SOURCE_DIR}/src/ospray
+                    ${Galaxy_SOURCE_DIR}/src/intel
                     ${Galaxy_SOURCE_DIR}/src/data
                     ${Galaxy_BINARY_DIR}/src
                     ${OSPRAY_INCLUDE_DIRS}
@@ -56,7 +56,7 @@ set (CPP_SOURCES
   AmrVolume.cpp)
 
 add_library(gxy_data SHARED ${CPP_SOURCES})
-target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework gxy_ospray)
+target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework gxy_intel)
 set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 install(TARGETS gxy_data DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

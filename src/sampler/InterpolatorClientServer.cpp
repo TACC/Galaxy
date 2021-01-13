@@ -100,9 +100,9 @@ float interpolate(InterpolatorClientServer::Args *args, VolumeDPtr v, vec3f *xyz
 static void
 Interpolate(InterpolatorClientServer::Args *a)
 {
-  VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-  ParticlesDPtr s = Particles::Cast(KeyedDataObject::GetByKey(a->sk));
-  ParticlesDPtr d = Particles::Cast(KeyedDataObject::GetByKey(a->dk));
+  VolumeDPtr v = Volume::DCast(KeyedDataObject::GetByKey(a->vk));
+  ParticlesDPtr s = Particles::DCast(KeyedDataObject::GetByKey(a->sk));
+  ParticlesDPtr d = Particles::DCast(KeyedDataObject::GetByKey(a->dk));
 
   d->CopyPartitioning(s);
 
@@ -164,7 +164,7 @@ new_handler(SocketHandler *sh)
 bool
 InterpolatorClientServer::handle(std::string line, std::string &reply)
 {
-  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::DCast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
     theDatasets = Datasets::NewDistributed();
@@ -186,14 +186,14 @@ InterpolatorClientServer::handle(std::string line, std::string &reply)
       return true;
     }
 
-    volume = Volume::Cast(theDatasets->Find(vname));
+    volume = Volume::DCast(theDatasets->Find(vname));
     if (! volume) 
     {
       reply = "error Interpolator first arg must name a volume dataset";
       return true;
     }
 
-    src = Particles::Cast(theDatasets->Find(sname));
+    src = Particles::DCast(theDatasets->Find(sname));
     if (! src) 
     {
       reply = "error Interpolator second arg must name a pre-existing particles dataset";

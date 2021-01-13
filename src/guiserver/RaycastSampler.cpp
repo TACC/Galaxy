@@ -43,13 +43,13 @@ RaycastSampler::Sample(rapidjson::Document& doc, KeyedDataObjectDPtr scalarVolum
   {
     IsoSamplerVisDPtr iv = IsoSamplerVis::NewDistributed();
     iv->SetIsovalue(doc["isovalue"].GetDouble());
-    vis = Vis::Cast(iv);
+    vis = Vis::DCast(iv);
   }
   else
   {
     GradientSamplerVisDPtr gv = GradientSamplerVis::NewDistributed();
     gv->SetTolerance(doc["tolerance"].GetDouble());
-    vis = Vis::Cast(gv);
+    vis = Vis::DCast(gv);
   }
 
   vis->Commit(scalarVolume->getkey());
@@ -81,7 +81,7 @@ RaycastSampler::Sample(rapidjson::Document& doc, KeyedDataObjectDPtr scalarVolum
   sleep(1);
   result->Commit();
 
-  ParticlesDPtr p = Particles::Cast(result);
+  ParticlesDPtr p = Particles::DCast(result);
 
   if (! p) 
     std::cerr << "samples aren't particle set?\n";

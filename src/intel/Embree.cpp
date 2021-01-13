@@ -21,60 +21,61 @@
 #include <embree3/rtcore.h>
 #include <iostream>
 
-#include "Embree.h"
+#include "Device.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Embree)
+KEYED_OBJECT_CLASS_TYPE(Device)
 
-static Embree *theEmbree;
-Embree *GetEmbree() { return theEmbree; }
+static Device *theDevice;
+Device *GetTheDevice() { return theDevice; }
 
 void
-Embree::Register()
+Device::Register()
 {
     RegisterClass();
 }
 
-Embree::~Embree()
+Device::~Device()
 {
     rtcReleaseDevice(device);
+    vklShutdown();
 }
 
 void
-Embree::initialize()
+Device::initialize()
 {
     super::initialize();
 
     device = rtcNewDevice(NULL);
     rtcSetDeviceErrorFunction(device, embreeError, (void *)this);
 
-    theEmbree = this;
+    theDevice = this;
 }
 
 int
-Embree::serialSize()
+Device::serialSize()
 {
     return super::serialSize();
 }
 
 unsigned char *
-Embree::serialize(unsigned char *p)
+Device::serialize(unsigned char *p)
 {
     p = super::serialize(p);
     return p;
 }
 
 unsigned char *
-Embree::deserialize(unsigned char *p)
+Device::deserialize(unsigned char *p)
 {
     p = super::deserialize(p);
     return p;
 }
 
 bool 
-Embree::local_commit(MPI_Comm c)
+Device::local_commit(MPI_Comm c)
 {
     return false;
 }

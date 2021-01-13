@@ -43,9 +43,9 @@ KEYED_OBJECT_CLASS_TYPE(SamplerVis)
 void
 SamplerVis::Register()
 {
-	RegisterClass();
-    IsoSamplerVis::Register();
-    GradientSamplerVis::Register();
+  RegisterClass();
+  IsoSamplerVis::Register();
+  GradientSamplerVis::Register();
 }
 
 SamplerVis::~SamplerVis()
@@ -74,7 +74,7 @@ SamplerVis::allocate_ispc()
 bool 
 SamplerVis::Commit(DatasetsDPtr datasets)
 {
-	return Vis::Commit(datasets);
+  return Vis::Commit(datasets);
 }
 
 bool
@@ -85,16 +85,10 @@ SamplerVis::LoadFromJSON(Value& v)
   return true;
 }
 
-void
-SamplerVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
-{
-  super::SetTheOsprayDataObject(o);
-}
-
 int
 SamplerVis::serialSize() 
 {
-	return super::serialSize();
+  return super::serialSize();
 }
 
 unsigned char *
