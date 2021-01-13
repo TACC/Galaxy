@@ -51,7 +51,7 @@ if test X$ISPC_EXEC != X ; then
     AA=`$ISPC_EXEC --version | sed -e "s/^.*ISPC), //" -e "s/ .*//"`
     maj=`echo $AA | sed "s/\..*//"`
     min=`echo $AA | sed -e "s/[^.].//" -e "s/\..*//"`
-    if $maj != 1 -o $min -lt 14 ; then
+    if test $maj != 1 -o $min -lt 14 ; then
         ISPC_EXEC=
     fi
 fi
@@ -74,17 +74,6 @@ EMBREE_CMAKE_FLAGS="-DEMBREE_ISPC_EXECUTABLE=${ISPC_EXEC} \
 						 				-DEMBREE_STATIC_LIB=ON \
 						 				-DEMBREE_TUTORIALS=OFF \
 						 				-DEMBREE_ISA_SSE2=OFF"
-OSPRAY_CMAKE_FLAGS="-Dembree_DIR=${GXY_ROOT}/third-party/install/lib/cmake/embree-3.6.1 \
-						  			-DEMBREE_ISPC_EXECUTABLE=${ISPC_EXEC} \
-						  			-DCMAKE_CXX_FLAGS=-I${GXY_ROOT}/third-party/install/include \
-						  			-DOSPRAY_ENABLE_TUTORIALS=OFF \
-						  			-DOSPRAY_ENABLE_TESTING=OFF \
-						  			-DOSPRAY_APPS_BENCHMARK=OFF \
-						  			-DOSPRAY_APPS_ENABLE_DENOISER=OFF \
-						  			-DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
-						  			-DOSPRAY_APPS_PARAVIEW_TFN_CVT=OFF \
-						  			-DOSPRAY_APPS_UTILITIES=OFF \
-						  			-DOSPRAY_AUTO_DOWNLOAD_TEST_IMAGES=OFF"
 RAPIDJSON_CMAKE_FLAGS="-DRAPIDJSON_BUILD_DOC=OFF \
 											 -DRAPIDJSON_BUILD_EXAMPLES=OFF \
 											 -DRAPIDJSON_BUILD_TESTS=OFF"
@@ -146,7 +135,7 @@ fi
 
 
 cd ${GXY_ROOT}/third-party
-for tp_lib_dir in embree ospray nodeeditor rapidjson; do
+for tp_lib_dir in embree nodeeditor rapidjson; do
 	if [ -d install/include/$tp_lib_dir ] || [ -d install/include/${tp_lib_dir}3 ]; then # silly embree uses embree3
 		report "$tp_lib_dir already installed."
 	else 
@@ -161,9 +150,6 @@ for tp_lib_dir in embree ospray nodeeditor rapidjson; do
 			;;
 			embree)
 			ALL_CMAKE_FLAGS="${ALL_CMAKE_FLAGS} ${EMBREE_CMAKE_FLAGS}"
-			;;
-			ospray)
-			ALL_CMAKE_FLAGS="${ALL_CMAKE_FLAGS} ${OSPRAY_CMAKE_FLAGS}"
 			;;
 			rapidjson)
 			ALL_CMAKE_FLAGS="${ALL_CMAKE_FLAGS} ${RAPIDJSON_CMAKE_FLAGS}"
