@@ -30,7 +30,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Schlieren2Rendering)
+KEYED_OBJECT_POINTER_TYPES(Schlieren2Rendering)
 
 class Schlieren2Rendering : public Rendering
 {

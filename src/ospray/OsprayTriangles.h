@@ -43,7 +43,7 @@ class OsprayTriangles : public OsprayObject
   GALAXY_OBJECT(OsprayTriangles)
 
 public:
-  static OsprayTrianglesDPtr NewDistributed(TrianglesDPtr p) { return OsprayTriangles::Cast(std::shared_ptr<OsprayTriangles>(new OsprayTriangles(p))); }
+  static OsprayTrianglesDPtr NewDistributed(TrianglesDPtr p) { return OsprayTriangles::DCast(std::shared_ptr<OsprayTriangles>(new OsprayTriangles(p))); }
 
 private:
   OsprayTriangles(TrianglesDPtr);

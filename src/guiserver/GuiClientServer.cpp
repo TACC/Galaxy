@@ -268,7 +268,7 @@ GuiClientServer::handle(string line, string& reply)
       int ncomp;
       if (type == 0)
       {
-        VolumeDPtr v = Volume::Cast(kdop);
+        VolumeDPtr v = Volume::DCast(kdop);
         ncomp = v->get_number_of_components();
       }
       else
@@ -573,9 +573,9 @@ GuiClientServer::handle(string line, string& reply)
 
       std::string name = doc["vectorField"].GetString();
 
-      VolumeDPtr vectorField = Volume::Cast(globals->Find(name));
+      VolumeDPtr vectorField = Volume::DCast(globals->Find(name));
       if (! vectorField)
-        vectorField = Volume::Cast(temporaries->Find(name));
+        vectorField = Volume::DCast(temporaries->Find(name));
 
       if (! vectorField)
         HANDLED_BUT_ERROR_RETURN("unable to find StreamTracer vector dataset");
@@ -593,9 +593,9 @@ GuiClientServer::handle(string line, string& reply)
 
     std::string name = doc["seeds"].GetString();
 
-    ParticlesDPtr seeds = Particles::Cast(temporaries->Find(name));
+    ParticlesDPtr seeds = Particles::DCast(temporaries->Find(name));
     if (! seeds)
-      seeds = Particles::Cast(temporaries->Find(name));
+      seeds = Particles::DCast(temporaries->Find(name));
 
     if (! seeds)
       HANDLED_BUT_ERROR_RETURN("streamtracer: couldn't find seeds");
@@ -692,9 +692,9 @@ GuiClientServer::handle(string line, string& reply)
 
     std::string name = doc["volume"].GetString();
 
-    VolumeDPtr vfield = Volume::Cast(globals->Find(name));
+    VolumeDPtr vfield = Volume::DCast(globals->Find(name));
     if (! vfield)
-      vfield = Volume::Cast(temporaries->Find(name));
+      vfield = Volume::DCast(temporaries->Find(name));
 
     if (! vfield)
       HANDLED_BUT_ERROR_RETURN("unable to find Interpolator volume dataset");
@@ -704,9 +704,9 @@ GuiClientServer::handle(string line, string& reply)
 
     name = doc["pointset"].GetString();
 
-    GeometryDPtr pset = Geometry::Cast(globals->Find(name));
+    GeometryDPtr pset = Geometry::DCast(globals->Find(name));
     if (! pset)
-      pset = Geometry::Cast(temporaries->Find(name));
+      pset = Geometry::DCast(temporaries->Find(name));
 
     if (! pset)
       HANDLED_BUT_ERROR_RETURN("unable to find Interpolator pointset");

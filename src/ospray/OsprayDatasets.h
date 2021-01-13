@@ -50,7 +50,7 @@ class OsprayDatasets : public OsprayObject
   GALAXY_OBJECT(OsprayDatasets)
 
 public:
-  static OsprayDatasetsDPtr NewDistributed(DatasetsDPtr p) { return OsprayDatasets::Cast(std::shared_ptr<OsprayDatasets>(new OsprayDatasets(p))); }
+  static OsprayDatasetsDPtr NewDistributed(DatasetsDPtr p) { return OsprayDatasets::DCast(std::shared_ptr<OsprayDatasets>(new OsprayDatasets(p))); }
 
   OsprayObject GetByKey(Key);
   void Add(Key k, OsprayObject);

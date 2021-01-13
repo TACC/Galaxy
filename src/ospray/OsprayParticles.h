@@ -44,7 +44,7 @@ class OsprayParticles : public OsprayObject
   GALAXY_OBJECT(OsprayParticles) 
 
 public:
-  static OsprayParticlesDPtr NewDistributed(ParticlesDPtr p) { return OsprayParticles::Cast(std::shared_ptr<OsprayParticles>(new OsprayParticles(p))); }
+  static OsprayParticlesDPtr NewDistributed(ParticlesDPtr p) { return OsprayParticles::DCast(std::shared_ptr<OsprayParticles>(new OsprayParticles(p))); }
   
 private:
   OsprayParticles(ParticlesDPtr);

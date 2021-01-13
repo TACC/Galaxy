@@ -38,7 +38,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Geometry)
+KEYED_OBJECT_POINTER_TYPES(Geometry)
 
 //! representation for 3D renderable geometry in Galaxy
 /*! \ingroup data 

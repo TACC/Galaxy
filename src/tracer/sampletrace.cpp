@@ -273,7 +273,7 @@ main(int argc, char * argv[])
     // 'Sampler' renderer.   
 
     vector<string> datasets = theDatasets->GetDatasetNames(); 
-    VolumeDPtr volume = Volume::Cast(theDatasets->Find(datasets[0]));
+    VolumeDPtr volume = Volume::DCast(theDatasets->Find(datasets[0]));
 
     ParticlesDPtr samples = Particles::NewDistributed();
     samples->CopyPartitioning(volume);
@@ -289,7 +289,7 @@ main(int argc, char * argv[])
 
     if (sdata != "")
     {
-      VolumeDPtr vdata = Volume::Cast(theDatasets->Find(sdata));
+      VolumeDPtr vdata = Volume::DCast(theDatasets->Find(sdata));
       InterpolateVolumeOntoGeometry(samples, vdata);
       samples->Commit();
     }
@@ -314,7 +314,7 @@ main(int argc, char * argv[])
     rkp->SetMinVelocity(z);
     rkp->SetMaxIntegrationTime(t);
 
-    if (! rkp->SetVectorField(Volume::Cast(theDatasets->Find("vectors"))))
+    if (! rkp->SetVectorField(Volume::DCast(theDatasets->Find("vectors"))))
       exit(1);
 
     rkp->Commit();
@@ -359,7 +359,7 @@ main(int argc, char * argv[])
 
       if (pdata != "")
       {
-        VolumeDPtr vdata = Volume::Cast(theDatasets->Find(pdata));
+        VolumeDPtr vdata = Volume::DCast(theDatasets->Find(pdata));
         InterpolateVolumeOntoGeometry(plp, vdata);
         plp->Commit();
       }
@@ -371,7 +371,7 @@ main(int argc, char * argv[])
       {
         for (auto i = 0; i < v->GetNumberOfVis(); i++)
         {
-          MappedVisDPtr mvp = MappedVis::Cast(v->GetVis(i));
+          MappedVisDPtr mvp = MappedVis::DCast(v->GetVis(i));
           if (mvp)
             mvp->ScaleMaps(0.0, max_i);
         }

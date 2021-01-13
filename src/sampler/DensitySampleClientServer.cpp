@@ -94,8 +94,8 @@ CellValues(VolumeDPtr v, DensitySampleClientServer::Args *a)
 static void
 DensitySample(MPI_Comm c, DensitySampleClientServer::Args *a)
 {
-  VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-  ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
+  VolumeDPtr v = Volume::DCast(KeyedDataObject::GetByKey(a->vk));
+  ParticlesDPtr p = Particles::DCast(KeyedDataObject::GetByKey(a->pk));
 
   p->clear();
   p->CopyPartitioning(v);
@@ -195,7 +195,7 @@ DensitySampleClientServer::handle(std::string line, std::string& reply)
 {
   int nSamples = 1000;
 
-  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::DCast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
     theDatasets = Datasets::NewDistributed();
@@ -217,7 +217,7 @@ DensitySampleClientServer::handle(std::string line, std::string& reply)
       return true;
     }
 
-    volume = Volume::Cast(theDatasets->Find(name));
+    volume = Volume::DCast(theDatasets->Find(name));
     if (! volume)
     {
       reply = "error DensitySampler volume command must name a pre-existing volume";

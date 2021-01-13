@@ -6,6 +6,10 @@
 #include "Triangles.h"
 #include "Particles.h"
 #include "PathLines.h"
+
+#include "IntelDevice.h"
+#include "IntelModel.h"
+
 #include "EmbreeTriangles.h"
 #include "EmbreeSpheres.h"
 #include "EmbreePathLines.h"
@@ -188,7 +192,7 @@ public:
         EmbreeModelDPtr emp = EmbreeModel::GetByKey(p[0]);
         GeometryDPtr gp = Geometry::GetByKey(p[1]);
 
-        if (Triangles::Cast(gp))
+        if (Triangles::DCast(gp))
         {
             EmbreeTrianglesDPtr etp = EmbreeTriangles::New();
             etp->SetGeometry(gp);
@@ -197,7 +201,7 @@ public:
             emp->AddGeometry(etp);
 
         }
-        else if (Particles::Cast(gp))
+        else if (Particles::DCast(gp))
         {
             EmbreeSpheresDPtr esp = EmbreeSpheres::New();
             esp->SetGeometry(gp);
@@ -205,7 +209,7 @@ public:
             esp->FinalizeIspc();
             emp->AddGeometry(esp);
         }
-        else if (PathLines::Cast(gp))
+        else if (PathLines::DCast(gp))
         {
             EmbreePathLinesDPtr plp = EmbreePathLines::New();
             plp->SetGeometry(gp);
@@ -338,6 +342,9 @@ main(int argc, char *argv[])
     bool atch = false;
     float y = 0.5;
 
+    DeviceLPtr intelDevice = new IntelDevice();
+    ModelLPtr  intelModel = intelDevice->NewModel();
+
     Application theApplication(&argc, &argv);
     theApplication.Start();
 
@@ -366,20 +373,12 @@ main(int argc, char *argv[])
     GeomToEmbree::Register();
     IntersectMsg::Register();
 
+    IntelDevice::Register();
+    IntelModel::Register();
+
     if (mpiRank == 0)
     {
         {
-            EmbreeDPtr ep = Embree::NewDistributed();
-            ep->Commit();
-
-            theApplication.SyncApplication();
-
-            EmbreeModelDPtr emp = EmbreeModel::NewDistributed();
-            emp->SetEmbree(ep);
-            emp->Commit();
-
-            theApplication.SyncApplication();
-
             TrianglesDPtr tp;
             if (test_element_types & 0x1)
             {

@@ -84,12 +84,6 @@ GradientSamplerVis::LoadFromJSON(Value& v)
   return true;
 }
 
-void
-GradientSamplerVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
-{
-  super::SetTheOsprayDataObject(o);
-}
-
 int
 GradientSamplerVis::serialSize() 
 {

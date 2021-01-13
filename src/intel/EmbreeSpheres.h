@@ -25,14 +25,13 @@ namespace gxy { OBJECT_POINTER_TYPES(EmbreeSpheres) }
 
 #include "EmbreeGeometry.h"
 #include "Particles.h"
-#include "EmbreeSpheres_ispc.h"
+// #include "EmbreeSpheres_ispc.h"
 
 namespace gxy 
 {
 class EmbreeSpheres : public EmbreeGeometry
 {
 public:
-    static EmbreeSpheresDPtr New() { return std::shared_ptr<EmbreeSpheres>(new EmbreeSpheres); }
     ~EmbreeSpheres() {};
 
     void SetMap(float, float, float, float);

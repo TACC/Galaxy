@@ -45,7 +45,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(GuiRendering)
+KEYED_OBJECT_POINTER_TYPES(GuiRendering)
 
 class GuiRendering : public Rendering
 { 

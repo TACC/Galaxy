@@ -46,7 +46,7 @@ namespace gxy
     static KeyedDataObjectDPtr getSource(rapidjson::Document& doc)
     {
       std::string name = doc["source"].GetString();
-      DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+      DatasetsDPtr theDatasets = Datasets::DCast(MultiServer::Get()->GetGlobal("global datasets"));
       return theDatasets->Find(name);
     }
 

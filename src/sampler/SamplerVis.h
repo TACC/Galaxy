@@ -40,7 +40,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(SamplerVis)
+KEYED_OBJECT_POINTER_TYPES(SamplerVis)
 
 //! a visualization element that uses a color map and opacity map to define its rendering behavior
 /*! \ingroup render
@@ -61,9 +61,6 @@ public:
 
   //! construct a SamplerVis from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-
-  //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
-  virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
 
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);

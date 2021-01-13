@@ -24,6 +24,7 @@
 #include "Geometry.h"
 #include "Volume.h"
 #include "AmrVolume.h"
+#include "Device.h"
 
 using namespace std;
 
@@ -61,7 +62,7 @@ KeyedDataObject::~KeyedDataObject()
 KeyedDataObjectDPtr
 KeyedDataObject::Copy()
 {
-  KeyedDataObjectDPtr dst = Cast(GetTheObjectFactory()->NewDistributed(getclass()));
+  KeyedDataObjectDPtr dst = DCast(GetTheKeyedObjectMap()->NewDistributed(getclass()));
   CopyMsg msg(getkey(), dst->getkey());
   msg.Broadcast(true, true);
   return dst;
@@ -77,12 +78,6 @@ KeyedDataObject::local_copy(KeyedDataObjectDPtr src)
   time_varying = false;
   attached = false;
   return true;
-}
-
-GalaxyObjectDPtr
-KeyedDataObject::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
-{
-  return NULL;
 }
 
 void 

@@ -25,7 +25,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(ServerRendering)
+KEYED_OBJECT_POINTER_TYPES(ServerRendering)
 
 class ServerRendering : public Rendering
 { 

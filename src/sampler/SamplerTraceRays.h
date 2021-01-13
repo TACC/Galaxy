@@ -37,7 +37,7 @@
 
 namespace gxy
 {
-OBJECT_POINTER_TYPES(SamplerTraceRays)
+KEYED_OBJECT_POINTER_TYPES(SamplerTraceRays)
 
 //! controls the ray tracing loop within Galaxy
 /*! \sa KeyedObject, IspcObject

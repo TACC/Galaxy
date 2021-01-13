@@ -63,8 +63,8 @@ public:
   bool CollectiveAction(MPI_Comm c, bool s)
   {
     Key* keys = (Key *)contents->get();
-    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(keys[0]));
-    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(keys[1]));
+    VolumeDPtr v = Volume::DCast(KeyedDataObject::GetByKey(keys[0]));
+    ParticlesDPtr p = Particles::DCast(KeyedDataObject::GetByKey(keys[1]));
 
     p->CopyPartitioning(v);
 

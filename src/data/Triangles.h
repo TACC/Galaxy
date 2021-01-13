@@ -41,7 +41,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Triangles)
+KEYED_OBJECT_POINTER_TYPES(Triangles)
 
 //! a triangle (tessellated) dataset within Galaxy
 /* \ingroup data 
@@ -61,7 +61,7 @@ public:
   //! Copy local part
   virtual bool local_copy(KeyedDataObjectDPtr);
 
-  virtual GalaxyObjectDPtr CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
+  virtual bool CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);

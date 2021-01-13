@@ -34,7 +34,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(TestObject)
+KEYED_OBJECT_POINTER_TYPES(TestObject)
 
 class TestObject : public KeyedDataObject
 {

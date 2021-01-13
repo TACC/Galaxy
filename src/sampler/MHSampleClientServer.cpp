@@ -178,8 +178,8 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
 {
   generator = new variate_generator<mt19937, normal_distribution<> >(mt19937(time(0)), normal_distribution<>(0.0, a->sigma));
 
-  VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->vk));
-  ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
+  VolumeDPtr v = Volume::DCast(KeyedDataObject::GetByKey(a->vk));
+  ParticlesDPtr p = Particles::DCast(KeyedDataObject::GetByKey(a->pk));
 
   p->clear();
 
@@ -294,7 +294,7 @@ new_handler(SocketHandler *sh)
 bool
 MHSampleClientServer::handle(std::string line, std::string& reply)
 {
-  DatasetsDPtr theDatasets = Datasets::Cast(MultiServer::Get()->GetGlobal("global datasets"));
+  DatasetsDPtr theDatasets = Datasets::DCast(MultiServer::Get()->GetGlobal("global datasets"));
   if (! theDatasets)
   {
     theDatasets = Datasets::NewDistributed();
@@ -339,7 +339,7 @@ MHSampleClientServer::handle(std::string line, std::string& reply)
       return true;
     }
 
-    volume = Volume::Cast(theDatasets->Find(name));
+    volume = Volume::DCast(theDatasets->Find(name));
     if (! volume)
     {
       reply = "error MHSampler volume command must name a pre-existing volume";

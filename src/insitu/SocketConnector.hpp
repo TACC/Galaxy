@@ -46,7 +46,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(SocketConnector)
+KEYED_OBJECT_POINTER_TYPES(SocketConnector)
 
 class SocketConnector : public KeyedObject
 {

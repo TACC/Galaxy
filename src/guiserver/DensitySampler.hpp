@@ -120,8 +120,8 @@ public:
   void
   Sample(MPI_Comm c, dMsg *a)
   {
-    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
-    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
+    VolumeDPtr v = Volume::DCast(KeyedDataObject::GetByKey(a->sourceKey));
+    ParticlesDPtr p = Particles::DCast(KeyedDataObject::GetByKey(a->destinationKey));
 
     p->setModified(true);
 
@@ -256,7 +256,7 @@ public:
     ss << "DensityFilter_" << densityfilter_index++;
     name = ss.str();
 
-    result = KeyedDataObject::Cast(Particles::NewDistributed());
+    result = KeyedDataObject::DCast(Particles::NewDistributed());
     result->CopyPartitioning(source);
   }
 

@@ -29,7 +29,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(AsyncRendering)
+KEYED_OBJECT_POINTER_TYPES(AsyncRendering)
 
 class AsyncRendering : public Rendering
 { 

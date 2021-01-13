@@ -19,11 +19,7 @@
 // ========================================================================== //
 
 #include "Application.h"
-#include "Embree.h"
 #include "EmbreeModel.h"
-
-#include <embree3/rtcore_scene.h>
-
 #include "EmbreeModel_ispc.h"
 
 namespace gxy
@@ -41,51 +37,16 @@ void
 EmbreeModel::initialize()
 {
     super::initialize();
-    embree = NULL;
     scene = NULL;
 }
 
 void
-EmbreeModel::SetEmbree(EmbreeDPtr e)
-{
-    embree = e;
-}
-
-int
-EmbreeModel::serialSize()
-{
-    return super::serialSize() + sizeof(Key);
-}
-
-unsigned char *
-EmbreeModel::serialize(unsigned char *p)
-{
-    p = super::serialize(p);
-    *(Key *)p = embree->getkey();
-    p = p + sizeof(key);
-    
-    return p;
-}
-
-unsigned char *
-EmbreeModel::deserialize(unsigned char *p)
-{
-    p = super::deserialize(p);
-    embree = Embree::GetByKey(*(Key *)p);
-    p = p + sizeof(key);
-
-    return p;
-}
-
-bool
-EmbreeModel::local_commit(MPI_Comm c)
+EmbreeModel::Build()
 {
     if (! scene)
         scene = rtcNewScene(embree->Device());
     
     rtcCommitScene(scene);
-
-    return false;
 }
 
 EmbreeModel::~EmbreeModel()

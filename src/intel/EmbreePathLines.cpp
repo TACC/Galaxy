@@ -18,6 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
+#include "IntelDevice.h"
 #include "EmbreePathLines.h"
 
 #include <embree3/rtcore.h>
@@ -96,7 +97,7 @@ EmbreePathLines::SetMap(float v0, float r0, float v1, float r1)
 void 
 EmbreePathLines::FinalizeIspc()
 {
-    PathLinesDPtr p = PathLines::Cast(geometry);
+    PathLinesDPtr p = PathLines::DCast(geometry);
     if (! p)
     {
         std::cerr << "EmbreePathLines::FinalizeIspc called with something other than PathLines\n";
@@ -204,9 +205,8 @@ EmbreePathLines::FinalizeIspc()
     iptr->ni = iCurve.size();
     iptr->indexCurve = (int *)iCurve.data();
 
-    device_geometry = rtcNewGeometry((RTCDevice)GetEmbree()->Device(), RTC_GEOMETRY_TYPE_USER);
-
-    device_geometry = rtcNewGeometry((RTCDevice)GetEmbree()->Device(), RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
+    IntelDevicePtr intel_device = IntelDevice::Cast(GetTheDevice());
+    device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_USER);
     rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, iptr->vertexCurve, 0, sizeof(vec4f), iptr->nvc);
     rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_INDEX,  0, RTC_FORMAT_UINT, iptr->indexCurve, 0, sizeof(int), iptr->ni);
     rtcCommitGeometry(device_geometry);

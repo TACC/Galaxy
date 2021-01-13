@@ -82,7 +82,7 @@ Geometry::local_copy(KeyedDataObjectDPtr src)
   if (! super::local_copy(src))
     return false;
 
-  GeometryDPtr g = Cast(src);
+  GeometryDPtr g = DCast(src);
 
   vertices             = g->vertices;
   data                 = g->data;

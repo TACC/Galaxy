@@ -25,19 +25,19 @@
 namespace gxy { OBJECT_POINTER_TYPES(EmbreeGeometry) }
 
 #include "Geometry.h"
-#include "Embree.h"
-#include "EmbreeGeometry_ispc.h"
 
 #include <embree3/rtcore.h>
 
 namespace gxy 
 {
 
-class EmbreeGeometry
+class EmbreeGeometry : GalaxyObject
 {
+    GALAXY_OBJECT_SUBCLASS(EmbreeGeometry, GalaxyObject)
+
 public:
-    static EmbreeGeometryDPtr New() { return std::shared_ptr<EmbreeGeometry>(new EmbreeGeometry); }
     virtual ~EmbreeGeometry();
+    virtual void initialize();
 
     void SetGeometry(GeometryDPtr g);
 
@@ -49,7 +49,6 @@ public:
     void *GetIspc() { return ispc; }
 
 protected:
-    EmbreeGeometry();
 
     GeometryDPtr geometry;
     RTCGeometry device_geometry;

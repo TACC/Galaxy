@@ -20,13 +20,15 @@
 
 #include "Geometry.h"
 #include "EmbreeGeometry.h"
+#include "EmbreeGeometry_ispc.h"
 
 #include <embree3/rtcore.h>
 
 namespace gxy
 {
 
-EmbreeGeometry::EmbreeGeometry()
+void
+EmbreeGeometry::initialize()
 {
     geometry = NULL;
     device_geometry = NULL;

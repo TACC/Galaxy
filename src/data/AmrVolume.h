@@ -32,7 +32,7 @@
 
 namespace gxy
 {
-OBJECT_POINTER_TYPES(AmrVolume)
+KEYED_OBJECT_POINTER_TYPES(AmrVolume)
 
 //! an AMR volumetric dataset within Galaxy. This class encapsulates an ospray 
 //  AMR volume object and makes it available to Galaxy

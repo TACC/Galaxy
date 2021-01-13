@@ -46,6 +46,9 @@ set (CPP_SOURCES
 			ClientServer.cpp
 			Events.cpp
 			GalaxyObject.cpp
+      KeyedObject.cpp
+			ObjectFactory.cpp
+      KeyedObjectMap.cpp
 			Message.cpp
 			MessageManager.cpp 
 			MessageQ.cpp 
@@ -65,6 +68,9 @@ install(FILES
 	Events.h
 	framework.h
     GalaxyObject.h
+    KeyedObject.h
+    KeyedObjectMap.h
+    ObjectFactory.h
 	Message.h 
 	MessageManager.h 
 	MessageQ.h 

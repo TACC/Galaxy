@@ -161,7 +161,7 @@ int main(int argc,  char *argv[])
     rkp->SetMinVelocity(z);
     rkp->SetMaxIntegrationTime(t);
 
-    if (! rkp->SetVectorField(Volume::Cast(theDatasets->Find("vectors"))))
+    if (! rkp->SetVectorField(Volume::DCast(theDatasets->Find("vectors"))))
       exit(1);
     rkp->Commit();
 
@@ -243,7 +243,7 @@ int main(int argc,  char *argv[])
     {
       for (auto i = 0; i < v->GetNumberOfVis(); i++)
       {
-        MappedVisDPtr mvp = MappedVis::Cast(v->GetVis(i));
+        MappedVisDPtr mvp = MappedVis::DCast(v->GetVis(i));
         if (mvp)
           mvp->ScaleMaps(0.0, max_i);
       }

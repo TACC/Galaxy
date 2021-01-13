@@ -36,13 +36,15 @@ OBJECT_POINTER_TYPES(TransferFunction)
  * TransformFunction is an ISPC implementation of a 1D lookup into a table of 1, 3, or 4-tuples.   Linear interpolation, arbitrary length.  Capped.
  */
 
-class TransferFunction : public KeyedObject
+class TransferFunction : public GalaxyObject
 {
-    KEYED_OBJECT(TransferFunction)
+    GALAXY_OBJECT(TransferFunction)
 
 public: 
     virtual ~TransferFunction();
     virtual void initialize();
+
+    void Register() { RegisterClass(); }
 
     void Set(int len, int wid, float m, float M, float *data);
 

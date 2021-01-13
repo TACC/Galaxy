@@ -41,7 +41,7 @@ namespace gxy
 
 class RayList;
 
-OBJECT_POINTER_TYPES(Schlieren2)
+KEYED_OBJECT_POINTER_TYPES(Schlieren2)
 
 class Schlieren2 : public Renderer
 {

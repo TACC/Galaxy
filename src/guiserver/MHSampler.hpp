@@ -113,7 +113,7 @@ public:
     ss << "MHFilter_" << mhfilter_index++;
     name = ss.str();
 
-    result = KeyedDataObject::Cast(Particles::NewDistributed());
+    result = KeyedDataObject::DCast(Particles::NewDistributed());
     result->CopyPartitioning(source);
 
   }
@@ -252,8 +252,8 @@ public:
   {
     variate_generator<mt19937, normal_distribution<> > generator(mt19937(time(0)), normal_distribution<>(0.0, a->sigma));
   
-    VolumeDPtr v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
-    ParticlesDPtr p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
+    VolumeDPtr v = Volume::DCast(KeyedDataObject::GetByKey(a->sourceKey));
+    ParticlesDPtr p = Particles::DCast(KeyedDataObject::GetByKey(a->destinationKey));
 
     p->setModified(true);
     p->clear();

@@ -294,7 +294,7 @@ int main(int argc,  char *argv[])
       rs->WaitForDone();
 
       if (original_algorithm)
-        Schlieren::Cast(theRenderer)->NormalizeImages(rs);
+        Schlieren::DCast(theRenderer)->NormalizeImages(rs);
       sleep(4);
 
       rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image", true);

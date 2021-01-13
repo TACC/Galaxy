@@ -25,6 +25,7 @@
 
 #include "Application.h"
 #include "MultiServer.h"
+#include "KeyedObjectMap.h"
 #include "DynamicLibraryManager.h"
 
 using namespace std;
@@ -117,14 +118,14 @@ DynamicLibrary::CommitMsg::CollectiveAction(MPI_Comm c, bool isRoot)
   Key k = *(Key *)p;
   p += sizeof(Key);
 
-  KeyedObjectDPtr kdl = GetTheObjectFactory()->get(k);
+  KeyedObjectDPtr kdl = GetTheKeyedObjectMap()->get(k);
 
   if (! isRoot)
     kdl->deserialize(p);
 
   if (kdl->local_commit(c)) return true;
 
-  // MultiServer::Get()->getTheDynamicLibraryManager()->post(DynamicLibrary::Cast(kdl));
+  // MultiServer::Get()->getTheDynamicLibraryManager()->post(DynamicLibrary::DCast(kdl));
 
   return false;
 }
@@ -144,7 +145,7 @@ DynamicLibraryManager::Flush()
   {
     if (i->use_count() == 1)
     {
-      GetTheObjectFactory()->Drop((*i)->getkey());
+      GetTheKeyedObjectMap()->Drop((*i)->getkey());
       loadmap.erase(i);
       i = loadmap.begin();
     }

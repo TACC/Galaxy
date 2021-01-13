@@ -1,5 +1,9 @@
-#include <Application.h>
-#include <TransferFunction.h>
+// Create a new distributed object class (a decendent of KeyedObject) that
+// contains a TransferFunction.   Commit it to check that the TF is serialized correctly.
+
+#include "Application.h"
+#include "TransferFunction.h"
+#include "KeyedObjectMap.h"
 
 using namespace gxy;
 using namespace std;
@@ -7,21 +11,35 @@ using namespace std;
 int mpiRank = 0, mpiSize = 1;
 #include "Debug.h"
 
+KEYED_OBJECT_POINTER_TYPES(TestObject)
+
+class TestObject : public KeyedObject
+{ 
+  KEYED_OBJECT(TestObject)
+
+public:
+
+  virtual void initialize();
+  virtual ~TestObject();
+
+  TransferFunctionPtr tf;
+
+  void doit()
+  {
+    std::cerr << "I am a TestObject\n";
+  }
+};
+
+void TestObject::initialize() { APP_PRINT(<< "TestObject initialize"); }
+TestObject::~TestObject() { APP_PRINT(<< "TestObject dtor"); }
+
 class TestMsg : public Work
 {
 public:
-    TestMsg(TransferFunctionDPtr tfp, int n, float *v) : TestMsg(sizeof(Key) + sizeof(int) + n*sizeof(float*))
+    TestMsg(TestObjectDPtr dto) : TestMsg(sizeof(Key))
     {
         unsigned char *p = (unsigned char *)get();
-
-        *(Key *)p = tfp->getkey();
-        p = p + sizeof(Key);
-
-        *(int *)p = n;
-        p = p + sizeof(int);
-
-        memcpy((void *)p, v, n*sizeof(float));
-        p = p + n*sizeof(float);
+        *(Key *)p = dto->getkey();
     }
 
     ~TestMsg() {}
@@ -32,7 +50,11 @@ public:
     {   
         unsigned char *p = (unsigned char *)get();
 
-        TransferFunctionDPtr tfp = TransferFunction::GetByKey(*(Key *)p);
+        TestObjectPtr tpo = TestObject::GetByKey(*(Key *)p);
+        tpo->doit();
+
+#if 0
+        TransferFunctionPtr tfp = tpo->tf;
         p = p + sizeof(Key);
 
         int n = *(int *)p;
@@ -64,11 +86,20 @@ public:
         }
 
         delete[] r;
+#endif
         
         return false;
     }
 };
 
+void
+TestObject::Register()
+{
+  RegisterClass();
+  TestMsg::Register();
+};
+
+KEYED_OBJECT_CLASS_TYPE(TestObject)
 WORK_CLASS_TYPE(TestMsg)
 
 void
@@ -104,8 +135,7 @@ main(int argc, char *argv[])
 
     theApplication.Run();
 
-    TransferFunction::Register();
-    TestMsg::Register();
+    TestObject::Register();
 
     if (mpiRank == 0)
     {
@@ -115,7 +145,7 @@ main(int argc, char *argv[])
         for (int i = 0; i < 100; i++)
             values[i] = -1.0 + (mpiSize + 2)*(i / 99.0);
 
-        TransferFunctionDPtr tf = TransferFunction::NewDistributed();
+        TransferFunctionPtr tf = TransferFunction::New();
 
         int widths[] = {1, 3, 4};
         for (int i = 0; i < 3; i++)
@@ -133,10 +163,12 @@ main(int argc, char *argv[])
             }
 
             tf->Set(256, w, 0.0, (float)mpiSize, data);
+#if 0
             tf->Commit();
 
             TestMsg t(tf, 100, values);
             t.Broadcast(true, true);
+#endif
         }
 
         theApplication.QuitApplication();

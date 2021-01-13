@@ -45,7 +45,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(Particles)
+KEYED_OBJECT_POINTER_TYPES(Particles)
 
 //! a particle within Galaxy
 /*! \ingroup data */
@@ -93,7 +93,7 @@ public:
   
   void GetParticles(Particle*& p, int& n);
 
-  virtual GalaxyObjectDPtr CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
+  virtual bool CreateTheDeviceEquivalent(KeyedDataObjectDPtr);
 
 protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *);

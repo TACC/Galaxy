@@ -29,7 +29,7 @@
 
 #include "Application.h"
 #include "Particles.h"
-#include "OsprayParticles.h"
+#include "EmbreeSpheres.h"
 
 
 #include <vtkNew.h>
@@ -128,10 +128,11 @@ Particles::load_from_vtkPointSet(vtkPointSet *pset)
   return true;
 }
 
-GalaxyObjectDPtr 
+bool 
 Particles::CreateTheDeviceEquivalent(KeyedDataObjectDPtr kdop)
 { 
-  return GalaxyObject::Cast(OsprayParticles::NewDistributed(Particles::Cast(kdop)));
+  // return GalaxyObject::DCast(OsprayParticles::NewDistributed(Particles::DCast(kdop)));
+  return false;
 } 
 
 

@@ -48,12 +48,12 @@
 #include <vector>
 #include <memory>
 
-#include "GalaxyObject.h"
+#include "KeyedObject.h"
 
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(DynamicLibrary)
+KEYED_OBJECT_POINTER_TYPES(DynamicLibrary)
 
 class DynamicLibrary : public KeyedObject
 {

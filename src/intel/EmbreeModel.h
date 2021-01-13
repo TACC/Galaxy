@@ -22,7 +22,6 @@
 
 #include "GalaxyObject.h"
 #include "Rays.h"
-#include "Embree.h"
 #include "EmbreeGeometry.h"
 
 namespace gxy {
@@ -37,11 +36,9 @@ public:
     virtual void initialize();
     virtual ~EmbreeModel();
 
-    void SetEmbree(EmbreeDPtr);
-
-    int  AddGeometry(EmbreeGeometryDPtr);
+    int  AddGeometry(EmbreeGeometryPtr);
     void RemoveGeometry(int);
-    void RemoveGeometry(EmbreeGeometryDPtr);
+    void RemoveGeometry(EmbreeGeometryPtr);
 
     void Intersect(RayList *);
 
@@ -55,10 +52,6 @@ public:
 
 protected:
 
-    std::vector<EmbreeGeometryDPtr> geometries;
-    std::vector<int> free_ids;
-
-    EmbreeDPtr     embree;
     RTCScene    scene;
 };
 

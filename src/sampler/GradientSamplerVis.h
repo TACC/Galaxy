@@ -40,7 +40,7 @@
 namespace gxy
 {
 
-OBJECT_POINTER_TYPES(GradientSamplerVis)
+KEYED_OBJECT_POINTER_TYPES(GradientSamplerVis)
 
 //! a visualization element that identifies isosurface crossings as samples
 /*! \ingroup render
@@ -67,9 +67,6 @@ public:
 
   //! construct a GradientSamplerVis from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-
-  //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
-  virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
 
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
