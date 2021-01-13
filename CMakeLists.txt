@@ -92,27 +92,20 @@ find_package(PythonInterp)
 # find third-party local builds
 # Assumption that these have been installed to single 'third-party/install' directory
 # cmake -DCMAKE_INSTALL_PREFIX=${GXY_ROOT}/third-party/install/ ..
+
 find_package(RapidJSON PATHS
     ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
     ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
+
 find_package(embree 3.6.1 QUIET PATHS
     ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
     ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake) # pnav: REQUIRED breaks static-linked version ¯\_(ツ)_/¯
-find_package(ospray 1.8.5 PATHS
-    ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
-    ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
 
 find_package(openvkl 0.11.0 PATHS
     /opt/intel/oneapi/openvkl/0.11.0/lib/cmake/openvkl-0.11.0 REQUIRED)
 
 # Cmake definitions to handle building ISPC files
 include(ispc)
-
-# All OSPRay target libraries
-set(OSPRAY_LIBRARIES
-    ospray::ospray
-    ospray::ospray_common
-    ospray::ospray_module_ispc)
 
 include_directories(${RapidJSON_INCLUDE_DIRS})
 
@@ -121,7 +114,6 @@ SET(CMAKE_INSTALL_RPATH
   "${OSPRAY_ROOT}/${CMAKE_INSTALL_LIBDIR}"
   "${EMBREE_ROOT_DIR}/${CMAKE_INSTALL_LIBDIR}"
   "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
-  "${CMAKE_INSTALL_PREFIX}/ospray/${CMAKE_INSTALL_LIBDIR}"
   "${VTK_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 include(CMakePackageConfigHelpers)
