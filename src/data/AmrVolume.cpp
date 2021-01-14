@@ -19,6 +19,7 @@
 // // ========================================================================== //
 
 #include <iostream>
+#include <fstream>
 #include <cmath>
 
 #include "Application.h"
@@ -388,7 +389,7 @@ AmrVolume::getScalarData(int level, int grid)
 void
 AmrVolume::ReadGxyAmrHeader()
 {
-    ifstream in;
+    std::ifstream in;
     in.open(filename.c_str());
     if (in.fail())
     {
