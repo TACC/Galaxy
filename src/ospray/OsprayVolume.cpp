@@ -33,7 +33,6 @@ OsprayVolume::OsprayVolume(VolumeP v)
   v->get_ghosted_local_origin(origin.x, origin.y, origin.z);
   v->get_deltas(spacing.x, spacing.y, spacing.z);
 
-  samples = v->get_samples();
   size_t sz = counts.x*counts.y*counts.z;
   
   OSPData data = ospNewData(sz, v->isFloat() ? OSP_FLOAT : OSP_UCHAR, (void *)samples.get(), OSP_DATA_SHARED_BUFFER);

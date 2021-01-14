@@ -81,7 +81,7 @@ public:
     int ystep = nx;
     int zstep = nx * ny;
 
-    float *fsamples = (float *)v->get_samples();
+    float *fsamples = (float *)v->get_samples().get();
 
 #if 0
     p->allocate(samples_per_partition);

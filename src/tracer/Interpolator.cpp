@@ -26,9 +26,7 @@
 
 #include <dtypes.h>
 
-
-
-include "Interpolator.h"
+#include "Interpolator.h"
 
 using namespace gxy;
 using namespace std;
@@ -115,13 +113,13 @@ public:
       
       if (vol->get_type() == Volume::FLOAT)
       {
-        float *s = (float *)vol->get_samples();
+        float *s = (float *)vol->get_samples().get();
         *d = s[v000]*b000 + s[v001]*b001 + s[v010]*b010 + s[v011]*b011 +
              s[v100]*b100 + s[v101]*b101 + s[v110]*b110 + s[v111]*b111;
       }        
       else
       {
-        unsigned char *s = (unsigned char *)vol->get_samples();
+        unsigned char *s = (unsigned char *)vol->get_samples().get();
         *d = s[v000]*b000 + s[v001]*b001 + s[v010]*b010 + s[v011]*b011 +
              s[v100]*b100 + s[v101]*b101 + s[v110]*b110 + s[v111]*b111;
       }        
