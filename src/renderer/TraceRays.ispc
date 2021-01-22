@@ -38,16 +38,12 @@
 //                                                                          //
 // ======================================================================== //
 
-#if 1
-#include "Rays.ih"
-export void *uniform RayList_dummy(RayList_ispc *uniform a) {}
-#else
 
 #include "galaxy.h"
 
-#include "embree3/rtcore_config.h"
-#include "embree3/rtcore_ray.isph"
-#include "embree3/rtcore.isph"
+// #include "embree3/rtcore_config.h"
+// #include "embree3/rtcore_ray.isph"
+// #include "embree3/rtcore.isph"
 
 #include "vec.ih"
 
@@ -72,6 +68,8 @@ export void *uniform RayList_dummy(RayList_ispc *uniform a) {}
 #else
 #error Unknown vector width
 #endif
+
+export void *uniform RayList_dummy(RayList_ispc *uniform a) {}
 
 export void *uniform TraceRays_allocate()
 {
@@ -953,4 +951,3 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
     }
   }
 }
-#endif

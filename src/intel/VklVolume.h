@@ -30,7 +30,8 @@
 namespace gxy { OBJECT_POINTER_TYPES(VklVolume) }
 
 #include "Volume.h"
-#include "Vkl.h"
+
+#include <openvkl/openvkl.h>
 
 namespace gxy
 {

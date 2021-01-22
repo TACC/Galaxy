@@ -61,19 +61,11 @@ EmbreeModel_Intersect(RTCScene scene,  void **uniform _geom, const uniform int n
         int gid = rayhit.hit.geomID;
         if (gid != RTC_INVALID_GEOMETRY_ID && geom[gid]->connectivity && geom[gid]->normals)
         {
-            // print("GID %\n", gid);
-            // print("PID %\n", rayhit.hit.primID);
-            // print("X %\nY %\nZ %\n", rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
             vec3f bary = make_vec3f(1.0f - rayhit.hit.u - rayhit.hit.v, rayhit.hit.u, rayhit.hit.v);
-            // print("BX %\nBY %\nBZ %\n", bary.x, bary.y, bary.z);
             vec3i pqr = ((vec3i*)geom[gid]->connectivity)[rayhit.hit.primID];
-            // print("PQRX %\nPQRY %\nPQRZ %\n", pqr.x, pqr.y, pqr.z);
             vec3f np = ((vec3f*)geom[gid]->normals)[pqr.x];
-            // print("NPX %\nNPY %\nNPZ %\n", np.x, np.y, np.z);
             vec3f nq = ((vec3f*)geom[gid]->normals)[pqr.y];
-            // print("NQX %\nNQY %\nNQZ %\n", nq.x, nq.y, nq.z);
             vec3f nr = ((vec3f*)geom[gid]->normals)[pqr.z];
-            // print("NRX %\nNRY %\nNRZ %\n", nr.x, nr.y, nr.z);
             vec3f normal = bary.x*np + bary.y*nq + bary.z*nr;
             rays->nx[i] = normal.x;
             rays->ny[i] = normal.y;
