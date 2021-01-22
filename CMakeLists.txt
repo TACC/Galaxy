@@ -79,8 +79,8 @@ find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
 find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})
+
 find_package(TBB REQUIRED)
-include_directories(${TBB_INCLUDE_DIRS})
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(VTK REQUIRED NO_MODULE)
@@ -96,13 +96,6 @@ find_package(PythonInterp)
 find_package(RapidJSON PATHS
     ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
     ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
-
-find_package(embree 3.6.1 QUIET PATHS
-    ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
-    ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake) # pnav: REQUIRED breaks static-linked version ¯\_(ツ)_/¯
-
-find_package(openvkl 0.11.0 PATHS
-    /opt/intel/oneapi/openvkl/0.11.0/lib/cmake/openvkl-0.11.0 REQUIRED)
 
 # Cmake definitions to handle building ISPC files
 include(ispc)
