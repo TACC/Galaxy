@@ -24,7 +24,6 @@
 #include "Geometry.h"
 #include "Volume.h"
 #include "AmrVolume.h"
-#include "Device.h"
 
 using namespace std;
 
