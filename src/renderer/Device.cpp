@@ -18,7 +18,6 @@
 //                                                                            //
 // ========================================================================== //
 
-// #include <embree3/rtcore.h>
 #include <iostream>
 
 #include "Device.h"
@@ -26,19 +25,18 @@
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(Device)
-
 DevicePtr theDevice = NULL;
-DevicePtr GetTheDevice() { return theDevice; }
 
-void Device::InitDevice() { }
-void Device::SetDevice(DevicePtr d) { theDevice = d; }
 void Device::FreeDevice() { theDevice = NULL; }
+void Device::SetTheDevice(DevicePtr d) { theDevice = d; }
+DevicePtr Device::GetTheDevice() { return theDevice; }
 
-void
-Device::initialize()
+Device::Device()
 {
-    super::initialize();
+}
+
+Device::~Device()
+{
 }
 
 ModelPtr
@@ -54,6 +52,5 @@ Device::CreateTheDatasetDeviceEquivalent(KeyedDataObjectDPtr kop)
   std::cerr << "NULL device";
   return;
 }
-
 
 }

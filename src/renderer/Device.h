@@ -21,21 +21,22 @@
 #include "GalaxyObject.h"
 #include "Model.h"
 
+#include <memory>
+
 namespace gxy 
 {
 
-OBJECT_POINTER_TYPES(Device)
-
-extern DevicePtr GetTheDevice();
-
-class Device : public GalaxyObject
+class Device;
+typedef std::shared_ptr<Device> DevicePtr;                                                    
+class Device 
 {
-    GALAXY_OBJECT_SUBCLASS(Device, GalaxyObject)
-
 public:
+    Device();
+    virtual ~Device();
+
+    static DevicePtr GetTheDevice();
+    static void SetTheDevice(DevicePtr);
     static void FreeDevice();
-    static void InitDevice();
-    virtual void initialize();
 
     virtual void *GetTheDeviceEquivalent() { return NULL; }
 

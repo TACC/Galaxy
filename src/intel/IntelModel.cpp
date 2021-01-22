@@ -54,7 +54,7 @@ IntelModel::Build()
 {
   std::cerr << "BUILD!\n";
 
-  IntelDevicePtr idev = IntelDevice::Cast(GetTheDevice());
+  IntelDevicePtr idev = IntelDevice::Cast(Device::GetTheDevice());
   ispc.scene = rtcNewScene(idev->get_embree());
 
   if (geometries.size())
@@ -91,9 +91,8 @@ IntelModel::Build()
 }
 
 void
-IntelModel::Intersect(void *_rays)
+IntelModel::Intersect(RayList *rays)
 {
-  RayList *rays = (RayList *)_rays;
   ::ispc::IntelModel_Intersect(ispc, rays->GetRayCount(), rays->GetIspc());
 }
 

@@ -47,7 +47,7 @@ EmbreeTriangles::FinalizeData(KeyedDataObjectPtr kop)
     ::ispc::EmbreeGeometry_ispc *iptr = (::ispc::EmbreeGeometry_ispc *)GetIspc();
     if (nv && nc)
     {
-        IntelDevicePtr intel_device = IntelDevice::Cast(GetTheDevice());
+        IntelDevicePtr intel_device = IntelDevice::Cast(Device::GetTheDevice());
 
         device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_TRIANGLE);
 

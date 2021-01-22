@@ -42,7 +42,7 @@ public:
 
     void Build();
 
-    void Intersect(void *);
+    void Intersect(RayList *);
 
 protected:
 

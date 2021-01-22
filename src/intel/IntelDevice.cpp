@@ -30,25 +30,12 @@
 #include "EmbreeTriangles.h"
 #include "EmbreeGeometry.h"
 
+#include <embree3/rtcore.h>
+#include <openvkl/openvkl.h>
+
+
 namespace gxy
 {
-
-OBJECT_CLASS_TYPE(IntelDevice)
-
-void IntelDevice::InitDevice()
-{
-  std::cerr << "XXXX\n";
-  super::InitDevice();
-
-  IntelDevice::RegisterClass();
-  EmbreeGeometry::RegisterClass();
-  EmbreeTriangles::RegisterClass();
-  EmbreePathLines::RegisterClass();
-  EmbreeSpheres::RegisterClass();
-  VklVolume::RegisterClass();
-
-  Device::SetDevice(IntelDevice::New());
-}
 
 static void embreeError(void *ptr, enum RTCError error, const char* msg)
 {
@@ -60,23 +47,28 @@ static void vklError(void *ptr, VKLError error, const char* msg)
   std::cerr << "Vkl error: " << error << " :: " << msg << "\n";
 }
 
+IntelDevice::IntelDevice()
+{
+  std::cerr << "XXXX\n";
+
+  EmbreeGeometry::RegisterClass();
+  EmbreeTriangles::RegisterClass();
+  EmbreePathLines::RegisterClass();
+  EmbreeSpheres::RegisterClass();
+  VklVolume::RegisterClass();
+
+  intel_device.embree = rtcNewDevice(NULL);
+  rtcSetDeviceErrorFunction(intel_device.embree, embreeError, (void *)this);
+
+  vklLoadModule("ispc_driver");
+  intel_device.vkl = vklNewDriver("ispc");
+  vklDriverSetErrorCallback(intel_device.vkl, vklError, (void *)this);
+}
+
 IntelDevice::~IntelDevice()
 {
   rtcReleaseDevice(intel_device.embree);
   vklShutdown();
-}
-
-void
-IntelDevice::initialize()
-{
-    super::initialize();
-
-    intel_device.embree = rtcNewDevice(NULL);
-    rtcSetDeviceErrorFunction(intel_device.embree, embreeError, (void *)this);
-
-    vklLoadModule("ispc_driver");
-    intel_device.vkl = vklNewDriver("ispc");
-    vklDriverSetErrorCallback(intel_device.vkl, vklError, (void *)this);
 }
 
 ModelPtr

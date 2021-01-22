@@ -195,9 +195,9 @@ public:
         float *p = (float *)get();
 
         for (auto g : geometries)
-          GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
+          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
 
-        ModelPtr model = GetTheDevice()->NewModel();
+        ModelPtr model = Device::GetTheDevice()->NewModel();
         for (auto g : geometries)
           model->AddGeometry(g);
 
@@ -357,6 +357,7 @@ main(int argc, char *argv[])
         theApplication.QuitApplication();
     }
 
-    IntelDevice::FreeDevice();
     theApplication.Wait();
+
+    IntelDevice::FreeDevice();
 }

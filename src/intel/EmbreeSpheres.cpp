@@ -67,7 +67,7 @@ EmbreeSpheres::FinalizeData(KeyedDataObjectPtr kop)
         exit(1);
     }
 
-    IntelDevicePtr intel_device = IntelDevice::Cast(GetTheDevice());
+    IntelDevicePtr intel_device = IntelDevice::Cast(Device::GetTheDevice());
     device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_USER);
 
     rtcSetGeometryUserData(device_geometry, GetIspc());

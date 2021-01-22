@@ -89,7 +89,6 @@ Renderer::Initialize()
   
   RegisterDataObjects();
 
-  Device::RegisterClass();
   Model::RegisterClass();
   
   Camera::Register();

@@ -217,7 +217,7 @@ Visualization::SetDeviceObjects()
   // Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
   // volumevis - NULL unless there's some model data
 
-  model = GetTheDevice()->NewModel();
+  model = Device::GetTheDevice()->NewModel();
 
   for (auto v : vis)
   {
@@ -232,7 +232,7 @@ Visualization::SetDeviceObjects()
     GalaxyObjectPtr op = kdop->GetTheDeviceEquivalent();
 
     if (! op || kdop->hasBeenModified())
-      GetTheDevice()->CreateTheDatasetDeviceEquivalent(kdop);
+      Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(kdop);
 
     if (Volume::IsA(kdop))
       model->AddVolume(Volume::Cast(kdop));

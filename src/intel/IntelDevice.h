@@ -29,29 +29,33 @@
 namespace gxy 
 {
 
-OBJECT_POINTER_TYPES(IntelDevice)
+class IntelDevice;
+typedef std::shared_ptr<IntelDevice> IntelDevicePtr;
+
 
 class IntelDevice : public Device
 {
-  GALAXY_OBJECT_SUBCLASS(IntelDevice, Device)
-
 public:
   virtual ~IntelDevice();
-
-  static  void InitDevice();
-  virtual void initialize();
 
   virtual void *GetTheDeviceEquivalent() { return (void *)&intel_device; }
 
   virtual void CreateTheDatasetDeviceEquivalent(KeyedDataObjectPtr);
 
   virtual ModelPtr NewModel();
-
   
   RTCDevice   get_embree() { return intel_device.embree; }
   VKLDriver   get_vkl() { return intel_device.vkl; }
 
+  static IntelDevicePtr Cast(DevicePtr d) { return std::dynamic_pointer_cast<IntelDevice>(d); }
+  static void InitDevice()
+  {
+    IntelDevicePtr a = std::shared_ptr<IntelDevice>(new IntelDevice());
+    Device::SetTheDevice(a);
+  }
+
 protected:
+  IntelDevice();
 
   struct {
     RTCDevice   embree;
