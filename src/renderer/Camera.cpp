@@ -55,7 +55,7 @@ namespace pt = boost::property_tree;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Camera)
+OBJECT_CLASS_TYPE(Camera)
 
 bool full_window;
 bool raydebug;

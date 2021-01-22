@@ -36,8 +36,6 @@
 #include "TrianglesVis.h"
 #include "VolumeVis.h"
 
-// #include <ospray/ospray.h>
-
 namespace gxy
 {
 
@@ -87,7 +85,7 @@ public:
   //! get the current annotation string for this Visualization
   const char *GetAnnotation() { return annotation.c_str(); }
 
-  //! get the Ospray OSPModel for this Visualization
+  //! get the Device Model for this Visualization
   ModelPtr GetTheModel() { return model; }
 
   //! get the Box that represents the global data extent for this Visualization
@@ -116,8 +114,6 @@ public:
   int GetNumberOfVis() { return vis.size(); }
   VisDPtr GetVis(int i) { return vis[i]; }
 
-  //! Set Ospray-side data for each attached Vis
-  // void SetOsprayObjects(std::map<Key, OsprayObjectDPtr>&);
   void SetDeviceObjects();
 
 protected:
@@ -125,7 +121,6 @@ protected:
 
   virtual void allocate_ispc();
   virtual void initialize_ispc();
-  virtual void destroy_ispc();
 
   ModelPtr model;
 

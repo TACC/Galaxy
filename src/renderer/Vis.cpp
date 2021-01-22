@@ -19,6 +19,7 @@
 // ========================================================================== //
 
 #include "Vis.h"
+#include "Vis_ispc.h"
 
 #include "Application.h"
 #include "KeyedDataObject.h"
@@ -26,7 +27,6 @@
 #include "ParticlesVis.h"
 #include "PathLinesVis.h"
 #include "TrianglesVis.h"
-#include "Vis_ispc.h"
 #include "VolumeVis.h"
 
 #include "rapidjson/document.h"
@@ -37,7 +37,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Vis)
+OBJECT_CLASS_TYPE(Vis)
 
 void
 Vis::Register()
@@ -64,19 +64,23 @@ Vis::~Vis()
 void 
 Vis::allocate_ispc()
 {
-  ispc = ispc::Vis_allocate();
+  ispc = malloc(sizeof(::ispc::Vis_ispc));
 }
 
 void 
 Vis::initialize_ispc()
 {
-  ispc::Vis_initialize(GetIspc());
+  ((::ispc::Vis_ispc *)ispc)->data = NULL;
 }
 
 void 
 Vis::destroy_ispc()
 {
-  ispc::Vis_destroy(GetIspc());
+  if (ispc)
+  {
+    free(ispc);
+    ispc = NULL;
+  }
 }
 
 bool 

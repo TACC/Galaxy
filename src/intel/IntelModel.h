@@ -21,10 +21,12 @@
 #pragma once
 
 #include "GalaxyObject.h"
-#include "Rays.h"
 #include "Model.h"
 #include "EmbreeGeometry.h"
 #include "VklVolume.h"
+
+#include "IntelModel_ispc.h"
+#include "EmbreeGeometry_ispc.h"
 
 namespace gxy {
 
@@ -38,25 +40,13 @@ public:
     virtual void initialize();
     virtual ~IntelModel();
 
-    int  AddGeometry(GeometryDPtr);
-    void RemoveGeometry(int);
-    int RemoveGeometry(GeometryDPtr);
-
     void Build();
 
-    void Intersect(RayList *);
-
-    virtual bool local_commit(MPI_Comm c);
+    void Intersect(void *);
 
 protected:
 
-    std::vector<EmbreeGeometryPtr> geometries;
-    std::vector<int> free_geometry_ids;
-
-    std::vector<VklVolumePtr> volumes;
-    std::vector<int> free_volume_ids;
-
-    RTCScene    scene;
+    ::ispc::IntelModel_ispc ispc;
 };
 
 }

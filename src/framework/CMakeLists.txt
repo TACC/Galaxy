@@ -33,6 +33,8 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
+find_package(TBB REQUIRED)
+
 include_directories(
 			${gxy_framework_SOURCE_DIR}
 			${gxy_data_SOURCE_DIR}
@@ -56,7 +58,7 @@ set (CPP_SOURCES
 			Work.cpp)
 
 add_library(gxy_framework SHARED ${CPP_SOURCES})
-target_link_libraries(gxy_framework  ${MPI_LIBRARIES} ${TBB_LIBRARIES})
+target_link_libraries(gxy_framework  ${MPI_LIBRARIES} TBB::tbb)
 set_target_properties(gxy_framework PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 install(TARGETS gxy_framework DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

@@ -26,7 +26,7 @@
 
 namespace gxy
 {
-KEYED_OBJECT_CLASS_TYPE(AmrVolume)
+OBJECT_CLASS_TYPE(AmrVolume)
 
 void
 AmrVolume::initialize()

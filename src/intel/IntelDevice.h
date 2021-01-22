@@ -41,23 +41,22 @@ public:
   static  void InitDevice();
   virtual void initialize();
 
-  RTCDevice get_embree();
+  virtual void *GetTheDeviceEquivalent() { return (void *)&intel_device; }
+
+  virtual void CreateTheDatasetDeviceEquivalent(KeyedDataObjectPtr);
+
   virtual ModelPtr NewModel();
 
-  virtual GalaxyObjectPtr CreateTheDeviceEquivalent(KeyedDataObjectPtr);
+  
+  RTCDevice   get_embree() { return intel_device.embree; }
+  VKLDriver   get_vkl() { return intel_device.vkl; }
 
 protected:
 
-  RTCDevice   embree;
-  VKLDriver   vkl;
+  struct {
+    RTCDevice   embree;
+    VKLDriver   vkl;
+  } intel_device;
 };
 
 }
-
-
-
-
-
-  
-
-

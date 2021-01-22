@@ -47,12 +47,6 @@
 #include "TraceRays_ispc.h"
 #include "Visualization_ispc.h"
 
-#if 0
-#include "OsprayVolume.h"
-#include "OsprayTriangles.h"
-#include "OsprayParticles.h"
-#endif
-
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 
@@ -75,7 +69,7 @@ WORK_CLASS_TYPE(Renderer::SendPixelsMsg);
 WORK_CLASS_TYPE(Renderer::AckRaysMsg);
 #endif // GXY_WRITE_IMAGES
 
-KEYED_OBJECT_CLASS_TYPE(Renderer)
+OBJECT_CLASS_TYPE(Renderer)
 
 // define class static variables
 int Renderer::TERMINATED    = -1;

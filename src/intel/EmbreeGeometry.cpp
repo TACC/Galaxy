@@ -27,54 +27,37 @@
 namespace gxy
 {
 
+OBJECT_CLASS_TYPE(EmbreeGeometry)
+
 void
 EmbreeGeometry::initialize()
 {
-    geometry = NULL;
-    device_geometry = NULL;
-    ispc = NULL;
+  super::initialize();
+  device_geometry = NULL;
 }
 
 EmbreeGeometry::~EmbreeGeometry()
 {
-    if (device_geometry) 
-    {
-        rtcReleaseGeometry(device_geometry);
-        free(ispc);
-        ispc = NULL;
-    }
+  if (device_geometry) 
+    rtcReleaseGeometry(device_geometry);
 }
+
+int EmbreeGeometry::IspcSize() { return sizeof(ispc::EmbreeGeometry_ispc); }
 
 void
-EmbreeGeometry::SetGeometry(GeometryDPtr g)
+EmbreeGeometry::FinalizeData(KeyedDataObjectPtr kop)
 {
-    geometry = g;
-}
+    super::FinalizeData(kop);
 
-void
-EmbreeGeometry::CreateIspc()
-{
-    if (! ispc)
-        ispc = malloc(sizeof(ispc::EmbreeGeometry_ispc));
-}
+    ispc::EmbreeGeometry_ispc *ispc = (ispc::EmbreeGeometry_ispc*)GetIspc();
 
-void
-EmbreeGeometry::FinalizeIspc()
-{
-    ispc::EmbreeGeometry_ispc *iptr = (ispc::EmbreeGeometry_ispc*)ispc;
+    GeometryPtr geometry = Geometry::Cast(kop);
+    geometry->GetLocalCounts(ispc->nv, ispc->nc);
 
-    geometry->GetLocalCounts(iptr->nv, iptr->nc);
-
-    iptr->vertices     = (ispc::vec3f*)geometry->GetVertices();
-    iptr->normals      = (ispc::vec3f*)geometry->GetNormals();
-    iptr->connectivity = geometry->GetConnectivity();
-    iptr->data         = geometry->GetData();
-}
-
-GeometryDPtr 
-EmbreeGeometry::GetGeometry()
-{
-    return geometry;
+    ispc->vertices     = (ispc::vec3f*)geometry->GetVertices();
+    ispc->normals      = (ispc::vec3f*)geometry->GetNormals();
+    ispc->connectivity = geometry->GetConnectivity();
+    ispc->data         = geometry->GetData();
 }
 
 }

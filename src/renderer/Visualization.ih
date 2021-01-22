@@ -18,8 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ospray/SDK/math/vec.ih"
-#include "ospray/SDK/math/box.ih"
+#include "vec.ih"
+#include "box.ih"
 
 struct Model;
 

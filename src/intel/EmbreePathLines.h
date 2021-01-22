@@ -26,25 +26,26 @@ namespace gxy { OBJECT_POINTER_TYPES(EmbreePathLines) }
 #include <vector>
 
 #include "EmbreeGeometry.h"
-#include "Particles.h"
-
-// #include "EmbreePathLines_ispc.h"
+#include "PathLines.h"
+#include "EmbreePathLines_ispc.h"
 
 namespace gxy 
 {
 
 class EmbreePathLines : public EmbreeGeometry
 {
+    GALAXY_OBJECT_SUBCLASS(EmbreePathLines, EmbreeGeometry);
+
 public:
+    virtual void initialize();
     ~EmbreePathLines() {};
 
     void SetMap(float, float, float, float);
 
-    virtual void FinalizeIspc();
-    virtual void CreateIspc();
+    virtual void FinalizeData(KeyedDataObjectPtr);
 
 protected:
-    EmbreePathLines();
+    virtual int IspcSize() { return sizeof(::ispc::EmbreePathLines_ispc); }
 
 private:
     std::vector<vec4f> vCurve;

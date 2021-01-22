@@ -20,13 +20,13 @@
 
 #pragma once
 
-#include "GalaxyObject.h"
+#include "KeyedObject.h"
 
 namespace gxy { OBJECT_POINTER_TYPES(Model); }
 
-#include "Rays.h"
 #include "Geometry.h"
 #include "Volume.h"
+#include "Rays.h"
 
 #include <vector>
 

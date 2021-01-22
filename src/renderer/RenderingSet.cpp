@@ -36,7 +36,7 @@ WORK_CLASS_TYPE(RenderingSet::ResetMsg);
 WORK_CLASS_TYPE(RenderingSet::DumpStateMsg);
 #endif // GXY_WRITE_IMAGES
 
-KEYED_OBJECT_CLASS_TYPE(RenderingSet)
+OBJECT_CLASS_TYPE(RenderingSet)
 
 void
 RenderingSet::Register()

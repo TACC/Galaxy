@@ -29,15 +29,15 @@ namespace gxy { OBJECT_POINTER_TYPES(EmbreeTriangles) }
 
 namespace gxy 
 {
+
 class EmbreeTriangles : public EmbreeGeometry
 {
+  GALAXY_OBJECT_SUBCLASS(EmbreeTriangles, EmbreeGeometry)
+
 public:
-    ~EmbreeTriangles() {};
+  ~EmbreeTriangles() {};
 
-    virtual void FinalizeIspc();
-
-protected:
-    EmbreeTriangles();
+  virtual void FinalizeData(KeyedDataObjectPtr kop);
 };
 
 }

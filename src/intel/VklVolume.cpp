@@ -20,11 +20,29 @@
 
 #include "VklVolume.h"
 
-using namespace gxy;
+namespace gxy
+{
+
+OBJECT_CLASS_TYPE(VklVolume)
+
+struct VklVolume_ispc
+{
+  VKLVolume volume;
+};
+
+int 
+VklVolume::IspcSize() 
+{
+  return sizeof(VklVolume_ispc);
+}
 
 void
-VklVolume::SetVolume(VolumePtr v)
+VklVolume::FinalizeData(KeyedDataObjectPtr kop)
 {
+  super::FinalizeData(kop);
+
+  VolumePtr v = Volume::Cast(kop);
+
   vec3i counts;
   v->get_ghosted_local_counts(counts.x, counts.y, counts.z);
 
@@ -38,18 +56,22 @@ VklVolume::SetVolume(VolumePtr v)
   VKLData attr[] = {data};
   VKLData aData = vklNewData(1, VKL_DATA, attr, VKL_DATA_DEFAULT, 0);
   vklRelease(data);
+
+  VklVolume_ispc *vispc = (VklVolume_ispc *)GetIspc();
   
-  volume = vklNewVolume("structuredRegular");
-  vklSetVec3i(volume, "dimensions", counts.x, counts.y, counts.z);
-  vklSetVec3f(volume, "gridOrigin", origin.x, origin.y, origin.z);
-  vklSetVec3f(volume, "gridSpacing", spacing.x, spacing.y, spacing.z);
-  vklSetData(volume, "data", aData);
+  vispc->volume = vklNewVolume("structuredRegular");
+  vklSetVec3i(vispc->volume, "dimensions", counts.x, counts.y, counts.z);
+  vklSetVec3f(vispc->volume, "gridOrigin", origin.x, origin.y, origin.z);
+  vklSetVec3f(vispc->volume, "gridSpacing", spacing.x, spacing.y, spacing.z);
+  vklSetData(vispc->volume, "data", aData);
   vklRelease(aData);
 }
 
 VklVolume::~VklVolume()
 {
-  vklRelease(volume);
-  volume = NULL;
+  VklVolume_ispc *vispc = (VklVolume_ispc *)GetIspc();
+  vklRelease(vispc->volume);
+  vispc->volume = NULL;
 }
 
+}

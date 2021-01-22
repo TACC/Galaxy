@@ -52,7 +52,7 @@ using namespace rapidjson;
 
 namespace gxy
 {
-KEYED_OBJECT_CLASS_TYPE(Geometry)
+OBJECT_CLASS_TYPE(Geometry)
 
 void
 Geometry::Register()

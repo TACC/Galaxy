@@ -30,12 +30,10 @@
 #include <vector>
 #include <memory>
 
-#include "ospray/ospray.h"
-
 #include "dtypes.h"
 #include "Vis.h"
 #include "Datasets.h"
-#include "GalaxyObject.h"
+#include "TransferFunction.h"
 
 #include "rapidjson/document.h"
 
@@ -63,16 +61,12 @@ public:
 
   //! set the colormap for this MappedVis as an array of XRGB values
   void SetColorMap(int, vec4f *);
+
   //! set the opacity map for this MappedVis as an array of XO values
   void SetOpacityMap(int, vec2f *);
 
   //! construct a MappedVis from a Galaxy JSON specification
   virtual bool LoadFromJSON(rapidjson::Value&);
-
-#if 0
-  //! Set the vis' ownership of the OSPRay object and set any per-vis parameters on it
-  virtual void SetTheOsprayDataObject(OsprayObjectDPtr o);
-#endif
 
   //! commit this object to the local registry
   virtual bool local_commit(MPI_Comm);
@@ -80,9 +74,12 @@ public:
   //! scale mapping to a given range
   virtual void ScaleMaps(float xmin, float xmax);
 
- protected:
+protected:
   virtual void allocate_ispc();
   virtual void initialize_ispc();
+
+  TransferFunction<3, 256> color_tf;
+  TransferFunction<1, 256> opacity_tf;
 
   float data_range_min, data_range_max;
   bool data_range;
@@ -93,9 +90,6 @@ public:
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *);
   virtual unsigned char *deserialize(unsigned char *);
-
-  OSPTransferFunction transferFunction;
-  
 };
 
 } // namespace gxy

@@ -99,7 +99,7 @@ TestObject::Register()
   TestMsg::Register();
 };
 
-KEYED_OBJECT_CLASS_TYPE(TestObject)
+OBJECT_CLASS_TYPE(TestObject)
 WORK_CLASS_TYPE(TestMsg)
 
 void

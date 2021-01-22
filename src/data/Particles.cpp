@@ -29,7 +29,7 @@
 
 #include "Application.h"
 #include "Particles.h"
-#include "EmbreeSpheres.h"
+// #include "EmbreeSpheres.h"
 
 
 #include <vtkNew.h>
@@ -56,7 +56,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Particles)
+OBJECT_CLASS_TYPE(Particles)
 
 void
 Particles::Register()

@@ -1,8 +1,7 @@
 #include <Application.h>
+#include <DataObjects.h>
 #include <Rays.h>
 
-#include "Embree.h"
-#include "EmbreeModel.h"
 #include "Triangles.h"
 #include "Particles.h"
 #include "PathLines.h"
@@ -35,6 +34,9 @@ using namespace std;
 
 int mpiRank = 0, mpiSize = 1;
 #include "Debug.h"
+
+std::vector<GeometryDPtr> geometries;
+std::vector<VolumeDPtr>   volumes;
 
 class SetupTriangles : public Work
 {
@@ -77,6 +79,8 @@ public:
         indices[0] = 0; indices[1] = 1; indices[2] = 3;
         indices[3] = 1; indices[4] = 2; indices[5] = 3;
 
+        geometries.push_back(tp);
+
         return false;
     }
 }; 
@@ -116,7 +120,7 @@ public:
         data[2] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
         data[3] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
 
-        MPI_Barrier(c);
+        geometries.push_back(pp);
         
         return false;
     }
@@ -164,75 +168,18 @@ public:
         data[2] = 0.20;
         data[3] = 0.25;
 
+        geometries.push_back(plp);
+
         return false;
     }
 }; 
 
-class GeomToEmbree : public Work
-{
-public:
-    GeomToEmbree(EmbreeModelDPtr emp, GeometryDPtr tp) : GeomToEmbree(2*sizeof(Key))
-    {
-        unsigned char *p = (unsigned char *)get();
-
-        *(Key *)p = emp->getkey();
-        p = p + sizeof(Key);
-
-        *(Key *)p = tp->getkey();
-        p = p + sizeof(Key);
-    }
-
-    ~GeomToEmbree() {}
-    WORK_CLASS(GeomToEmbree, true)
-
-public:
-    bool CollectiveAction(MPI_Comm c, bool isRoot)
-    {   
-        Key *p = (Key *)get();
-        EmbreeModelDPtr emp = EmbreeModel::GetByKey(p[0]);
-        GeometryDPtr gp = Geometry::GetByKey(p[1]);
-
-        if (Triangles::DCast(gp))
-        {
-            EmbreeTrianglesDPtr etp = EmbreeTriangles::New();
-            etp->SetGeometry(gp);
-            etp->CreateIspc();
-            etp->FinalizeIspc();
-            emp->AddGeometry(etp);
-
-        }
-        else if (Particles::DCast(gp))
-        {
-            EmbreeSpheresDPtr esp = EmbreeSpheres::New();
-            esp->SetGeometry(gp);
-            esp->CreateIspc();
-            esp->FinalizeIspc();
-            emp->AddGeometry(esp);
-        }
-        else if (PathLines::DCast(gp))
-        {
-            EmbreePathLinesDPtr plp = EmbreePathLines::New();
-            plp->SetGeometry(gp);
-            plp->CreateIspc();
-            plp->FinalizeIspc();
-            emp->AddGeometry(plp);
-        }
-
-        MPI_Barrier(c);
-        
-        return false;
-    }
-};
-
 class IntersectMsg : public Work
 {
 public:
-    IntersectMsg(EmbreeDPtr ep, EmbreeModelDPtr emp, float x, float y, float z) : IntersectMsg(2*sizeof(Key) + 3*sizeof(float))
+    IntersectMsg(float x, float y, float z) : IntersectMsg(3*sizeof(float))
     {
-        Key *k = (Key *)get();
-        k[0] = ep->getkey();
-        k[1] = emp->getkey();
-        float *p = (float *)(k + 2);
+        float *p = (float *)get();
         
         p[0] = x;
         p[1] = y;
@@ -245,12 +192,17 @@ public:
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
-        Key *k = (Key *)get();
-        EmbreeDPtr ep = Embree::GetByKey(k[0]);
-        EmbreeModelDPtr emp = EmbreeModel::GetByKey(k[1]);
+        float *p = (float *)get();
 
-        float *p = (float *)(k + 2);
+        for (auto g : geometries)
+          GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
 
+        ModelPtr model = GetTheDevice()->NewModel();
+        for (auto g : geometries)
+          model->AddGeometry(g);
+
+        model->Build();
+        
         RayList *rays = new RayList(50*mpiSize);
 
         for (int i = 0; i < 50*mpiSize; i++)
@@ -266,7 +218,7 @@ public:
             rays->get_tMax_base()[i] = std::numeric_limits<float>::infinity();
         }
 
-        emp->Intersect(rays);
+        model->Intersect(rays);
 
         for (int j = 0; j < mpiSize; j++)
         {
@@ -306,7 +258,7 @@ public:
                 }
             }
 
-            sleep(1);
+            // sleep(1);
         }
 
         return false;
@@ -316,7 +268,6 @@ public:
 WORK_CLASS_TYPE(SetupTriangles)
 WORK_CLASS_TYPE(SetupSpheres)
 WORK_CLASS_TYPE(SetupPathLines)
-WORK_CLASS_TYPE(GeomToEmbree)
 WORK_CLASS_TYPE(IntersectMsg)
 
 void
@@ -342,10 +293,12 @@ main(int argc, char *argv[])
     bool atch = false;
     float y = 0.5;
 
-    DeviceLPtr intelDevice = new IntelDevice();
-    ModelLPtr  intelModel = intelDevice->NewModel();
+    IntelDevice::InitDevice();
 
     Application theApplication(&argc, &argv);
+
+    RegisterDataObjects();
+
     theApplication.Start();
 
     for (int i = 1; i < argc; i++)
@@ -362,19 +315,10 @@ main(int argc, char *argv[])
 
     theApplication.Run();
 
-    Embree::Register();
-    EmbreeModel::Register();
-
-    KeyedDataObject::Register();
-
     SetupTriangles::Register();
     SetupSpheres::Register();
     SetupPathLines::Register();
-    GeomToEmbree::Register();
     IntersectMsg::Register();
-
-    IntelDevice::Register();
-    IntelModel::Register();
 
     if (mpiRank == 0)
     {
@@ -386,9 +330,6 @@ main(int argc, char *argv[])
                 SetupTriangles s(tp);
                 s.Broadcast(true, true);
                 tp->Commit();
-
-                GeomToEmbree t2e(emp, tp);
-                t2e.Broadcast(true, true);
             }
                    
             ParticlesDPtr pp;
@@ -398,9 +339,6 @@ main(int argc, char *argv[])
                 SetupSpheres s(pp);
                 s.Broadcast(true, true);
                 pp->Commit();
-
-                GeomToEmbree t2e(emp, pp);
-                t2e.Broadcast(true, true);
             }
                
             PathLinesDPtr plp;
@@ -410,19 +348,15 @@ main(int argc, char *argv[])
                 SetupPathLines s(plp);
                 s.Broadcast(true, true);
                 plp->Commit();
-
-                GeomToEmbree t2e(emp, plp);
-                t2e.Broadcast(true, true);
             }
 
-            emp->Commit();
-
-            IntersectMsg i = IntersectMsg(ep, emp, 0.0, y, -1);
+            IntersectMsg i = IntersectMsg(0.0, y, -1);
             i.Broadcast(true, true);
         }
 
         theApplication.QuitApplication();
     }
 
+    IntelDevice::FreeDevice();
     theApplication.Wait();
 }

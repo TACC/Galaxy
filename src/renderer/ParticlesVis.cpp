@@ -29,7 +29,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(ParticlesVis)
+OBJECT_CLASS_TYPE(ParticlesVis)
 
 void
 ParticlesVis::Register()
@@ -39,7 +39,7 @@ ParticlesVis::Register()
 
 ParticlesVis::~ParticlesVis()
 {
-	ParticlesVis::destroy_ispc();
+	destroy_ispc();
 }
 
 void
@@ -52,20 +52,6 @@ ParticlesVis::initialize()
   v0 =  0.0;
   v1 =  0.0;
 }
-
-void
-ParticlesVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::ParticlesVis_initialize(ispc);
-} 
-    
-void
-ParticlesVis::allocate_ispc()
-{
-  ispc = ispc::ParticlesVis_allocate();
-}
-
 
 int
 ParticlesVis::serialSize()
@@ -117,33 +103,11 @@ ParticlesVis::LoadFromJSON(Value& v)
   return super::LoadFromJSON(v);
 }
 
-void
-ParticlesVis::destroy_ispc()
-{
-  if (ispc)
-  {
-    ispc::ParticlesVis_destroy(ispc);
-  }
-}
-
 bool
 ParticlesVis::local_commit(MPI_Comm c)
 {  
 	return super::local_commit(c);
 }
-
-#if 0
-void
-ParticlesVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
-{
-  super::SetTheOsprayDataObject(o);
-
-  ospSet1f(o->GetOSP(), "value0", v0);
-  ospSet1f(o->GetOSP(), "radius0", r0);
-  ospSet1f(o->GetOSP(), "value1", v1);
-  ospSet1f(o->GetOSP(), "radius1", r1);
-}
-#endif
 
 void
 ParticlesVis::ScaleMaps(float xmin, float xmax)

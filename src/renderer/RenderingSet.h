@@ -182,7 +182,7 @@ public:
       
 #endif // GXY_WRITE_IMAGES
 
-  // set up internal data structures including attaching OSPRayObject's to OVis's.
+  // set up ispc-level data structures 
   virtual bool local_commit(MPI_Comm);
 
 protected:

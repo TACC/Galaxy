@@ -18,7 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
-// adapted from Intel OSPRay ospray/render/scivis/SciVisRenderer.ispc
+// distantly descended from Intel OSPRay ospray/render/scivis/SciVisRenderer.ispc
 
 // ======================================================================== //
 //                                                                          //
@@ -38,15 +38,18 @@
 //                                                                          //
 // ======================================================================== //
 
+#if 1
+#include "Rays.ih"
+export void *uniform RayList_dummy(RayList_ispc *uniform a) {}
+#else
+
 #include "galaxy.h"
 
-#include "ospray/SDK/math/vec.ih"
-#include "ospray/SDK/common/Ray.ih"
-#include "ospray/SDK/render/util.ih"
-#include "ospray/SDK/camera/Camera.ih"
-#include "ospray/SDK/common/Model.ih"
-#include "ospray/SDK/transferFunction/LinearTransferFunction.ih"
-#include "ospray/SDK/volume/Volume.ih"
+#include "embree3/rtcore_config.h"
+#include "embree3/rtcore_ray.isph"
+#include "embree3/rtcore.isph"
+
+#include "vec.ih"
 
 #include "hits.h"
 #include "Lighting.ih"
@@ -57,6 +60,18 @@
 #include "VolumeVis.ih"
 
 #include "UV.ih"
+
+#if TARGET_WIDTH == 1
+#define INTERSECTOR rtcIntersect
+#elif TARGET_WIDTH == 4
+#define INTERSECTOR rtcIntersect4
+#elif TARGET_WIDTH == 8
+#define INTERSECTOR rtcIntersect8
+#elif TARGET_WIDTH == 16
+#define INTERSECTOR rtcIntersect16
+#else
+#error Unknown vector width
+#endif
 
 export void *uniform TraceRays_allocate()
 {
@@ -91,13 +106,16 @@ struct Hit
 };
 
 inline void
-MyIntersectBox(const Ray& ray,
+MyIntersectBox(const RTCRayHit& ray,
                const uniform box3f& box,
                float& t0,
                float& t1)
 {
-  const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
-  const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
+  vec3f org = make_vec3f(ray.ray.org_x, ray.ray.org_y, ray.ray.org_z);
+  vec3f dir = make_vec3f(ray.ray.dir_x, ray.ray.dir_y, ray.ray.dir_z);
+
+  const vec3f mins = (box.lower - org) * rcp(dir);
+  const vec3f maxs = (box.upper - org) * rcp(dir);
 
   t0 = max(min(mins.x,maxs.x),
            max(min(mins.y,maxs.y),
@@ -108,15 +126,26 @@ MyIntersectBox(const Ray& ray,
                max(mins.z,maxs.z)));
 }
 
+inline void
+traceRay(uniform RTCScene scene, void *uniform rayhit)
+{
+  uniform RTCIntersectContext context;
+  rtcInitIntersectContext(&context);
+
+  varying int valid = -1;
+  INTERSECTOR((const int* uniform)&valid, scene, &context, rayhit);
+}
+
 inline bool
 LookForGeometryHit(varying bool shadeFlag,
                    uniform Model *uniform model,
-                   varying Ray &ray,
+                   varying RTCRayHit &ray,
                    uniform Visualization_ispc *uniform vis,
                    varying Hit &hit)
 {
   //print("LFGH %\n", model);
 
+  
   traceRay(model, ray);
 
   if(ray.geomID < 0)
@@ -373,7 +402,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     bool shadeFlag = raysIn->type[i] == RAY_PRIMARY;
 
-    Ray ray;
+    RTCRayHit ray;
 
     ray.org = make_vec3f(raysIn->ox[i], raysIn->oy[i], raysIn->oz[i]);
     ray.dir = make_vec3f(raysIn->dx[i], raysIn->dy[i], raysIn->dz[i]);
@@ -924,3 +953,4 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
     }
   }
 }
+#endif

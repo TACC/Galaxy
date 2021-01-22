@@ -25,7 +25,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Model)
+OBJECT_CLASS_TYPE(Model)
 
 Model::~Model()
 {

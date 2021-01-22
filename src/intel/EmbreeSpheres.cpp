@@ -27,19 +27,14 @@
 namespace gxy 
 {
 
-EmbreeSpheres::EmbreeSpheres() : EmbreeGeometry()
-{
-}
+OBJECT_CLASS_TYPE(EmbreeSpheres)
 
 void
-EmbreeSpheres::CreateIspc()
+EmbreeSpheres::initialize()
 {
-    if (! ispc)
-        ispc = malloc(sizeof(ispc::EmbreeSpheres_ispc));
+    super::initialize();
 
-    EmbreeGeometry::CreateIspc();
-
-    ispc::EmbreeSpheres_ispc *iptr = (ispc::EmbreeSpheres_ispc*)ispc;
+    ::ispc::EmbreeSpheres_ispc *iptr = (::ispc::EmbreeSpheres_ispc*)ispc;
 
     iptr->radius0 = 0.0;
     iptr->value0  = 0.0;
@@ -50,7 +45,7 @@ EmbreeSpheres::CreateIspc()
 void
 EmbreeSpheres::SetMap(float v0, float r0, float v1, float r1)
 {
-    ispc::EmbreeSpheres_ispc *iptr = (ispc::EmbreeSpheres_ispc*)GetIspc();
+    ::ispc::EmbreeSpheres_ispc *iptr = (::ispc::EmbreeSpheres_ispc*)GetIspc();
 
     iptr->radius0 = r0;
     iptr->value0  = v0;
@@ -59,13 +54,13 @@ EmbreeSpheres::SetMap(float v0, float r0, float v1, float r1)
 }
 
 void 
-EmbreeSpheres::FinalizeIspc()
+EmbreeSpheres::FinalizeData(KeyedDataObjectPtr kop)
 {
-    EmbreeGeometry::FinalizeIspc();
+    super::FinalizeData(kop);
 
-    ispc::EmbreeSpheres_ispc *iptr = (ispc::EmbreeSpheres_ispc*)GetIspc();
+    ::ispc::EmbreeSpheres_ispc *iptr = (::ispc::EmbreeSpheres_ispc*)GetIspc();
 
-    ParticlesDPtr p = Particles::DCast(geometry);
+    ParticlesDPtr p = Particles::DCast(kop);
     if (! p)
     {
         std::cerr << "EmbreeSpheres::FinalizeIspc called with something other than Particles\n";
@@ -77,9 +72,9 @@ EmbreeSpheres::FinalizeIspc()
 
     rtcSetGeometryUserData(device_geometry, GetIspc());
     rtcSetGeometryUserPrimitiveCount(device_geometry, p->GetNumberOfVertices());
-    rtcSetGeometryBoundsFunction(device_geometry, (RTCBoundsFunction)&ispc::EmbreeSpheres_bounds, GetIspc());
-    rtcSetGeometryIntersectFunction (device_geometry, (RTCIntersectFunctionN)&ispc::EmbreeSpheres_intersect);
-    rtcSetGeometryOccludedFunction(device_geometry, (RTCOccludedFunctionN)&ispc::EmbreeSpheres_occluded);
+    rtcSetGeometryBoundsFunction(device_geometry, (RTCBoundsFunction)&::ispc::EmbreeSpheres_bounds, GetIspc());
+    rtcSetGeometryIntersectFunction (device_geometry, (RTCIntersectFunctionN)&::ispc::EmbreeSpheres_intersect);
+    rtcSetGeometryOccludedFunction(device_geometry, (RTCOccludedFunctionN)&::ispc::EmbreeSpheres_occluded);
 
     rtcCommitGeometry(device_geometry);
 }

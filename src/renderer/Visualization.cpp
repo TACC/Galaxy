@@ -40,7 +40,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Visualization)
+OBJECT_CLASS_TYPE(Visualization)
 
 void
 Visualization::Register()
@@ -56,20 +56,23 @@ Visualization::initialize()
 
 Visualization::~Visualization()
 {
-  //std::cerr << "Visualization dtor " << std::hex << ((long)this) << "\n";
-  Visualization::destroy_ispc();
+  destroy_ispc();
 }
 
 void 
 Visualization::allocate_ispc()
 {
-  ispc = ispc::Visualization_allocate();
+  ispc = malloc(sizeof(::ispc::Visualization_ispc));
 }
 
 void 
 Visualization::initialize_ispc()
 {
-  ispc::Visualization_initialize(GetIspc());
+  ::ispc::Visualization_ispc *myspc = (::ispc::Visualization_ispc *)ispc;
+  myspc->nVolumeVis = 0;
+  myspc->volumeVis = NULL;
+  myspc->nMappedVis = 0;
+  myspc->mappedVis = NULL;
 }
 
 bool
@@ -229,17 +232,7 @@ Visualization::SetDeviceObjects()
     GalaxyObjectPtr op = kdop->GetTheDeviceEquivalent();
 
     if (! op || kdop->hasBeenModified())
-    {
-      GalaxyObjectPtr de = GetTheDevice()->CreateTheDeviceEquivalent(kdop);
-      if (! op)
-      {
-        std::cerr << "Visualization::SetDeviceObjects : failed to create device equivalent\n";
-        exit(1);
-      }
-
-      kdop->SetTheDeviceEquivalent(de);
-      kdop->setModified(false);
-    }
+      GetTheDevice()->CreateTheDatasetDeviceEquivalent(kdop);
 
     if (Volume::IsA(kdop))
       model->AddVolume(Volume::Cast(kdop));
@@ -374,15 +367,6 @@ Visualization::deserialize(unsigned char *p)
   }
 
   return p;
-}
-
-void 
-Visualization::destroy_ispc()
-{
-  if (ispc)
-  {
-    ispc::Visualization_destroy(ispc);
-  }
 }
 
 } // namespace gxy

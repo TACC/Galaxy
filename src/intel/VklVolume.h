@@ -20,12 +20,12 @@
 
 #pragma once
 
-/*! \file OsprayVolume.h 
- * \brief translation class for Galaxy Volume to OSPRay Volume
+/*! \file VklVolume.h 
+ * \brief translation class for Galaxy Volume to Vkl Volume
  * \ingroup render
  */
 
-#include "GalaxyObject.h"
+#include "IntelData.h"
 
 namespace gxy { OBJECT_POINTER_TYPES(VklVolume) }
 
@@ -38,17 +38,17 @@ namespace gxy
 //! translation class for Galaxy Volume to Vkl Volume
 /*! \ingroup render 
  */
-class VklVolume : public GalaxyObject
+class VklVolume : public IntelData
 {
-  GALAXY_OBJECT_SUBCLASS(VklVolume, GalaxyObject)
+  GALAXY_OBJECT_SUBCLASS(VklVolume, IntelData)
 
 public:
+  virtual void FinalizeData(KeyedDataObjectPtr);
+
   ~VklVolume();
 
-  void SetVolume(VolumePtr);
-
-private:
-  VKLVolume volume;
+protected:
+  virtual int  IspcSize();
 };
 
 }

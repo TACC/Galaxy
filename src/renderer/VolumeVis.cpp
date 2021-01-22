@@ -32,7 +32,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(VolumeVis)
+OBJECT_CLASS_TYPE(VolumeVis)
 
 void
 VolumeVis::Register()
@@ -42,13 +42,12 @@ VolumeVis::Register()
 
 VolumeVis::~VolumeVis()
 {
-	VolumeVis::destroy_ispc();
+	destroy_ispc();
 }
 
 void
 VolumeVis::initialize()
 {
-  // std::cerr << "VolVis init: " << std::hex << this << "\n";
   super::initialize();
   volume_rendering = false;
 }
@@ -57,14 +56,21 @@ void
 VolumeVis::initialize_ispc()
 {
   super::initialize_ispc();
-  ispc::VolumeVis_initialize(ispc);
+
+  ::ispc::VolumeVis_ispc *myspc = (::ispc::VolumeVis_ispc*)ispc;
+  if (myspc)
+  {
+    myspc->slices = NULL;
+    myspc->nSlices = 0;
+    myspc->isovalues = NULL;
+    myspc->nIsovalues = 0;
+  }
 } 
     
 void
 VolumeVis::allocate_ispc()
 {
-  ispc = ispc::VolumeVis_allocate();
-  // std::cerr << "VV alloc ispc " << std::hex << ispc << "\n";
+  ispc = malloc(sizeof(::ispc::VolumeVis_ispc));
 }
 
 int 
@@ -162,24 +168,20 @@ VolumeVis::LoadFromJSON(Value& v)
   return true;
 }
 
-void
-VolumeVis::destroy_ispc()
-{
-  if (ispc)
-  {
-    ispc::VolumeVis_destroy(ispc);
-  }
-}
-
 bool
 VolumeVis::local_commit(MPI_Comm c)
 {  
 	if (super::local_commit(c))
     return true;
 
-	ispc::VolumeVis_SetSlices(GetIspc(), slices.size(), ((float *)slices.data()));
-	ispc::VolumeVis_SetIsovalues(GetIspc(), isovalues.size(), ((float *)isovalues.data()));
-	ispc::VolumeVis_SetVolumeRenderFlag(GetIspc(), volume_rendering);
+  ::ispc::VolumeVis_ispc *myspc = (::ispc::VolumeVis_ispc*)ispc;
+  myspc->slices = (::ispc::vec4f *)slices.data();
+  myspc->nSlices = slices.size();
+  
+  myspc->isovalues = (float *)isovalues.data();
+  myspc->nIsovalues = isovalues.size();
+
+  myspc->volume_render = volume_rendering;
 
 	return false;
 }

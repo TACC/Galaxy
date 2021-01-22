@@ -61,7 +61,7 @@ private:
 public:
 	~RayList(); //!< default destructor
 
-    void *get_base(); //!< get pointer to start of ray data (skip past header)
+  void *get_base(); //!< get pointer to start of ray data (skip past header)
 
 	//! deep copy the ray at the given position in the source RayList to the given position in the destination RayList
 	static void CopyRay(RayList *srcRayList, int srcRayIndex, RayList *dstRayList, int dstRayIndex)
@@ -95,7 +95,7 @@ public:
 
 	RayList(RendererDPtr renderer, RenderingSetDPtr rs, RenderingDPtr r, int nrays, int frame, RayListType type); //!< constructor
 	RayList(RendererDPtr renderer, RenderingSetDPtr rs, RenderingDPtr r, int nrays, RayListType type); //!< constructor
-    RayList(int n); //!< constructor
+  RayList(int n); //!< constructor
 	RayList(SharedP contents); //!< constructor from ISPC serialization
 
 	RayListType  GetType() { return ((struct hdr *)contents->get())->type; } //!< get the type of rays in this RayList

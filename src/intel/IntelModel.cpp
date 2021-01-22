@@ -19,63 +19,82 @@
 // ========================================================================== //
 
 #include "Application.h"
+#include "IntelDevice.h"
 #include "IntelModel.h"
-
-#include <embree3/rtcore_scene.h>
+#include "Rays.h"
 
 #include "IntelModel_ispc.h"
+
+#include <embree3/rtcore_scene.h>
 
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(IntelModel)
+OBJECT_CLASS_TYPE(IntelModel)
 
 void
 IntelModel::initialize()
 {
-    super::initialize();
+  super::initialize();
+  ispc.scene = NULL;
 }
 
 IntelModel::~IntelModel()
 {
-    rtcReleaseScene(scene);
+  if (ispc.scene)
+    rtcReleaseScene(ispc.scene);
+
+  ispc.scene = NULL;
+  if (ispc.geometries) free((void *)ispc.geometries);
+  if (ispc.volumes) free((void *)ispc.volumes);
 }
 
-int
-IntelModel::AddGeometry(GeometryDPtr g)
+void
+IntelModel::Build()
 {
-    int id = super::AddGeometry(g);
+  std::cerr << "BUILD!\n";
+
+  IntelDevicePtr idev = IntelDevice::Cast(GetTheDevice());
+  ispc.scene = rtcNewScene(idev->get_embree());
+
+  if (geometries.size())
+    ispc.geometries = (::ispc::EmbreeGeometry_ispc **)malloc(geometries.size() * sizeof(::ispc::EmbreeGeometry_ispc *));
+  else
+    ispc.geometries = NULL;
+
+  if (volumes.size())
+  {
+    ispc.nVolumes = volumes.size();
+    ispc.volumes = (::ispc::VklVolume_ispc **)malloc(volumes.size() * sizeof(::ispc::VklVolume_ispc *));
+  }
+  else
+  {
+    ispc.nVolumes = 0;
+    ispc.volumes = NULL;
+  }
+
+  int i = 0;
+  for (auto g : geometries)
+  {
     EmbreeGeometryPtr eg = EmbreeGeometry::Cast(g->GetTheDeviceEquivalent());
-    rtcAttachGeometryByID(scene, eg->GetDeviceGeometry(), id);
-    return id;
-}
+    if (! eg)
+    {
+      std::cerr << "IntelModel::Build : EmbreeGeometry has no device equivalent\n";    
+      exit(1);
+    }
 
-int
-IntelModel::RemoveGeometry(GeometryDPtr g)
-{
-    int id = super::RemoveGeometry(g);
-    if (id != -1)
-        rtcDetachGeometry(scene, id);
-    return id;
-}
+    rtcAttachGeometryByID(ispc.scene, eg->GetDeviceGeometry(), i);
+    ispc.geometries[i++] = (::ispc::EmbreeGeometry_ispc *)eg->GetIspc();
+  }
 
-void
-IntelModel::RemoveGeometry(int id)
-{
-    rtcDetachGeometry(scene, id);
+  rtcCommitScene(ispc.scene);
 }
 
 void
-IntelModel::Intersect(RayList *rays)
+IntelModel::Intersect(void *_rays)
 {
-    void** geoms = new void*[geometries.size()];
-
-    for (int i = 0; i < geometries.size(); i++)
-        geoms[i] = geometries[i] ? geometries[i]->GetIspc() : NULL;
-
-    ispc::IntelModel_Intersect(scene, geoms, rays->GetRayCount(), rays->GetIspc());
-
-    delete[] geoms;
+  RayList *rays = (RayList *)_rays;
+  ::ispc::IntelModel_Intersect(ispc, rays->GetRayCount(), rays->GetIspc());
 }
 
 }

@@ -33,11 +33,21 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
+find_package(embree 3.0.0 REQUIRED)
+find_package(openvkl 0.11.0)
+
+# get_cmake_property(_variableNames VARIABLES)
+# list (SORT _variableNames)
+# foreach (_variableName ${_variableNames})
+    # message(STATUS "${_variableName}=${${_variableName}}")
+# endforeach()
+
 ispc_include_directories(
-    ${EMBREE_INCLUDE_DIRS} 
     ${Galaxy_BINARY_DIR}/src/intel
-    ${Galaxy_SOURCE_DIR}/src/ispc
+    ${Galaxy_BINARY_DIR}/src/renderer
     ${Galaxy_SOURCE_DIR}/src/renderer
+    ${openvkl_DIR}/../../../include
+    ${embree_DIR}/include
 )
 
 include_directories( 
@@ -47,8 +57,8 @@ include_directories(
     ${Galaxy_SOURCE_DIR}/src/data
     ${Galaxy_SOURCE_DIR}/src/renderer
     ${Galaxy_SOURCE_DIR}/src/ospray
-    ${EMBREE_INCLUDE_DIRS}
     ${openvkl_DIR}/../../../include
+    ${embree_DIR}/include
 )
 
 set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_intel ${EMBREE_LIBRARIES} ${MPI_C_LIBRARIES})
@@ -58,11 +68,13 @@ set (ISPC_SOURCES
     EmbreeGeometry.ispc
     EmbreeSpheres.ispc
     EmbreePathLines.ispc
+    VklVolume.ispc
     )
 
 set (CPP_SOURCES 
   IntelDevice.cpp
   IntelModel.cpp
+  IntelData.cpp
   EmbreeGeometry.cpp
   EmbreeTriangles.cpp
   EmbreeSpheres.cpp
@@ -73,6 +85,7 @@ set (CPP_SOURCES
 install(FILES
   IntelDevice.h
   IntelModel.h
+  IntelData.h
   EmbreeGeometry.h
   EmbreeTriangles.h
   DESTINATION include/gxy)
@@ -83,10 +96,6 @@ target_link_libraries(gxy_intel gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIE
 set_target_properties(gxy_intel PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 install(TARGETS gxy_intel DESTINATION lib)
 
-# add_executable(em_test em_test.cpp)
-# target_link_libraries(em_test ${GALAXY_LIBRARIES})
-# install(TARGETS em_test DESTINATION tests)
-
-# add_executable(vkl_test vkl_test.cpp)
-# target_link_libraries(vkl_test ${GALAXY_LIBRARIES})
-# install(TARGETS vkl_test DESTINATION tests)
+add_executable(em_test em_test.cpp)
+target_link_libraries(em_test gxy_framework gxy_data gxy_renderer gxy_intel embree openvkl::openvkl_module_ispc_driver ${MPI_C_LIBRARIES})
+install(TARGETS em_test DESTINATION tests)

@@ -20,6 +20,8 @@
 
 #include "Visualization.ih"
 
+export void *uniform Visualization_dummy(Visualization_ispc *uniform a) {}
+
 export void *uniform Visualization_allocate()
 {
     Visualization_ispc *uniform v = uniform new uniform Visualization_ispc;

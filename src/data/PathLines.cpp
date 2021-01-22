@@ -21,7 +21,7 @@
 #include <iostream>
 #include "vtkerror.h"
 #include "PathLines.h"
-#include "EmbreePathLines.h"
+// #include "EmbreePathLines.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -52,7 +52,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(PathLines) 
+OBJECT_CLASS_TYPE(PathLines) 
 
 void     
 PathLines::Register()

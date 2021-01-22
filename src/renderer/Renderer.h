@@ -58,7 +58,7 @@ class Renderer : public KeyedObject
 public:
   static void Initialize(); //!< initialize the Renderer subcomponents
 
-  //! Converts OSPRay objects for Galaxy::Data objects  - ALWAYS CALLED FROM COMMIT
+  //! Converts ISPC objects for Galaxy::Data objects  - ALWAYS CALLED FROM COMMIT
   virtual bool local_commit(MPI_Comm);
 
   virtual ~Renderer(); //!< default destructor

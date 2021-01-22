@@ -83,9 +83,6 @@ to create the "dependent" objects.  More discussion in KeyedObjectMap.h
 
 *********/
 
-#define KEYED_OBJECT_CLASS_TYPE(typ)                       \
-  int typ::ClassType;                                      
-
 OBJECT_POINTER_TYPES(KeyedObject)
 
 typedef long Key;

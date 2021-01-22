@@ -21,17 +21,33 @@
 #include <iostream>
 
 #include "IntelDevice.h"
+#include "IntelModel.h"
+
 #include "VklVolume.h"
+
+#include "EmbreePathLines.h"
+#include "EmbreeSpheres.h"
+#include "EmbreeTriangles.h"
+#include "EmbreeGeometry.h"
 
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(IntelDevice)
+OBJECT_CLASS_TYPE(IntelDevice)
 
 void IntelDevice::InitDevice()
 {
-  IntelDevicePtr idp = IntelDevice::New();
-  Device::SetDevice(idp);
+  std::cerr << "XXXX\n";
+  super::InitDevice();
+
+  IntelDevice::RegisterClass();
+  EmbreeGeometry::RegisterClass();
+  EmbreeTriangles::RegisterClass();
+  EmbreePathLines::RegisterClass();
+  EmbreeSpheres::RegisterClass();
+  VklVolume::RegisterClass();
+
+  Device::SetDevice(IntelDevice::New());
 }
 
 static void embreeError(void *ptr, enum RTCError error, const char* msg)
@@ -46,7 +62,7 @@ static void vklError(void *ptr, VKLError error, const char* msg)
 
 IntelDevice::~IntelDevice()
 {
-  rtcReleaseDevice(embree);
+  rtcReleaseDevice(intel_device.embree);
   vklShutdown();
 }
 
@@ -55,24 +71,41 @@ IntelDevice::initialize()
 {
     super::initialize();
 
-    embree = rtcNewDevice(NULL);
-    rtcSetDeviceErrorFunction(embree, embreeError, (void *)this);
+    intel_device.embree = rtcNewDevice(NULL);
+    rtcSetDeviceErrorFunction(intel_device.embree, embreeError, (void *)this);
 
-    vkl = vklNewDriver("ispc");
-    vklDriverSetErrorCallback(vkl, vklError, (void *)this);
+    vklLoadModule("ispc_driver");
+    intel_device.vkl = vklNewDriver("ispc");
+    vklDriverSetErrorCallback(intel_device.vkl, vklError, (void *)this);
 }
 
-GalaxyObjectPtr
-IntelDevice::CreateTheDeviceEquivalent(KeyedDataObjectPtr kdop)
+ModelPtr
+IntelDevice::NewModel() 
 {
+  return Model::Cast(IntelModel::New());
+}
+
+void
+IntelDevice::CreateTheDatasetDeviceEquivalent(KeyedDataObjectPtr kdop)
+{
+  IntelDataPtr idata;
+
   if (Volume::IsA(kdop))
-  {
-    VklVolumePtr v = VklVolume::New();
-    v->SetVolume(Volume::Cast(kdop));
-    return GalaxyObject::Cast(v);
-  }
+    idata = IntelData::Cast(VklVolume::New());
+  else if (Particles::IsA(kdop))
+    idata = IntelData::Cast(EmbreeSpheres::New());
+  else if (PathLines::IsA(kdop))
+    idata = IntelData::Cast(EmbreePathLines::New());
+  else if (Triangles::IsA(kdop))
+    idata = IntelData::Cast(EmbreeTriangles::New());
   else
-    return NULL;
+  {
+    std::cerr << "error - unknown dataset class\n";
+    exit(1);
+  }
+
+  idata->FinalizeData(kdop);
+  kdop->SetTheDeviceEquivalent(idata);
 }
 
 }

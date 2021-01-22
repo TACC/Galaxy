@@ -32,6 +32,13 @@ KeyedObjectMap* GetTheKeyedObjectMap() { return &theKeyedObjectMap; }
 WORK_CLASS_TYPE(KeyedObjectMap::NewMsg)
 WORK_CLASS_TYPE(KeyedObjectMap::DropMsg)
 
+void
+KeyedObjectMap::Register()
+{
+  NewMsg::Register();
+  DropMsg::Register();
+}
+
 KeyedObjectPtr
 KeyedObjectMap::NewDistributed(GalaxyObjectClass c)
 {

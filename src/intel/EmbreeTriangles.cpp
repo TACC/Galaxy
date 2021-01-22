@@ -27,16 +27,14 @@
 namespace gxy 
 {
 
-EmbreeTriangles::EmbreeTriangles() : EmbreeGeometry()
-{
-}
+OBJECT_CLASS_TYPE(EmbreeTriangles)
 
 void
-EmbreeTriangles::FinalizeIspc()
+EmbreeTriangles::FinalizeData(KeyedDataObjectPtr kop)
 {
-    EmbreeGeometry::FinalizeIspc();
+    super::FinalizeData(kop);
 
-    TrianglesDPtr t = Triangles::DCast(geometry);
+    TrianglesDPtr t = Triangles::DCast(kop);
     if (! t)
     {
         std::cerr << "EmbreeTriangles::FinalizeIspc called with something other than Triangles\n";
@@ -46,7 +44,7 @@ EmbreeTriangles::FinalizeIspc()
     int nv = t->GetNumberOfVertices();
     int nc = t->GetConnectivitySize();
 
-    ispc::EmbreeGeometry_ispc *iptr = (ispc::EmbreeGeometry_ispc *)GetIspc();
+    ::ispc::EmbreeGeometry_ispc *iptr = (::ispc::EmbreeGeometry_ispc *)GetIspc();
     if (nv && nc)
     {
         IntelDevicePtr intel_device = IntelDevice::Cast(GetTheDevice());

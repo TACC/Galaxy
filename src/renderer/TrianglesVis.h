@@ -39,7 +39,7 @@ KEYED_OBJECT_POINTER_TYPES(TrianglesVis)
 
 //! a visualization element operating on a triangle (tessellated) dataset within Galaxy
 /* \ingroup render 
- * \sa Vis, KeyedObject, IspcObject, OsprayObject
+ * \sa Vis, KeyedObject, IspcObject
  */
 class TrianglesVis : public GeometryVis
 {
@@ -54,10 +54,6 @@ public:
   virtual bool local_commit(MPI_Comm);
 
 protected:
-
-	virtual void initialize_ispc();
-	virtual void allocate_ispc();
-	virtual void destroy_ispc();
 
   virtual bool LoadFromJSON(rapidjson::Value&);
 

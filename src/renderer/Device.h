@@ -33,22 +33,17 @@ class Device : public GalaxyObject
     GALAXY_OBJECT_SUBCLASS(Device, GalaxyObject)
 
 public:
+    static void FreeDevice();
     static void InitDevice();
     virtual void initialize();
 
+    virtual void *GetTheDeviceEquivalent() { return NULL; }
+
     virtual ModelPtr NewModel();
-    virtual GalaxyObjectPtr CreateTheDeviceEquivalent(KeyedDataObjectPtr);
+    virtual void CreateTheDatasetDeviceEquivalent(KeyedDataObjectPtr);
 
 protected:
     static void SetDevice(DevicePtr);
 };
 
 }
-
-
-
-
-
-    
-
-

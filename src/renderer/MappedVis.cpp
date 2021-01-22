@@ -26,6 +26,7 @@
 #include <fstream>
 #include "Application.h"
 #include "MappedVis.h"
+
 #include "MappedVis_ispc.h"
 
 #include "rapidjson/document.h"
@@ -36,7 +37,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(MappedVis)
+OBJECT_CLASS_TYPE(MappedVis)
 
 void
 MappedVis::Register()
@@ -46,8 +47,6 @@ MappedVis::Register()
 
 MappedVis::~MappedVis()
 {
-  if (transferFunction)
-    ospRelease(transferFunction);
 }
 
 void
@@ -60,21 +59,22 @@ MappedVis::initialize()
 
   opacitymap.push_back(vec2f(0.0, 1.0));
   opacitymap.push_back(vec2f(1.0, 1.0));
-  
-  transferFunction = NULL;
 }
 
 void 
 MappedVis::initialize_ispc()
 {
   super::initialize_ispc();
-  ispc::MappedVis_initialize(ispc);
+
+  ::ispc::MappedVis_ispc *myspc = (::ispc::MappedVis_ispc*)ispc;
+  myspc->colorMap   = color_tf.GetIspc();
+  myspc->opacityMap = opacity_tf.GetIspc();
 }
 
 void
 MappedVis::allocate_ispc()
 {
-  ispc = ispc::MappedVis_allocate();
+  ispc = malloc(sizeof(::ispc::MappedVis_ispc));
 }
 
 bool 
@@ -202,17 +202,6 @@ MappedVis::LoadFromJSON(Value& v)
   return true;
 }
 
-#if 0
-void
-MappedVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
-{
-  super::SetTheOsprayDataObject(o);
-
-  ospSetObject(o->GetOSP(), "transferFunction", transferFunction);
-  ospCommit(o->GetOSP());
-}
-#endif
-
 int
 MappedVis::serialSize() 
 {
@@ -281,61 +270,12 @@ MappedVis::local_commit(MPI_Comm c)
 {
   if(super::local_commit(c))  
     return true;
-  
-  if (! transferFunction)
-    transferFunction = ospNewTransferFunction("piecewise_linear");
 
-  int n_colors = colormap.size();
+  color_tf.Interpolate(colormap.size(), (float *)colormap.data());
+  color_tf.SetMinMax(data_range_min, data_range_max);
 
-  vec3f color[256];
-
-  int i0 = 0, i1 = 1;
-  float xmin = colormap[0].x, xmax = colormap[n_colors-1].x;
-  for (int i = 0; i < 256; i++)
-  {
-    float x = xmin + (i / (255.0))*(xmax - xmin);
-    if (x > xmax) x = xmax;
-
-    while (colormap[i1].x <= x)
-      i0++, i1++;
-
-    float d = (x - colormap[i0].x) / (colormap[i1].x - colormap[i0].x);
-    color[i].x = colormap[i0].y + d * (colormap[i1].y - colormap[i0].y);
-    color[i].y = colormap[i0].z + d * (colormap[i1].z - colormap[i0].z);
-    color[i].z = colormap[i0].w + d * (colormap[i1].w - colormap[i0].w);
-  }
-
-  OSPData oColors = ospNewData(256, OSP_FLOAT3, color);
-  ospSetData(transferFunction, "colors", oColors);
-  ospRelease(oColors);
-  
-  int n_opacities = opacitymap.size();
-  float opacity[256];
-
-  i0 = 0, i1 = 1;
-  xmin = opacitymap[0].x, xmax = opacitymap[n_opacities-1].x;
-  for (int i = 0; i < 256; i++)
-  {
-    float x = xmin + (i / (255.0))*(xmax - xmin);
-    if (x > xmax) x = xmax;
-
-    while (opacitymap[i1].x <= x)
-      i0++, i1++;
-
-    float d = (x - opacitymap[i0].x) / (opacitymap[i1].x - opacitymap[i0].x);
-    opacity[i] = opacitymap[i0].y + d * (opacitymap[i1].y - opacitymap[i0].y);
-  }
-
-  OSPData oAlphas = ospNewData(256, OSP_FLOAT, opacity);
-  ospSetData(transferFunction, "opacities", oAlphas);
-  ospRelease(oAlphas);
-  if (data_range)
-      ospSet2f(transferFunction, "valueRange", data_range_min, data_range_max);
-  else
-      ospSet2f(transferFunction, "valueRange", colormap[0].x, colormap[n_colors-1].x);
-  ospCommit(transferFunction);
-  
-  // ispc::MappedVis_set_transferFunction(ispc, ospray_util::GetIE(transferFunction));
+  opacity_tf.Interpolate(opacitymap.size(), (float *)opacitymap.data());
+  opacity_tf.SetMinMax(data_range_min, data_range_max);
 
   return false;
 }

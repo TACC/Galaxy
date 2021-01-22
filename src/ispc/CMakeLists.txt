@@ -20,7 +20,7 @@
 
 cmake_minimum_required (VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
-project (gxy_ospray VERSION ${GALAXY_VERSION})
+project (gxy_ispc VERSION ${GALAXY_VERSION})
 
 if (COMMAND cmake_policy)
   # use rpath on MacOS
@@ -51,13 +51,11 @@ install(FILES
   TransferFunction.h
   DESTINATION include/gxy)
 
-if (ospray_DIR)
-  add_library(gxy_ispc SHARED ${CPP_SOURCES})
-  ispc_target_add_sources(gxy_ispc ${ISPC_SOURCES})
-  target_link_libraries(gxy_ispc gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
-  set_target_properties(gxy_ispc PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_ispc DESTINATION lib)
-endif()
+add_library(gxy_ispc SHARED ${CPP_SOURCES})
+ispc_target_add_sources(gxy_ispc ${ISPC_SOURCES})
+target_link_libraries(gxy_ispc gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
+set_target_properties(gxy_ispc PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
+install(TARGETS gxy_ispc DESTINATION lib)
 
 add_executable(tf_test tf_test.cpp)
 target_link_libraries(tf_test ${GALAXY_LIBRARIES})

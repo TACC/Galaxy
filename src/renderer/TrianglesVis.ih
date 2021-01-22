@@ -21,7 +21,7 @@
 #pragma once
 
 #include "MappedVis.ih"
-#include "SDK/math/vec.ih"
+#include "vec.ih"
 
 struct TrianglesVis_ispc
 {

@@ -26,7 +26,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Vkl)
+OBJECT_CLASS_TYPE(Vkl)
 
 static Vkl *theVkl;
 Vkl *GetVkl() { return theVkl; }

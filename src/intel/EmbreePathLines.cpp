@@ -29,19 +29,14 @@
 namespace gxy 
 {
 
-EmbreePathLines::EmbreePathLines() : EmbreeGeometry()
-{
-}
+OBJECT_CLASS_TYPE(EmbreePathLines)
 
 void
-EmbreePathLines::CreateIspc()
+EmbreePathLines::initialize()
 {
-    if (! ispc)
-        ispc = malloc(sizeof(ispc::EmbreePathLines_ispc));
-
-    EmbreeGeometry::CreateIspc();
+    super::initialize();
     
-    ispc::EmbreePathLines_ispc *iptr = (ispc::EmbreePathLines_ispc*)ispc;
+    ::ispc::EmbreePathLines_ispc *iptr = (::ispc::EmbreePathLines_ispc *)GetIspc();
 
     iptr->epsilon = 0.001;
     iptr->radius0 = 0;
@@ -53,7 +48,7 @@ EmbreePathLines::CreateIspc()
 void
 EmbreePathLines::SetMap(float v0, float r0, float v1, float r1)
 {
-    ispc::EmbreePathLines_ispc *iptr = (ispc::EmbreePathLines_ispc*)GetIspc();
+    ::ispc::EmbreePathLines_ispc *iptr = (::ispc::EmbreePathLines_ispc*)GetIspc();
     iptr->radius0 = r0;
     iptr->value0  = v0;
     iptr->radius1 = r1;
@@ -95,18 +90,18 @@ EmbreePathLines::SetMap(float v0, float r0, float v1, float r1)
 #define LERP(r, a, b) (r*a + (1-r)*b)
 
 void 
-EmbreePathLines::FinalizeIspc()
+EmbreePathLines::FinalizeData(KeyedDataObjectPtr kop)
 {
-    PathLinesDPtr p = PathLines::DCast(geometry);
+    EmbreeGeometry::FinalizeData(kop);
+
+    PathLinesDPtr p = PathLines::DCast(kop);
     if (! p)
     {
         std::cerr << "EmbreePathLines::FinalizeIspc called with something other than PathLines\n";
         exit(1);
     }
 
-    EmbreeGeometry::FinalizeIspc();
-
-    ispc::EmbreePathLines_ispc *iptr = (ispc::EmbreePathLines_ispc*)GetIspc();
+    ::ispc::EmbreePathLines_ispc *iptr = (::ispc::EmbreePathLines_ispc*)GetIspc();
 
     // XXX curves may actually have a larger bounding box due to swinging
 
@@ -206,7 +201,7 @@ EmbreePathLines::FinalizeIspc()
     iptr->indexCurve = (int *)iCurve.data();
 
     IntelDevicePtr intel_device = IntelDevice::Cast(GetTheDevice());
-    device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_USER);
+    device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
     rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, iptr->vertexCurve, 0, sizeof(vec4f), iptr->nvc);
     rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_INDEX,  0, RTC_FORMAT_UINT, iptr->indexCurve, 0, sizeof(int), iptr->ni);
     rtcCommitGeometry(device_geometry);

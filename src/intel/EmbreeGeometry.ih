@@ -20,6 +20,9 @@
 
 #pragma once
 
+#include "embree3/rtcore_config.h"
+#include "embree3/rtcore_ray.isph"
+
 #include "vec.ih"
 
 struct EmbreeGeometry_ispc
@@ -29,6 +32,7 @@ struct EmbreeGeometry_ispc
     uniform vec3f *normals;
     uniform int   *connectivity;
     uniform float *data;
+    void (*computeNormal)(uniform EmbreeGeometry_ispc *uniform, void *uniform rayhit);
 };
 
 typedef uniform EmbreeGeometry_ispc *uniform pEmbreeGeometry_ispc;

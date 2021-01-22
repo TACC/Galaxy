@@ -39,7 +39,7 @@ KEYED_OBJECT_POINTER_TYPES(VolumeVis)
 
 //! a visualization element operating on a regular-grid volumetric dataset within Galaxy
 /*! \ingroup render 
- * \sa MappedVis, Vis, KeyedObject, IspcObject, OsprayObject
+ * \sa MappedVis, Vis, KeyedObject, IspcObject
  */
 class VolumeVis : public MappedVis
 {
@@ -104,7 +104,6 @@ protected:
 
 	virtual void initialize_ispc();
 	virtual void allocate_ispc();
-	virtual void destroy_ispc();
 
   virtual bool LoadFromJSON(rapidjson::Value&);
 

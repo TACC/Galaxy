@@ -25,7 +25,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(EmbreeModel)
+OBJECT_CLASS_TYPE(EmbreeModel)
 
 void
 EmbreeModel::Register()

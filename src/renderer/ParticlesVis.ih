@@ -22,7 +22,7 @@
 
 #include "MappedVis.ih"
 
-#include "ospray/SDK/math/vec.ih"
+#include "vec.ih"
 
 struct ParticlesVis_ispc
 {

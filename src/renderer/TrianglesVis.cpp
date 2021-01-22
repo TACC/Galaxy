@@ -36,7 +36,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(TrianglesVis)
+OBJECT_CLASS_TYPE(TrianglesVis)
 
 void
 TrianglesVis::Register()
@@ -46,26 +46,12 @@ TrianglesVis::Register()
 
 TrianglesVis::~TrianglesVis()
 {
-	TrianglesVis::destroy_ispc();
 }
 
 void
 TrianglesVis::initialize()
 {
   super::initialize();
-}
-
-void
-TrianglesVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::TrianglesVis_initialize(ispc);
-} 
-    
-void
-TrianglesVis::allocate_ispc()
-{
-  ispc = ispc::TrianglesVis_allocate();
 }
 
 int 
@@ -92,15 +78,6 @@ bool
 TrianglesVis::LoadFromJSON(Value& v)
 {
   return super::LoadFromJSON(v);
-}
-
-void
-TrianglesVis::destroy_ispc()
-{
-  if (ispc)
-  {
-    ispc::TrianglesVis_destroy(ispc);
-  }
 }
 
 bool

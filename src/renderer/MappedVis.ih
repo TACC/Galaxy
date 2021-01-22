@@ -21,12 +21,14 @@
 #pragma once
 
 #include "Vis.ih"
-struct TransferFunction;
+#include "TransferFunction.ih"
 
 struct MappedVis_ispc
 {
-  struct Vis_ispc vis;
-  void *uniform transferFunction;
+  Vis_ispc vis;
+  float min_value, max_value;
+  void *colorMap;
+  void *opacityMap;
 };  
 
 typedef uniform MappedVis_ispc *uniform pMappedVis_ispc;

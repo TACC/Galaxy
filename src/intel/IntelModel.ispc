@@ -2,6 +2,7 @@
 #include "embree3/rtcore_ray.isph"
 #include "embree3/rtcore.isph"
 
+#include "IntelModel.ih"
 #include "EmbreeGeometry.ih"
 #include "Rays.ih"
 
@@ -16,6 +17,9 @@
 #else
 #error Unknown vector width
 #endif
+
+export void
+crap(uniform IntelModel_ispc& foo) {}
 
 void
 IntelModel_IntersectSOA(RTCScene scene, void *uniform rayhit)
@@ -32,9 +36,10 @@ IntelModel_IntersectSOA(RTCScene scene, void *uniform rayhit)
 // bridges the gap from C++ to ISPC.
 
 export void
-IntelModel_Intersect(RTCScene scene,  void **uniform _geom, const uniform int n, void *uniform _rays)
+IntelModel_Intersect(uniform IntelModel_ispc& self, const uniform int n, void *uniform _rays)
 {
-    EmbreeGeometry_ispc **uniform geom = (EmbreeGeometry_ispc **uniform)_geom;
+    RTCScene scene = self.scene;
+    EmbreeGeometry_ispc **uniform geom = self.geometries;
     uniform RayList_ispc *uniform rays = (uniform RayList_ispc *)_rays;
     RTCRayHit rayhit;
 
@@ -59,9 +64,9 @@ IntelModel_Intersect(RTCScene scene,  void **uniform _geom, const uniform int n,
         IntelModel_IntersectSOA(scene, (void *)&rayhit);
 
         int gid = rayhit.hit.geomID;
+        // print("GID %\n", gid);
         if (gid != RTC_INVALID_GEOMETRY_ID && geom[gid]->connectivity && geom[gid]->normals)
         {
-            // print("GID %\n", gid);
             // print("PID %\n", rayhit.hit.primID);
             // print("X %\nY %\nZ %\n", rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
             vec3f bary = make_vec3f(1.0f - rayhit.hit.u - rayhit.hit.v, rayhit.hit.u, rayhit.hit.v);

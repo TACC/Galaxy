@@ -29,7 +29,7 @@ using namespace rapidjson;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(PathLinesVis)
+OBJECT_CLASS_TYPE(PathLinesVis)
 
 void
 PathLinesVis::Register()
@@ -39,7 +39,7 @@ PathLinesVis::Register()
 
 PathLinesVis::~PathLinesVis()
 {
-	PathLinesVis::destroy_ispc();
+	destroy_ispc();
 }
 
 void
@@ -51,19 +51,6 @@ PathLinesVis::initialize()
   r1 =  1.0;
   v0 =  0.0;
   v1 =  1.0;
-}
-
-void
-PathLinesVis::initialize_ispc()
-{
-  super::initialize_ispc();
-  ispc::PathLinesVis_initialize(ispc);
-} 
-    
-void
-PathLinesVis::allocate_ispc()
-{
-  ispc = ispc::PathLinesVis_allocate();
 }
 
 int 
@@ -110,34 +97,11 @@ PathLinesVis::LoadFromJSON(Value& v)
   return super::LoadFromJSON(v);
 }
 
-void
-PathLinesVis::destroy_ispc()
-{
-  if (ispc)
-  {
-    ispc::PathLinesVis_destroy(ispc);
-  }
-}
-
 bool
 PathLinesVis::local_commit(MPI_Comm c)
 {  
 	return super::local_commit(c);
 }
-
-#if 0
-void
-PathLinesVis::SetTheOsprayDataObject(OsprayObjectDPtr o)
-{
-  super::SetTheOsprayDataObject(o);
-
-  ospSet1f(o->GetOSP(), "value0", v0);
-  ospSet1f(o->GetOSP(), "radius0", r0);
-
-  ospSet1f(o->GetOSP(), "value1", v1);
-  ospSet1f(o->GetOSP(), "radius1", r1);
-}
-#endif
 
 void
 PathLinesVis::ScaleMaps(float xmin, float xmax)

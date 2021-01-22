@@ -27,6 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <stdexcept>
 #include <map>
 
 #include "Application.h"
@@ -35,7 +36,6 @@
 #include "Events.h"
 
 #include "tbb/tbb.h"
-#include "tbb/task_scheduler_init.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
@@ -113,6 +113,7 @@ Application::Application()
   PrintMsg::Register();
 
   KeyedObject::Register();
+  KeyedObjectMap::Register();
 
   pthread_mutex_unlock(&lock);
 }

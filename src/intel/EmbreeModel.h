@@ -26,7 +26,7 @@
 
 namespace gxy {
 
-OBJECT_POINTER_TYPES(EmbreeModel) 
+KEYED_OBJECT_POINTER_TYPES(EmbreeModel) 
 
 class EmbreeModel : public KeyedObject
 {

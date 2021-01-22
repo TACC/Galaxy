@@ -25,7 +25,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(TransferFunction)
+OBJECT_CLASS_TYPE(TransferFunction)
 
 void
 TransferFunction::initialize()

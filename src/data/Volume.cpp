@@ -37,7 +37,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Volume)
+OBJECT_CLASS_TYPE(Volume)
 
 void
 Volume::initialize()

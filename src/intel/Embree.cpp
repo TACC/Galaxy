@@ -26,7 +26,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Device)
+OBJECT_CLASS_TYPE(Device)
 
 static Device *theDevice;
 Device *GetTheDevice() { return theDevice; }

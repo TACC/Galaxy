@@ -40,7 +40,7 @@ using namespace std;
 namespace gxy
 {
   
-KEYED_OBJECT_CLASS_TYPE(Datasets)
+OBJECT_CLASS_TYPE(Datasets)
 
 void
 Datasets::Register()

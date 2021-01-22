@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "GalaxyObject.h"
+#include "IntelData.h"
 
 namespace gxy { OBJECT_POINTER_TYPES(EmbreeGeometry) }
 
@@ -31,28 +31,21 @@ namespace gxy { OBJECT_POINTER_TYPES(EmbreeGeometry) }
 namespace gxy 
 {
 
-class EmbreeGeometry : GalaxyObject
+class EmbreeGeometry : public IntelData
 {
-    GALAXY_OBJECT_SUBCLASS(EmbreeGeometry, GalaxyObject)
+    GALAXY_OBJECT_SUBCLASS(EmbreeGeometry, IntelData)
 
 public:
     virtual ~EmbreeGeometry();
     virtual void initialize();
 
-    void SetGeometry(GeometryDPtr g);
+    virtual void FinalizeData(KeyedDataObjectPtr);
 
-    virtual void CreateIspc();
-    virtual void FinalizeIspc();
-
-    GeometryDPtr GetGeometry();
     RTCGeometry GetDeviceGeometry() { return device_geometry; }
-    void *GetIspc() { return ispc; }
 
 protected:
-
-    GeometryDPtr geometry;
+    virtual int  IspcSize();
     RTCGeometry device_geometry;
-    void *ispc;
 };
 
 }

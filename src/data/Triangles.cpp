@@ -22,7 +22,7 @@
 #include <iostream>
 #include "vtkerror.h"
 #include "Triangles.h"
-#include "EmbreeTriangles.h"
+// #include "EmbreeTriangles.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -50,7 +50,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(Triangles) 
+OBJECT_CLASS_TYPE(Triangles) 
 
 void     
 Triangles::Register()

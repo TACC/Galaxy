@@ -20,6 +20,13 @@
 
 #include "EmbreeGeometry.ih"
 
+#include "embree3/rtcore_config.h"
+#include "embree3/rtcore_ray.isph"
+
 // force export of EmbreeGeometry_ispc in EmbreeGeometry_ispc.h
 
 export void EmbreeGeometry_dummy(uniform EmbreeGeometry_ispc * uniform egi) {}
+
+export void EmbreeGeometry_computeNormal(uniform EmbreeGeometry_ispc * uniform egi, void *uniform ptr)
+{
+}

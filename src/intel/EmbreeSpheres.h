@@ -25,23 +25,24 @@ namespace gxy { OBJECT_POINTER_TYPES(EmbreeSpheres) }
 
 #include "EmbreeGeometry.h"
 #include "Particles.h"
-// #include "EmbreeSpheres_ispc.h"
+#include "EmbreeSpheres_ispc.h"
 
 namespace gxy 
 {
 class EmbreeSpheres : public EmbreeGeometry
 {
+  GALAXY_OBJECT_SUBCLASS(EmbreeSpheres, EmbreeGeometry);
+
 public:
-    ~EmbreeSpheres() {};
+  ~EmbreeSpheres() {};
+  virtual void initialize();
 
-    void SetMap(float, float, float, float);
+  void SetMap(float, float, float, float);
 
-    virtual void CreateIspc();
-    virtual void FinalizeIspc();
+  virtual void FinalizeData(KeyedDataObjectPtr);
 
 protected:
-    EmbreeSpheres();
-
+  virtual int  IspcSize() { return sizeof(::ispc::EmbreeSpheres_ispc); }
 };
 
 }

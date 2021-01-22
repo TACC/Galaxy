@@ -20,17 +20,4 @@
 
 #include "PathLinesVis.ih"
 
-export void *uniform PathLinesVis_allocate()
-{
-	PathLinesVis_ispc *uniform v = uniform new uniform PathLinesVis_ispc;
-	return (void *)v;
-}
-
-export void PathLinesVis_initialize(void *uniform _self)
-{
-	PathLinesVis_ispc *uniform self = (uniform PathLinesVis_ispc *)_self;
-}
-
-export void PathLinesVis_destroy(void *uniform _self)
-{
-}
+export void *uniform PathLinesVis_dummy(PathLinesVis_ispc *uniform a) {}

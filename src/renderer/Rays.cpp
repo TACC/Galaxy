@@ -20,7 +20,7 @@
 
 #include "RayFlags.h"
 #include "Rays.h"
-#include "Rays.ih"
+// #include "Rays.ih"
 #include "Rays_ispc.h"
 
 #include <iostream>
@@ -66,7 +66,7 @@ RayList::RayList(RendererDPtr renderer, RenderingSetDPtr rs, RenderingDPtr r, in
 	h->aligned_size 		= nn;
 	h->type 				= type;
 
-	ispc = malloc(sizeof(ispc::RayList_ispc));
+	ispc = malloc(sizeof(::ispc::RayList_ispc));
 	setup_ispc_pointers();
 
 	pthread_mutex_lock(&raylist_lock);
@@ -92,7 +92,7 @@ RayList::RayList(int n)
 	h->aligned_size 		= nn;
 	h->type 				= PRIMARY;
 
-	ispc = malloc(sizeof(ispc::RayList_ispc));
+	ispc = malloc(sizeof(::ispc::RayList_ispc));
 	setup_ispc_pointers();
 
 	pthread_mutex_lock(&raylist_lock);
@@ -109,7 +109,7 @@ RayList::RayList(SharedP c)
 	theRenderingSet = RenderingSet::GetByKey(h->renderingSetKey);
 	theRendering = Rendering::GetByKey(h->renderingKey);
 
-	ispc = malloc(sizeof(ispc::RayList_ispc));
+	ispc = malloc(sizeof(::ispc::RayList_ispc));
 	setup_ispc_pointers();
 }
 
@@ -118,83 +118,83 @@ RayList::~RayList()
   free(ispc);
 }
 
-float RayList::get_ox(int i)              { return ((ispc::RayList_ispc *)ispc)->ox[i]; }
-float RayList::get_oy(int i)              { return ((ispc::RayList_ispc *)ispc)->oy[i]; }
-float RayList::get_oz(int i)              { return ((ispc::RayList_ispc *)ispc)->oz[i]; }
-float RayList::get_dx(int i)              { return ((ispc::RayList_ispc *)ispc)->dx[i]; }
-float RayList::get_dy(int i)              { return ((ispc::RayList_ispc *)ispc)->dy[i]; }
-float RayList::get_dz(int i)              { return ((ispc::RayList_ispc *)ispc)->dz[i]; }
-float RayList::get_nx(int i)              { return ((ispc::RayList_ispc *)ispc)->nx[i]; }
-float RayList::get_ny(int i)              { return ((ispc::RayList_ispc *)ispc)->ny[i]; }
-float RayList::get_nz(int i)              { return ((ispc::RayList_ispc *)ispc)->nz[i]; }
-float RayList::get_sample(int i)          { return ((ispc::RayList_ispc *)ispc)->sample[i]; }
-float RayList::get_r(int i)               { return ((ispc::RayList_ispc *)ispc)->r[i]; }
-float RayList::get_g(int i)               { return ((ispc::RayList_ispc *)ispc)->g[i]; }
-float RayList::get_b(int i)               { return ((ispc::RayList_ispc *)ispc)->b[i]; }
-float RayList::get_o(int i)               { return ((ispc::RayList_ispc *)ispc)->o[i]; }
-float RayList::get_sr(int i)              { return ((ispc::RayList_ispc *)ispc)->sr[i]; }
-float RayList::get_sg(int i)              { return ((ispc::RayList_ispc *)ispc)->sg[i]; }
-float RayList::get_sb(int i)              { return ((ispc::RayList_ispc *)ispc)->sb[i]; }
-float RayList::get_so(int i)              { return ((ispc::RayList_ispc *)ispc)->so[i]; }
-float RayList::get_t(int i)               { return ((ispc::RayList_ispc *)ispc)->t[i]; }
-float RayList::get_tMax(int i)            { return ((ispc::RayList_ispc *)ispc)->tMax[i]; }
-int   RayList::get_x(int i)               { return ((ispc::RayList_ispc *)ispc)->x[i]; }
-int   RayList::get_y(int i)               { return ((ispc::RayList_ispc *)ispc)->y[i]; }
-int   RayList::get_type(int i)            { return ((ispc::RayList_ispc *)ispc)->type[i]; }
-int   RayList::get_term(int i)            { return ((ispc::RayList_ispc *)ispc)->term[i]; }
-int   RayList::get_classification(int i)  { return ((ispc::RayList_ispc *)ispc)->classification[i]; }
+float RayList::get_ox(int i)              { return ((::ispc::RayList_ispc *)ispc)->ox[i]; }
+float RayList::get_oy(int i)              { return ((::ispc::RayList_ispc *)ispc)->oy[i]; }
+float RayList::get_oz(int i)              { return ((::ispc::RayList_ispc *)ispc)->oz[i]; }
+float RayList::get_dx(int i)              { return ((::ispc::RayList_ispc *)ispc)->dx[i]; }
+float RayList::get_dy(int i)              { return ((::ispc::RayList_ispc *)ispc)->dy[i]; }
+float RayList::get_dz(int i)              { return ((::ispc::RayList_ispc *)ispc)->dz[i]; }
+float RayList::get_nx(int i)              { return ((::ispc::RayList_ispc *)ispc)->nx[i]; }
+float RayList::get_ny(int i)              { return ((::ispc::RayList_ispc *)ispc)->ny[i]; }
+float RayList::get_nz(int i)              { return ((::ispc::RayList_ispc *)ispc)->nz[i]; }
+float RayList::get_sample(int i)          { return ((::ispc::RayList_ispc *)ispc)->sample[i]; }
+float RayList::get_r(int i)               { return ((::ispc::RayList_ispc *)ispc)->r[i]; }
+float RayList::get_g(int i)               { return ((::ispc::RayList_ispc *)ispc)->g[i]; }
+float RayList::get_b(int i)               { return ((::ispc::RayList_ispc *)ispc)->b[i]; }
+float RayList::get_o(int i)               { return ((::ispc::RayList_ispc *)ispc)->o[i]; }
+float RayList::get_sr(int i)              { return ((::ispc::RayList_ispc *)ispc)->sr[i]; }
+float RayList::get_sg(int i)              { return ((::ispc::RayList_ispc *)ispc)->sg[i]; }
+float RayList::get_sb(int i)              { return ((::ispc::RayList_ispc *)ispc)->sb[i]; }
+float RayList::get_so(int i)              { return ((::ispc::RayList_ispc *)ispc)->so[i]; }
+float RayList::get_t(int i)               { return ((::ispc::RayList_ispc *)ispc)->t[i]; }
+float RayList::get_tMax(int i)            { return ((::ispc::RayList_ispc *)ispc)->tMax[i]; }
+int   RayList::get_x(int i)               { return ((::ispc::RayList_ispc *)ispc)->x[i]; }
+int   RayList::get_y(int i)               { return ((::ispc::RayList_ispc *)ispc)->y[i]; }
+int   RayList::get_type(int i)            { return ((::ispc::RayList_ispc *)ispc)->type[i]; }
+int   RayList::get_term(int i)            { return ((::ispc::RayList_ispc *)ispc)->term[i]; }
+int   RayList::get_classification(int i)  { return ((::ispc::RayList_ispc *)ispc)->classification[i]; }
 
-float* RayList::get_ox_base()             { return ((ispc::RayList_ispc *)ispc)->ox; }
-float* RayList::get_oy_base()             { return ((ispc::RayList_ispc *)ispc)->oy; }
-float* RayList::get_oz_base()             { return ((ispc::RayList_ispc *)ispc)->oz; }
-float* RayList::get_dx_base()             { return ((ispc::RayList_ispc *)ispc)->dx; }
-float* RayList::get_dy_base()             { return ((ispc::RayList_ispc *)ispc)->dy; }
-float* RayList::get_dz_base()             { return ((ispc::RayList_ispc *)ispc)->dz; }
-float* RayList::get_nx_base()             { return ((ispc::RayList_ispc *)ispc)->nx; }
-float* RayList::get_ny_base()             { return ((ispc::RayList_ispc *)ispc)->ny; }
-float* RayList::get_nz_base()             { return ((ispc::RayList_ispc *)ispc)->nz; }
-float* RayList::get_sample_base()         { return ((ispc::RayList_ispc *)ispc)->sample; }
-float* RayList::get_r_base()              { return ((ispc::RayList_ispc *)ispc)->r; }
-float* RayList::get_g_base()              { return ((ispc::RayList_ispc *)ispc)->g; }
-float* RayList::get_b_base()              { return ((ispc::RayList_ispc *)ispc)->b; }
-float* RayList::get_o_base()              { return ((ispc::RayList_ispc *)ispc)->o; }
-float* RayList::get_sr_base()             { return ((ispc::RayList_ispc *)ispc)->sr; }
-float* RayList::get_sg_base()             { return ((ispc::RayList_ispc *)ispc)->sg; }
-float* RayList::get_sb_base()             { return ((ispc::RayList_ispc *)ispc)->sb; }
-float* RayList::get_so_base()             { return ((ispc::RayList_ispc *)ispc)->so; }
-float* RayList::get_t_base()              { return ((ispc::RayList_ispc *)ispc)->t; }
-float* RayList::get_tMax_base()           { return ((ispc::RayList_ispc *)ispc)->tMax; }
-int*   RayList::get_x_base()              { return ((ispc::RayList_ispc *)ispc)->x; }
-int*   RayList::get_y_base()              { return ((ispc::RayList_ispc *)ispc)->y; }
-int*   RayList::get_type_base()           { return ((ispc::RayList_ispc *)ispc)->type; }
-int*   RayList::get_term_base()           { return ((ispc::RayList_ispc *)ispc)->term; }
-int*   RayList::get_classification_base() { return ((ispc::RayList_ispc *)ispc)->classification; }
+float* RayList::get_ox_base()             { return ((::ispc::RayList_ispc *)ispc)->ox; }
+float* RayList::get_oy_base()             { return ((::ispc::RayList_ispc *)ispc)->oy; }
+float* RayList::get_oz_base()             { return ((::ispc::RayList_ispc *)ispc)->oz; }
+float* RayList::get_dx_base()             { return ((::ispc::RayList_ispc *)ispc)->dx; }
+float* RayList::get_dy_base()             { return ((::ispc::RayList_ispc *)ispc)->dy; }
+float* RayList::get_dz_base()             { return ((::ispc::RayList_ispc *)ispc)->dz; }
+float* RayList::get_nx_base()             { return ((::ispc::RayList_ispc *)ispc)->nx; }
+float* RayList::get_ny_base()             { return ((::ispc::RayList_ispc *)ispc)->ny; }
+float* RayList::get_nz_base()             { return ((::ispc::RayList_ispc *)ispc)->nz; }
+float* RayList::get_sample_base()         { return ((::ispc::RayList_ispc *)ispc)->sample; }
+float* RayList::get_r_base()              { return ((::ispc::RayList_ispc *)ispc)->r; }
+float* RayList::get_g_base()              { return ((::ispc::RayList_ispc *)ispc)->g; }
+float* RayList::get_b_base()              { return ((::ispc::RayList_ispc *)ispc)->b; }
+float* RayList::get_o_base()              { return ((::ispc::RayList_ispc *)ispc)->o; }
+float* RayList::get_sr_base()             { return ((::ispc::RayList_ispc *)ispc)->sr; }
+float* RayList::get_sg_base()             { return ((::ispc::RayList_ispc *)ispc)->sg; }
+float* RayList::get_sb_base()             { return ((::ispc::RayList_ispc *)ispc)->sb; }
+float* RayList::get_so_base()             { return ((::ispc::RayList_ispc *)ispc)->so; }
+float* RayList::get_t_base()              { return ((::ispc::RayList_ispc *)ispc)->t; }
+float* RayList::get_tMax_base()           { return ((::ispc::RayList_ispc *)ispc)->tMax; }
+int*   RayList::get_x_base()              { return ((::ispc::RayList_ispc *)ispc)->x; }
+int*   RayList::get_y_base()              { return ((::ispc::RayList_ispc *)ispc)->y; }
+int*   RayList::get_type_base()           { return ((::ispc::RayList_ispc *)ispc)->type; }
+int*   RayList::get_term_base()           { return ((::ispc::RayList_ispc *)ispc)->term; }
+int*   RayList::get_classification_base() { return ((::ispc::RayList_ispc *)ispc)->classification; }
 
-void RayList::set_ox(int i, float v)           { ((ispc::RayList_ispc *)ispc)->ox[i] = v; }
-void RayList::set_oy(int i, float v)           { ((ispc::RayList_ispc *)ispc)->oy[i] = v; }
-void RayList::set_oz(int i, float v)           { ((ispc::RayList_ispc *)ispc)->oz[i] = v; }
-void RayList::set_dx(int i, float v)           { ((ispc::RayList_ispc *)ispc)->dx[i] = v; }
-void RayList::set_dy(int i, float v)           { ((ispc::RayList_ispc *)ispc)->dy[i] = v; }
-void RayList::set_dz(int i, float v)           { ((ispc::RayList_ispc *)ispc)->dz[i] = v; }
-void RayList::set_nx(int i, float v)           { ((ispc::RayList_ispc *)ispc)->nx[i] = v; }
-void RayList::set_ny(int i, float v)           { ((ispc::RayList_ispc *)ispc)->ny[i] = v; }
-void RayList::set_nz(int i, float v)           { ((ispc::RayList_ispc *)ispc)->nz[i] = v; }
-void RayList::set_sample(int i, float v)       { ((ispc::RayList_ispc *)ispc)->sample[i] = v; }
-void RayList::set_r(int i, float v)            { ((ispc::RayList_ispc *)ispc)->r[i] = v; }
-void RayList::set_g(int i, float v)            { ((ispc::RayList_ispc *)ispc)->g[i] = v; }
-void RayList::set_b(int i, float v)            { ((ispc::RayList_ispc *)ispc)->b[i] = v; }
-void RayList::set_o(int i, float v)            { ((ispc::RayList_ispc *)ispc)->o[i] = v; }
-void RayList::set_sr(int i, float v)           { ((ispc::RayList_ispc *)ispc)->sr[i] = v; }
-void RayList::set_sg(int i, float v)           { ((ispc::RayList_ispc *)ispc)->sg[i] = v; }
-void RayList::set_sb(int i, float v)           { ((ispc::RayList_ispc *)ispc)->sb[i] = v; }
-void RayList::set_so(int i, float v)           { ((ispc::RayList_ispc *)ispc)->so[i] = v; }
-void RayList::set_t(int i, float v)            { ((ispc::RayList_ispc *)ispc)->t[i] = v; }
-void RayList::set_tMax(int i, float v)         { ((ispc::RayList_ispc *)ispc)->tMax[i] = v; }
-void RayList::set_x(int i, int v)              { ((ispc::RayList_ispc *)ispc)->x[i] = v; }
-void RayList::set_y(int i, int v)              { ((ispc::RayList_ispc *)ispc)->y[i] = v; }
-void RayList::set_type(int i, int v)           { ((ispc::RayList_ispc *)ispc)->type[i] = v; }
-void RayList::set_term(int i, int v)           { ((ispc::RayList_ispc *)ispc)->term[i] = v; }
-void RayList::set_classification(int i, int v) { ((ispc::RayList_ispc *)ispc)->classification[i] = v; }
+void RayList::set_ox(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->ox[i] = v; }
+void RayList::set_oy(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->oy[i] = v; }
+void RayList::set_oz(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->oz[i] = v; }
+void RayList::set_dx(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->dx[i] = v; }
+void RayList::set_dy(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->dy[i] = v; }
+void RayList::set_dz(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->dz[i] = v; }
+void RayList::set_nx(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->nx[i] = v; }
+void RayList::set_ny(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->ny[i] = v; }
+void RayList::set_nz(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->nz[i] = v; }
+void RayList::set_sample(int i, float v)       { ((::ispc::RayList_ispc *)ispc)->sample[i] = v; }
+void RayList::set_r(int i, float v)            { ((::ispc::RayList_ispc *)ispc)->r[i] = v; }
+void RayList::set_g(int i, float v)            { ((::ispc::RayList_ispc *)ispc)->g[i] = v; }
+void RayList::set_b(int i, float v)            { ((::ispc::RayList_ispc *)ispc)->b[i] = v; }
+void RayList::set_o(int i, float v)            { ((::ispc::RayList_ispc *)ispc)->o[i] = v; }
+void RayList::set_sr(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->sr[i] = v; }
+void RayList::set_sg(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->sg[i] = v; }
+void RayList::set_sb(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->sb[i] = v; }
+void RayList::set_so(int i, float v)           { ((::ispc::RayList_ispc *)ispc)->so[i] = v; }
+void RayList::set_t(int i, float v)            { ((::ispc::RayList_ispc *)ispc)->t[i] = v; }
+void RayList::set_tMax(int i, float v)         { ((::ispc::RayList_ispc *)ispc)->tMax[i] = v; }
+void RayList::set_x(int i, int v)              { ((::ispc::RayList_ispc *)ispc)->x[i] = v; }
+void RayList::set_y(int i, int v)              { ((::ispc::RayList_ispc *)ispc)->y[i] = v; }
+void RayList::set_type(int i, int v)           { ((::ispc::RayList_ispc *)ispc)->type[i] = v; }
+void RayList::set_term(int i, int v)           { ((::ispc::RayList_ispc *)ispc)->term[i] = v; }
+void RayList::set_classification(int i, int v) { ((::ispc::RayList_ispc *)ispc)->classification[i] = v; }
 
 void *
 RayList::get_base()
@@ -208,31 +208,31 @@ RayList::setup_ispc_pointers()
 	hdr *h = (hdr *)contents->get();
     int nn = h->aligned_size;
 
-	((ispc::RayList_ispc *)ispc)->ox             = (float *)get_base();
-	((ispc::RayList_ispc *)ispc)->oy             = ((ispc::RayList_ispc *)ispc)->ox + nn;
-	((ispc::RayList_ispc *)ispc)->oz             = ((ispc::RayList_ispc *)ispc)->oy + nn;
-	((ispc::RayList_ispc *)ispc)->dx             = ((ispc::RayList_ispc *)ispc)->oz + nn;
-	((ispc::RayList_ispc *)ispc)->dy             = ((ispc::RayList_ispc *)ispc)->dx + nn;
-	((ispc::RayList_ispc *)ispc)->dz             = ((ispc::RayList_ispc *)ispc)->dy + nn;
-	((ispc::RayList_ispc *)ispc)->nx             = ((ispc::RayList_ispc *)ispc)->dz + nn;
-	((ispc::RayList_ispc *)ispc)->ny             = ((ispc::RayList_ispc *)ispc)->nx + nn;
-	((ispc::RayList_ispc *)ispc)->nz             = ((ispc::RayList_ispc *)ispc)->ny + nn;
-	((ispc::RayList_ispc *)ispc)->sample         = ((ispc::RayList_ispc *)ispc)->nz + nn;
-	((ispc::RayList_ispc *)ispc)->r              = ((ispc::RayList_ispc *)ispc)->sample + nn;
-	((ispc::RayList_ispc *)ispc)->g              = ((ispc::RayList_ispc *)ispc)->r + nn;
-	((ispc::RayList_ispc *)ispc)->b              = ((ispc::RayList_ispc *)ispc)->g + nn;
-	((ispc::RayList_ispc *)ispc)->o              = ((ispc::RayList_ispc *)ispc)->b + nn;
-	((ispc::RayList_ispc *)ispc)->sr             = ((ispc::RayList_ispc *)ispc)->o + nn;
-	((ispc::RayList_ispc *)ispc)->sg             = ((ispc::RayList_ispc *)ispc)->sr + nn;
-	((ispc::RayList_ispc *)ispc)->sb             = ((ispc::RayList_ispc *)ispc)->sg + nn;
-	((ispc::RayList_ispc *)ispc)->so             = ((ispc::RayList_ispc *)ispc)->sb + nn;
-	((ispc::RayList_ispc *)ispc)->t              = ((ispc::RayList_ispc *)ispc)->so + nn;
-	((ispc::RayList_ispc *)ispc)->tMax           = ((ispc::RayList_ispc *)ispc)->t + nn;
-	((ispc::RayList_ispc *)ispc)->x              = (int *)(((ispc::RayList_ispc *)ispc)->tMax + nn);
-	((ispc::RayList_ispc *)ispc)->y              = ((ispc::RayList_ispc *)ispc)->x + nn;
-	((ispc::RayList_ispc *)ispc)->type           = ((ispc::RayList_ispc *)ispc)->y + nn;
-	((ispc::RayList_ispc *)ispc)->term           = ((ispc::RayList_ispc *)ispc)->type + nn;
-	((ispc::RayList_ispc *)ispc)->classification = ((ispc::RayList_ispc *)ispc)->term + nn;
+	((::ispc::RayList_ispc *)ispc)->ox             = (float *)get_base();
+	((::ispc::RayList_ispc *)ispc)->oy             = ((::ispc::RayList_ispc *)ispc)->ox + nn;
+	((::ispc::RayList_ispc *)ispc)->oz             = ((::ispc::RayList_ispc *)ispc)->oy + nn;
+	((::ispc::RayList_ispc *)ispc)->dx             = ((::ispc::RayList_ispc *)ispc)->oz + nn;
+	((::ispc::RayList_ispc *)ispc)->dy             = ((::ispc::RayList_ispc *)ispc)->dx + nn;
+	((::ispc::RayList_ispc *)ispc)->dz             = ((::ispc::RayList_ispc *)ispc)->dy + nn;
+	((::ispc::RayList_ispc *)ispc)->nx             = ((::ispc::RayList_ispc *)ispc)->dz + nn;
+	((::ispc::RayList_ispc *)ispc)->ny             = ((::ispc::RayList_ispc *)ispc)->nx + nn;
+	((::ispc::RayList_ispc *)ispc)->nz             = ((::ispc::RayList_ispc *)ispc)->ny + nn;
+	((::ispc::RayList_ispc *)ispc)->sample         = ((::ispc::RayList_ispc *)ispc)->nz + nn;
+	((::ispc::RayList_ispc *)ispc)->r              = ((::ispc::RayList_ispc *)ispc)->sample + nn;
+	((::ispc::RayList_ispc *)ispc)->g              = ((::ispc::RayList_ispc *)ispc)->r + nn;
+	((::ispc::RayList_ispc *)ispc)->b              = ((::ispc::RayList_ispc *)ispc)->g + nn;
+	((::ispc::RayList_ispc *)ispc)->o              = ((::ispc::RayList_ispc *)ispc)->b + nn;
+	((::ispc::RayList_ispc *)ispc)->sr             = ((::ispc::RayList_ispc *)ispc)->o + nn;
+	((::ispc::RayList_ispc *)ispc)->sg             = ((::ispc::RayList_ispc *)ispc)->sr + nn;
+	((::ispc::RayList_ispc *)ispc)->sb             = ((::ispc::RayList_ispc *)ispc)->sg + nn;
+	((::ispc::RayList_ispc *)ispc)->so             = ((::ispc::RayList_ispc *)ispc)->sb + nn;
+	((::ispc::RayList_ispc *)ispc)->t              = ((::ispc::RayList_ispc *)ispc)->so + nn;
+	((::ispc::RayList_ispc *)ispc)->tMax           = ((::ispc::RayList_ispc *)ispc)->t + nn;
+	((::ispc::RayList_ispc *)ispc)->x              = (int *)(((::ispc::RayList_ispc *)ispc)->tMax + nn);
+	((::ispc::RayList_ispc *)ispc)->y              = ((::ispc::RayList_ispc *)ispc)->x + nn;
+	((::ispc::RayList_ispc *)ispc)->type           = ((::ispc::RayList_ispc *)ispc)->y + nn;
+	((::ispc::RayList_ispc *)ispc)->term           = ((::ispc::RayList_ispc *)ispc)->type + nn;
+	((::ispc::RayList_ispc *)ispc)->classification = ((::ispc::RayList_ispc *)ispc)->term + nn;
 }
 
 void

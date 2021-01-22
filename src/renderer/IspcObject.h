@@ -21,7 +21,7 @@
 #pragma once
 
 /*! \file IspcObject.h 
- * \brief base class for data objects that will be passed to OSPRay for processing within ISPC routines
+ * \brief base class for data objects that will be passed to into ISPC code for processing
  * \ingroup render
  */
 
@@ -34,8 +34,8 @@ namespace gxy
 {
 
 
-//! base class for data objects that will be passed to OSPRay for processing within ISPC routines
-/*! Galaxy utilizes the Intel OSPRay and Embree ray tracing engines, 
+//! base class for data objects that will be passed to ISPC code for processing
+/*! Galaxy utilizes the Intel Embree ray tracing engine and OpenVkl volume library
  * both of which use the Intel ISPC parallel language for instruction-level parallelism.
  * This class serves as a base for Galaxy data objects to ease ISPC integration.
  * \ingroup data

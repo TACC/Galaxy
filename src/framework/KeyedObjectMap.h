@@ -134,6 +134,9 @@ public:
     //! print the local KeyedObject registry to std::cerr
 	  void Dump();
 
+    //! register local object classes
+    static void Register();
+
 private:
 
   int next_key;
