@@ -56,9 +56,9 @@ EmbreeSpheres::SetMap(float v0, float r0, float v1, float r1)
 void 
 EmbreeSpheres::FinalizeData(KeyedDataObjectPtr kop)
 {
-    super::FinalizeData(kop);
-
     ::ispc::EmbreeSpheres_ispc *iptr = (::ispc::EmbreeSpheres_ispc*)GetIspc();
+
+    super::FinalizeData(kop);
 
     ParticlesDPtr p = Particles::DCast(kop);
     if (! p)
@@ -68,15 +68,15 @@ EmbreeSpheres::FinalizeData(KeyedDataObjectPtr kop)
     }
 
     IntelDevicePtr intel_device = IntelDevice::Cast(Device::GetTheDevice());
-    device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_USER);
+    SetDeviceGeometry(rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_USER));
 
-    rtcSetGeometryUserData(device_geometry, GetIspc());
-    rtcSetGeometryUserPrimitiveCount(device_geometry, p->GetNumberOfVertices());
-    rtcSetGeometryBoundsFunction(device_geometry, (RTCBoundsFunction)&::ispc::EmbreeSpheres_bounds, GetIspc());
-    rtcSetGeometryIntersectFunction (device_geometry, (RTCIntersectFunctionN)&::ispc::EmbreeSpheres_intersect);
-    rtcSetGeometryOccludedFunction(device_geometry, (RTCOccludedFunctionN)&::ispc::EmbreeSpheres_occluded);
+    rtcSetGeometryUserData(GetDeviceGeometry(), GetIspc());
+    rtcSetGeometryUserPrimitiveCount(GetDeviceGeometry(), p->GetNumberOfVertices());
+    rtcSetGeometryBoundsFunction(GetDeviceGeometry(), (RTCBoundsFunction)&::ispc::EmbreeSpheres_bounds, GetIspc());
+    rtcSetGeometryIntersectFunction (GetDeviceGeometry(), (RTCIntersectFunctionN)&::ispc::EmbreeSpheres_intersect);
+    rtcSetGeometryOccludedFunction(GetDeviceGeometry(), (RTCOccludedFunctionN)&::ispc::EmbreeSpheres_occluded);
 
-    rtcCommitGeometry(device_geometry);
+    rtcCommitGeometry(GetDeviceGeometry());
 }
 
 }

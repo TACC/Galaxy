@@ -20,13 +20,22 @@
 
 #pragma once
 
+#include "IntelData.ih"
+
 #include "embree3/rtcore_config.h"
 #include "embree3/rtcore_ray.isph"
+
+
+#include "embree3/rtcore_geometry.isph"
 
 #include "vec.ih"
 
 struct EmbreeGeometry_ispc
 {
+    IntelData_ispc super;
+
+    void *device_geometry;
+
     uniform int   nv, nc;
     uniform vec3f *vertices;
     uniform vec3f *normals;

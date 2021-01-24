@@ -39,11 +39,13 @@
 // ======================================================================== //
 
 
-#include "galaxy.h"
+#if 1
 
-// #include "embree3/rtcore_config.h"
-// #include "embree3/rtcore_ray.isph"
-// #include "embree3/rtcore.isph"
+#include "galaxy.h"
+#include "Rays.ih"
+export void *uniform RayList_dummy(RayList_ispc *uniform a) {}
+
+#else
 
 #include "vec.ih"
 
@@ -951,3 +953,5 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
     }
   }
 }
+
+#endif

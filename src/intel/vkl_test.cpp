@@ -2,16 +2,12 @@
 #include <DataObjects.h>
 #include <Rays.h>
 
-#include "Triangles.h"
-#include "Particles.h"
-#include "PathLines.h"
+#include "Volume.h"
 
 #include "IntelDevice.h"
 #include "IntelModel.h"
 
-#include "EmbreeTriangles.h"
-#include "EmbreeSpheres.h"
-#include "EmbreePathLines.h"
+#include "VklVolume.h"
 
 #include <memory>
 #include <cstdlib>
@@ -38,141 +34,53 @@ int mpiRank = 0, mpiSize = 1;
 std::vector<GeometryDPtr> geometries;
 std::vector<VolumeDPtr>   volumes;
 
-class SetupTriangles : public Work
+class SetupVolume : public Work
 {
 public:
-    SetupTriangles(TrianglesDPtr tp) : SetupTriangles(sizeof(Key))
+    SetupVolume(VolumeDPtr tp) : SetupVolume(sizeof(Key))
     {
         Key *p = (Key *)get();
         p[0] = tp->getkey();
     }
 
-    ~SetupTriangles() {}
-    WORK_CLASS(SetupTriangles, true)
+    ~SetupVolume() {}
+    WORK_CLASS(SetupVolume, true)
 
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
         Key *p = (Key *)get();
         
-        TrianglesDPtr tp = Triangles::GetByKey(p[0]);
+        VolumeDPtr vp = gxy::Volume::GetByKey(p[0]);
 
-        tp->allocate_vertices(4);
-        tp->allocate_connectivity(2*3);
+        vp->set_global_partitions(1, 1, 1);
+        vp->set_ijk(0, 0, 0);
 
-        vec3f *vertices = tp->GetVertices();
+        vp->set_type(gxy::Volume::FLOAT);
+        vp->set_number_of_components(1);
 
-        vertices[0].x = mpiRank + 0.1f; vertices[0].y = 0.1f; vertices[0].z = 0.f;
-        vertices[1].x = mpiRank + 0.9f; vertices[1].y = 0.1f; vertices[1].z = 0.f;
-        vertices[2].x = mpiRank + 0.9f; vertices[2].y = 0.9f; vertices[2].z = 0.f;
-        vertices[3].x = mpiRank + 0.1f; vertices[3].y = 0.9f; vertices[3].z = 0.f;
+        vp->set_global_origin(0.0, 0.0, 0.0);
+        vp->set_ghosted_local_offset(0, 0, 0);
+        vp->set_local_offset(1, 1, 1);
+        vp->set_ghosted_local_counts(32, 32, 32);
+        vp->set_local_counts(30, 30, 30);
 
-        vec3f *normals = tp->GetNormals();
+        vp->set_local_minmax(1.0/31.0, 1.0 - (1.0/31.0));
 
-        normals[0].x = mpiRank + 0.f; normals[0].y = 1.f; normals[0].z = 0.f;
-        normals[1].x = mpiRank + 1.f; normals[1].y = 0.f; normals[1].z = 0.f;
-        normals[2].x = mpiRank + 1.f; normals[2].y = 0.f; normals[2].z = 0.f;
-        normals[3].x = mpiRank + 0.f; normals[3].y = 1.f; normals[3].z = 0.f;
+        vp->set_samples(malloc(32 * 32 * 32 * sizeof(float)));
 
-        int *indices = tp->GetConnectivity();
-
-        indices[0] = 0; indices[1] = 1; indices[2] = 3;
-        indices[3] = 1; indices[4] = 2; indices[5] = 3;
-
-        geometries.push_back(tp);
+        float *ptr = (float *)vp->get_samples().get();
+        for (int i = 0; i < 32; i++)
+          for (int j = 0; j < 32; j++)
+            for (int k = 0; k < 32; k++)
+              *ptr++ = (i/31.0);
+        
+        volumes.push_back(vp);
 
         return false;
     }
 }; 
 
-class SetupSpheres : public Work
-{
-public:
-    SetupSpheres(ParticlesDPtr pp) : SetupSpheres(sizeof(Key))
-    {
-        Key *p = (Key *)get();
-
-        p[0] = pp->getkey();
-    }
-
-    ~SetupSpheres() {}
-    WORK_CLASS(SetupSpheres, true)
-
-public:
-    bool CollectiveAction(MPI_Comm c, bool isRoot)
-    {   
-        Key *p = (Key *)get();
-        
-        ParticlesDPtr pp = Particles::GetByKey(p[0]);
-
-        pp->allocate_vertices(4);
-        pp->allocate_connectivity(4);
-
-        vec3f *vertices = pp->GetVertices();
-        float *data = pp->GetData();
-
-        vertices[0].x = mpiRank + 0.25; vertices[0].y = 0.25; vertices[0].z = 0.0;
-        vertices[1].x = mpiRank + 0.25; vertices[1].y = 0.75; vertices[1].z = 0.0;
-        vertices[2].x = mpiRank + 0.75; vertices[2].y = 0.75; vertices[2].z = 0.0;
-        vertices[3].x = mpiRank + 0.75; vertices[3].y = 0.25; vertices[3].z = 0.0;
-        data[0] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
-        data[1] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
-        data[2] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
-        data[3] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
-
-        geometries.push_back(pp);
-        
-        return false;
-    }
-}; 
-
-class SetupPathLines : public Work
-{
-public:
-    SetupPathLines(PathLinesDPtr plp) : SetupPathLines(sizeof(Key))
-    {
-        Key *p = (Key *)get();
-        p[0] = plp->getkey();
-    }
-
-    ~SetupPathLines() {}
-    WORK_CLASS(SetupPathLines, true)
-
-public:
-    bool CollectiveAction(MPI_Comm c, bool isRoot)
-    {   
-        Key *p = (Key *)get();
-        
-        PathLinesDPtr plp = PathLines::GetByKey(p[0]);
-
-        plp->allocate_vertices(4);
-        plp->allocate_connectivity(3);
-
-        vec3f *vertices = plp->GetVertices();
-
-        vertices[0].x = mpiRank + 0.0f; vertices[0].y = 1.f; vertices[0].z = 0.f;
-        vertices[1].x = mpiRank + 0.3f; vertices[1].y = 0.f; vertices[1].z = 0.f;
-        vertices[2].x = mpiRank + 0.7f; vertices[2].y = 0.f; vertices[2].z = 0.f;
-        vertices[3].x = mpiRank + 1.0f; vertices[3].y = 1.f; vertices[3].z = 0.f;
-
-        int *indices = plp->GetConnectivity();
-
-        indices[0] = 0; 
-        indices[1] = 1; 
-        indices[2] = 2;
-
-        float *data = plp->GetData();
-
-        data[0] = 0.10;
-        data[1] = 0.15;
-        data[2] = 0.20;
-        data[3] = 0.25;
-
-        geometries.push_back(plp);
-
-        return false;
-    }
-}; 
 
 class IntersectMsg : public Work
 {
@@ -194,14 +102,20 @@ public:
     {   
         float *p = (float *)get();
 
-        for (auto g : geometries)
-          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
-
         ModelPtr model = Device::GetTheDevice()->NewModel();
+
         for (auto g : geometries)
         {
+          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
           GeometryVisDPtr gv = GeometryVis::New();
           model->AddGeometry(g, gv);
+        }
+
+        for (auto v : volumes)
+        {
+          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(v);
+          VolumeVisDPtr vv = VolumeVis::New();
+          model->AddVolume(v, vv);
         }
 
         model->Build();
@@ -222,6 +136,104 @@ public:
         }
 
         model->Intersect(rays);
+#if 0
+        for (int j = 0; j < mpiSize; j++)
+        {
+            MPI_Barrier(c);
+
+            if (j == mpiRank)
+            {
+                for (int i = 0; i < 50*mpiSize; i++)
+                {
+                    char c;
+                    switch (rays->get_term_base()[i])
+                    {
+                        case 0: c = '0'; break;
+                        case 1: c = '1'; break;
+                        case 2: c = '2'; break;
+                        case 3: c = '3'; break;
+                        default: c = ' ';
+                    }
+                    std::cerr << c;
+                }
+                std::cerr << "\n";
+                if (show_Z)
+                {
+                for (int i = 0; i < 50*mpiSize; i++)
+                    if (rays->get_term_base()[i] != -1)
+                    {
+                        float t = rays->get_tMax_base()[i];
+                        std::cerr << i << ": " 
+                            << "(" << (rays->get_ox_base()[i] + t*(rays->get_dx_base()[i]))
+                            << " " << (rays->get_oy_base()[i] + t*(rays->get_dy_base()[i]))
+                            << " " << (rays->get_oz_base()[i] + t*(rays->get_dz_base()[i]))
+                            << ") (" << rays->get_nx_base()[i] 
+                            << " " << rays->get_ny_base()[i] 
+                            << " " << rays->get_nz_base()[i] 
+                            << ") " << rays->get_tMax_base()[i] << "\n";
+                    }
+                }
+            }
+        }
+#endif
+        return false;
+    }
+};
+
+class SampleMsg : public Work
+{
+public:
+    SampleMsg(float x, float y, float z) : SampleMsg(3*sizeof(float))
+    {
+        float *p = (float *)get();
+        
+        p[0] = x;
+        p[1] = y;
+        p[2] = z;
+    }
+
+    ~SampleMsg() {}
+    WORK_CLASS(SampleMsg, true)
+
+public:
+    bool CollectiveAction(MPI_Comm c, bool isRoot)
+    {   
+        float *p = (float *)get();
+
+        ModelPtr model = Device::GetTheDevice()->NewModel();
+
+        for (auto g : geometries)
+        {
+          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
+          GeometryVisDPtr gv = GeometryVis::New();
+          model->AddGeometry(g, gv);
+        }
+
+        for (auto v : volumes)
+        {
+          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(v);
+          VolumeVisDPtr vv = VolumeVis::New();
+          model->AddVolume(v, vv);
+        }
+
+        model->Build();
+        
+        RayList *rays = new RayList(50*mpiSize);
+
+        for (int i = 0; i < 50*mpiSize; i++)
+        {
+            rays->get_ox_base()[i]   = (1/50.0)*i + p[0];
+            rays->get_oy_base()[i]   = p[1];
+            rays->get_oz_base()[i]   = p[2];
+            rays->get_dx_base()[i]   = 0;
+            rays->get_dy_base()[i]   = 0;
+            rays->get_dz_base()[i]   = 1;
+            rays->get_t_base()[i]    = 0;
+            rays->get_term_base()[i] = -1;
+            rays->get_tMax_base()[i] = std::numeric_limits<float>::infinity();
+        }
+
+        model->Sample(rays);
 
         for (int j = 0; j < mpiSize; j++)
         {
@@ -260,18 +272,15 @@ public:
                     }
                 }
             }
-
-            // sleep(1);
         }
 
         return false;
     }
 };
 
-WORK_CLASS_TYPE(SetupTriangles)
-WORK_CLASS_TYPE(SetupSpheres)
-WORK_CLASS_TYPE(SetupPathLines)
+WORK_CLASS_TYPE(SetupVolume)
 WORK_CLASS_TYPE(IntersectMsg)
+WORK_CLASS_TYPE(SampleMsg)
 
 void
 syntax(char *a)
@@ -318,43 +327,21 @@ main(int argc, char *argv[])
 
     theApplication.Run();
 
-    SetupTriangles::Register();
-    SetupSpheres::Register();
-    SetupPathLines::Register();
+    SetupVolume::Register();
     IntersectMsg::Register();
+    SampleMsg::Register();
 
     if (mpiRank == 0)
     {
         {
-            TrianglesDPtr tp;
-            if (test_element_types & 0x1)
-            {
-                tp = Triangles::NewDistributed();
-                SetupTriangles s(tp);
-                s.Broadcast(true, true);
-                tp->Commit();
-            }
-                   
-            ParticlesDPtr pp;
-            if (test_element_types & 0x2)
-            {
-                pp = Particles::NewDistributed();
-                SetupSpheres s(pp);
-                s.Broadcast(true, true);
-                pp->Commit();
-            }
-               
-            PathLinesDPtr plp;
-            if (test_element_types & 0x4)
-            {
-                plp = PathLines::NewDistributed();
-                SetupPathLines s(plp);
-                s.Broadcast(true, true);
-                plp->Commit();
-            }
+            VolumeDPtr vp = gxy::Volume::NewDistributed();
+            SetupVolume v(vp);
+            v.Broadcast(true, true);
 
-            IntersectMsg i = IntersectMsg(0.0, y, -1);
-            i.Broadcast(true, true);
+            vp->Commit();
+
+            SampleMsg s = SampleMsg(0.0, y, -1);
+            s.Broadcast(true, true);
         }
 
         theApplication.QuitApplication();

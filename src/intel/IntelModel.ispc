@@ -5,6 +5,8 @@
 #include "IntelModel.ih"
 #include "EmbreeGeometry.ih"
 #include "Rays.ih"
+#include "VolumeVis.ih"
+#include "VklVolume.ih"
 
 #if TARGET_WIDTH == 1
 #define INTERSECTOR rtcIntersect
@@ -24,11 +26,79 @@ crap(uniform IntelModel_ispc& foo) {}
 void
 IntelModel_IntersectSOA(RTCScene scene, void *uniform rayhit)
 {
+  uniform RTCIntersectContext context;
+  rtcInitIntersectContext(&context);
+
+  varying int valid = -1;
+  INTERSECTOR((const int* uniform)&valid, scene, &context, rayhit);
+}
+
+struct rayOD
+{
+  vec3f o;
+  vec3f d;
+};
+
+export void
+IntelModel_TraceRays(uniform IntelModel_ispc& self, const uniform int n, void *uniform _rays)
+{
+  RTCScene scene = self.scene;
+  EmbreeGeometry_ispc **uniform geom = self.geometries;
+  uniform RayList_ispc *uniform rays = (uniform RayList_ispc *)_rays;
+  uniform nV = self.nVolumes;
+  uniform VolumeVis_ispc **uniform volume_vis = (uniform VolumeVis_ispc **)self.volume_vis;
+  uniform VklVolume_ispc **uniform volumes = (uniform VklVolume_ispc **)self.volumes;
+
+  RTCRayHit rayhit;
+
+  uniform float step = -1;
+  uniform float epsilon;
+
+  for (uniform int major = 0; major < nV; major++)
+  {
+    uniform VolumeVis_ispc *uniform vvis = volume_vis[major];
+    uniform VklVolume_ispc *uniform vol = (uniform VklVolume_ispc *uniform)volumes[major];
+
+#if 0
+    if (vvis->volume_render)
+      integrate = true;
+
+    if (vvis->nIsovalues > 0)
+      integrate = true;
+
+    uniform float s = vol->samplingStep * vol->samplingRate;
+
+    if (step < 0 || step > s)
+    {
+      step = s;
+      epsilon = global_epsilon * s;
+    }
+#endif
+  }
+
+  foreach (i = 0 ... n)
+  {
     uniform RTCIntersectContext context;
     rtcInitIntersectContext(&context);
 
-    varying int valid = -1;
-    INTERSECTOR((const int* uniform)&valid, scene, &context, rayhit);
+    rayhit.ray.org_x     = rays->ox[i];
+    rayhit.ray.org_y     = rays->oy[i];
+    rayhit.ray.org_z     = rays->oz[i];
+    rayhit.ray.dir_x     = rays->dx[i];
+    rayhit.ray.dir_y     = rays->dy[i];
+    rayhit.ray.dir_z     = rays->dz[i];
+    rayhit.ray.tnear     = rays->t[i];
+    rayhit.ray.tfar      = rays->tMax[i];
+    rayhit.ray.mask      = -1;
+    rayhit.ray.flags     = 0;
+    rayhit.hit.geomID    = RTC_INVALID_GEOMETRY_ID;
+    rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+
+    varying rayOD *uniform r = (varying rayOD *uniform)&rayhit;
+    print("%\n", r->o.x);
+
+    IntelModel_IntersectSOA(scene, (void *)&rayhit);
+}
 }
 
 // This is for testing the Embree device interface from C++.   It is equivalent to
@@ -61,25 +131,21 @@ IntelModel_Intersect(uniform IntelModel_ispc& self, const uniform int n, void *u
         rayhit.hit.geomID    = RTC_INVALID_GEOMETRY_ID;
         rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
+        varying rayOD *uniform r = (varying rayOD *uniform)&rayhit;
+        print("%\n", r->o.x);
+
         IntelModel_IntersectSOA(scene, (void *)&rayhit);
 
         int gid = rayhit.hit.geomID;
-        // print("GID %\n", gid);
         if (gid != RTC_INVALID_GEOMETRY_ID && geom[gid]->connectivity && geom[gid]->normals)
         {
-            // print("PID %\n", rayhit.hit.primID);
-            // print("X %\nY %\nZ %\n", rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
             vec3f bary = make_vec3f(1.0f - rayhit.hit.u - rayhit.hit.v, rayhit.hit.u, rayhit.hit.v);
-            // print("BX %\nBY %\nBZ %\n", bary.x, bary.y, bary.z);
             vec3i pqr = ((vec3i*)geom[gid]->connectivity)[rayhit.hit.primID];
-            // print("PQRX %\nPQRY %\nPQRZ %\n", pqr.x, pqr.y, pqr.z);
             vec3f np = ((vec3f*)geom[gid]->normals)[pqr.x];
-            // print("NPX %\nNPY %\nNPZ %\n", np.x, np.y, np.z);
             vec3f nq = ((vec3f*)geom[gid]->normals)[pqr.y];
-            // print("NQX %\nNQY %\nNQZ %\n", nq.x, nq.y, nq.z);
             vec3f nr = ((vec3f*)geom[gid]->normals)[pqr.z];
-            // print("NRX %\nNRY %\nNRZ %\n", nr.x, nr.y, nr.z);
             vec3f normal = bary.x*np + bary.y*nq + bary.z*nr;
+
             rays->nx[i] = normal.x;
             rays->ny[i] = normal.y;
             rays->nz[i] = normal.z;
@@ -96,3 +162,46 @@ IntelModel_Intersect(uniform IntelModel_ispc& self, const uniform int n, void *u
         rays->t[i]    = rayhit.ray.tfar;
     }
 }
+
+// This is for testing the VKL device interface from C++.   It is equivalent to
+// the TraceRays_TraceRays in renderer/TraceRays.ispc - a call made from C++ that
+// bridges the gap from C++ to ISPC.
+
+export void
+IntelModel_Sample(uniform IntelModel_ispc& self, const uniform int n, void *uniform _rays)
+{
+    print("hello\n");
+    if (self.nVolumes == 0) return;
+
+    uniform VKLVolume volume   = (uniform VKLVolume)self.volumes[0]->volume;
+    uniform VKLSampler sampler = (uniform VKLSampler)self.volumes[0]->sampler;
+
+    VKLValueSelector selector = vklNewValueSelector(volume);
+
+    uniform float values[] = {0.23};
+
+    vklValueSelectorSetValues(selector, 1, values);
+    vklCommit((VKLObject)selector);
+
+    uniform RayList_ispc *uniform rays = (uniform RayList_ispc *)_rays;
+    RTCRayHit rayhit;
+
+    foreach (i = 0 ... n)
+    {
+        vkl_vec3f o = {rays->ox[i], rays->oy[i], rays->oz[i]};
+        vkl_vec3f d = {rays->dx[i], rays->dy[i], rays->dz[i]};
+
+        vkl_range1f tRange = {0, 200};
+
+        uniform unsigned int8 buf[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+        VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(sampler, &o, &d, &tRange, selector, buf);
+
+        VKLInterval interval;
+        while (vklIterateIntervalV(intervalIterator, &interval)) {
+          print("\ttRange:\n\t\tlower: %\n\t\tupper: %\n", interval.tRange.lower, interval.tRange.upper);
+          print("\tvalueRange:\n\t\tlower: %\n\t\tupper: %\n", interval.valueRange.lower, interval.valueRange.upper);
+          print("\tnominalDeltaT:\n\t\t%\n\n", interval.nominalDeltaT);
+        }
+  }
+}
+

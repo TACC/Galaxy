@@ -25,13 +25,14 @@
  * \ingroup render
  */
 
+#include <openvkl/openvkl.h>
+
 #include "IntelData.h"
 
 namespace gxy { OBJECT_POINTER_TYPES(VklVolume) }
 
 #include "Volume.h"
-
-#include <openvkl/openvkl.h>
+#include "VklVolume_ispc.h"
 
 namespace gxy
 {
@@ -47,6 +48,9 @@ public:
   virtual void FinalizeData(KeyedDataObjectPtr);
 
   ~VklVolume();
+
+  VKLVolume GetVolume() { return (VKLVolume)((::ispc::VklVolume_ispc *)GetIspc())->volume; }
+  VKLSampler GetSampler() { return (VKLSampler)((::ispc::VklVolume_ispc *)GetIspc())->sampler; }
 
 protected:
   virtual int  IspcSize();

@@ -25,7 +25,8 @@
 
 #include "IntelModel_ispc.h"
 
-#include <embree3/rtcore_scene.h>
+// #include <embree3/rtcore_scene.h>
+// #include <openvkl/openvkl.isph>
 
 namespace gxy
 {
@@ -52,25 +53,33 @@ IntelModel::~IntelModel()
 void
 IntelModel::Build()
 {
-  std::cerr << "BUILD!\n";
-
   IntelDevicePtr idev = IntelDevice::Cast(Device::GetTheDevice());
   ispc.scene = rtcNewScene(idev->get_embree());
 
   if (geometries.size())
+  {
+    ispc.nGeometries = geometries.size();
     ispc.geometries = (::ispc::EmbreeGeometry_ispc **)malloc(geometries.size() * sizeof(::ispc::EmbreeGeometry_ispc *));
+    ispc.geometry_vis = (::ispc::Vis_ispc **)malloc(geometries.size() * sizeof(::ispc::Vis_ispc *));
+  }
   else
+  {
+    ispc.nGeometries = 0;
     ispc.geometries = NULL;
+    ispc.geometry_vis = NULL;
+  }
 
   if (volumes.size())
   {
     ispc.nVolumes = volumes.size();
     ispc.volumes = (::ispc::VklVolume_ispc **)malloc(volumes.size() * sizeof(::ispc::VklVolume_ispc *));
+    ispc.volume_vis = (::ispc::Vis_ispc **)malloc(volumes.size() * sizeof(::ispc::Vis_ispc *));
   }
   else
   {
     ispc.nVolumes = 0;
     ispc.volumes = NULL;
+    ispc.volume_vis = NULL;
   }
 
   int i = 0;
@@ -84,7 +93,22 @@ IntelModel::Build()
     }
 
     rtcAttachGeometryByID(ispc.scene, eg->GetDeviceGeometry(), i);
-    ispc.geometries[i++] = (::ispc::EmbreeGeometry_ispc *)eg->GetIspc();
+    ispc.geometries[i] = (::ispc::EmbreeGeometry_ispc *)eg->GetIspc();
+    ispc.geometry_vis[i++] = (::ispc::Vis_ispc *)eg->GetIspc();
+  }
+
+  i = 0;
+  for (auto v : volumes)
+  {
+    VklVolumePtr ev = VklVolume::Cast(v->GetTheDeviceEquivalent());
+    if (! ev)
+    {
+      std::cerr << "IntelModel::Build : VklVolume has no device equivalent\n";    
+      exit(1);
+    }
+
+    ispc.volumes[i] = (::ispc::VklVolume_ispc *)ev->GetIspc();
+    ispc.volume_vis[i++] = (::ispc::Vis_ispc *)ev->GetIspc();
   }
 
   rtcCommitScene(ispc.scene);
@@ -94,6 +118,12 @@ void
 IntelModel::Intersect(RayList *rays)
 {
   ::ispc::IntelModel_Intersect(ispc, rays->GetRayCount(), rays->GetIspc());
+}
+
+void
+IntelModel::Sample(RayList *rays)
+{
+  ::ispc::IntelModel_Sample(ispc, rays->GetRayCount(), rays->GetIspc());
 }
 
 }

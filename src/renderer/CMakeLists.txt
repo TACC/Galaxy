@@ -86,7 +86,7 @@ set (CPP_SOURCES
   RenderingEvents.cpp
   RenderingSet.cpp 
   TransferFunction.cpp
-  TraceRays.cpp
+  # TraceRays.cpp
   TrianglesVis.cpp
   Vis.cpp
   Visualization.cpp

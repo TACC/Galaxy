@@ -18,36 +18,9 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "IntelData.ih"
 
-#include "GalaxyObject.h"
-#include "Model.h"
-#include "EmbreeGeometry.h"
-#include "VklVolume.h"
+// force export of IntelData_ispc in IntelData_ispc.h
 
-#include "IntelModel_ispc.h"
-#include "EmbreeGeometry_ispc.h"
+export void IntelData_dummy(uniform IntelData_ispc * uniform vi) {}
 
-namespace gxy {
-
-OBJECT_POINTER_TYPES(IntelModel) 
-
-class IntelModel : public Model
-{
-    GALAXY_OBJECT_SUBCLASS(IntelModel, Model)
-
-public:
-    virtual void initialize();
-    virtual ~IntelModel();
-
-    void Build();
-
-    void Intersect(RayList *);
-    void Sample(RayList *);
-
-protected:
-
-    ::ispc::IntelModel_ispc ispc;
-};
-
-}

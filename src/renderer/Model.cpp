@@ -38,7 +38,7 @@ Model::initialize()
 }
 
 int
-Model::AddGeometry(GeometryDPtr g)
+Model::AddGeometry(GeometryDPtr g, GeometryVisDPtr vis)
 {
     int id;
 
@@ -47,11 +47,13 @@ Model::AddGeometry(GeometryDPtr g)
         id = free_geometry_ids.back();
         free_geometry_ids.pop_back();
         geometries[id] = g;
+        geometry_vis[id] = vis;
     }
     else
     {
         id = geometries.size();
         geometries.push_back(g);
+        geometry_vis.push_back(vis);
     }
 
     return id;
@@ -64,6 +66,7 @@ Model::RemoveGeometry(GeometryDPtr g)
         if (geometries[id] == g)
         {
             geometries[id] = NULL;
+            geometry_vis[id] = NULL;
             free_geometry_ids.push_back(id);
             return id;
         }
@@ -78,12 +81,13 @@ Model::RemoveGeometry(int id)
     if (geometries[id])
     {
         geometries[id] = NULL;
+        geometry_vis[id] = NULL;
         free_geometry_ids.push_back(id);
     }
 }
 
 int
-Model::AddVolume(VolumeDPtr v)
+Model::AddVolume(VolumeDPtr v, VolumeVisDPtr vis)
 {
     int id;
 
@@ -92,11 +96,13 @@ Model::AddVolume(VolumeDPtr v)
         id = free_volume_ids.back();
         free_volume_ids.pop_back();
         volumes[id] = v;
+        volume_vis[id] = vis;
     }
     else
     {
         id = volumes.size();
         volumes.push_back(v);
+        volume_vis.push_back(vis);
     }
 
     return id;
@@ -109,6 +115,7 @@ Model::RemoveVolume(VolumeDPtr g)
         if (volumes[id] == g)
         {
             volumes[id] = NULL;
+            volume_vis[id] = NULL;
             free_volume_ids.push_back(id);
             return id;
         }
@@ -123,6 +130,7 @@ Model::RemoveVolume(int id)
     if (id != -1 && volumes[id])
     {
         volumes[id] = NULL;
+        volume_vis[id] = NULL;
         free_volume_ids.push_back(id);
     }
 
@@ -130,6 +138,7 @@ Model::RemoveVolume(int id)
 }
 
 void Model::Intersect(RayList *r) {}
+void Model::Sample(RayList *r) {}
 void Model::Build() {}
 
 }

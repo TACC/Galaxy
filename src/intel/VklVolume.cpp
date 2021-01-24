@@ -18,27 +18,34 @@
 //                                                                            //
 // ========================================================================== //
 
+#include "dtypes.h"
+
 #include "VklVolume.h"
+#include "VklVolume_ispc.h"
+
 
 namespace gxy
 {
 
 OBJECT_CLASS_TYPE(VklVolume)
 
-struct VklVolume_ispc
-{
-  VKLVolume volume;
-};
+// struct ::ispc::VklVolume_ispc
+// {
+  // VKLVolume volume;
+  // VKLSampler sampler;
+// };
 
 int 
 VklVolume::IspcSize() 
 {
-  return sizeof(VklVolume_ispc);
+  return sizeof(::ispc::VklVolume_ispc);
 }
 
 void
 VklVolume::FinalizeData(KeyedDataObjectPtr kop)
 {
+  ::ispc::VklVolume_ispc *vispc = (::ispc::VklVolume_ispc *)GetIspc();
+
   super::FinalizeData(kop);
 
   VolumePtr v = Volume::Cast(kop);
@@ -57,21 +64,29 @@ VklVolume::FinalizeData(KeyedDataObjectPtr kop)
   VKLData aData = vklNewData(1, VKL_DATA, attr, VKL_DATA_DEFAULT, 0);
   vklRelease(data);
 
-  VklVolume_ispc *vispc = (VklVolume_ispc *)GetIspc();
-  
-  vispc->volume = vklNewVolume("structuredRegular");
-  vklSetVec3i(vispc->volume, "dimensions", counts.x, counts.y, counts.z);
-  vklSetVec3f(vispc->volume, "gridOrigin", origin.x, origin.y, origin.z);
-  vklSetVec3f(vispc->volume, "gridSpacing", spacing.x, spacing.y, spacing.z);
-  vklSetData(vispc->volume, "data", aData);
+  // Weird   The VklVolume.ih struct specifying VKLVolume and VKLSampler passed through the ISPC compiler and comes
+  // out specifying (struct OpenVKLVolume *) and (struct Sampler *) which is the same, but the
+  // compiler doesn't understand.   Hence casts in the below.
+
+  vispc->volume = (struct ispc::OpenVKLVolume *)vklNewVolume("structuredRegular");
+
+  vklSetVec3i((VKLVolume)vispc->volume, "dimensions", counts.x, counts.y, counts.z);
+  vklSetVec3f((VKLVolume)vispc->volume, "gridOrigin", origin.x, origin.y, origin.z);
+  vklSetVec3f((VKLVolume)vispc->volume, "gridSpacing", spacing.x, spacing.y, spacing.z);
+  vklSetData((VKLVolume)vispc->volume, "data", aData);
   vklRelease(aData);
+
+  vispc->sampler = vklNewSampler((VKLVolume)vispc->volume);
 }
 
 VklVolume::~VklVolume()
 {
-  VklVolume_ispc *vispc = (VklVolume_ispc *)GetIspc();
-  vklRelease(vispc->volume);
+  ::ispc::VklVolume_ispc *vispc = (::ispc::VklVolume_ispc *)GetIspc();
+
+  vklRelease((VKLVolume)vispc->volume);
+  vklRelease(vispc->sampler);
   vispc->volume = NULL;
+  vispc->sampler = NULL;
 }
 
 }

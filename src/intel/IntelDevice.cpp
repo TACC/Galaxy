@@ -33,7 +33,6 @@
 #include <embree3/rtcore.h>
 #include <openvkl/openvkl.h>
 
-
 namespace gxy
 {
 
@@ -49,8 +48,6 @@ static void vklError(void *ptr, VKLError error, const char* msg)
 
 IntelDevice::IntelDevice()
 {
-  std::cerr << "XXXX\n";
-
   EmbreeGeometry::RegisterClass();
   EmbreeTriangles::RegisterClass();
   EmbreePathLines::RegisterClass();
@@ -63,6 +60,8 @@ IntelDevice::IntelDevice()
   vklLoadModule("ispc_driver");
   intel_device.vkl = vklNewDriver("ispc");
   vklDriverSetErrorCallback(intel_device.vkl, vklError, (void *)this);
+  vklCommitDriver(intel_device.vkl);
+  vklSetCurrentDriver(intel_device.vkl);
 }
 
 IntelDevice::~IntelDevice()

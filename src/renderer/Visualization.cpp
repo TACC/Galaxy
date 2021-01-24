@@ -235,19 +235,13 @@ Visualization::SetDeviceObjects()
       Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(kdop);
 
     if (Volume::IsA(kdop))
-      model->AddVolume(Volume::Cast(kdop));
+      model->AddVolume(Volume::Cast(kdop), VolumeVis::Cast(v));
     else
-      model->AddGeometry(Geometry::Cast(kdop));
+      model->AddGeometry(Geometry::Cast(kdop), GeometryVis::Cast(v));
   }
 
-/*
-  ispc::Visualization_commit(ispc, 
-          ospModel ? ospray_util::GetIE(ospModel) : NULL,
-          nvispc, vispc,
-          nmispc, mispc,
-          global_box.get_min(), global_box.get_max(),
-          local_box.get_min(), local_box.get_max());
-*/
+  model->SetBoxes(global_box, local_box);
+  model->Build();
 }
 
 void

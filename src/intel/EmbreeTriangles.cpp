@@ -49,17 +49,17 @@ EmbreeTriangles::FinalizeData(KeyedDataObjectPtr kop)
     {
         IntelDevicePtr intel_device = IntelDevice::Cast(Device::GetTheDevice());
 
-        device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_TRIANGLE);
+        SetDeviceGeometry(rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_TRIANGLE));
 
-        rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_VERTEX,
+        rtcSetSharedGeometryBuffer(GetDeviceGeometry(), RTC_BUFFER_TYPE_VERTEX,
                              0, RTC_FORMAT_FLOAT3, (void *)iptr->vertices,
                              0, 3*sizeof(float), nv);
 
-        rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_INDEX,
+        rtcSetSharedGeometryBuffer(GetDeviceGeometry(), RTC_BUFFER_TYPE_INDEX,
                              0, RTC_FORMAT_UINT3, (void *)iptr->connectivity,
                              0, 3*sizeof(int), nc);
 
-        rtcCommitGeometry(device_geometry);
+        rtcCommitGeometry(GetDeviceGeometry());
      }
 }
 

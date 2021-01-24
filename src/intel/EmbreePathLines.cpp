@@ -201,10 +201,10 @@ EmbreePathLines::FinalizeData(KeyedDataObjectPtr kop)
     iptr->indexCurve = (int *)iCurve.data();
 
     IntelDevicePtr intel_device = IntelDevice::Cast(Device::GetTheDevice());
-    device_geometry = rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
-    rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, iptr->vertexCurve, 0, sizeof(vec4f), iptr->nvc);
-    rtcSetSharedGeometryBuffer(device_geometry, RTC_BUFFER_TYPE_INDEX,  0, RTC_FORMAT_UINT, iptr->indexCurve, 0, sizeof(int), iptr->ni);
-    rtcCommitGeometry(device_geometry);
+    SetDeviceGeometry(rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE));
+    rtcSetSharedGeometryBuffer(GetDeviceGeometry(), RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, iptr->vertexCurve, 0, sizeof(vec4f), iptr->nvc);
+    rtcSetSharedGeometryBuffer(GetDeviceGeometry(), RTC_BUFFER_TYPE_INDEX,  0, RTC_FORMAT_UINT, iptr->indexCurve, 0, sizeof(int), iptr->ni);
+    rtcCommitGeometry(GetDeviceGeometry());
 }
 
 }

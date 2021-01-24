@@ -20,11 +20,22 @@
 
 #pragma once
 
+#include "IntelData.ih"
+
+#ifdef __cplusplus
+#include "openvkl/openvkl.h"
+#include "dtypes.h"
+#else
 #include "openvkl/openvkl.isph"
+#include "vec.ih"
+#endif // __cplusplus
+
 
 struct VklVolume_ispc
 {
-    VKLVolume volume;
+  IntelData_ispc super;
+  VKLVolume volume;
+  VKLSampler sampler;
 };
 
 typedef uniform VklVolume_ispc *uniform pVklVolume_ispc;

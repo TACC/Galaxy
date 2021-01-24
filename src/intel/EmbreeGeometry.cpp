@@ -33,13 +33,13 @@ void
 EmbreeGeometry::initialize()
 {
   super::initialize();
-  device_geometry = NULL;
+  ((::ispc::EmbreeGeometry_ispc *)GetIspc())->device_geometry = NULL;
 }
 
 EmbreeGeometry::~EmbreeGeometry()
 {
-  if (device_geometry) 
-    rtcReleaseGeometry(device_geometry);
+  if (GetDeviceGeometry())
+    rtcReleaseGeometry(GetDeviceGeometry());
 }
 
 int EmbreeGeometry::IspcSize() { return sizeof(ispc::EmbreeGeometry_ispc); }
@@ -47,9 +47,9 @@ int EmbreeGeometry::IspcSize() { return sizeof(ispc::EmbreeGeometry_ispc); }
 void
 EmbreeGeometry::FinalizeData(KeyedDataObjectPtr kop)
 {
-    super::FinalizeData(kop);
-
     ispc::EmbreeGeometry_ispc *ispc = (ispc::EmbreeGeometry_ispc*)GetIspc();
+
+    super::FinalizeData(kop);
 
     GeometryPtr geometry = Geometry::Cast(kop);
     geometry->GetLocalCounts(ispc->nv, ispc->nc);

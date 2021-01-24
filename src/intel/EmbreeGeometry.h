@@ -25,6 +25,7 @@
 namespace gxy { OBJECT_POINTER_TYPES(EmbreeGeometry) }
 
 #include "Geometry.h"
+#include "EmbreeGeometry_ispc.h"
 
 #include <embree3/rtcore.h>
 
@@ -41,11 +42,18 @@ public:
 
     virtual void FinalizeData(KeyedDataObjectPtr);
 
-    RTCGeometry GetDeviceGeometry() { return device_geometry; }
+    RTCGeometry GetDeviceGeometry()
+    {
+      return (RTCGeometry)((::ispc::EmbreeGeometry_ispc *)GetIspc())->device_geometry;
+    }
+
+    void SetDeviceGeometry(RTCGeometry dg)
+    {
+      ((::ispc::EmbreeGeometry_ispc *)GetIspc())->device_geometry = (void *)dg;
+    }
 
 protected:
     virtual int  IspcSize();
-    RTCGeometry device_geometry;
 };
 
 }
