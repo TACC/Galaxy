@@ -129,8 +129,8 @@ main(int argc, char *argv[])
   if (nparticles == 1)
   {
     *p++ = (MM.x + mm.x) / 2.0;
-    *p++ = (MM.x + mm.x) / 2.0;
-    *p++ = (MM.x + mm.x) / 2.0;
+    *p++ = (MM.y + mm.y) / 2.0;
+    *p++ = (MM.z + mm.z) / 2.0;
     if (random_v)
       *p++ = frand();
     else
