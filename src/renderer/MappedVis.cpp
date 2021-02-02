@@ -143,7 +143,7 @@ MappedVis::LoadFromJSON(Value& v)
           {
             vec2f xo;
             xo.x = oa[i+0].GetDouble();
-            xo.y = oa[i+2].GetDouble();
+            xo.y = oa[i+1].GetDouble();
             opacitymap.push_back(xo);
           }
         }
@@ -294,7 +294,7 @@ MappedVis::local_commit(MPI_Comm c)
     float x = xmin + (i / (255.0))*(xmax - xmin);
     if (x > xmax) x = xmax;
 
-    while (colormap[i1].x <= x)
+    while (colormap[i1].x < x)
       i0++, i1++;
 
     float d = (x - colormap[i0].x) / (colormap[i1].x - colormap[i0].x);
@@ -317,7 +317,7 @@ MappedVis::local_commit(MPI_Comm c)
     float x = xmin + (i / (255.0))*(xmax - xmin);
     if (x > xmax) x = xmax;
 
-    while (opacitymap[i1].x <= x)
+    while (opacitymap[i1].x < x)
       i0++, i1++;
 
     float d = (x - opacitymap[i0].x) / (opacitymap[i1].x - opacitymap[i0].x);
