@@ -42,9 +42,9 @@ KEYED_OBJECT_CLASS_TYPE(Volume)
 void
 Volume::initialize()
 {
-	initialize_grid = false;
-	vtkobj = NULL;
-	samples = NULL;
+  initialize_grid = false;
+  vtkobj = NULL;
+  samples = NULL;
   number_of_components = 1;
   super::initialize();
 }
@@ -52,13 +52,13 @@ Volume::initialize()
 void
 Volume::Register()
 {
-	RegisterClass();
+  RegisterClass();
 }
 
 Volume::~Volume()
 {
-	if (vtkobj) vtkobj->Delete();
-	if (samples) samples = NULL;
+  if (vtkobj) vtkobj->Delete();
+  if (samples) samples = NULL;
 }
 
 bool
@@ -66,23 +66,23 @@ Volume::LoadFromJSON(Value& v)
 {
   int r = GetTheApplication()->GetRank();
 
- 	if (v.HasMember("filename"))
-	{
+   if (v.HasMember("filename"))
+  {
     set_attached(false);
     return Import(string(v["filename"].GetString()), NULL, 0);
-	}
+  }
 #if 0
- 	else if (v.HasMember("layout"))
-	{
-		set_attached(true);
- 		return Attach(string(v["layout"].GetString()));
-	}
+   else if (v.HasMember("layout"))
+  {
+    set_attached(true);
+     return Attach(string(v["layout"].GetString()));
+  }
 #endif
- 	else
- 	{
- 		if (r == 0) cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
- 		return false;
- 	}
+   else
+   {
+     if (r == 0) cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
+     return false;
+   }
 }
 
 static void
@@ -174,23 +174,23 @@ partition(int ijk, vec3i factors, vec3i grid)
 bool
 Volume::local_import(char *fname, MPI_Comm c)
 {
-	string type_string, data_fname;
+  string type_string, data_fname;
 
-	filename = fname;
+  filename = fname;
 
-	int rank = GetTheApplication()->GetRank();
-	int size = GetTheApplication()->GetSize();
+  int rank = GetTheApplication()->GetRank();
+  int size = GetTheApplication()->GetSize();
 
-	string dir((filename.find_last_of("/") == string::npos) ? "" : filename.substr(0, filename.find_last_of("/")+1));
-	string ext((filename.find_last_of(".") == string::npos) ? "vol" : filename.substr(filename.find_last_of(".")+1));
+  string dir((filename.find_last_of("/") == string::npos) ? "" : filename.substr(0, filename.find_last_of("/")+1));
+  string ext((filename.find_last_of(".") == string::npos) ? "vol" : filename.substr(filename.find_last_of(".")+1));
 
-	ifstream in;
-	in.open(filename.c_str());
-	if (in.fail())
-	{
-		if (rank == 0) cerr << "ERROR: unable to open volfile: " << filename << endl;;
-		return false;
-	}
+  ifstream in;
+  in.open(filename.c_str());
+  if (in.fail())
+  {
+    if (rank == 0) cerr << "ERROR: unable to open volfile: " << filename << endl;;
+    return false;
+  }
 
   if (ext == "vol")
   {
@@ -204,7 +204,7 @@ Volume::local_import(char *fname, MPI_Comm c)
 
     in >> type_string;
     type = type_string == "float" ? FLOAT : UCHAR;
-	
+  
     in >> global_origin.x >> global_origin.y >> global_origin.z;
     in >> global_counts.x >> global_counts.y >> global_counts.z;
     in >> deltas.x >> deltas.y >> deltas.z;
@@ -328,60 +328,60 @@ Volume::local_import(char *fname, MPI_Comm c)
   ghosted_local_offset = my_partition->goffsets;
   ghosted_local_counts = my_partition->gcounts;
 
-	in.open(data_fname[0] == '/' ? data_fname.c_str() : (dir + data_fname).c_str(), ios::binary | ios::in);
-	size_t sample_sz = number_of_components * ((type == FLOAT) ? 4 : 1);
+  in.open(data_fname[0] == '/' ? data_fname.c_str() : (dir + data_fname).c_str(), ios::binary | ios::in);
+  size_t sample_sz = number_of_components * ((type == FLOAT) ? 4 : 1);
 
-	size_t row_sz = ghosted_local_counts.x * sample_sz;
-	size_t tot_sz = row_sz * ghosted_local_counts.y * ghosted_local_counts.z;
+  size_t row_sz = ghosted_local_counts.x * sample_sz;
+  size_t tot_sz = row_sz * ghosted_local_counts.y * ghosted_local_counts.z;
 
-	set_samples(malloc(tot_sz));
+  set_samples(malloc(tot_sz));
 
-	string rawname = data_fname[0] == '/' ? data_fname : (dir + data_fname);
-	ifstream raw;
+  string rawname = data_fname[0] == '/' ? data_fname : (dir + data_fname);
+  ifstream raw;
   raw.open(rawname.c_str(), ios::in | ios::binary);
 
-	char *dst = (char *)samples.get();
-	for (int z = 0; z < ghosted_local_counts.z; z++)
-		for (int y = 0; y < ghosted_local_counts.y; y++)
-		{
-			streampos src = (((ghosted_local_offset.z + z) * (global_counts.y * global_counts.x)) + 
-											 ((ghosted_local_offset.y + y) * global_counts.x) + 
-											   ghosted_local_offset.x) * sample_sz;
+  char *dst = (char *)samples.get();
+  for (int z = 0; z < ghosted_local_counts.z; z++)
+    for (int y = 0; y < ghosted_local_counts.y; y++)
+    {
+      streampos src = (((ghosted_local_offset.z + z) * (global_counts.y * global_counts.x)) + 
+                       ((ghosted_local_offset.y + y) * global_counts.x) + 
+                         ghosted_local_offset.x) * sample_sz;
 
-			raw.seekg(src, ios_base::beg);
-			raw.read(dst, row_sz);
-			dst += row_sz;
-		}
+      raw.seekg(src, ios_base::beg);
+      raw.read(dst, row_sz);
+      dst += row_sz;
+    }
 
-	raw.close();
+  raw.close();
 
 #define ijk2rank(i, j, k) ((i) + ((j) * global_partitions.x) + ((k) * global_partitions.x * global_partitions.y))
 
-	if (getenv("MPI_TEST_RANK"))
-	{
-		neighbors[0] = -1;
-		neighbors[1] = -1;
-		neighbors[2] = -1;
-		neighbors[3] = -1;
-		neighbors[4] = -1;
-		neighbors[5] = -1;
-	}
-	else
-	{
-		neighbors[0] = (ijk.x > 0) ? ijk2rank(ijk.x - 1, ijk.y, ijk.z) : -1;
-		neighbors[1] = (ijk.x < (global_partitions.x-1)) ? ijk2rank(ijk.x + 1, ijk.y, ijk.z) : -1;
-		neighbors[2] = (ijk.y > 0) ? ijk2rank(ijk.x, ijk.y - 1, ijk.z) : -1;
-		neighbors[3] = (ijk.y < (global_partitions.y-1)) ? ijk2rank(ijk.x, ijk.y + 1, ijk.z) : -1;
-		neighbors[4] = (ijk.z > 0) ? ijk2rank(ijk.x, ijk.y, ijk.z - 1) : -1;
-		neighbors[5] = (ijk.z < (global_partitions.z-1)) ? ijk2rank(ijk.x, ijk.y, ijk.z + 1) : -1;
-	}
+  if (getenv("MPI_TEST_RANK"))
+  {
+    neighbors[0] = -1;
+    neighbors[1] = -1;
+    neighbors[2] = -1;
+    neighbors[3] = -1;
+    neighbors[4] = -1;
+    neighbors[5] = -1;
+  }
+  else
+  {
+    neighbors[0] = (ijk.x > 0) ? ijk2rank(ijk.x - 1, ijk.y, ijk.z) : -1;
+    neighbors[1] = (ijk.x < (global_partitions.x-1)) ? ijk2rank(ijk.x + 1, ijk.y, ijk.z) : -1;
+    neighbors[2] = (ijk.y > 0) ? ijk2rank(ijk.x, ijk.y - 1, ijk.z) : -1;
+    neighbors[3] = (ijk.y < (global_partitions.y-1)) ? ijk2rank(ijk.x, ijk.y + 1, ijk.z) : -1;
+    neighbors[4] = (ijk.z > 0) ? ijk2rank(ijk.x, ijk.y, ijk.z - 1) : -1;
+    neighbors[5] = (ijk.z < (global_partitions.z-1)) ? ijk2rank(ijk.x, ijk.y, ijk.z + 1) : -1;
+  }
 
   float go[] = {global_origin.x + deltas.x, global_origin.y + deltas.y, global_origin.z + deltas.z};
   int   gc[] = {global_counts.x - 2, global_counts.y - 2, global_counts.z - 2};
-	global_box = Box(go, gc, (float *)&deltas);
+  global_box = Box(go, gc, (float *)&deltas);
 
   float lo[3] =
-	{
+  {
     global_origin.x + (local_offset.x * deltas.x),
     global_origin.y + (local_offset.y * deltas.y),
     global_origin.z + (local_offset.z * deltas.z)
@@ -403,14 +403,14 @@ Volume::local_commit(MPI_Comm c)
     return true;
   }
 
-	if (type == FLOAT)
-	{
-		float *ptr = (float *)samples.get();
+  if (type == FLOAT)
+  {
+    float *ptr = (float *)samples.get();
     if (number_of_components == 1)
     {
       local_min = local_max = *ptr++;
       for (int i = 1; i < ghosted_local_counts.x * ghosted_local_counts.y * ghosted_local_counts.z; i++, ptr++)
-      {	
+      {  
         if (*ptr < local_min) local_min = *ptr;
         if (*ptr > local_max) local_max = *ptr;
       }
@@ -418,7 +418,7 @@ Volume::local_commit(MPI_Comm c)
     else
     {
       for (int i = 0; i < ghosted_local_counts.x * ghosted_local_counts.y * ghosted_local_counts.z; i++)
-      {	
+      {  
         double d = 0;
         for (int j = 0; j < number_of_components; j++, ptr++)
           d += ((*ptr) * (*ptr));
@@ -433,15 +433,15 @@ Volume::local_commit(MPI_Comm c)
       local_min = sqrt(local_min);
       local_max = sqrt(local_max);
     }
-	}
-	else
-	{
-		unsigned char *ptr = (unsigned char *)samples.get();
+  }
+  else
+  {
+    unsigned char *ptr = (unsigned char *)samples.get();
     if (number_of_components == 1)
     {
       local_min = local_max = *ptr++;
       for (int i = 1; i < ghosted_local_counts.x * ghosted_local_counts.y * ghosted_local_counts.z; i++, ptr++)
-      {	
+      {  
         if (*ptr < local_min) local_min = *ptr;
         if (*ptr > local_max) local_max = *ptr;
       }
@@ -449,7 +449,7 @@ Volume::local_commit(MPI_Comm c)
     else
     {
       for (int i = 0; i < ghosted_local_counts.x * ghosted_local_counts.y * ghosted_local_counts.z; i++)
-      {	
+      {  
         double d = 0;
         for (int j = 0; j < number_of_components; j++, ptr++)
         {
@@ -467,24 +467,24 @@ Volume::local_commit(MPI_Comm c)
       local_min = sqrt(local_min);
       local_max = sqrt(local_max);
     }
-	}
+  }
 
 
-	float lmin, lmax, gmin, gmax;
-	get_local_minmax(lmin, lmax);
+  float lmin, lmax, gmin, gmax;
+  get_local_minmax(lmin, lmax);
 
-	if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
-	{
-		MPI_Allreduce(&lmax, &gmax, 1, MPI_FLOAT, MPI_MAX, c);
-		MPI_Allreduce(&lmin, &gmin, 1, MPI_FLOAT, MPI_MIN, c);
-	}
-	else
-	{
-		gmin = lmin;
-		gmax = lmax;
-	}
+  if (GetTheApplication()->GetTheMessageManager()->UsingMPI())
+  {
+    MPI_Allreduce(&lmax, &gmax, 1, MPI_FLOAT, MPI_MAX, c);
+    MPI_Allreduce(&lmin, &gmin, 1, MPI_FLOAT, MPI_MIN, c);
+  }
+  else
+  {
+    gmin = lmin;
+    gmax = lmax;
+  }
 
-	set_global_minmax(gmin, gmax);
+  set_global_minmax(gmin, gmax);
 
   return false;
 }
