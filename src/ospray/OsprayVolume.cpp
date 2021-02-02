@@ -24,6 +24,8 @@ using namespace gxy;
 
 OsprayVolume::OsprayVolume(VolumeP v)
 {
+  samples = v->get_samples();
+
   OSPVolume ospv = ospNewVolume("shared_structured_volume");
   
   osp::vec3i counts;
