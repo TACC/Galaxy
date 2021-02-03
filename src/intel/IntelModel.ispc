@@ -178,6 +178,15 @@ IntelModel_Sample(uniform IntelModel_ispc& self, const uniform int n, void *unif
 
     VKLValueSelector selector = vklNewValueSelector(volume);
 
+  
+    foreach (i = 0 ... n)
+    {
+      float z = i * (1.0 / (n-1));
+      vkl_vec3f p = {0.5, 0.5, z};
+      float f = vklComputeSampleV((VKLSampler)sampler, &p);
+      print("%: %\n", z, f);
+    }
+
     uniform float values[] = {0.23};
 
     vklValueSelectorSetValues(selector, 1, values);
@@ -188,6 +197,8 @@ IntelModel_Sample(uniform IntelModel_ispc& self, const uniform int n, void *unif
 
     foreach (i = 0 ... n)
     {
+        print("I %\n", i);
+
         vkl_vec3f o = {rays->ox[i], rays->oy[i], rays->oz[i]};
         vkl_vec3f d = {rays->dx[i], rays->dy[i], rays->dz[i]};
 

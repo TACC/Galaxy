@@ -93,8 +93,10 @@ IntelModel::Build()
     }
 
     rtcAttachGeometryByID(ispc.scene, eg->GetDeviceGeometry(), i);
+
     ispc.geometries[i] = (::ispc::EmbreeGeometry_ispc *)eg->GetIspc();
-    ispc.geometry_vis[i++] = (::ispc::Vis_ispc *)eg->GetIspc();
+    ispc.geometry_vis[i] = (::ispc::Vis_ispc *)geometry_vis[i]->GetIspc();
+    i++;
   }
 
   i = 0;
@@ -108,7 +110,8 @@ IntelModel::Build()
     }
 
     ispc.volumes[i] = (::ispc::VklVolume_ispc *)ev->GetIspc();
-    ispc.volume_vis[i++] = (::ispc::Vis_ispc *)ev->GetIspc();
+    ispc.volume_vis[i] = (::ispc::Vis_ispc *)volume_vis[i]->GetIspc();
+    i++;
   }
 
   rtcCommitScene(ispc.scene);

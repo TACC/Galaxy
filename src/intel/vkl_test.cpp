@@ -63,6 +63,7 @@ public:
         vp->set_ghosted_local_offset(0, 0, 0);
         vp->set_local_offset(1, 1, 1);
         vp->set_ghosted_local_counts(32, 32, 32);
+        vp->set_deltas(1.0 / 31, 1.0 / 31, 1.0 / 31);
         vp->set_local_counts(30, 30, 30);
 
         vp->set_local_minmax(1.0/31.0, 1.0 - (1.0/31.0));

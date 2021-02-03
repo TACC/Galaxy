@@ -58,7 +58,9 @@ VklVolume::FinalizeData(KeyedDataObjectPtr kop)
   v->get_deltas(spacing.x, spacing.y, spacing.z);
 
   size_t sz = counts.x*counts.y*counts.z;
-  VKLData data = vklNewData(sz, v->isFloat() ? VKL_FLOAT : VKL_UCHAR, (void *)v->get_samples().get(), VKL_DATA_SHARED_BUFFER, 0);
+  void *volume_data = (void *)v->get_samples().get();
+
+  VKLData data = vklNewData(sz, v->isFloat() ? VKL_FLOAT : VKL_UCHAR, volume_data, VKL_DATA_SHARED_BUFFER, 0);
 
   VKLData attr[] = {data};
   VKLData aData = vklNewData(1, VKL_DATA, attr, VKL_DATA_DEFAULT, 0);
@@ -76,7 +78,11 @@ VklVolume::FinalizeData(KeyedDataObjectPtr kop)
   vklSetData((VKLVolume)vispc->volume, "data", aData);
   vklRelease(aData);
 
+  vklCommit((VKLVolume)vispc->volume);
+
   vispc->sampler = vklNewSampler((VKLVolume)vispc->volume);
+  vklCommit((VKLSampler)vispc->sampler);
+  
 }
 
 VklVolume::~VklVolume()
