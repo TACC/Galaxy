@@ -299,6 +299,8 @@ Receiver::receiver(ServerSkt *skt, void *p, char *buf)
 bool
 Receiver::receive(char *buffer)
 {
+  std::cerr << GetTheApplication()->GetRank();
+
   if (! buffer)
   {
     if (state == EXITTING)
