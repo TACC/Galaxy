@@ -217,6 +217,7 @@ Geometry::local_import(char *p, MPI_Comm c)
     }
 
     pset = (vtkPointSet *)(rdr->GetOutputAsDataSet());
+    return load_from_vtkPointSet(pset);
 
   }
   else if (v.HasMember("port") && v.HasMember("host"))
@@ -249,11 +250,10 @@ Geometry::local_import(char *p, MPI_Comm c)
     rdr->Update();
 
     pset = (vtkPointSet *)(rdr->GetOutput());
+    return load_from_vtkPointSet(pset);
   }
 
-  bool r = load_from_vtkPointSet(pset);
-
-  return r;
+  return true;
 }
 
 int
