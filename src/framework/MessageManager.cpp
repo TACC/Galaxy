@@ -527,7 +527,8 @@ MessageManager::setup_mpi(Application *app, MessageManager *mm)
 	if (mm->UsingMPI())
 	{
 		int pvd;
-#if 0
+
+#if 1
 		MPI_Init_thread(app->GetPArgC(), app->GetPArgV(), MPI_THREAD_MULTIPLE, &pvd);
 
 		if (pvd != MPI_THREAD_MULTIPLE)
@@ -535,6 +536,9 @@ MessageManager::setup_mpi(Application *app, MessageManager *mm)
 			std::cerr << "ERROR: did not receive MPI_THREAD_MULTIPLE from MPI_Init_thread" << endl;
 			exit(1);
 		}
+    else
+      std::cerr << "MPI_THREAD_MULTIPLE OK!\n";
+
 #else
 		MPI_Init(app->GetPArgC(), (char ***)app->GetPArgV());
 #endif

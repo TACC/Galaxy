@@ -112,7 +112,8 @@ namespace gxy
 {
 
 #define KEYED_OBJECT_CLASS_TYPE(typ)                       \
-  int typ::ClassType;                                      
+int typ::ClassType;                                        \
+void Delete(typ ## P& p) { p = NULL; }
 
 OBJECT_POINTER_TYPES(KeyedObject)
 
