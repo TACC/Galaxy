@@ -44,6 +44,39 @@ Receiver::~Receiver()
 {
 }
 
+int 
+Receiver::serialSize() { return super::serialSize() + sizeof(commit_args); }
+
+unsigned char*
+Receiver::serialize(unsigned char *ptr)
+{
+  ptr = super::serialize(ptr);
+
+  commit_args *a = (commit_args *)ptr;
+
+  a->base_port = base_port;
+  a->geometry = geometry->getkey();
+  a->partitioning = partitioning ? partitioning->getkey() : -1;
+  a->nsenders = nsenders;
+
+  return ptr + sizeof(commit_args);
+}
+
+unsigned char*
+Receiver::deserialize(unsigned char *ptr)
+{
+  ptr = super::deserialize(ptr);
+
+  commit_args *a = (commit_args *)ptr;
+
+  base_port = a->base_port;
+  geometry = Geometry::GetByKey(a->geometry);
+  partitioning = a->partitioning != -1 ? Partitioning::GetByKey(a->partitioning) : NULL;
+  nsenders = a->nsenders;
+
+  return ptr + sizeof(commit_args);
+}
+
 void
 Receiver::Stop()
 {
@@ -164,26 +197,26 @@ Receiver::reshuffle_thread(void *d)
 }
 
 void
-Receiver::Start(GeometryP g, int n_senders, int base_port)
+Receiver::Start()
 {
-  StartMsg msg(this, g, n_senders, base_port);
+  StartMsg msg(this);
   msg.Broadcast(true, true);
 }
 
 bool
-Receiver::Setup(MPI_Comm comm, GeometryP g, int n, int bp)
+Receiver::Setup(MPI_Comm comm)
 {
   state = RUNNING;
 
-  int r, s;
-  MPI_Comm_rank(comm, &r);
-  MPI_Comm_size(comm, &s);
+  int gsz, grnk;
+  MPI_Comm_rank(comm, &grnk);
+  MPI_Comm_size(comm, &gsz);
 
   MPI_Comm_dup(comm, &receiver_comm);
 
-  int port = bp + r;
-  n_total_senders = n;
-  number_of_local_attachments = (n / s) + (((n % s) > r) ? 1 : 0);
+  local_port = base_port + grnk;
+
+  number_of_local_attachments = (nsenders / gsz) + (((nsenders % gsz) > grnk) ? 1 : 0);
 
   // If there are connections expected, start a server to receive them.
   // This will start a thread that expresses a port for connections.
@@ -196,7 +229,7 @@ Receiver::Setup(MPI_Comm comm, GeometryP g, int n, int bp)
 
   if (number_of_local_attachments)
   {
-    serverskt = new ServerSkt(port, receiver, this);
+    serverskt = new ServerSkt(local_port, receiver, this);
     serverskt->start();
   }
   else
@@ -211,17 +244,44 @@ bool
 Receiver::Reshuffle()
 {
   int r = GetTheApplication()->GetRank();
+  std::cerr << r << " reshuffle\n";
+
+  int num_points = 0;
 
   for (auto buffer : buffers)
   {
-    int *ptr = (int *)buffer;
-    if (!ptr)
-      std::cerr << "ptr is NULL\n";
-    else
+    if (buffer)
     {
-      std::cerr << ptr[0] << "::" << ptr[1] << "\n";
-      free(buffer);
+      int *ptr = (int *)buffer;
+      num_points += *buffer;
     }
+  }
+
+  geometry->allocate_vertices(num_points);    // also allocates per-vertex float data
+
+  float *ptr = (float *)geometry->GetVertices();
+  for (auto buffer : buffers)
+  {
+    if (buffer)
+    {
+      int n = *(int *)buffer;
+      float *vertices = (float *)(buffer + sizeof(int));
+      memcpy(ptr, vertices, n*3*sizeof(float));
+    }
+  }
+
+  ptr = (float *)geometry->GetData();
+  for (auto buffer : buffers)
+  {
+    if (buffer)
+    {
+      int n = *(int *)buffer;
+      float *vertices = (float *)(buffer + sizeof(int));
+      float *data = vertices + n*3;
+      memcpy(ptr, data, n*sizeof(float));
+    }
+
+    free(buffer);
   }
 
   buffers.clear();
@@ -247,7 +307,7 @@ Receiver::receive(char *buffer)
       int all_status;
       MPI_Allreduce(&status, &all_status, 1, MPI_INT, MPI_MIN, receiver_comm);
 
-      state = FINISHED;
+      state = NOT_RUNNING;
     }
 
     return true; // we're done - want socket thread loop to quit
@@ -274,7 +334,7 @@ Receiver::receive(char *buffer)
 
       if (! all_status)
       {
-        state = FINISHED;
+        state = NOT_RUNNING;
         return true; // we're done - want socket thread loop to quit
       }
     }

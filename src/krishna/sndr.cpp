@@ -34,10 +34,20 @@ using namespace gxy;
 
 int mpi_rank, mpi_size;
 
+float xmin, xmax, ymin, ymax, zmin, zmax;
+
 void
 syntax(char *a)
 {
-  if (mpi_rank == 0) std::cerr << "syntax: " << a << " hostfile baseport\n";
+  if (mpi_rank == 0)
+  {
+    std::cerr << "syntax: " << a << " box hostfile baseport\n";
+    std::cerr << "box is a file containing six space separated values: xmin xmax ymin ymax  zmin, zmax\n";
+    std::cerr << "hostfile is a file containing the hosts that are in play on the Galaxy side\n";
+    std::cerr << "The i'th host will be listening on port (baseport + i)\n";
+    std::cerr << "baseport is the port being listened to on the rank-0 Galaxy server\n";
+  }
+
   MPI_Finalize();
   exit(1);
 }
@@ -45,30 +55,43 @@ syntax(char *a)
 
 static int frame = 0;
 
+inline float frand() { return float(rand()) / RAND_MAX; }
+
 bool
 SendSomeData(string destination, int port)
 {
-#if 0
-  if (mpi_rank == 1)
-  {
-    std::cerr << getpid() << "\n";
-    int dbg = 1;
-    while(dbg)
-      sleep(1);
-  }
-#endif
-    
+  if (frame == 0)
+    srand((unsigned int) getpid());
+  
   ClientSkt c(destination, port);
   if (c.Connect())
   {
-    int msg[2] = {mpi_rank, frame++};
-    c.Send((char *)&msg, sizeof(msg));
-    std::cerr << mpi_rank << ": send data\n";
-    char *buf = c.Receive();
-    int rply = *(int *)buf;
-    std::cerr << mpi_rank << ": got " << rply << "\n";
+    int dsz = sizeof(float) + 100*4*sizeof(float);
+    char *data = (char *)malloc(dsz);
+
+    *(int *)data = 100;
+
+    float *ptr = (float *)(data + sizeof(int));
+
+    for (int i = 0; i < 100; i++)
+    {
+      *ptr++ = xmin + frand()*(xmax - xmin);
+      *ptr++ = ymin + frand()*(ymax - ymin);
+      *ptr++ = zmin + frand()*(zmax - zmin);
+    }
+
+    for (int i = 0; i < 100; i++)
+      *ptr++ = frand();
+
+    c.Send(data, dsz);
+    char *rply = c.Receive();
+    int r = *(int *)rply;
     c.Disconnect();
-    return rply == 1;
+
+    free(data);
+    free(rply);
+
+    return r == 1;
   }
   else
     return false;
@@ -81,20 +104,22 @@ main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-  if (argc != 3)
+  if (argc != 4)
     syntax(argv[0]);
 
   vector<string> gxy_hosts;
-  ifstream ifs(argv[1]);
-
+  ifstream ifs(argv[2]);
   string s;
   while (ifs >> s)
     gxy_hosts.push_back(s);
+  ifs.close();
+  
+  ifs.open(argv[1]);
+  ifs >> xmin >> xmax >> ymin >> ymax >> zmin >> zmax;
+  ifs.close();
 
   string destination = gxy_hosts[mpi_rank % gxy_hosts.size()];
-  int port = atoi(argv[2]) + (mpi_rank % gxy_hosts.size());
-
-  std::cerr << mpi_rank << ": " << port << "\n";
+  int port = atoi(argv[3]) + (mpi_rank % gxy_hosts.size());
 
   int done = 0;
   char cmd = 's';

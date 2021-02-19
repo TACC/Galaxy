@@ -27,6 +27,7 @@
 #include <KeyedObject.h>
 #include <Geometry.h>
 
+#include "Partitioning.hpp"
 #include "Skt.hpp"
 
 namespace gxy
@@ -39,17 +40,33 @@ class Receiver : public gxy::KeyedObject
   KEYED_OBJECT(Receiver)
 
   enum receiver_state {
-    NOT_STARTED,
+    NOT_RUNNING,
     RUNNING,
-    EXITTING,
-    FINISHED
+    EXITTING
+  };
+
+  struct commit_args
+  {
+    int base_port;
+    Key geometry;
+    Key partitioning;
+    int nsenders;
   };
 
 public:
   ~Receiver();
 
-  void Start(GeometryP, int, int);
+  virtual int serialSize();
+  virtual unsigned char* serialize(unsigned char *ptr);
+  virtual unsigned char* deserialize(unsigned char *ptr);
+
+  void Start();
   void Stop();
+
+  void SetGeometry(GeometryP g) { geometry = g; }
+  void SetPartitioning(PartitioningP p) { partitioning = p; }
+  void SetNSenders(int n) { nsenders = n; }
+  void SetBasePort(int p) { base_port = p; }
 
   bool receive(char *);
 
@@ -57,9 +74,16 @@ protected:
   void _Stop();
 
 private:
+  GeometryP geometry = NULL;
+  PartitioningP partitioning = NULL;
+  int base_port = 1900;
+  int nsenders = -1;
+
+  int local_port;
+
   MPI_Comm receiver_comm;
 
-  receiver_state state = NOT_STARTED;
+  receiver_state state = NOT_RUNNING;
 
   pthread_t tid;
   bool thread_running = false;
@@ -71,10 +95,8 @@ private:
   ServerSkt *serverskt = NULL;
   static bool receiver(ServerSkt*, void *, char *);
 
-  bool Setup(MPI_Comm, GeometryP, int, int);
+  bool Setup(MPI_Comm);
   bool Reshuffle();
-
-  GeometryP geometry; // The geometry object being updated across the socket.
 
   int n_total_senders;
 
@@ -88,36 +110,22 @@ private:
     struct StartMsgArgs
     {
       Key rk; // Receiver object
-      Key gk; // Geometry object
-      int n;  // number of senders
-      int bp; // base port
     };
 
   public:
-    StartMsg(Receiver* r, GeometryP g, int n, int bp)
-    : StartMsg(sizeof(struct StartMsgArgs))
+    StartMsg(Receiver* r) : StartMsg(sizeof(Key))
     {
       struct StartMsgArgs *p = (struct StartMsgArgs *)contents->get();
       p->rk = r->getkey();
-      p->gk = g->getkey();
-      p->n  = n;
-      p->bp = bp;
     }
 
     WORK_CLASS(StartMsg, true);
 
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {
-      int r, s;
-      MPI_Comm_rank(c, &r);
-      MPI_Comm_size(c, &s);
-
       struct StartMsgArgs *p = (struct StartMsgArgs *)get();
-
       ReceiverP receiver = Receiver::GetByKey(p->rk);
-      GeometryP geometry = Geometry::GetByKey(p->gk);
-
-      return receiver->Setup(c, geometry, p->n, p->bp);
+      return receiver->Setup(c);
     }
   };
 
