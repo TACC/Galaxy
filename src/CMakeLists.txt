@@ -34,6 +34,7 @@ add_subdirectory(apps)
 add_subdirectory(cinema)
 add_subdirectory(tracer)
 add_subdirectory(insitu)
+add_subdirectory(krishna)
 
 if (GXY_GUI)
   add_subdirectory(gui)
