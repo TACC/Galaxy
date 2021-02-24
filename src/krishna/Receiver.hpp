@@ -51,6 +51,7 @@ class Receiver : public gxy::KeyedObject
     Key geometry;
     Key partitioning;
     int nsenders;
+    float fuzz;
   };
 
 public:
@@ -67,17 +68,23 @@ public:
   void SetPartitioning(PartitioningP p) { partitioning = p; }
   void SetNSenders(int n) { nsenders = n; }
   void SetBasePort(int p) { base_port = p; }
+  void SetFuzz(float f) { fuzz = f; }
 
   bool receive(char *);
 
 protected:
   void _Stop();
+  void _Receive(char *);
 
 private:
+  pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t  cond = PTHREAD_COND_INITIALIZER;
+
   GeometryP geometry = NULL;
   PartitioningP partitioning = NULL;
   int base_port = 1900;
   int nsenders = -1;
+  float fuzz = 0;
 
   int local_port;
 
@@ -104,6 +111,7 @@ private:
   int number_of_timestep_connections_received = 0;
 
   std::vector<char *> buffers;
+  std::vector<char *> reshuffle_buffers;
 
   class StartMsg : public Work
   {
@@ -151,6 +159,35 @@ private:
       ReceiverP receiver = Receiver::GetByKey(p->rk);
 
       receiver->_Stop();
+      return false;
+    }
+  };
+
+  class ReshuffleMsg : public Work
+  {
+    struct ReshuffleMsgArgs
+    {
+      Key  rk;       // Receiver object
+      char buffer[]; // data
+    };
+
+  public:
+    ReshuffleMsg(Receiver* r, char *buffer) :
+                     ReshuffleMsg(sizeof(struct ReshuffleMsgArgs) + *(int *)buffer)
+    {
+      struct ReshuffleMsgArgs *p = (struct ReshuffleMsgArgs *)contents->get();
+      p->rk = r->getkey();
+      memcpy(p->buffer, buffer, *(int *)buffer);
+    }
+
+    WORK_CLASS(ReshuffleMsg, false);
+
+    bool Action(int sender)
+    {
+      // std::cerr << GetTheApplication()->GetRank() << " rcvd from " << sender << "\n";
+      struct ReshuffleMsgArgs *p = (struct ReshuffleMsgArgs *)get();
+      ReceiverP receiver = Receiver::GetByKey(p->rk);
+      receiver->_Receive(p->buffer);
       return false;
     }
   };

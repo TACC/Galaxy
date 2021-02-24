@@ -30,16 +30,20 @@ using namespace std;
 
 #include "Skt.hpp"
 
+#include "bufhdr.h"
+
 using namespace gxy;
 
-int mpi_rank, mpi_size;
+int mpiRank, mpiSize;
+
+#include "Debug.h"
 
 float xmin, xmax, ymin, ymax, zmin, zmax;
 
 void
 syntax(char *a)
 {
-  if (mpi_rank == 0)
+  if (mpiRank == 0)
   {
     std::cerr << "syntax: " << a << " box hostfile baseport\n";
     std::cerr << "box is a file containing six space separated values: xmin xmax ymin ymax  zmin, zmax\n";
@@ -57,6 +61,49 @@ static int frame = 0;
 
 inline float frand() { return float(rand()) / RAND_MAX; }
 
+int dsz = -1;
+char *data = NULL;
+
+void
+CreateSomeData()
+{
+  if (dsz == -1)
+  {
+    dsz = sizeof(int) + sizeof(bufhdr)+ 100*4*sizeof(float);
+    data = (char *)malloc(dsz);
+  }
+
+  *(int *)data = dsz;
+
+  bufhdr *hdr = (bufhdr *)(data + sizeof(int));
+  float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
+
+  hdr->type          = bufhdr::Particles;
+  hdr->origin        = mpiRank;
+  hdr->has_data      = true;
+  hdr->npoints       = 100;
+  hdr->nconnectivity = 0;
+
+#if 0
+  for (int i = 0; i < 100; i++)
+  {
+    *ptr++ = xmin + frand()*(xmax - xmin);
+    *ptr++ = ymin + frand()*(ymax - ymin);
+    *ptr++ = zmin + frand()*(zmax - zmin);
+  }
+#else
+  for (int i = 0; i < 100; i++)
+  {
+    *ptr++ = xmin + (i / 99.0)*(xmax - xmin);
+    *ptr++ = ymin + (i / 99.0)*(ymax - ymin);
+    *ptr++ = zmin + (i / 99.0)*(zmax - zmin);
+  }
+#endif
+
+  for (int i = 0; i < 100; i++)
+    *ptr++ = frand();
+}
+
 bool
 SendSomeData(string destination, int port)
 {
@@ -66,30 +113,14 @@ SendSomeData(string destination, int port)
   ClientSkt c(destination, port);
   if (c.Connect())
   {
-    int dsz = sizeof(float) + 100*4*sizeof(float);
-    char *data = (char *)malloc(dsz);
-
-    *(int *)data = 100;
-
-    float *ptr = (float *)(data + sizeof(int));
-
-    for (int i = 0; i < 100; i++)
-    {
-      *ptr++ = xmin + frand()*(xmax - xmin);
-      *ptr++ = ymin + frand()*(ymax - ymin);
-      *ptr++ = zmin + frand()*(zmax - zmin);
-    }
-
-    for (int i = 0; i < 100; i++)
-      *ptr++ = frand();
-
     c.Send(data, dsz);
+    // std::cerr << mpiRank << " sent to port " << port << " ... waiting for ack\n";
     char *rply = c.Receive();
+    // std::cerr << mpiRank << " got ack\n";
     int r = *(int *)rply;
     c.Disconnect();
-
-    free(data);
     free(rply);
+    // std::cerr << mpiRank << " sent to port " << port << "\n";
 
     return r == 1;
   }
@@ -101,8 +132,10 @@ int
 main(int argc, char *argv[])
 {
   MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+  MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+
+  // new Debug(argv[0], false, "");
 
   if (argc != 4)
     syntax(argv[0]);
@@ -118,27 +151,29 @@ main(int argc, char *argv[])
   ifs >> xmin >> xmax >> ymin >> ymax >> zmin >> zmax;
   ifs.close();
 
-  string destination = gxy_hosts[mpi_rank % gxy_hosts.size()];
-  int port = atoi(argv[3]) + (mpi_rank % gxy_hosts.size());
+  string destination = gxy_hosts[mpiRank % gxy_hosts.size()];
+  int port = atoi(argv[3]) + (mpiRank % gxy_hosts.size());
 
   int done = 0;
   char cmd = 's';
+
+  CreateSomeData();
 
   while (! done)
   {
     if (cmd == 's')
       SendSomeData(destination, port);
-    else
-      std::cerr << mpi_rank << " " << destination << " " << port << "\n";
+    if (cmd == 'c')
+      CreateSomeData();
+    // else
+      // std::cerr << mpiRank << " " << destination << " " << port << "\n";
 
-    if (mpi_rank == 0)
+    if (mpiRank == 0)
     {
       cout << "? ";
       cin >> cmd;
       if (cin.eof())
         cmd = 'q';
-
-      std::cerr << "rank 0: cmd " << cmd << "\n";
     }
 
     MPI_Bcast(&cmd, 1, MPI_CHAR, 0, MPI_COMM_WORLD);

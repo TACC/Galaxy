@@ -154,8 +154,6 @@ public:
       std::cerr << "error connecting to host " << host << " :: " << port << "\n";
       return false;
     }
-    else
-      std::cerr << "succeeded connecting to host " << host << " :: " << port << "\n";
 
     return true;
   }
@@ -206,7 +204,7 @@ public:
       exit(1);
     }
 
-    ::listen(mskt,5);
+    ::listen(mskt,30);
   }
 
   ~ServerSkt()

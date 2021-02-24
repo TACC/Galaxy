@@ -20,6 +20,7 @@
 // ========================================================================== //
 
 #include "Receiver.hpp"
+#include "bufhdr.h"
 
 using namespace gxy;
 
@@ -30,6 +31,7 @@ namespace gxy {
 
 WORK_CLASS_TYPE(Receiver::StartMsg)
 WORK_CLASS_TYPE(Receiver::StopMsg)
+WORK_CLASS_TYPE(Receiver::ReshuffleMsg)
 KEYED_OBJECT_CLASS_TYPE(Receiver)
 
 void
@@ -38,6 +40,7 @@ Receiver::Register()
   RegisterClass();
   Receiver::StartMsg::Register();
   Receiver::StopMsg::Register();
+  Receiver::ReshuffleMsg::Register();
 }
 
 Receiver::~Receiver()
@@ -58,6 +61,7 @@ Receiver::serialize(unsigned char *ptr)
   a->geometry = geometry->getkey();
   a->partitioning = partitioning ? partitioning->getkey() : -1;
   a->nsenders = nsenders;
+  a->fuzz = fuzz;
 
   return ptr + sizeof(commit_args);
 }
@@ -73,6 +77,7 @@ Receiver::deserialize(unsigned char *ptr)
   geometry = Geometry::GetByKey(a->geometry);
   partitioning = a->partitioning != -1 ? Partitioning::GetByKey(a->partitioning) : NULL;
   nsenders = a->nsenders;
+  fuzz = a->fuzz;
 
   return ptr + sizeof(commit_args);
 }
@@ -246,48 +251,217 @@ Receiver::Reshuffle()
   int r = GetTheApplication()->GetRank();
   std::cerr << r << " reshuffle\n";
 
-  int num_points = 0;
+  // First we see how much data we need to send to each recipient
+
+  int *recipient_vertex_count = new int[partitioning->number_of_partitions()];
+  memset(recipient_vertex_count, 0, partitioning->number_of_partitions()*sizeof(int));
+
+  int *recipient_connectivity_count = new int[partitioning->number_of_partitions()];
+  memset(recipient_connectivity_count, 0, partitioning->number_of_partitions()*sizeof(int));
+
+  // For each input buffer we got from the socket...
+
+  bufhdr::btype btype = bufhdr::None;
+  bool has_data;
 
   for (auto buffer : buffers)
   {
+    int size = *(int *)buffer;
+    bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+
+    if (btype == bufhdr::None)
+    {
+      btype = hdr->type;
+      has_data = hdr->has_data;
+    }
+    else if (btype != hdr->type || has_data != hdr->has_data)
+    {
+      std::cerr << "difference in data received from different senders\n";
+      exit(1);
+    }
+
+    float *ptr = (float *)(buffer + sizeof(int) + sizeof(bufhdr));
+
+    if (hdr->type == bufhdr::Particles)
+    {
+      // Then we do it point by point.  For each point in the buffer...
+
+      for (int i = 0; i < hdr->npoints; i++, ptr += 3)
+      {
+        // Due to fuzz, each point might land in more than one partition...
+
+        for (int j = 0; j < partitioning->number_of_partitions(); j++)
+        {
+          if (partitioning->IsIn(j, ptr, fuzz))
+            recipient_vertex_count[j] ++;
+        }
+      }
+    }
+    else
+    {
+      // Other geometry types will have to taks connectivity into account\n";
+      std::cerr << "we only handle particles at the moment\n";
+      exit(1);
+    }
+  }
+
+  // list of buffers containing the points to send to each server
+  // begins with integer size and a header
+
+  vector<char *> send_buffers;
+  for (int i = 0; i < partitioning->number_of_partitions(); i++)
+  {
+
+    // Note - the 2* sizeof int is to add a overrun tag on the end
+
+    int size = 2*sizeof(int) + sizeof(bufhdr)
+               + recipient_vertex_count[i]*3 * sizeof(float) 
+               + recipient_connectivity_count[i] * sizeof(int) 
+               + (has_data ? recipient_vertex_count[i]*sizeof(float) : 0);
+
+    char *buffer = (char *)malloc(size);
+
+    *(int *)buffer = size;
+    *(int *)(buffer + (size-4)) = 12345;
+
+    bufhdr *sndhdr = (bufhdr *)(buffer + sizeof(int));
+
+    sndhdr->type = btype;
+    sndhdr->origin = GetTheApplication()->GetRank();
+    sndhdr->has_data = has_data;
+    sndhdr->npoints = recipient_vertex_count[i];
+    sndhdr->nconnectivity = recipient_connectivity_count[i];
+    
+    send_buffers.push_back(buffer);
+  }
+
+  // next pointers for each destination points followed by data  THIS IS GOING
+  // TO BE DIFFERENT IF THERE IS CONNECTIVITY DATA!
+
+  float **dpptrs = new float*[partitioning->number_of_partitions()];
+  float **ddptrs = new float*[partitioning->number_of_partitions()];
+
+  for (int i = 0; i < partitioning->number_of_partitions(); i++)
+  {
+    dpptrs[i] = (float *)(send_buffers[i] + sizeof(int) + sizeof(bufhdr));
+    ddptrs[i] = dpptrs[i] + 3*recipient_vertex_count[i];
+  }
+
+  // Now go through the received buffers, copying data to outgoing buffers
+
+  for (auto buffer : buffers)
+  {
+    bufhdr *shdr = (bufhdr *)(buffer + sizeof(int));
+    float *spptr = (float *)(shdr + 1);
+    float *sdptr = spptr + 3*shdr->npoints;
+
+    for (int i = 0; i < shdr->npoints; i++)
+    {
+      for (int j = 0; j < partitioning->number_of_partitions(); j++)
+      {
+        if (partitioning->IsIn(j, spptr, fuzz))
+        {
+          float *dp = dpptrs[j]; dpptrs[j] = dpptrs[j] + 3;
+          float *dd = ddptrs[j]; ddptrs[j] = ddptrs[j] + 1;
+
+          *dp++ = spptr[0];
+          *dp++ = spptr[1];
+          *dp++ = spptr[2];
+          *dd++ = *sdptr;
+        }
+      }
+
+      spptr = spptr + 3;
+      sdptr = sdptr + 1;
+    }
+  }
+
+  // Check the overrun tags - ddptrs should point to it?
+  
+  for (int i = 0; i < partitioning->number_of_partitions(); i++)
+    if (*(int *)ddptrs[i] != 12345)
+      std::cerr << "overrun error 1\n";
+
+  // Now we can delete the buffers we got from the sender(s)...
+
+  for (auto buffer : buffers) free(buffer);
+  buffers.clear();
+
+  // Off to the races...
+
+  pthread_mutex_lock(&lock);
+
+  for (int i = 0; i < partitioning->number_of_partitions(); i++)
+  {
+    if (i == GetTheApplication()->GetRank())
+      reshuffle_buffers.push_back(send_buffers[i]);
+    else
+    {
+      // std::cerr << GetTheApplication()->GetRank() << " sendto " << i <<"\n";
+      ReshuffleMsg msg(this, send_buffers[i]);
+      msg.Send(i);
+    }
+  }
+
+  while (reshuffle_buffers.size() < (partitioning->number_of_partitions()-1))
+  {
+    // std::cerr << GetTheApplication()->GetRank() << " bsz " << reshuffle_buffers.size() << "\n";
+    pthread_cond_wait(&cond, &lock);
+  }
+
+  pthread_mutex_unlock(&lock);
+
+  int num_points = 0;
+
+  for (auto buffer : reshuffle_buffers)
+  {
     if (buffer)
     {
-      int *ptr = (int *)buffer;
-      num_points += *buffer;
+      bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+      num_points += hdr->npoints;
     }
   }
 
   geometry->allocate_vertices(num_points);    // also allocates per-vertex float data
 
-  float *ptr = (float *)geometry->GetVertices();
-  for (auto buffer : buffers)
+  float *pptr = (float *)geometry->GetVertices();
+  float *dptr = (float *)geometry->GetData();
+
+  for (auto buffer : reshuffle_buffers)
   {
     if (buffer)
     {
-      int n = *(int *)buffer;
-      float *vertices = (float *)(buffer + sizeof(int));
-      memcpy(ptr, vertices, n*3*sizeof(float));
+      bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+      float *vertices = (float *)(hdr + 1);
+      float *data = vertices + hdr->npoints*3;
+      memcpy(pptr, vertices, hdr->npoints*3*sizeof(float));
+      memcpy(dptr, data, hdr->npoints*sizeof(float));
+      pptr += hdr->npoints*3;
+      dptr += hdr->npoints;
+      free(buffer);
     }
   }
 
-  ptr = (float *)geometry->GetData();
-  for (auto buffer : buffers)
-  {
-    if (buffer)
-    {
-      int n = *(int *)buffer;
-      float *vertices = (float *)(buffer + sizeof(int));
-      float *data = vertices + n*3;
-      memcpy(ptr, data, n*sizeof(float));
-    }
-
-    free(buffer);
-  }
-
-  buffers.clear();
+  reshuffle_buffers.clear();
 
   return true;
 }
+
+void
+Receiver::_Receive(char *buffer)
+{
+  pthread_mutex_lock(&lock);
+  
+  int sz = *(int *)buffer;
+  char *buf = (char *)malloc(sz);
+  memcpy(buf, buffer, sz);
+  reshuffle_buffers.push_back(buf);
+
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&lock);
+}
+
+// Called from the socket handler with data from the sender
 
 bool
 Receiver::receiver(ServerSkt *skt, void *p, char *buf)
@@ -299,7 +473,6 @@ Receiver::receiver(ServerSkt *skt, void *p, char *buf)
 bool
 Receiver::receive(char *buffer)
 {
-  std::cerr << GetTheApplication()->GetRank();
 
   if (! buffer)
   {
@@ -318,6 +491,9 @@ Receiver::receive(char *buffer)
   {
     // If the receiver is locked, then its in the process of
     // cleaning up and we DO NOT want to enter the Allreduce
+
+    bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+    // std::cerr << GetTheApplication()->GetRank() << " received from sender " << hdr->origin << "\n";
 
     buffers.push_back(buffer);
     number_of_timestep_connections_received ++;

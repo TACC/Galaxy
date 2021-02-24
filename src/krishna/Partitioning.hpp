@@ -45,6 +45,14 @@ public:
     float xmin, xmax;
     float ymin, ymax;
     float zmin, zmax;
+
+    bool IsIn(float *p, float fuzz)
+    {
+      if (p[0] < xmin - fuzz || p[0] > xmax + fuzz) return false;
+      if (p[1] < ymin - fuzz || p[1] > ymax + fuzz) return false;
+      if (p[2] < zmin - fuzz || p[2] > zmax + fuzz) return false;
+      return true;
+    }
   };
 
   bool Load(std::string);
@@ -61,6 +69,12 @@ public:
     extents = (Extent *)malloc(n*sizeof(Extent));
     memcpy(extents, e, n*sizeof(Extent));
   }
+
+  bool IsIn(int i, float *p, float fuzz)
+  {
+    return extents[i].IsIn(p, fuzz);
+  }
+
     
 private:
   Extent *extents = NULL;
