@@ -175,6 +175,8 @@ Receiver::_Stop()
 void *
 Receiver::reshuffle_thread(void *d)
 {
+  std::cerr << "res=huffle thread start\n";
+
   Receiver *rcvr = (Receiver *)d;
   bool done = false;
 
@@ -182,6 +184,7 @@ Receiver::reshuffle_thread(void *d)
   {
     int status = 1;
     int all_status;
+    std::cerr << "Receiver::reshuffle_thread calling Allreduce\n";
     MPI_Allreduce(&status, &all_status, 1, MPI_INT, MPI_MIN, rcvr->receiver_comm);
 
     if (all_status)
@@ -484,6 +487,7 @@ Receiver::receive(char *buffer)
     {
       int status = 0;
       int all_status;
+      std::cerr << "Receiver::receive calling Allreduce\n";
       MPI_Allreduce(&status, &all_status, 1, MPI_INT, MPI_MIN, receiver_comm);
 
       state = NOT_RUNNING;
