@@ -1,4 +1,4 @@
-// ========================================================================== //
+
 //                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
@@ -45,6 +45,13 @@ Receiver::Register()
 
 Receiver::~Receiver()
 {
+  if (state == RUNNING)
+    _Stop();
+
+
+  // std::cerr << "Freeing receiver comm\n";
+  MPI_Comm_free(&receiver_comm);
+  // std::cerr << "receiver comm freed\n";
 }
 
 int 
@@ -110,7 +117,7 @@ Receiver::_Stop()
     // Set a flag so that the socket thread quits before it checks
     // for new data.
 
-    serverskt->set_done();
+    serverskt->stop();
 
     // At the moment that this procedure (running in a main MPI thread 
     // collective) sets the socket done and exitting flags, the socket
@@ -153,8 +160,7 @@ Receiver::_Stop()
     // to the socket handler loop, which exits and we are in the equivalent
     // of case 1.
 
-    serverskt->wait();
-    delete serverskt;
+    serverskt = NULL;
   }
   else
   {
@@ -164,8 +170,6 @@ Receiver::_Stop()
 
     pthread_join(tid, NULL);
   }
-
-  MPI_Comm_free(&receiver_comm);
 }
 
 void *
@@ -520,5 +524,6 @@ Receiver::receive(char *buffer)
 
   return false;  // socket thread needs to keep going
 }
+
 
 }

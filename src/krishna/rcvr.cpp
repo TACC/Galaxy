@@ -107,6 +107,7 @@ main(int argc, char *argv[])
     }
 
     receiver->Stop();
+    // std::cerr << "Stop return\n";
 
     Delete(receiver);
     Delete(particles);

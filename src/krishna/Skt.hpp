@@ -214,11 +214,31 @@ public:
   }
 
   void
-  start()
+  start(bool p = false)
   {
+    paused = p;
+    pthread_mutex_lock(&mutex);
+
     done = false;
     pthread_create(&tid, NULL, skt_thread, this);
     thread_running = true;
+
+    pthread_mutex_unlock(&mutex);
+  }
+
+  void
+  pause()
+  {
+    paused = true;
+  }
+
+  void
+  resume()
+  {
+    pthread_mutex_lock(&mutex);
+    paused = false;
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&mutex);
   }
 
   void 
@@ -227,17 +247,11 @@ public:
     done = true;
   }
 
-  void
-  wait()
-  {
-    pthread_join(tid, NULL);
-  }
-
   void 
   stop()
   {
     set_done();
-    wait();
+    pthread_join(tid, NULL);
   }
 
   bool is_running() { return thread_running; }
@@ -247,8 +261,13 @@ public:
   {
     ServerSkt *me = (ServerSkt *)d;
 
+    me->lock();
+
     while (! me->done)
     {
+      while (me->paused)
+        me->wait();
+
       struct sockaddr_in cli_addr;
       socklen_t cli_len = sizeof(cli_addr);
 
@@ -276,9 +295,13 @@ public:
         close(me->cskt);
         me->cskt = -1;
       }
+
+      me->unlock();
     }
 
+    // std::cerr << "skt thread calling final handler\n";
     (*me->handler)(me, me->ptr, NULL);
+    // std::cerr << "skt thread exit\n";
 
     pthread_exit(NULL);
 
@@ -286,6 +309,15 @@ public:
   }
 
 private:
+
+  void lock()   { pthread_mutex_lock(&mutex); }
+  void unlock() { pthread_mutex_unlock(&mutex); }
+  void wait()   { pthread_cond_wait(&cond, &mutex); }
+  void signal() { pthread_cond_signal(&cond); }
+
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+  bool paused;
 
   pthread_t tid;
   bool thread_running = false;

@@ -159,6 +159,7 @@ private:
       ReceiverP receiver = Receiver::GetByKey(p->rk);
 
       receiver->_Stop();
+      // std::cerr << "StopMsg CollectiveAction exit\n";
       return false;
     }
   };
@@ -191,6 +192,27 @@ private:
       return false;
     }
   };
+
+  class ReceiveMsg : public Work
+  {
+    struct ReceiveMsgArgs
+    {
+      Key  rk;       // Receiver object
+    };
+
+  public:
+    ReceiveMsg(Receiver* r) : ReceiveMsg(sizeof(struct ReceiveMsgArgs))
+    {
+      struct ReceiveMsgArgs *p = (struct ReceiveMsgArgs *)contents->get();
+      p->rk = r->getkey();
+    }
+
+    WORK_CLASS(ReceiveMsg, false);
+
+    bool CollectiveAction(MPI_Comm c, bool isRoot)
+    { return false; }
+  };
+
 };
 
 }
