@@ -41,7 +41,8 @@ class Receiver : public gxy::KeyedObject
 
   enum receiver_state {
     NOT_RUNNING,
-    RUNNING,
+    PAUSED,
+    BUSY,
     EXITTING
   };
 
@@ -63,6 +64,8 @@ public:
 
   void Start();
   void Stop();
+  void Accept();
+  void Wait();
 
   void SetGeometry(GeometryP g) { geometry = g; }
   void SetPartitioning(PartitioningP p) { partitioning = p; }
@@ -70,15 +73,29 @@ public:
   void SetBasePort(int p) { base_port = p; }
   void SetFuzz(float f) { fuzz = f; }
 
-  bool receive(char *);
 
 protected:
   void _Stop();
   void _Receive(char *);
+  int receive(char *);
 
 private:
-  pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-  pthread_cond_t  cond = PTHREAD_COND_INITIALIZER;
+  pthread_mutex_t mutex_buffers = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t  cond_buffers = PTHREAD_COND_INITIALIZER;
+  void lock_buffers() { pthread_mutex_lock(&mutex_buffers); }
+  void unlock_buffers() { pthread_mutex_unlock(&mutex_buffers); }
+  void signal_buffers() { pthread_cond_signal(&cond_buffers); }
+  void wait_buffers() { pthread_cond_wait(&cond_buffers, &mutex_buffers); }
+
+  pthread_mutex_t mutex_busy = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t  cond_busy = PTHREAD_COND_INITIALIZER;
+  void lock_busy() { pthread_mutex_lock(&mutex_busy); }
+  void unlock_busy() { pthread_mutex_unlock(&mutex_busy); }
+  void signal_busy() { pthread_cond_signal(&cond_busy); }
+  void wait_busy() { pthread_cond_wait(&cond_busy, &mutex_busy); }
+
+  void _Wait();
+  void _Accept();
 
   GeometryP geometry = NULL;
   PartitioningP partitioning = NULL;
@@ -159,7 +176,7 @@ private:
       ReceiverP receiver = Receiver::GetByKey(p->rk);
 
       receiver->_Stop();
-      // std::cerr << "StopMsg CollectiveAction exit\n";
+
       return false;
     }
   };
@@ -185,7 +202,6 @@ private:
 
     bool Action(int sender)
     {
-      // std::cerr << GetTheApplication()->GetRank() << " rcvd from " << sender << "\n";
       struct ReshuffleMsgArgs *p = (struct ReshuffleMsgArgs *)get();
       ReceiverP receiver = Receiver::GetByKey(p->rk);
       receiver->_Receive(p->buffer);
@@ -193,24 +209,42 @@ private:
     }
   };
 
-  class ReceiveMsg : public Work
+  class AcceptMsg : public Work
   {
-    struct ReceiveMsgArgs
+    struct AcceptMsgArgs
     {
       Key  rk;       // Receiver object
     };
 
   public:
-    ReceiveMsg(Receiver* r) : ReceiveMsg(sizeof(struct ReceiveMsgArgs))
+    AcceptMsg(Receiver* r) : AcceptMsg(sizeof(struct AcceptMsgArgs))
     {
-      struct ReceiveMsgArgs *p = (struct ReceiveMsgArgs *)contents->get();
+      struct AcceptMsgArgs *p = (struct AcceptMsgArgs *)contents->get();
       p->rk = r->getkey();
     }
 
-    WORK_CLASS(ReceiveMsg, false);
+    WORK_CLASS(AcceptMsg, false);
 
-    bool CollectiveAction(MPI_Comm c, bool isRoot)
-    { return false; }
+    bool CollectiveAction(MPI_Comm c, bool isRoot);
+  };
+
+  class WaitMsg : public Work
+  {
+    struct WaitMsgArgs
+    {
+      Key  rk;       // Receiver object
+    };
+
+  public:
+    WaitMsg(Receiver* r) : WaitMsg(sizeof(struct WaitMsgArgs))
+    {
+      struct WaitMsgArgs *p = (struct WaitMsgArgs *)contents->get();
+      p->rk = r->getkey();
+    }
+
+    WORK_CLASS(WaitMsg, false);
+
+    bool CollectiveAction(MPI_Comm c, bool isRoot);
   };
 
 };

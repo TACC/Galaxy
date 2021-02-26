@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -251,6 +252,8 @@ public:
   stop()
   {
     set_done();
+    if (paused) 
+      resume();
     pthread_join(tid, NULL);
   }
 
@@ -268,6 +271,9 @@ public:
       while (me->paused)
         me->wait();
 
+      if (me->done)
+        break;
+
       struct sockaddr_in cli_addr;
       socklen_t cli_len = sizeof(cli_addr);
 
@@ -280,7 +286,7 @@ public:
           break;
         }
 
-        struct timespec rem, req = {0, 10000};
+        struct timespec rem, req = {0, 10000000};
         nanosleep(&req, &rem);
       }
       else
@@ -299,9 +305,7 @@ public:
       me->unlock();
     }
 
-    // std::cerr << "skt thread calling final handler\n";
     (*me->handler)(me, me->ptr, NULL);
-    // std::cerr << "skt thread exit\n";
 
     pthread_exit(NULL);
 

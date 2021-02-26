@@ -96,14 +96,18 @@ main(int argc, char *argv[])
 
     receiver->Start();
 
-    int done = 0;
-    while (! done)
+    while (true)
     {
       char cmd;
       cout << "? ";
       cin >> cmd;
       if (cmd == 'q' || cin.eof())
-        done = 1;
+        break;
+
+      receiver->Accept();
+      receiver->Wait();
+
+      std::cerr << "I think I got a timestep\n";
     }
 
     receiver->Stop();

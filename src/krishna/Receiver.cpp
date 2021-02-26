@@ -1,4 +1,4 @@
-
+// ========================================================================== //
 //                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
@@ -32,12 +32,14 @@ namespace gxy {
 WORK_CLASS_TYPE(Receiver::StartMsg)
 WORK_CLASS_TYPE(Receiver::StopMsg)
 WORK_CLASS_TYPE(Receiver::ReshuffleMsg)
+WORK_CLASS_TYPE(Receiver::AcceptMsg)
 KEYED_OBJECT_CLASS_TYPE(Receiver)
 
 void
 Receiver::Register()
 {
   RegisterClass();
+  Receiver::AcceptMsg::Register();
   Receiver::StartMsg::Register();
   Receiver::StopMsg::Register();
   Receiver::ReshuffleMsg::Register();
@@ -45,13 +47,10 @@ Receiver::Register()
 
 Receiver::~Receiver()
 {
-  if (state == RUNNING)
+  if (state == BUSY)
     _Stop();
 
-
-  // std::cerr << "Freeing receiver comm\n";
   MPI_Comm_free(&receiver_comm);
-  // std::cerr << "receiver comm freed\n";
 }
 
 int 
@@ -175,8 +174,6 @@ Receiver::_Stop()
 void *
 Receiver::reshuffle_thread(void *d)
 {
-  std::cerr << "res=huffle thread start\n";
-
   Receiver *rcvr = (Receiver *)d;
   bool done = false;
 
@@ -184,8 +181,9 @@ Receiver::reshuffle_thread(void *d)
   {
     int status = 1;
     int all_status;
-    std::cerr << "Receiver::reshuffle_thread calling Allreduce\n";
+
     MPI_Allreduce(&status, &all_status, 1, MPI_INT, MPI_MIN, rcvr->receiver_comm);
+    rcvr->state = BUSY;
 
     if (all_status)
     {
@@ -215,10 +213,30 @@ Receiver::Start()
   msg.Broadcast(true, true);
 }
 
+void
+Receiver::Wait()
+{
+  lock_busy();
+
+  while (state != PAUSED)
+    wait_busy();
+
+  unlock_busy();
+}
+
+void
+Receiver::Accept()
+{
+  state = BUSY;
+
+  AcceptMsg msg(this);
+  msg.Broadcast(true, true);
+}
+
 bool
 Receiver::Setup(MPI_Comm comm)
 {
-  state = RUNNING;
+  state = PAUSED;
 
   int gsz, grnk;
   MPI_Comm_rank(comm, &grnk);
@@ -242,7 +260,7 @@ Receiver::Setup(MPI_Comm comm)
   if (number_of_local_attachments)
   {
     serverskt = new ServerSkt(local_port, receiver, this);
-    serverskt->start();
+    serverskt->start(true);
   }
   else
   {
@@ -256,7 +274,6 @@ bool
 Receiver::Reshuffle()
 {
   int r = GetTheApplication()->GetRank();
-  std::cerr << r << " reshuffle\n";
 
   // First we see how much data we need to send to each recipient
 
@@ -387,7 +404,7 @@ Receiver::Reshuffle()
   
   for (int i = 0; i < partitioning->number_of_partitions(); i++)
     if (*(int *)ddptrs[i] != 12345)
-      std::cerr << "overrun error 1\n";
+      std::cerr << "overrun error\n";
 
   // Now we can delete the buffers we got from the sender(s)...
 
@@ -396,7 +413,7 @@ Receiver::Reshuffle()
 
   // Off to the races...
 
-  pthread_mutex_lock(&lock);
+  lock_buffers();
 
   for (int i = 0; i < partitioning->number_of_partitions(); i++)
   {
@@ -404,7 +421,6 @@ Receiver::Reshuffle()
       reshuffle_buffers.push_back(send_buffers[i]);
     else
     {
-      // std::cerr << GetTheApplication()->GetRank() << " sendto " << i <<"\n";
       ReshuffleMsg msg(this, send_buffers[i]);
       msg.Send(i);
     }
@@ -412,11 +428,10 @@ Receiver::Reshuffle()
 
   while (reshuffle_buffers.size() < (partitioning->number_of_partitions()-1))
   {
-    // std::cerr << GetTheApplication()->GetRank() << " bsz " << reshuffle_buffers.size() << "\n";
-    pthread_cond_wait(&cond, &lock);
+    wait_buffers();
   }
 
-  pthread_mutex_unlock(&lock);
+  unlock_buffers();
 
   int num_points = 0;
 
@@ -451,57 +466,73 @@ Receiver::Reshuffle()
 
   reshuffle_buffers.clear();
 
+  lock_busy();
+
+  state = PAUSED;
+
+  signal_busy();
+  unlock_busy();
+
   return true;
 }
 
 void
 Receiver::_Receive(char *buffer)
 {
-  pthread_mutex_lock(&lock);
+  bufhdr *b = (bufhdr *)(buffer + sizeof(int));
+  lock_buffers();
   
   int sz = *(int *)buffer;
   char *buf = (char *)malloc(sz);
   memcpy(buf, buffer, sz);
   reshuffle_buffers.push_back(buf);
 
-  pthread_cond_signal(&cond);
-  pthread_mutex_unlock(&lock);
+  signal_buffers();
+  unlock_buffers();
 }
 
 // Called from the socket handler with data from the sender
+// Four possible outcomes: 
+//  - it was a NULL buffer that triggered a final Allreduce.   
+//    The socket thread will be exitting, so doesn't care about pause
+//  - it was a non-NULL buffer but the Allreduce returns 0 -- someone
+//    else triggered an exit.  We cause the socket thread to exit
+//  - it was a non-NULL buffer that completed a timestep.  Pause the 
+//    socket thread, but keep it going
 
 bool
 Receiver::receiver(ServerSkt *skt, void *p, char *buf)
 {
   Receiver *me = (Receiver *)p;
-  return me->receive(buf);
+
+  switch (me->receive(buf))
+  {
+    case 0: return true;    // exitting
+    case 1: return false;   // Wasn't the buffer that triggered a reshuffle
+    default:
+      skt->pause();         // Was, so we pause the socket and succeed
+      return false;
+  }
 }
 
-bool
+int
 Receiver::receive(char *buffer)
 {
+  // If the receiver is locked, then its in the process of
+  // cleaning up and we DO NOT want to enter the Allreduce
 
   if (! buffer)
   {
-    if (state == EXITTING)
-    {
-      int status = 0;
-      int all_status;
-      std::cerr << "Receiver::receive calling Allreduce\n";
-      MPI_Allreduce(&status, &all_status, 1, MPI_INT, MPI_MIN, receiver_comm);
+    int status = 0;
+    int all_status;
+    MPI_Allreduce(&status, &all_status, 1, MPI_INT, MPI_MIN, receiver_comm);
+    state = NOT_RUNNING;
 
-      state = NOT_RUNNING;
-    }
-
-    return true; // we're done - want socket thread loop to quit
+    return 0; // we're done - want socket thread loop to quit
   }
   else
   {
-    // If the receiver is locked, then its in the process of
-    // cleaning up and we DO NOT want to enter the Allreduce
-
     bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
-    // std::cerr << GetTheApplication()->GetRank() << " received from sender " << hdr->origin << "\n";
 
     buffers.push_back(buffer);
     number_of_timestep_connections_received ++;
@@ -521,13 +552,32 @@ Receiver::receive(char *buffer)
       if (! all_status)
       {
         state = NOT_RUNNING;
-        return true; // we're done - want socket thread loop to quit
+        return 0; // we're done - want socket thread loop to quit
       }
+      else
+        return 2; // pause the socket thread
     }
+    else
+      return 1; // keep on accepting buffers
   }
-
-  return false;  // socket thread needs to keep going
 }
 
+bool
+Receiver::AcceptMsg::CollectiveAction(MPI_Comm c, bool isRoot)
+{
+  AcceptMsgArgs *p = (AcceptMsgArgs *)get();
+  ReceiverP receiver = Receiver::GetByKey(p->rk);
+  receiver->_Accept();
+  return false;
+}
+
+void
+Receiver::_Accept()
+{
+  state = BUSY;
+
+  if (serverskt)
+    serverskt->resume();
+}
 
 }
