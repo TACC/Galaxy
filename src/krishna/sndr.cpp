@@ -28,6 +28,11 @@
 
 using namespace std;
 
+#include <unistd.h>
+#include <stdio.h>      /* printf, NULL */
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
+
 #include "Skt.hpp"
 
 #include "bufhdr.h"
@@ -40,16 +45,18 @@ int mpiRank, mpiSize;
 
 float xmin, xmax, ymin, ymax, zmin, zmax;
 
+int nPer;
+
 void
 syntax(char *a)
 {
   if (mpiRank == 0)
   {
-    std::cerr << "syntax: " << a << " box hostfile baseport\n";
+    std::cerr << "syntax: " << a << " box hostfile nPerSender\n";
     std::cerr << "box is a file containing six space separated values: xmin xmax ymin ymax  zmin, zmax\n";
     std::cerr << "hostfile is a file containing the hosts that are in play on the Galaxy side\n";
-    std::cerr << "The i'th host will be listening on port (baseport + i)\n";
-    std::cerr << "baseport is the port being listened to on the rank-0 Galaxy server\n";
+    std::cerr << "The i'th host will be listening on port (1900 + i)\n";
+    std::cerr << "nPerSender is the number of particles sent per sender (100)\n";
   }
 
   MPI_Finalize();
@@ -67,9 +74,15 @@ char *data = NULL;
 void
 CreateSomeData()
 {
+  if (frame == 0)
+  {
+    unsigned int seed = time(NULL);
+    srand((unsigned int) getpid());
+  }
+  
   if (dsz == -1)
   {
-    dsz = sizeof(int) + sizeof(bufhdr)+ 100*4*sizeof(float);
+    dsz = sizeof(int) + sizeof(bufhdr)+ nPer*4*sizeof(float);
     data = (char *)malloc(dsz);
   }
 
@@ -81,18 +94,18 @@ CreateSomeData()
   hdr->type          = bufhdr::Particles;
   hdr->origin        = mpiRank;
   hdr->has_data      = true;
-  hdr->npoints       = 100;
+  hdr->npoints       = nPer;
   hdr->nconnectivity = 0;
 
-#if 0
-  for (int i = 0; i < 100; i++)
+#if 1
+  for (int i = 0; i < nPer; i++)
   {
     *ptr++ = xmin + frand()*(xmax - xmin);
     *ptr++ = ymin + frand()*(ymax - ymin);
     *ptr++ = zmin + frand()*(zmax - zmin);
   }
 #else
-  for (int i = 0; i < 100; i++)
+  for (int i = 0; i < nPer; i++)
   {
     *ptr++ = xmin + (i / 99.0)*(xmax - xmin);
     *ptr++ = ymin + (i / 99.0)*(ymax - ymin);
@@ -100,27 +113,31 @@ CreateSomeData()
   }
 #endif
 
-  for (int i = 0; i < 100; i++)
-    *ptr++ = frand();
+  float v = (mpiSize == 1) ? 1.0 : float(mpiRank) / float(mpiSize - 1);
+    
+  for (int i = 0; i < nPer; i++)
+    *ptr++ = v;
+
+#if 0
+  sleep(mpiRank + 1);
+  std::cerr << "========== " << mpiRank << " ===========\n";
+  ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
+  for (int i = 0; i < nPer; i++, ptr += 3)
+    std::cerr << ptr[0] << " " << ptr[1] << " " << ptr[2] << "\n";
+#endif
 }
 
 bool
 SendSomeData(string destination, int port)
 {
-  if (frame == 0)
-    srand((unsigned int) getpid());
-  
   ClientSkt c(destination, port);
   if (c.Connect())
   {
     c.Send(data, dsz);
-    // std::cerr << mpiRank << " sent to port " << port << " ... waiting for ack\n";
     char *rply = c.Receive();
-    // std::cerr << mpiRank << " got ack\n";
     int r = *(int *)rply;
     c.Disconnect();
     free(rply);
-    // std::cerr << mpiRank << " sent to port " << port << "\n";
 
     return r == 1;
   }
@@ -152,7 +169,9 @@ main(int argc, char *argv[])
   ifs.close();
 
   string destination = gxy_hosts[mpiRank % gxy_hosts.size()];
-  int port = atoi(argv[3]) + (mpiRank % gxy_hosts.size());
+  int port = 1900 + (mpiRank % gxy_hosts.size());
+
+  nPer = atoi(argv[3]);
 
   int done = 0;
   char cmd = 's';

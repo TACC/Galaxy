@@ -82,14 +82,8 @@ main(int argc, char *argv[])
     particles->Import(pfile);
     particles->Commit();
 
-
-    PartitioningP partitioning = Partitioning::NewP();
-    partitioning->Gather(particles);
-    partitioning->Commit();
-
     ReceiverP  receiver  = Receiver::NewP();
     receiver->SetGeometry(particles);
-    receiver->SetPartitioning(partitioning);
     receiver->SetNSenders(nsenders);
     receiver->SetBasePort(1900);
     receiver->Commit();

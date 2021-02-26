@@ -53,6 +53,15 @@ Receiver::~Receiver()
   MPI_Comm_free(&receiver_comm);
 }
 
+void
+Receiver::SetGeometry(GeometryP g)
+{
+  geometry = g;
+  partitioning = Partitioning::NewP();
+  partitioning->Gather(geometry);
+  partitioning->Commit();
+}
+
 int 
 Receiver::serialSize() { return super::serialSize() + sizeof(commit_args); }
 

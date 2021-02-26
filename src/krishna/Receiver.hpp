@@ -67,7 +67,7 @@ public:
   void Accept();
   void Wait();
 
-  void SetGeometry(GeometryP g) { geometry = g; }
+  void SetGeometry(GeometryP g);
   void SetPartitioning(PartitioningP p) { partitioning = p; }
   void SetNSenders(int n) { nsenders = n; }
   void SetBasePort(int p) { base_port = p; }

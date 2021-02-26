@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +10,8 @@
 #include <time.h>
 #include <pthread.h>
 #include <fcntl.h>
+
+#include "Application.h"
 
 using namespace std;
 
@@ -218,42 +219,50 @@ public:
   start(bool p = false)
   {
     paused = p;
-    pthread_mutex_lock(&mutex);
+    lock();
 
     done = false;
     pthread_create(&tid, NULL, skt_thread, this);
     thread_running = true;
 
-    pthread_mutex_unlock(&mutex);
+    unlock();
   }
 
   void
   pause()
   {
+    lock();
     paused = true;
+    signal();
+    unlock();
   }
 
   void
   resume()
   {
-    pthread_mutex_lock(&mutex);
+    lock();
     paused = false;
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&mutex);
+    signal();
+    unlock();
   }
 
   void 
   set_done()
   {
+    lock();
     done = true;
+    signal();
+    unlock();
   }
 
   void 
   stop()
   {
-    set_done();
-    if (paused) 
-      resume();
+    lock();
+    done = true;
+    signal();
+    unlock();
+
     pthread_join(tid, NULL);
   }
 
@@ -268,7 +277,7 @@ public:
 
     while (! me->done)
     {
-      while (me->paused)
+      while (me->paused && !me->done)
         me->wait();
 
       if (me->done)
@@ -296,7 +305,7 @@ public:
         int status = 1;
         me->Send(&status, sizeof(status));
         
-        me->done = (*me->handler)(me, me->ptr, buf);
+        me->done = (*me->handler)(me, me->ptr, buf) || me->done;
 
         close(me->cskt);
         me->cskt = -1;
