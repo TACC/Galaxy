@@ -577,6 +577,7 @@ Receiver::_Receive(char *buffer)
   signal_buffers();
   unlock_buffers();
 
+#if 0
   char fname[256];
   sprintf(fname, "%d-from-%d-%d.csv", gxy::GetTheApplication()->GetRank(), b->origin, frame);
   std::ofstream ofs(fname);
@@ -588,6 +589,7 @@ Receiver::_Receive(char *buffer)
     ofs << pptr[0] << "," << pptr[1] << "," << pptr[2] << "," << *dptr++ << "\n";
     pptr = pptr + 3;
   }
+#endif
 
 }
 
