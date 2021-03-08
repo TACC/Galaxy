@@ -58,6 +58,8 @@ class Receiver : public gxy::KeyedObject
 public:
   ~Receiver();
 
+  void initialize(); //!< initialize this Receiver object
+
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
@@ -91,11 +93,13 @@ private:
   pthread_cond_t  cond_busy = PTHREAD_COND_INITIALIZER;
   void lock_busy() { pthread_mutex_lock(&mutex_busy); }
   void unlock_busy() { pthread_mutex_unlock(&mutex_busy); }
-  void signal_busy() { pthread_cond_signal(&cond_busy); }
+  void signal_busy() { pthread_cond_broadcast(&cond_busy); }
   void wait_busy() { pthread_cond_wait(&cond_busy, &mutex_busy); }
 
   void _Wait();
   void _Accept();
+
+  int done_count;
 
   GeometryP geometry = NULL;
   PartitioningP partitioning = NULL;
@@ -224,25 +228,6 @@ private:
     }
 
     WORK_CLASS(AcceptMsg, false);
-
-    bool CollectiveAction(MPI_Comm c, bool isRoot);
-  };
-
-  class WaitMsg : public Work
-  {
-    struct WaitMsgArgs
-    {
-      Key  rk;       // Receiver object
-    };
-
-  public:
-    WaitMsg(Receiver* r) : WaitMsg(sizeof(struct WaitMsgArgs))
-    {
-      struct WaitMsgArgs *p = (struct WaitMsgArgs *)contents->get();
-      p->rk = r->getkey();
-    }
-
-    WORK_CLASS(WaitMsg, false);
 
     bool CollectiveAction(MPI_Comm c, bool isRoot);
   };

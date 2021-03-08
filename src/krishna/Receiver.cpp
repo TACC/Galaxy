@@ -19,10 +19,14 @@
 //                                                                            //
 // ========================================================================== //
 
+static int frame = 0;
+
 #include "Receiver.hpp"
 #include "bufhdr.h"
 
 using namespace gxy;
+
+#include <sstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +55,12 @@ Receiver::~Receiver()
     _Stop();
 
   MPI_Comm_free(&receiver_comm);
+}
+
+void
+Receiver::initialize()
+{
+  lock_busy();
 }
 
 void
@@ -218,6 +228,8 @@ Receiver::reshuffle_thread(void *d)
 void
 Receiver::Start()
 {
+  done_count = GetTheApplication()->GetSize() - 1;
+
   StartMsg msg(this);
   msg.Broadcast(true, true);
 }
@@ -226,11 +238,8 @@ void
 Receiver::Wait()
 {
   lock_busy();
-
   while (state != PAUSED)
     wait_busy();
-
-  unlock_busy();
 }
 
 void
@@ -283,6 +292,25 @@ bool
 Receiver::Reshuffle()
 {
   int r = GetTheApplication()->GetRank();
+
+  int sknts[1024];
+  memset(sknts, 0, 1024*sizeof(int));
+
+  for (auto buffer : buffers)
+  {
+    bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+    float *dptr = ((float *)(hdr + 1)) + 3*hdr->npoints;
+
+    for (int i = 0; i < hdr->npoints; i++)
+      sknts[int(*dptr++ + 0.01)]++;
+  }
+  
+  std::stringstream ss; 
+  ss << GetTheApplication()->GetRank() << ": Start ";
+  for (int i = 0; i < 1024; i++)
+    if (sknts[i])
+      ss << i << "(" << sknts[i] << ") ";
+  GetTheApplication()->Print(ss.str());
 
   // First we see how much data we need to send to each recipient
 
@@ -426,6 +454,9 @@ Receiver::Reshuffle()
 
   for (int i = 0; i < partitioning->number_of_partitions(); i++)
   {
+    bufhdr *hdr = (bufhdr *)(send_buffers[i] + sizeof(int));
+    APP_PRINT(<< "sending " << hdr->npoints << " to " << i);
+
     if (i == GetTheApplication()->GetRank())
       reshuffle_buffers.push_back(send_buffers[i]);
     else
@@ -435,12 +466,30 @@ Receiver::Reshuffle()
     }
   }
 
-  while (reshuffle_buffers.size() < (partitioning->number_of_partitions()-1))
-  {
+  while (reshuffle_buffers.size() < (partitioning->number_of_partitions()))
     wait_buffers();
-  }
+
+  APP_PRINT(<< "after wait_buffers... " << reshuffle_buffers.size() << "\n");
 
   unlock_buffers();
+
+  memset(sknts, 0, 1024*sizeof(int));
+
+  for (auto buffer : reshuffle_buffers)
+  {
+    bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+    float *dptr = ((float *)(hdr + 1)) + 3*hdr->npoints;
+
+    for (int i = 0; i < hdr->npoints; i++)
+      sknts[int(*dptr++ + 0.01)]++;
+  }
+  
+  ss.str("");
+  ss << GetTheApplication()->GetRank() << ": Received ";
+  for (int i = 0; i < 1024; i++)
+    if (sknts[i])
+      ss << i << "(" << sknts[i] << ") ";
+  GetTheApplication()->Print(ss.str());
 
   int num_points = 0;
 
@@ -453,13 +502,27 @@ Receiver::Reshuffle()
     }
   }
 
+  geometry->RemoveTheOSPRayEquivalent();      
   geometry->allocate_vertices(num_points);    // also allocates per-vertex float data
 
   float *pptr = (float *)geometry->GetVertices();
   float *dptr = (float *)geometry->GetData();
 
+#if 0
   for (auto buffer : reshuffle_buffers)
   {
+#else
+  char **sorted = new char*[reshuffle_buffers.size()];
+  for (auto buffer : reshuffle_buffers)
+  {
+    bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+    sorted[hdr->origin] = buffer;
+  }
+
+  for (int i = 0; i < reshuffle_buffers.size(); i++)
+  {
+    char *buffer = sorted[i];
+#endif
     if (buffer)
     {
       bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
@@ -473,12 +536,26 @@ Receiver::Reshuffle()
     }
   }
 
+#if 0
+  char namebuf[256];
+  sprintf(namebuf, "RS-%d-%d.csv", GetTheApplication()->GetRank(), frame);
+  ofstream ofs(namebuf);
+  pptr = (float *)geometry->GetVertices();
+  dptr = (float *)geometry->GetData();
+  for (int i = 0; i < geometry->GetNumberOfVertices(); i++)
+  {
+    ofs << pptr[0] << ", " << pptr[1] << ", " << pptr[2] << ", " << *dptr << "\n";
+    pptr += 3;
+    dptr++;
+  }
+  ofs.close();
+#endif
+
+  frame++;
+
   reshuffle_buffers.clear();
 
-  lock_busy();
-
   state = PAUSED;
-
   signal_busy();
   unlock_busy();
 
@@ -489,6 +566,7 @@ void
 Receiver::_Receive(char *buffer)
 {
   bufhdr *b = (bufhdr *)(buffer + sizeof(int));
+  APP_PRINT(<< "received " << b->npoints << " from " << b->origin);
   lock_buffers();
   
   int sz = *(int *)buffer;
@@ -498,6 +576,19 @@ Receiver::_Receive(char *buffer)
 
   signal_buffers();
   unlock_buffers();
+
+  char fname[256];
+  sprintf(fname, "%d-from-%d-%d.csv", gxy::GetTheApplication()->GetRank(), b->origin, frame);
+  std::ofstream ofs(fname);
+  float *pptr = (float *)(b + 1);
+  float *dptr = (float *)pptr + b->npoints*3;
+  ofs << "X,Y,Z,D\n";
+  for (int i = 0; i < b->npoints; i++)
+  {
+    ofs << pptr[0] << "," << pptr[1] << "," << pptr[2] << "," << *dptr++ << "\n";
+    pptr = pptr + 3;
+  }
+
 }
 
 // Called from the socket handler with data from the sender
@@ -529,6 +620,11 @@ Receiver::receive(char *buffer)
 {
   // If the receiver is locked, then its in the process of
   // cleaning up and we DO NOT want to enter the Allreduce
+
+  if (buffer)
+    APP_PRINT(<< "receiver got " << *(int *)buffer)
+  else
+    APP_PRINT(<< "receiver got NULL!");
 
   if (! buffer)
   {
@@ -584,6 +680,7 @@ void
 Receiver::_Accept()
 {
   state = BUSY;
+  unlock_busy();
 
   if (serverskt)
     serverskt->resume();
