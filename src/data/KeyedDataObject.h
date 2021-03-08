@@ -119,6 +119,7 @@ public:
 
   virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP kdop);
   virtual OsprayObjectP GetTheOSPRayEquivalent() { return ospData; }
+  void RemoveTheOSPRayEquivalent() { ospData = nullptr; }
 
   void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 
