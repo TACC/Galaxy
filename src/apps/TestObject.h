@@ -51,7 +51,7 @@ private:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {
 			Key k = *(Key *)contents->get();
-      TestObjectP to = TestObject::GetByKey();
+      TestObjectP to = TestObject::GetByKey(k);
 			char *foo = ((char *)contents->get()) + sizeof(k);
       return to->_doit(foo);
     }
@@ -72,6 +72,8 @@ private:
   bool _doit(char *s)
   {
     APP_PRINT(<< GetTheApplication()->GetRank() << " " << s);
+    return false;
+  }
     
 };
 
