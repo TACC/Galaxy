@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,8 +11,6 @@
 #include <time.h>
 #include <pthread.h>
 #include <fcntl.h>
-
-#include "Application.h"
 
 using namespace std;
 
@@ -202,7 +201,9 @@ public:
 
     if (::bind(mskt, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
     {
-      perror("ERROR on binding");
+      std::stringstream ss;
+      ss << "Error on binding... port " << port;
+      perror(ss.str().c_str());
       exit(1);
     }
 
