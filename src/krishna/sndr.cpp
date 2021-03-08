@@ -25,180 +25,289 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <random>
+#include <climits>
+#include <memory>
 
 using namespace std;
 
 #include <unistd.h>
-#include <stdio.h>      /* printf, NULL */
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
+#include <stdio.h> 
+#include <stdlib.h>
+#include <time.h> 
+#include <pthread.h> 
 
 #include "Skt.hpp"
-
 #include "bufhdr.h"
 
 using namespace gxy;
 
-int mpiRank, mpiSize;
+float xmin = -1.0, xmax = 1.0, ymin = -1.0, ymax = 1.0, zmin = -1.0, zmax = 1.0;
+int nPer = 100;
+int n_senders = 1;
+int running_count;
+float fuzz = 0.0;
 
-#include "Debug.h"
-
-float xmin, xmax, ymin, ymax, zmin, zmax;
-
-int nPer;
+int mpi_rank = 0, mpi_size = 1;
 
 void
 syntax(char *a)
 {
-  if (mpiRank == 0)
-  {
-    std::cerr << "syntax: " << a << " box hostfile nPerSender\n";
-    std::cerr << "box is a file containing six space separated values: xmin xmax ymin ymax  zmin, zmax\n";
-    std::cerr << "hostfile is a file containing the hosts that are in play on the Galaxy side\n";
-    std::cerr << "The i'th host will be listening on port (1900 + i)\n";
-    std::cerr << "nPerSender is the number of particles sent per sender (100)\n";
-  }
-
-  MPI_Finalize();
+  std::cerr << "syntax: " << a << " [options]\n";
+  std::cerr << "options:\n";
+  std::cerr << " -b box      a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
+  std::cerr << " -h hostfile a file containing a host name for each receiver process (localhost)\n";
+  std::cerr << " -p npart    number of particles to send to each receiver (100)\n";
+  std::cerr << " -n nproc    number of senders to run (1)\n";
+  std::cerr << " -f fuzz     max radius of points - creates empty border region (0)\n";
+  
   exit(1);
 }
 
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
 
-static int frame = 0;
+enum
+{
+  CREATE_SOME_DATA, SEND_SOME_DATA
+} command;
 
-inline float frand() { return float(rand()) / RAND_MAX; }
+class SenderThread
+{
+  static void *sender_thread(void *d)
+  {
+    SenderThread *me = (SenderThread *)d;
 
-int dsz = -1;
-char *data = NULL;
+    if (command == SEND_SOME_DATA)
+      me->SendSomeData();
+    else 
+      me->CreateSomeData();
+
+    pthread_exit(NULL);
+    return NULL;
+  }
+    
+public:
+  SenderThread(int n, string host, int port) : sender_id(n), host(host), port(port)
+  {
+    long seed = getpid() + rand();
+    std::cerr << "seed: " << seed << "\n";
+    mt_rand.seed(seed);
+  }
+
+  ~SenderThread()
+  {
+    if (tid != NULL)
+    {
+      pthread_join(tid, NULL);
+      tid = NULL;
+    }
+  }
+
+  void
+  Run()
+  {
+    pthread_create(&tid, NULL, sender_thread, (void *)this);
+  }
+
+  void
+  Wait()
+  {
+    pthread_join(tid, NULL);
+    tid = NULL;
+  }
+
+private:
+  void
+  CreateSomeData()
+  {
+    if (dsz == -1)
+    {
+      dsz = sizeof(int) + sizeof(bufhdr)+ nPer*4*sizeof(float);
+      data = (char *)malloc(dsz);
+    }
+
+    *(int *)data = dsz;
+
+    bufhdr *hdr = (bufhdr *)(data + sizeof(int));
+    float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
+
+    hdr->type          = bufhdr::Particles;
+    hdr->origin        = sender_id;
+    hdr->has_data      = true;
+    hdr->npoints       = nPer;
+    hdr->nconnectivity = 0;
+
+    std::cerr << xmin << " -> " << xmax << "\n";
+    std::cerr << ymin << " -> " << ymax << "\n";
+    std::cerr << zmin << " -> " << zmax << "\n";
+
+    for (int i = 0; i < nPer; i++)
+    {
+      *ptr++ = xmin + frand()*(xmax - xmin);
+      *ptr++ = ymin + frand()*(ymax - ymin);
+      *ptr++ = zmin + frand()*(zmax - zmin);
+    }
+
+    // float v = (n_senders == 1) ? 0.0 : float(sender_id) / float(n_senders - 1);
+      
+    for (int i = 0; i < nPer; i++)
+      *ptr++ = sender_id;
+  }
+
+  bool
+  SendSomeData()
+  {
+    std::cerr << "send data to " << host << "::" << port << "\n";
+#if 0
+    return true;
+#else
+    ClientSkt c(host, port);
+    if (c.Connect())
+    {
+      c.Send(data, dsz);
+      char *rply = c.Receive();
+      int r = *(int *)rply;
+      c.Disconnect();
+      free(rply);
+
+      return r == 1;
+    }
+    else
+      return false;
+#endif
+  }
+
+  float
+  frand()
+  {
+    return float(mt_rand()) / UINT_MAX;
+  }
+
+private:
+  mt19937 mt_rand;
+  pthread_t tid;
+  int sender_id;
+  int dsz = -1;
+  char *data = NULL;
+  int frame = 0;
+  string host;
+  int port;
+};
+
+vector< shared_ptr<SenderThread> > senders;
+
+void
+SendSomeData()
+{
+  command = SEND_SOME_DATA;
+
+  for (auto s : senders)
+    s->Run();
+
+  for (auto s : senders)
+    s->Wait();
+}
 
 void
 CreateSomeData()
 {
-  if (frame == 0)
-  {
-    unsigned int seed = time(NULL);
-    srand((unsigned int) getpid());
-  }
-  
-  if (dsz == -1)
-  {
-    dsz = sizeof(int) + sizeof(bufhdr)+ nPer*4*sizeof(float);
-    data = (char *)malloc(dsz);
-  }
+  command = CREATE_SOME_DATA;
 
-  *(int *)data = dsz;
+  for (auto s : senders)
+    s->Run();
 
-  bufhdr *hdr = (bufhdr *)(data + sizeof(int));
-  float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
-
-  hdr->type          = bufhdr::Particles;
-  hdr->origin        = mpiRank;
-  hdr->has_data      = true;
-  hdr->npoints       = nPer;
-  hdr->nconnectivity = 0;
-
-#if 1
-  for (int i = 0; i < nPer; i++)
-  {
-    *ptr++ = xmin + frand()*(xmax - xmin);
-    *ptr++ = ymin + frand()*(ymax - ymin);
-    *ptr++ = zmin + frand()*(zmax - zmin);
-  }
-#else
-  for (int i = 0; i < nPer; i++)
-  {
-    *ptr++ = xmin + (i / 99.0)*(xmax - xmin);
-    *ptr++ = ymin + (i / 99.0)*(ymax - ymin);
-    *ptr++ = zmin + (i / 99.0)*(zmax - zmin);
-  }
-#endif
-
-  float v = (mpiSize == 1) ? 1.0 : float(mpiRank) / float(mpiSize - 1);
-    
-  for (int i = 0; i < nPer; i++)
-    *ptr++ = v;
-
-#if 0
-  sleep(mpiRank + 1);
-  std::cerr << "========== " << mpiRank << " ===========\n";
-  ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
-  for (int i = 0; i < nPer; i++, ptr += 3)
-    std::cerr << ptr[0] << " " << ptr[1] << " " << ptr[2] << "\n";
-#endif
-}
-
-bool
-SendSomeData(string destination, int port)
-{
-  ClientSkt c(destination, port);
-  if (c.Connect())
-  {
-    c.Send(data, dsz);
-    char *rply = c.Receive();
-    int r = *(int *)rply;
-    c.Disconnect();
-    free(rply);
-
-    return r == 1;
-  }
-  else
-    return false;
+  for (auto s : senders)
+    s->Wait();
 }
 
 int
 main(int argc, char *argv[])
 {
   MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-  MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-  // new Debug(argv[0], false, "");
+  vector<string> hosts;
+  hosts.push_back("localhost");
 
-  if (argc != 4)
-    syntax(argv[0]);
+  for (int i = 1; i < argc; i++)
+    if (! strcmp(argv[i], "-b"))
+    {
+      ifstream ifs(argv[++i]);
+      ifs >> xmin >> xmax >> ymin >> ymax >> zmin >> zmax;
+      ifs.close();
+    }
+    else if (! strcmp(argv[i], "-h"))
+    {
+      hosts.clear();
+      ifstream ifs(argv[++i]);
+      string s;
+      while (ifs >> s)
+        hosts.push_back(s);
+      ifs.close();
+    }
+    else if (! strcmp(argv[i], "-p"))
+    {
+      nPer = atoi(argv[++i]);
+    }
+    else if (! strcmp(argv[i], "-n"))
+    {
+      n_senders = atoi(argv[++i]);
+    }
+    else if (! strcmp(argv[i], "-f"))
+    {
+      fuzz = atof(argv[++i]);
+    }
+    else
+      syntax(argv[0]);
 
-  vector<string> gxy_hosts;
-  ifstream ifs(argv[2]);
-  string s;
-  while (ifs >> s)
-    gxy_hosts.push_back(s);
-  ifs.close();
-  
-  ifs.open(argv[1]);
-  ifs >> xmin >> xmax >> ymin >> ymax >> zmin >> zmax;
-  ifs.close();
+  xmin = xmin + fuzz;
+  ymin = ymin + fuzz;
+  zmin = zmin + fuzz;
+  xmax = xmax - fuzz;
+  ymax = ymax - fuzz;
+  zmax = zmax - fuzz;
 
-  string destination = gxy_hosts[mpiRank % gxy_hosts.size()];
-  int port = 1900 + (mpiRank % gxy_hosts.size());
+  int senders_per_rank = n_senders / mpi_size;
+  int sender_start = mpi_rank * senders_per_rank;
+  int sender_end   = (mpi_rank == mpi_size-1) ? n_senders : (mpi_rank+1) * senders_per_rank;
 
-  nPer = atoi(argv[3]);
-
-  int done = 0;
-  char cmd = 's';
+  for (int i = sender_start;  i < sender_end; i++)
+  {
+    int host_id = i % hosts.size();
+    senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], 1900 + host_id)));
+  }
 
   CreateSomeData();
+
+  bool done = false;
+  char cmd = 's';
 
   while (! done)
   {
     if (cmd == 's')
-      SendSomeData(destination, port);
-    if (cmd == 'c')
+      SendSomeData();
+    else if (cmd == 'c')
       CreateSomeData();
-    // else
-      // std::cerr << mpiRank << " " << destination << " " << port << "\n";
+    else if (cmd == 'S')
+    {
+      CreateSomeData();
+      SendSomeData();
+    }
 
-    if (mpiRank == 0)
+    if (mpi_rank == 0)
     {
       cout << "? ";
       cin >> cmd;
       if (cin.eof())
-        cmd = 'q';
+          cmd = 'q';
     }
 
     MPI_Bcast(&cmd, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
 
     if (cmd == 'q')
-      done = 1;
+      done = true;
   }
   
   MPI_Finalize();
