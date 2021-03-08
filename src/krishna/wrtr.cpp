@@ -41,12 +41,12 @@ syntax(char *a)
   cerr << "use Galaxy to write an image library for the given state file" << endl;
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "options:" << endl;
+  cerr << "  -f fuzz    sort-of ghost zone width (0.0)" << endl;
   cerr << "  -n nsndrs  number of external processes sending particle data (1)" << endl;
   cerr << "  -C cdb     put output in Cinema DB (no)" << endl;
   cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
   cerr << "  -A         wait for attachment" << endl;
   cerr << "  -s w h     window width, height (1920 1080)" << endl;
-  cerr << "  -S k       render only every k'th rendering" << endl;
   cerr << "  -N         max number of simultaneous renderings (VERY large)" << endl;
   exit(1);
 }
@@ -70,14 +70,15 @@ int main(int argc,  char *argv[])
   bool atch = false;
   bool cinema = false;
   int width = 1920, height = 1080;
-  int skip = 0;
   int maxConcurrentRenderings = 99999999;
   bool override_windowsize = false;
   int nsenders = 1;
+  float fuzz = 0.0;
 
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
+    else if (!strcmp(argv[i], "-f")) fuzz = atof(argv[++i]);
     else if (!strcmp(argv[i], "-n")) nsenders = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
@@ -87,7 +88,6 @@ int main(int argc,  char *argv[])
         height = atoi(argv[++i]);
         override_windowsize = true;
     }
-    else if (!strcmp(argv[i], "-S")) skip = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-N")) maxConcurrentRenderings = atoi(argv[++i]);
     else if (statefile == "")   statefile = argv[i];
     else syntax(argv[0]);
@@ -122,6 +122,7 @@ int main(int argc,  char *argv[])
       std::cerr << "Bad state file: " << statefile << "\n";
       theApplication.QuitApplication();
       theApplication.Wait();
+      sleep(2);
       exit(1);
     }
 
@@ -155,27 +156,6 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    ParticlesP particles = Particles::Cast(theDatasets->Find("particles"));
-    if (! particles)
-    {
-      std::cerr << "no particles object?\n";
-      exit(1);
-    }
-
-    ReceiverP receiver  = Receiver::NewP();
-    receiver->SetGeometry(particles);
-    receiver->SetNSenders(nsenders);
-    receiver->SetBasePort(1900);
-    receiver->Commit();
-
-    std::cerr << "waiting for data...\n";
-    receiver->Start();
-    receiver->Accept();
-    receiver->Wait();
-    receiver->Stop();
-    receiver = nullptr;
-    std::cerr << "got it\n";
-   
     if (! theDatasets->Commit())
     {
       std::cerr << "error committing theDatasets\n";
@@ -194,83 +174,99 @@ int main(int argc,  char *argv[])
         exit(1);
       }
 
-    vector<RenderingSetP> theRenderingSets;
-    theRenderingSets.push_back(RenderingSet::NewP());
+  RenderingSetP theRenderingSet = RenderingSet::NewP();
 
-		int k = 0, index = 0;
-    for (auto c : theCameras)
-      for (auto v : theVisualizations)
-      {
-        if (skip && (k % skip) != 0)
-        {
-          std::cerr << "S";
-          continue;
-        }
-
-        if (theRenderingSets.back()->GetNumberOfRenderings() >= maxConcurrentRenderings)
-          theRenderingSets.push_back(RenderingSet::NewP());
-
-        RenderingP theRendering = Rendering::NewP();
-
-        theRendering->SetTheOwner(index++ % mpiSize );
-        if (override_windowsize)
-        {
-            c->set_width(width);
-            c->set_height(height);
-        }
-        theRendering->SetTheCamera(c);
-        theRendering->SetTheDatasets(theDatasets);
-        theRendering->SetTheVisualization(v);
-        if (! theRendering->Commit())
-        {
-          std::cerr << "error committing theRendering\n";
-          theApplication.QuitApplication();
-          theApplication.Wait();
-          exit(1);
-        }
-
-        theRenderingSets.back()->AddRendering(theRendering);
-
-        k ++;
-      }
-
-    cout << "index = " << index << endl;
-
-    theApplication.SyncApplication();
-
-    long t_rendering_start = my_time();
-
-    for (auto& rs : theRenderingSets)
+  int index = 0;
+  for (auto c : theCameras)
+    for (auto v : theVisualizations)
     {
-      long t0 = my_time();
-      cout << "render start" << endl;
+      RenderingP theRendering = Rendering::NewP();
 
-      if (! rs->Commit())
+      theRendering->SetTheOwner(index++ % mpiSize );
+      if (override_windowsize)
       {
-        std::cerr << "error committing a RenderingSet\n";
+          c->set_width(width);
+          c->set_height(height);
+      }
+      theRendering->SetTheCamera(c);
+      theRendering->SetTheDatasets(theDatasets);
+      theRendering->SetTheVisualization(v);
+      if (! theRendering->Commit())
+      {
+        std::cerr << "error committing theRendering\n";
         theApplication.QuitApplication();
         theApplication.Wait();
         exit(1);
       }
 
-      theRenderer->Start(rs);
-
-      rs->WaitForDone();
-      rs->SaveImages(cinema ? (cdb + "/image/image").c_str() : "image");
-
-      long t1 = my_time();
-      cout << rs->GetNumberOfRenderings() << ": " << ((t1 - t0) / 1000000000.0) << " seconds" << endl;
+      theRenderingSet->AddRendering(theRendering);
     }
 
-    long t_done = my_time();
-    cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
+    ParticlesP particles = Particles::Cast(theDatasets->Find("particles"));
+    if (! particles)
+    {
+      std::cerr << "no particles object?\n";
+      exit(1);
+    }
 
+    ReceiverP receiver  = Receiver::NewP();
+    receiver->SetGeometry(particles);
+    receiver->SetNSenders(nsenders);
+    receiver->SetBasePort(1900);
+    receiver->SetFuzz(fuzz);
+    receiver->Commit();
+
+    receiver->Start();
+
+    int tstep = 0;
+
+    while (true)
+    {
+      std::cerr << "waiting for data...\n";
+      receiver->Accept();
+      receiver->Wait();
+     
+      theRenderingSet->Reset();
+      theRenderingSet->Commit();
+
+      long t_rendering_start = my_time();
+      cout << "render start" << endl;
+
+      theRenderer->Start(theRenderingSet);
+      theRenderingSet->WaitForDone();
+
+      long t_done = my_time();
+      cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
+
+      char namebuf[1024];
+
+      if (cinema)
+        sprintf(namebuf, "%s/image/image/image-%04d", cdb.c_str(), tstep);
+      else
+        sprintf(namebuf, "image-%04d", tstep);
+
+      theRenderingSet->SaveImages(namebuf);
+
+      theApplication.DumpLog();
+
+      char cmd;
+      cerr << "? ";
+      do
+      {
+        cin >> cmd;
+      } 
+      while (cmd != 'q' && cmd != 's');
+
+      if (cmd == 'q') 
+        break;
+
+      tstep ++;
+    }
+
+    receiver->Stop();
+    receiver = nullptr;
 
     theDatasets = nullptr;
-
-    theRenderingSets.clear();
-    theVisualizations.clear();
-    theCameras.clear();
 
     theRenderer = nullptr;
     theApplication.QuitApplication();
