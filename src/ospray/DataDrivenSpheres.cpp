@@ -16,6 +16,14 @@
 
 #undef NDEBUG
 
+#include "Application.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+
+using namespace gxy;
+
 // ospray
 #include "DataDrivenSpheres.h"
 #include "common/Data.h"
@@ -27,6 +35,8 @@
 #include "DataDrivenSpheres_ispc.h"
 
 namespace gxy { void DDSpheres_Hello() { std::cerr << "hello\n"; } }
+
+static int frame_count = 0;
 
 namespace ospray {
 
@@ -58,6 +68,7 @@ namespace ospray {
     value1 = getParam1f("value1", 0.0);
 
     numDataDrivenSpheres = centers->numItems;
+    APP_PRINT(<< gxy::GetTheApplication()->GetRank() << ": rendering " << numDataDrivenSpheres << " spheres");
 
     postStatusMsg(2) << "#galaxy: creating 'ddspheres' geometry, #ddspheres = "
                      << numDataDrivenSpheres;
