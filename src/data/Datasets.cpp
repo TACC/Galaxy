@@ -96,14 +96,13 @@ Datasets::Insert(std::string name, KeyedDataObjectP val)
 bool
 Datasets::loadTyped(Value& v)
 {
-	if (! v.HasMember("filename") || ! v.HasMember("type"))
+	if (! v.HasMember("name") || ! v.HasMember("type"))
 	{
 		std::cerr << "Dataset must have name and type\n";
     set_error(1);
     return false;
 	}
 
-	string name(v["filename"].GetString());
 	string type(v["type"].GetString());
 
 	KeyedDataObjectP kop;
@@ -125,8 +124,7 @@ Datasets::loadTyped(Value& v)
 	if (! kop->LoadFromJSON(v))
     return false;
 		
-	if (v.HasMember("name"))
-		name = v["name"].GetString();
+  string name = v["name"].GetString();
 
 	Insert(name.c_str(), kop);
   return true;
