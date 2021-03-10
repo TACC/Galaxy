@@ -208,6 +208,10 @@ Receiver::reshuffle_thread(void *d)
     {
       rcvr->Reshuffle();
       MPI_Barrier(rcvr->receiver_comm);
+
+      rcvr->state = PAUSED;
+      rcvr->signal_busy();
+      rcvr->unlock_busy();
     }
     else
     {
@@ -292,25 +296,6 @@ bool
 Receiver::Reshuffle()
 {
   int r = GetTheApplication()->GetRank();
-
-  int sknts[1024];
-  memset(sknts, 0, 1024*sizeof(int));
-
-  for (auto buffer : buffers)
-  {
-    bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
-    float *dptr = ((float *)(hdr + 1)) + 3*hdr->npoints;
-
-    for (int i = 0; i < hdr->npoints; i++)
-      sknts[int(*dptr++ + 0.01)]++;
-  }
-  
-  std::stringstream ss; 
-  ss << GetTheApplication()->GetRank() << ": Start ";
-  for (int i = 0; i < 1024; i++)
-    if (sknts[i])
-      ss << i << "(" << sknts[i] << ") ";
-  GetTheApplication()->Print(ss.str());
 
   // First we see how much data we need to send to each recipient
 
@@ -455,7 +440,7 @@ Receiver::Reshuffle()
   for (int i = 0; i < partitioning->number_of_partitions(); i++)
   {
     bufhdr *hdr = (bufhdr *)(send_buffers[i] + sizeof(int));
-    APP_PRINT(<< "sending " << hdr->npoints << " to " << i);
+    // APP_PRINT(<< "sending " << hdr->npoints << " to " << i);
 
     if (i == GetTheApplication()->GetRank())
       reshuffle_buffers.push_back(send_buffers[i]);
@@ -469,27 +454,9 @@ Receiver::Reshuffle()
   while (reshuffle_buffers.size() < (partitioning->number_of_partitions()))
     wait_buffers();
 
-  APP_PRINT(<< "after wait_buffers... " << reshuffle_buffers.size() << "\n");
+  // APP_PRINT(<< "after wait_buffers... " << reshuffle_buffers.size() << "\n");
 
   unlock_buffers();
-
-  memset(sknts, 0, 1024*sizeof(int));
-
-  for (auto buffer : reshuffle_buffers)
-  {
-    bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
-    float *dptr = ((float *)(hdr + 1)) + 3*hdr->npoints;
-
-    for (int i = 0; i < hdr->npoints; i++)
-      sknts[int(*dptr++ + 0.01)]++;
-  }
-  
-  ss.str("");
-  ss << GetTheApplication()->GetRank() << ": Received ";
-  for (int i = 0; i < 1024; i++)
-    if (sknts[i])
-      ss << i << "(" << sknts[i] << ") ";
-  GetTheApplication()->Print(ss.str());
 
   int num_points = 0;
 
@@ -555,10 +522,6 @@ Receiver::Reshuffle()
 
   reshuffle_buffers.clear();
 
-  state = PAUSED;
-  signal_busy();
-  unlock_busy();
-
   return true;
 }
 
@@ -566,7 +529,7 @@ void
 Receiver::_Receive(char *buffer)
 {
   bufhdr *b = (bufhdr *)(buffer + sizeof(int));
-  APP_PRINT(<< "received " << b->npoints << " from " << b->origin);
+  // APP_PRINT(<< "received " << b->npoints << " from " << b->origin);
   lock_buffers();
   
   int sz = *(int *)buffer;
@@ -623,11 +586,6 @@ Receiver::receive(char *buffer)
   // If the receiver is locked, then its in the process of
   // cleaning up and we DO NOT want to enter the Allreduce
 
-  if (buffer)
-    APP_PRINT(<< "receiver got " << *(int *)buffer)
-  else
-    APP_PRINT(<< "receiver got NULL!");
-
   if (! buffer)
   {
     int status = 0;
@@ -640,6 +598,7 @@ Receiver::receive(char *buffer)
   else
   {
     bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+    // APP_PRINT(<< "receiver got " << hdr->npoints);
 
     buffers.push_back(buffer);
     number_of_timestep_connections_received ++;
@@ -654,6 +613,11 @@ Receiver::receive(char *buffer)
         Reshuffle();
 
       MPI_Barrier(receiver_comm);
+
+      state = PAUSED;
+      signal_busy();
+      unlock_busy();
+
       number_of_timestep_connections_received = 0;
 
       if (! all_status)
