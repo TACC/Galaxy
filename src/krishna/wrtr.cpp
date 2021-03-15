@@ -225,7 +225,8 @@ int main(int argc,  char *argv[])
       std::cerr << "waiting for data...\n";
       receiver->Accept();
       receiver->Wait();
-     
+      std::cerr << "shuffle done\n";
+    
       theRenderingSet->Reset();
       theRenderingSet->Commit();
 

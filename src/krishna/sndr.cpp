@@ -31,6 +31,15 @@
 
 using namespace std;
 
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkXMLPolyDataReader.h>
+#include <vtkPolyData.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkPoints.h>
+#include <vtkFloatArray.h>
+#include <vtkDoubleArray.h>
+#include <vtkPointData.h>
+
 #include <unistd.h>
 #include <stdio.h> 
 #include <stdlib.h>
@@ -43,7 +52,7 @@ using namespace std;
 using namespace gxy;
 
 float xmin = -1.0, xmax = 1.0, ymin = -1.0, ymax = 1.0, zmin = -1.0, zmax = 1.0;
-int nPer = 100;
+int generated_nPts = 100;
 int n_senders = 1;
 int running_count;
 float fuzz = 0.0;
@@ -55,6 +64,7 @@ syntax(char *a)
 {
   std::cerr << "syntax: " << a << " [options]\n";
   std::cerr << "options:\n";
+  std::cerr << " -F pfile    a file containing a list of constituent files (none)\n";
   std::cerr << " -b box      a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
   std::cerr << " -h hostfile a file containing a host name for each receiver process (localhost)\n";
   std::cerr << " -p npart    number of particles to send to each receiver (100)\n";
@@ -63,9 +73,6 @@ syntax(char *a)
   
   exit(1);
 }
-
-pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
 
 enum
 {
@@ -88,11 +95,11 @@ class SenderThread
   }
     
 public:
-  SenderThread(int n, string host, int port) : sender_id(n), host(host), port(port)
+  SenderThread(int n, string host, int port, string pfile = "") : sender_id(n), host(host), port(port), pfile(pfile)
   {
     long seed = getpid() + rand();
-    std::cerr << "seed: " << seed << "\n";
     mt_rand.seed(seed);
+
   }
 
   ~SenderThread()
@@ -121,47 +128,128 @@ private:
   void
   CreateSomeData()
   {
-    if (dsz == -1)
+    bufhdr *hdr;
+
+    if (pfile != "")
     {
-      dsz = sizeof(int) + sizeof(bufhdr)+ nPer*4*sizeof(float);
-      data = (char *)malloc(dsz);
+      string ext = pfile.substr(pfile.size() - 3);
+      if (ext == "vtp" || ext == "vtu")
+      {
+        vtkPointSet *ps;
+
+        if (ext == "vtp")
+        {
+          vtkXMLPolyDataReader *rdr = vtkXMLPolyDataReader::New();
+          rdr->SetFileName(pfile.c_str());
+          rdr->Update();
+          ps = (vtkPointSet *)rdr->GetOutput();
+        }
+        else
+        {
+          vtkXMLUnstructuredGridReader *rdr = vtkXMLUnstructuredGridReader::New();
+          rdr->SetFileName(pfile.c_str());
+          rdr->Update();
+          ps = (vtkPointSet *)rdr->GetOutput();
+        }
+
+        vtkPoints *vpts = ps->GetPoints();
+        nPts = ps->GetNumberOfPoints();
+
+        dsz = sizeof(int) + sizeof(bufhdr)+ nPts*4*sizeof(float);
+        data = (char *)malloc(dsz);
+        *(int *)data = dsz;
+
+        hdr = (bufhdr *)(data + sizeof(int));
+        float *pdst = (float *)(hdr + 1);
+        float *ddst = pdst + 3*nPts;
+
+        vtkFloatArray *pArray = vtkFloatArray::SafeDownCast(vpts->GetData());
+        if (pArray)
+          memcpy(pdst, pArray->GetVoidPointer(0), nPts * 3 * sizeof(float));
+        else
+        {
+          vtkDoubleArray *pArray = vtkDoubleArray::SafeDownCast(vpts->GetData());
+          if (! pArray)
+          {
+            std::cerr << "points have to be float or double\n";
+            exit(1);
+          }
+
+          double *psrc = (double *)pArray->GetVoidPointer(0);
+          for (int i = 0; i < 3*nPts; i++)
+            *pdst++ = (float)*psrc++;
+        }
+
+        vtkFloatArray *dArray = vtkFloatArray::SafeDownCast(ps->GetPointData()->GetArray("displacements"));
+        if (dArray)
+        {
+          float *dsrc = (float *)dArray->GetVoidPointer(0);
+          for (int i = 0; i < nPts; i++)
+          {
+            double a = dsrc[0]*dsrc[0] + dsrc[1]*dsrc[1] + dsrc[2]*dsrc[2];
+            *ddst++ = sqrt(a);
+            dsrc += 3;
+          }
+        }
+        else
+        {
+          vtkDoubleArray *dArray = vtkDoubleArray::SafeDownCast(ps->GetPointData()->GetArray("displacements"));
+          if (! dArray)
+          {
+            std::cerr << "data have to be float or double\n";
+            exit(1);
+          }
+
+          double *dsrc = (double *)dArray->GetVoidPointer(0);
+          for (int i = 0; i < nPts; i++)
+          {
+            double a = dsrc[0]*dsrc[0] + dsrc[1]*dsrc[1] + dsrc[2]*dsrc[2];
+            *ddst++ = sqrt(a);
+            dsrc += 3;
+          }
+        }
+      }
+      else
+      {
+        std::cerr << "pfile must be vtu or vtp\n";
+        exit(1);
+      }
     }
+    else
+    {
+      nPts = generated_nPts;
+      if (dsz == -1)
+      {
+        dsz = sizeof(int) + sizeof(bufhdr)+ nPts*4*sizeof(float);
+        data = (char *)malloc(dsz);
+      }
 
-    *(int *)data = dsz;
+      *(int *)data = dsz;
 
-    bufhdr *hdr = (bufhdr *)(data + sizeof(int));
-    float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
+      hdr = (bufhdr *)(data + sizeof(int));
+      float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
+
+      for (int i = 0; i < nPts; i++)
+      {
+        *ptr++ = xmin + frand()*(xmax - xmin);
+        *ptr++ = ymin + frand()*(ymax - ymin);
+        *ptr++ = zmin + frand()*(zmax - zmin);
+      }
+
+      for (int i = 0; i < nPts; i++)
+        *ptr++ = sender_id;
+    }
 
     hdr->type          = bufhdr::Particles;
     hdr->origin        = sender_id;
     hdr->has_data      = true;
-    hdr->npoints       = nPer;
+    hdr->npoints       = nPts;
     hdr->nconnectivity = 0;
-
-    std::cerr << xmin << " -> " << xmax << "\n";
-    std::cerr << ymin << " -> " << ymax << "\n";
-    std::cerr << zmin << " -> " << zmax << "\n";
-
-    for (int i = 0; i < nPer; i++)
-    {
-      *ptr++ = xmin + frand()*(xmax - xmin);
-      *ptr++ = ymin + frand()*(ymax - ymin);
-      *ptr++ = zmin + frand()*(zmax - zmin);
-    }
-
-    // float v = (n_senders == 1) ? 0.0 : float(sender_id) / float(n_senders - 1);
-      
-    for (int i = 0; i < nPer; i++)
-      *ptr++ = sender_id;
   }
 
   bool
   SendSomeData()
   {
-    std::cerr << "send data to " << host << "::" << port << "\n";
-#if 0
-    return true;
-#else
     ClientSkt c(host, port);
     if (c.Connect())
     {
@@ -175,7 +263,6 @@ private:
     }
     else
       return false;
-#endif
   }
 
   float
@@ -185,14 +272,16 @@ private:
   }
 
 private:
+  string pfile;
   mt19937 mt_rand;
   pthread_t tid;
   int sender_id;
-  int dsz = -1;
+  size_t dsz = -1;
   char *data = NULL;
   int frame = 0;
   string host;
   int port;
+  int nPts;
 };
 
 vector< shared_ptr<SenderThread> > senders;
@@ -228,6 +317,8 @@ main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
+  vector<string> pfiles;
+
   vector<string> hosts;
   hosts.push_back("localhost");
 
@@ -249,7 +340,7 @@ main(int argc, char *argv[])
     }
     else if (! strcmp(argv[i], "-p"))
     {
-      nPer = atoi(argv[++i]);
+      generated_nPts = atoi(argv[++i]);
     }
     else if (! strcmp(argv[i], "-n"))
     {
@@ -258,6 +349,19 @@ main(int argc, char *argv[])
     else if (! strcmp(argv[i], "-f"))
     {
       fuzz = atof(argv[++i]);
+    }
+    else if (! strcmp(argv[i], "-F"))
+    {
+      ifstream ifs(argv[++i]);
+      while (true)
+      {
+        string part;
+        ifs >> part;
+        if (ifs.eof())
+          break;
+        pfiles.push_back(part);
+      };
+      n_senders = pfiles.size();
     }
     else
       syntax(argv[0]);
@@ -276,7 +380,10 @@ main(int argc, char *argv[])
   for (int i = sender_start;  i < sender_end; i++)
   {
     int host_id = i % hosts.size();
-    senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], 1900 + host_id)));
+    if (pfiles.size())
+      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], 1900 + host_id, pfiles[i])));
+    else
+      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], 1900 + host_id)));
   }
 
   CreateSomeData();
