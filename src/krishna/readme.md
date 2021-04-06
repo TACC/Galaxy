@@ -121,7 +121,7 @@ In another:  ```ksndr [-h hostfile]``` followed by an 's' at the prompt.
 
 One <b>ksndr</b> task will send a 'timestep' of ~100 points in the default box (+/- 1, +/- 1, +/- 1) and a data value of zero (the sender ID divided by the total number of senders, if not zero) to however many <b>kwrtr</b> tasks are started by mpirun.  One image will be rendered as per <b>krishna.state</b>.   Since the data is constant, the spheres will take on a size of 0.1.
 
-Now we have more than one renderer, each responsible for a partition of the data space.  We therefore need to reshuffle the incoming points so that each process has access to the points that affect its partition of space.    Since the max sphere radius is 0.1, we add the -f 0.1 option so that the data is distributed with the necessary overlap.
+Now we have more than one renderer, each responsible for a partition of the data space.  We therefore need to reshuffle the incoming points so that each process has access to the points that affect its partition of space.    Since the max sphere radius is 0.1, we add the <b>-f 0.1</b> option so that the data is distributed with the necessary overlap.
 
 Again, we can give a host file to tell the sender where the renderers are.   However, it defaults so that all renderers are on 'localhost'.   Since there's a single sender, it'll send to 'localhost'.
 
@@ -133,7 +133,7 @@ In one window: ```kwrtr krishna.state -f 0.1 ```
 In another:  ```(mpirun)  ksndr [-h hostfile] -n K``` followed by an 's' at the prompt.
 
 
-Now K senders (determined by -n argument) will send data to one renderer.   The K senders can be spread across any number of processes (less than or equal to K) which are started by mpirun.  Since there's only one renderer, the default behavoir will be for all senders to send to a single recipient at localhost.
+Now K senders (determined by <b>-n K</b> argument) will send data to one renderer.   The K senders can be spread across any number of processes (less than or equal to K) which are started by mpirun.  Since there's only one renderer, the default behavoir will be for all senders to send to a single recipient at localhost.
 	
 ##Multiple senders and renderers
 
@@ -142,7 +142,7 @@ In one window: ```(mpirun) kwrtr krishna.state -f 0.1 -n nsenders```
 In another:  ```(mpirun)  ksndr -h hostfile -n K``` followed by an 's' at the prompt.
 
 
-Now K senders (determined by -n argument) will send data to multiple renderers, as per the mpirun arguments passed when starting the renderers.   As before, he K senders can be spread across any number of processes (less than or equal to K) which are started by mpirun.  In this case, however, the senders send to multiple renderers, so they need to know how many and where they are.   We therefore need to specify the <b>-h hostfile</b> argument.  The K senders will send to the listed renderers, wrapping the list where necessary.   Note that there is an implicit port number associated with each line of the hostfile - the n'th renderer will be listening at port 1900+n on the n'th host listed.  Thus a hostfile can list the same hosts multiple times, if more than one renderer is running on the same node.
+Now K senders (determined by -n argument) will send data to multiple renderers, as per the mpirun arguments passed when starting the renderers.   As before, the K senders can be spread across any number of processes (less than or equal to K) which are started by mpirun.  In this case, however, the senders send to multiple renderers, so they need to know how many and where they are.   We therefore need to specify the <b>-h hostfile</b> argument.  The K senders will send to the listed renderers, wrapping the list where necessary.   Note that there is an implicit port number associated with each line of the hostfile - the n'th renderer will be listening at port 1900+n on the n'th host listed.  Thus a hostfile can list the same hosts multiple times, if more than one renderer is running on the same node.
 
 	
 	
