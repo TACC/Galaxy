@@ -107,11 +107,11 @@ Interpolate(InterpolatorClientServer::Args *a)
 
   d->CopyPartitioning(s);
 
-  v->get_ghosted_local_origin(a->ox, a->oy, a->oz);
+  v->get_local_origin(a->ox, a->oy, a->oz);
   v->get_deltas(a->dx, a->dy, a->dz);
 
   int ik, jk, kk;
-  v->get_ghosted_local_counts(ik, jk, kk);
+  v->get_local_counts(ik, jk, kk);
 
   a->istride = 1;
   a->jstride = ik;

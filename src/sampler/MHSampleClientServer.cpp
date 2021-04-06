@@ -124,7 +124,7 @@ static float sample(MHSampleClientServer::Args *args, VolumeP v, float x, float 
   v->get_deltas(dx, dy, dz);
 
   float ox, oy, oz;
-  v->get_ghosted_local_origin(ox, oy, oz);
+  v->get_local_origin(ox, oy, oz);
 
   x = (x - ox) / dx;
   y = (y - oy) / dy;
@@ -183,7 +183,8 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
 
   p->clear();
 
-  p->CopyPartitioning(v);
+  if (v->is_empty())
+    return;
 
   p->SetDefaultColor(a->r, a->g, a->b, a->a);
 
@@ -193,14 +194,8 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
   float ox, oy, oz;
   v->get_local_origin(ox, oy, oz);
 
-  int lioff, ljoff, lkoff;
-  v->get_ghosted_local_offsets(lioff, ljoff, lkoff);
-
   int nli, nlj, nlk;
   v->get_local_counts(nli, nlj, nlk);
-
-  int gnli, gnlj, gnlk;
-  v->get_ghosted_local_counts(gnli, gnlj, gnlk);
 
   int local_count = nli*nlj*nlk;
 
@@ -213,8 +208,8 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
   int global_count = ngx*ngy*ngz;
 
   a->istep = 1;
-  a->jstep = gnli;
-  a->kstep = gnli * gnlj;
+  a->jstep = nli;
+  a->kstep = nli * nlj;
 
   Particle tp;
   tp.xyz = get_starting_point(v);

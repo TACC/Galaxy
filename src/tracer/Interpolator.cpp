@@ -64,13 +64,13 @@ public:
     }
 
     float ox, oy, oz;
-    vol->get_ghosted_local_origin(ox, oy, oz);
+    vol->get_local_origin(ox, oy, oz);
 
     float dx, dy, dz;
     vol->get_deltas(dx, dy, dz);
 
     int ik, jk, kk;
-    vol->get_ghosted_local_counts(ik, jk, kk);
+    vol->get_local_counts(ik, jk, kk);
 
     int istride = 1;
     int jstride = ik;

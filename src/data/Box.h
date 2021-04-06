@@ -47,7 +47,7 @@ class Box
 	}
 
 public:
-	Box() : initialized(false) {} //!< default constructr
+	Box(); //!< default constructr
 	//! construct a box with given origin and axes
 	/*! initialization uses `min = o` and `max = o + (n-1)*d` 
 	 * \param o box origin, maps to `min` corner
@@ -228,15 +228,39 @@ public:
 	}
 
 	//! is the given point inside this Box?
-  bool isIn(vec3f p)
+  bool isIn(vec3f p, float fuzz = 0.0)
   {
-    return (p.x >= xyz_min.x) && (p.x <= xyz_max.x) &&
-           (p.y >= xyz_min.y) && (p.y <= xyz_max.y) &&
-           (p.z >= xyz_min.z) && (p.z <= xyz_max.z);
+    return (p.x >= (xyz_min.x - fuzz)) && (p.x <= (xyz_max.x + fuzz)) &&
+           (p.y >= (xyz_min.y - fuzz)) && (p.y <= (xyz_max.y + fuzz)) &&
+           (p.z >= (xyz_min.z - fuzz)) && (p.z <= (xyz_max.z + fuzz));
   }
 
 	vec3f xyz_min = {0.0, 0.0, 0.0}; //!< the min point for this Box
 	vec3f xyz_max = {0.0, 0.0, 0.0}; //!< the max point for this Box
+
+  int serialSize()
+  {
+    return 2*sizeof(vec3f);
+  }
+
+  unsigned char *
+  serialize(unsigned char *p)
+  {
+    vec3f *v = (vec3f *)p;
+    v[0] = xyz_min;
+    v[1] = xyz_max;
+
+    return p + 2*sizeof(vec3f);
+  }
+
+  unsigned char *
+  deserialize(unsigned char *p)
+  {
+    vec3f *v = (vec3f *)p;
+    xyz_min = v[0];
+    xyz_max = v[1];
+    return p + 2*sizeof(vec3f);
+  }
 
 private:
 	bool initialized;

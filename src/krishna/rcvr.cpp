@@ -72,7 +72,6 @@ main(int argc, char *argv[])
   theApplication.Run();
 
   KeyedDataObject::Register();
-  Partitioning::Register();
   Receiver::Register();
 
   if (mpiRank == 0)

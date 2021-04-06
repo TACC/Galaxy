@@ -29,6 +29,9 @@
 
 #include "OsprayHandle.h"
 
+#include "Box.h"
+#include "Partitioning.hpp"
+
 #include "dtypes.h"
 #include "KeyedObject.h"
 #include "Datasets.h"
@@ -48,6 +51,7 @@ class Pixel;
 class RayList;
 
 OBJECT_POINTER_TYPES(Renderer)
+
 
 //! the primary class controlling rendering within Galaxy
 /*! \sa KeyedObject
@@ -89,9 +93,9 @@ public:
   //! render the given RenderingSet at this process, in response to a received RenderMsg
   virtual void local_render(RendererP, RenderingSetP);
 
-  virtual int SerialSize(); //!< return the size in bytes for the serialization of this Renderer
-  virtual unsigned char *Serialize(unsigned char *); //!< serialize this Renderer to the given byte array
-  virtual unsigned char *Deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
+  virtual int serialSize(); //!< return the size in bytes for the serialization of this Renderer
+  virtual unsigned char *serialize(unsigned char *); //!< serialize this Renderer to the given byte array
+  virtual unsigned char *deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
 
   //! broadcasts a RenderMsg to all processes to begin rendering via each localRendering method
 	virtual void Start(RenderingSetP);
@@ -175,7 +179,23 @@ public:
 
   virtual void HandleTerminatedRays(RayList *raylist);
 
+  void get_local_box(Box& b) { b = partitioning->get_local_box(); }
+  Box get_local_box() { return partitioning->get_local_box(); }
+
+  void get_global_box(Box& b) { b = global_box; }
+  Box get_global_box() { return global_box; }
+
+  //! which partition owns a particular point?
+  int PointOwner(vec3f& p) { return partitioning->PointOwner(p); }
+
+  Partitioning *get_partitioning() { return partitioning; }
+
 private:
+
+  Box   global_box;
+
+  Partitioning *partitioning = NULL;
+
   OsprayHandleP ospray;
 	std::vector<std::future<void>> rvec;
 
@@ -354,5 +374,7 @@ public:
 		int frame;
   };
 };
+
+Renderer *GetTheRenderer();
 
 } // namespace gxy

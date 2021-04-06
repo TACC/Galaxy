@@ -50,7 +50,6 @@ class Receiver : public gxy::KeyedObject
   {
     int base_port;
     Key geometry;
-    Key partitioning;
     int nsenders;
     float fuzz;
   };
@@ -70,7 +69,6 @@ public:
   void Wait();
 
   void SetGeometry(GeometryP g);
-  void SetPartitioning(PartitioningP p) { partitioning = p; }
   void SetNSenders(int n) { nsenders = n; }
   void SetBasePort(int p) { base_port = p; }
   void SetFuzz(float f) { fuzz = f; }
@@ -102,7 +100,6 @@ private:
   int done_count;
 
   GeometryP geometry = NULL;
-  PartitioningP partitioning = NULL;
   int base_port = 1900;
   int nsenders = -1;
   float fuzz = 0;

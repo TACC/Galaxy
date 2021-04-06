@@ -56,6 +56,7 @@ int generated_nPts = 100;
 int n_senders = 1;
 int running_count;
 float fuzz = 0.0;
+bool testdata = false;
 
 int mpi_rank = 0, mpi_size = 1;
 
@@ -70,6 +71,7 @@ syntax(char *a)
   std::cerr << " -p npart    number of particles to send to each receiver (100)\n";
   std::cerr << " -n nproc    number of senders to run (1)\n";
   std::cerr << " -f fuzz     max radius of points - creates empty border region (0)\n";
+  std::cerr << " -T          test case: one point at the center\n";
   
   exit(1);
 }
@@ -130,7 +132,26 @@ private:
   {
     bufhdr *hdr;
 
-    if (pfile != "")
+    if (testdata)
+    {
+      nPts = 1;
+      if (dsz == -1)
+      {
+        dsz = sizeof(int) + sizeof(bufhdr)+ nPts*4*sizeof(float);
+        data = (char *)malloc(dsz);
+      }
+
+      *(int *)data = dsz;
+
+      hdr = (bufhdr *)(data + sizeof(int));
+      float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
+      
+      *ptr++ = 0.0;
+      *ptr++ = 0.0;
+      *ptr++ = 0.0;
+      *ptr++ = 0.0;
+    }
+    else if (pfile != "")
     {
       string ext = pfile.substr(pfile.size() - 3);
       if (ext == "vtp" || ext == "vtu")
@@ -237,7 +258,7 @@ private:
       }
 
       for (int i = 0; i < nPts; i++)
-        *ptr++ = sender_id;
+        *ptr++ = n_senders > 1 ? float(sender_id) / n_senders : 0.0;
     }
 
     hdr->type          = bufhdr::Particles;
@@ -363,8 +384,12 @@ main(int argc, char *argv[])
       };
       n_senders = pfiles.size();
     }
+    else if (! strcmp(argv[i], "-T"))
+      testdata = true;
     else
       syntax(argv[0]);
+
+  if (n_senders < mpi_size) n_senders = mpi_size;
 
   xmin = xmin + fuzz;
   ymin = ymin + fuzz;

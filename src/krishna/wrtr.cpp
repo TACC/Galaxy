@@ -100,7 +100,6 @@ int main(int argc,  char *argv[])
   theApplication.Start();
 
   Renderer::Initialize();
-  Partitioning::Register();
   Receiver::Register();
 
   mpiRank = theApplication.GetRank();
@@ -127,6 +126,7 @@ int main(int argc,  char *argv[])
     }
 
     theRenderer->LoadStateFromDocument(*doc);
+    theRenderer->Commit();
 
     vector<CameraP> theCameras;
     if (! Camera::LoadCamerasFromJSON(*doc, theCameras))

@@ -24,6 +24,17 @@ using namespace std;
 
 namespace gxy
 {
+Box::Box()
+{
+  initialized = false;
+	xyz_min.x = 0;
+	xyz_min.y = 0;
+	xyz_min.z = 0;
+	xyz_max.x = 0;
+	xyz_max.y = 0;
+	xyz_max.z = 0;
+}
+  
 Box::Box(float *o, int *n, float *d)
 {
 	set(o, n, d);

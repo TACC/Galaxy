@@ -21,6 +21,8 @@
 
 static int frame = 0;
 
+#include "Application.h"
+#include "Renderer.h"
 #include "Receiver.hpp"
 #include "bufhdr.h"
 
@@ -67,9 +69,6 @@ void
 Receiver::SetGeometry(GeometryP g)
 {
   geometry = g;
-  partitioning = Partitioning::NewP();
-  partitioning->Gather(geometry);
-  partitioning->Commit();
 }
 
 int 
@@ -84,7 +83,6 @@ Receiver::serialize(unsigned char *ptr)
 
   a->base_port = base_port;
   a->geometry = geometry->getkey();
-  a->partitioning = partitioning ? partitioning->getkey() : -1;
   a->nsenders = nsenders;
   a->fuzz = fuzz;
 
@@ -100,7 +98,6 @@ Receiver::deserialize(unsigned char *ptr)
 
   base_port = a->base_port;
   geometry = Geometry::GetByKey(a->geometry);
-  partitioning = a->partitioning != -1 ? Partitioning::GetByKey(a->partitioning) : NULL;
   nsenders = a->nsenders;
   fuzz = a->fuzz;
 
@@ -296,14 +293,17 @@ bool
 Receiver::Reshuffle()
 {
   int r = GetTheApplication()->GetRank();
+  int s = GetTheApplication()->GetSize();
+
+  Partitioning *partitioning = GetTheRenderer()->get_partitioning();
 
   // First we see how much data we need to send to each recipient
 
-  int *recipient_vertex_count = new int[partitioning->number_of_partitions()];
-  memset(recipient_vertex_count, 0, partitioning->number_of_partitions()*sizeof(int));
+  int *recipient_vertex_count = new int[s];
+  memset(recipient_vertex_count, 0, s*sizeof(int));
 
-  int *recipient_connectivity_count = new int[partitioning->number_of_partitions()];
-  memset(recipient_connectivity_count, 0, partitioning->number_of_partitions()*sizeof(int));
+  int *recipient_connectivity_count = new int[s];
+  memset(recipient_connectivity_count, 0, s*sizeof(int));
 
   // For each input buffer we got from the socket...
 
@@ -336,9 +336,9 @@ Receiver::Reshuffle()
       {
         // Due to fuzz, each point might land in more than one partition...
 
-        for (int j = 0; j < partitioning->number_of_partitions(); j++)
+        for (int j = 0; j < s; j++)
         {
-          if (partitioning->IsIn(j, ptr, fuzz))
+          if (partitioning->isIn(j, ptr, fuzz))
             recipient_vertex_count[j] ++;
         }
       }
@@ -355,7 +355,7 @@ Receiver::Reshuffle()
   // begins with integer size and a header
 
   vector<char *> send_buffers;
-  for (int i = 0; i < partitioning->number_of_partitions(); i++)
+  for (int i = 0; i < s; i++)
   {
 
     // Note - the 2* sizeof int is to add a overrun tag on the end
@@ -384,10 +384,10 @@ Receiver::Reshuffle()
   // next pointers for each destination points followed by data  THIS IS GOING
   // TO BE DIFFERENT IF THERE IS CONNECTIVITY DATA!
 
-  float **dpptrs = new float*[partitioning->number_of_partitions()];
-  float **ddptrs = new float*[partitioning->number_of_partitions()];
+  float **dpptrs = new float*[s];
+  float **ddptrs = new float*[s];
 
-  for (int i = 0; i < partitioning->number_of_partitions(); i++)
+  for (int i = 0; i < s; i++)
   {
     dpptrs[i] = (float *)(send_buffers[i] + sizeof(int) + sizeof(bufhdr));
     ddptrs[i] = dpptrs[i] + 3*recipient_vertex_count[i];
@@ -403,9 +403,9 @@ Receiver::Reshuffle()
 
     for (int i = 0; i < shdr->npoints; i++)
     {
-      for (int j = 0; j < partitioning->number_of_partitions(); j++)
+      for (int j = 0; j < s; j++)
       {
-        if (partitioning->IsIn(j, spptr, fuzz))
+        if (partitioning->isIn(j, spptr, fuzz))
         {
           float *dp = dpptrs[j]; dpptrs[j] = dpptrs[j] + 3;
           float *dd = ddptrs[j]; ddptrs[j] = ddptrs[j] + 1;
@@ -424,7 +424,7 @@ Receiver::Reshuffle()
 
   // Check the overrun tags - ddptrs should point to it?
   
-  for (int i = 0; i < partitioning->number_of_partitions(); i++)
+  for (int i = 0; i < s; i++)
     if (*(int *)ddptrs[i] != 12345)
       std::cerr << "overrun error\n";
 
@@ -437,7 +437,7 @@ Receiver::Reshuffle()
 
   lock_buffers();
 
-  for (int i = 0; i < partitioning->number_of_partitions(); i++)
+  for (int i = 0; i < s; i++)
   {
     bufhdr *hdr = (bufhdr *)(send_buffers[i] + sizeof(int));
     // APP_PRINT(<< "sending " << hdr->npoints << " to " << i);
@@ -451,7 +451,7 @@ Receiver::Reshuffle()
     }
   }
 
-  while (reshuffle_buffers.size() < (partitioning->number_of_partitions()))
+  while (reshuffle_buffers.size() < s)
     wait_buffers();
 
   // APP_PRINT(<< "after wait_buffers... " << reshuffle_buffers.size() << "\n");

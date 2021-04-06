@@ -375,11 +375,6 @@ Geometry::LoadFromJSON(Value& v)
   {
     return Import(v["filename"].GetString());
   }
-  else
-  {
-    cerr << "ERROR: json Particles block has neither a filename nor a layout spec" << endl;
-    exit(1);
-  }
 
   return true;
 }

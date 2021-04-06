@@ -41,16 +41,13 @@ set(GALAXY_LIBRARIES
     ${OSPRAY_LIBRARIES}
     ${MPI_C_LIBRARIES})
 
-add_executable(krcvr rcvr.cpp Receiver.cpp Partitioning.cpp)
+add_executable(krcvr rcvr.cpp Receiver.cpp)
 target_link_libraries(krcvr gxy_data gxy_framework ${Galaxy_BINARY_DIR}/src)
 
 add_executable(ksndr sndr.cpp)
 target_link_libraries(ksndr ${VTK_LIBRARIES} ${MPI_LIBRARIES})
 
-add_executable(kparts parts.cpp Partitioning.cpp)
-target_link_libraries(kparts gxy_data gxy_framework ${Galaxy_BINARY_DIR}/src ${MPI_LIBRARIES})
-
-add_executable(kwrtr wrtr.cpp Receiver.cpp Partitioning.cpp)
+add_executable(kwrtr wrtr.cpp Receiver.cpp)
 target_link_libraries(kwrtr ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 set(BINS kwrtr ${BINS})
 

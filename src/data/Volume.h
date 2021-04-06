@@ -1,4 +1,5 @@
 // ========================================================================== //
+        
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -104,14 +105,7 @@ public:
   {
       local_box = Box(low,high);
   }
-  //! set the ghosted local offset values. 
-  /* The values of the ghosted_local_offset are directly set with this method */
-  void set_ghosted_local_offset(int x, int y, int z)
-  {
-      ghosted_local_offset.x = x;
-      ghosted_local_offset.y = y;
-      ghosted_local_offset.z = z;
-  }
+
   //! set the local offset values.
   void set_local_offset(int x, int y, int z)
   {
@@ -119,14 +113,7 @@ public:
       local_offset.y = y;
       local_offset.z = z;
   }
-	//! get the local origin, including ghost data, for the data at this process in this Volume
-	/*! These values are computed from the global origin and ghosted local offsets */
-	void get_ghosted_local_origin(float &x, float &y, float &z)
-	{
-		x = global_origin.x + ghosted_local_offset.x * deltas.x;
-		y = global_origin.y + ghosted_local_offset.y * deltas.y;
-		z = global_origin.z + ghosted_local_offset.z * deltas.z;
-	}
+	
 	//! get the global number of sample points (i.e. data values) per axis
 	void get_global_counts(int& nx, int& ny, int& nz) 
 	{
@@ -134,6 +121,7 @@ public:
 		ny = global_counts.y;
 		nz = global_counts.z;
 	}
+
 	//! set the global number of sample points (i.e. data values) per axis
 	void set_global_counts(int nx, int ny, int nz) 
 	{
@@ -156,29 +144,7 @@ public:
 	 	local_counts.y = ny;
     local_counts.z = nz;
 	}
-	//! get the local offset for ghost data at this process
-	void get_ghosted_local_offsets(int& ni, int& nj, int& nk) 
-	{
-		ni = ghosted_local_offset.x;
-		nj = ghosted_local_offset.y;
-		nk = ghosted_local_offset.z;
-	}
-	//! get the local number of sample points (i.e. data values) per axis, including ghost data, at this process
-	void get_ghosted_local_counts(int& nx, int& ny, int& nz) 
-	{
-		nx = ghosted_local_counts.x;
-		ny = ghosted_local_counts.y;
-		nz = ghosted_local_counts.z;
-	}
-
-	//! set the local number of sample points (i.e. data values) per axis, including ghost data, at this process
-	void set_ghosted_local_counts(int nx, int ny, int nz) 
-	{
-		ghosted_local_counts.x = nx;
-		ghosted_local_counts.y = ny;
-		ghosted_local_counts.z = nz;
-	}
-
+	
 	//! get the type of data used in this Volume
 	DataType get_type() { return type; }
 	//! set the type of data used in this Volume
@@ -238,7 +204,11 @@ public:
     samples = (unsigned char *)malloc(sz);
   }
 
+  //! If the volume does not intersect the local box on any particular Galaxy process, its said to empty
+  bool is_empty() { return empty; }
+
 protected:
+  bool empty;
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep
 
   vtkImageData *vtkobj;
@@ -257,8 +227,6 @@ protected:
 	vec3i global_counts;
 	vec3i local_offset;
 	vec3i local_counts;
-	vec3i ghosted_local_offset;
-	vec3i ghosted_local_counts;
 	unsigned char *samples;
 };
 
