@@ -41,13 +41,14 @@ syntax(char *a)
   cerr << "use Galaxy to write an image library for the given state file" << endl;
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "options:" << endl;
-  cerr << "  -f fuzz    sort-of ghost zone width (0.0)" << endl;
-  cerr << "  -n nsndrs  number of external processes sending particle data (1)" << endl;
-  cerr << "  -C cdb     put output in Cinema DB (no)" << endl;
-  cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
-  cerr << "  -A         wait for attachment" << endl;
-  cerr << "  -s w h     window width, height (1920 1080)" << endl;
-  cerr << "  -N         max number of simultaneous renderings (VERY large)" << endl;
+  cerr << "  -b xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1)\n";
+  cerr << "  -f fuzz                      sort-of ghost zone width (0.0)" << endl;
+  cerr << "  -n nsndrs                    number of external processes sending particle data (1)" << endl;
+  cerr << "  -C cdb                       put output in Cinema DB (no)" << endl;
+  cerr << "  -D[which]                    run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
+  cerr << "  -A                           wait for attachment" << endl;
+  cerr << "  -s w h                       window width, height (1920 1080)" << endl;
+  cerr << "  -N                           max number of simultaneous renderings (VERY large)" << endl;
   exit(1);
 }
 
@@ -74,10 +75,16 @@ int main(int argc,  char *argv[])
   bool override_windowsize = false;
   int nsenders = 1;
   float fuzz = 0.0;
+  Box gbox(-1, -1, -1, 1, 1, 1);
 
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
+    else if (!strcmp(argv[i], "-b"))
+    {
+      gbox.set(atof(argv[i+1]), atof(argv[i+2]), atof(argv[i+3]), atof(argv[i+4]), atof(argv[i+6]), atof(argv[i+6]));
+      i += 6;
+    }
     else if (!strcmp(argv[i], "-f")) fuzz = atof(argv[++i]);
     else if (!strcmp(argv[i], "-n")) nsenders = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
@@ -101,6 +108,7 @@ int main(int argc,  char *argv[])
 
   Renderer::Initialize();
   Receiver::Register();
+  Partitioning::Register();
 
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
@@ -113,7 +121,13 @@ int main(int argc,  char *argv[])
 
   if (mpiRank == 0)
   {
+    PartitioningP thePartitioning = Partitioning::NewP();
+    thePartitioning->SetBox(gbox);
+    thePartitioning->Commit();
+
     RendererP theRenderer = Renderer::NewP();
+    theRenderer->SetPartitioning(thePartitioning);
+    theRenderer->Commit();
 
     rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
     if (! doc)

@@ -155,7 +155,7 @@ public:
 
   //! import the given data file into local memory
   /*! This action is performed in response to a ImportMsg */
-	virtual bool local_import(char *fname, MPI_Comm c);
+	virtual bool local_import(PartitioningP, char *fname, MPI_Comm c);
 
   //! complete the global properties of the distributed volume object
   /*! This action is performed in response to a CommitMsg */
@@ -174,7 +174,7 @@ public:
 	void set_global_minmax(float min, float max) { global_min = min; global_max = max; }
 
   //! construct a Volume from a Galaxy JSON specification
-  virtual bool LoadFromJSON(rapidjson::Value&);
+  virtual bool LoadFromJSON(PartitioningP, rapidjson::Value&);
 
   //! Get the number of components
   int get_number_of_components() { return number_of_components; }

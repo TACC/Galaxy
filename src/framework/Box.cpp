@@ -68,6 +68,15 @@ Box::Box(float *p)
 }
 
 void
+Box::set(float xl, float yl, float zl, float xu, float yu, float zu)
+{
+	initialized = true;
+
+	xyz_min = vec3f(xl, yl, zl);
+	xyz_max = vec3f(xu, yu, zu);
+}
+
+void
 Box::set(vec3f m, vec3f M)
 {
 	initialized = true;

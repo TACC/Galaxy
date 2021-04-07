@@ -224,8 +224,8 @@ Visualization::local_commit(MPI_Comm c)
   for (auto v : vis)
     v->local_commit(c);
 
-  local_box = GetTheRenderer()->get_local_box();
-  global_box = GetTheRenderer()->get_global_box();
+  local_box = GetTheRenderer()->GetPartitioning()->get_local_box();
+  global_box = GetTheRenderer()->GetPartitioning()->get_global_box();
 
   // CHECKBOX(vis);
 

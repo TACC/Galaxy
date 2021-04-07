@@ -44,11 +44,7 @@ class OsprayPathLines : public OsprayObject
   GALAXY_OBJECT(OsprayPathLines) 
 
 public:
-  static OsprayPathLinesP NewP(PathLinesP p) { return OsprayPathLines::Cast(std::shared_ptr<OsprayPathLines>(new OsprayPathLines(p))); }
-  
-private:
-  OsprayPathLines(PathLinesP);
-
+  void SetPathLines(PathLinesP p);
 };
 
 }

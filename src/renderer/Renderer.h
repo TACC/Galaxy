@@ -30,7 +30,7 @@
 #include "OsprayHandle.h"
 
 #include "Box.h"
-#include "Partitioning.hpp"
+#include "Partitioning.h"
 
 #include "dtypes.h"
 #include "KeyedObject.h"
@@ -179,22 +179,14 @@ public:
 
   virtual void HandleTerminatedRays(RayList *raylist);
 
-  void get_local_box(Box& b) { b = partitioning->get_local_box(); }
-  Box get_local_box() { return partitioning->get_local_box(); }
-
-  void get_global_box(Box& b) { b = global_box; }
-  Box get_global_box() { return global_box; }
-
-  //! which partition owns a particular point?
-  int PointOwner(vec3f& p) { return partitioning->PointOwner(p); }
-
-  Partitioning *get_partitioning() { return partitioning; }
+  void SetPartitioning(PartitioningP p) { partitioning = p; }
+  PartitioningP GetPartitioning() { return partitioning; }
 
 private:
 
   Box   global_box;
 
-  Partitioning *partitioning = NULL;
+  PartitioningP partitioning;
 
   OsprayHandleP ospray;
 	std::vector<std::future<void>> rvec;

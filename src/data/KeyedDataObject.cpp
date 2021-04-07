@@ -89,18 +89,21 @@ KeyedDataObject::local_commit(MPI_Comm c)
 }
 
 bool
-KeyedDataObject::Import(string filename) { return Import(filename, NULL, 0); }
+KeyedDataObject::Import(string filename) { return Import(NULL, filename, NULL, 0); }
 
 bool
-KeyedDataObject::Import(string filename, void *args, int argsSize)
+KeyedDataObject::Import(PartitioningP p, string filename) { return Import(p, filename, NULL, 0); }
+
+bool
+KeyedDataObject::Import(PartitioningP p, string filename, void *args, int argsSize)
 {
-  ImportMsg msg(getkey(), filename, args, argsSize);
+  ImportMsg msg(p, getkey(), filename, args, argsSize);
   msg.Broadcast(true, true);
   return get_error() == 0;
 }
 
 bool
-KeyedDataObject::local_import(char *s, MPI_Comm c)
+KeyedDataObject::local_import(PartitioningP p, char *s, MPI_Comm c)
 {
   std::cerr << "ERROR: generic KeyedDataObject::local_import called?" << std::endl;
   return false;

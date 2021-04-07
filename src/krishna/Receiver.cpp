@@ -295,7 +295,7 @@ Receiver::Reshuffle()
   int r = GetTheApplication()->GetRank();
   int s = GetTheApplication()->GetSize();
 
-  Partitioning *partitioning = GetTheRenderer()->get_partitioning();
+  PartitioningP partitioning = GetTheRenderer()->GetPartitioning();
 
   // First we see how much data we need to send to each recipient
 
@@ -598,7 +598,6 @@ Receiver::receive(char *buffer)
   else
   {
     bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
-    // APP_PRINT(<< "receiver got " << hdr->npoints);
 
     buffers.push_back(buffer);
     number_of_timestep_connections_received ++;

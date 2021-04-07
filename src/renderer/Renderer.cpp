@@ -161,9 +161,6 @@ Renderer::~Renderer()
 {
   rayQmanager->Kill();
   delete rayQmanager;
-
-  if (partitioning)
-    delete partitioning;
 }
 
 void 
@@ -182,11 +179,6 @@ bool
 Renderer::local_commit(MPI_Comm c)
 {
   if (super::local_commit(c)) return true;
-
-  if (partitioning)
-    delete partitioning;
-
-  partitioning = new Partitioning(global_box);
 
   return false;
 }
@@ -259,8 +251,8 @@ Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
       CameraP camera = rendering->GetTheCamera();
       VisualizationP visualization = rendering->GetTheVisualization();
 
-      Box gBox = get_global_box();
-      Box lBox = get_local_box();
+      Box gBox = partitioning->get_global_box();
+      Box lBox = partitioning->get_local_box();
 
       camera->generate_initial_rays(renderer, renderingSet, rendering, &lBox, &gBox, rvec, fnum);
     }
@@ -830,7 +822,7 @@ Renderer::SendRaysMsg::Action(int sender)
 int
 Renderer::serialSize()
 {
-  return super::serialSize() + sizeof(bool) + sizeof(int) + global_box.serialSize() + sizeof(float);
+  return super::serialSize() + sizeof(Key) + sizeof(bool) + sizeof(int) + global_box.serialSize() + sizeof(float);
 }
 
 unsigned char *
@@ -838,10 +830,15 @@ Renderer::serialize(unsigned char *p)
 {
   p = super::serialize(p);
 
+  *(Key *)p = partitioning->getkey();
+  p += sizeof(Key);
+
   *(bool*)p = permute_pixels;
   p += sizeof(bool);
+
   *(int*)p = max_rays_per_packet;
   p += sizeof(int);
+
   *(float*)p = epsilon;
   p += sizeof(float);
 
@@ -855,10 +852,15 @@ Renderer::deserialize(unsigned char *p)
 {
   p = super::deserialize(p);
 
+  partitioning = Partitioning::GetByKey(*(Key *)p);
+  p = p + sizeof(Key);
+
   permute_pixels = *(bool*)p;
   p += sizeof(bool);
+
   max_rays_per_packet = *(int*)p;
   p += sizeof(int);
+
   epsilon = *(float *)p;
   p += sizeof(float);
 

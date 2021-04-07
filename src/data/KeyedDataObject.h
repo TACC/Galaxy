@@ -34,6 +34,7 @@
 #include <vtkImageData.h>
 
 #include "Box.h"
+#include "Partitioning.h"
 #include "KeyedObject.h"
 #include "OsprayObject.h"
 
@@ -102,8 +103,11 @@ public:
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file
 	virtual bool Import(std::string);
 
+  //! broadcast an ImportMsg to all Galaxy processes to import the given data file
+	virtual bool Import(PartitioningP, std::string);
+
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file using the given arguments
-	virtual bool Import(std::string, void *args, int argsSize);
+	virtual bool Import(PartitioningP, std::string, void *args, int argsSize);
 
   //! copy the data partitioning of the given KeyedDataObject
 	void CopyPartitioning(KeyedDataObjectP o);
@@ -134,7 +138,7 @@ protected:
 
 	bool time_varying, attached;
 
-  virtual bool local_import(char *, MPI_Comm c);
+  virtual bool local_import(PartitioningP, char *, MPI_Comm c);
 
 	Box global_box, local_box;
 	int neighbors[6];
@@ -143,9 +147,12 @@ protected:
   class ImportMsg : public Work
   {
   public:
-    ImportMsg(Key k, std::string vname, void *args, int argsSize) : ImportMsg(sizeof(Key) + vname.length() + 1 + argsSize)
+    ImportMsg(PartitioningP part, Key k, std::string vname, void *args, int argsSize) : ImportMsg(2*sizeof(Key) + vname.length() + 1 + argsSize)
     {
       unsigned char *p = contents->get();
+
+      *(Key *)p = part ? part->getkey() : NullKey;
+      p += sizeof(Key);
 
       *(Key *)p = k;
       p += sizeof(Key);
@@ -164,12 +171,15 @@ protected:
 		{
 			char *p = (char *)contents->get();
 
+      PartitioningP part = Partitioning::GetByKey(*(Key *)p);
+			p += sizeof(Key);
+
 			Key k = *(Key *)p;
 			p += sizeof(Key);
 
 			KeyedDataObjectP o = KeyedDataObject::GetByKey(k);
 
-			if (!o->local_import(p, c))
+			if (!o->local_import(part, p, c))
         o->set_error(1);
 
 			return false;

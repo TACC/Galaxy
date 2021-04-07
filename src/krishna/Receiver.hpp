@@ -23,11 +23,11 @@
 
 #include <pthread.h>
 
-#include <Application.h>
-#include <KeyedObject.h>
-#include <Geometry.h>
+#include "Application.h"
+#include "KeyedObject.h"
+#include "Geometry.h"
 
-#include "Partitioning.hpp"
+#include "Partitioning.h"
 #include "Skt.hpp"
 
 namespace gxy

@@ -34,6 +34,7 @@
 #include <vtkPointSet.h>
 
 #include "KeyedDataObject.h"
+#include "Partitioning.h"
 
 namespace gxy
 {

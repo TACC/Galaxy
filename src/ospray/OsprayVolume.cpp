@@ -22,7 +22,8 @@
 
 using namespace gxy;
 
-OsprayVolume::OsprayVolume(VolumeP v)
+void
+OsprayVolume::SetVolume(VolumeP v)
 {
   OSPVolume ospv = ospNewVolume("shared_structured_volume");
   
@@ -49,9 +50,5 @@ OsprayVolume::OsprayVolume(VolumeP v)
   ospCommit(ospv);
   
   theOSPRayObject = ospv;
-}
-
-OsprayVolume::~OsprayVolume()
-{
 }
 

@@ -116,11 +116,22 @@ public:
 	 * \param d `xyz` array of step size between points
 	 */
 	void set(float *o, int *n, float *d);
+
 	//! set the extent of this Box
 	/*! \param m box min point in `xyz` form
 	 * \param M box max point in `xyz` form
 	 */
 	void set(vec3f m, vec3f M);
+
+	//! set the extent of this Box
+	/*! \param xl box min point x component
+	 * \param xu box max point x component
+	 * \param yl box min point y component
+	 * \param yu box max point y component
+	 * \param zl box min point z component
+	 * \param zu box max point z component
+	 */
+	void set(float xl, float xu, float yl, float yu, float zl, float zu);
 
 	//! computes the exit face for a given vector
 	/*! for a vector origin at `x,y,z` and direction of `dx,dy,dz`

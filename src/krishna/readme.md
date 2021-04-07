@@ -6,25 +6,25 @@ First timestep data is created or loaded immediately.   It then waits for input;
 
 	syntax: (mpi) ksndr [options]
 	options:
-		-p pfile		-- list of data files; can be vtp, vtu, csv, raw
-						csv:
-							n
-							x, y, z, d
-							...
-						raw: binary version of above
+		-p pfile		          list of data files; can be vtp, vtu, csv, raw
+									csv:
+										n
+										x, y, z, d
+										...
+									 raw: binary version of above
 		
-		-b box      	-- a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1) 
+		-b xl yl zl xu yu zu       bounding box (-1 -1 -1 1 1 1)
 	
-		-h hostfile 	-- a file containing a host name for each receiver process (localhost)
-						duplicate to create >1 process / node
+		-h hostfile 	           a file containing a host name for each receiver process (localhost)
+						           duplicate to create >1 process / node
   	
-		-p npart     	-- number of particles to send to each receiver (100)
-						in the case of randomly generated data
+		-p npart     	           number of particles to send to each receiver (100)
+						           in the case of randomly generated data
    
-		-n nproc    	-- number of senders to run (1)
-						if pfile is given, this is ignored and the number of data files is used
+       -n nproc    	               number of senders to run (1).  if pfile is given,
+                                   this is ignored and the number of data files is used
 	
-		-f fuzz     	-- max radius of points - creates empty border region (0)
+		-f fuzz     	           max radius of points - creates empty border region (0)
 	
 	
 #kwrtr
@@ -35,15 +35,17 @@ ksndr can be run in any number of parallel processes. If there are more senders 
 
 	syntax: (mpi) kwrtr [options] state
 	options:
-		-f fuzz    sort-of ghost zone width (0.0)
-
-		-n nsndrs  number of external processes sending particle data (1)
-
-		-C cdb     put output in Cinema DB (no)
+		-f fuzz                 sort-of ghost zone width (0.0)
 		
-		-s w h     image width, height (1920 1080)
+		-b xl yl zl xu yu zu    bounding box (-1 -1 -1 1 1 1)
+
+		-n nsndrs               number of external processes sending particle data (1)
+
+		-C cdb                  put output in Cinema DB (no)
 		
-		-N         max number of simultaneous renderings (VERY large)
+		-s w h                  image width, height (1920 1080)
+		
+		-N                      max number of simultaneous renderings (VERY large)
 
 
 ## note:

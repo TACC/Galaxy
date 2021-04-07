@@ -149,12 +149,9 @@ Triangles::load_from_vtkPointSet(vtkPointSet *pset)
 OsprayObjectP
 Triangles::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
-  if (! ospData || hasBeenModified())
-  {
-    ospData = OsprayObject::Cast(OsprayTriangles::NewP(Triangles::Cast(kdop)));
-    setModified(false);
-  }
-
+  OsprayTrianglesP op = OsprayTriangles::NewL();
+  op->SetTriangles(Triangles::Cast(kdop));
+  ospData = OsprayObject::Cast(op);
   return ospData;
 }
 

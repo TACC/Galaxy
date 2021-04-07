@@ -21,7 +21,7 @@
 #include <iostream>
 
 #include "Application.h"
-#include "Renderer.h"
+#include "Partitioning.h"
 #include "Volume.h"
 #include "OsprayVolume.h"
 
@@ -63,22 +63,15 @@ Volume::~Volume()
 }
 
 bool
-Volume::LoadFromJSON(Value& v)
+Volume::LoadFromJSON(PartitioningP p, Value& v)
 {
   int r = GetTheApplication()->GetRank();
 
  	if (v.HasMember("filename"))
 	{
     set_attached(false);
-    return Import(string(v["filename"].GetString()), NULL, 0);
+    return Import(p, string(v["filename"].GetString()), NULL, 0);
 	}
-#if 0
- 	else if (v.HasMember("layout"))
-	{
-		set_attached(true);
- 		return Attach(string(v["layout"].GetString()));
-	}
-#endif
  	else
  	{
  		if (r == 0) cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
@@ -173,7 +166,7 @@ partition(int ijk, vec3i factors, vec3i grid)
 }
 
 bool
-Volume::local_import(char *fname, MPI_Comm c)
+Volume::local_import(PartitioningP partitioning, char *fname, MPI_Comm c)
 {
 	string type_string, data_fname;
 
@@ -183,7 +176,7 @@ Volume::local_import(char *fname, MPI_Comm c)
 	int size = GetTheApplication()->GetSize();
 
   Box local_box;
-  GetTheRenderer()->get_local_box(local_box);
+  partitioning->get_local_box(local_box);
 
 	string dir((filename.find_last_of("/") == string::npos) ? "" : filename.substr(0, filename.find_last_of("/")+1));
 	string ext((filename.find_last_of(".") == string::npos) ? "vol" : filename.substr(filename.find_last_of(".")+1));
@@ -586,12 +579,9 @@ Volume::Sample(vec3f& p, float* result)
 OsprayObjectP 
 Volume::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
-  if (! ospData || hasBeenModified())
-  {
-    ospData = OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
-    setModified(false);
-  }
-
+  OsprayVolumeP op = OsprayVolume::NewL();
+  op->SetVolume(Volume::Cast(kdop));
+  ospData = OsprayObject::Cast(op);
   return ospData;
 }
  

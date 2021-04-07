@@ -65,13 +65,14 @@ syntax(char *a)
 {
   std::cerr << "syntax: " << a << " [options]\n";
   std::cerr << "options:\n";
-  std::cerr << " -F pfile    a file containing a list of constituent files (none)\n";
-  std::cerr << " -b box      a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
-  std::cerr << " -h hostfile a file containing a host name for each receiver process (localhost)\n";
-  std::cerr << " -p npart    number of particles to send to each receiver (100)\n";
-  std::cerr << " -n nproc    number of senders to run (1)\n";
-  std::cerr << " -f fuzz     max radius of points - creates empty border region (0)\n";
-  std::cerr << " -T          test case: one point at the center\n";
+  std::cerr << " -F pfile                     a file containing a list of constituent files (none)\n";
+  std::cerr << " -b xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1)\n";
+  std::cerr << " -b box                       a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
+  std::cerr << " -h hostfile                  a file containing a host name for each receiver process (localhost)\n";
+  std::cerr << " -p npart                     number of particles to send to each receiver (100)\n";
+  std::cerr << " -n nproc                     number of senders to run (1)\n";
+  std::cerr << " -f fuzz                      max radius of points - creates empty border region (0)\n";
+  std::cerr << " -T                           test case: one point at the center\n";
   
   exit(1);
 }
@@ -347,7 +348,7 @@ main(int argc, char *argv[])
     if (! strcmp(argv[i], "-b"))
     {
       ifstream ifs(argv[++i]);
-      ifs >> xmin >> xmax >> ymin >> ymax >> zmin >> zmax;
+      ifs >> xmin >> ymin >> zmin >> xmax >> ymax >> zmax;
       ifs.close();
     }
     else if (! strcmp(argv[i], "-h"))

@@ -119,6 +119,7 @@ OBJECT_POINTER_TYPES(KeyedObject)
 
 typedef int  KeyedObjectClass;
 typedef long Key;
+#define NullKey ((Key)-1)
 
 class KeyedObjectFactory;
 
@@ -145,6 +146,7 @@ class KeyedObject : public GalaxyObject
   GALAXY_OBJECT(KeyedObject)
 
 public:
+  KeyedObject() {}
   KeyedObject(KeyedObjectClass c, Key k); //!< constructor
   virtual ~KeyedObject(); //!< destructor
 
@@ -430,8 +432,8 @@ public:                                                                         
   GALAXY_OBJECT_SUBCLASS(typ, parent)                                                           \
                                                                                                 \
 protected:                                                                                      \
-  typ(Key k = -1) : parent(ClassType, k) {}                                                     \
-  typ(KeyedObjectClass c, Key k = -1) : parent(c, k) {}                                         \
+  typ(Key k = NullKey) : parent(ClassType, k) {}                                                \
+  typ(KeyedObjectClass c, Key k = NullKey) : parent(c, k) {}                                    \
                                                                                                 \
 private:                                                                                        \
   static KeyedObject *_New(Key k)                                                               \
