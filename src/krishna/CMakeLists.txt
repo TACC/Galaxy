@@ -39,14 +39,11 @@ set(GALAXY_LIBRARIES
     ${OSPRAY_LIBRARIES}
     ${MPI_C_LIBRARIES})
 
-add_executable(krcvr rcvr.cpp Receiver.cpp)
-target_link_libraries(krcvr gxy_data gxy_framework)
-
-add_executable(ksndr sndr.cpp)
+add_executable(ksndr ksndr.cpp)
 target_link_libraries(ksndr ${VTK_LIBRARIES} ${MPI_LIBRARIES})
 
-add_executable(kwrtr wrtr.cpp Receiver.cpp)
+add_executable(kwrtr kwrtr.cpp Receiver.cpp)
 target_link_libraries(kwrtr ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 set(BINS kwrtr ${BINS})
 
-install(TARGETS kwrtr krcvr ksndr DESTINATION bin)
+install(TARGETS kwrtr ksndr DESTINATION bin)

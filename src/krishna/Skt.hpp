@@ -64,6 +64,18 @@ public:
     return buffer;
   }
 
+  bool 
+  Send(char *buffer)
+  {
+    return Send((void *)buffer, strlen(buffer)+1);
+  }
+
+  bool
+  Send(std::string buffer)
+  {
+    return Send((void *)buffer.c_str(), buffer.size()+1);
+  }
+
   bool
   Send(void *buffer, int n)
   {
@@ -133,14 +145,14 @@ public:
     if (cskt < 0)
     {
      perror("ERROR opening socket");
-     exit(1);
+     return false;
     }
 
     struct hostent *server = gethostbyname(host.c_str());
     if (server == NULL)
     {
      fprintf(stderr,"ERROR, no such host\n");
-     exit(0);
+     return false;
     }
 
     struct sockaddr_in serv_addr;

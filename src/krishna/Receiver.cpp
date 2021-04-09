@@ -35,7 +35,7 @@ using namespace gxy;
 
 namespace gxy {
 
-WORK_CLASS_TYPE(Receiver::StartMsg)
+WORK_CLASS_TYPE(Receiver::RunMsg)
 WORK_CLASS_TYPE(Receiver::StopMsg)
 WORK_CLASS_TYPE(Receiver::ReshuffleMsg)
 WORK_CLASS_TYPE(Receiver::AcceptMsg)
@@ -46,7 +46,7 @@ Receiver::Register()
 {
   RegisterClass();
   Receiver::AcceptMsg::Register();
-  Receiver::StartMsg::Register();
+  Receiver::RunMsg::Register();
   Receiver::StopMsg::Register();
   Receiver::ReshuffleMsg::Register();
 }
@@ -107,6 +107,8 @@ Receiver::deserialize(unsigned char *ptr)
 void
 Receiver::Stop()
 {
+  masterskt->stop();
+
   StopMsg msg(this);
   msg.Broadcast(true, true);
 }
@@ -227,11 +229,18 @@ Receiver::reshuffle_thread(void *d)
 }
 
 void
-Receiver::Start()
+Receiver::Start(bool(*handler)(ServerSkt*, void *, char*))
 {
-  done_count = GetTheApplication()->GetSize() - 1;
+  masterskt = new ServerSkt(base_port, handler, this);
+  masterskt->start(false);
 
-  StartMsg msg(this);
+  done_count = GetTheApplication()->GetSize() - 1;
+}
+
+void
+Receiver::Run()
+{
+  RunMsg msg(this);
   msg.Broadcast(true, true);
 }
 
@@ -263,7 +272,7 @@ Receiver::Setup(MPI_Comm comm)
 
   MPI_Comm_dup(comm, &receiver_comm);
 
-  local_port = base_port + grnk;
+  local_port = base_port + grnk + 1;
 
   number_of_local_attachments = (nsenders / gsz) + (((nsenders % gsz) > grnk) ? 1 : 0);
 
@@ -475,10 +484,6 @@ Receiver::Reshuffle()
   float *pptr = (float *)geometry->GetVertices();
   float *dptr = (float *)geometry->GetData();
 
-#if 0
-  for (auto buffer : reshuffle_buffers)
-  {
-#else
   char **sorted = new char*[reshuffle_buffers.size()];
   for (auto buffer : reshuffle_buffers)
   {
@@ -489,7 +494,6 @@ Receiver::Reshuffle()
   for (int i = 0; i < reshuffle_buffers.size(); i++)
   {
     char *buffer = sorted[i];
-#endif
     if (buffer)
     {
       bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));

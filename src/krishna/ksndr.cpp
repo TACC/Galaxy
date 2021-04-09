@@ -66,6 +66,7 @@ syntax(char *a)
   std::cerr << "syntax: " << a << " [options]\n";
   std::cerr << "options:\n";
   std::cerr << " -F pfile                     a file containing a list of constituent files (none)\n";
+  std::cerr << " -M master                    address of master process (localhost)\n";
   std::cerr << " -b xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1)\n";
   std::cerr << " -b box                       a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
   std::cerr << " -h hostfile                  a file containing a host name for each receiver process (localhost)\n";
@@ -102,7 +103,6 @@ public:
   {
     long seed = getpid() + rand();
     mt_rand.seed(seed);
-
   }
 
   ~SenderThread()
@@ -259,7 +259,7 @@ private:
       }
 
       for (int i = 0; i < nPts; i++)
-        *ptr++ = n_senders > 1 ? float(sender_id) / n_senders : 0.0;
+        *ptr++ = n_senders > 1 ? float(sender_id) / (n_senders - 1) : 0.0;
     }
 
     hdr->type          = bufhdr::Particles;
@@ -277,14 +277,21 @@ private:
     {
       c.Send(data, dsz);
       char *rply = c.Receive();
-      int r = *(int *)rply;
-      c.Disconnect();
-      free(rply);
-
-      return r == 1;
+      if (rply)
+      {
+        int r = *(int *)rply;
+        c.Disconnect();
+        free(rply);
+        return r == 1;
+      }
+      else
+        return false;
     }
     else
+    {
+      std::cerr << "no connection\n";
       return false;
+    }
   }
 
   float
@@ -309,22 +316,46 @@ private:
 vector< shared_ptr<SenderThread> > senders;
 
 void
-SendSomeData()
+SendSomeData(ClientSkt& masterskt)
 {
-  command = SEND_SOME_DATA;
+  char doit;
 
-  for (auto s : senders)
-    s->Run();
+  if (mpi_rank == 0)
+  {
+    if (masterskt.Connect())
+    {
+      masterskt.Send("go");
+      char *rply = masterskt.Receive();
+      doit = (rply && *(int *)rply == 1)  ? 1 : 0;
+      if (rply) free(rply);
+      masterskt.Disconnect();
+    }
+    else
+    {
+      doit = 0;
+      std::cerr << "no renderer available\n";
+    }
+  }
 
-  for (auto s : senders)
-    s->Wait();
+  MPI_Bcast(&doit, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  if (doit)
+  {
+    command = SEND_SOME_DATA;
+
+    for (auto s : senders)
+      s->Run();
+
+    for (auto s : senders)
+      s->Wait();
+  }
+  else
+      std::cerr << "something went wrong\n";
 }
 
 void
 CreateSomeData()
 {
-  command = CREATE_SOME_DATA;
-
   for (auto s : senders)
     s->Run();
 
@@ -344,12 +375,24 @@ main(int argc, char *argv[])
   vector<string> hosts;
   hosts.push_back("localhost");
 
+  string master_host("localhost");
+
+  int base_port = 1900;
+
   for (int i = 1; i < argc; i++)
     if (! strcmp(argv[i], "-b"))
     {
       ifstream ifs(argv[++i]);
       ifs >> xmin >> ymin >> zmin >> xmax >> ymax >> zmax;
       ifs.close();
+    }
+    else if (! strcmp(argv[i], "-M")) 
+    {
+      master_host = argv[++i];
+    }
+    else if (! strcmp(argv[i], "-P")) 
+    {
+      base_port = atoi(argv[++i]);
     }
     else if (! strcmp(argv[i], "-h"))
     {
@@ -403,13 +446,15 @@ main(int argc, char *argv[])
   int sender_start = mpi_rank * senders_per_rank;
   int sender_end   = (mpi_rank == mpi_size-1) ? n_senders : (mpi_rank+1) * senders_per_rank;
 
+  ClientSkt master_socket(master_host, base_port);
+
   for (int i = sender_start;  i < sender_end; i++)
   {
     int host_id = i % hosts.size();
     if (pfiles.size())
-      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], 1900 + host_id, pfiles[i])));
+      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], base_port + host_id + 1, pfiles[i])));
     else
-      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], 1900 + host_id)));
+      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], base_port + host_id + 1)));
   }
 
   CreateSomeData();
@@ -419,14 +464,18 @@ main(int argc, char *argv[])
 
   while (! done)
   {
+    MPI_Bcast(&cmd, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+    if (cmd == 'q')
+      break;
+
     if (cmd == 's')
-      SendSomeData();
+      SendSomeData(master_socket);
     else if (cmd == 'c')
       CreateSomeData();
     else if (cmd == 'S')
     {
       CreateSomeData();
-      SendSomeData();
+      SendSomeData(master_socket);
     }
 
     if (mpi_rank == 0)
@@ -436,11 +485,19 @@ main(int argc, char *argv[])
       if (cin.eof())
           cmd = 'q';
     }
+  }
 
-    MPI_Bcast(&cmd, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
-
-    if (cmd == 'q')
-      done = true;
+  if (mpi_rank == 0)
+  {
+    if (master_socket.Connect())
+    {
+      master_socket.Send("quit");
+      char *rply = master_socket.Receive();
+      if (! rply || *(int *)rply != 1)
+        std::cerr << "something is wrong\n";
+      if (rply) free(rply);
+      master_socket.Disconnect();
+    }
   }
   
   MPI_Finalize();

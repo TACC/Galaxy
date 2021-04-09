@@ -63,7 +63,8 @@ public:
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
 
-  void Start();
+  void Start(bool(*)(ServerSkt*, void*, char*));
+  void Run();
   void Stop();
   void Accept();
   void Wait();
@@ -117,6 +118,8 @@ private:
   bool exitting = false;
   bool complete = false;
 
+  ServerSkt *masterskt = NULL;
+
   ServerSkt *serverskt = NULL;
   static bool receiver(ServerSkt*, void *, char *);
 
@@ -131,25 +134,25 @@ private:
   std::vector<char *> buffers;
   std::vector<char *> reshuffle_buffers;
 
-  class StartMsg : public Work
+  class RunMsg : public Work
   {
-    struct StartMsgArgs
+    struct RunMsgArgs
     {
       Key rk; // Receiver object
     };
 
   public:
-    StartMsg(Receiver* r) : StartMsg(sizeof(Key))
+    RunMsg(Receiver* r) : RunMsg(sizeof(Key))
     {
-      struct StartMsgArgs *p = (struct StartMsgArgs *)contents->get();
+      struct RunMsgArgs *p = (struct RunMsgArgs *)contents->get();
       p->rk = r->getkey();
     }
 
-    WORK_CLASS(StartMsg, true);
+    WORK_CLASS(RunMsg, true);
 
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {
-      struct StartMsgArgs *p = (struct StartMsgArgs *)get();
+      struct RunMsgArgs *p = (struct RunMsgArgs *)get();
       ReceiverP receiver = Receiver::GetByKey(p->rk);
       return receiver->Setup(c);
     }

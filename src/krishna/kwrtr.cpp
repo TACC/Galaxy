@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <sstream>
 #include <time.h>
+#include <pthread.h>
 
 #include "Application.h"
 #include "Renderer.h"
@@ -34,6 +35,19 @@ using namespace gxy;
 using namespace std;
 
 int mpiRank = 0, mpiSize = 1;
+
+// These are going to be needed in the master socket handler
+
+ReceiverP receiver  = NULL;
+RenderingSetP theRenderingSet = NULL;
+RendererP theRenderer = NULL;
+
+pthread_mutex_t main_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  main_cond = PTHREAD_COND_INITIALIZER;
+
+bool   done = false;
+bool   cinema = false;
+string cdb("");
 
 void
 syntax(char *a)
@@ -49,6 +63,7 @@ syntax(char *a)
   cerr << "  -A                           wait for attachment" << endl;
   cerr << "  -s w h                       window width, height (1920 1080)" << endl;
   cerr << "  -N                           max number of simultaneous renderings (VERY large)" << endl;
+  cerr << "  -P                           base port; master here, workers start here + 1 (1900)" << endl;
   exit(1);
 }
 
@@ -62,24 +77,95 @@ my_time()
 
 #include "Debug.h"
 
+bool 
+master_handler(ServerSkt *skt, void *p, char *buf)
+{
+  static int tstep = 0;
+
+  Receiver *rcvr = (Receiver *)p;
+  if (buf)
+  {
+    std::cerr << "received: " << buf << "\n";
+
+    if (! strcmp(buf, "go"))
+    {
+      std::cerr << "waiting for data...\n";
+      receiver->Accept();
+      receiver->Wait();
+      std::cerr << "shuffle done\n";
+      
+      theRenderingSet->Reset();
+      theRenderingSet->Commit();
+
+      long t_rendering_start = my_time();
+      cout << "render start" << endl;
+
+      theRenderer->Start(theRenderingSet);
+      theRenderingSet->WaitForDone();
+
+      long t_done = my_time();
+      cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
+
+      char namebuf[1024];
+
+      if (cinema)
+        sprintf(namebuf, "%s/image/image/image-%04d", cdb.c_str(), tstep);
+      else
+        sprintf(namebuf, "image-%04d", tstep);
+
+      theRenderingSet->SaveImages(namebuf);
+
+      tstep ++;
+
+      free(buf);
+      return false;
+    }
+    else if (! strcmp(buf, "quit"))
+    {
+      pthread_mutex_lock(&main_lock);
+      done = true;
+      pthread_cond_signal(&main_cond);
+      pthread_mutex_unlock(&main_lock);
+      free(buf);
+
+      return true;
+    }
+    else
+    {
+      std::cerr << "received unknown message from sender side: " << buf << "\n";
+      free(buf);
+      return true;
+    }
+  }
+
+  std::cerr << "connection broke!\n";
+  pthread_mutex_lock(&main_lock);
+  done = true;
+  pthread_cond_signal(&main_cond);
+  pthread_mutex_unlock(&main_lock);
+  free(buf);
+  return true;
+}
+
 int main(int argc,  char *argv[])
 {
   string statefile("");
-  string  cdb("");
   char *dbgarg;
   bool dbg = false;
   bool atch = false;
-  bool cinema = false;
   int width = 1920, height = 1080;
   int maxConcurrentRenderings = 99999999;
   bool override_windowsize = false;
   int nsenders = 1;
   float fuzz = 0.0;
   Box gbox(-1, -1, -1, 1, 1, 1);
+  int base_port = 1900;
 
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
+    else if (!strcmp(argv[i], "-P"))
+      base_port = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-b"))
     {
       gbox.set(atof(argv[i+1]), atof(argv[i+2]), atof(argv[i+3]), atof(argv[i+4]), atof(argv[i+6]), atof(argv[i+6]));
@@ -99,6 +185,13 @@ int main(int argc,  char *argv[])
     else if (statefile == "")   statefile = argv[i];
     else syntax(argv[0]);
   }
+
+  gbox.xyz_min.x -= fuzz;
+  gbox.xyz_min.y -= fuzz;
+  gbox.xyz_min.z -= fuzz;
+  gbox.xyz_max.x += fuzz;
+  gbox.xyz_max.y += fuzz;
+  gbox.xyz_max.z += fuzz;
 
   if (statefile == "")
     syntax(argv[0]);
@@ -125,7 +218,7 @@ int main(int argc,  char *argv[])
     thePartitioning->SetBox(gbox);
     thePartitioning->Commit();
 
-    RendererP theRenderer = Renderer::NewP();
+    theRenderer = Renderer::NewP();
     theRenderer->SetPartitioning(thePartitioning);
     theRenderer->Commit();
 
@@ -188,7 +281,7 @@ int main(int argc,  char *argv[])
         exit(1);
       }
 
-  RenderingSetP theRenderingSet = RenderingSet::NewP();
+  theRenderingSet = RenderingSet::NewP();
 
   int index = 0;
   for (auto c : theCameras)
@@ -223,67 +316,31 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    ReceiverP receiver  = Receiver::NewP();
+    receiver  = Receiver::NewP();
     receiver->SetGeometry(particles);
     receiver->SetNSenders(nsenders);
-    receiver->SetBasePort(1900);
+    receiver->SetBasePort(base_port);
     receiver->SetFuzz(fuzz);
     receiver->Commit();
 
-    receiver->Start();
+    receiver->Start(master_handler);
+    receiver->Run();
 
-    int tstep = 0;
+    pthread_mutex_lock(&main_lock);
+    while (! done)
+      pthread_cond_wait(&main_cond, &main_lock);
 
-    while (true)
-    {
-      std::cerr << "waiting for data...\n";
-      receiver->Accept();
-      receiver->Wait();
-      std::cerr << "shuffle done\n";
-    
-      theRenderingSet->Reset();
-      theRenderingSet->Commit();
-
-      long t_rendering_start = my_time();
-      cout << "render start" << endl;
-
-      theRenderer->Start(theRenderingSet);
-      theRenderingSet->WaitForDone();
-
-      long t_done = my_time();
-      cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
-
-      char namebuf[1024];
-
-      if (cinema)
-        sprintf(namebuf, "%s/image/image/image-%04d", cdb.c_str(), tstep);
-      else
-        sprintf(namebuf, "image-%04d", tstep);
-
-      theRenderingSet->SaveImages(namebuf);
-
-      theApplication.DumpLog();
-
-      char cmd;
-      cerr << "? ";
-      do
-      {
-        cin >> cmd;
-      } 
-      while (cmd != 'q' && cmd != 's');
-
-      if (cmd == 'q') 
-        break;
-
-      tstep ++;
-    }
+    pthread_mutex_unlock(&main_lock);
 
     receiver->Stop();
     receiver = nullptr;
 
+    theRenderingSet = nullptr;
     theDatasets = nullptr;
-
     theRenderer = nullptr;
+
+    theApplication.DumpLog();
+
     theApplication.QuitApplication();
   }
 
