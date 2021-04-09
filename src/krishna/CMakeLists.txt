@@ -25,7 +25,6 @@ project (gxy_krishna VERSION ${GALAXY_VERSION})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${gxy_framework_SOURCE_DIR}
                     ${gxy_renderer_SOURCE_DIR}
-                    ${gxy_sampler_SOURCE_DIR}
                     ${OSPRAY_INCLUDE_DIRS}
                     ${gxy_data_SOURCE_DIR}
                     ${gxy_ospray_SOURCE_DIR}
@@ -35,23 +34,15 @@ include_directories(${gxy_framework_SOURCE_DIR}
 set(GALAXY_LIBRARIES
     gxy_framework
     gxy_renderer
-    gxy_sampler
     gxy_data
     gxy_ospray
     ${OSPRAY_LIBRARIES}
     ${MPI_C_LIBRARIES})
 
-add_executable(krcvr rcvr.cpp Receiver.cpp Partitioning.cpp)
-target_link_libraries(krcvr gxy_data gxy_framework)
-
-add_executable(ksndr sndr.cpp)
+add_executable(ksndr ksndr.cpp)
 target_link_libraries(ksndr ${VTK_LIBRARIES} ${MPI_LIBRARIES})
 
-add_executable(kparts parts.cpp Partitioning.cpp)
-target_link_libraries(kparts gxy_data gxy_framework ${MPI_LIBRARIES})
-
-add_executable(kwrtr wrtr.cpp Receiver.cpp Partitioning.cpp)
+add_executable(kwrtr kwrtr.cpp Receiver.cpp)
 target_link_libraries(kwrtr ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-set(BINS kwrtr ${BINS})
 
-install(TARGETS kwrtr krcvr ksndr DESTINATION bin)
+install(TARGETS kwrtr ksndr DESTINATION bin)

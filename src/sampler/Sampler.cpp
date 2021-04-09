@@ -89,24 +89,24 @@ Sampler::HandleTerminatedRays(RayList *raylist)
 }
 
 int
-Sampler::SerialSize()
+Sampler::serialSize()
 {
-  return super::SerialSize() + sizeof(Key);
+  return super::serialSize() + sizeof(Key);
 }
 
 unsigned char *
-Sampler::Serialize(unsigned char *p)
+Sampler::serialize(unsigned char *p)
 {
-  p = super::Serialize(p);
+  p = super::serialize(p);
   *(Key *)p = mSamples->getkey();
   p = p + sizeof(Key);
   return p;
 }
 
 unsigned char *
-Sampler::Deserialize(unsigned char *p)
+Sampler::deserialize(unsigned char *p)
 {
-  p = super::Deserialize(p);
+  p = super::deserialize(p);
   mSamples = Particles::GetByKey(*(Key *)p);
   p = p + sizeof(Key);
   return p;

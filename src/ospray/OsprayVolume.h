@@ -43,11 +43,7 @@ class OsprayVolume : public OsprayObject
   GALAXY_OBJECT(OsprayVolume)
 
 public:
-  static OsprayVolumeP NewP(VolumeP p) { return OsprayVolume::Cast(std::shared_ptr<OsprayVolume>(new OsprayVolume(p))); }
-  ~OsprayVolume();
-
-private:
-  OsprayVolume(VolumeP);
+  void SetVolume(VolumeP p);
 };
 
 }

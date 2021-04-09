@@ -127,7 +127,7 @@ private:
     v->get_deltas(dx, dy, dz);
 
     float ox, oy, oz;
-    v->get_ghosted_local_origin(ox, oy, oz);
+    v->get_local_origin(ox, oy, oz);
 
     x = (x - ox) / dx;
     y = (y - oy) / dy;
@@ -191,14 +191,8 @@ public:
     float ox, oy, oz;
     v->get_local_origin(ox, oy, oz);
 
-    int lioff, ljoff, lkoff;
-    v->get_ghosted_local_offsets(lioff, ljoff, lkoff);
-
     int nli, nlj, nlk;
     v->get_local_counts(nli, nlj, nlk);
-
-    int gnli, gnlj, gnlk;
-    v->get_ghosted_local_counts(gnli, gnlj, gnlk);
 
     int local_count = nli*nlj*nlk;
 
@@ -211,8 +205,8 @@ public:
     int global_count = ngx*ngy*ngz;
 
     istep = 1;
-    jstep = gnli;
-    kstep = gnli * gnlj;
+    jstep = nli;
+    kstep = nli * nlj;
 
     Particle tp;
     tp.xyz = get_starting_point(v);

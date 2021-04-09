@@ -131,7 +131,9 @@ Particles::load_from_vtkPointSet(vtkPointSet *pset)
 OsprayObjectP 
 Particles::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 { 
-  ospData = OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
+  OsprayParticlesP op = OsprayParticles::NewL();
+  op->SetParticles(Particles::Cast(kdop));
+  ospData = OsprayObject::Cast(op);
   return ospData;
 } 
 

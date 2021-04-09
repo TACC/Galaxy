@@ -50,6 +50,8 @@
 #include "OsprayTriangles.h"
 #include "OsprayParticles.h"
 
+#include "dtypes.h"
+
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 
@@ -81,12 +83,14 @@ int Renderer::KEEP_HERE     = -3;
 int Renderer::UNDETERMINED  = -4;
 int Renderer::NO_NEIGHBOR   = -1;
 
+static Renderer *theRenderer = NULL;
+Renderer *GetTheRenderer() { return theRenderer; }
+
 void
 Renderer::Initialize()
 {
   extern void force_ospray_library_load();
   force_ospray_library_load();
-
 
   RegisterClass();
   
@@ -149,12 +153,14 @@ Renderer::initialize()
   char *ospMsgs = getenv("GXY_SHOW_OSPRAY_MESSAGES");
   if (ospMsgs && atoi(ospMsgs) > 0)
     ospDeviceSetStatusFunc(ospGetCurrentDevice(), print_ospray_error_messages);
+
+  theRenderer = this;
 }
 
 Renderer::~Renderer()
 {
-    rayQmanager->Kill();
-    delete rayQmanager;
+  rayQmanager->Kill();
+  delete rayQmanager;
 }
 
 void 
@@ -173,6 +179,7 @@ bool
 Renderer::local_commit(MPI_Comm c)
 {
   if (super::local_commit(c)) return true;
+
   return false;
 }
 
@@ -244,10 +251,10 @@ Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
       CameraP camera = rendering->GetTheCamera();
       VisualizationP visualization = rendering->GetTheVisualization();
 
-      Box *gBox = visualization->get_global_box();
-      Box *lBox = visualization->get_local_box();
+      Box gBox = partitioning->get_global_box();
+      Box lBox = partitioning->get_local_box();
 
-      camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
+      camera->generate_initial_rays(renderer, renderingSet, rendering, &lBox, &gBox, rvec, fnum);
     }
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
@@ -292,6 +299,14 @@ Renderer::LoadStateFromValue(Value& v)
   if (v.HasMember("epsilon"))
     SetEpsilon(v["epsilon"].GetDouble());
 
+  if (v.HasMember("box"))
+  {
+    Value& b = v["box"];
+    vec3f min_box(b[0].GetDouble(), b[2].GetDouble(), b[4].GetDouble());
+    vec3f max_box(b[1].GetDouble(), b[3].GetDouble(), b[5].GetDouble());
+    global_box.set(min_box, max_box);
+  }
+
   return true;
 }
 
@@ -299,6 +314,18 @@ void
 Renderer::SaveStateToValue(Value& v, Document& doc)
 {
   v.AddMember("epsilon", Value().SetDouble(GetEpsilon()), doc.GetAllocator());
+
+  if (global_box.is_initialized())
+  {
+    Value box(kArrayType);
+    box.PushBack(Value().SetDouble(global_box.xyz_min.x), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_max.x), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_min.y), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_max.y), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_min.z), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_max.z), doc.GetAllocator());
+    v.AddMember("box", box, doc.GetAllocator());
+  }
 }
 
 void
@@ -430,11 +457,11 @@ Renderer::AssignDestinations(RayList *raylist)
   {
     if (raylist->get_classification(i) == RAY_BOUNDARY)
     {
-      int exit_face = box->exit_face(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
-                                   raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
+      int nbr = partitioning->neighbor(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
+                                 raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
 
-      if (visualization->has_neighbor(exit_face)) 
-        raylist->set_classification(i, visualization->get_neighbor(exit_face));
+      if (nbr != -1)
+        raylist->set_classification(i, nbr);
       else
       {
         int t = raylist->get_type(i);
@@ -793,29 +820,51 @@ Renderer::SendRaysMsg::Action(int sender)
 }
 
 int
-Renderer::SerialSize()
+Renderer::serialSize()
 {
-  return sizeof(bool) + sizeof(int);
+  return super::serialSize() + sizeof(Key) + sizeof(bool) + sizeof(int) + global_box.serialSize() + sizeof(float);
 }
 
 unsigned char *
-Renderer::Serialize(unsigned char *p)
+Renderer::serialize(unsigned char *p)
 {
+  p = super::serialize(p);
+
+  *(Key *)p = partitioning->getkey();
+  p += sizeof(Key);
+
   *(bool*)p = permute_pixels;
   p += sizeof(bool);
+
   *(int*)p = max_rays_per_packet;
   p += sizeof(int);
+
+  *(float*)p = epsilon;
+  p += sizeof(float);
+
+  p = global_box.serialize(p);
 
   return p;
 }
 
 unsigned char *
-Renderer::Deserialize(unsigned char *p)
+Renderer::deserialize(unsigned char *p)
 {
+  p = super::deserialize(p);
+
+  partitioning = Partitioning::GetByKey(*(Key *)p);
+  p = p + sizeof(Key);
+
   permute_pixels = *(bool*)p;
   p += sizeof(bool);
+
   max_rays_per_packet = *(int*)p;
   p += sizeof(int);
+
+  epsilon = *(float *)p;
+  p += sizeof(float);
+
+  p = global_box.deserialize(p);
 
   return p;
 }
@@ -876,12 +925,11 @@ Renderer::RenderMsg::~RenderMsg()
 }
 
 Renderer::RenderMsg::RenderMsg(Renderer* r, RenderingSetP rs) :
-  Renderer::RenderMsg(sizeof(Key) + r->SerialSize() + sizeof(Key))
+  Renderer::RenderMsg(sizeof(Key) + sizeof(Key))
 {
   unsigned char *p = contents->get();
   *(Key *)p = r->getkey();
   p = p + sizeof(Key);
-  p = r->Serialize(p);
   *(Key *)p = rs->getkey();
 }
 
@@ -893,8 +941,6 @@ Renderer::RenderMsg::Action(int sender)
   p += sizeof(Key);
 
   RendererP renderer = Renderer::GetByKey(renderer_key);
-  p = renderer->Deserialize(p);
-
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
   renderer->local_render(renderer, rs);

@@ -42,14 +42,16 @@ include_directories(
 
 set (CPP_SOURCES 
 			Application.cpp
-			Threading.cpp
+      Box.cpp
 			ClientServer.cpp
 			Events.cpp
 			KeyedObject.cpp
 			Message.cpp
 			MessageManager.cpp 
 			MessageQ.cpp 
+      Partitioning.cpp
 			smem.cpp
+			Threading.cpp
 			Work.cpp)
 
 add_library(gxy_framework SHARED ${CPP_SOURCES})
@@ -59,8 +61,8 @@ install(TARGETS gxy_framework DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
 	Application.h 
+	Box.h 
 	ClientServer.h  
-	Threading.h
 	Debug.h 
 	Events.h
 	framework.h
@@ -69,7 +71,9 @@ install(FILES
 	Message.h 
 	MessageManager.h 
 	MessageQ.h 
+  Partitioning.h
 	smem.h 
+	Threading.h
 	Timer.h 
 	Work.h 
 	DESTINATION include/gxy)

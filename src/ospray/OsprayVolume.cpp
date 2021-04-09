@@ -22,15 +22,16 @@
 
 using namespace gxy;
 
-OsprayVolume::OsprayVolume(VolumeP v)
+void
+OsprayVolume::SetVolume(VolumeP v)
 {
   OSPVolume ospv = ospNewVolume("shared_structured_volume");
   
   osp::vec3i counts;
-  v->get_ghosted_local_counts(counts.x, counts.y, counts.z);
+  v->get_local_counts(counts.x, counts.y, counts.z);
 
   osp::vec3f origin, spacing;
-  v->get_ghosted_local_origin(origin.x, origin.y, origin.z);
+  v->get_local_origin(origin.x, origin.y, origin.z);
   v->get_deltas(spacing.x, spacing.y, spacing.z);
   
   OSPData data = ospNewData(counts.x*counts.y*counts.z, 
@@ -49,9 +50,5 @@ OsprayVolume::OsprayVolume(VolumeP v)
   ospCommit(ospv);
   
   theOSPRayObject = ospv;
-}
-
-OsprayVolume::~OsprayVolume()
-{
 }
 

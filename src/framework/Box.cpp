@@ -24,6 +24,17 @@ using namespace std;
 
 namespace gxy
 {
+Box::Box()
+{
+  initialized = false;
+	xyz_min.x = 0;
+	xyz_min.y = 0;
+	xyz_min.z = 0;
+	xyz_max.x = 0;
+	xyz_max.y = 0;
+	xyz_max.z = 0;
+}
+  
 Box::Box(float *o, int *n, float *d)
 {
 	set(o, n, d);
@@ -54,6 +65,15 @@ Box::Box(float *p)
 	xyz_max.x = *p++;
 	xyz_max.y = *p++;
 	xyz_max.z = *p++;
+}
+
+void
+Box::set(float xl, float yl, float zl, float xu, float yu, float zu)
+{
+	initialized = true;
+
+	xyz_min = vec3f(xl, yl, zl);
+	xyz_max = vec3f(xu, yu, zu);
 }
 
 void

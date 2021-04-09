@@ -22,7 +22,8 @@
 
 using namespace gxy;
 
-OsprayParticles::OsprayParticles(ParticlesP p)
+void
+OsprayParticles::SetParticles(ParticlesP p)
 {
   OSPGeometry ospg = ospNewGeometry("ddspheres");
   if (! ospg) 

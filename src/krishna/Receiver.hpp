@@ -23,11 +23,11 @@
 
 #include <pthread.h>
 
-#include <Application.h>
-#include <KeyedObject.h>
-#include <Geometry.h>
+#include "Application.h"
+#include "KeyedObject.h"
+#include "Geometry.h"
 
-#include "Partitioning.hpp"
+#include "Partitioning.h"
 #include "Skt.hpp"
 
 namespace gxy
@@ -50,7 +50,6 @@ class Receiver : public gxy::KeyedObject
   {
     int base_port;
     Key geometry;
-    Key partitioning;
     int nsenders;
     float fuzz;
   };
@@ -64,13 +63,13 @@ public:
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
 
-  void Start();
+  void Start(bool(*)(ServerSkt*, void*, char*));
+  void Run();
   void Stop();
   void Accept();
   void Wait();
 
   void SetGeometry(GeometryP g);
-  void SetPartitioning(PartitioningP p) { partitioning = p; }
   void SetNSenders(int n) { nsenders = n; }
   void SetBasePort(int p) { base_port = p; }
   void SetFuzz(float f) { fuzz = f; }
@@ -102,7 +101,6 @@ private:
   int done_count;
 
   GeometryP geometry = NULL;
-  PartitioningP partitioning = NULL;
   int base_port = 1900;
   int nsenders = -1;
   float fuzz = 0;
@@ -120,6 +118,8 @@ private:
   bool exitting = false;
   bool complete = false;
 
+  ServerSkt *masterskt = NULL;
+
   ServerSkt *serverskt = NULL;
   static bool receiver(ServerSkt*, void *, char *);
 
@@ -134,25 +134,25 @@ private:
   std::vector<char *> buffers;
   std::vector<char *> reshuffle_buffers;
 
-  class StartMsg : public Work
+  class RunMsg : public Work
   {
-    struct StartMsgArgs
+    struct RunMsgArgs
     {
       Key rk; // Receiver object
     };
 
   public:
-    StartMsg(Receiver* r) : StartMsg(sizeof(Key))
+    RunMsg(Receiver* r) : RunMsg(sizeof(Key))
     {
-      struct StartMsgArgs *p = (struct StartMsgArgs *)contents->get();
+      struct RunMsgArgs *p = (struct RunMsgArgs *)contents->get();
       p->rk = r->getkey();
     }
 
-    WORK_CLASS(StartMsg, true);
+    WORK_CLASS(RunMsg, true);
 
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {
-      struct StartMsgArgs *p = (struct StartMsgArgs *)get();
+      struct RunMsgArgs *p = (struct RunMsgArgs *)get();
       ReceiverP receiver = Receiver::GetByKey(p->rk);
       return receiver->Setup(c);
     }

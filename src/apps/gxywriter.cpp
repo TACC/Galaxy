@@ -131,6 +131,7 @@ int main(int argc,  char *argv[])
     }
 
     theRenderer->LoadStateFromDocument(*doc);
+    theRenderer->Commit();
 
     vector<CameraP> theCameras;
     if (! Camera::LoadCamerasFromJSON(*doc, theCameras))

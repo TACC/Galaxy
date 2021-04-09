@@ -102,8 +102,6 @@ DensitySample(MPI_Comm c, DensitySampleClientServer::Args *a)
   p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);
 
   v->get_local_counts(a->ni, a->nj, a->nk);
-  v->get_ghosted_local_counts(a->gi, a->gj, a->gk);
-  v->get_ghosted_local_offsets(a->goi, a->goj, a->gok);
   v->get_local_origin(a->ox, a->oy, a->oz);
   v->get_deltas(a->dx, a->dy, a->dz);
 

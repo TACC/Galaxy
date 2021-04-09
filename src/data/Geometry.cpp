@@ -134,7 +134,7 @@ Geometry::Import(string s)
 
   set_attached(false);
 
-  bool r = KeyedDataObject::Import(buf, (void *)s.c_str(), s.size()+1);
+  bool r = KeyedDataObject::Import(nullptr, buf, (void *)s.c_str(), s.size()+1);
 
   return r;
 }
@@ -374,11 +374,6 @@ Geometry::LoadFromJSON(Value& v)
   if (v.HasMember("filename"))
   {
     return Import(v["filename"].GetString());
-  }
-  else
-  {
-    cerr << "ERROR: json Particles block has neither a filename nor a layout spec" << endl;
-    exit(1);
   }
 
   return true;

@@ -151,6 +151,9 @@ KeyedObjectFactory::DropMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 KeyedObjectP
 KeyedObjectFactory::get(Key k)
 {
+  if (k == NullKey)
+      return nullptr;
+
 	KeyedObjectP kop = k >= smap.size() ? nullptr : smap[k];
   if (kop == nullptr)
 		return k >= wmap.size() ? nullptr : wmap[k].lock();
@@ -242,19 +245,19 @@ KeyedObject::Serialize(unsigned char *p)
 int
 KeyedObject::serialSize()
 {
-	return sizeof(Key) + sizeof(int);
+	return super::serialSize() + sizeof(Key) + sizeof(int);
 }
 
 unsigned char *
 KeyedObject::serialize(unsigned char *p)
 {
-	return p;
+	return super::serialize(p);
 }
 
 unsigned char *
 KeyedObject::deserialize(unsigned char *p)
 {
-	return p;
+	return super::deserialize(p);
 }
 
 bool

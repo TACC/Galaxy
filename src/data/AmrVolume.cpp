@@ -231,8 +231,6 @@ AmrVolume::local_import(char *fname, MPI_Comm c)
     part *my_partition = partitions + rank;
     local_offset = my_partition->offsets;
     local_counts = my_partition->counts;
-    ghosted_local_offset = my_partition->goffsets;
-    ghosted_local_counts = my_partition->gcounts;
     // done partitioning level0 metadata. Use it to get some scalars
     // NOTE: this is broke using vtk datasets.
     // just set the level0 data to point to all of level 0 for now.

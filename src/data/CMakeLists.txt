@@ -43,7 +43,6 @@ include_directories(${GALAXY_INCLUDES}
                     ${EMBREE_INCLUDE_DIRS})
 
 set (CPP_SOURCES     
-  Box.cpp
   data.cpp 
   DataObjects.cpp
   Datasets.cpp
@@ -62,7 +61,6 @@ install(TARGETS gxy_data DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
   dtypes.h
-  Box.h
   data.h
   DataObjects.h
   Datasets.h
