@@ -92,7 +92,7 @@ if (ospray_DIR)
   ispc_target_add_sources(gxy_renderer ${ISPC_SOURCES})
   target_link_libraries(gxy_renderer ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_framework gxy_ospray ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE})
   set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_renderer DESTINATION lib)
+  install(TARGETS gxy_renderer DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 install(FILES 

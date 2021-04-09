@@ -124,6 +124,17 @@ public:
     tid = NULL;
   }
 
+  void
+  GetBox(float& x, float& X, float& y, float& Y, float& z, float& Z)
+  {
+    x = xmin;
+    X = xmax;
+    y = ymin;
+    Y = ymax;
+    z = zmin;
+    Z = zmax;
+  }
+
 private:
   void
   CreateSomeData()
@@ -209,9 +220,56 @@ private:
           }
         }
       }
+      else if (ext == "csv")
+      {
+        FILE *f = fopen(pfile.c_str(), "r");
+        if (! f)
+        {
+          std::cerr << "unable to open " << pfile << "\n";
+          exit(1);
+        }
+
+        fscanf(f, "%d", &nPts);
+
+        dsz = sizeof(int) + sizeof(bufhdr)+ nPts*4*sizeof(float);
+        data = (char *)malloc(dsz);
+  
+        hdr = (bufhdr *)(data + sizeof(int));
+        float *pptr = (float *)(data + sizeof(int) + sizeof(bufhdr));
+        float *dptr = pptr + 3*nPts;
+
+        for (int i = 0; i < nPts; i++)
+        {
+          fscanf(f, "%f,%f,%f,%f", pptr, pptr+1, pptr+2, dptr);
+          pptr += 3;
+          dptr += 1;
+        }
+      }
+      else if (ext == "raw")
+      {
+        std::fstream fs;
+        fs.open(pfile, std::ios::in|std::ios::binary);
+        if (! fs.good())
+        {
+          std::cerr << "bad\n";
+          exit(1);
+        }
+
+        fs.read((char *)&nPts, sizeof(int));
+
+        dsz = sizeof(int) + sizeof(bufhdr)+ nPts*4*sizeof(float);
+        data = (char *)malloc(dsz);
+  
+        hdr = (bufhdr *)(data + sizeof(int));
+        char *pptr = (char *)(data + sizeof(int) + sizeof(bufhdr));
+        char *dptr = pptr + 3*nPts*sizeof(float);
+
+        fs.read(pptr, 3*nPts*sizeof(float));
+        fs.read(dptr, nPts*sizeof(float));
+      }
       else
       {
-        std::cerr << "pfile must be vtu or vtp\n";
+        std::cerr << "pfile must be vtu, vtp, csv or raw\n";
         exit(1);
       }
     }
@@ -245,6 +303,23 @@ private:
     hdr->has_data      = true;
     hdr->npoints       = nPts;
     hdr->nconnectivity = 0;
+
+    float *pptr = (float *)(data + sizeof(int) + sizeof(bufhdr));
+
+    xmin = xmax = pptr[0];
+    ymin = ymax = pptr[1];
+    zmin = zmax = pptr[2];
+
+    for (int i = 0; i < nPts; i++)
+    {
+      if (xmin > pptr[0]) xmin = pptr[0];
+      if (xmax < pptr[0]) xmax = pptr[0];
+      if (ymin > pptr[1]) ymin = pptr[1];
+      if (ymax < pptr[1]) ymax = pptr[1];
+      if (zmin > pptr[2]) zmin = pptr[2];
+      if (zmax < pptr[2]) zmax = pptr[2];
+      pptr += 3;
+    }
   }
 
   bool
@@ -272,6 +347,7 @@ private:
   }
 
 private:
+  float xmin, xmax, ymin, ymax, zmin, zmax;
   string pfile;
   mt19937 mt_rand;
   pthread_t tid;
@@ -366,6 +442,9 @@ main(int argc, char *argv[])
     else
       syntax(argv[0]);
 
+  // This in case data is generated algorithmically... generate points
+  // inside fuzzed box
+  
   xmin = xmin + fuzz;
   ymin = ymin + fuzz;
   zmin = zmin + fuzz;
@@ -387,6 +466,44 @@ main(int argc, char *argv[])
   }
 
   CreateSomeData();
+
+  // If we generated data algorithmically, we already have box.  Otherwise,
+  // get it.
+  //
+  if (pfiles.size() > 0)
+  {
+    senders[0]->GetBox(xmin, xmax, ymin, ymax, zmin, zmax);
+    for (int i = 1; i < senders.size(); i++)
+    {
+      float pxmin, pxmax, pymin, pymax, pzmin, pzmax;
+      senders[i]->GetBox(pxmin, pxmax, pymin, pymax, pzmin, pzmax);
+      if (xmin > pxmin) xmin = pxmin;
+      if (ymin > pymin) ymin = pymin;
+      if (zmin > pymin) zmin = pymin;
+      if (xmax < pxmin) xmax = pxmin;
+      if (ymax < pymin) ymax = pymin;
+      if (zmax < pymin) zmax = pymin;
+    }
+
+    MPI_Reduce(&xmin, &xmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&ymin, &ymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&zmin, &zmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&xmax, &xmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&zmax, &ymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&zmax, &zmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    // The accumulated minmax is *without* fuzz.   Add it in to report box
+  
+    xmin = xmin - fuzz;
+    ymin = ymin - fuzz;
+    zmin = zmin - fuzz;
+    xmax = xmax + fuzz;
+    ymax = ymax + fuzz;
+    zmax = zmax + fuzz;
+
+    if (mpi_rank == 0)
+      std::cerr << "box: " << xmin << " " << xmax << " " << ymin << " " << ymax << " " << zmin << " " << zmax << "\n";
+  }
 
   bool done = false;
   char cmd = 's';
