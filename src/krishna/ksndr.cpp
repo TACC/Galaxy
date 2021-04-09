@@ -376,7 +376,6 @@ private:
   }
 
 private:
-  float xmin, xmax, ymin, ymax, zmin, zmax;
   string pfile;
   mt19937 mt_rand;
   pthread_t tid;

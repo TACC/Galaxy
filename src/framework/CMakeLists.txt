@@ -64,6 +64,7 @@ install(FILES
 	Box.h 
 	ClientServer.h  
 	Debug.h 
+  dtypes.h
 	Events.h
 	framework.h
   GalaxyObject.h

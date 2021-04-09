@@ -60,7 +60,6 @@ set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${
 install(TARGETS gxy_data DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
-  dtypes.h
   data.h
   DataObjects.h
   Datasets.h
