@@ -138,7 +138,8 @@ Model::RemoveVolume(int id)
 }
 
 void Model::Intersect(RayList *r) {}
-void Model::Sample(RayList *r) {}
+void Model::IsoCrossing(RayList *r, int n, float *v) {}
+void Model::Sample(int n, float* x, float* y, float* z, float* d) {}
 void Model::Build() {}
 
 }

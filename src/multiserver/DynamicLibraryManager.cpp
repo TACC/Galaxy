@@ -33,7 +33,7 @@ using namespace std;
 namespace gxy
 {
 
-KEYED_OBJECT_CLASS_TYPE(DynamicLibrary)
+OBJECT_CLASS_TYPE(DynamicLibrary)
 WORK_CLASS_TYPE(DynamicLibrary::CommitMsg)
 WORK_CLASS_TYPE(DynamicLibraryManager::FlushMsg)
 

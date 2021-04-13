@@ -151,7 +151,7 @@ export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
 
     foreach (i = 0 ... nRaysIn)
     {
-      Ray ray;
+      RTCRayHit ray;
 
       ray.org = make_vec3f(raysIn->ox[i], raysIn->oy[i], raysIn->oz[i]);
       ray.dir = make_vec3f(raysIn->dx[i], raysIn->dy[i], raysIn->dz[i]);

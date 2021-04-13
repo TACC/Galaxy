@@ -43,7 +43,8 @@ public:
     void Build();
 
     void Intersect(RayList *);
-    void Sample(RayList *);
+    void IsoCrossing(RayList *, int, float*);
+    void Sample(int, float *, float *, float *, float *);
 
 protected:
 

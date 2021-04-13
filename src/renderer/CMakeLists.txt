@@ -49,7 +49,7 @@ link_directories(${Galaxy_BINARY_DIR}/src/data
                  ${Galaxy_BINARY_DIR}/src/framework
 )
 
-ispc_include_directories(${Galaxy_BINARY_DIR}/src ${gxy_ispc_SOURCE_DIR} ${gxy_ispc_BINARY_DIR})
+ispc_include_directories(${Galaxy_BINARY_DIR}/src ${gxy_render_SOURCE_DIR} ${gxy_render_BINARY_DIR})
 
 set (ISPC_SOURCES
   IspcObject.ispc

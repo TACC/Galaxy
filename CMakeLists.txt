@@ -74,13 +74,15 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(GALAXY_INCLUDES ${PROJECT_SOURCE_DIR}/src/data ${PROJECT_SOURCE_DIR}/src/framework ${PROJECT_SOURCE_DIR}/src/renderer)
 
+find_package(TBB REQUIRED)
+include_directories(${TBB_INCLUDE_DIRS})
+
 # find system-installed dependencies
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
 find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})
 
-find_package(TBB REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(VTK REQUIRED NO_MODULE)
@@ -96,6 +98,11 @@ find_package(PythonInterp)
 find_package(RapidJSON PATHS
     ${PROJECT_SOURCE_DIR}/third-party/install/lib64/cmake
     ${PROJECT_SOURCE_DIR}/third-party/install/lib/cmake REQUIRED)
+
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+  message(STATUS "CCC dir='${dir}'")
+endforeach()
 
 # Cmake definitions to handle building ISPC files
 include(ispc)

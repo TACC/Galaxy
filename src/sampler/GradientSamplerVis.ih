@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "ospray/SDK/common/Ray.ih"
+#include "embree3/rtcore_config.h"
+#include "embree3/rtcore_ray.isph"
 #include "SamplerVis.ih"
 
 struct GradientSamplerVis_ispc

@@ -18,20 +18,8 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ospray/SDK/volume/Volume.ih"
 #include "SamplerVis.ih"
 
-export void *uniform SamplerVis_allocate()
-{
-    SamplerVis_ispc *uniform v = uniform new uniform SamplerVis_ispc;
-    return (void *)v;
-}
+export void *uniform SamplerVis_dummy(SamplerVis_ispc *uniform a) {}
 
-export void SamplerVis_initialize(void *uniform _self)
-{
-    SamplerVis_ispc *uniform self = (uniform SamplerVis_ispc *)_self;
-    self->init = NULL; 
-    self->check_interval = NULL; 
-    self->get_sample_t = NULL; 
-}
 

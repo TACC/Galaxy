@@ -55,7 +55,8 @@ public:
     virtual void Build();
     
     virtual void Intersect(RayList *);
-    virtual void Sample(RayList *);
+    virtual void IsoCrossing(RayList *, int n, float *v);
+    virtual void Sample(int, float *, float *, float *, float *);
 
     void SetBoxes(Box g, Box l) { gbox = g; lbox = l; }
 

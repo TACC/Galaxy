@@ -18,7 +18,9 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "ospray/SDK/volume/Volume.ih"
+//#include "ospray/SDK/volume/Volume.ih"
+
+#include "Rays.ih"
 #include "GradientSamplerVis.ih"
 
 export void *uniform GradientSamplerVis_allocate()
@@ -33,10 +35,10 @@ export void GradientSamplerVis_set_tolerance(void *uniform _self, uniform float 
     self->tolerance = t;
 }                                                                                                                            
 
-varying bool GradientSamplerVis_init(void *uniform _self, varying Ray& ray, varying float t)
+varying bool GradientSamplerVis_init(void *uniform _self, varying RTCRayHit& ray, varying float t)
 {
     GradientSamplerVis_ispc *uniform self = (uniform GradientSamplerVis_ispc *)_self;
-    vec3f coord = ray.org + t*ray.dir;
+    vec3f coord = make_vec3f(ray.org_x + t*ray.dir_x, 0, 0);
     uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)self)->data;
 
     self->sLast = vol->computeGradient(vol, coord);

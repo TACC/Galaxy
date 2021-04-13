@@ -24,6 +24,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
 include_directories(${gxy_framework_SOURCE_DIR} 
                     ${gxy_renderer_SOURCE_DIR}
+                    ${gxy_renderer_BINARY_DIR}
 					          ${gxy_sampler_SOURCE_DIR}
                     ${OSPRAY_INCLUDE_DIRS}
 					          ${gxy_data_SOURCE_DIR}
@@ -63,9 +64,9 @@ if (GXY_WRITE_IMAGES)
   target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
   set(BINS sample ${BINS})
 
-  add_executable(particleproc particleproc.cpp)
-  target_link_libraries(particleproc ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-  set(BINS particleproc ${BINS})
+  # add_executable(particleproc particleproc.cpp)
+  # target_link_libraries(particleproc ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  # set(BINS particleproc ${BINS})
 
   add_executable(mhwriter mhwriter.cpp)
 	target_link_libraries(mhwriter ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
@@ -137,9 +138,9 @@ add_executable(drop drop.cpp TestObject.cpp)
 target_link_libraries(drop gxy_framework ${TBB_LIBRARY})
 set(BINS drop ${BINS})
 
-add_executable(gvt gvt.cpp)
-target_link_libraries(gvt ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
-set(BINS gvt ${BINS})
+# add_executable(gvt gvt.cpp)
+# target_link_libraries(gvt ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+# set(BINS gvt ${BINS})
 
 add_executable(radial radial.cpp)
 target_link_libraries(radial ${VTK_LIBRARIES} ${MPI_LIBRARIES})

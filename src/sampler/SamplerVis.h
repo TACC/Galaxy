@@ -40,7 +40,7 @@
 namespace gxy
 {
 
-KEYED_OBJECT_POINTER_TYPES(SamplerVis)
+OBJECT_POINTER_TYPES(SamplerVis)
 
 //! a visualization element that uses a color map and opacity map to define its rendering behavior
 /*! \ingroup render

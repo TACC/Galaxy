@@ -124,9 +124,15 @@ IntelModel::Intersect(RayList *rays)
 }
 
 void
-IntelModel::Sample(RayList *rays)
+IntelModel::IsoCrossing(RayList *rays, int n, float *values)
 {
-  ::ispc::IntelModel_Sample(ispc, rays->GetRayCount(), rays->GetIspc());
+  ::ispc::IntelModel_IsoCrossing(ispc, rays->GetRayCount(), rays->GetIspc(), n, values);
+}
+
+void
+IntelModel::Sample(int n, float *x, float *y, float *z, float *d)
+{
+  ::ispc::IntelModel_Sample(ispc, n, x, y, z, d);
 }
 
 }

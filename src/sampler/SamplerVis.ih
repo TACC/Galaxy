@@ -20,15 +20,18 @@
 
 #pragma once
 
-#include "ospray/SDK/common/Ray.ih"
+#include "embree3/rtcore_config.h"
+#include "embree3/rtcore_ray.isph"
+#include "embree3/rtcore.isph"
+
 #include "VolumeVis.ih"
 
 struct SamplerVis_ispc
 {
   struct VolumeVis_ispc super;
 
-  varying bool (*uniform init)(void *uniform, varying Ray& ray, varying float t);
-  varying bool (*uniform check_interval)(void *uniform, varying Ray& ray, varying float t);
+  varying bool (*uniform init)(void *uniform, varying RTCRayHit& ray, varying float t);
+  varying bool (*uniform check_interval)(void *uniform, varying RTCRayHit& ray, varying float t);
   varying float (*uniform get_sample_t)(void *uniform);
 };  
 
