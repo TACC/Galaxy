@@ -85,102 +85,6 @@ public:
     }
 }; 
 
-class IntersectMsg : public Work
-{
-public:
-    IntersectMsg(float x, float y, float z) : IntersectMsg(3*sizeof(float))
-    {
-        float *p = (float *)get();
-        
-        p[0] = x;
-        p[1] = y;
-        p[2] = z;
-    }
-
-    ~IntersectMsg() {}
-    WORK_CLASS(IntersectMsg, true)
-
-public:
-    bool CollectiveAction(MPI_Comm c, bool isRoot)
-    {   
-        float *p = (float *)get();
-
-        ModelPtr model = Device::GetTheDevice()->NewModel();
-
-        for (auto g : geometries)
-        {
-          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
-          GeometryVisDPtr gv = GeometryVis::New();
-          model->AddGeometry(g, gv);
-        }
-
-        for (auto v : volumes)
-        {
-          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(v);
-          VolumeVisDPtr vv = VolumeVis::New();
-          model->AddVolume(v, vv);
-        }
-
-        model->Build();
-        
-        RayList *rays = new RayList(nsamp*mpiSize);
-
-        for (int i = 0; i < nsamp; i++)
-        {
-            rays->get_ox_base()[i]   = mpiRank + (nsamp == 1 ? 0.5 : (1/float(nsamp-1))*i);
-            rays->get_oy_base()[i]   = 0.5;
-            rays->get_oz_base()[i]   = (nsamp == 1 ? 0.5 : (1/float(nsamp-1))*i);
-            rays->get_dx_base()[i]   = 0;
-            rays->get_dy_base()[i]   = 0;
-            rays->get_dz_base()[i]   = 1;
-            rays->get_t_base()[i]    = 0;
-            rays->get_term_base()[i] = -1;
-            rays->get_tMax_base()[i] = std::numeric_limits<float>::infinity();
-        }
-
-        model->Intersect(rays);
-        for (int j = 0; j < mpiSize; j++)
-        {
-            MPI_Barrier(c);
-
-            if (j == mpiRank)
-            {
-                for (int i = 0; i < nsamp*mpiSize; i++)
-                {
-                    char c;
-                    switch (rays->get_term_base()[i])
-                    {
-                        case 0: c = '0'; break;
-                        case 1: c = '1'; break;
-                        case 2: c = '2'; break;
-                        case 3: c = '3'; break;
-                        default: c = ' ';
-                    }
-                    std::cerr << c;
-                }
-                std::cerr << "\n";
-                if (show_Z)
-                {
-                for (int i = 0; i < nsamp*mpiSize; i++)
-                    if (rays->get_term_base()[i] != -1)
-                    {
-                        float t = rays->get_tMax_base()[i];
-                        std::cerr << i << ": " 
-                            << "(" << (rays->get_ox_base()[i] + t*(rays->get_dx_base()[i]))
-                            << " " << (rays->get_oy_base()[i] + t*(rays->get_dy_base()[i]))
-                            << " " << (rays->get_oz_base()[i] + t*(rays->get_dz_base()[i]))
-                            << ") (" << rays->get_nx_base()[i] 
-                            << " " << rays->get_ny_base()[i] 
-                            << " " << rays->get_nz_base()[i] 
-                            << ") " << rays->get_tMax_base()[i] << "\n";
-                    }
-                }
-            }
-        }
-        return false;
-    }
-};
-
 class IsoCrossingMsg : public Work
 {
 public:
@@ -329,7 +233,6 @@ public:
 };
 
 WORK_CLASS_TYPE(SetupVolume)
-WORK_CLASS_TYPE(IntersectMsg)
 WORK_CLASS_TYPE(SampleMsg)
 WORK_CLASS_TYPE(IsoCrossingMsg)
 
@@ -382,7 +285,6 @@ main(int argc, char *argv[])
     theApplication.Run();
 
     SetupVolume::Register();
-    IntersectMsg::Register();
     SampleMsg::Register();
     IsoCrossingMsg::Register();
 

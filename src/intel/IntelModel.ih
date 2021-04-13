@@ -18,14 +18,17 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "embree3/rtcore_scene.isph"
-
+#include "Model.ih"
 #include "EmbreeGeometry.ih"
 #include "VklVolume.ih"
 #include "Vis.ih"
 
+// extern void IntelModel_IntersectSOA(void *, void *);
+
 struct IntelModel_ispc
 {
+  struct Model_ispc super;
+
   // This is the structure passed to the ISPC layer, containing the Intel 
   // device equivalent of the Galaxy data objects, as well as the associated
   // Vis objects.  Vkl-side Volume data is aggregated in the volumes list;

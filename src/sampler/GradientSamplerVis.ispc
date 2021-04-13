@@ -38,7 +38,8 @@ export void GradientSamplerVis_set_tolerance(void *uniform _self, uniform float 
 varying bool GradientSamplerVis_init(void *uniform _self, varying RTCRayHit& ray, varying float t)
 {
     GradientSamplerVis_ispc *uniform self = (uniform GradientSamplerVis_ispc *)_self;
-    vec3f coord = make_vec3f(ray.org_x + t*ray.dir_x, 0, 0);
+    // vec3f coord = make_vec3f(ray.ray.org_x + t*ray.ray.dir_x, 0, 0);
+    vec3f coord = make_vec3f(ray.ray.org_x + t*ray.ray.dir_x, 0, 0);
     uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)self)->data;
 
     self->sLast = vol->computeGradient(vol, coord);

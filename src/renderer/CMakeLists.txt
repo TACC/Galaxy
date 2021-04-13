@@ -33,6 +33,8 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
+
+
 find_library(PNG_LIBRARY_RELEASE png)
 find_library(Z_LIBRARY_RELEASE z)
 
@@ -54,6 +56,7 @@ ispc_include_directories(${Galaxy_BINARY_DIR}/src ${gxy_render_SOURCE_DIR} ${gxy
 set (ISPC_SOURCES
   IspcObject.ispc
   MappedVis.ispc
+  Model.ispc
   Rays.ispc
   TrianglesVis.ispc
   Visualization.ispc

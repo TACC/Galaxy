@@ -38,14 +38,15 @@
 //                                                                          //
 // ======================================================================== //
 
-
 #if 1
 
-#include "galaxy.h"
-#include "Rays.ih"
-export void *uniform RayList_dummy(RayList_ispc *uniform a) {}
+export void *uniform RayList_dummy(int *uniform a) {}
 
 #else
+
+
+
+#include "GxyRayHit.isph"
 
 #include "vec.ih"
 
@@ -106,7 +107,7 @@ struct Hit
 };
 
 inline void
-MyIntersectBox(const RTCRayHit& ray,
+MyIntersectBox(const GXYRayHit& ray,
                const uniform box3f& box,
                float& t0,
                float& t1)
@@ -139,13 +140,10 @@ traceRay(uniform RTCScene scene, void *uniform rayhit)
 inline bool
 LookForGeometryHit(varying bool shadeFlag,
                    uniform Model *uniform model,
-                   varying RTCRayHit &ray,
+                   varying GXYRayHit &ray,
                    uniform Visualization_ispc *uniform vis,
                    varying Hit &hit)
 {
-  //print("LFGH %\n", model);
-
-  
   traceRay(model, ray);
 
   if(ray.geomID < 0)
@@ -402,7 +400,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     bool shadeFlag = raysIn->type[i] == RAY_PRIMARY;
 
-    RTCRayHit ray;
+    GXYRayHit ray;
 
     ray.org = make_vec3f(raysIn->ox[i], raysIn->oy[i], raysIn->oz[i]);
     ray.dir = make_vec3f(raysIn->dx[i], raysIn->dy[i], raysIn->dz[i]);

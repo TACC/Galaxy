@@ -60,7 +60,11 @@ public:
 
     void SetBoxes(Box g, Box l) { gbox = g; lbox = l; }
 
+    void *GetDeviceEquivalent() { return device_equivalent; }
+
 protected:
+    void *device_equivalent = NULL;
+
     std::vector<GeometryDPtr> geometries;
     std::vector<GeometryVisDPtr> geometry_vis;
     std::vector<int> free_geometry_ids;
@@ -71,7 +75,6 @@ protected:
 
     Box gbox;
     Box lbox;
-
 };
 
 }

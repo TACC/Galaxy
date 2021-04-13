@@ -2,6 +2,8 @@
 #include <DataObjects.h>
 #include <Rays.h>
 
+#include "test_ispc.h"
+
 #include "Triangles.h"
 #include "Particles.h"
 #include "PathLines.h"
@@ -174,6 +176,11 @@ public:
     }
 }; 
 
+void Intersect(ModelPtr model, RayList *rays)
+{
+    ::ispc::Test_Intersect(IntelModel::Cast(model)->GetDeviceEquivalent(), rays->GetRayCount(), rays->GetIspc());
+}
+
 class IntersectMsg : public Work
 {
 public:
@@ -221,7 +228,8 @@ public:
             rays->get_tMax_base()[i] = std::numeric_limits<float>::infinity();
         }
 
-        model->Intersect(rays);
+        // model->Intersect(rays);
+        Intersect(model, rays);
 
         for (int j = 0; j < mpiSize; j++)
         {

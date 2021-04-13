@@ -70,6 +70,7 @@ set (ISPC_SOURCES
     EmbreeSpheres.ispc
     EmbreePathLines.ispc
     VklVolume.ispc
+    test.ispc
     )
 
 set (CPP_SOURCES 

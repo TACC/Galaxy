@@ -29,6 +29,9 @@ OBJECT_CLASS_TYPE(Model)
 
 Model::~Model()
 {
+  if (device_equivalent) 
+    free(device_equivalent);
+  device_equivalent = NULL;
 }
 
 void

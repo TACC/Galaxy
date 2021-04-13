@@ -45,10 +45,6 @@ public:
     void Intersect(RayList *);
     void IsoCrossing(RayList *, int, float*);
     void Sample(int, float *, float *, float *, float *);
-
-protected:
-
-    ::ispc::IntelModel_ispc ispc;
 };
 
 }
