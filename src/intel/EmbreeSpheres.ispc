@@ -19,12 +19,14 @@
 // ========================================================================== //
 
 #include "embree3/rtcore.isph"
+#include "embree3/rtcore_scene.isph"
 #include "embree3/rtcore_geometry.isph"
 #include "embree3/rtcore_ray.isph"
 
+#include "IntelModel.ih" 
 #include "EmbreeSpheres.ih" 
 
-export /*unmasked*/ void EmbreeSpheres_bounds(const RTCBoundsFunctionArguments *uniform args)
+export void EmbreeSpheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   uniform EmbreeSpheres_ispc *uniform self = (uniform EmbreeSpheres_ispc *uniform)args->geometryUserPtr;
   uniform RTCBounds* uniform bounds_o = args->bounds_o;
@@ -35,7 +37,6 @@ export /*unmasked*/ void EmbreeSpheres_bounds(const RTCBoundsFunctionArguments *
 
   if (self->super.data && self->value0 != self->value1)
   {
-    // print("A % % %\n", self->super.data, self->value0, self->value1);
     uniform float dataval = self->super.data[primID];
     uniform float d = (dataval - self->value0) / (self->value1 - self->value0);
     if (d > 1) radius = self->radius1;
@@ -44,12 +45,10 @@ export /*unmasked*/ void EmbreeSpheres_bounds(const RTCBoundsFunctionArguments *
   }
   else if (self->super.data)
   {
-    // print("B\n");
     radius = self->super.data[primID];
   }
   else
   {
-    // print("C\n");
     radius = 1;
   }
 
@@ -78,8 +77,12 @@ void EmbreeSpheres_intersect_kernel(const RTCIntersectFunctionNArguments *unifor
   varying RTCHit* uniform hit = (varying RTCHit* uniform)&rayhit->hit;
   uniform unsigned int primID = args->primID;
 
+
   vec3f org = make_vec3f(ray->org_x, ray->org_y, ray->org_z);
   vec3f dir = make_vec3f(ray->dir_x, ray->dir_y, ray->dir_z);
+
+  // print("OX %\nOY %\nOZ %\n", org.x, org.y, org.z);
+  // print("DX %\nDY %\nDZ %\n", dir.x, dir.y, dir.z);
  
   if (!args->valid[programIndex]) return;
 
@@ -127,11 +130,11 @@ void EmbreeSpheres_intersect_kernel(const RTCIntersectFunctionNArguments *unifor
     ray->tfar = t_out;
   }
     
+  // print("H %\n", h);
   if (h) {
     hit->primID = primID;
-
-    // OLD (third-part) VERSION OF EMBREE DOESN'T HAVE THIS! hit->geomID = args->geomID;
-    hit->geomID = 0;
+    hit->geomID = args->geomID;
+    // print("GID %\n", hit->geomID);
 
     if (isOcclusionTest) {
       ray->tfar = neg_inf;
@@ -157,4 +160,27 @@ export /*unmasked*/ void EmbreeSpheres_occluded(const struct RTCIntersectFunctio
 // Force export
 export void EmbreeSpheres_dummy(uniform EmbreeSpheres_ispc * uniform esi) {}
 
+export void EmbreeSpheres_postIntersect(uniform int gid, void *uniform _imodel, void *uniform _rayhit, void *uniform _sample)
+{
+  uniform IntelModel_ispc *uniform imodel = (uniform IntelModel_ispc *uniform)_imodel;
+  uniform GxyRayHit *uniform rayhit = (uniform GxyRayHit *uniform)_rayhit;
+  uniform GxySample *uniform sample = (uniform GxySample *uniform)_sample;
+
+  uniform unsigned int ugid = gid;
+
+  int mask = rayhit->hit.geomID == gid;
+  if (mask)
+  {
+    // print("SPI mask %\n", mask);
+    // print("SPI pid %\n", rayhit->hit.primID);
+    // print("SPI gid %\n", rayhit->hit.geomID);
+
+    // EmbreeSpheres_ispc *geom = (EmbreeSpheres_ispc *)imodel->geometries[rayhit->hit.geomID];
+    EmbreeSpheres_ispc *geom = (EmbreeSpheres_ispc *)rtcGetGeometryUserData(rtcGetGeometry(imodel->scene, ugid));
+
+    int pid = rayhit->hit.primID;
+    sample->normal = make_vec3f(rayhit->hit.Ng_x, rayhit->hit.Ng_y, rayhit->hit.Ng_z);
+    sample->data = geom->super.data[pid];
+  }
+}
 

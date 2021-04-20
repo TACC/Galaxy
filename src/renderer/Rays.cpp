@@ -330,13 +330,14 @@ RayList::print(int which)
 	std::ostream &s = std::cerr;
 #endif
 
-	s << "px,py,ox,oy,oz,dx,dy,dz,cx,cy,cz,r,g,b,classification,t,tMax,primary,shadow,ao,empty,surface,opaque,boundary,timeout" << endl;
+	s << "px,py,ox,oy,oz,dx,dy,dz,nx,ny,nz,cx,cy,cz,r,g,b,classification,t,tMax,primary,shadow,ao,empty,surface,opaque,boundary,timeout" << endl;
 	if (which == -1)
 		for (int i = 0; i < GetRayCount(); i++)
 		{
 			s << get_x(i) << "," << get_y(i) << ",";
 			s << get_ox(i) << "," << get_oy(i) << "," << get_oz(i) << ",";
 			s << get_dx(i) << "," << get_dy(i) << "," << get_dz(i) << ",";
+			s << get_nx(i) << "," << get_ny(i) << "," << get_nz(i) << ",";
 			s << (get_ox(i) + get_t(i)*get_dx(i)) << "," << (get_oy(i) + get_t(i)*get_dy(i)) << "," << (get_oz(i) + get_t(i)*get_dz(i)) << ",";
 			s << get_r(i) << "," << get_g(i) << "," << get_b(i) << ",";
 			s << get_classification(i) << ",";

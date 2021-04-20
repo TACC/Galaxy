@@ -18,7 +18,6 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "Geometry.h"
 #include "EmbreeGeometry.h"
 #include "EmbreeGeometry_ispc.h"
 
@@ -33,13 +32,17 @@ void
 EmbreeGeometry::initialize()
 {
   super::initialize();
+  if (IspcSize()) ispc = malloc(IspcSize()); else ispc = NULL;
   ((::ispc::EmbreeGeometry_ispc *)GetIspc())->device_geometry = NULL;
+  ((::ispc::EmbreeGeometry_ispc *)GetIspc())->postIntersect = ::ispc::EmbreeGeometry_postIntersect;
 }
 
 EmbreeGeometry::~EmbreeGeometry()
 {
   if (GetDeviceGeometry())
     rtcReleaseGeometry(GetDeviceGeometry());
+  if (ispc) 
+    free(ispc);
 }
 
 int EmbreeGeometry::IspcSize() { return sizeof(ispc::EmbreeGeometry_ispc); }
@@ -48,8 +51,6 @@ void
 EmbreeGeometry::FinalizeData(KeyedDataObjectPtr kop)
 {
     ispc::EmbreeGeometry_ispc *ispc = (ispc::EmbreeGeometry_ispc*)GetIspc();
-
-    super::FinalizeData(kop);
 
     GeometryPtr geometry = Geometry::Cast(kop);
     geometry->GetLocalCounts(ispc->nv, ispc->nc);

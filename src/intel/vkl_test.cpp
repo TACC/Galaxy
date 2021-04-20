@@ -8,6 +8,7 @@
 #include "IntelModel.h"
 
 #include "VklVolume.h"
+#include "VklVolume_ispc.h"
 
 #define NSAMP 10
 int nsamp = NSAMP;
@@ -34,8 +35,7 @@ using namespace std;
 int mpiRank = 0, mpiSize = 1;
 #include "Debug.h"
 
-std::vector<GeometryDPtr> geometries;
-std::vector<VolumeDPtr>   volumes;
+VolumeDPtr   volume;
 
 class SetupVolume : public Work
 {
@@ -79,7 +79,7 @@ public:
             for (int k = 0; k < 32; k++)
               *ptr++ = (i/31.0) + 0.01*(k/31.0);
         
-        volumes.push_back(vp);
+        Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(volume);
 
         return false;
     }
@@ -106,40 +106,26 @@ public:
         int nv = *(int *)p;
         float *v = p + 1;
 
-        ModelPtr model = Device::GetTheDevice()->NewModel();
+        RayList *rays = new RayList(nsamp);
 
-        for (auto g : geometries)
+        for (int i = 0; i < nsamp; i++)
         {
-          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
-          GeometryVisDPtr gv = GeometryVis::New();
-          model->AddGeometry(g, gv);
+            rays->set_ox(i, mpiRank + (nsamp == 1 ? 0.5 : -0.1 + (1.2/float(nsamp-1))*i));
+            rays->set_oy(i, 0.5);
+            rays->set_oz(i, -1.0);
+            rays->set_dx(i, 0);
+            rays->set_dy(i, 0);
+            rays->set_dz(i, 1);
+            rays->set_t(i, 0);
+            //rays->set_term(i, -1);
+            //rays->set_tMax(i, std::numeric_limits<float>::infinity());
+            rays->set_term(i, 1);
+            rays->set_tMax(i, 2);
         }
 
-        for (auto v : volumes)
-        {
-          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(v);
-          VolumeVisDPtr vv = VolumeVis::New();
-          model->AddVolume(v, vv);
-        }
-
-        model->Build();
-        
-        RayList *rays = new RayList(nsamp*mpiSize);
-
-        for (int i = 0; i < nsamp*mpiSize; i++)
-        {
-            rays->get_ox_base()[i]   = mpiRank + (nsamp == 1 ? 0.5 : (1/float(nsamp-1))*i);
-            rays->get_oy_base()[i]   = 0.5;
-            rays->get_oz_base()[i]   = -1.0;
-            rays->get_dx_base()[i]   = 0;
-            rays->get_dy_base()[i]   = 0;
-            rays->get_dz_base()[i]   = 1;
-            rays->get_t_base()[i]    = 0;
-            rays->get_term_base()[i] = -1;
-            rays->get_tMax_base()[i] = std::numeric_limits<float>::infinity();
-        }
-
-        model->IsoCrossing(rays, nv, v);
+        VklVolumePtr vklv = VklVolume::Cast(volume->GetTheDeviceEquivalent());
+        ::ispc::VklVolume_ispc *vklispc = (::ispc::VklVolume_ispc *)vklv->GetIspc();
+        ::ispc::VklVolume_TestIsoCrossing(vklispc, nsamp, rays->GetIspc(), nv, v);
 
         for (int j = 0; j < mpiSize; j++)
         {
@@ -147,10 +133,10 @@ public:
 
             if (j == mpiRank)
             {
-                for (int i = 0; i < nsamp*mpiSize; i++)
+                for (int i = 0; i < nsamp; i++)
                 {
                     char c;
-                    switch (rays->get_term_base()[i])
+                    switch (rays->get_term(i))
                     {
                         case 0: c = '0'; break;
                         case 1: c = '1'; break;
@@ -162,18 +148,15 @@ public:
                 }
                 std::cerr << "\n";
                 
-                for (int i = 0; i < nsamp*mpiSize; i++)
-                    if (rays->get_term_base()[i] != -1)
+                for (int i = 0; i < nsamp; i++)
+                    if (rays->get_term(i))
                     {
-                        float t = rays->get_tMax_base()[i];
+                        float t = rays->get_tMax(i);
                         std::cerr << i << ": " 
-                            << "(" << (rays->get_ox_base()[i] + t*(rays->get_dx_base()[i]))
-                            << " " << (rays->get_oy_base()[i] + t*(rays->get_dy_base()[i]))
-                            << " " << (rays->get_oz_base()[i] + t*(rays->get_dz_base()[i]))
-                            << ") (" << rays->get_nx_base()[i] 
-                            << " " << rays->get_ny_base()[i] 
-                            << " " << rays->get_nz_base()[i] 
-                            << ") " << rays->get_tMax_base()[i] << "\n";
+                            << "(" << (rays->get_ox(i) + t*(rays->get_dx(i)))
+                            << " " << (rays->get_oy(i) + t*(rays->get_dy(i)))
+                            << " " << (rays->get_oz(i) + t*(rays->get_dz(i)))
+                            << ") " << t << "\n";
                     }
             }
         }
@@ -191,40 +174,26 @@ public:
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
-        ModelPtr model = Device::GetTheDevice()->NewModel();
-
-        for (auto g : geometries)
-        {
-          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
-          GeometryVisDPtr gv = GeometryVis::New();
-          model->AddGeometry(g, gv);
-        }
-
-        for (auto v : volumes)
-        {
-          Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(v);
-          VolumeVisDPtr vv = VolumeVis::New();
-          model->AddVolume(v, vv);
-        }
-
-        model->Build();
-
-        float x[nsamp], y[nsamp], z[nsamp], d[nsamp];
-
-        for (int i = 0; i < nsamp*mpiSize; i++)
+        float x[nsamp];
+        float y[nsamp];
+        float z[nsamp];
+        float d[nsamp];
+        for (int i = 0; i < nsamp; i++)
         {
             x[i] = mpiRank + (nsamp == 1 ? 0.5 : (1/float(nsamp-1))*i);
             y[i] = 0.5;
             z[i] = (nsamp == 1 ? 0.5 : (1/float(nsamp-1))*i);
         }
 
-        model->Sample(nsamp, x, y, z, d);
+        VklVolumePtr vklv = VklVolume::Cast(volume->GetTheDeviceEquivalent());
+        ::ispc::VklVolume_ispc *vklispc = (::ispc::VklVolume_ispc *)vklv->GetIspc();
+        ::ispc::VklVolume_TestSample(vklispc, nsamp, x, y, z, d);
 
         for (int j = 0; j < mpiSize; j++)
         {
             if (j == mpiRank)
               for (int i = 0; i < nsamp; i++)
-                std::cerr << i << ":: (" << x[i] << ", " << y[i] << ", " << z[i] << ") " << d[i] << "\n";
+                std::cerr << i << " :: (" << x[i] << ", " << y[i] << ", " << z[i] << ") " << d[i] << "\n";
             MPI_Barrier(c);
         }
 
@@ -291,10 +260,12 @@ main(int argc, char *argv[])
     if (mpiRank == 0)
     {
         {
-            VolumeDPtr vp = gxy::Volume::NewDistributed();
-            SetupVolume sv(vp);
+            volume = gxy::Volume::NewDistributed();
+
+            SetupVolume sv(volume);
             sv.Broadcast(true, true);
-            vp->Commit();
+
+            volume->Commit();
 
             SampleMsg s = SampleMsg();
             s.Broadcast(true, true);

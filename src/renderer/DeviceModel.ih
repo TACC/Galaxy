@@ -20,28 +20,10 @@
 
 #pragma once
 
-#include "GalaxyObject.h"
-#include "DeviceModel.h"
-#include "EmbreeGeometry.h"
+typedef void (*DeviceModel_IntersectSOAFct)(uniform bool, void *uniform, void *uniform, void *uniform);
 
-#include "IntelModel_ispc.h"
-#include "EmbreeGeometry_ispc.h"
-
-namespace gxy {
-
-OBJECT_POINTER_TYPES(IntelModel) 
-
-class IntelModel : public DeviceModel
+struct DeviceModel_ispc
 {
-    GALAXY_OBJECT_SUBCLASS(IntelModel, DeviceModel)
+  DeviceModel_IntersectSOAFct IntersectSOA;
+};  
 
-public:
-    virtual void initialize();
-    virtual ~IntelModel();
-
-    void Build();
-
-    void Intersect(RayList *);
-};
-
-}

@@ -23,7 +23,7 @@
 
 #include "Rendering.h"
 #include "Device.h"
-#include "Model.h"
+#include "DeviceModel.h"
 #include "Visualization.h"
 #include "Visualization_ispc.h"
 
@@ -214,10 +214,10 @@ Visualization::SetDeviceObjects()
     initialize_ispc();
   }
 
-  // Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
+  // DeviceModel for stuff that we'll be Intersecting; lists of mappedvis and 
   // volumevis - NULL unless there's some model data
 
-  model = Device::GetTheDevice()->NewModel();
+  model = Device::GetTheDevice()->NewDeviceModel();
 
   for (auto v : vis)
   {
@@ -234,10 +234,15 @@ Visualization::SetDeviceObjects()
     if (! op || kdop->hasBeenModified())
       Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(kdop);
 
+#if 0
     if (Volume::IsA(kdop))
       model->AddVolume(Volume::Cast(kdop), VolumeVis::Cast(v));
     else
       model->AddGeometry(Geometry::Cast(kdop), GeometryVis::Cast(v));
+#else
+    if (Geometry::IsA(kdop))
+      model->AddGeometry(Geometry::Cast(kdop), GeometryVis::Cast(v));
+#endif
   }
 
   model->SetBoxes(global_box, local_box);

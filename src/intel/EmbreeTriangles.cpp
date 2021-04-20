@@ -20,14 +20,23 @@
 
 #include "IntelDevice.h"
 #include "EmbreeTriangles.h"
-#include "EmbreeGeometry.h"
+#include "EmbreeTriangles_ispc.h"
 #include "EmbreeGeometry_ispc.h"
+
 #include <embree3/rtcore.h>
 
 namespace gxy 
 {
 
 OBJECT_CLASS_TYPE(EmbreeTriangles)
+
+void
+EmbreeTriangles::initialize()
+{
+  super::initialize();
+  ::ispc::EmbreeGeometry_ispc *iptr = (::ispc::EmbreeGeometry_ispc *)GetIspc();
+  iptr->postIntersect = ::ispc::EmbreeTriangles_postIntersect;
+}
 
 void
 EmbreeTriangles::FinalizeData(KeyedDataObjectPtr kop)
@@ -59,6 +68,7 @@ EmbreeTriangles::FinalizeData(KeyedDataObjectPtr kop)
                              0, RTC_FORMAT_UINT3, (void *)iptr->connectivity,
                              0, 3*sizeof(int), nc);
 
+        rtcSetGeometryUserData(GetDeviceGeometry(), (void *)iptr);
         rtcCommitGeometry(GetDeviceGeometry());
      }
 }

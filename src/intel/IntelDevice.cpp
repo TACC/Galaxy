@@ -1,4 +1,5 @@
 // ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -70,33 +71,46 @@ IntelDevice::~IntelDevice()
   vklShutdown();
 }
 
-ModelPtr
-IntelDevice::NewModel() 
+DeviceModelPtr
+IntelDevice::NewDeviceModel() 
 {
-  return Model::Cast(IntelModel::New());
+  return DeviceModel::Cast(IntelModel::New());
 }
 
 void
 IntelDevice::CreateTheDatasetDeviceEquivalent(KeyedDataObjectPtr kdop)
 {
-  IntelDataPtr idata;
+  GalaxyObjectPtr idata;
 
   if (Volume::IsA(kdop))
-    idata = IntelData::Cast(VklVolume::New());
+  {
+    VklVolumePtr v = VklVolume::New();
+    v->FinalizeData(kdop);
+    kdop->SetTheDeviceEquivalent(v);
+  }
   else if (Particles::IsA(kdop))
-    idata = IntelData::Cast(EmbreeSpheres::New());
+  {
+    EmbreeSpheresPtr s = EmbreeSpheres::New();
+    s->FinalizeData(kdop);
+    kdop->SetTheDeviceEquivalent(s);
+  }
   else if (PathLines::IsA(kdop))
-    idata = IntelData::Cast(EmbreePathLines::New());
+  {
+    EmbreePathLinesPtr pl = EmbreePathLines::New();
+    pl->FinalizeData(kdop);
+    kdop->SetTheDeviceEquivalent(pl);
+  }
   else if (Triangles::IsA(kdop))
-    idata = IntelData::Cast(EmbreeTriangles::New());
+  {
+    EmbreeTrianglesPtr t = EmbreeTriangles::New();
+    t->FinalizeData(kdop);
+    kdop->SetTheDeviceEquivalent(t);
+  }
   else
   {
     std::cerr << "error - unknown dataset class\n";
     exit(1);
   }
-
-  idata->FinalizeData(kdop);
-  kdop->SetTheDeviceEquivalent(idata);
 }
 
 }

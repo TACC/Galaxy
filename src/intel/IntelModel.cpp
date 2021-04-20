@@ -37,8 +37,9 @@ IntelModel::initialize()
   device_equivalent = malloc(sizeof(::ispc::IntelModel_ispc));
   
   ::ispc::IntelModel_ispc *ispc = (::ispc::IntelModel_ispc *)GetDeviceEquivalent();
-  ispc->super.IntersectSOA = ::ispc::IntelModel_IntersectSOA;
+
   ispc->scene = NULL;
+  ispc->super.IntersectSOA = ::ispc::IntelModel_IntersectSOA;
 }
 
 IntelModel::~IntelModel()
@@ -50,7 +51,6 @@ IntelModel::~IntelModel()
 
   ispc->scene = NULL;
   if (ispc->geometries) free((void *)ispc->geometries);
-  if (ispc->volumes) free((void *)ispc->volumes);
 }
 
 void
@@ -74,19 +74,6 @@ IntelModel::Build()
     ispc->geometry_vis = NULL;
   }
 
-  if (volumes.size())
-  {
-    ispc->nVolumes = volumes.size();
-    ispc->volumes = (::ispc::VklVolume_ispc **)malloc(volumes.size() * sizeof(::ispc::VklVolume_ispc *));
-    ispc->volume_vis = (::ispc::Vis_ispc **)malloc(volumes.size() * sizeof(::ispc::Vis_ispc *));
-  }
-  else
-  {
-    ispc->nVolumes = 0;
-    ispc->volumes = NULL;
-    ispc->volume_vis = NULL;
-  }
-
   int i = 0;
   for (auto g : geometries)
   {
@@ -104,21 +91,6 @@ IntelModel::Build()
     i++;
   }
 
-  i = 0;
-  for (auto v : volumes)
-  {
-    VklVolumePtr ev = VklVolume::Cast(v->GetTheDeviceEquivalent());
-    if (! ev)
-    {
-      std::cerr << "IntelModel::Build : VklVolume has no device equivalent\n";    
-      exit(1);
-    }
-
-    ispc->volumes[i] = (::ispc::VklVolume_ispc *)ev->GetIspc();
-    ispc->volume_vis[i] = (::ispc::Vis_ispc *)volume_vis[i]->GetIspc();
-    i++;
-  }
-
   rtcCommitScene(ispc->scene);
 }
 
@@ -126,18 +98,6 @@ void
 IntelModel::Intersect(RayList *rays)
 {
   ::ispc::IntelModel_Intersect((::ispc::IntelModel_ispc *)GetDeviceEquivalent(), rays->GetRayCount(), rays->GetIspc());
-}
-
-void
-IntelModel::IsoCrossing(RayList *rays, int n, float *values)
-{
-  ::ispc::IntelModel_IsoCrossing((::ispc::IntelModel_ispc *)GetDeviceEquivalent(), rays->GetRayCount(), rays->GetIspc(), n, values);
-}
-
-void
-IntelModel::Sample(int n, float *x, float *y, float *z, float *d)
-{
-  ::ispc::IntelModel_Sample((::ispc::IntelModel_ispc *)GetDeviceEquivalent(), n, x, y, z, d);
 }
 
 }

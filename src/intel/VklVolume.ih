@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "IntelData.ih"
+#include "Volume.ih"
 
 #ifdef __cplusplus
 #include "openvkl/openvkl.h"
@@ -30,10 +30,10 @@
 #include "vec.ih"
 #endif // __cplusplus
 
+typedef void (*VklVolume_IsoCrossingFct)(uniform Volume_ispc *uniform, void *uniform, uniform int, void *uniform);
 
 struct VklVolume_ispc
 {
-  IntelData_ispc super;
   VKLVolume volume;
   VKLSampler sampler;
 };

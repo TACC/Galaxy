@@ -18,33 +18,25 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "Model.ih"
+#include "DeviceModel.ih"
 #include "EmbreeGeometry.ih"
-#include "VklVolume.ih"
 #include "Vis.ih"
-
-// extern void IntelModel_IntersectSOA(void *, void *);
 
 struct IntelModel_ispc
 {
-  struct Model_ispc super;
+  struct DeviceModel_ispc super;
 
   // This is the structure passed to the ISPC layer, containing the Intel 
-  // device equivalent of the Galaxy data objects, as well as the associated
-  // Vis objects.  Vkl-side Volume data is aggregated in the volumes list;
-  // Embree-side Geometry data is aggregated in the geometries list.
+  // device equivalent of the Galaxy Geometry data objects, as well as the
+  // associated Vis objects. 
   // 
-  // The Intel device equivalent objects - eg. VklVolumes and subclasses of
-  // EmbreeGeometry are subclasses of IntelData, which has an 'ispc' pointer 
-  // to the device-side equivalents.  These are 'descendents' of IntelData_ispc
-  // (in ISPC's ad-hoc manner), and are created in Visualization::SetDeviceObjects
+  // The Intel device equivalent objects have which has an 'ispc' pointer 
+  // to the device-side equivalents.  These are created in Visualization::SetDeviceObjects
   // when a RenderingSet is committed.
   //
   // Note - the scene collects all the Embree-side geometry objects for ray
   // tracing by Embree, so we don't need the Embree objects in the 
-  // EmbreeGeometry_ispc's.  However, there is no equivalent in Vkl, so we
-  // need to have the Vkl objects (VklVolume and VklSampler) in the 
-  // VklVolume_ispc's for calling into Vkl.
+  // EmbreeGeometry_ispc's.  
   //
   // In both cases we need the corresponding Vis_ispc's so we know what
   // the user wants us to do with data - isovalues, slices, color maps ... 
@@ -55,8 +47,4 @@ struct IntelModel_ispc
   int nGeometries;
   EmbreeGeometry_ispc **geometries;
   Vis_ispc **geometry_vis;
-
-  int nVolumes;
-  VklVolume_ispc **volumes;
-  Vis_ispc **volume_vis;
 };

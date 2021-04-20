@@ -18,30 +18,26 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include <iostream>
 
-#include "GalaxyObject.h"
-#include "DeviceModel.h"
-#include "EmbreeGeometry.h"
+#include "DeviceVolume.h"
 
-#include "IntelModel_ispc.h"
-#include "EmbreeGeometry_ispc.h"
-
-namespace gxy {
-
-OBJECT_POINTER_TYPES(IntelModel) 
-
-class IntelModel : public DeviceModel
+namespace gxy
 {
-    GALAXY_OBJECT_SUBCLASS(IntelModel, DeviceModel)
 
-public:
-    virtual void initialize();
-    virtual ~IntelModel();
+OBJECT_CLASS_TYPE(DeviceVolume)
 
-    void Build();
+DeviceVolume::~DeviceVolume()
+{
+  if (device_equivalent) 
+    free(device_equivalent);
+  device_equivalent = NULL;
+}
 
-    void Intersect(RayList *);
-};
+void
+DeviceVolume::initialize()
+{
+    super::initialize();
+}
 
 }

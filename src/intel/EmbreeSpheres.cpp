@@ -34,12 +34,14 @@ EmbreeSpheres::initialize()
 {
     super::initialize();
 
-    ::ispc::EmbreeSpheres_ispc *iptr = (::ispc::EmbreeSpheres_ispc*)ispc;
+    ::ispc::EmbreeSpheres_ispc *iptr = (::ispc::EmbreeSpheres_ispc*)GetIspc();
 
     iptr->radius0 = 0.0;
     iptr->value0  = 0.0;
     iptr->radius1 = 0.0;
     iptr->value1  = 0.0;
+
+    iptr->super.postIntersect = ::ispc::EmbreeSpheres_postIntersect;
 }
 
 void
@@ -76,6 +78,7 @@ EmbreeSpheres::FinalizeData(KeyedDataObjectPtr kop)
     rtcSetGeometryIntersectFunction (GetDeviceGeometry(), (RTCIntersectFunctionN)&::ispc::EmbreeSpheres_intersect);
     rtcSetGeometryOccludedFunction(GetDeviceGeometry(), (RTCOccludedFunctionN)&::ispc::EmbreeSpheres_occluded);
 
+    rtcSetGeometryUserData(GetDeviceGeometry(), (void *)iptr);
     rtcCommitGeometry(GetDeviceGeometry());
 }
 

@@ -18,63 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "DeviceVolume.ih"
 
-#include "KeyedObject.h"
+export void *uniform DeviceVolume_dummy(DeviceVolume_ispc *uniform a) {}
 
-namespace gxy { OBJECT_POINTER_TYPES(Model); }
-
-#include "Geometry.h"
-#include "Volume.h"
-#include "GeometryVis.h"
-#include "VolumeVis.h"
-#include "Rays.h"
-#include "Box.h"
-
-#include <vector>
-
-namespace gxy 
-{
-
-class Model : public GalaxyObject
-{
-    GALAXY_OBJECT_SUBCLASS(Model, GalaxyObject)
-
-public:
-    virtual void initialize();
-    virtual ~Model();
-    
-    virtual int  AddGeometry(GeometryDPtr, GeometryVisDPtr);
-    virtual void RemoveGeometry(int);
-    virtual int  RemoveGeometry(GeometryDPtr);
-
-    virtual int  AddVolume(VolumeDPtr, VolumeVisDPtr);
-    virtual void RemoveVolume(int);
-    virtual int  RemoveVolume(VolumeDPtr);
-
-    virtual void Build();
-    
-    virtual void Intersect(RayList *);
-    virtual void IsoCrossing(RayList *, int n, float *v);
-    virtual void Sample(int, float *, float *, float *, float *);
-
-    void SetBoxes(Box g, Box l) { gbox = g; lbox = l; }
-
-    void *GetDeviceEquivalent() { return device_equivalent; }
-
-protected:
-    void *device_equivalent = NULL;
-
-    std::vector<GeometryDPtr> geometries;
-    std::vector<GeometryVisDPtr> geometry_vis;
-    std::vector<int> free_geometry_ids;
-
-    std::vector<VolumeDPtr> volumes;
-    std::vector<VolumeVisDPtr> volume_vis;
-    std::vector<int> free_volume_ids;
-
-    Box gbox;
-    Box lbox;
-};
-
-}

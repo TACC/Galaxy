@@ -19,7 +19,7 @@
 // ========================================================================== //
 
 #include "GalaxyObject.h"
-#include "Model.h"
+#include "DeviceModel.h"
 
 #include <memory>
 
@@ -40,7 +40,7 @@ public:
 
     virtual void *GetTheDeviceEquivalent() { return NULL; }
 
-    virtual ModelPtr NewModel();
+    virtual DeviceModelPtr NewDeviceModel();
     virtual void CreateTheDatasetDeviceEquivalent(KeyedDataObjectPtr);
 
 protected:

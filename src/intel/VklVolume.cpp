@@ -29,12 +29,6 @@ namespace gxy
 
 OBJECT_CLASS_TYPE(VklVolume)
 
-// struct ::ispc::VklVolume_ispc
-// {
-  // VKLVolume volume;
-  // VKLSampler sampler;
-// };
-
 int 
 VklVolume::IspcSize() 
 {
@@ -42,11 +36,16 @@ VklVolume::IspcSize()
 }
 
 void
+VklVolume::initialize()
+{
+  super::initialize();
+  if (IspcSize()) ispc = malloc(IspcSize()); else ispc = NULL;
+}
+
+void
 VklVolume::FinalizeData(KeyedDataObjectPtr kop)
 {
   ::ispc::VklVolume_ispc *vispc = (::ispc::VklVolume_ispc *)GetIspc();
-
-  super::FinalizeData(kop);
 
   VolumePtr v = Volume::Cast(kop);
 

@@ -43,6 +43,8 @@ EmbreePathLines::initialize()
     iptr->value0  = 0;
     iptr->radius1 = 0;
     iptr->value1  = 0;
+
+    iptr->super.postIntersect = ::ispc::EmbreePathLines_postIntersect;
 }
 
 void
@@ -204,6 +206,7 @@ EmbreePathLines::FinalizeData(KeyedDataObjectPtr kop)
     SetDeviceGeometry(rtcNewGeometry(intel_device->get_embree(), RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE));
     rtcSetSharedGeometryBuffer(GetDeviceGeometry(), RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, iptr->vertexCurve, 0, sizeof(vec4f), iptr->nvc);
     rtcSetSharedGeometryBuffer(GetDeviceGeometry(), RTC_BUFFER_TYPE_INDEX,  0, RTC_FORMAT_UINT, iptr->indexCurve, 0, sizeof(int), iptr->ni);
+    rtcSetGeometryUserData(GetDeviceGeometry(), (void *)iptr);
     rtcCommitGeometry(GetDeviceGeometry());
 }
 

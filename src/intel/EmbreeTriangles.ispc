@@ -18,16 +18,45 @@
 //                                                                            //
 // ========================================================================== //
 
-#include "EmbreeGeometry.ih"
+#include "IntelModel.ih"
+#include "EmbreeTriangles.ih"
 
 #include "embree3/rtcore_config.h"
 #include "embree3/rtcore_ray.isph"
+#include "embree3/rtcore_scene.isph"
+#include "embree3/rtcore_geometry.isph"
 
-// force export of EmbreeGeometry_ispc in EmbreeGeometry_ispc.h
-
-export void EmbreeGeometry_dummy(uniform EmbreeGeometry_ispc * uniform egi) {}
-
-export void EmbreeGeometry_postIntersect(uniform int, void *uniform _self, void *uniform rayhit, void *uniform sample)
+export void EmbreeTriangles_postIntersect(uniform int gid, void *uniform _imodel, void *uniform _rayhit, void *uniform _sample)
 {
-  print("EmbreeGeometry_postIntersect\n");
+  uniform IntelModel_ispc *uniform imodel = (uniform IntelModel_ispc *uniform)_imodel;
+  uniform GxyRayHit *uniform rayhit = (uniform GxyRayHit *uniform)_rayhit;
+  uniform GxySample *uniform sample = (uniform GxySample *uniform)_sample;
+
+  uniform unsigned int ugid = gid;
+
+  int mask = rayhit->hit.geomID == gid;
+  if (mask)
+  {
+    // print("TPI mask %\n", mask);
+    // print("TPI pid %\n", rayhit->hit.primID);
+    // print("TPI gid %\n", rayhit->hit.geomID);
+
+    EmbreeTriangles_ispc *geom = (EmbreeTriangles_ispc *)rtcGetGeometryUserData(rtcGetGeometry(imodel->scene, ugid));
+    // EmbreeTriangles_ispc *geom = (EmbreeTriangles_ispc *)imodel->geometries[rayhit->hit.geomID];
+
+    int pid = rayhit->hit.primID;
+    vec3i pqr = ((vec3i *)geom->super.connectivity)[pid];
+
+    vec3f bary = make_vec3f(1.0f - rayhit->hit.u - rayhit->hit.v, rayhit->hit.u, rayhit->hit.v);
+
+    vec3f nx = geom->super.normals[pqr.x];
+    vec3f ny = geom->super.normals[pqr.y];
+    vec3f nz = geom->super.normals[pqr.z];
+    sample->normal = bary.x * nx + bary.y * ny + bary.z * nz;
+
+    float dx = geom->super.data[pqr.x];
+    float dy = geom->super.data[pqr.y];
+    float dz = geom->super.data[pqr.z];
+    sample->data = bary.x * dx + bary.y * dy + bary.z * dz;
+  }
 }

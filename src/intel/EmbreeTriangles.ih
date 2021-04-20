@@ -20,28 +20,12 @@
 
 #pragma once
 
-#include "GalaxyObject.h"
-#include "DeviceModel.h"
-#include "EmbreeGeometry.h"
+#include "EmbreeGeometry.ih"
 
-#include "IntelModel_ispc.h"
-#include "EmbreeGeometry_ispc.h"
-
-namespace gxy {
-
-OBJECT_POINTER_TYPES(IntelModel) 
-
-class IntelModel : public DeviceModel
+struct EmbreeTriangles_ispc
 {
-    GALAXY_OBJECT_SUBCLASS(IntelModel, DeviceModel)
-
-public:
-    virtual void initialize();
-    virtual ~IntelModel();
-
-    void Build();
-
-    void Intersect(RayList *);
+    EmbreeGeometry_ispc super;
 };
 
-}
+
+    

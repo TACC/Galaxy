@@ -28,7 +28,7 @@
 #include "Box.h"
 #include "Datasets.h"
 #include "KeyedDataObject.h"
-#include "Model.h"
+#include "DeviceModel.h"
 #include "Lighting.h"
 #include "MappedVis.h"
 #include "ParticlesVis.h"
@@ -86,7 +86,7 @@ public:
   const char *GetAnnotation() { return annotation.c_str(); }
 
   //! get the Device Model for this Visualization
-  ModelPtr GetTheModel() { return model; }
+  DeviceModelPtr GetTheDeviceModel() { return model; }
 
   //! get the Box that represents the global data extent for this Visualization
   Box *get_global_box() { return &global_box; }
@@ -122,7 +122,7 @@ protected:
   virtual void allocate_ispc();
   virtual void initialize_ispc();
 
-  ModelPtr model;
+  DeviceModelPtr model;
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *);

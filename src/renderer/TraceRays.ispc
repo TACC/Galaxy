@@ -38,17 +38,10 @@
 //                                                                          //
 // ======================================================================== //
 
-#if 1
-
-export void *uniform RayList_dummy(int *uniform a) {}
-
-#else
-
-
 
 #include "GxyRayHit.isph"
 
-#include "vec.ih"
+#if 0
 
 #include "hits.h"
 #include "Lighting.ih"
@@ -56,7 +49,10 @@ export void *uniform RayList_dummy(int *uniform a) {}
 #include "Rays.ih"
 #include "TraceRays.ih"
 #include "Visualization.ih"
+#include "TransferFunction.ih"
 #include "VolumeVis.ih"
+#include "VklVolume.ih"
+#include "Model.ih"
 
 #include "UV.ih"
 
@@ -89,28 +85,12 @@ export void TraceRays_initialize(void *uniform _self)
     self->debug[i] = -1;
 }
 
-
-
 export void TraceRays_destroy(void *uniform ispc)
 {
 }
 
-struct Hit
-{
-  float sample;
-  float t;
-
-  vec3f point;
-  vec3f normal;
-  vec3f color;
-  float opacity;
-};
-
 inline void
-MyIntersectBox(const GXYRayHit& ray,
-               const uniform box3f& box,
-               float& t0,
-               float& t1)
+MyIntersectBox(const GxyRayHit& ray, const uniform box3f& box, float& t0, float& t1)
 {
   vec3f org = make_vec3f(ray.ray.org_x, ray.ray.org_y, ray.ray.org_z);
   vec3f dir = make_vec3f(ray.ray.dir_x, ray.ray.dir_y, ray.ray.dir_z);
@@ -127,25 +107,16 @@ MyIntersectBox(const GXYRayHit& ray,
                max(mins.z,maxs.z)));
 }
 
-inline void
-traceRay(uniform RTCScene scene, void *uniform rayhit)
-{
-  uniform RTCIntersectContext context;
-  rtcInitIntersectContext(&context);
-
-  varying int valid = -1;
-  INTERSECTOR((const int* uniform)&valid, scene, &context, rayhit);
-}
-
 inline bool
 LookForGeometryHit(varying bool shadeFlag,
-                   uniform Model *uniform model,
-                   varying GXYRayHit &ray,
+                   uniform Model_ispc *uniform model,
                    uniform Visualization_ispc *uniform vis,
-                   varying Hit &hit)
+                   GxyRayHit *uniform ray,
+                   GxySample *uniform sample)
 {
-  traceRay(model, ray);
+  model->IntersectSOA(shadeFlag, model, (void *)ray, (void *)sample);
 
+#if 0
   if(ray.geomID < 0)
   {
     return false;
@@ -168,19 +139,24 @@ LookForGeometryHit(varying bool shadeFlag,
 
     return true;
   }
+#else
+  return true;
+#endif
 }
 
 inline bool
 LookForSliceHit(uniform int *uniform debug,
                 varying bool shadeFlag,
-                varying Ray &ray, 
                 uniform Visualization_ispc *uniform vis,
-                varying Hit &hit)
+                GxyRayHit *uniform ray,
+                GxySample *uniform sample)
 {
   bool h = false;
   int vid = -1, sid = -1;
 
   debug[6] = 0;
+  vec3f rdir = make_vec3f(ray->dir_x, ray->dir_y, ray->dir_z);
+  vec3f rorg = make_vec3f(ray->org_x, ray->org_y, ray->org_z);
 
   if (vis->nVolumeVis > 0)
   {
@@ -205,29 +181,29 @@ LookForSliceHit(uniform int *uniform debug,
 
         float d = plane.w;
 
-        float denom = dot(ray.dir, pnorm);
+        float denom = dot(rdir, pnorm);
 
         debug[11] = 3;
         if (abs(denom) > 0.0001)
         {
           debug[12] = 1;
 
-          float t = (d - dot(ray.org, pnorm)) / denom;
-          if (t >= ray.t0 && t <= ray.t)
+          float t = (d - dot(rorg, pnorm)) / denom;
+          if (t >= ray->t0 && t <= ray->t)
           {
             debug[13] = 1;
 
             if (denom > 0)
-              hit.normal   = neg(pnorm);
+              sample->normal   = neg(pnorm);
             else
-              hit.normal   = pnorm;
+              sample->normal   = pnorm;
 
-            hit.opacity  = 1.0;       // FIXME
-            hit.t        = t;
-            vid          = major;
-            sid          = minor;
-            ray.t        = hit.t;
-            h            = true;
+            sample->opacity  = 1.0;       // FIXME
+            sample->t        = t;
+            vid              = major;
+            sid              = minor;
+            ray->t           = sample->t;
+            h                = true;
 
             debug[13] = 2;
           }
@@ -247,27 +223,21 @@ LookForSliceHit(uniform int *uniform debug,
       debug[15] = 1;
 
       float s[100];
-      hit.point = ray.org + hit.t * ray.dir;
+      sample->point = rorg + sample->t * rdir;
  
       for (uniform int major = 0; major <= vid; major++)
         if (major == vid)
         {
-          debug[16] = 1;
           uniform VolumeVis_ispc *uniform vvis = (VolumeVis_ispc *)vis->volumeVis[major];
-          debug[16] = 2;
-          uniform TransferFunction *uniform tf = (uniform TransferFunction *uniform )((MappedVis_ispc *)vvis)->transferFunction;
-          debug[16] = 3;
-          uniform Volume *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
-          debug[16] = 4;
+          uniform TransferFunction_ispc *uniform tf = (uniform TransferFunction_ispc *uniform )((MappedVis_ispc *)vvis)->transferFunction;
+          uniform VklVolume_ispc *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
           if (! vol)
             print("VOL IS ZERO!\n");
-          hit.sample = vol->sample(vol, hit.point);
-          debug[16] = 5;
+          sample->sample = vol->sample(vol, sample.point);
           if (! tf) 
             print("TF is ZERO!\n");
-          hit.color = tf->getColorForValue(tf, hit.sample);
-          debug[16] = 6;
-          hit.opacity = 1.0;
+          sample->color = tf->TransferFunction_SampleRGB(tf, sample.sample);
+          sample->opacity = 1.0;
         }
 
         debug[15] = 2;
@@ -285,7 +255,7 @@ LookForIsoHit(varying bool shadeFlag,
               varying float* sLast, varying float* sThis, // Last and current samples
               varying float tLast, varying float tThis,    // Last and current T
               uniform Visualization_ispc *uniform vis,
-              varying Hit &hit)
+              varying GxySample *hit)
 {
   bool h = false;
   int vid;
@@ -361,7 +331,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
   uniform Visualization_ispc *uniform vis = (uniform Visualization_ispc *)_vis;
   uniform RayList_ispc *uniform raysIn = (uniform RayList_ispc *)_raysIn;
-  Model *uniform model = (Model *uniform) vis->model;
+  Model_ispc *uniform model = (Model_ispc *uniform) vis->model;
   uniform box3f box = vis->local_bb;
   uniform bool integrate = false;
   uniform float step, epsilon;
@@ -400,7 +370,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     bool shadeFlag = raysIn->type[i] == RAY_PRIMARY;
 
-    GXYRayHit ray;
+    GxyRayHit ray;
 
     ray.org = make_vec3f(raysIn->ox[i], raysIn->oy[i], raysIn->oz[i]);
     ray.dir = make_vec3f(raysIn->dx[i], raysIn->dy[i], raysIn->dz[i]);
@@ -450,7 +420,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // The Hit information is used to retain info if and when we hit a surface (slice, 
     // iso or geometry)
 
-    Hit hit;          
+    GxySample hit;          
 
     // Look for slice or geometry that stops the ray inside this block.  May continue
     // if its not opaque; but that'll be in a later call to this routine after we've
@@ -460,12 +430,12 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     self->debug[0] = 4;
     self->debug[5] = 0;
 
-    bool surface_hit = LookForSliceHit(self->debug, shadeFlag, ray, vis, hit);
+    bool surface_hit = LookForSliceHit(self->debug, shadeFlag, vis, &ray, &hit);
 
     self->debug[5] = 1;
 
     if (model)
-      surface_hit |= LookForGeometryHit(shadeFlag, model, ray, vis, hit);
+      surface_hit |= LookForGeometryHit(shadeFlag, model, vis, &ray, &hit);
 
     self->debug[5] = 2;
 
@@ -523,7 +493,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
         {
           self->debug[4] = 3;
 
-          if (LookForIsoHit(shadeFlag, ray, sLast, sThis, tLast, tThis, vis, hit))
+          if (LookForIsoHit(shadeFlag, ray, sLast, sThis, tLast, tThis, vis, &hit))
           {
             tTermination = hit.t;     // Terminate both the ray and the interval at the hit point 
             tThis = hit.t;            

@@ -39,11 +39,11 @@ Device::~Device()
 {
 }
 
-ModelPtr
-Device::NewModel()
+DeviceModelPtr
+Device::NewDeviceModel()
 {
   std::cerr << "NULL device";
-  return Model::New();
+  return DeviceModel::New();
 }
 
 void

@@ -51,12 +51,14 @@ link_directories(${Galaxy_BINARY_DIR}/src/data
                  ${Galaxy_BINARY_DIR}/src/framework
 )
 
-ispc_include_directories(${Galaxy_BINARY_DIR}/src ${gxy_render_SOURCE_DIR} ${gxy_render_BINARY_DIR})
+# ispc_include_directories(${Galaxy_BINARY_DIR}/src ${gxy_render_SOURCE_DIR} ${gxy_render_BINARY_DIR})
+ispc_include_directories(${Galaxy_BINARY_DIR}/src)
 
 set (ISPC_SOURCES
   IspcObject.ispc
   MappedVis.ispc
-  Model.ispc
+  DeviceModel.ispc
+  DeviceVolume.ispc
   Rays.ispc
   TrianglesVis.ispc
   Visualization.ispc
@@ -72,7 +74,8 @@ set (ISPC_SOURCES
 
 set (CPP_SOURCES 
   Device.cpp
-  Model.cpp
+  DeviceModel.cpp
+  DeviceVolume.cpp
   mypng.cpp
   Camera.cpp 
   IspcObject.cpp
@@ -103,7 +106,7 @@ set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSIO
 install(TARGETS gxy_renderer DESTINATION lib)
 
 install(FILES 
-  Model.h 
+  DeviceModel.h 
   Device.h
   Camera.h 
   # ImageWriter.h 

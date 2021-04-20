@@ -41,6 +41,8 @@ include_directories(${GALAXY_INCLUDES}
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS})
 
+ispc_include_directories( ${gxy_renderer_SOURCE_DIR} )
+
 set (CPP_SOURCES     
   Box.cpp
   data.cpp 
@@ -54,7 +56,11 @@ set (CPP_SOURCES
   Volume.cpp 
   AmrVolume.cpp)
 
+set (ISPC_SOURCES
+)
+
 add_library(gxy_data SHARED ${CPP_SOURCES})
+ispc_target_add_sources(gxy_data ${ISPC_SOURCES})
 target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework)
 set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 install(TARGETS gxy_data DESTINATION ${CMAKE_INSTALL_LIBDIR})

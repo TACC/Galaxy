@@ -27,7 +27,7 @@
 
 #include <openvkl/openvkl.h>
 
-#include "IntelData.h"
+#include "GalaxyObject.h"
 
 namespace gxy { OBJECT_POINTER_TYPES(VklVolume) }
 
@@ -40,11 +40,12 @@ namespace gxy
 //! translation class for Galaxy Volume to Vkl Volume
 /*! \ingroup render 
  */
-class VklVolume : public IntelData
+class VklVolume : public GalaxyObject
 {
-  GALAXY_OBJECT_SUBCLASS(VklVolume, IntelData)
+  GALAXY_OBJECT_SUBCLASS(VklVolume, GalaxyObject)
 
 public:
+  virtual void initialize();
   virtual void FinalizeData(KeyedDataObjectPtr);
 
   ~VklVolume();
@@ -52,8 +53,11 @@ public:
   VKLVolume GetVolume() { return (VKLVolume)((::ispc::VklVolume_ispc *)GetIspc())->volume; }
   VKLSampler GetSampler() { return (VKLSampler)((::ispc::VklVolume_ispc *)GetIspc())->sampler; }
 
+  void *GetIspc() { return ispc; }
+
 protected:
   virtual int  IspcSize();
+  void *ispc = NULL;
 };
 
 }

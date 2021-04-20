@@ -1,0 +1,52 @@
+#include "vec.ih"
+
+#define GXY_MAX_INSTANCE_LEVEL_COUNT 1
+
+struct GxyRay
+{ 
+  varying float org_x;        // x coordinate of ray origin
+  varying float org_y;        // y coordinate of ray origin
+  varying float org_z;        // z coordinate of ray origin
+  varying float tnear;        // start of ray segment
+  
+  varying float dir_x;        // x coordinate of ray direction
+  varying float dir_y;        // y coordinate of ray direction
+  varying float dir_z;        // z coordinate of ray direction
+  varying float time;         // time of this ray for motion blur
+  
+  varying float tfar;         // end of ray segment (set to hit distance)
+  varying unsigned int mask;  // ray mask
+  varying unsigned int id;    // ray ID
+  varying unsigned int flags; // ray flags
+};
+
+/* Hit structure */
+struct GxyHit
+{ 
+  varying float Ng_x;          // x coordinate of geometry normal
+  varying float Ng_y;          // y coordinate of geometry normal
+  varying float Ng_z;          // z coordinate of geometry normal
+   
+  varying float u;             // barycentric u coordinate of hit
+  varying float v;             // barycentric v coordinate of hit
+  
+  varying int primID;          // primitive ID
+  varying int geomID;          // geometry ID
+
+  varying int instID[GXY_MAX_INSTANCE_LEVEL_COUNT]; // instance ID
+};
+
+/* Combined ray/hit structure */
+struct GxyRayHit
+{
+  GxyRay ray;
+  GxyHit hit;
+};
+
+struct GxySample
+{
+  varying float t;
+  varying float data;
+  varying vec3f normal;
+};
+

@@ -21,7 +21,7 @@
 #pragma once
 
 #include "Device.h"
-#include "Model.h"
+#include "DeviceModel.h"
 
 #include <embree3/rtcore.h>
 #include <openvkl/openvkl.h>
@@ -42,7 +42,7 @@ public:
 
   virtual void CreateTheDatasetDeviceEquivalent(KeyedDataObjectPtr);
 
-  virtual ModelPtr NewModel();
+  virtual DeviceModelPtr NewDeviceModel();
   
   RTCDevice   get_embree() { return intel_device.embree; }
   VKLDriver   get_vkl() { return intel_device.vkl; }

@@ -43,6 +43,7 @@ find_package(openvkl 0.11.0)
 # endforeach()
 
 ispc_include_directories(
+    ${gxy_data_SOURCE_DIR}
     ${Galaxy_BINARY_DIR}/src/intel
     ${Galaxy_BINARY_DIR}/src/renderer
     ${Galaxy_SOURCE_DIR}/src/renderer
@@ -65,10 +66,10 @@ set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_intel ${EMBREE_LIBR
 
 set (ISPC_SOURCES 
     IntelModel.ispc
-    IntelData.ispc
     EmbreeGeometry.ispc
     EmbreeSpheres.ispc
     EmbreePathLines.ispc
+    EmbreeTriangles.ispc
     VklVolume.ispc
     test.ispc
     )
@@ -76,7 +77,6 @@ set (ISPC_SOURCES
 set (CPP_SOURCES 
   IntelDevice.cpp
   IntelModel.cpp
-  IntelData.cpp
   EmbreeGeometry.cpp
   EmbreeTriangles.cpp
   EmbreeSpheres.cpp
@@ -87,7 +87,6 @@ set (CPP_SOURCES
 install(FILES
   IntelDevice.h
   IntelModel.h
-  IntelData.h
   EmbreeGeometry.h
   EmbreeTriangles.h
   DESTINATION include/gxy)

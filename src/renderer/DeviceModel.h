@@ -20,28 +20,50 @@
 
 #pragma once
 
-#include "GalaxyObject.h"
-#include "DeviceModel.h"
-#include "EmbreeGeometry.h"
+#include "KeyedObject.h"
 
-#include "IntelModel_ispc.h"
-#include "EmbreeGeometry_ispc.h"
+namespace gxy { OBJECT_POINTER_TYPES(DeviceModel); }
 
-namespace gxy {
+#include "Geometry.h"
+#include "GeometryVis.h"
+#include "Rays.h"
+#include "Box.h"
 
-OBJECT_POINTER_TYPES(IntelModel) 
+#include <vector>
 
-class IntelModel : public DeviceModel
+namespace gxy 
 {
-    GALAXY_OBJECT_SUBCLASS(IntelModel, DeviceModel)
+
+class DeviceModel : public GalaxyObject
+{
+    GALAXY_OBJECT_SUBCLASS(DeviceModel, GalaxyObject)
 
 public:
     virtual void initialize();
-    virtual ~IntelModel();
+    virtual ~DeviceModel();
+    
+    virtual int  AddGeometry(GeometryDPtr, GeometryVisDPtr);
+    virtual void RemoveGeometry(int);
+    virtual int  RemoveGeometry(GeometryDPtr);
 
-    void Build();
 
-    void Intersect(RayList *);
+    virtual void Build();
+    
+    virtual void Intersect(RayList *);
+
+    void SetBoxes(Box g, Box l) { gbox = g; lbox = l; }
+
+    void *GetDeviceEquivalent() { return device_equivalent; }
+
+protected:
+    void *device_equivalent = NULL;
+
+    std::vector<GeometryDPtr> geometries;
+    std::vector<GeometryVisDPtr> geometry_vis;
+    std::vector<int> free_geometry_ids;
+
+    Box gbox;
+    Box lbox;
 };
 
 }

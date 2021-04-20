@@ -18,30 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
-#pragma once
+#include "DeviceModel.ih"
 
-#include "GalaxyObject.h"
-#include "DeviceModel.h"
-#include "EmbreeGeometry.h"
+export void *uniform DeviceModel_dummy(DeviceModel_ispc *uniform a) {}
 
-#include "IntelModel_ispc.h"
-#include "EmbreeGeometry_ispc.h"
-
-namespace gxy {
-
-OBJECT_POINTER_TYPES(IntelModel) 
-
-class IntelModel : public DeviceModel
-{
-    GALAXY_OBJECT_SUBCLASS(IntelModel, DeviceModel)
-
-public:
-    virtual void initialize();
-    virtual ~IntelModel();
-
-    void Build();
-
-    void Intersect(RayList *);
-};
-
-}

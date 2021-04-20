@@ -20,7 +20,7 @@
 #include <cmath>
 
 int test_element_types = 0;
-bool show_Z = false;
+int RES = 50;
 
 void *
 aligned_alloc(int bytes, int size, void* &ptr)
@@ -71,10 +71,10 @@ public:
 
         vec3f *normals = tp->GetNormals();
 
-        normals[0].x = mpiRank + 0.f; normals[0].y = 1.f; normals[0].z = 0.f;
-        normals[1].x = mpiRank + 1.f; normals[1].y = 0.f; normals[1].z = 0.f;
-        normals[2].x = mpiRank + 1.f; normals[2].y = 0.f; normals[2].z = 0.f;
-        normals[3].x = mpiRank + 0.f; normals[3].y = 1.f; normals[3].z = 0.f;
+        normals[0].x = mpiRank + 0.f; normals[0].y = 0.f; normals[0].z = -1.f;
+        normals[1].x = mpiRank + 0.f; normals[1].y = 0.f; normals[1].z = -1.f;
+        normals[2].x = mpiRank + 0.f; normals[2].y = 0.f; normals[2].z = -1.f;
+        normals[3].x = mpiRank + 0.f; normals[3].y = 0.f; normals[3].z = -1.f;
 
         int *indices = tp->GetConnectivity();
 
@@ -117,10 +117,10 @@ public:
         vertices[1].x = mpiRank + 0.25; vertices[1].y = 0.75; vertices[1].z = 0.0;
         vertices[2].x = mpiRank + 0.75; vertices[2].y = 0.75; vertices[2].z = 0.0;
         vertices[3].x = mpiRank + 0.75; vertices[3].y = 0.25; vertices[3].z = 0.0;
-        data[0] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
-        data[1] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
-        data[2] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
-        data[3] = 0.20 - ((float)mpiRank/mpiSize) * 0.02;
+        data[0] = 0.10;
+        data[1] = 0.15;
+        data[2] = 0.20;
+        data[3] = 0.25;
 
         geometries.push_back(pp);
         
@@ -152,6 +152,7 @@ public:
 
         vec3f *vertices = plp->GetVertices();
 
+#if 0
         vertices[0].x = mpiRank + 0.0f; vertices[0].y = 1.f; vertices[0].z = 0.f;
         vertices[1].x = mpiRank + 0.3f; vertices[1].y = 0.f; vertices[1].z = 0.f;
         vertices[2].x = mpiRank + 0.7f; vertices[2].y = 0.f; vertices[2].z = 0.f;
@@ -171,12 +172,33 @@ public:
         data[3] = 0.25;
 
         geometries.push_back(plp);
+#else
+        vertices[0].y = mpiRank + 0.0f; vertices[0].x = 0.5f; vertices[0].z = 0.f;
+        vertices[1].y = mpiRank + 0.3f; vertices[1].x = 0.5f; vertices[1].z = 0.f;
+        vertices[2].y = mpiRank + 0.7f; vertices[2].x = 0.5f; vertices[2].z = 0.f;
+        vertices[3].y = mpiRank + 1.0f; vertices[3].x = 0.5f; vertices[3].z = 0.f;
+
+        int *indices = plp->GetConnectivity();
+
+        indices[0] = 0; 
+        indices[1] = 1; 
+        indices[2] = 2;
+
+        float *data = plp->GetData();
+
+        data[0] = 0.10;
+        data[1] = 0.15;
+        data[2] = 0.20;
+        data[3] = 0.25;
+
+        geometries.push_back(plp);
+#endif
 
         return false;
     }
 }; 
 
-void Intersect(ModelPtr model, RayList *rays)
+void Intersect(DeviceModelPtr model, RayList *rays)
 {
     ::ispc::Test_Intersect(IntelModel::Cast(model)->GetDeviceEquivalent(), rays->GetRayCount(), rays->GetIspc());
 }
@@ -184,14 +206,6 @@ void Intersect(ModelPtr model, RayList *rays)
 class IntersectMsg : public Work
 {
 public:
-    IntersectMsg(float x, float y, float z) : IntersectMsg(3*sizeof(float))
-    {
-        float *p = (float *)get();
-        
-        p[0] = x;
-        p[1] = y;
-        p[2] = z;
-    }
 
     ~IntersectMsg() {}
     WORK_CLASS(IntersectMsg, true)
@@ -199,12 +213,10 @@ public:
 public:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {   
-        float *p = (float *)get();
-
         for (auto g : geometries)
           Device::GetTheDevice()->CreateTheDatasetDeviceEquivalent(g);
 
-        ModelPtr model = Device::GetTheDevice()->NewModel();
+        DeviceModelPtr model = Device::GetTheDevice()->NewDeviceModel();
         for (auto g : geometries)
         {
           GeometryVisDPtr gv = GeometryVis::New();
@@ -213,64 +225,52 @@ public:
 
         model->Build();
         
-        RayList *rays = new RayList(50*mpiSize);
+        RayList *rays = new RayList(1024);
+        bool first = true;
 
-        for (int i = 0; i < 50*mpiSize; i++)
-        {
-            rays->get_ox_base()[i]   = (1/50.0)*i + p[0];
-            rays->get_oy_base()[i]   = p[1];
-            rays->get_oz_base()[i]   = p[2];
-            rays->get_dx_base()[i]   = 0;
-            rays->get_dy_base()[i]   = 0;
-            rays->get_dz_base()[i]   = 1;
-            rays->get_t_base()[i]    = 0;
-            rays->get_term_base()[i] = -1;
-            rays->get_tMax_base()[i] = std::numeric_limits<float>::infinity();
-        }
+        int k = 0, v = 0;
+        for (int i = 0; i < RES; i++)
+          for (int j = 0; j < RES; j++, v++)
+          {
+            rays->get_ox_base()[k]   = mpiRank + (1/(RES-1.0))*i;
+            rays->get_oy_base()[k]   = (1/(RES-1.0))*j;
+            rays->get_oz_base()[k]   = -1;
+            rays->get_dx_base()[k]   = 0;
+            rays->get_dy_base()[k]   = 0;
+            rays->get_dz_base()[k]   = 1;
+            rays->get_t_base()[k]    = 0;
+            rays->get_term_base()[k] = -1;
+            rays->get_tMax_base()[k] = std::numeric_limits<float>::infinity();
+            k++;
 
-        // model->Intersect(rays);
-        Intersect(model, rays);
-
-        for (int j = 0; j < mpiSize; j++)
-        {
-            MPI_Barrier(c);
-
-            if (j == mpiRank)
+            if (k == 1024)
             {
-                for (int i = 0; i < 50*mpiSize; i++)
-                {
-                    char c;
-                    switch (rays->get_term_base()[i])
-                    {
-                        case 0: c = '0'; break;
-                        case 1: c = '1'; break;
-                        case 2: c = '2'; break;
-                        case 3: c = '3'; break;
-                        default: c = ' ';
-                    }
-                    std::cerr << c;
-                }
-                std::cerr << "\n";
-                if (show_Z)
-                {
-                for (int i = 0; i < 50*mpiSize; i++)
-                    if (rays->get_term_base()[i] != -1)
-                    {
-                        float t = rays->get_tMax_base()[i];
-                        std::cerr << i << ": " 
-                            << "(" << (rays->get_ox_base()[i] + t*(rays->get_dx_base()[i]))
-                            << " " << (rays->get_oy_base()[i] + t*(rays->get_dy_base()[i]))
-                            << " " << (rays->get_oz_base()[i] + t*(rays->get_dz_base()[i]))
-                            << ") (" << rays->get_nx_base()[i] 
-                            << " " << rays->get_ny_base()[i] 
-                            << " " << rays->get_nz_base()[i] 
-                            << ") " << rays->get_tMax_base()[i] << "\n";
-                    }
-                }
-            }
+              Intersect(model, rays);
 
-            // sleep(1);
-        }
+              for (int j = 0; j < mpiSize; j++)
+              {
+                if (first)
+                {
+                  first = false;
+                  std::cout << "x,y,z,nx,ny,nz,i\n";
+                }
+
+                for (int i = 0; i < rays->GetRayCount(); i++)
+                  if (rays->get_term(i))
+                  {
+                      float t = rays->get_tMax(i);
+                      float x = rays->get_ox(i) + t*rays->get_dx(i);
+                      float y = rays->get_oy(i) + t*rays->get_dy(i);
+                      float z = rays->get_oz(i) + t*rays->get_dz(i);
+
+                      std::cout << x << "," << y << "," << z << "," <<
+                                   rays->get_nx(i) << "," << rays->get_ny(i) << "," << rays->get_nz(i) << "," << i << "\n";
+                  }
+              }
+
+              k = 0;
+            }
+          }
 
         return false;
     }
@@ -290,8 +290,7 @@ syntax(char *a)
     std::cerr << "options:" << endl;
     std::cerr << "  -D[which]  run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
     std::cerr << "  -t types   test element types,   bitfield 1 for triangles, 2 for spheres, 4 for pathlines.  Multiple -t's are OR'd" << endl;
-    std::cerr << "  -y y       vertical position of samples (0.5)" << endl;
-    std::cerr << "  -z         show hit points, normals, T" << endl;
+    std::cerr << "  -R res     number of samples along edge (50)\n";
   }
   exit(1);
 }
@@ -315,8 +314,7 @@ main(int argc, char *argv[])
     for (int i = 1; i < argc; i++)
         if (!strncmp(argv[i], "-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
         else if (!strcmp(argv[i], "-t")) test_element_types |= atoi(argv[++i]);
-        else if (!strcmp(argv[i], "-y")) y = atof(argv[++i]);
-        else if (!strcmp(argv[i], "-z")) show_Z = true;
+        else if (!strcmp(argv[i], "-R")) RES = atoi(argv[++i]);
         else syntax(argv[0]);
 
     mpiRank = theApplication.GetRank();
@@ -361,7 +359,7 @@ main(int argc, char *argv[])
                 plp->Commit();
             }
 
-            IntersectMsg i = IntersectMsg(0.0, y, -1);
+            IntersectMsg i = IntersectMsg();
             i.Broadcast(true, true);
         }
 

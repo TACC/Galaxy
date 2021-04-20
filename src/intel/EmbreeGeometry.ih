@@ -20,20 +20,15 @@
 
 #pragma once
 
-#include "IntelData.ih"
-
 #include "embree3/rtcore_config.h"
 #include "embree3/rtcore_ray.isph"
-
-
 #include "embree3/rtcore_geometry.isph"
 
 #include "vec.ih"
+#include "GxyRayHit.isph"
 
 struct EmbreeGeometry_ispc
 {
-    IntelData_ispc super;
-
     void *device_geometry;
 
     uniform int   nv, nc;
@@ -41,7 +36,8 @@ struct EmbreeGeometry_ispc
     uniform vec3f *normals;
     uniform int   *connectivity;
     uniform float *data;
-    void (*computeNormal)(uniform EmbreeGeometry_ispc *uniform, void *uniform rayhit);
+
+    void (*postIntersect)(uniform int, void *uniform, void *uniform, void *uniform);
 };
 
 typedef uniform EmbreeGeometry_ispc *uniform pEmbreeGeometry_ispc;

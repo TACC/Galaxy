@@ -20,14 +20,14 @@
 
 #include <iostream>
 
-#include "Model.h"
+#include "DeviceModel.h"
 
 namespace gxy
 {
 
-OBJECT_CLASS_TYPE(Model)
+OBJECT_CLASS_TYPE(DeviceModel)
 
-Model::~Model()
+DeviceModel::~DeviceModel()
 {
   if (device_equivalent) 
     free(device_equivalent);
@@ -35,13 +35,13 @@ Model::~Model()
 }
 
 void
-Model::initialize()
+DeviceModel::initialize()
 {
     super::initialize();
 }
 
 int
-Model::AddGeometry(GeometryDPtr g, GeometryVisDPtr vis)
+DeviceModel::AddGeometry(GeometryDPtr g, GeometryVisDPtr vis)
 {
     int id;
 
@@ -63,7 +63,7 @@ Model::AddGeometry(GeometryDPtr g, GeometryVisDPtr vis)
 }
 
 int
-Model::RemoveGeometry(GeometryDPtr g)
+DeviceModel::RemoveGeometry(GeometryDPtr g)
 {
     for (int id = 0; id < geometries.size() ; id++)
         if (geometries[id] == g)
@@ -74,12 +74,12 @@ Model::RemoveGeometry(GeometryDPtr g)
             return id;
         }
 
-    std::cerr << "Model::RemoveGeometry: geometry not found\n";
+    std::cerr << "DeviceModel::RemoveGeometry: geometry not found\n";
     return -1;
 }
 
 void
-Model::RemoveGeometry(int id)
+DeviceModel::RemoveGeometry(int id)
 {
     if (geometries[id])
     {
@@ -89,60 +89,8 @@ Model::RemoveGeometry(int id)
     }
 }
 
-int
-Model::AddVolume(VolumeDPtr v, VolumeVisDPtr vis)
-{
-    int id;
+void DeviceModel::Intersect(RayList *r) {}
 
-    if (free_volume_ids.size())
-    {
-        id = free_volume_ids.back();
-        free_volume_ids.pop_back();
-        volumes[id] = v;
-        volume_vis[id] = vis;
-    }
-    else
-    {
-        id = volumes.size();
-        volumes.push_back(v);
-        volume_vis.push_back(vis);
-    }
-
-    return id;
-}
-
-int
-Model::RemoveVolume(VolumeDPtr g)
-{
-    for (int id = 0; id < volumes.size() ; id++)
-        if (volumes[id] == g)
-        {
-            volumes[id] = NULL;
-            volume_vis[id] = NULL;
-            free_volume_ids.push_back(id);
-            return id;
-        }
-
-    std::cerr << "Model::RemoveVolume: volume not found\n";
-    return -1;
-}
-
-void
-Model::RemoveVolume(int id)
-{
-    if (id != -1 && volumes[id])
-    {
-        volumes[id] = NULL;
-        volume_vis[id] = NULL;
-        free_volume_ids.push_back(id);
-    }
-
-    std::cerr << "Model::RemoveVolume: volume not found\n";
-}
-
-void Model::Intersect(RayList *r) {}
-void Model::IsoCrossing(RayList *r, int n, float *v) {}
-void Model::Sample(int n, float* x, float* y, float* z, float* d) {}
-void Model::Build() {}
+void DeviceModel::Build() {}
 
 }

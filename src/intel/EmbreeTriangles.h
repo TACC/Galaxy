@@ -36,6 +36,7 @@ class EmbreeTriangles : public EmbreeGeometry
 
 public:
   ~EmbreeTriangles() {};
+  virtual void initialize();
 
   virtual void FinalizeData(KeyedDataObjectPtr kop);
 };
