@@ -57,6 +57,7 @@ int n_senders = 1;
 int running_count;
 float fuzz = 0.0;
 bool testdata = false;
+string varname = "data";
 
 int mpi_rank = 0, mpi_size = 1;
 
@@ -66,6 +67,7 @@ syntax(char *a)
   std::cerr << "syntax: " << a << " [options]\n";
   std::cerr << "options:\n";
   std::cerr << " -F pfile                     a file containing a list of constituent files (none)\n";
+  std::cerr << " -V varname                   name of point-dependendent data to be used in the case of CTK file input (data)\n";
   std::cerr << " -M master                    address of master process (localhost)\n";
   std::cerr << " -b xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1)\n";
   std::cerr << " -b box                       a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
@@ -136,6 +138,12 @@ public:
     Y = ymax;
     z = zmin;
     Z = zmax;
+  }
+
+  void GetDataRange(float& d, float &D)
+  {
+    d = dmin;
+    D = dmax;
   }
 
 private:
@@ -213,15 +221,28 @@ private:
             *pdst++ = (float)*psrc++;
         }
 
-        vtkFloatArray *dArray = vtkFloatArray::SafeDownCast(ps->GetPointData()->GetArray("displacements"));
-        if (dArray)
+        vtkFloatArray *fArray = vtkFloatArray::SafeDownCast(ps->GetPointData()->GetArray(varname.c_str()));
+        if (fArray)
         {
-          float *dsrc = (float *)dArray->GetVoidPointer(0);
-          for (int i = 0; i < nPts; i++)
+          float *fsrc = (float *)fArray->GetVoidPointer(0);
+    
+          if (fArray->GetNumberOfComponents() == 1)
           {
-            double a = dsrc[0]*dsrc[0] + dsrc[1]*dsrc[1] + dsrc[2]*dsrc[2];
-            *ddst++ = sqrt(a);
-            dsrc += 3;
+            memcpy(ddst, fArray->GetVoidPointer(0), nPts * sizeof(float));
+          }
+          else if (fArray->GetNumberOfComponents() == 3)
+          {
+            for (int i = 0; i < nPts; i++)
+            {
+              double a = fsrc[0]*fsrc[0] + fsrc[1]*fsrc[1] + fsrc[2]*fsrc[2];
+              *ddst++ = sqrt(a);
+              fsrc += 3;
+            }
+          }
+          else
+          {
+            std::cerr << "data have to be scalar or 3-vector\n";
+            exit(1);
           }
         }
         else
@@ -234,11 +255,25 @@ private:
           }
 
           double *dsrc = (double *)dArray->GetVoidPointer(0);
-          for (int i = 0; i < nPts; i++)
+
+          if (dArray->GetNumberOfComponents() == 1)
           {
-            double a = dsrc[0]*dsrc[0] + dsrc[1]*dsrc[1] + dsrc[2]*dsrc[2];
-            *ddst++ = sqrt(a);
-            dsrc += 3;
+            for (int i = 0; i < nPts; i++)
+              *ddst++ = *dsrc++;
+          }
+          else if (dArray->GetNumberOfComponents() == 3)
+          {
+            for (int i = 0; i < nPts; i++)
+            {
+              double a = dsrc[0]*dsrc[0] + dsrc[1]*dsrc[1] + dsrc[2]*dsrc[2];
+              *ddst++ = sqrt(a);
+              dsrc += 3;
+            }
+          }
+          else
+          {
+            std::cerr << "data have to be scalar or 3-vector\n";
+            exit(1);
           }
         }
       }
@@ -327,10 +362,12 @@ private:
     hdr->nconnectivity = 0;
 
     float *pptr = (float *)(data + sizeof(int) + sizeof(bufhdr));
+    float *dptr = pptr + 3*nPts;
 
     xmin = xmax = pptr[0];
     ymin = ymax = pptr[1];
     zmin = zmax = pptr[2];
+    dmin = dmax = *dptr;
 
     for (int i = 0; i < nPts; i++)
     {
@@ -340,7 +377,10 @@ private:
       if (ymax < pptr[1]) ymax = pptr[1];
       if (zmin > pptr[2]) zmin = pptr[2];
       if (zmax < pptr[2]) zmax = pptr[2];
+      if (dmin > *dptr) dmin = *dptr;
+      if (dmax < *dptr) dmax = *dptr;
       pptr += 3;
+      dptr ++;
     }
   }
 
@@ -386,6 +426,7 @@ private:
   string host;
   int port;
   int nPts;
+  float xmin, xmax, ymin, ymax, zmin, zmax, dmin, dmax;
 };
 
 vector< shared_ptr<SenderThread> > senders;
@@ -499,12 +540,15 @@ main(int argc, char *argv[])
         ifs >> part;
         if (ifs.eof())
           break;
-        pfiles.push_back(part);
+        if (part.c_str()[0] != '#')
+          pfiles.push_back(part);
       };
       n_senders = pfiles.size();
     }
     else if (! strcmp(argv[i], "-T"))
       testdata = true;
+    else if (! strcmp(argv[i], "-V"))
+      varname = argv[++i];
     else
       syntax(argv[0]);
 
@@ -539,34 +583,47 @@ main(int argc, char *argv[])
   //
   if (pfiles.size() > 0)
   {
+    float dmin, dmax;
     senders[0]->GetBox(xmin, xmax, ymin, ymax, zmin, zmax);
+    senders[0]->GetDataRange(dmin, dmax);
+
     for (int i = 1; i < senders.size(); i++)
     {
-      float pxmin, pxmax, pymin, pymax, pzmin, pzmax;
+      float pxmin, pxmax, pymin, pymax, pzmin, pzmax, pdmin, pdmax;
       senders[i]->GetBox(pxmin, pxmax, pymin, pymax, pzmin, pzmax);
+      senders[0]->GetDataRange(pdmin, pdmax);
       if (xmin > pxmin) xmin = pxmin;
       if (ymin > pymin) ymin = pymin;
       if (zmin > pymin) zmin = pymin;
       if (xmax < pxmin) xmax = pxmin;
       if (ymax < pymin) ymax = pymin;
       if (zmax < pymin) zmax = pymin;
+      if (pdmin < dmin) dmin = pdmin;
+      if (pdmax < dmin) dmax = pdmax;
     }
 
-    MPI_Reduce(&xmin, &xmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&ymin, &ymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&zmin, &zmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&xmax, &xmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&zmax, &ymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&zmax, &zmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+    float gxmin, gxmax, gymin, gymax, gzmin, gzmax, gdmin, gdmax;
+    
+    MPI_Reduce(&xmin, &gxmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&ymin, &gymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&zmin, &gzmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&xmax, &gxmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&zmax, &gymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&zmax, &gzmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&dmin, &gdmax, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&dmax, &gdmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    if (mpi_rank == 0)
+      std::cerr << "global data range: " << gdmin << " --> " << gdmax << "\n";
 
     // The accumulated minmax is *without* fuzz.   Add it in to report box
   
-    xmin = xmin - fuzz;
-    ymin = ymin - fuzz;
-    zmin = zmin - fuzz;
-    xmax = xmax + fuzz;
-    ymax = ymax + fuzz;
-    zmax = zmax + fuzz;
+    xmin = gxmin - fuzz;
+    ymin = gymin - fuzz;
+    zmin = gzmin - fuzz;
+    xmax = gxmax + fuzz;
+    ymax = gymax + fuzz;
+    zmax = gzmax + fuzz;
 
     if (mpi_rank == 0)
       std::cerr << "box: " << xmin << " " << xmax << " " << ymin << " " << ymax << " " << zmin << " " << zmax << "\n";

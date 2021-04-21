@@ -36,7 +36,7 @@ If in random mode, the data associated with each particle is the <i>i/(n-1)</i> 
 	    
 	    -P baseport               base port: master will be here, senders start here + 1 (1900)
 	    
-	    -p pfile		          list of data files; can be vtp, vtu, csv, raw
+	    -F pfile		          list of data files; can be vtp, vtu, csv, raw
 									csv:
 										n
 										x, y, z, d
@@ -51,7 +51,7 @@ If in random mode, the data associated with each particle is the <i>i/(n-1)</i> 
 		-p npart     	           number of particles to send to each receiver (100)
 						           in the case of randomly generated data
    
-       -n nproc    	               number of senders to run (1).  if pfile is given,
+        -n nproc    	           number of senders to run (1).  if pfile is given,
                                    this is ignored and the number of data files is used
 	
 		-f fuzz     	           max radius of points - creates empty border region (0)
@@ -98,7 +98,6 @@ The actual bounding box used by kwrtr is the given bounding box expanded by <b>f
     ],
     "Datasets": [
         {
-            "filename": "particles.part",
             "name": "particles",
             "type": "Particles"
         }
