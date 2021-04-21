@@ -29,43 +29,27 @@ namespace gxy
  * TransformFunction is an ISPC implementation of a 1D lookup into a table of 1, 3, or 4-tuples.   Linear interpolation, arbitrary length.  Capped.
  */
 
-#include "TransferFunction_ispc.h"
-
-template<int WIDTH, int LENGTH>
 class TransferFunction
 {
 public: 
-    TransferFunction()
-    {
-      ispc.length = LENGTH; 
-      ispc.width  = WIDTH;
-      ispc.minV   = 0;
-      ispc.maxV   = 0;
-      ispc.data   = new float[LENGTH * WIDTH]; 
-    }
-
-    ~TransferFunction()
-    {
-      delete[] ispc.data;
-    }
+    TransferFunction(int w, int h);
+    ~TransferFunction();
 
     void Interpolate(int n, float *data);
 
-    void SetMin(float v) { ispc.minV = v; }
-    void SetMax(float v) { ispc.maxV = v; }
-    void SetMinMax(float m, float M) { SetMin(m); SetMax(M); }
+    void SetMin(float v);
+    void SetMax(float v);
+    void SetMinMax(float m, float M);
+    int GetWidth();
+    int GetLength();
+    int GetMinV();
+    int GetMaxV();
+    float *GetData();
 
-
-    int GetWidth() { return ispc.width; }
-    int GetLength() { return ispc.length; }
-    int GetMinV() { return ispc.minV; }
-    int GetMaxV() { return ispc.maxV; }
-    float *GetData() { return ispc.data; }
-
-    ispc::TransferFunction_ispc *GetIspc() { return &ispc; }
+    void *GetIspc() { return _ispc; }
 
 private:
-    ispc::TransferFunction_ispc ispc;
+    void *_ispc;
 };
 
 }

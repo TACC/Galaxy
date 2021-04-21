@@ -62,8 +62,6 @@ include_directories(
     ${embree_DIR}/include
 )
 
-set(GALAXY_LIBRARIES gxy_framework gxy_data gxy_renderer gxy_intel ${EMBREE_LIBRARIES} ${MPI_C_LIBRARIES})
-
 set (ISPC_SOURCES 
     IntelModel.ispc
     EmbreeGeometry.ispc
@@ -98,9 +96,9 @@ set_target_properties(gxy_intel PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION $
 install(TARGETS gxy_intel DESTINATION lib)
 
 add_executable(em_test em_test.cpp)
-target_link_libraries(em_test gxy_framework gxy_data gxy_renderer gxy_intel embree openvkl::openvkl_module_ispc_driver ${MPI_C_LIBRARIES})
+target_link_libraries(em_test gxy_renderer gxy_framework gxy_data gxy_intel embree openvkl::openvkl_module_ispc_driver ${MPI_C_LIBRARIES})
 install(TARGETS em_test DESTINATION tests)
 
 add_executable(vkl_test vkl_test.cpp)
-target_link_libraries(vkl_test gxy_framework gxy_data gxy_renderer gxy_intel embree openvkl::openvkl_module_ispc_driver ${MPI_C_LIBRARIES})
+target_link_libraries(vkl_test gxy_renderer gxy_framework gxy_data gxy_intel embree openvkl::openvkl_module_ispc_driver ${MPI_C_LIBRARIES})
 install(TARGETS vkl_test DESTINATION tests)

@@ -47,12 +47,17 @@ MappedVis::Register()
 
 MappedVis::~MappedVis()
 {
+  if (color_tf) delete color_tf;
+  if (opacity_tf) delete opacity_tf;
 }
 
 void
 MappedVis::initialize()
 {
   super::initialize();
+
+  color_tf = new TransferFunction(3,256);
+  opacity_tf = new TransferFunction(1,256);
 
   colormap.push_back(vec4f(0.0, 0.4, 0.4, 0.4));
   colormap.push_back(vec4f(1.0, 1.0, 1.0, 1.0));
@@ -67,8 +72,8 @@ MappedVis::initialize_ispc()
   super::initialize_ispc();
 
   ::ispc::MappedVis_ispc *myspc = (::ispc::MappedVis_ispc*)ispc;
-  myspc->colorMap   = color_tf.GetIspc();
-  myspc->opacityMap = opacity_tf.GetIspc();
+  myspc->colorMap   = color_tf->GetIspc();
+  myspc->opacityMap = opacity_tf->GetIspc();
 }
 
 void
@@ -271,11 +276,11 @@ MappedVis::local_commit(MPI_Comm c)
   if(super::local_commit(c))  
     return true;
 
-  color_tf.Interpolate(colormap.size(), (float *)colormap.data());
-  color_tf.SetMinMax(data_range_min, data_range_max);
+  color_tf->Interpolate(colormap.size(), (float *)colormap.data());
+  color_tf->SetMinMax(data_range_min, data_range_max);
 
-  opacity_tf.Interpolate(opacitymap.size(), (float *)opacitymap.data());
-  opacity_tf.SetMinMax(data_range_min, data_range_max);
+  opacity_tf->Interpolate(opacitymap.size(), (float *)opacitymap.data());
+  opacity_tf->SetMinMax(data_range_min, data_range_max);
 
   return false;
 }

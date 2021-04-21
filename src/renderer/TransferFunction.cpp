@@ -21,32 +21,68 @@
 #include <iostream>
 
 #include "TransferFunction.h"
+#include "TransferFunction_ispc.h"
 
 namespace gxy
 {
 
-template<int WIDTH, int LENGTH>
-void 
-TransferFunction<WIDTH, LENGTH>::Interpolate(int n, float *data)
+TransferFunction::TransferFunction(int w, int l)
 {
-  float (*inpt)[WIDTH+1] = (float(*)[WIDTH+1])data;
-  float (*outpt)[WIDTH] = (float(*)[WIDTH])ispc.data;
+  _ispc = malloc(sizeof(::ispc::TransferFunction_ispc));
+  ::ispc::TransferFunction_ispc *ispc = (::ispc::TransferFunction_ispc *)GetIspc();
 
-  ispc.minV = inpt[0][0], ispc.maxV = inpt[n-1][0];
+  ispc->width  = w;
+  ispc->length = l;
+  ispc->minV   = 0;
+  ispc->maxV   = 0;
+  ispc->data   = new float[w * l];
+}
 
-  int i0 = 0, i1 = 1;
-  for (int i = 0; i < LENGTH; i++)
+TransferFunction::~TransferFunction()
+{
+  if (_ispc)
   {
-    float x = ispc.minV + (i / float(LENGTH))*(ispc.maxV - ispc.minV);
-
-    while (inpt[i1][0] <= x)
-      i0++, i1++;
-
-    float d = (x - inpt[i0].x) / (inpt[i1].x - inpt[i0].x);
-
-    for (int j = 0; j < WIDTH; j++)
-      outpt[i][j] = inpt[i0][j+1] + d * (inpt[i1][j+1] - inpt[i0][j+1]);
+    free(((::ispc::TransferFunction_ispc *)GetIspc())->data);
+    free(_ispc);
   }
 }
+
+void 
+TransferFunction::Interpolate(int n, float *data)
+{
+  ::ispc::TransferFunction_ispc *ispc = (::ispc::TransferFunction_ispc *)GetIspc();
+
+  float *inpt = data;
+  float *outpt = ispc->data;
+
+#define INDX(i,j) (i*ispc->width + j)
+
+  ispc->minV = inpt[INDX(0,0)], ispc->maxV = inpt[INDX(n, 0)];
+
+  int i0 = 0, i1 = 1;
+  for (int i = 0; i < ispc->length; i++)
+  {
+    float x = ispc->minV + (i / float(ispc->length))*(ispc->maxV - ispc->minV);
+
+    while (inpt[INDX(i1,0)] <= x)
+      i0++, i1++;
+
+    float d = (x - inpt[INDX(i0,0)]) / (inpt[INDX(i1,0)] - inpt[INDX(i0,0)]);
+
+    for (int j = 0; j < ispc->width; j++)
+      outpt[INDX(i,j)] = inpt[INDX(i0,j+1)] + d * (inpt[INDX(i1,j+1)] - inpt[INDX(i0,j+1)]);
+  }
+}
+
+void TransferFunction::SetMin(float v) { ((::ispc::TransferFunction_ispc *)GetIspc())->minV = v; }
+void TransferFunction::SetMax(float v) { ((::ispc::TransferFunction_ispc *)GetIspc())->maxV = v; }
+void TransferFunction::SetMinMax(float m, float M) { SetMin(m); SetMax(M); }
+int TransferFunction::GetWidth() { return ((::ispc::TransferFunction_ispc *)GetIspc())->width; }
+int TransferFunction::GetLength() { return ((::ispc::TransferFunction_ispc *)GetIspc())->length; }
+int TransferFunction::GetMinV() { return ((::ispc::TransferFunction_ispc *)GetIspc())->minV; }
+int TransferFunction::GetMaxV() { return ((::ispc::TransferFunction_ispc *)GetIspc())->maxV; }
+float *TransferFunction::GetData() { return ((::ispc::TransferFunction_ispc *)GetIspc())->data; }
+
+
 
 }

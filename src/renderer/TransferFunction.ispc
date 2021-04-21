@@ -32,7 +32,6 @@ struct TransferFunction_ispc
 
 varying float TransferFunction_SampleO(uniform TransferFunction_ispc* self, varying float v)
 {
-
     if (v < self->minV) v = self->minV;
     else if (v > self->maxV) v = self->maxV;
 
@@ -104,6 +103,7 @@ export void *uniform TransferFunction_Test(uniform TransferFunction_ispc *unifor
     }
 }
         
+
 
 
 

@@ -78,8 +78,8 @@ protected:
   virtual void allocate_ispc();
   virtual void initialize_ispc();
 
-  TransferFunction<3, 256> color_tf;
-  TransferFunction<1, 256> opacity_tf;
+  TransferFunction *color_tf;
+  TransferFunction *opacity_tf;
 
   float data_range_min, data_range_max;
   bool data_range;
