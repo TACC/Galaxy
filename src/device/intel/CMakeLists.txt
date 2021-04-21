@@ -44,6 +44,8 @@ find_package(openvkl 0.11.0)
 
 ispc_include_directories(
     ${gxy_data_SOURCE_DIR}
+    ${gxy_device_SOURCE_DIR}
+    ${gxy_renderer_SOURCE_DIR}
     ${Galaxy_BINARY_DIR}/src/intel
     ${Galaxy_BINARY_DIR}/src/renderer
     ${Galaxy_SOURCE_DIR}/src/renderer
@@ -52,6 +54,7 @@ ispc_include_directories(
 )
 
 include_directories( 
+    ${gxy_device_SOURCE_DIR}
     ${Galaxy_BINARY_DIR}/src 
     ${Galaxy_BINARY_DIR}/src/renderer
     ${Galaxy_SOURCE_DIR}/src/framework

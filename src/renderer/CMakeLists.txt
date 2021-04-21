@@ -39,6 +39,7 @@ find_library(PNG_LIBRARY_RELEASE png)
 find_library(Z_LIBRARY_RELEASE z)
 
 include_directories(${gxy_framework_SOURCE_DIR}
+                    ${gxy_device_SOURCE_DIR}
                     ${gxy_renderer_SOURCE_DIR}
                     ${gxy_renderer_BINARY_DIR}
                     ${Galaxy_SOURCE_DIR}/src/data
@@ -57,8 +58,6 @@ ispc_include_directories(${Galaxy_BINARY_DIR}/src)
 set (ISPC_SOURCES
   IspcObject.ispc
   MappedVis.ispc
-  DeviceModel.ispc
-  DeviceVolume.ispc
   Rays.ispc
   TrianglesVis.ispc
   Visualization.ispc
@@ -73,9 +72,6 @@ set (ISPC_SOURCES
 )
 
 set (CPP_SOURCES 
-  Device.cpp
-  DeviceModel.cpp
-  DeviceVolume.cpp
   mypng.cpp
   Camera.cpp 
   IspcObject.cpp
@@ -101,13 +97,11 @@ set (CPP_SOURCES
 
 add_library(gxy_renderer SHARED ${CPP_SOURCES})
 ispc_target_add_sources(gxy_renderer ${ISPC_SOURCES})
-target_link_libraries(gxy_renderer ${VTK_LIBRARIES} gxy_data gxy_framework ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE})
+target_link_libraries(gxy_renderer ${VTK_LIBRARIES} gxy_data gxy_framework gxy_device ${PNG_LIBRARY_RELEASE} ${Z_LIBRARY_RELEASE})
 set_target_properties(gxy_renderer PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
 install(TARGETS gxy_renderer DESTINATION lib)
 
 install(FILES 
-  DeviceModel.h 
-  Device.h
   Camera.h 
   # ImageWriter.h 
   Lighting.h
