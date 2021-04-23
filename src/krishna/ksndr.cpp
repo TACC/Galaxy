@@ -426,7 +426,7 @@ private:
   string host;
   int port;
   int nPts;
-  float xmin, xmax, ymin, ymax, zmin, zmax, dmin, dmax;
+  float xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1, dmin = 0, dmax = 1;
 };
 
 vector< shared_ptr<SenderThread> > senders;
