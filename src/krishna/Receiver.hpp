@@ -41,8 +41,12 @@ class Receiver : public gxy::KeyedObject
 
   enum receiver_state {
     NOT_RUNNING,
+    RECEIVING,
+    RECEIVE_DONE,
+    ERROR,
     PAUSED,
-    BUSY,
+    START_RESHUFFLE,
+    RESHUFFLING,
     EXITTING
   };
 
@@ -53,6 +57,8 @@ class Receiver : public gxy::KeyedObject
     int nsenders;
     float fuzz;
   };
+
+  static void *reshuffle_thread(void *d);
 
 public:
   ~Receiver();
@@ -66,19 +72,20 @@ public:
   void Start(bool(*)(ServerSkt*, void*, char*));
   void Run();
   void Stop();
-  void Accept();
-  void Wait();
+  void Accept(int n);
+  bool Wait();
 
   void SetGeometry(GeometryP g);
   void SetNSenders(int n) { nsenders = n; }
   void SetBasePort(int p) { base_port = p; }
   void SetFuzz(float f) { fuzz = f; }
 
+  int GetNSenders() { return nsenders; }
 
 protected:
   void _Stop();
   void _Receive(char *);
-  int receive(char *);
+  bool receive(char *);
 
 private:
   pthread_mutex_t mutex_buffers = PTHREAD_MUTEX_INITIALIZER;
@@ -88,15 +95,15 @@ private:
   void signal_buffers() { pthread_cond_signal(&cond_buffers); }
   void wait_buffers() { pthread_cond_wait(&cond_buffers, &mutex_buffers); }
 
-  pthread_mutex_t mutex_busy = PTHREAD_MUTEX_INITIALIZER;
-  pthread_cond_t  cond_busy = PTHREAD_COND_INITIALIZER;
-  void lock_busy() { pthread_mutex_lock(&mutex_busy); }
-  void unlock_busy() { pthread_mutex_unlock(&mutex_busy); }
-  void signal_busy() { pthread_cond_broadcast(&cond_busy); }
-  void wait_busy() { pthread_cond_wait(&cond_busy, &mutex_busy); }
+  pthread_mutex_t mutex_state = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t  cond_state = PTHREAD_COND_INITIALIZER;
+  void lock_state() { pthread_mutex_lock(&mutex_state); }
+  void unlock_state() { pthread_mutex_unlock(&mutex_state); }
+  void signal_state() { pthread_cond_broadcast(&cond_state); }
+  void wait_state() { pthread_cond_wait(&cond_state, &mutex_state); }
 
-  void _Wait();
-  void _Accept();
+  void _Wait(MPI_Comm);
+  void _Accept(MPI_Comm, int);
 
   int done_count;
 
@@ -113,7 +120,6 @@ private:
 
   pthread_t tid;
   bool thread_running = false;
-  static void *reshuffle_thread(void *);
 
   bool exitting = false;
   bool complete = false;
@@ -218,16 +224,37 @@ private:
     struct AcceptMsgArgs
     {
       Key  rk;       // Receiver object
+      int  nsenders; 
     };
 
   public:
-    AcceptMsg(Receiver* r) : AcceptMsg(sizeof(struct AcceptMsgArgs))
+    AcceptMsg(Receiver* r, int nsenders) : AcceptMsg(sizeof(struct AcceptMsgArgs))
     {
       struct AcceptMsgArgs *p = (struct AcceptMsgArgs *)contents->get();
       p->rk = r->getkey();
+      p->nsenders = nsenders;
     }
 
     WORK_CLASS(AcceptMsg, false);
+
+    bool CollectiveAction(MPI_Comm c, bool isRoot);
+  };
+
+  class WaitMsg : public Work
+  {
+    struct WaitMsgArgs
+    {
+      Key  rk;       // Receiver object
+    };
+
+  public:
+    WaitMsg(Receiver* r) : WaitMsg(sizeof(struct WaitMsgArgs))
+    {
+      struct WaitMsgArgs *p = (struct WaitMsgArgs *)contents->get();
+      p->rk = r->getkey();
+    }
+
+    WORK_CLASS(WaitMsg, false);
 
     bool CollectiveAction(MPI_Comm c, bool isRoot);
   };

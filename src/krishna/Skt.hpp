@@ -23,6 +23,17 @@ public:
   char *
   Receive()
   {
+    char *buf = ReceiveRaw();
+
+    int status = 1;
+    SendRaw(&status, sizeof(status));
+
+    return buf;
+  }
+
+  char *
+  ReceiveRaw()
+  {
     int n;
 
     int rem = sizeof(n);
@@ -30,12 +41,9 @@ public:
     while (rem)
     {
       int k = read(cskt, p, rem);
-      if (k < 0)
-      {
-        if (errno != EAGAIN)
-          return NULL;
-      }
-      else
+      if ((k < 0 && errno != EAGAIN) || k == 0)
+        return NULL;
+      else if (k > 0)
       {
         rem = rem - k;
         p = p + k;
@@ -49,12 +57,9 @@ public:
     while (rem)
     {
       int k = read(cskt, p, rem);
-      if (k < 0)
-      {
-        if (errno != EAGAIN)
-          return NULL;
-      }
-      else
+      if ((k < 0 && errno != EAGAIN) || k == 0)
+        return NULL;
+      else if (k > 0)
       {
         rem = rem - k;
         p = p + k;
@@ -78,6 +83,36 @@ public:
 
   bool
   Send(void *buffer, int n)
+  {
+    int r = 0;
+
+    if (SendRaw(buffer, n))
+    {
+      char *rply = ReceiveRaw();
+      if (rply)
+      {
+        r = *(int *)rply;
+        free(rply);
+      }
+    }
+
+    return r == 1;
+  }
+
+  bool 
+  SendRaw(char *buffer)
+  {
+    return SendRaw((void *)buffer, strlen(buffer)+1);
+  }
+
+  bool
+  SendRaw(std::string buffer)
+  {
+    return SendRaw((void *)buffer.c_str(), buffer.size()+1);
+  }
+
+  bool
+  SendRaw(void *buffer, int n)
   {
     int rem = sizeof(n);
     unsigned char *p = (unsigned char *)&n;
@@ -123,6 +158,13 @@ protected:
 class ClientSkt : public Skt
 {
 public:
+  ClientSkt()
+  {
+    host = "localhost";
+    port = 1900;
+    cskt = -1;
+  }
+
   ClientSkt(std::string _host, int _port) 
   {
     host = _host;
@@ -137,6 +179,14 @@ public:
   }
 
   bool IsConnected() { return cskt > 0; }
+
+  bool
+  Connect(std::string h, int p)
+  {
+    host = h;
+    port = p;
+    return Connect();
+  }
 
   bool
   Connect()
@@ -313,12 +363,10 @@ public:
       }
       else
       {
-        char *buf = me->Receive();
+        char *buf;
 
-        int status = 1;
-        me->Send(&status, sizeof(status));
-        
-        me->done = (*me->handler)(me, me->ptr, buf) || me->done;
+        while((buf = me->Receive()) != NULL && !me->paused)
+          me->paused = (*me->handler)(me, me->ptr, buf) || me->done;
 
         close(me->cskt);
         me->cskt = -1;
@@ -326,8 +374,6 @@ public:
 
       me->unlock();
     }
-
-    (*me->handler)(me, me->ptr, NULL);
 
     pthread_exit(NULL);
 

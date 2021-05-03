@@ -30,7 +30,6 @@
 
 #include "Receiver.hpp"
 
-
 using namespace gxy;
 using namespace std;
 
@@ -41,6 +40,7 @@ int mpiRank = 0, mpiSize = 1;
 ReceiverP receiver  = NULL;
 RenderingSetP theRenderingSet = NULL;
 RendererP theRenderer = NULL;
+PartitioningP thePartitioning = NULL;
 
 pthread_mutex_t main_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  main_cond = PTHREAD_COND_INITIALIZER;
@@ -55,7 +55,6 @@ syntax(char *a)
   cerr << "use Galaxy to write an image library for the given state file" << endl;
   cerr << "syntax: " << a << " [options] statefile" << endl;
   cerr << "options:" << endl;
-  cerr << "  -b xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1)\n";
   cerr << "  -f fuzz                      sort-of ghost zone width (0.0)" << endl;
   cerr << "  -n nsndrs                    number of external processes sending particle data (1)" << endl;
   cerr << "  -C cdb                       put output in Cinema DB (no)" << endl;
@@ -87,10 +86,14 @@ master_handler(ServerSkt *skt, void *p, char *buf)
   {
     std::cerr << "received: " << buf << "\n";
 
-    if (! strcmp(buf, "go"))
+    std::stringstream ss(buf);
+    std::string cmd;
+    ss >> cmd;
+
+    if (cmd == "go")
     {
       std::cerr << "waiting for data...\n";
-      receiver->Accept();
+      receiver->Accept(receiver->GetNSenders());
       receiver->Wait();
       std::cerr << "shuffle done\n";
       
@@ -120,15 +123,28 @@ master_handler(ServerSkt *skt, void *p, char *buf)
       free(buf);
       return false;
     }
-    else if (! strcmp(buf, "quit"))
+    else if (cmd == "box")
+    {
+      //float x, y, z, X, Y, Z;
+      //ss >> x >> y >> z >> X >> Y >> Z;
+      //ss << "As string " <<  x << " " <<  y << " " <<  z << " " <<  X << " " <<  Y << " " <<  Z;
+
+      float *box = (float *)skt->Receive();
+      std::cerr << "As float " <<  box[0] << " " <<  box[1] << " " <<  box[2] << " " <<  box[3] << " " <<  box[4] << " " <<  box[5] << "\n";
+      thePartitioning->SetBox(box[0], box[1], box[2], box[3], box[4], box[5]);
+      free(box);
+
+      thePartitioning->Commit();
+      return false;
+    }
+    else if (cmd == "q" || cmd == "quit")
     {
       pthread_mutex_lock(&main_lock);
       done = true;
       pthread_cond_signal(&main_cond);
       pthread_mutex_unlock(&main_lock);
       free(buf);
-
-      return true;
+      return false;
     }
     else
     {
@@ -158,19 +174,12 @@ int main(int argc,  char *argv[])
   bool override_windowsize = false;
   int nsenders = 1;
   float fuzz = 0.0;
-  Box gbox(-1, -1, -1, 1, 1, 1);
   int base_port = 1900;
 
   for (int i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
-    else if (!strcmp(argv[i], "-P"))
-      base_port = atoi(argv[++i]);
-    else if (!strcmp(argv[i], "-b"))
-    {
-      gbox.set(atof(argv[i+1]), atof(argv[i+2]), atof(argv[i+3]), atof(argv[i+4]), atof(argv[i+6]), atof(argv[i+6]));
-      i += 6;
-    }
+    else if (!strcmp(argv[i], "-P")) base_port = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-f")) fuzz = atof(argv[++i]);
     else if (!strcmp(argv[i], "-n")) nsenders = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
@@ -185,13 +194,6 @@ int main(int argc,  char *argv[])
     else if (statefile == "")   statefile = argv[i];
     else syntax(argv[0]);
   }
-
-  gbox.xyz_min.x -= fuzz;
-  gbox.xyz_min.y -= fuzz;
-  gbox.xyz_min.z -= fuzz;
-  gbox.xyz_max.x += fuzz;
-  gbox.xyz_max.y += fuzz;
-  gbox.xyz_max.z += fuzz;
 
   if (statefile == "")
     syntax(argv[0]);
@@ -214,9 +216,7 @@ int main(int argc,  char *argv[])
 
   if (mpiRank == 0)
   {
-    PartitioningP thePartitioning = Partitioning::NewP();
-    thePartitioning->SetBox(gbox);
-    thePartitioning->Commit();
+    thePartitioning = Partitioning::NewP();
 
     theRenderer = Renderer::NewP();
     theRenderer->SetPartitioning(thePartitioning);
@@ -245,14 +245,13 @@ int main(int argc,  char *argv[])
     }
 
     for (auto c : theCameras)
-        if (! c->Commit())
-        {
-          std::cerr << "error committing camera\n";
-          theApplication.QuitApplication();
-          theApplication.Wait();
-          exit(1);
-        }
-
+      if (! c->Commit())
+      {
+        std::cerr << "error committing camera\n";
+        theApplication.QuitApplication();
+        theApplication.Wait();
+        exit(1);
+      }
 
     DatasetsP theDatasets = Datasets::NewP();
     if (! theDatasets->LoadFromJSON(*doc))
@@ -335,6 +334,7 @@ int main(int argc,  char *argv[])
     receiver->Stop();
     receiver = nullptr;
 
+    thePartitioning = nullptr;
     theRenderingSet = nullptr;
     theDatasets = nullptr;
     theRenderer = nullptr;

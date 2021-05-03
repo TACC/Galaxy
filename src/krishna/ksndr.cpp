@@ -52,10 +52,11 @@ using namespace std;
 using namespace gxy;
 
 float xmin = -1.0, xmax = 1.0, ymin = -1.0, ymax = 1.0, zmin = -1.0, zmax = 1.0;
+float fuzz = 0.0;
+
 int generated_nPts = 100;
 int n_senders = 1;
 int running_count;
-float fuzz = 0.0;
 bool testdata = false;
 string varname = "data";
 
@@ -66,15 +67,17 @@ syntax(char *a)
 {
   std::cerr << "syntax: " << a << " [options]\n";
   std::cerr << "options:\n";
+  std::cerr << " -M master                    address of master process (localhost)\n";
+  std::cerr << " -h hostfile                  a file containing a host name for each receiver process (localhost)\n";
+  std::cerr << " Relevant when sending pre-computed data:\n";
   std::cerr << " -F pfile                     a file containing a list of constituent files (none)\n";
   std::cerr << " -V varname                   name of point-dependendent data to be used in the case of CTK file input (data)\n";
-  std::cerr << " -M master                    address of master process (localhost)\n";
-  std::cerr << " -b xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1)\n";
-  std::cerr << " -b box                       a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
-  std::cerr << " -h hostfile                  a file containing a host name for each receiver process (localhost)\n";
-  std::cerr << " -p npart                     number of particles to send to each receiver (100)\n";
+  std::cerr << " Relevant when generating random data:\n";
   std::cerr << " -n nproc                     number of senders to run (1)\n";
+  std::cerr << " -p npart                     number of particles to send to each receiver (100)\n";
   std::cerr << " -f fuzz                      max radius of points - creates empty border region (0)\n";
+  std::cerr << " -b box                       a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
+  std::cerr << " -b xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1))\n";
   std::cerr << " -T                           test case: one point at the center\n";
   
   exit(1);
@@ -195,6 +198,7 @@ private:
 
         vtkPoints *vpts = ps->GetPoints();
         nPts = ps->GetNumberOfPoints();
+        std::cerr << nPts << "\n";
 
         dsz = sizeof(int) + sizeof(bufhdr)+ nPts*4*sizeof(float);
         data = (char *)malloc(dsz);
@@ -371,6 +375,7 @@ private:
 
     for (int i = 0; i < nPts; i++)
     {
+      std::cerr << pptr[0] << " " << pptr[1] << " " << pptr[2] << " " << *dptr << "\n";
       if (xmin > pptr[0]) xmin = pptr[0];
       if (xmax < pptr[0]) xmax = pptr[0];
       if (ymin > pptr[1]) ymin = pptr[1];
@@ -387,26 +392,9 @@ private:
   bool
   SendSomeData()
   {
+    std::cerr << "s " << host << " " << port << "\n";
     ClientSkt c(host, port);
-    if (c.Connect())
-    {
-      c.Send(data, dsz);
-      char *rply = c.Receive();
-      if (rply)
-      {
-        int r = *(int *)rply;
-        c.Disconnect();
-        free(rply);
-        return r == 1;
-      }
-      else
-        return false;
-    }
-    else
-    {
-      std::cerr << "no connection\n";
-      return false;
-    }
+    return c.Connect() && c.Send(data, dsz);
   }
 
   float
@@ -431,7 +419,7 @@ private:
 
 vector< shared_ptr<SenderThread> > senders;
 
-void
+bool
 SendSomeData(ClientSkt& masterskt)
 {
   char doit;
@@ -440,11 +428,20 @@ SendSomeData(ClientSkt& masterskt)
   {
     if (masterskt.Connect())
     {
-      masterskt.Send("go");
-      char *rply = masterskt.Receive();
-      doit = (rply && *(int *)rply == 1)  ? 1 : 0;
-      if (rply) free(rply);
+      // std::stringstream ss;
+      // ss << "box " << xmin << " " << ymin << " " << zmin << " " << xmax << " " << ymax << " " << zmax;
+
+      if (! masterskt.Send(std::string("box")))
+        return false;
+
+      float box[] = {xmin, ymin, zmin, xmax, ymax, zmax};
+      masterskt.Send((void *)box, 6*sizeof(float));
+
+      if (! masterskt.Send("go"))
+        return false;
+
       masterskt.Disconnect();
+      doit = 1;
     }
     else
     {
@@ -467,16 +464,49 @@ SendSomeData(ClientSkt& masterskt)
   }
   else
       std::cerr << "something went wrong\n";
+
+  return true;
 }
 
 void
-CreateSomeData()
+CreateSomeData(ClientSkt& masterskt)
 {
   for (auto s : senders)
     s->Run();
 
   for (auto s : senders)
     s->Wait();
+
+  float dmin, dmax;
+
+  senders[0]->GetBox(xmin, xmax, ymin, ymax, zmin, zmax);
+  senders[0]->GetDataRange(dmin, dmax);
+
+  for (int i = 1; i < senders.size(); i++)
+  {
+    float pxmin, pxmax, pymin, pymax, pzmin, pzmax, pdmin, pdmax;
+    senders[i]->GetBox(pxmin, pxmax, pymin, pymax, pzmin, pzmax);
+    senders[0]->GetDataRange(pdmin, pdmax);
+    if (xmin > pxmin) xmin = pxmin;
+    if (ymin > pymin) ymin = pymin;
+    if (zmin > pymin) zmin = pymin;
+    if (xmax < pxmin) xmax = pxmin;
+    if (ymax < pymin) ymax = pymin;
+    if (zmax < pymin) zmax = pymin;
+    if (pdmin < dmin) dmin = pdmin;
+    if (pdmax < dmin) dmax = pdmax;
+  }
+
+  float gxmin, gxmax, gymin, gymax, gzmin, gzmax, gdmin, gdmax;
+    
+  MPI_Reduce(&xmin, &gxmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&ymin, &gymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&zmin, &gzmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&xmax, &gxmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&zmax, &gymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&zmax, &gzmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&dmin, &gdmax, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&dmax, &gdmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
 }
 
 int
@@ -576,58 +606,44 @@ main(int argc, char *argv[])
       senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], base_port + host_id + 1)));
   }
 
-  CreateSomeData();
+  CreateSomeData(master_socket);
 
-  // If we generated data algorithmically, we already have box.  Otherwise,
-  // get it.
-  //
-  if (pfiles.size() > 0)
+  float dmin, dmax;
+  float xmin, xmax;
+  float ymin, ymax;
+  float zmin, zmax;
+
+  senders[0]->GetBox(xmin, xmax, ymin, ymax, zmin, zmax);
+  senders[0]->GetDataRange(dmin, dmax);
+
+  for (int i = 1; i < senders.size(); i++)
   {
-    float dmin, dmax;
-    senders[0]->GetBox(xmin, xmax, ymin, ymax, zmin, zmax);
-    senders[0]->GetDataRange(dmin, dmax);
-
-    for (int i = 1; i < senders.size(); i++)
-    {
-      float pxmin, pxmax, pymin, pymax, pzmin, pzmax, pdmin, pdmax;
-      senders[i]->GetBox(pxmin, pxmax, pymin, pymax, pzmin, pzmax);
-      senders[0]->GetDataRange(pdmin, pdmax);
-      if (xmin > pxmin) xmin = pxmin;
-      if (ymin > pymin) ymin = pymin;
-      if (zmin > pymin) zmin = pymin;
-      if (xmax < pxmin) xmax = pxmin;
-      if (ymax < pymin) ymax = pymin;
-      if (zmax < pymin) zmax = pymin;
-      if (pdmin < dmin) dmin = pdmin;
-      if (pdmax < dmin) dmax = pdmax;
-    }
-
-    float gxmin, gxmax, gymin, gymax, gzmin, gzmax, gdmin, gdmax;
-    
-    MPI_Reduce(&xmin, &gxmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&ymin, &gymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&zmin, &gzmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&xmax, &gxmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&zmax, &gymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&zmax, &gzmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&dmin, &gdmax, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&dmax, &gdmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-
-    if (mpi_rank == 0)
-      std::cerr << "global data range: " << gdmin << " --> " << gdmax << "\n";
-
-    // The accumulated minmax is *without* fuzz.   Add it in to report box
-  
-    xmin = gxmin - fuzz;
-    ymin = gymin - fuzz;
-    zmin = gzmin - fuzz;
-    xmax = gxmax + fuzz;
-    ymax = gymax + fuzz;
-    zmax = gzmax + fuzz;
-
-    if (mpi_rank == 0)
-      std::cerr << "box: " << xmin << " " << xmax << " " << ymin << " " << ymax << " " << zmin << " " << zmax << "\n";
+    float pxmin, pxmax, pymin, pymax, pzmin, pzmax, pdmin, pdmax;
+    senders[i]->GetBox(pxmin, pxmax, pymin, pymax, pzmin, pzmax);
+    senders[0]->GetDataRange(pdmin, pdmax);
+    if (xmin > pxmin) xmin = pxmin;
+    if (ymin > pymin) ymin = pymin;
+    if (zmin > pymin) zmin = pymin;
+    if (xmax < pxmin) xmax = pxmin;
+    if (ymax < pymin) ymax = pymin;
+    if (zmax < pymin) zmax = pymin;
+    if (pdmin < dmin) dmin = pdmin;
+    if (pdmax < dmin) dmax = pdmax;
   }
+
+  float gxmin, gxmax, gymin, gymax, gzmin, gzmax, gdmin, gdmax;
+    
+  MPI_Reduce(&xmin, &gxmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&ymin, &gymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&zmin, &gzmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&xmax, &gxmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&zmax, &gymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&zmax, &gzmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&dmin, &gdmax, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&dmax, &gdmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+
+  if (mpi_rank == 0)
+    std::cerr << "global data range: " << gdmin << " --> " << gdmax << "\n";
 
   bool done = false;
   char cmd = 's';
@@ -641,11 +657,19 @@ main(int argc, char *argv[])
     if (cmd == 's')
       SendSomeData(master_socket);
     else if (cmd == 'c')
-      CreateSomeData();
+      CreateSomeData(master_socket);
     else if (cmd == 'S')
     {
-      CreateSomeData();
+      CreateSomeData(master_socket);
       SendSomeData(master_socket);
+    }
+    else if (cmd == 'k')
+    {
+      if (master_socket.Connect())
+      {
+        master_socket.Send("quit");
+        master_socket.Disconnect();
+      }
     }
 
     if (mpi_rank == 0)
@@ -657,19 +681,6 @@ main(int argc, char *argv[])
     }
   }
 
-  if (mpi_rank == 0)
-  {
-    if (master_socket.Connect())
-    {
-      master_socket.Send("quit");
-      char *rply = master_socket.Receive();
-      if (! rply || *(int *)rply != 1)
-        std::cerr << "something is wrong\n";
-      if (rply) free(rply);
-      master_socket.Disconnect();
-    }
-  }
-  
   MPI_Finalize();
   exit(0);
 }

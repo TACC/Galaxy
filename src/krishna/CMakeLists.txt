@@ -39,6 +39,12 @@ set(GALAXY_LIBRARIES
     ${OSPRAY_LIBRARIES}
     ${MPI_C_LIBRARIES})
 
+add_executable(qq qq.cpp)
+target_link_libraries(qq ${MPI_LIBRARIES})
+
+add_executable(rr rr.cpp)
+target_link_libraries(rr ${MPI_LIBRARIES})
+
 add_executable(ksndr ksndr.cpp)
 target_link_libraries(ksndr ${VTK_LIBRARIES} ${MPI_LIBRARIES})
 
