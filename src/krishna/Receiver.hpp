@@ -63,16 +63,19 @@ class Receiver : public gxy::KeyedObject
 public:
   ~Receiver();
 
-  void initialize(); //!< initialize this Receiver object
+  void initialize() override; //!< initialize this Receiver object
 
-  virtual int serialSize();
-  virtual unsigned char* serialize(unsigned char *ptr);
-  virtual unsigned char* deserialize(unsigned char *ptr);
+  virtual bool Commit() override;
+  virtual bool local_commit(MPI_Comm) override;
+
+  virtual int serialSize() override;
+  virtual unsigned char* serialize(unsigned char *ptr) override;
+  virtual unsigned char* deserialize(unsigned char *ptr) override;
 
   void Start(bool(*)(ServerSkt*, void*, char*));
   void Run();
   void Stop();
-  void Accept(int n);
+  void Accept(int n = 1);
   bool Wait();
 
   void SetGeometry(GeometryP g);
@@ -82,12 +85,16 @@ public:
 
   int GetNSenders() { return nsenders; }
 
+  const char *gethosts() { return host_list.c_str(); }
+
 protected:
   void _Stop();
   void _Receive(char *);
   bool receive(char *);
 
 private:
+  std::string host_list;
+
   pthread_mutex_t mutex_buffers = PTHREAD_MUTEX_INITIALIZER;
   pthread_cond_t  cond_buffers = PTHREAD_COND_INITIALIZER;
   void lock_buffers() { pthread_mutex_lock(&mutex_buffers); }
@@ -255,6 +262,25 @@ private:
     }
 
     WORK_CLASS(WaitMsg, false);
+
+    bool CollectiveAction(MPI_Comm c, bool isRoot);
+  };
+
+  class HostsMsg : public Work
+  {
+    struct HostsMsgArgs
+    {
+      Key  rk;       // Receiver object
+    };
+
+  public:
+    HostsMsg(Receiver *r) : HostsMsg(sizeof(HostsMsgArgs))
+    {
+      struct HostsMsgArgs *p = (struct HostsMsgArgs *)contents->get();
+      p->rk = r->getkey();
+    }
+
+    WORK_CLASS(HostsMsg, false);
 
     bool CollectiveAction(MPI_Comm c, bool isRoot);
   };

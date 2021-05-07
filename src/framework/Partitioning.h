@@ -44,6 +44,7 @@ public:
   virtual void initialize(); //!< initialize this object
 
   void SetBox(Box&);
+  void SetBox(float, float, float, float, float, float); // xmin ymin zmin xmax ymax zmax
 
   bool isIn(vec3f, float fuzz = 0);          // Is the point inside this rank's partition (with fuzz)
   bool isIn(int i, vec3f p, float fuzz = 0); // Is the point inside rank i's partition (with fuzz)

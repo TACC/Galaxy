@@ -55,6 +55,14 @@ Partitioning::SetBox(Box& global_box)
   setup();
 }
 
+void 
+Partitioning::SetBox(float x, float y, float z, float X, float Y, float Z)
+{
+  gbox.xyz_min = vec3f(x, y, z);
+  gbox.xyz_max = vec3f(X, Y, Z);
+}
+
+
 bool
 Partitioning::local_commit(MPI_Comm c)
 {

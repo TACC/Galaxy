@@ -49,6 +49,8 @@ bool   done = false;
 bool   cinema = false;
 string cdb("");
 
+float fuzz = 0.0;
+
 void
 syntax(char *a)
 {
@@ -84,18 +86,14 @@ master_handler(ServerSkt *skt, void *p, char *buf)
   Receiver *rcvr = (Receiver *)p;
   if (buf)
   {
-    std::cerr << "received: " << buf << "\n";
-
     std::stringstream ss(buf);
     std::string cmd;
     ss >> cmd;
 
     if (cmd == "go")
     {
-      std::cerr << "waiting for data...\n";
       receiver->Accept(receiver->GetNSenders());
       receiver->Wait();
-      std::cerr << "shuffle done\n";
       
       theRenderingSet->Reset();
       theRenderingSet->Commit();
@@ -125,16 +123,24 @@ master_handler(ServerSkt *skt, void *p, char *buf)
     }
     else if (cmd == "box")
     {
-      //float x, y, z, X, Y, Z;
-      //ss >> x >> y >> z >> X >> Y >> Z;
-      //ss << "As string " <<  x << " " <<  y << " " <<  z << " " <<  X << " " <<  Y << " " <<  Z;
-
       float *box = (float *)skt->Receive();
-      std::cerr << "As float " <<  box[0] << " " <<  box[1] << " " <<  box[2] << " " <<  box[3] << " " <<  box[4] << " " <<  box[5] << "\n";
-      thePartitioning->SetBox(box[0], box[1], box[2], box[3], box[4], box[5]);
+      thePartitioning->SetBox(box[0]-fuzz, box[1]-fuzz, box[2]-fuzz, box[3]+fuzz, box[4]+fuzz, box[5]+fuzz);
       free(box);
 
       thePartitioning->Commit();
+      return false;
+    }
+    else if (cmd == "sendhosts")
+    {
+      skt->Send((char *)rcvr->gethosts());
+      return false;
+    }
+    else if (cmd == "nsenders")
+    {
+      int nsenders;
+      ss >> nsenders;
+      rcvr->SetNSenders(nsenders);
+      rcvr->Commit();
       return false;
     }
     else if (cmd == "q" || cmd == "quit")
@@ -172,8 +178,6 @@ int main(int argc,  char *argv[])
   int width = 1920, height = 1080;
   int maxConcurrentRenderings = 99999999;
   bool override_windowsize = false;
-  int nsenders = 1;
-  float fuzz = 0.0;
   int base_port = 1900;
 
   for (int i = 1; i < argc; i++)
@@ -181,7 +185,6 @@ int main(int argc,  char *argv[])
     if (!strcmp(argv[i], "-A")) dbg = true, atch = true, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-P")) base_port = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-f")) fuzz = atof(argv[++i]);
-    else if (!strcmp(argv[i], "-n")) nsenders = atoi(argv[++i]);
     else if (!strcmp(argv[i], "-C")) cinema = true, cdb = argv[++i];
     else if (!strncmp(argv[i],"-D", 2)) dbg = true, atch = false, dbgarg = argv[i] + 2;
     else if (!strcmp(argv[i], "-s")) 
@@ -317,7 +320,6 @@ int main(int argc,  char *argv[])
 
     receiver  = Receiver::NewP();
     receiver->SetGeometry(particles);
-    receiver->SetNSenders(nsenders);
     receiver->SetBasePort(base_port);
     receiver->SetFuzz(fuzz);
     receiver->Commit();
@@ -345,6 +347,4 @@ int main(int argc,  char *argv[])
   }
 
   theApplication.Wait();
-
-  std::cerr << "done\n";
 }

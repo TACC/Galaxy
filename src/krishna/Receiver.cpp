@@ -32,6 +32,7 @@ using namespace gxy;
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 namespace gxy {
 
@@ -40,6 +41,8 @@ WORK_CLASS_TYPE(Receiver::StopMsg)
 WORK_CLASS_TYPE(Receiver::ReshuffleMsg)
 WORK_CLASS_TYPE(Receiver::AcceptMsg)
 WORK_CLASS_TYPE(Receiver::WaitMsg)
+WORK_CLASS_TYPE(Receiver::HostsMsg)
+
 KEYED_OBJECT_CLASS_TYPE(Receiver)
 
 void
@@ -48,6 +51,7 @@ Receiver::Register()
   RegisterClass();
   Receiver::AcceptMsg::Register();
   Receiver::WaitMsg::Register();
+  Receiver::HostsMsg::Register();
   Receiver::RunMsg::Register();
   Receiver::StopMsg::Register();
   Receiver::ReshuffleMsg::Register();
@@ -64,6 +68,34 @@ Receiver::~Receiver()
 void
 Receiver::initialize()
 {
+}
+
+bool
+Receiver::local_commit(MPI_Comm c)
+{
+  if (super::local_commit(c))
+    return true;
+
+  int grnk, gsz;
+  MPI_Comm_rank(c, &grnk);
+  MPI_Comm_size(c, &gsz);
+  MPI_Comm_dup(c, &receiver_comm);
+
+  local_port = base_port + grnk + 1;
+
+  return false;
+}
+
+bool
+Receiver::Commit()
+{
+  if (! super::Commit())
+    return false;
+
+  HostsMsg msg(this);
+  msg.Broadcast(true, true);
+
+  return true;
 }
 
 void
@@ -160,14 +192,6 @@ bool
 Receiver::Setup(MPI_Comm comm)
 {
   state = PAUSED;
-
-  int grnk, gsz;
-  MPI_Comm_rank(comm, &grnk);
-  MPI_Comm_size(comm, &gsz);
-
-  MPI_Comm_dup(comm, &receiver_comm);
-
-  local_port = base_port + grnk + 1;
 
   serverskt = new ServerSkt(local_port, receiver, this);
   serverskt->start(true);
@@ -338,10 +362,8 @@ Receiver::Reshuffle()
     }
   }
 
-  std::cerr << GetTheApplication()->GetRank() << " waiting for buffers...\n";
   while (reshuffle_buffers.size() < s)
     wait_buffers();
-  std::cerr << GetTheApplication()->GetRank() << " got them\n";
 
   unlock_buffers();
 
@@ -572,6 +594,41 @@ Receiver::_Accept(MPI_Comm c, int nsenders)
   }
 
   unlock_state();
+}
+
+bool
+Receiver::HostsMsg::CollectiveAction(MPI_Comm c, bool isRoot)
+{
+  HostsMsgArgs *p = (HostsMsgArgs *)get();
+  ReceiverP receiver = Receiver::GetByKey(p->rk);
+  
+  int r = GetTheApplication()->GetRank();
+  int s = GetTheApplication()->GetSize();
+
+  char *sndbuf = new char[256];
+
+  gethostname(sndbuf, 256);
+  std::stringstream ss;
+  ss << sndbuf << ":" << receiver->local_port;
+  
+  char *rcvbuf = new char[s*256];
+
+  MPI_Gather((void *)ss.str().c_str(), 256, MPI_CHAR, (void *)rcvbuf, 256, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  if (r == 0)
+  {
+    std::stringstream ss;
+
+    for (int i = 0; i < s; i++)
+      ss << std::string(rcvbuf + i*256) << ";";
+
+    receiver->host_list = ss.str();
+  }
+
+  delete[] sndbuf;
+  delete[] rcvbuf;
+
+  return false;
 }
 
 }

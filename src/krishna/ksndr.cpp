@@ -51,7 +51,7 @@ using namespace std;
 
 using namespace gxy;
 
-float xmin = -1.0, xmax = 1.0, ymin = -1.0, ymax = 1.0, zmin = -1.0, zmax = 1.0;
+float gxmin, gxmax, gymin, gymax, gzmin, gzmax, gdmin, gdmax;
 float fuzz = 0.0;
 
 int generated_nPts = 100;
@@ -77,7 +77,7 @@ syntax(char *a)
   std::cerr << " -p npart                     number of particles to send to each receiver (100)\n";
   std::cerr << " -f fuzz                      max radius of points - creates empty border region (0)\n";
   std::cerr << " -b box                       a file containing six space separated values: xmin xmax ymin ymax zmin zmax (-1 1 -1 1 -1 1)\n";
-  std::cerr << " -b xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1))\n";
+  std::cerr << " -B xl, yl, zl, xu, yu, zu    bounding box (default -1 -1 -1 1 1 1))\n";
   std::cerr << " -T                           test case: one point at the center\n";
   
   exit(1);
@@ -104,7 +104,7 @@ class SenderThread
   }
     
 public:
-  SenderThread(int n, string host, int port, string pfile = "") : sender_id(n), host(host), port(port), pfile(pfile)
+  SenderThread(int n, string pfile = "") : sender_id(n), pfile(pfile)
   {
     long seed = getpid() + rand();
     mt_rand.seed(seed);
@@ -117,6 +117,12 @@ public:
       pthread_join(tid, NULL);
       tid = NULL;
     }
+  }
+
+  void SetDestination(string h, int p)
+  {
+    host = h;
+    port = p;
   }
 
   void
@@ -132,8 +138,18 @@ public:
     tid = NULL;
   }
 
+  void SetFuzz(float f)
+  {
+    fuzz = f;
+  }
+
+  void GetFuzz(float& f)
+  {
+    f = fuzz;
+  }
+
   void
-  GetBox(float& x, float& X, float& y, float& Y, float& z, float& Z)
+  GetBox(float& x, float& y, float& z, float& X, float& Y, float& Z)
   {
     x = xmin;
     X = xmax;
@@ -141,6 +157,17 @@ public:
     Y = ymax;
     z = zmin;
     Z = zmax;
+  }
+
+  void
+  SetBox(float x, float y, float z, float X, float Y, float Z)
+  {
+    xmin = x;
+    xmax = X;
+    ymin = y;
+    ymax = Y;
+    zmin = z;
+    zmax = Z;
   }
 
   void GetDataRange(float& d, float &D)
@@ -198,7 +225,6 @@ private:
 
         vtkPoints *vpts = ps->GetPoints();
         nPts = ps->GetNumberOfPoints();
-        std::cerr << nPts << "\n";
 
         dsz = sizeof(int) + sizeof(bufhdr)+ nPts*4*sizeof(float);
         data = (char *)malloc(dsz);
@@ -348,11 +374,19 @@ private:
       hdr = (bufhdr *)(data + sizeof(int));
       float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
 
+      float fxmin = xmin + fuzz;
+      float fymin = ymin + fuzz;
+      float fzmin = zmin + fuzz;
+
+      float fxmax = xmax - fuzz;
+      float fymax = ymax - fuzz;
+      float fzmax = zmax - fuzz;
+
       for (int i = 0; i < nPts; i++)
       {
-        *ptr++ = xmin + frand()*(xmax - xmin);
-        *ptr++ = ymin + frand()*(ymax - ymin);
-        *ptr++ = zmin + frand()*(zmax - zmin);
+        *ptr++ = fxmin + frand()*(fxmax - fxmin);
+        *ptr++ = fymin + frand()*(fymax - fymin);
+        *ptr++ = fzmin + frand()*(fzmax - fzmin);
       }
 
       for (int i = 0; i < nPts; i++)
@@ -375,7 +409,6 @@ private:
 
     for (int i = 0; i < nPts; i++)
     {
-      std::cerr << pptr[0] << " " << pptr[1] << " " << pptr[2] << " " << *dptr << "\n";
       if (xmin > pptr[0]) xmin = pptr[0];
       if (xmax < pptr[0]) xmax = pptr[0];
       if (ymin > pptr[1]) ymin = pptr[1];
@@ -392,9 +425,16 @@ private:
   bool
   SendSomeData()
   {
-    std::cerr << "s " << host << " " << port << "\n";
-    ClientSkt c(host, port);
-    return c.Connect() && c.Send(data, dsz);
+    if (port == -1)
+    {
+      std::cerr << "Can't send data without knowing where!\n";
+      return false;
+    }
+    else
+    {
+      ClientSkt c(host, port);
+      return c.Connect() && c.Send(data, dsz);
+    }
   }
 
   float
@@ -411,48 +451,105 @@ private:
   size_t dsz = -1;
   char *data = NULL;
   int frame = 0;
-  string host;
-  int port;
+  string host = "";
+  int port = -1;
   int nPts;
   float xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1, dmin = 0, dmax = 1;
 };
 
 vector< shared_ptr<SenderThread> > senders;
 
-bool
-SendSomeData(ClientSkt& masterskt)
+bool 
+Setup(ClientSkt& masterskt)
 {
-  char doit;
+  int status = 0;
+  int sz;
+  char *hoststring = NULL;
 
   if (mpi_rank == 0)
   {
     if (masterskt.Connect())
     {
-      // std::stringstream ss;
-      // ss << "box " << xmin << " " << ymin << " " << zmin << " " << xmax << " " << ymax << " " << zmax;
+      status = 1;
 
-      if (! masterskt.Send(std::string("box")))
-        return false;
+      if (status && !masterskt.Send(std::string("box")))
+        status = 0;
 
-      float box[] = {xmin, ymin, zmin, xmax, ymax, zmax};
-      masterskt.Send((void *)box, 6*sizeof(float));
+      float box[] = {gxmin, gymin, gzmin, gxmax, gymax, gzmax};
+      if (status && !masterskt.Send((void *)box, 6*sizeof(float)))
+        status = 0;
 
-      if (! masterskt.Send("go"))
-        return false;
+      std::stringstream ss;
+      ss << "nsenders " << n_senders;
+      if (status && !masterskt.Send(ss.str()))
+        status = 0;
+
+      if (status && !masterskt.Send(std::string("sendhosts")))
+        status = 0;
+    
+      if (status && ((hoststring = masterskt.Receive()) == NULL))
+        status = 0;
+
+      if (status && !masterskt.Send(std::string("go")))
+        status = 0;
 
       masterskt.Disconnect();
-      doit = 1;
     }
-    else
-    {
-      doit = 0;
-      std::cerr << "no renderer available\n";
-    }
+
+    sz = status ? strlen(hoststring) : -1;
   }
 
-  MPI_Bcast(&doit, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&status, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (doit)
+  if (status)
+  {
+    if (mpi_rank > 0)
+      hoststring = (char *)malloc(sz);
+
+    MPI_Bcast(&hoststring, sz, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+    // create a list of space-separated 'host port' destination strings
+    // from a colon-separated of 'host:port's.
+
+    std::vector<char *> hosts;
+    hosts.push_back(hoststring);
+
+    for (char *c = hoststring; *c; c++)
+      if (*c == ':') *c = ' ';
+      else if (*c == ';')
+      {
+        *c = '\0';
+        if (*(c+1) != '\0')
+          hosts.push_back(c+1);
+      }
+
+    int senders_per_rank = n_senders / mpi_size;
+    int sender_start = mpi_rank * senders_per_rank;
+    int sender_end   = (mpi_rank == mpi_size-1) ? n_senders : (mpi_rank+1) * senders_per_rank;
+
+    for (int i = 0;  i < (sender_end - sender_start); i++)
+    {
+      int j = (i + sender_start) % hosts.size();
+
+      char host[256]; int port;
+
+      stringstream ss(hosts[j]);
+      ss >> host >> port;
+
+      senders[i]->SetDestination(host, port);
+    }
+
+  }
+
+  if (hoststring)
+    free(hoststring);
+  return status == 1;
+}
+
+bool
+SendSomeData(ClientSkt& masterskt)
+{
+  if (Setup(masterskt))
   {
     command = SEND_SOME_DATA;
 
@@ -462,43 +559,50 @@ SendSomeData(ClientSkt& masterskt)
     for (auto s : senders)
       s->Wait();
   }
-  else
-      std::cerr << "something went wrong\n";
 
   return true;
 }
 
 void
-CreateSomeData(ClientSkt& masterskt)
+CreateSomeData()
 {
+  command = CREATE_SOME_DATA;
+
   for (auto s : senders)
     s->Run();
 
   for (auto s : senders)
     s->Wait();
 
-  float dmin, dmax;
+  float xmin, xmax, ymin, ymax, zmin, zmax, dmin, dmax;
 
-  senders[0]->GetBox(xmin, xmax, ymin, ymax, zmin, zmax);
-  senders[0]->GetDataRange(dmin, dmax);
-
-  for (int i = 1; i < senders.size(); i++)
+  if (testdata)
   {
-    float pxmin, pxmax, pymin, pymax, pzmin, pzmax, pdmin, pdmax;
-    senders[i]->GetBox(pxmin, pxmax, pymin, pymax, pzmin, pzmax);
-    senders[0]->GetDataRange(pdmin, pdmax);
-    if (xmin > pxmin) xmin = pxmin;
-    if (ymin > pymin) ymin = pymin;
-    if (zmin > pymin) zmin = pymin;
-    if (xmax < pxmin) xmax = pxmin;
-    if (ymax < pymin) ymax = pymin;
-    if (zmax < pymin) zmax = pymin;
-    if (pdmin < dmin) dmin = pdmin;
-    if (pdmax < dmin) dmax = pdmax;
+    xmin = ymin = zmin = -1;
+    xmax = ymax = zmax =  1;
+  }
+  else
+  {
+    senders[0]->GetBox(xmin, ymin, zmin, xmax, ymax, zmax);
+    senders[0]->GetDataRange(dmin, dmax);
+
+    for (int i = 1; i < senders.size(); i++)
+    {
+      float pxmin, pxmax, pymin, pymax, pzmin, pzmax, pdmin, pdmax;
+      senders[i]->GetBox(pxmin, pymin, pzmin, pxmax, pymax, pzmax);
+      senders[i]->GetDataRange(pdmin, pdmax);
+
+      if (xmin > pxmin) xmin = pxmin;
+      if (ymin > pymin) ymin = pymin;
+      if (zmin > pymin) zmin = pymin;
+      if (xmax < pxmin) xmax = pxmin;
+      if (ymax < pymin) ymax = pymin;
+      if (zmax < pymin) zmax = pymin;
+      if (pdmin < dmin) dmin = pdmin;
+      if (pdmax < dmin) dmax = pdmax;
+    }
   }
 
-  float gxmin, gxmax, gymin, gymax, gzmin, gzmax, gdmin, gdmax;
-    
   MPI_Reduce(&xmin, &gxmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&ymin, &gymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&zmin, &gzmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -529,8 +633,17 @@ main(int argc, char *argv[])
     if (! strcmp(argv[i], "-b"))
     {
       ifstream ifs(argv[++i]);
-      ifs >> xmin >> ymin >> zmin >> xmax >> ymax >> zmax;
+      ifs >> gxmin >> gymin >> gzmin >> gxmax >> gymax >> gzmax;
       ifs.close();
+    }
+    else if (! strcmp(argv[i], "-B"))
+    {
+      gxmin = atof(argv[++i]);
+      gymin = atof(argv[++i]);
+      gzmin = atof(argv[++i]);
+      gxmax = atof(argv[++i]);
+      gymax = atof(argv[++i]);
+      gzmax = atof(argv[++i]);
     }
     else if (! strcmp(argv[i], "-M")) 
     {
@@ -584,13 +697,6 @@ main(int argc, char *argv[])
 
   if (n_senders < mpi_size) n_senders = mpi_size;
 
-  xmin = xmin + fuzz;
-  ymin = ymin + fuzz;
-  zmin = zmin + fuzz;
-  xmax = xmax - fuzz;
-  ymax = ymax - fuzz;
-  zmax = zmax - fuzz;
-
   int senders_per_rank = n_senders / mpi_size;
   int sender_start = mpi_rank * senders_per_rank;
   int sender_end   = (mpi_rank == mpi_size-1) ? n_senders : (mpi_rank+1) * senders_per_rank;
@@ -599,51 +705,19 @@ main(int argc, char *argv[])
 
   for (int i = sender_start;  i < sender_end; i++)
   {
-    int host_id = i % hosts.size();
     if (pfiles.size())
-      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], base_port + host_id + 1, pfiles[i])));
+      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, pfiles[i])));
     else
-      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i, hosts[host_id], base_port + host_id + 1)));
+      senders.push_back(shared_ptr<SenderThread>(new SenderThread(i)));
   }
 
-  CreateSomeData(master_socket);
-
-  float dmin, dmax;
-  float xmin, xmax;
-  float ymin, ymax;
-  float zmin, zmax;
-
-  senders[0]->GetBox(xmin, xmax, ymin, ymax, zmin, zmax);
-  senders[0]->GetDataRange(dmin, dmax);
-
-  for (int i = 1; i < senders.size(); i++)
+  for (auto s : senders)
   {
-    float pxmin, pxmax, pymin, pymax, pzmin, pzmax, pdmin, pdmax;
-    senders[i]->GetBox(pxmin, pxmax, pymin, pymax, pzmin, pzmax);
-    senders[0]->GetDataRange(pdmin, pdmax);
-    if (xmin > pxmin) xmin = pxmin;
-    if (ymin > pymin) ymin = pymin;
-    if (zmin > pymin) zmin = pymin;
-    if (xmax < pxmin) xmax = pxmin;
-    if (ymax < pymin) ymax = pymin;
-    if (zmax < pymin) zmax = pymin;
-    if (pdmin < dmin) dmin = pdmin;
-    if (pdmax < dmin) dmax = pdmax;
+    s->SetFuzz(fuzz);
+    s->SetBox(gxmin, gymin, gzmin, gxmax, gymax, gzmax);
   }
 
-  float gxmin, gxmax, gymin, gymax, gzmin, gzmax, gdmin, gdmax;
-    
-  MPI_Reduce(&xmin, &gxmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&ymin, &gymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&zmin, &gzmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&xmax, &gxmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&zmax, &gymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&zmax, &gzmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&dmin, &gdmax, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&dmax, &gdmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-
-  if (mpi_rank == 0)
-    std::cerr << "global data range: " << gdmin << " --> " << gdmax << "\n";
+  CreateSomeData();
 
   bool done = false;
   char cmd = 's';
@@ -657,10 +731,10 @@ main(int argc, char *argv[])
     if (cmd == 's')
       SendSomeData(master_socket);
     else if (cmd == 'c')
-      CreateSomeData(master_socket);
+      CreateSomeData();
     else if (cmd == 'S')
     {
-      CreateSomeData(master_socket);
+      CreateSomeData();
       SendSomeData(master_socket);
     }
     else if (cmd == 'k')
