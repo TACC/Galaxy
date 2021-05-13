@@ -51,7 +51,7 @@ using namespace std;
 
 using namespace gxy;
 
-float gxmin, gxmax, gymin, gymax, gzmin, gzmax, gdmin, gdmax;
+float gxmin = -1, gxmax = 1, gymin = -1, gymax = 1, gzmin = -1, gzmax = 1, gdmin, gdmax;
 float fuzz = 0.0;
 
 int generated_nPts = 100;
@@ -159,6 +159,12 @@ public:
     Z = zmax;
   }
 
+  void 
+  SetBox(float *b)
+  {
+    SetBox(b[0], b[1], b[2], b[3], b[4], b[5]);
+  }
+
   void
   SetBox(float x, float y, float z, float X, float Y, float Z)
   {
@@ -196,9 +202,9 @@ private:
       hdr = (bufhdr *)(data + sizeof(int));
       float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
       
-      *ptr++ = 0.0;
-      *ptr++ = 0.0;
-      *ptr++ = 0.0;
+      *ptr++ = (xmin + xmax) / 2.0;
+      *ptr++ = (ymin + ymax) / 2.0;
+      *ptr++ = (zmin + zmax) / 2.0;
       *ptr++ = 0.0;
     }
     else if (pfile != "")
@@ -362,13 +368,15 @@ private:
     }
     else
     {
-      nPts = generated_nPts;
-      if (dsz == -1)
+      if (nPts != generated_nPts)
       {
+        if (data) free(data);
+        nPts = generated_nPts;
         dsz = sizeof(int) + sizeof(bufhdr)+ nPts*4*sizeof(float);
         data = (char *)malloc(dsz);
       }
 
+      nPts = generated_nPts;
       *(int *)data = dsz;
 
       hdr = (bufhdr *)(data + sizeof(int));
@@ -399,26 +407,29 @@ private:
     hdr->npoints       = nPts;
     hdr->nconnectivity = 0;
 
-    float *pptr = (float *)(data + sizeof(int) + sizeof(bufhdr));
-    float *dptr = pptr + 3*nPts;
-
-    xmin = xmax = pptr[0];
-    ymin = ymax = pptr[1];
-    zmin = zmax = pptr[2];
-    dmin = dmax = *dptr;
-
-    for (int i = 0; i < nPts; i++)
+    if (! testdata)
     {
-      if (xmin > pptr[0]) xmin = pptr[0];
-      if (xmax < pptr[0]) xmax = pptr[0];
-      if (ymin > pptr[1]) ymin = pptr[1];
-      if (ymax < pptr[1]) ymax = pptr[1];
-      if (zmin > pptr[2]) zmin = pptr[2];
-      if (zmax < pptr[2]) zmax = pptr[2];
-      if (dmin > *dptr) dmin = *dptr;
-      if (dmax < *dptr) dmax = *dptr;
-      pptr += 3;
-      dptr ++;
+      float *pptr = (float *)(data + sizeof(int) + sizeof(bufhdr));
+      float *dptr = pptr + 3*nPts;
+
+      xmin = xmax = pptr[0];
+      ymin = ymax = pptr[1];
+      zmin = zmax = pptr[2];
+      dmin = dmax = *dptr;
+
+      for (int i = 0; i < nPts; i++)
+      {
+        if (xmin > pptr[0]) xmin = pptr[0];
+        if (xmax < pptr[0]) xmax = pptr[0];
+        if (ymin > pptr[1]) ymin = pptr[1];
+        if (ymax < pptr[1]) ymax = pptr[1];
+        if (zmin > pptr[2]) zmin = pptr[2];
+        if (zmax < pptr[2]) zmax = pptr[2];
+        if (dmin > *dptr) dmin = *dptr;
+        if (dmax < *dptr) dmax = *dptr;
+        pptr += 3;
+        dptr ++;
+      }
     }
   }
 
@@ -453,51 +464,48 @@ private:
   int frame = 0;
   string host = "";
   int port = -1;
-  int nPts;
+  int nPts = -1;
   float xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1, dmin = 0, dmax = 1;
 };
 
 vector< shared_ptr<SenderThread> > senders;
 
-bool 
-Setup(ClientSkt& masterskt)
+int 
+Setup(ClientSkt* masterskt)
 {
   int status = 0;
   int sz;
   char *hoststring = NULL;
 
-  if (mpi_rank == 0)
+  if (masterskt && masterskt->Connect())
   {
-    if (masterskt.Connect())
-    {
-      status = 1;
+    status = 1;
 
-      if (status && !masterskt.Send(std::string("box")))
-        status = 0;
+    if (status && !masterskt->Send(std::string("box")))
+      status = 0;
 
-      float box[] = {gxmin, gymin, gzmin, gxmax, gymax, gzmax};
-      if (status && !masterskt.Send((void *)box, 6*sizeof(float)))
-        status = 0;
+    float box[] = {gxmin, gymin, gzmin, gxmax, gymax, gzmax};
+    if (status && !masterskt->Send((void *)box, 6*sizeof(float)))
+      status = 0;
 
-      std::stringstream ss;
-      ss << "nsenders " << n_senders;
-      if (status && !masterskt.Send(ss.str()))
-        status = 0;
+    std::stringstream ss;
+    ss << "nsenders " << n_senders;
+    if (status && !masterskt->Send(ss.str()))
+      status = 0;
 
-      if (status && !masterskt.Send(std::string("sendhosts")))
-        status = 0;
-    
-      if (status && ((hoststring = masterskt.Receive()) == NULL))
-        status = 0;
+    if (status && !masterskt->Send(std::string("sendhosts")))
+      status = 0;
+  
+    if (status && ((hoststring = masterskt->Receive()) == NULL))
+      status = 0;
 
-      if (status && !masterskt.Send(std::string("go")))
-        status = 0;
+    if (status && !masterskt->Send(std::string("go")))
+      status = 0;
 
-      masterskt.Disconnect();
-    }
-
-    sz = status ? strlen(hoststring) : -1;
+    masterskt->Disconnect();
   }
+
+  sz = status ? strlen(hoststring) : -1;
 
   MPI_Bcast(&status, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -543,13 +551,16 @@ Setup(ClientSkt& masterskt)
 
   if (hoststring)
     free(hoststring);
-  return status == 1;
+
+  return status;
 }
 
 bool
-SendSomeData(ClientSkt& masterskt)
+SendSomeData(ClientSkt* masterskt)
 {
-  if (Setup(masterskt))
+  int status = Setup(masterskt);
+
+  if (status)
   {
     command = SEND_SOME_DATA;
 
@@ -701,7 +712,7 @@ main(int argc, char *argv[])
   int sender_start = mpi_rank * senders_per_rank;
   int sender_end   = (mpi_rank == mpi_size-1) ? n_senders : (mpi_rank+1) * senders_per_rank;
 
-  ClientSkt master_socket(master_host, base_port);
+  ClientSkt *master_socket = (mpi_rank == 0) ? new ClientSkt(master_host, base_port) : NULL;
 
   for (int i = sender_start;  i < sender_end; i++)
   {
@@ -729,9 +740,30 @@ main(int argc, char *argv[])
       break;
 
     if (cmd == 's')
+    {
       SendSomeData(master_socket);
+    }
     else if (cmd == 'c')
+    {
       CreateSomeData();
+    }
+    else if (cmd == 'b')
+    {
+      float box[6];
+      if (mpi_rank == 0)
+        cin >> box[0] >> box[1] >> box[2] >> box[3] >> box[4] >> box[5];
+      MPI_Bcast(box, 6, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      for (auto s : senders)
+        s->SetBox(box);
+      CreateSomeData();
+    }
+    else if (cmd == 'p')
+    {
+      if (mpi_rank == 0)
+        cin >> generated_nPts;
+      MPI_Bcast(&generated_nPts, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      CreateSomeData();
+    }
     else if (cmd == 'S')
     {
       CreateSomeData();
@@ -739,11 +771,12 @@ main(int argc, char *argv[])
     }
     else if (cmd == 'k')
     {
-      if (master_socket.Connect())
-      {
-        master_socket.Send("quit");
-        master_socket.Disconnect();
-      }
+      if (mpi_rank == 0)
+        if (master_socket->Connect())
+        {
+          master_socket->Send("quit");
+          master_socket->Disconnect();
+        }
     }
 
     if (mpi_rank == 0)
@@ -754,6 +787,8 @@ main(int argc, char *argv[])
           cmd = 'q';
     }
   }
+
+  if (master_socket) delete master_socket;
 
   MPI_Finalize();
   exit(0);
