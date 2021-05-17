@@ -210,6 +210,7 @@ Receiver::Reshuffle()
 
   PartitioningP partitioning = GetTheRenderer()->GetPartitioning();
 
+#if 0
   for (int i = 0; i < s; i++)
   {
     Box b = partitioning->get_box(i);
@@ -221,6 +222,7 @@ Receiver::Reshuffle()
       b.xyz_max.y << " " <<
       b.xyz_max.z << "\n";
   }
+#endif
 
   // First we see how much data we need to send to each recipient
 

@@ -52,7 +52,7 @@ public:
       }
     }
 
-    std::cerr << "reading " << n << " bytes on skt " << cskt << "\n";
+    // std::cerr << "reading " << n << " bytes on skt " << cskt << "\n";
     char *buffer = (char *)malloc(n);
 
     rem = n;
@@ -118,7 +118,7 @@ public:
   bool
   SendRaw(void *buffer, int n)
   {
-    std::cerr << "sending " << n << " bytes on skt " << cskt << "\n";
+    // std::cerr << "sending " << n << " bytes on skt " << cskt << "\n";
 
     int rem = sizeof(n);
     unsigned char *p = (unsigned char *)&n;
@@ -181,7 +181,7 @@ public:
 
   ~ClientSkt()
   {
-    std::cerr << "Client socket dtor... " << cskt << "\n";
+    // std::cerr << "Client socket dtor... " << cskt << "\n";
     if (IsConnected())
       Disconnect();
   }
@@ -226,7 +226,7 @@ public:
       return false;
     }
 
-    std::cerr << "port " << port << " connected to " << cskt << "\n";
+    // std::cerr << "port " << port << " connected to " << cskt << "\n";
     return true;
   }
 
@@ -235,7 +235,7 @@ public:
   {
     if (cskt > 0)
     {
-      std::cerr << "Client socket Disconnect... " << cskt << "\n";
+      // std::cerr << "Client socket Disconnect... " << cskt << "\n";
       close(cskt);
       cskt = -1;
     }
@@ -260,7 +260,7 @@ public:
     mskt = ::socket(AF_INET, SOCK_STREAM, 0);
     cskt = -1;
 
-    std::cerr << "Master socket " << mskt << "\n";
+    // std::cerr << "Master socket " << mskt << "\n";
 
     int flags = fcntl(mskt, F_GETFL, 0);
     flags = (flags | O_NONBLOCK);
@@ -283,7 +283,7 @@ public:
 
     ::listen(mskt,30);
 
-    std::cerr << "port " << port << " listening on socket " << mskt << "\n";
+    // std::cerr << "port " << port << " listening on socket " << mskt << "\n";
   }
 
   ~ServerSkt()
@@ -377,13 +377,13 @@ public:
       }
       else
       {
-        std::cerr << "Server " << me->mskt << " accepts on socket " << me->cskt << "\n";
+        // std::cerr << "Server " << me->mskt << " accepts on socket " << me->cskt << "\n";
         char *buf;
 
         while((buf = me->Receive()) != NULL && !me->paused)
           me->paused = (*me->handler)(me, me->ptr, buf) || me->done;
 
-        std::cerr << "Server closes socket " << me->cskt << "\n";
+        // std::cerr << "Server closes socket " << me->cskt << "\n";
         close(me->cskt);
         me->cskt = -1;
       }

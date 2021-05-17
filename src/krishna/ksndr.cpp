@@ -368,7 +368,6 @@ private:
     }
     else
     {
-      std::cerr << generated_nPts << "\n";
       if (nPts != generated_nPts)
       {
         if (data) free(data);

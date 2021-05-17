@@ -127,7 +127,6 @@ master_handler(ServerSkt *skt, void *p, char *buf)
       thePartitioning->SetBox(box[0]-fuzz, box[1]-fuzz, box[2]-fuzz, box[3]+fuzz, box[4]+fuzz, box[5]+fuzz);
       std::cerr << (box[0]-fuzz) << " " << (box[1]-fuzz) << " " << (box[2]-fuzz) << " " << (box[3]+fuzz) << " " << (box[4]+fuzz) << " " << (box[5]+fuzz) << " " << "\n";
       free(box);
-
       thePartitioning->Commit();
       return false;
     }
