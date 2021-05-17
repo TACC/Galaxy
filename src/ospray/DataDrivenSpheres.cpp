@@ -68,7 +68,6 @@ namespace ospray {
     value1 = getParam1f("value1", 0.0);
 
     numDataDrivenSpheres = centers->numItems;
-    APP_PRINT(<< gxy::GetTheApplication()->GetRank() << ": rendering " << numDataDrivenSpheres << " spheres");
 
     postStatusMsg(2) << "#galaxy: creating 'ddspheres' geometry, #ddspheres = "
                      << numDataDrivenSpheres;

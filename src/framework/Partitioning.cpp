@@ -97,6 +97,14 @@ Partitioning::setup()
     }
   }
 
+  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
+  {
+    Box *b = boxes + i;
+    std::cerr << "Setup " << i << ": " 
+        << b->xyz_min.x << " " << b->xyz_min.y << " " << b->xyz_min.z << " " 
+        << b->xyz_max.x << " " << b->xyz_max.y << " " << b->xyz_max.z << "\n";
+  }
+
   vec3i ijk = rank2ijk(GetTheApplication()->GetRank());
 
   neighbors[0] = (ijk.x > 0) ? ijk2rank(ijk.x - 1, ijk.y, ijk.z) : -1;

@@ -16,6 +16,8 @@ using namespace std;
 
 namespace gxy {
 
+#define BUFSZ 10240
+
 class Skt
 {
 public:
@@ -34,7 +36,7 @@ public:
   char *
   ReceiveRaw()
   {
-    int n;
+    int n = 9999999;
 
     int rem = sizeof(n);
     unsigned char *p = (unsigned char *)&n;
@@ -50,13 +52,15 @@ public:
       }
     }
 
+    std::cerr << "reading " << n << " bytes on skt " << cskt << "\n";
     char *buffer = (char *)malloc(n);
 
     rem = n;
     p = (unsigned char *)buffer;
     while (rem)
     {
-      int k = read(cskt, p, rem);
+      int l = (rem > 1024) ? 1024 : rem;
+      int k = read(cskt, p, l);
       if ((k < 0 && errno != EAGAIN) || k == 0)
         return NULL;
       else if (k > 0)
@@ -114,6 +118,8 @@ public:
   bool
   SendRaw(void *buffer, int n)
   {
+    std::cerr << "sending " << n << " bytes on skt " << cskt << "\n";
+
     int rem = sizeof(n);
     unsigned char *p = (unsigned char *)&n;
     while (rem)
@@ -135,7 +141,8 @@ public:
     p = (unsigned char *)buffer;
     while (rem)
     {
-      int k = write(cskt, p, rem);
+      int l = (rem > 1024) ? 1024 : rem;
+      int k = write(cskt, p, l);
       if (k < 0)
       {
         if (errno != EAGAIN)
@@ -174,6 +181,7 @@ public:
 
   ~ClientSkt()
   {
+    std::cerr << "Client socket dtor... " << cskt << "\n";
     if (IsConnected())
       Disconnect();
   }
@@ -218,6 +226,7 @@ public:
       return false;
     }
 
+    std::cerr << "port " << port << " connected to " << cskt << "\n";
     return true;
   }
 
@@ -226,6 +235,7 @@ public:
   {
     if (cskt > 0)
     {
+      std::cerr << "Client socket Disconnect... " << cskt << "\n";
       close(cskt);
       cskt = -1;
     }
@@ -250,6 +260,8 @@ public:
     mskt = ::socket(AF_INET, SOCK_STREAM, 0);
     cskt = -1;
 
+    std::cerr << "Master socket " << mskt << "\n";
+
     int flags = fcntl(mskt, F_GETFL, 0);
     flags = (flags | O_NONBLOCK);
     fcntl(mskt, F_SETFL, flags);
@@ -270,6 +282,8 @@ public:
     }
 
     ::listen(mskt,30);
+
+    std::cerr << "port " << port << " listening on socket " << mskt << "\n";
   }
 
   ~ServerSkt()
@@ -363,11 +377,13 @@ public:
       }
       else
       {
+        std::cerr << "Server " << me->mskt << " accepts on socket " << me->cskt << "\n";
         char *buf;
 
         while((buf = me->Receive()) != NULL && !me->paused)
           me->paused = (*me->handler)(me, me->ptr, buf) || me->done;
 
+        std::cerr << "Server closes socket " << me->cskt << "\n";
         close(me->cskt);
         me->cskt = -1;
       }

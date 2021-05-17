@@ -337,6 +337,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
+  print("TR %\n", raysIn);
   self->debug[0] = 1;
 
   step = -1;
@@ -866,6 +867,8 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
   uniform RayList_ispc *uniform raysIn  = (RayList_ispc *uniform)_raysIn;
 
   uniform float Kd = lights->Kd / lights->nLights;
+
+  print("XXXX %\n", nRaysIn);
 
   foreach (i = 0 ... nRaysIn)
   {

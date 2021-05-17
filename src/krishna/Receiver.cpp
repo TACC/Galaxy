@@ -25,6 +25,7 @@ static int frame = 0;
 #include "Renderer.h"
 #include "Receiver.hpp"
 #include "bufhdr.h"
+#include "Box.h"
 
 using namespace gxy;
 
@@ -209,6 +210,18 @@ Receiver::Reshuffle()
 
   PartitioningP partitioning = GetTheRenderer()->GetPartitioning();
 
+  for (int i = 0; i < s; i++)
+  {
+    Box b = partitioning->get_box(i);
+    std::cerr << 
+      b.xyz_min.x << " " << 
+      b.xyz_min.y << " " <<
+      b.xyz_min.z << " " <<
+      b.xyz_max.x << " " << 
+      b.xyz_max.y << " " <<
+      b.xyz_max.z << "\n";
+  }
+
   // First we see how much data we need to send to each recipient
 
   int *recipient_vertex_count = new int[s];
@@ -221,6 +234,7 @@ Receiver::Reshuffle()
 
   bufhdr::btype btype = bufhdr::None;
   bool has_data;
+  int tot_points = 0;
 
   for (auto buffer : buffers)
   {
@@ -244,6 +258,7 @@ Receiver::Reshuffle()
     {
       // Then we do it point by point.  For each point in the buffer...
 
+      tot_points += hdr->npoints;
       for (int i = 0; i < hdr->npoints; i++, ptr += 3)
       {
         // Due to fuzz, each point might land in more than one partition...
@@ -262,6 +277,10 @@ Receiver::Reshuffle()
       exit(1);
     }
   }
+
+  std::cerr << "tot points " << tot_points << "\n";
+  for (int i = 0; i < s; i++)
+    std::cerr << i << ": " << recipient_vertex_count[i] << "\n";
 
   // list of buffers containing the points to send to each server
   // begins with integer size and a header
@@ -407,7 +426,7 @@ Receiver::Reshuffle()
     }
   }
 
-#if 0
+#if 1
   char namebuf[256];
   sprintf(namebuf, "RS-%d-%d.csv", GetTheApplication()->GetRank(), frame);
   ofstream ofs(namebuf);
