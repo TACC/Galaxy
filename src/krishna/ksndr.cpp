@@ -435,8 +435,6 @@ private:
         dptr ++;
       }
     }
-
-    std::cerr << "XXXX " << " " << xmin << " " << ymin << " " << zmin << " " << xmax << " " << ymax << " " << zmax << "\n";
   }
 
   bool

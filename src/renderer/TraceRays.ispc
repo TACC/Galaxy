@@ -112,8 +112,6 @@ LookForGeometryHit(varying bool shadeFlag,
                    uniform Visualization_ispc *uniform vis,
                    varying Hit &hit)
 {
-  //print("LFGH %\n", model);
-
   traceRay(model, ray);
 
   if(ray.geomID < 0)
@@ -285,8 +283,6 @@ LookForIsoHit(varying bool shadeFlag,
   {
     hit.point = ray.org + hit.t * ray.dir;
 
-    // print("hit\nT %\nX %\nY %\nZ %\n", hit.t, hit.point.x, hit.point.y, hit.point.z);
-
     if (shadeFlag)
     {
       for (uniform int major = 0; major <= vid; major++)
@@ -337,7 +333,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
-  print("TR %\n", raysIn);
   self->debug[0] = 1;
 
   step = -1;
@@ -613,7 +608,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     }
     else if (raysIn->term[i] != RAY_OPAQUE)
     {
-      // print("TE term %\nX %\nY %\n", raysIn->term[i], raysIn->x[i], raysIn->y[i]);
       print("TERMINATION ERROR\n");
     }
 
@@ -867,8 +861,6 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
   uniform RayList_ispc *uniform raysIn  = (RayList_ispc *uniform)_raysIn;
 
   uniform float Kd = lights->Kd / lights->nLights;
-
-  print("XXXX %\n", nRaysIn);
 
   foreach (i = 0 ... nRaysIn)
   {

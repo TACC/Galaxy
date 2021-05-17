@@ -68,8 +68,6 @@ TraceRays::destroy_ispc()
 RayList *
 TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
 {
-std::cerr << "TRACE on " << GetTheApplication()->GetRank() << "\n";
-
   ispc::TraceRays_TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), epsilon);
 	RayList *raysOut = NULL;
 

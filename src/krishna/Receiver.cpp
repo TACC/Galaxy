@@ -280,9 +280,11 @@ Receiver::Reshuffle()
     }
   }
 
+#if 0
   std::cerr << "tot points " << tot_points << "\n";
   for (int i = 0; i < s; i++)
     std::cerr << i << ": " << recipient_vertex_count[i] << "\n";
+#endif
 
   // list of buffers containing the points to send to each server
   // begins with integer size and a header

@@ -97,6 +97,7 @@ Partitioning::setup()
     }
   }
 
+#if 0
   for (int i = 0; i < GetTheApplication()->GetSize(); i++)
   {
     Box *b = boxes + i;
@@ -104,6 +105,7 @@ Partitioning::setup()
         << b->xyz_min.x << " " << b->xyz_min.y << " " << b->xyz_min.z << " " 
         << b->xyz_max.x << " " << b->xyz_max.y << " " << b->xyz_max.z << "\n";
   }
+#endif
 
   vec3i ijk = rank2ijk(GetTheApplication()->GetRank());
 
