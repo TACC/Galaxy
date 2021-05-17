@@ -368,6 +368,8 @@ private:
     }
     else
     {
+      srand(mpi_rank * 9719 + sender_id * 8513);
+
       if (nPts != generated_nPts)
       {
         if (data) free(data);
