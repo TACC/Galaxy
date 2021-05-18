@@ -27,8 +27,11 @@ public:
   {
     char *buf = ReceiveRaw();
 
-    int status = 1;
-    SendRaw(&status, sizeof(status));
+    if (buf)
+    {
+      int status = 1;
+      SendRaw(&status, sizeof(status));
+    }
 
     return buf;
   }

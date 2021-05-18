@@ -384,8 +384,6 @@ private:
       hdr = (bufhdr *)(data + sizeof(int));
       float *ptr =   (float *)(data + sizeof(int) + sizeof(bufhdr));
 
-      std::cerr << sender_id << ": " << xmin << " " << ymin << " " << zmin << " " << xmax << " " << ymax << " " << zmax << "\n";
-
       float fxmin = xmin + fuzz;
       float fymin = ymin + fuzz;
       float fzmin = zmin + fuzz;
