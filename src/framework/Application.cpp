@@ -34,7 +34,7 @@
 #include "Threading.h"
 #include "Events.h"
 
-#include "tbb/tbb.h"
+// #include "tbb/tbb.h"
 #include "tbb/task_scheduler_init.h"
 
 #include "rapidjson/document.h"
@@ -81,7 +81,7 @@ Application::Application()
 	theMessageManager = new MessageManager; 
 	theKeyedObjectFactory = new KeyedObjectFactory; 
 
-#if 0
+#if 1
 	if (getenv("GXY_APP_NTHREADS"))
 	{
 		int nthreads = atoi(getenv("GXY_APP_NTHREADS"));
