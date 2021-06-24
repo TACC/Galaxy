@@ -76,6 +76,6 @@ if (ospray_DIR)
   ispc_target_add_sources(gxy_ospray ${ISPC_SOURCES})
   target_link_libraries(gxy_ospray gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
   set_target_properties(gxy_ospray PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_ospray DESTINATION lib)
+  install(TARGETS gxy_ospray DESTINATION lib64)
 endif()
 
