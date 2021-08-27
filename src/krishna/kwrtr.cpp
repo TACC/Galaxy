@@ -19,10 +19,13 @@
 // ========================================================================== //
 
 #include <string>
+#include <limits>
 #include <unistd.h>
 #include <sstream>
 #include <time.h>
 #include <pthread.h>
+
+typedef std::numeric_limits< double > dbl;
 
 #include "Application.h"
 #include "Renderer.h"
@@ -41,6 +44,8 @@ ReceiverP receiver  = NULL;
 RenderingSetP theRenderingSet = NULL;
 RendererP theRenderer = NULL;
 PartitioningP thePartitioning = NULL;
+DatasetsP theDatasets = NULL;
+vector<VisualizationP> theVisualizations;
 
 pthread_mutex_t main_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  main_cond = PTHREAD_COND_INITIALIZER;
@@ -49,7 +54,7 @@ bool   done = false;
 bool   cinema = false;
 string cdb("");
 
-float fuzz = 0.0;
+float fuzz = 5.0;
 
 void
 syntax(char *a)
@@ -94,9 +99,15 @@ master_handler(ServerSkt *skt, void *p, char *buf)
     {
       receiver->Accept(receiver->GetNSenders());
       receiver->Wait();
+
+      theDatasets->Commit();
+      for (auto v : theVisualizations)
+        v->Commit(theDatasets);
       
       theRenderingSet->Reset();
       theRenderingSet->Commit();
+
+      GetTheApplication()->SyncApplication();
 
       long t_rendering_start = my_time();
       cout << "render start" << endl;
@@ -125,7 +136,8 @@ master_handler(ServerSkt *skt, void *p, char *buf)
     {
       float *box = (float *)skt->Receive();
       thePartitioning->SetBox(box[0]-fuzz, box[1]-fuzz, box[2]-fuzz, box[3]+fuzz, box[4]+fuzz, box[5]+fuzz);
-      // std::cerr << (box[0]-fuzz) << " " << (box[1]-fuzz) << " " << (box[2]-fuzz) << " " << (box[3]+fuzz) << " " << (box[4]+fuzz) << " " << (box[5]+fuzz) << " " << "\n";
+      std::cerr.precision(dbl::max_digits10);
+      std::cerr << (box[0]-fuzz) << " " << (box[1]-fuzz) << " " << (box[2]-fuzz) << " " << (box[3]+fuzz) << " " << (box[4]+fuzz) << " " << (box[5]+fuzz) << " " << "\n";
       free(box);
       thePartitioning->Commit();
       return false;
@@ -256,7 +268,7 @@ int main(int argc,  char *argv[])
         exit(1);
       }
 
-    DatasetsP theDatasets = Datasets::NewP();
+    theDatasets = Datasets::NewP();
     if (! theDatasets->LoadFromJSON(*doc))
     {
       std::cerr << "error loading theDatasets\n";
@@ -273,7 +285,7 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    vector<VisualizationP> theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
+    theVisualizations = Visualization::LoadVisualizationsFromJSON(*doc);
     for (auto v : theVisualizations)
       if (! v->Commit(theDatasets))
       {

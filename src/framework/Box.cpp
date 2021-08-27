@@ -152,6 +152,7 @@ Box::intersect(vec3f& org, vec3f& dir, float& tmin, float& tmax)
 	float tzmax = (xyz_max.z - org.z) / dir.z; 
 
 	if (tzmin > tzmax) swap(tzmin, tzmax); 
+
   if (tzmax < 0) return false;
 
 	if ((tmin > tzmax) || (tzmin > tmax)) 

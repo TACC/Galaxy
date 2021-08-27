@@ -116,6 +116,7 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
 
 	int shadow_ray_knt = nOutputRays - ao_ray_knt;
 
+  // std::cerr << GetTheApplication()->GetRank() << " generated " << nOutputRays << "\n";
   if (nOutputRays)
   {
     raysOut = new RayList(raysIn->GetTheRenderer(), raysIn->GetTheRenderingSet(), raysIn->GetTheRendering(), nOutputRays, raysIn->GetFrame(), RayList::SECONDARY);
@@ -126,9 +127,24 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
 	if (ao_ray_knt)
 		ispc::TraceRays_generateAORays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), ao_offsets, raysOut->GetIspc(), epsilon);
 	
-	ispc::TraceRays_diffuseLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
+#if 0
+  std::cerr << "On " << GetTheApplication()->GetRank() << " LIGHTS " << ((long)lights) << "\n";
+
+  std::cerr << "On " << GetTheApplication()->GetRank() << " After AMBIENT\n";
+  for (int i = 0; i < raysIn->GetRayCount(); i++)
+    std::cerr << i << ": " << raysIn->get_x(i) << " "  << raysIn->get_y(i) << " " << raysIn->get_r(i) << " " << raysIn->get_g(i) << " " << raysIn->get_b(i) << "\n";
+#endif
+
+  ispc::TraceRays_diffuseLighting(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 	if (shadow_ray_knt)
 		ispc::TraceRays_generateShadowRays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), shadow_offsets, raysOut->GetIspc(), epsilon);
+
+#if 0
+  std::cerr << "On " << GetTheApplication()->GetRank() << " After DIFFUSE\n";
+  for (int i = 0; i < raysIn->GetRayCount(); i++)
+    std::cerr << i << ": " << raysIn->get_x(i) << " "  << raysIn->get_y(i) << " " << raysIn->get_r(i) << " " << raysIn->get_g(i) << " " << raysIn->get_b(i) << "\n";
+#endif
+
 #else
 	if (ao_ray_knt)
 		ispc::TraceRays_generateAORays(GetIspc(), lights->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), ao_offsets, raysOut->GetIspc(), epsilon);

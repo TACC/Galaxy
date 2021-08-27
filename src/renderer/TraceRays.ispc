@@ -862,10 +862,16 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
 
   uniform float Kd = lights->Kd / lights->nLights;
 
+  if (lights->types[0] != 0)
+    print("LIGHT type error! % x % y % z %\n", lights->types[0], lights->lights[0].x, lights->lights[0].y, lights->lights[0].z);
+
   foreach (i = 0 ... nRaysIn)
   {
+    // print("TYPE %\nTERM %\n", raysIn->type[i], raysIn->term[i]);
+
     if ((raysIn->type[i] == RAY_PRIMARY) && (raysIn->term[i] & RAY_SURFACE))
     {
+      // print("DIFFUSE SHADING %\n", i);
       vec3f surface_normal = make_vec3f(raysIn->nx[i], raysIn->ny[i], raysIn->nz[i]);
 
       float tot_dff_r = 0;
@@ -881,19 +887,28 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
 				{
 					float t = raysIn->t[i];
 
+          // print("AAAAA\n");
 					vec3f surface_point = make_vec3f(raysIn->ox[i] + t*raysIn->dx[i],
 																					 raysIn->oy[i] + t*raysIn->dy[i],
 																					 raysIn->oz[i] + t*raysIn->dz[i]);
 
+          // print("SPX %\nSPY %\nSPZ %\n", surface_point.x, surface_point.y, surface_point.z);
+
 					lvec = safe_normalize(lights->lights[k] - surface_point);
+
+          // print("LX %\nLY %\nLZ %\n", lvec.x, lvec.y, lvec.z);
 
 				}
 				else
 				{
+          // print("BBBBB\n");
           lvec = neg(lights->lights[k]);
+          // print("LX %\nLY %\nLZ %\n", lvec.x, lvec.y, lvec.z);
 				}
 
         d = dot(surface_normal, lvec);
+
+        // print("D %\n", d);
 
         if (d > 0)
         {

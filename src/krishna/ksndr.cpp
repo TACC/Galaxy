@@ -151,6 +151,10 @@ public:
   void
   GetBox(float& x, float& y, float& z, float& X, float& Y, float& Z)
   {
+    std::cerr << "sender " << sender_id << 
+        "(" << xmin << ", " << ymin << ", " << zmin << ") -> (" <<
+        xmax << ", " << ymax << ", " << zmax << "\n";
+
     x = xmin;
     X = xmax;
     y = ymin;
@@ -607,12 +611,12 @@ CreateSomeData()
 
       if (xmin > pxmin) xmin = pxmin;
       if (ymin > pymin) ymin = pymin;
-      if (zmin > pymin) zmin = pymin;
-      if (xmax < pxmin) xmax = pxmin;
-      if (ymax < pymin) ymax = pymin;
-      if (zmax < pymin) zmax = pymin;
+      if (zmin > pzmin) zmin = pzmin;
+      if (xmax < pxmax) xmax = pxmax;
+      if (ymax < pymax) ymax = pymax;
+      if (zmax < pzmax) zmax = pzmax;
       if (pdmin < dmin) dmin = pdmin;
-      if (pdmax < dmin) dmax = pdmax;
+      if (pdmax > dmax) dmax = pdmax;
     }
   }
 
@@ -620,7 +624,7 @@ CreateSomeData()
   MPI_Reduce(&ymin, &gymin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&zmin, &gzmin, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&xmax, &gxmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&zmax, &gymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&ymax, &gymax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
   MPI_Reduce(&zmax, &gzmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);
   MPI_Reduce(&dmin, &gdmax, 1, MPI_FLOAT, MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&dmax, &gdmax, 1, MPI_FLOAT, MPI_MAX, 0, MPI_COMM_WORLD);

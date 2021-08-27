@@ -19,6 +19,7 @@
 // ========================================================================== //
 
 #include "Partitioning.h"
+#include <unistd.h>
 
 /*! Structured partitioning uses the Box face orientation indices for neighbor indexing
  *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
@@ -75,6 +76,9 @@ Partitioning::setup()
 {
   factor(GetTheApplication()->GetSize(), gpart);
 
+  if (GetTheApplication()->GetRank() == 0)
+    std::cerr << "partitioning: " << gpart.x << " " << gpart.y << " " << gpart.z << "\n";
+
   vec3f gsize = gbox.xyz_max - gbox.xyz_min;
   psize = vec3f(gsize.x / gpart.x, gsize.y / gpart.y, gsize.z / gpart.z);
 
@@ -90,22 +94,12 @@ Partitioning::setup()
       float ox = gbox.xyz_min.x;
       for (int i = 0; i < gpart.x; i++, ox += psize.x, b++)
       {
-        b->xyz_min.x = ox;  b->xyz_max.x = ox + psize.x;
-        b->xyz_min.y = oy;  b->xyz_max.y = oy + psize.y;
-        b->xyz_min.z = oz;  b->xyz_max.z = oz + psize.z;
+        b->xyz_min.x = ox;  b->xyz_max.x = (i == (gpart.x-1)) ? gbox.xyz_max.x : ox + psize.x;
+        b->xyz_min.y = oy;  b->xyz_max.y = (j == (gpart.y-1)) ? gbox.xyz_max.y : oy + psize.y;
+        b->xyz_min.z = oz;  b->xyz_max.z = (k == (gpart.z-1)) ? gbox.xyz_max.z : oz + psize.z;
       }
     }
   }
-
-#if 0
-  for (int i = 0; i < GetTheApplication()->GetSize(); i++)
-  {
-    Box *b = boxes + i;
-    std::cerr << "Setup " << i << ": " 
-        << b->xyz_min.x << " " << b->xyz_min.y << " " << b->xyz_min.z << " " 
-        << b->xyz_max.x << " " << b->xyz_max.y << " " << b->xyz_max.z << "\n";
-  }
-#endif
 
   vec3i ijk = rank2ijk(GetTheApplication()->GetRank());
 
@@ -115,6 +109,19 @@ Partitioning::setup()
   neighbors[3] = (ijk.y < (gpart.y-1)) ? ijk2rank(ijk.x, ijk.y + 1, ijk.z) : -1;
   neighbors[4] = (ijk.z > 0) ? ijk2rank(ijk.x, ijk.y, ijk.z - 1) : -1;
   neighbors[5] = (ijk.z < (gpart.z-1)) ? ijk2rank(ijk.x, ijk.y, ijk.z + 1) : -1;
+
+#if 0
+  sleep(GetTheApplication()->GetRank());
+  std::cerr << "============== " << GetTheApplication()->GetRank() << " ===============\n";
+  std::cerr << "L box: " << boxes[GetTheApplication()->GetRank()] << "\n";
+  std::cerr << "nbrs " <<
+    neighbors[0] << " " << 
+    neighbors[1] << " " << 
+    neighbors[2] << " " << 
+    neighbors[3] << " " << 
+    neighbors[4] << " " << 
+    neighbors[5] << "\n";
+#endif
 }
 
 bool

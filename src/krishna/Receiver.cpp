@@ -205,24 +205,12 @@ Receiver::Setup(MPI_Comm comm)
 bool
 Receiver::Reshuffle()
 {
+  std::cerr << "Reshuffle start\n";
+
   int r = GetTheApplication()->GetRank();
   int s = GetTheApplication()->GetSize();
 
   PartitioningP partitioning = GetTheRenderer()->GetPartitioning();
-
-#if 0
-  for (int i = 0; i < s; i++)
-  {
-    Box b = partitioning->get_box(i);
-    std::cerr << 
-      b.xyz_min.x << " " << 
-      b.xyz_min.y << " " <<
-      b.xyz_min.z << " " <<
-      b.xyz_max.x << " " << 
-      b.xyz_max.y << " " <<
-      b.xyz_max.z << "\n";
-  }
-#endif
 
   // First we see how much data we need to send to each recipient
 
@@ -279,12 +267,6 @@ Receiver::Reshuffle()
       exit(1);
     }
   }
-
-#if 0
-  std::cerr << "tot points " << tot_points << "\n";
-  for (int i = 0; i < s; i++)
-    std::cerr << i << ": " << recipient_vertex_count[i] << "\n";
-#endif
 
   // list of buffers containing the points to send to each server
   // begins with integer size and a header
@@ -434,6 +416,7 @@ Receiver::Reshuffle()
   char namebuf[256];
   sprintf(namebuf, "RS-%d-%d.csv", GetTheApplication()->GetRank(), frame);
   ofstream ofs(namebuf);
+  ofs << "X,Y,Z,D\n";
   pptr = (float *)geometry->GetVertices();
   dptr = (float *)geometry->GetData();
   for (int i = 0; i < geometry->GetNumberOfVertices(); i++)
@@ -448,6 +431,7 @@ Receiver::Reshuffle()
   frame++;
 
   reshuffle_buffers.clear();
+  std::cerr << "Reshuffle done\n";
 
   return true;
 }
@@ -505,6 +489,7 @@ Receiver::receive(char *buffer)
   else
   {
     bufhdr *hdr = (bufhdr *)(buffer + sizeof(int));
+    std::cerr << "received " << hdr->npoints << "\n";
 
     buffers.push_back(buffer);
 

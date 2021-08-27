@@ -216,10 +216,22 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
     }                                                                           \
   }
 
+// #include "unistd.h"
+
 bool 
 Visualization::local_commit(MPI_Comm c)
 {
   bool first = true;
+
+  int nl;
+  float *l;
+  int *t;
+
+#if 0
+  sleep(GetTheApplication()->GetRank());
+  lighting.GetLights(nl, l, t);
+  std::cerr << "On " << GetTheApplication()->GetRank() << " " << ((long)this) << t[0] << " " << l[0] << " " << l[1] << " " << l[2] << "\n";
+#endif
 
   for (auto v : vis)
     v->local_commit(c);

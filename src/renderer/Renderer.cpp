@@ -763,6 +763,8 @@ Renderer::SendRays(RayList *rays, int destination)
   rays->GetTheRenderingSet()->IncrementInFlightCount();
 #endif
 
+  // std::cerr << GetTheApplication()->GetRank() << " sending " << rays->GetRayCount() << " to " << destination << "\n";
+  
   int nReceived = rays->GetRayCount();
   _sent_to(destination, nReceived);
 

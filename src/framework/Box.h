@@ -26,10 +26,13 @@
  */
 
 #include <iostream>
+#include <limits>
 #include <math.h>
 #include "string.h"
 #include "dtypes.h"
 #include "float.h"
+
+typedef std::numeric_limits< double > dbl;
 
 namespace gxy
 {
@@ -40,6 +43,7 @@ class Box
 {
 	friend std::ostream& operator<<(std::ostream& o, const Box& b)
 	{
+    o.precision(dbl::max_digits10);
 		o << "X " << b.xyz_min.x << " -- " << b.xyz_max.x << std::endl;
 		o << "Y " << b.xyz_min.y << " -- " << b.xyz_max.y << std::endl;
 		o << "Z " << b.xyz_min.z << " -- " << b.xyz_max.z << std::endl;
