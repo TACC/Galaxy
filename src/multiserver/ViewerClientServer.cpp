@@ -48,7 +48,9 @@ init()
 extern "C" ViewerClientServer *
 new_handler(SocketHandler *sh)
 {
-  return new ViewerClientServer(sh);
+  ViewerClientServer *vcs =  new ViewerClientServer;
+  vcs->SetSocketHandler(sh);
+  return vcs;
 }
 
 
@@ -68,6 +70,8 @@ ViewerClientServer::handle(string line, string& reply)
     theDatasets = Datasets::NewP();
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
+
+  PartitioningP thePartitioning = Partitioning::NewP();
 
   std::stringstream ss(line);
   std::string cmd;
@@ -137,7 +141,7 @@ ViewerClientServer::handle(string line, string& reply)
   
     if (doc.HasMember("Datasets"))
     {
-      if (!GetTheDatasets()->LoadFromJSON(doc))
+      if (!GetTheDatasets()->LoadFromJSON(doc, thePartitioning))
       {
         reply = "error loading datasets from json command";
         return true;

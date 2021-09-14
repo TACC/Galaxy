@@ -163,7 +163,7 @@ Lighting::SaveStateToValue(Value& v, Document& doc)
 }
 
 int
-Lighting::SerialSize()
+Lighting::serialSize()
 {
   int n; float *p; int *t;
   GetLights(n, p, t);
@@ -173,7 +173,7 @@ Lighting::SerialSize()
 }
 
 unsigned char *
-Lighting::Serialize(unsigned char *p)
+Lighting::serialize(unsigned char *p)
 {
   {
     int na; float nr;
@@ -215,7 +215,7 @@ Lighting::Serialize(unsigned char *p)
 }
 
 unsigned char *
-Lighting::Deserialize(unsigned char *p)
+Lighting::deserialize(unsigned char *p)
 {
   SetAO(*(int *)p, *(float *)(p + sizeof(int)));
   p = p + sizeof(float) + sizeof(int);

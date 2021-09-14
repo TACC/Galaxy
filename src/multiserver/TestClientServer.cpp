@@ -41,7 +41,9 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  return new TestClientServer(sh);
+  TestClientServer *tcs =  new TestClientServer();
+  tcs->SetSocketHandler(sh);
+  return tcs;
 }
 
 static pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;

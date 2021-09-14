@@ -41,7 +41,6 @@ namespace gxy
 class SocketConnectorClientServer : public MultiServerHandler
 {
 public:
-  SocketConnectorClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}
   ~SocketConnectorClientServer() { if (connector) { connector->Wait(); connector = NULL; } }
 
   static void init();

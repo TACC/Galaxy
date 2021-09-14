@@ -28,6 +28,7 @@
 #include "Schlieren2.h"
 #include "Schlieren2Rendering.h"
 #include "ClientServer.h"
+#include "Partitioning.h"
 
 #include <ospray/ospray.h>
 
@@ -113,6 +114,8 @@ int main(int argc,  char *argv[])
     Schlieren2Rendering::Register();
   }
 
+  Partitioning::RegisterClass();
+
   mpiRank = theApplication.GetRank();
   mpiSize = theApplication.GetSize();
 
@@ -147,7 +150,6 @@ int main(int argc,  char *argv[])
       theRenderer = Schlieren2::NewP();
     }
 
-
     rapidjson::Document *doc = GetTheApplication()->OpenJSONFile(statefile);
     if (! doc)
     {
@@ -158,6 +160,10 @@ int main(int argc,  char *argv[])
     }
 
     theRenderer->LoadStateFromDocument(*doc);
+
+    PartitioningP thePartitioning = Partitioning::NewP();
+    thePartitioning->LoadFromJSON(*doc);
+    theRenderer->SetPartitioning(thePartitioning);
 
     vector<CameraP> theCameras;
     if (! Camera::LoadCamerasFromJSON(*doc, theCameras))
@@ -179,7 +185,7 @@ int main(int argc,  char *argv[])
 
 
     DatasetsP theDatasets = Datasets::NewP();
-    if (! theDatasets->LoadFromJSON(*doc))
+    if (! theDatasets->LoadFromJSON(*doc, thePartitioning))
     {
       std::cerr << "error loading theDatasets\n";
       theApplication.QuitApplication();

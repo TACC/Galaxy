@@ -62,7 +62,8 @@ public:
   static MultiServerHandler *GetTheThreadMultiServerHandler(); //! return the thread-specific handler
   virtual ~MultiServerHandler() {}
 
-  MultiServerHandler(SocketHandler *sh) : socketHandler(sh) {}
+  MultiServerHandler();
+  void SetSocketHandler(SocketHandler *sh) { socketHandler = sh; }
 
   virtual bool handle(std::string, std::string& reply); // Handle command strings
 

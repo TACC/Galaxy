@@ -38,6 +38,7 @@
 #include "Rendering.h"
 #include "RenderingEvents.h"
 #include "RenderingSet.h"
+#include "Partitioning.h"
 
 namespace gxy
 {
@@ -89,14 +90,17 @@ public:
   //! render the given RenderingSet at this process, in response to a received RenderMsg
   virtual void local_render(RendererP, RenderingSetP);
 
-  virtual int SerialSize(); //!< return the size in bytes for the serialization of this Renderer
-  virtual unsigned char *Serialize(unsigned char *); //!< serialize this Renderer to the given byte array
-  virtual unsigned char *Deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
+  virtual int serialSize(); //!< return the size in bytes for the serialization of this Renderer
+  virtual unsigned char *serialize(unsigned char *); //!< serialize this Renderer to the given byte array
+  virtual unsigned char *deserialize(unsigned char *); //!< deserialize a Renderer from the given byte array into this object
 
   //! broadcasts a RenderMsg to all processes to begin rendering via each localRendering method
 	virtual void Start(RenderingSetP);
   //! return the frame number for the current render
 	int GetFrame() { return frame; }
+
+  void SetPartitioning(PartitioningP p) { partitioning = p; }
+  PartitioningP GetPartitioning() { return partitioning; }
 
 	void DumpStatistics(); //!< broadcast a StatisticsMsg to all processes to write rendering stats to local file via _dumpStats()
 	void _dumpStats(); //!< write local rendering statistics to file via APP_LOG()
@@ -179,6 +183,7 @@ private:
   OsprayHandleP ospray;
 	std::vector<std::future<void>> rvec;
 
+  PartitioningP partitioning;
 	int frame;
 
 	int max_rays_per_packet;
@@ -354,5 +359,8 @@ public:
 		int frame;
   };
 };
+
+Renderer *GetTheRenderer();
+
 
 } // namespace gxy

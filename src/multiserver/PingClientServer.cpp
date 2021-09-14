@@ -1,4 +1,5 @@
 // ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -44,7 +45,9 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  return new PingClientServer(sh);
+  PingClientServer *pcs = new PingClientServer;
+  pcs->SetSocketHandler(sh);
+  return pcs;
 }
 
 static pthread_mutex_t lck = PTHREAD_MUTEX_INITIALIZER;

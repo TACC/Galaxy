@@ -44,19 +44,19 @@ InterpolatorMsg::CollectiveAction(MPI_Comm c, bool is_root)
   GeometryP p = Geometry::Cast(KeyedDataObject::GetByKey(keys[1]));
 
   float ox, oy, oz;
-  v->get_ghosted_local_origin(ox, oy, oz);
+  v->get_local_origin(ox, oy, oz);
 
   float dx, dy, dz;
   v->get_deltas(dx, dy, dz);
 
   int ik, jk, kk;
-  v->get_ghosted_local_counts(ik, jk, kk);
+  v->get_local_counts(ik, jk, kk);
 
   int istride = 1;
   int jstride = ik;
   int kstride = ik * jk;
 
-  std::vector<float> *d = new std::vector<float>;
+  float *d = p->GetData();
 
   for (int i = 0; i < p->GetNumberOfVertices(); i++)
   {
@@ -95,21 +95,19 @@ InterpolatorMsg::CollectiveAction(MPI_Comm c, bool is_root)
     float interpolated_value;
     if (v->get_type() == Volume::FLOAT)
     {
-      float *p = (float *)v->get_samples().get();
+      float *p = (float *)v->get_samples();
       interpolated_value = p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
                            p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
     }
     else
     {
-      unsigned char *p = (unsigned char *)v->get_samples().get();
+      unsigned char *p = (unsigned char *)v->get_samples();
       interpolated_value = p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
                            p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
     }
 
-    d->push_back(interpolated_value);
+    *d++ = interpolated_value;
   }
-
-  p->SetData(d);
 
   return false;
 }

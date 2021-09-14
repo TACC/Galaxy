@@ -39,10 +39,6 @@ using namespace std;
 namespace gxy
 {
 
-DensitySampleClientServer::DensitySampleClientServer(SocketHandler *sh) : MultiServerHandler(sh)
-{
-};
-
 #define RNDM ((float)rand() / RAND_MAX) 
 
 static float *
@@ -53,7 +49,7 @@ CellValues(VolumeP v, DensitySampleClientServer::Args *a)
   float *d = cellValues;
   if (v->get_type() == Volume::FLOAT)
   {
-    float *s = (float *)v->get_samples().get();
+    float *s = (float *)v->get_samples();
     for (int i = 0; i < a->nj-1; i++)
       for (int j = 0; i < a->nj-1; j++)
         for (int k = 0; k < a->nk-1; k++)
@@ -71,7 +67,7 @@ CellValues(VolumeP v, DensitySampleClientServer::Args *a)
   }
   else
   {
-    double *s = (double *)v->get_samples().get();
+    double *s = (double *)v->get_samples();
     for (int i = 0; i < a->nj-1; i++)
       for (int j = 0; i < a->nj-1; j++)
         for (int k = 0; k < a->nk-1; k++)
@@ -102,8 +98,6 @@ DensitySample(MPI_Comm c, DensitySampleClientServer::Args *a)
   p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);
 
   v->get_local_counts(a->ni, a->nj, a->nk);
-  v->get_ghosted_local_counts(a->gi, a->gj, a->gk);
-  v->get_ghosted_local_offsets(a->goi, a->goj, a->gok);
   v->get_local_origin(a->ox, a->oy, a->oz);
   v->get_deltas(a->dx, a->dy, a->dz);
 
@@ -187,7 +181,9 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  return new DensitySampleClientServer(sh);
+  MultiServerHandler *msh = new DensitySampleClientServer;
+  msh->SetSocketHandler(sh);
+  return msh;
 }
 
 bool

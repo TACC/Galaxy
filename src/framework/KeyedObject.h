@@ -113,12 +113,14 @@ namespace gxy
 {
 
 #define KEYED_OBJECT_CLASS_TYPE(typ)                       \
-  int typ::ClassType;                                      
+  int typ::ClassType;                                      \
+  void Delete(typ ## P& p) { p = NULL; }
 
 OBJECT_POINTER_TYPES(KeyedObject)
 
 typedef int  KeyedObjectClass;
 typedef long Key;
+#define NullKey ((Key)-1)
 
 class KeyedObjectFactory;
 
@@ -145,6 +147,7 @@ class KeyedObject : public GalaxyObject
   GALAXY_OBJECT(KeyedObject)
 
 public:
+  KeyedObject() {}
   KeyedObject(KeyedObjectClass c, Key k); //!< constructor
   virtual ~KeyedObject(); //!< destructor
 
@@ -180,10 +183,12 @@ public:
   /*! \warning derived classes should overload this method to calculate object byte size
    */
   virtual int serialSize();
+
   //! serialize this object to a byte stream 
   /*! \warning derived classes should overload this method to serialize the object
    */
   virtual unsigned char *serialize(unsigned char *);
+
   //! deserialize this object from a byte stream 
   /*! \warning derived classes should overload this method to deserialize the object
    */
@@ -287,7 +292,7 @@ public:
   /*! \param c the KeyedObject class id, which is created using the OBJECT_CLASS_TYPE macro
    * \sa OBJECT_CLASS_TYPE
    */
-  KeyedObjectP NewP(KeyedObjectClass c)
+  KeyedObjectP New(KeyedObjectClass c)
   {
     Key k = keygen();
     KeyedObjectP kop = std::shared_ptr<KeyedObject>(new_procs[c](k));
@@ -430,8 +435,8 @@ public:                                                                         
   GALAXY_OBJECT_SUBCLASS(typ, parent)                                                           \
                                                                                                 \
 protected:                                                                                      \
-  typ(Key k = -1) : parent(ClassType, k) {}                                                     \
-  typ(KeyedObjectClass c, Key k = -1) : parent(c, k) {}                                         \
+  typ(Key k = NullKey) : parent(ClassType, k) {}                                                \
+  typ(KeyedObjectClass c, Key k = NullKey) : parent(c, k) {}                                    \
                                                                                                 \
 private:                                                                                        \
   static KeyedObject *_New(Key k)                                                               \
@@ -447,7 +452,7 @@ public:                                                                         
                                                                                                 \
   static typ ## P NewP()                                                                        \
   {                                                                                             \
-    KeyedObjectP kop = GetTheKeyedObjectFactory()->NewP(ClassType);                             \
+    KeyedObjectP kop = GetTheKeyedObjectFactory()->New(ClassType);                              \
     aol(kop);                                                                                   \
     return Cast(kop);                                                                           \
   }                                                                                             \

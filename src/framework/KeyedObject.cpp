@@ -191,7 +191,7 @@ KeyedObject::Drop()
 KeyedObject::KeyedObject(KeyedObjectClass c, Key k) : keyedObjectClass(c), key(k)
 {  
 	ko_count++;
-  std::cerr << " + " << ko_count;
+  // std::cerr << " + " << ko_count;
   error = 0;
 	initialize();
 }
@@ -203,7 +203,7 @@ KeyedObject::~KeyedObject()
     Drop();
 
 	ko_count--;
-  std::cerr << " - " << ko_count;
+  // std::cerr << " - " << ko_count;
 }
 
 bool
@@ -244,19 +244,19 @@ KeyedObject::Serialize(unsigned char *p)
 int
 KeyedObject::serialSize()
 {
-	return sizeof(Key) + sizeof(int);
+	return super::serialSize() + sizeof(Key) + sizeof(int);
 }
 
 unsigned char *
 KeyedObject::serialize(unsigned char *p)
 {
-	return p;
+	return super::serialize(p);
 }
 
 unsigned char *
 KeyedObject::deserialize(unsigned char *p)
 {
-	return p;
+	return super::deserialize(p);
 }
 
 bool

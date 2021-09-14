@@ -19,6 +19,7 @@
 // ========================================================================== //
 
 #define FUZZ 0.000001
+static float fuzz = FUZZ;
 
 #include "Camera.h"
 
@@ -438,7 +439,7 @@ Camera::SpawnRays(std::shared_ptr<spawn_rays_args> a, int start, int count)
     }
 
     float d = fabs(lmin) - fabs(gmin);
-    if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
+    if (hit && (lmax >= 0) && (d < fuzz) && (d > -fuzz))
     {
       if (!rlist) rlist = new RayList(a->renderer, a->rs, a->r, count, a->fnum, RayList::PRIMARY);
 
@@ -502,6 +503,9 @@ void check_env(RendererP renderer, int width, int height)
 
     full_window =  getenv("GXY_FULLWINDOW") != NULL;
     raydebug    =  getenv("GXY_RAYDEBUG") != NULL;
+
+    if (getenv("GXY_FUZZ"))
+      fuzz = atof(getenv("GXY_FUZZ"));
 
     if (getenv("GXY_X"))
       Xmin = Xmax = atoi(getenv("GXY_X"));
@@ -735,7 +739,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
         hit = lbox->intersect(vorigin, vray, lmin, lmax);
 
       float d = fabs(lmin) - fabs(gmin);
-      if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
+      if (hit && (lmax >= 0) && (d < fuzz) && (d > -fuzz))
       {
         rayList->set_x(kk, rayList->get_x(k));
         rayList->set_y(kk, rayList->get_y(k));

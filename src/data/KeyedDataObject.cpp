@@ -31,7 +31,6 @@ namespace gxy
 {
 
 WORK_CLASS_TYPE(KeyedDataObject::ImportMsg);
-WORK_CLASS_TYPE(KeyedDataObject::CopyMsg);
 
 void
 KeyedDataObject::Register()
@@ -39,8 +38,6 @@ KeyedDataObject::Register()
   RegisterClass();
 
   ImportMsg::Register();
-  CopyMsg::Register();
-
   Datasets::Register();
   Geometry::Register();
   Volume::Register();
@@ -58,27 +55,6 @@ KeyedDataObject::~KeyedDataObject()
   }
 }
 
-KeyedDataObjectP
-KeyedDataObject::Copy()
-{
-  KeyedDataObjectP dst = Cast(GetTheKeyedObjectFactory()->NewP(getclass()));
-  CopyMsg msg(getkey(), dst->getkey());
-  msg.Broadcast(true, true);
-  return dst;
-}
-
-bool
-KeyedDataObject::local_copy(KeyedDataObjectP src)
-{
-  CopyPartitioning(src);
-  modified = false;
-  skt = NULL;
-  filename = "";
-  time_varying = false;
-  attached = false;
-  return true;
-}
-
 OsprayObjectP
 KeyedDataObject::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
@@ -86,12 +62,9 @@ KeyedDataObject::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 }
 
 void 
-KeyedDataObject::CopyPartitioning(KeyedDataObject* o)
+KeyedDataObject::CopyPartitioning(KeyedDataObjectP o)
 {
-	local_box = *o->get_local_box();
-	global_box = *o->get_global_box();
-	for (int i = 0; i < 6; i++)
-			neighbors[i] = o->get_neighbor(i);
+  partitioning = o->get_partitioning();
 }
 
 void 
@@ -111,20 +84,23 @@ KeyedDataObject::local_commit(MPI_Comm c)
 }
 
 bool
-KeyedDataObject::Import(string filename) { return Import(filename, NULL, 0); }
+KeyedDataObject::Import(string filename) { return Import(NULL, filename, NULL, 0); }
 
 bool
-KeyedDataObject::Import(string filename, void *args, int argsSize)
+KeyedDataObject::Import(PartitioningP p, string filename) { return Import(p, filename, NULL, 0); }
+
+bool
+KeyedDataObject::Import(PartitioningP p, string filename, void *args, int argsSize)
 {
-  ImportMsg msg(getkey(), filename, args, argsSize);
+  ImportMsg msg(getkey(), p, filename, args, argsSize);
   msg.Broadcast(true, true);
   return get_error() == 0;
 }
 
 bool
-KeyedDataObject::local_import(char *s, MPI_Comm c)
+KeyedDataObject::local_import(PartitioningP p, char *s, MPI_Comm c)
 {
-  std::cerr << "ERROR: generic KeyedDataObject::local_import called?" << std::endl;
+  partitioning = p;
   return false;
 }
 
@@ -132,6 +108,13 @@ void
 KeyedDataObject::set_neighbors(int *n)
 {
   memcpy(neighbors, n, 6*sizeof(int));
+}
+
+bool 
+KeyedDataObject::LoadFromJSON(rapidjson::Value& v, PartitioningP p)
+{
+  std::cerr << "generic KeyedDataObject load from JSON\n";
+  return false;
 }
 
 

@@ -27,7 +27,7 @@ find_package(NodeEditor PATHS
 
 find_package(Qt5 5.3 COMPONENTS Core Widgets Gui OpenGL)
 
-include_directories(${gxy_multiserver_SOURCE_DIR} ${gxy_data_SOURCE_DIR} ${gxy_renderer_SOURCE_DIR})
+include_directories(${gxy_framework_SOURCE_DIR} ${gxy_multiserver_SOURCE_DIR} ${gxy_data_SOURCE_DIR} ${gxy_renderer_SOURCE_DIR})
 
 SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH} ${NodeEditor_DIR}/../..)
 

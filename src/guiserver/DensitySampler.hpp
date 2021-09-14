@@ -73,16 +73,16 @@ public:
     // minus 2, for the ghost points, minus 1 for the point-to-cell
     // conversion
 
-    int nCells = (gni-3) * (gnj-3) * (gnk-3);
+    int nCells = (ni-3) * (nj-3) * (nk-3);
     float *cellValues = new float[nCells];
 
     float *d = cellValues;
     if (v->get_type() == Volume::FLOAT)
     {
-      float *s = (float *)v->get_samples().get();
-      for (int i = 1; i < gni-2; i++)
-        for (int j = 1; j < gnj-2; j++)
-          for (int k = 1; k < gnk-2; k++)
+      float *s = (float *)v->get_samples();
+      for (int i = 1; i < ni-2; i++)
+        for (int j = 1; j < nj-2; j++)
+          for (int k = 1; k < nk-2; k++)
           {
             int corner = i*istep + j*jstep + k*kstep;
             *d++ = s[corner + 0*istep + 0*jstep + 0*kstep] +
@@ -97,10 +97,10 @@ public:
     }
     else
     {
-      double *s = (double *)v->get_samples().get();
-      for (int i = 1; i < gni-2; i++)
-        for (int j = 1; j < gnj-2; j++)
-          for (int k = 1; k < gnk-2; k++)
+      double *s = (double *)v->get_samples();
+      for (int i = 1; i < ni-2; i++)
+        for (int j = 1; j < nj-2; j++)
+          for (int k = 1; k < nk-2; k++)
           {
             int corner = i*istep + j*jstep + k*kstep;
             *d++ = s[corner + 0*istep + 0*jstep + 0*kstep] +
@@ -132,21 +132,17 @@ public:
     p->CopyPartitioning(v);
     p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);
 
-    v->get_ghosted_local_counts(gni, gnj, gnk); // absolute counts, inc. ghosts
+    v->get_local_counts(ni, nj, nk);
     v->get_local_origin(ox, oy, oz);
     v->get_deltas(dx, dy, dz);
 
     istep = 1;
-    jstep = gni;
-    kstep = gni * gnj;
+    jstep = ni;
+    kstep = ni * nj;
 
     float *cellValues = CellValues(v);
 
-    // Note: as above, the 3 here is the point count of the partition 
-    // minus 2, for the ghost points, minus 1 for the point-to-cell
-    // conversion
-
-    int nCells = (gni-3) * (gnj - 3) * (gnk - 3);
+    int nCells = (ni-1) * (nj - 1) * (nk - 1);
 
     float local_min = cellValues[0], local_max = cellValues[0];
     for (int i = 0; i < nCells; i++)
@@ -190,7 +186,7 @@ public:
 
     if (local_total > 0)
     {
-      // Note: gni, gnj, and gnk are the number of points along
+      // Note: ni, nj, and nk are the number of points along
       // each axis including ghosts.   The following loop is
       // through *cells*.   So... if the vertices are
       // 
@@ -200,15 +196,15 @@ public:
       // non-ghost cells start at b, c, d, e which
       // is index 1, 2, 3, 4 or i = 1; i < (g - 2)
 
-      for (int i = 0; i < gni-3; i++)
+      for (int i = 0; i < ni-3; i++)
       {
         float x = ox + i*dx;
 
-        for (int j = 0; j < gnj-3; j++)
+        for (int j = 0; j < nj-3; j++)
         {
           float y = oy + j*dy;
 
-          for (int k = 0; k < gnk-3; k++)
+          for (int k = 0; k < nk-3; k++)
           {
             float z = oz + k*dz;
 
@@ -231,7 +227,7 @@ public:
 private:
   int   nSamples;
   float power;
-  int   gni,  gnj,  gnk;      // ghosted counts along each local axis
+  int   ni, nj, nk;           // ghosted counts along each local axis
   int   istep, jstep, kstep;  // strides in ghosted space
   float ox, oy, oz;           // local grid origin
   float dx, dy, dz;           // grid step size

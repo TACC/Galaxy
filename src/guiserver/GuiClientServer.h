@@ -72,7 +72,7 @@ public:
   bool handle(std::string line, std::string& reply) override;
   virtual ~GuiClientServer();
 
-  GuiClientServer(SocketHandler *sh) : MultiServerHandler(sh)
+  GuiClientServer()
   {
     first = true;
 
@@ -89,6 +89,9 @@ public:
 
     renderer = Renderer::NewP();
     renderer->Commit();
+
+    partitioning = Partitioning::NewP();
+    renderer->SetPartitioning(partitioning);
   }
 
   bool Sample(rapidjson::Document& params, string& reply);
@@ -128,8 +131,9 @@ public:
   virtual void Notify(GalaxyObject* o, ObserverEvent id, void *cargo) override;
 
 private:
-  bool        first;
-  RendererP   renderer;
+  bool          first;
+  RendererP     renderer;
+  PartitioningP partitioning;
 
   std::vector<std::string> watched_datasets;
 

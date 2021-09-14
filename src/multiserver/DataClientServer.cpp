@@ -53,7 +53,9 @@ init()
 extern "C" DataClientServer *
 new_handler(SocketHandler *sh)
 {
-  return new DataClientServer(sh);
+  DataClientServer *dcs =  new DataClientServer;
+  dcs->SetSocketHandler(sh);
+  return dcs;
 }
 
 void
@@ -71,6 +73,8 @@ DataClientServer::handle(std::string line, std::string& reply)
     MultiServer::Get()->SetGlobal("global datasets", theDatasets);
   }
 
+  PartitioningP thePartitioning = Partitioning::NewP();
+
   std::stringstream ss(line);
   std::string cmd;
   ss >> cmd;
@@ -87,7 +91,7 @@ DataClientServer::handle(std::string line, std::string& reply)
       return true;
     }
 
-    if (! theDatasets->LoadFromJSON(doc))
+    if (! theDatasets->LoadFromJSON(doc, thePartitioning))
     {
       reply = "error loading JSON";
       return true;

@@ -64,13 +64,13 @@ public:
     }
 
     float ox, oy, oz;
-    vol->get_ghosted_local_origin(ox, oy, oz);
+    vol->get_local_origin(ox, oy, oz);
 
     float dx, dy, dz;
     vol->get_deltas(dx, dy, dz);
 
     int ik, jk, kk;
-    vol->get_ghosted_local_counts(ik, jk, kk);
+    vol->get_local_counts(ik, jk, kk);
 
     int istride = 1;
     int jstride = ik;
@@ -113,13 +113,13 @@ public:
       
       if (vol->get_type() == Volume::FLOAT)
       {
-        float *s = (float *)vol->get_samples().get();
+        float *s = (float *)vol->get_samples();
         *d = s[v000]*b000 + s[v001]*b001 + s[v010]*b010 + s[v011]*b011 +
              s[v100]*b100 + s[v101]*b101 + s[v110]*b110 + s[v111]*b111;
       }        
       else
       {
-        unsigned char *s = (unsigned char *)vol->get_samples().get();
+        unsigned char *s = (unsigned char *)vol->get_samples();
         *d = s[v000]*b000 + s[v001]*b001 + s[v010]*b010 + s[v011]*b011 +
              s[v100]*b100 + s[v101]*b101 + s[v110]*b110 + s[v111]*b111;
       }        

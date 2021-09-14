@@ -222,15 +222,15 @@ Schlieren2::HandleTerminatedRays(RayList *raylist)
 }
 
 int
-Schlieren2::SerialSize()
+Schlieren2::serialSize()
 {
-  return super::SerialSize() + 2*sizeof(float) + 2*sizeof(int);
+  return super::serialSize() + 2*sizeof(float) + 2*sizeof(int);
 }
 
 unsigned char *
-Schlieren2::Serialize(unsigned char *p)
+Schlieren2::serialize(unsigned char *p)
 {
-  p = super::Serialize(p);
+  p = super::serialize(p);
   *(int *)p = GetRaysPerPixel();
   p += sizeof(int);
   *(float *)p = GetFar();
@@ -243,9 +243,9 @@ Schlieren2::Serialize(unsigned char *p)
 }
 
 unsigned char *
-Schlieren2::Deserialize(unsigned char *p)
+Schlieren2::deserialize(unsigned char *p)
 {
-  p = super::Deserialize(p);
+  p = super::deserialize(p);
   SetRaysPerPixel(*(int *)p);
   p += sizeof(int);
   SetFar(*(float *)p);

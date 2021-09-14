@@ -113,10 +113,10 @@ PathLines::load_from_vtkPointSet(vtkPointSet *pset)
       for (int l = 0; l < ids->GetNumberOfIds(); l++, k++)
       {
         int id = ids->GetId(l);
-        (*vertices)[k] = points[id];
-        (*data)[k] = (fdata) ? fdata[id] : (ddata) ? ((float)ddata[id]) : 0.0;
+        vertices[k] = points[id];
+        data[k] = (fdata) ? fdata[id] : (ddata) ? ((float)ddata[id]) : 0.0;
         if (l < (ids->GetNumberOfIds() - 1))
-          (*connectivity)[j++] = k;
+          connectivity[j++] = k;
       }
     }
   }
@@ -127,19 +127,22 @@ PathLines::load_from_vtkPointSet(vtkPointSet *pset)
 void
 PathLines::GetPLVertices(PLVertex*& p, int& n)
 {
-  n = vertices->size();
+  n = vertices.size();
   p = new PLVertex[n];
   for (int i = 0; i < n; i++)
   {
-    p[i].xyz = (*vertices)[i];
-    p[i].value = (*data)[i];
+    p[i].xyz = vertices[i];
+    p[i].value = data[i];
   }
 }
 
 OsprayObjectP 
 PathLines::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 { 
-  return OsprayObject::Cast(OsprayPathLines::NewP(PathLines::Cast(kdop)));
+  OsprayPathLinesP op = OsprayPathLines::NewL();
+  op->SetPathLines(PathLines::Cast(kdop));
+  ospData = OsprayObject::Cast(op);
+  return ospData;
 } 
 
 

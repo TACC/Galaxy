@@ -42,6 +42,7 @@ include_directories(
 
 set (CPP_SOURCES 
 			Application.cpp
+      Box.cpp
 			Threading.cpp
 			ClientServer.cpp
 			Events.cpp
@@ -58,7 +59,9 @@ set_target_properties(gxy_framework PROPERTIES VERSION ${GALAXY_VERSION} SOVERSI
 install(TARGETS gxy_framework DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
+  dtypes.h
 	Application.h 
+  Box.h
 	ClientServer.h  
 	Threading.h
 	Debug.h 

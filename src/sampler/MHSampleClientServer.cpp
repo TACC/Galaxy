@@ -54,7 +54,7 @@ namespace gxy
 #define TF_LINEAR   1
 #define TF_GAUSSIAN 2
 
-MHSampleClientServer::MHSampleClientServer(SocketHandler *sh) : MultiServerHandler(sh)
+MHSampleClientServer::MHSampleClientServer()
 {
   args.radius       = 0.02;
   args.tf_type      = TF_NONE;
@@ -124,7 +124,7 @@ static float sample(MHSampleClientServer::Args *args, VolumeP v, float x, float 
   v->get_deltas(dx, dy, dz);
 
   float ox, oy, oz;
-  v->get_ghosted_local_origin(ox, oy, oz);
+  v->get_local_origin(ox, oy, oz);
 
   x = (x - ox) / dx;
   y = (y - oy) / dy;
@@ -158,13 +158,13 @@ static float sample(MHSampleClientServer::Args *args, VolumeP v, float x, float 
 
   if (v->get_type() == Volume::FLOAT)
   {
-    float *p = (float *)v->get_samples().get();
+    float *p = (float *)v->get_samples();
     return p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
            p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
   }
   else
   {
-    unsigned char *p = (unsigned char *)v->get_samples().get();
+    unsigned char *p = (unsigned char *)v->get_samples();
     return p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
            p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
   }
@@ -193,28 +193,12 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
   float ox, oy, oz;
   v->get_local_origin(ox, oy, oz);
 
-  int lioff, ljoff, lkoff;
-  v->get_ghosted_local_offsets(lioff, ljoff, lkoff);
-
   int nli, nlj, nlk;
   v->get_local_counts(nli, nlj, nlk);
 
-  int gnli, gnlj, gnlk;
-  v->get_ghosted_local_counts(gnli, gnlj, gnlk);
-
-  int local_count = nli*nlj*nlk;
-
-  float max_x = ox + (nli-1) * deltaX,
-        max_y = oy + (nlj-1) * deltaY,
-        max_z = oz + (nlk-1) * deltaZ;
-
-  int ngx, ngy, ngz;
-  v->get_local_counts(ngx, ngy, ngz);
-  int global_count = ngx*ngy*ngz;
-
   a->istep = 1;
-  a->jstep = gnli;
-  a->kstep = gnli * gnlj;
+  a->jstep = nli;
+  a->kstep = nli * nlj;
 
   Particle tp;
   tp.xyz = get_starting_point(v);
@@ -222,7 +206,7 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
 
   float tq = Q(v, tp.u.value, a);
 
-  Box *partition_box = v->get_local_box();
+  Box partition_box = v->get_partitioning()->get_local_box();
 
   int miss_count = 0;
   for (int iteration = 0; iteration < (a->n_startup + a->n_iterations); )
@@ -231,7 +215,7 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
     normally_distributed_vector(rv);
 
     Particle cp(tp.xyz.x + rv[0], tp.xyz.y + rv[1], tp.xyz.z + rv[2], float(0.0));
-    if (! partition_box->isIn(cp.xyz)) continue;
+    if (! partition_box.isIn(cp.xyz)) continue;
 
     iteration ++;
 
@@ -288,7 +272,9 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  return new MHSampleClientServer(sh);
+  MultiServerHandler *msh = new MHSampleClientServer;
+  msh->SetSocketHandler(sh);
+  return msh;
 }
 
 bool

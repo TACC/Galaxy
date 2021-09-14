@@ -30,7 +30,7 @@
 #include <ospray/ospray.h>
 
 #include "galaxy.h"
-
+#include "dtypes.h"
 #include "Application.h"
 #include "Camera.h"
 #include "DataObjects.h"
@@ -52,6 +52,9 @@
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
+
+static gxy::Renderer *theRenderer = NULL;
+gxy::Renderer *GetTheRenderer() { return theRenderer; }
 
 #ifdef GXY_TIMING
 #include "Timer.h"
@@ -87,7 +90,6 @@ Renderer::Initialize()
   extern void force_ospray_library_load();
   force_ospray_library_load();
 
-
   RegisterClass();
   
   RegisterDataObjects();
@@ -102,6 +104,7 @@ Renderer::Initialize()
   StatisticsMsg::Register();
 
   Datasets::Register();
+  Partitioning::Register();
 
   Vis::Register();
   Visualization::Register();
@@ -109,6 +112,7 @@ Renderer::Initialize()
 #ifdef GXY_WRITE_IMAGES
   AckRaysMsg::Register();
 #endif // GXY_WRITE_IMAGES
+
 }
 
 static  void
@@ -149,12 +153,14 @@ Renderer::initialize()
   char *ospMsgs = getenv("GXY_SHOW_OSPRAY_MESSAGES");
   if (ospMsgs && atoi(ospMsgs) > 0)
     ospDeviceSetStatusFunc(ospGetCurrentDevice(), print_ospray_error_messages);
+
+  theRenderer = this;
 }
 
 Renderer::~Renderer()
 {
-    rayQmanager->Kill();
-    delete rayQmanager;
+  rayQmanager->Kill();
+  delete rayQmanager;
 }
 
 void 
@@ -244,10 +250,10 @@ Renderer::local_render(RendererP renderer, RenderingSetP renderingSet)
       CameraP camera = rendering->GetTheCamera();
       VisualizationP visualization = rendering->GetTheVisualization();
 
-      Box *gBox = visualization->get_global_box();
-      Box *lBox = visualization->get_local_box();
+      Box gBox = partitioning->get_global_box();
+      Box lBox = partitioning->get_local_box();
 
-      camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
+      camera->generate_initial_rays(renderer, renderingSet, rendering, &lBox, &gBox, rvec, fnum);
     }
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES
@@ -430,11 +436,11 @@ Renderer::AssignDestinations(RayList *raylist)
   {
     if (raylist->get_classification(i) == RAY_BOUNDARY)
     {
-      int exit_face = box->exit_face(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
+      int nbr = partitioning->neighbor(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
                                    raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
 
-      if (visualization->has_neighbor(exit_face)) 
-        raylist->set_classification(i, visualization->get_neighbor(exit_face));
+      if (nbr != -1)
+        raylist->set_classification(i, nbr);
       else
       {
         int t = raylist->get_type(i);
@@ -669,7 +675,7 @@ Renderer::Trace(RayList *raylist)
   // RayQ) so we don't send a message upstream saying we are idle
   // until we actually are.
 
-  TraceRays tracer(GetEpsilon());
+  TraceRays tracer(GetEpsilon(), GetPartitioning());
 
   RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
   if (out)
@@ -793,29 +799,39 @@ Renderer::SendRaysMsg::Action(int sender)
 }
 
 int
-Renderer::SerialSize()
+Renderer::serialSize()
 {
-  return sizeof(bool) + sizeof(int);
+  return super::serialSize() + sizeof(Key) + sizeof(bool) + sizeof(int) + sizeof(float);
 }
 
 unsigned char *
-Renderer::Serialize(unsigned char *p)
+Renderer::serialize(unsigned char *p)
 {
+  p = super::serialize(p);
+  *(Key *)p = partitioning->getkey();
+  p += sizeof(Key);
   *(bool*)p = permute_pixels;
   p += sizeof(bool);
   *(int*)p = max_rays_per_packet;
   p += sizeof(int);
+  *(float*)p = epsilon;
+  p += sizeof(float);
 
   return p;
 }
 
 unsigned char *
-Renderer::Deserialize(unsigned char *p)
+Renderer::deserialize(unsigned char *p)
 {
+  p = super::deserialize(p);
+  partitioning = Partitioning::GetByKey(*(Key *)p);
+  p = p + sizeof(Key);
   permute_pixels = *(bool*)p;
   p += sizeof(bool);
   max_rays_per_packet = *(int*)p;
   p += sizeof(int);
+  epsilon = *(float *)p;
+  p += sizeof(float);
 
   return p;
 }
@@ -876,12 +892,11 @@ Renderer::RenderMsg::~RenderMsg()
 }
 
 Renderer::RenderMsg::RenderMsg(Renderer* r, RenderingSetP rs) :
-  Renderer::RenderMsg(sizeof(Key) + r->SerialSize() + sizeof(Key))
+  Renderer::RenderMsg(sizeof(Key) + sizeof(Key))
 {
   unsigned char *p = contents->get();
   *(Key *)p = r->getkey();
   p = p + sizeof(Key);
-  p = r->Serialize(p);
   *(Key *)p = rs->getkey();
 }
 
@@ -889,11 +904,9 @@ bool
 Renderer::RenderMsg::Action(int sender)
 {
   unsigned char *p = (unsigned char *)get();
-  Key renderer_key = *(Key *)p;
-  p += sizeof(Key);
 
-  RendererP renderer = Renderer::GetByKey(renderer_key);
-  p = renderer->Deserialize(p);
+  RendererP renderer = Renderer::GetByKey(*(Key *)p);
+  p += sizeof(Key);
 
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 

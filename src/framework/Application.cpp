@@ -243,11 +243,15 @@ Application::PrintMsg::PrintMsg(string &str) : Application::PrintMsg::PrintMsg(s
 	memcpy(ptr, str.c_str(), str.length() + 1);
 }
 
+pthread_mutex_t print_lock = PTHREAD_MUTEX_INITIALIZER;
+
 bool 
 Application::PrintMsg::Action(int sender)
 {
   unsigned char *ptr = (unsigned char *)get();
+  pthread_mutex_lock(&print_lock);
   std::cerr << sender << ": " << (char *)ptr << "\n";
+  pthread_mutex_unlock(&print_lock);
   return false;
 }
 	

@@ -42,6 +42,7 @@ include_directories(${Galaxy_BINARY_DIR}/src
                     ${Galaxy_SOURCE_DIR}/src/framework
                     ${Galaxy_SOURCE_DIR}/src/data
                     ${Galaxy_SOURCE_DIR}/src/ospray
+                    ${Galaxy_SOURCE_DIR}/src/renderer
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS})
 
@@ -76,6 +77,6 @@ if (ospray_DIR)
   ispc_target_add_sources(gxy_ospray ${ISPC_SOURCES})
   target_link_libraries(gxy_ospray gxy_framework ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES})
   set_target_properties(gxy_ospray PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_ospray DESTINATION lib64)
+  install(TARGETS gxy_ospray DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 

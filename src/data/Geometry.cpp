@@ -66,43 +66,22 @@ Geometry::Register()
 void
 Geometry::initialize()
 {
-  vertices = std::shared_ptr< std::vector<vec3f> >(new std::vector<vec3f>);
-  data = std::shared_ptr< std::vector<float> >(new std::vector<float>);
-  connectivity = std::shared_ptr< std::vector<int> >(new std::vector<int>);
-
   vtkobj = nullptr;
   super::initialize();
   pthread_mutex_init(&lock, NULL);
 }
 
-bool
-Geometry::local_copy(KeyedDataObjectP src)
-{
-  if (! super::local_copy(src))
-    return false;
-
-  GeometryP g = Cast(src);
-
-  vertices             = g->vertices;
-  data                 = g->data;
-  connectivity         = g->connectivity;
-  global_vertex_count  = g->global_vertex_count;
-  global_element_count = g->global_element_count;
-
-  return true;
-}
-
 void
 Geometry::allocate_vertices(int nv)
 {
-  vertices->resize(nv);
-  data->resize(nv);
+  vertices.resize(nv);
+  data.resize(nv);
 }
 
 void
 Geometry::allocate_connectivity(int nc)
 {
-  connectivity->resize(nc);
+  connectivity.resize(nc);
 }
 
 bool
@@ -155,7 +134,7 @@ Geometry::Import(string s)
 
   set_attached(false);
 
-  bool r = KeyedDataObject::Import(buf, (void *)s.c_str(), s.size()+1);
+  bool r = KeyedDataObject::Import(nullptr, buf, (void *)s.c_str(), s.size()+1);
 
   return r;
 }
@@ -166,14 +145,14 @@ Geometry::local_commit(MPI_Comm c)
   if (super::local_commit(c))
     return true;
 
-  if (data->size() == 0)
+  if (data.size() == 0)
     local_min = local_max = 0;
   else
   {
-    float *dptr = data->data();
+    float *dptr = data.data();
     local_min = local_max = *dptr ++;
 
-    for (auto i = 1; i < data->size(); i++)
+    for (auto i = 1; i < data.size(); i++)
     {
       float d = *dptr++;
       if (local_min > d) local_min = d;
@@ -184,7 +163,7 @@ Geometry::local_commit(MPI_Comm c)
   MPI_Allreduce(&local_min, &global_min, 1, MPI_FLOAT, MPI_MIN, c);
   MPI_Allreduce(&local_max, &global_max, 1, MPI_FLOAT, MPI_MAX, c);
 
-  int local_counts[2] = {(int)vertices->size(), (int)connectivity->size()};
+  int local_counts[2] = {(int)vertices.size(), (int)connectivity.size()};
   int global_counts[2];
 
   MPI_Allreduce(local_counts, global_counts, 2, MPI_INT, MPI_SUM, c);
@@ -195,8 +174,11 @@ Geometry::local_commit(MPI_Comm c)
 }
 
 bool
-Geometry::local_import(char *p, MPI_Comm c)
+Geometry::local_import(PartitioningP part, char *p, MPI_Comm c)
 {
+  if (super::local_import(part, p, c))
+      return true;
+
   vtkSmartPointer<vtkPointSet> pset;
 
   int rank = GetTheApplication()->GetRank();
@@ -238,7 +220,6 @@ Geometry::local_import(char *p, MPI_Comm c)
     }
 
     pset = (vtkPointSet *)(rdr->GetOutputAsDataSet());
-
   }
   else if (v.HasMember("port") && v.HasMember("host"))
   {
@@ -272,9 +253,7 @@ Geometry::local_import(char *p, MPI_Comm c)
     pset = (vtkPointSet *)(rdr->GetOutput());
   }
 
-  bool r = load_from_vtkPointSet(pset);
-
-  return r;
+  return load_from_vtkPointSet(pset);
 }
 
 int
@@ -371,7 +350,7 @@ Geometry::get_partitioning(Value& doc)
 }
 
 bool
-Geometry::LoadFromJSON(Value& v)
+Geometry::LoadFromJSON(Value& v, PartitioningP p)
 {
   if (v.HasMember("color")  || v.HasMember("default color"))
   {
@@ -396,16 +375,9 @@ Geometry::LoadFromJSON(Value& v)
   {
     return Import(v["filename"].GetString());
   }
-  else
-  {
-    cerr << "ERROR: json Particles block has neither a filename nor a layout spec" << endl;
-    exit(1);
-  }
 
   return true;
 }
-
-
 
 
 } // namespace gxy

@@ -51,14 +51,12 @@ Datasets::Register()
 void
 Datasets::initialize()
 {
-  //std::cerr << "Datasets init " << std::hex << ((long)this) << "\n";
   keys = NULL;
   super::initialize();
 }
 
 Datasets::~Datasets()
 {
-  //std::cerr << "Datasets dtor " << std::hex << ((long)this) << "\n";
   if (keys) delete[] keys;
 }
 
@@ -94,9 +92,9 @@ Datasets::Insert(std::string name, KeyedDataObjectP val)
 
 
 bool
-Datasets::loadTyped(Value& v)
+Datasets::loadTyped(PartitioningP p, Value& v)
 {
-  if (! v.HasMember("filename") || ! v.HasMember("type"))
+  if (! v.HasMember("name") || ! v.HasMember("type"))
   {
     std::cerr << "Dataset must have name and type\n";
     set_error(1);
@@ -122,42 +120,41 @@ Datasets::loadTyped(Value& v)
     return false;
   }
 
-  if (! kop->LoadFromJSON(v))
+  if (! kop->LoadFromJSON(v, p))
     return false;
 
   kop->Commit();
     
-  if (v.HasMember("name"))
-    name = v["name"].GetString();
-
+  name = v["name"].GetString();
   Insert(name.c_str(), kop);
+
   return true;
 }
 
 bool
-Datasets::LoadFromJSON(Value& v)
+Datasets::LoadFromJSON(Value& v, PartitioningP p)
 {
-    if (! v.HasMember("Datasets"))
-    {
-        std::cerr << "JSON has no Datasets clause\n";
-        set_error(1);
-        return false;
-    }
+  if (! v.HasMember("Datasets"))
+  {
+    std::cerr << "JSON has no Datasets clause\n";
+    set_error(1);
+    return false;
+  }
 
-    Value& ds = v["Datasets"];
+  Value& ds = v["Datasets"];
 
-    if (ds.IsArray())
-    {
-        for (int i = 0; i < ds.Size(); i++)
-            if (! loadTyped(ds[i])) return false;
-        return true;
-    }
-    else
-        return loadTyped(ds);
+  if (ds.IsArray())
+  {
+    for (int i = 0; i < ds.Size(); i++)
+      if (! loadTyped(p, ds[i])) return false;
+    return true;
+  }
+  else
+    return loadTyped(p, ds);
 }
 
 bool
-Datasets::LoadFromJSONFile(std::string fname)
+Datasets::LoadFromJSONFile(std::string fname, PartitioningP p)
 {
   ifstream ifs(fname);
   if (! ifs)
@@ -179,7 +176,7 @@ Datasets::LoadFromJSONFile(std::string fname)
       return false;
     }
 
-    return LoadFromJSON(doc);
+    return LoadFromJSON(doc, p);
   }
 }
 

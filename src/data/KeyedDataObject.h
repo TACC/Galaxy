@@ -36,6 +36,7 @@
 #include "Box.h"
 #include "KeyedObject.h"
 #include "OsprayObject.h"
+#include "Partitioning.h"
 
 namespace gxy
 {
@@ -60,9 +61,6 @@ class KeyedDataObject : public KeyedObject
 public:
 	virtual ~KeyedDataObject(); //!< destructor
 	virtual void initialize(); //!< initialize this KeyedDataObject
-
-  virtual KeyedDataObjectP Copy();
-  virtual bool local_copy(KeyedDataObjectP src);
 
   //! commit this object to the local registry
 	virtual bool local_commit(MPI_Comm);
@@ -105,14 +103,21 @@ public:
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file
 	virtual bool Import(std::string);
 
+  //! broadcast an ImportMsg to all Galaxy processes to import the given data file
+	virtual bool Import(PartitioningP, std::string);
+
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file using the given arguments
-	virtual bool Import(std::string, void *args, int argsSize);
+	virtual bool Import(PartitioningP, std::string, void *args, int argsSize);
 
   //! copy the data partitioning of the given KeyedDataObject
-	void CopyPartitioning(KeyedDataObjectP o) { CopyPartitioning(o.get()); };
+	void CopyPartitioning(KeyedDataObjectP o);
 
   float local_min, local_max;
   float global_min, global_max;
+
+  //! load data from a JSON file.   If the paritioning object is given and is uninitialized, it gets initialized; otherwise, it determines the partitioning to apply/check
+
+  virtual bool LoadFromJSON(rapidjson::Value& v, PartitioningP p = nullptr);
 
   void set_global_minmax(float min, float max)   { global_min = min; global_max = max; }
   void set_local_minmax(float min, float max)   { local_min = min; local_max = max; }
@@ -121,22 +126,27 @@ public:
   void get_local_minmax(float& min, float& max)   { min = local_min; max = local_max; }
 
   virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP kdop);
+  virtual OsprayObjectP GetTheOSPRayEquivalent() { return ospData; }
+  void RemoveTheOSPRayEquivalent() { ospData = nullptr; }
 
   void set_boxes(Box l, Box g) {local_box = l; global_box = g;};
 
   void setModified(bool m) { modified = m; }
   bool hasBeenModified() { return modified; }
 
+  PartitioningP get_partitioning() { return partitioning; }
+
 protected:
-	void CopyPartitioning(KeyedDataObject* o);
 
   bool modified;
+  OsprayObjectP ospData;
 	vtkClientSocket *skt;
 	std::string filename;
+  PartitioningP partitioning;
 
 	bool time_varying, attached;
 
-  virtual bool local_import(char *, MPI_Comm c);
+  virtual bool local_import(PartitioningP, char *, MPI_Comm c);
 
 	Box global_box, local_box;
 	int neighbors[6];
@@ -145,11 +155,14 @@ protected:
   class ImportMsg : public Work
   {
   public:
-    ImportMsg(Key k, std::string vname, void *args, int argsSize) : ImportMsg(sizeof(Key) + vname.length() + 1 + argsSize)
+    ImportMsg(Key k, PartitioningP part, std::string vname, void *args, int argsSize) : ImportMsg(2*sizeof(Key) + vname.length() + 1 + argsSize)
     {
       unsigned char *p = contents->get();
 
       *(Key *)p = k;
+      p += sizeof(Key);
+
+      *(Key *)p = part ? part->getkey() : NullKey;
       p += sizeof(Key);
 
       memcpy(p, vname.c_str(), vname.length()+1);
@@ -169,49 +182,13 @@ protected:
 			Key k = *(Key *)p;
 			p += sizeof(Key);
 
+      PartitioningP part = Partitioning::GetByKey(*(Key *)p);
+      p += sizeof(Key);
+
 			KeyedDataObjectP o = KeyedDataObject::GetByKey(k);
 
-			if (!o->local_import(p, c))
+			if (!o->local_import(part, p, c))
         o->set_error(1);
-
-			return false;
-		}
-  };
-
-  //! tell a Galaxy processes to copy the guts of src to dst
-
-  class CopyMsg : public Work
-  {
-  public:
-    CopyMsg(Key src, Key dst) : CopyMsg(2*sizeof(Key))
-    {
-      unsigned char *p = contents->get();
-
-      *(Key *)p = src;
-      p += sizeof(Key);
-
-      *(Key *)p = dst;
-      p += sizeof(Key);
-    }
-
-    WORK_CLASS(CopyMsg, true);
-
-  public:
-    bool CollectiveAction(MPI_Comm c, bool isRoot)
-		{
-			char *p = (char *)contents->get();
-
-			Key k = *(Key *)p;
-			p += sizeof(Key);
-			KeyedDataObjectP src = KeyedDataObject::GetByKey(k);
-
-			k = *(Key *)p;
-			p += sizeof(Key);
-			KeyedDataObjectP dst = KeyedDataObject::GetByKey(k);
-
-
-			if (!dst->local_copy(src))
-        dst->set_error(1);
 
 			return false;
 		}

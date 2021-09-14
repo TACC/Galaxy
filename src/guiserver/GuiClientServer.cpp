@@ -58,7 +58,9 @@ init()
 extern "C" GuiClientServer *
 new_handler(SocketHandler *sh)
 {
-  return new GuiClientServer(sh);
+  GuiClientServer *gcs = new GuiClientServer;
+  gcs->SetSocketHandler(sh);
+  return gcs;
 }
 
 void
@@ -216,7 +218,7 @@ GuiClientServer::handle(string line, string& reply)
 
   if (cmd == "gui::import")
   {
-    if (! globals->LoadFromJSON(doc))
+    if (! globals->LoadFromJSON(doc, partitioning))
       HANDLED_BUT_ERROR_RETURN("import datasets: error in LoadFromJson");
 
     globals->Commit();

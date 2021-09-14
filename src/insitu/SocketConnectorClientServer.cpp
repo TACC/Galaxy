@@ -56,7 +56,9 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  return new SocketConnectorClientServer(sh);
+  MultiServerHandler *msh = new SocketConnectorClientServer;
+  msh->SetSocketHandler(sh);
+  return msh;
 }
 
 void

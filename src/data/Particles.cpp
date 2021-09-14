@@ -77,12 +77,12 @@ Particles::~Particles()
 void
 Particles::GetParticles(Particle*& p, int& n)
 {
-  n = vertices->size();
+  n = vertices.size();
   p = new Particle[n];
   for (int i = 0; i < n; i++)
   { 
-    p[i].xyz = (*vertices)[i];
-    p[i].u.value = (*data)[i];
+    p[i].xyz = vertices[i];
+    p[i].u.value = data[i];
   }
 }
 
@@ -120,8 +120,8 @@ Particles::load_from_vtkPointSet(vtkPointSet *pset)
     int i = 0;
     for (int i = 0; i < nv; i++)
     {
-      (*vertices)[i] = points[i];
-      (*data)[i] = (fdata) ? fdata[i] : (ddata) ? ((float)ddata[i]) : 0.0;
+      vertices[i] = points[i];
+      data[i] = (fdata) ? fdata[i] : (ddata) ? ((float)ddata[i]) : 0.0;
     }
   }
 
@@ -131,7 +131,10 @@ Particles::load_from_vtkPointSet(vtkPointSet *pset)
 OsprayObjectP 
 Particles::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 { 
-  return OsprayObject::Cast(OsprayParticles::NewP(Particles::Cast(kdop)));
+  OsprayParticlesP op = OsprayParticles::NewL();
+  op->SetParticles(Particles::Cast(kdop));
+  ospData = OsprayObject::Cast(op);
+  return ospData;
 } 
 
 

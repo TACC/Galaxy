@@ -41,14 +41,7 @@ OBJECT_POINTER_TYPES(OsprayVolume)
 class OsprayVolume : public OsprayObject
 {
   GALAXY_OBJECT(OsprayVolume)
-
-public:
-  static OsprayVolumeP NewP(VolumeP p) { return OsprayVolume::Cast(std::shared_ptr<OsprayVolume>(new OsprayVolume(p))); }
-  ~OsprayVolume();
-
-private:
-  OsprayVolume(VolumeP);
-  std::shared_ptr<unsigned char> samples;
+  void SetVolume(VolumeP p);
 };
 
 }

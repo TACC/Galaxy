@@ -49,7 +49,7 @@ public:
 
         //! commit this object to the local registry
         /*! This action is performed in response to a ImportMsg */
-        virtual bool local_import(char *fname, MPI_Comm c);
+        virtual bool local_import(PartitioningP, char *fname, MPI_Comm c);
 
         //! method to read gxyamr data
         /*! an internal method used to load gxyamr metadata */

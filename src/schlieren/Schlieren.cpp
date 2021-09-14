@@ -198,24 +198,24 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
 }
 
 int
-Schlieren::SerialSize()
+Schlieren::serialSize()
 {
-  return super::SerialSize() + sizeof(float);
+  return super::serialSize() + sizeof(float);
 }
 
 unsigned char *
-Schlieren::Serialize(unsigned char *p)
+Schlieren::serialize(unsigned char *p)
 {
-  p = super::Serialize(p);
+  p = super::serialize(p);
   *(float *)p = GetFar();
   p += sizeof(float);
   return p;
 }
 
 unsigned char *
-Schlieren::Deserialize(unsigned char *p)
+Schlieren::deserialize(unsigned char *p)
 {
-  p = super::Deserialize(p);
+  p = super::deserialize(p);
   SetFar(*(float *)p);
   p += sizeof(float);
   return p;

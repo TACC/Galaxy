@@ -55,11 +55,13 @@ public:
   ~Lighting(); //!< default destructor
 
   //! returns the size in bytes of the serialization of this Lighting object
-  virtual int SerialSize();
+  virtual int serialSize();
+
   //! serialize this Lighting object to a given byte array
-  virtual unsigned char *Serialize(unsigned char *);
+  virtual unsigned char *serialize(unsigned char *);
+
   //! deserialize a Lighting object from a given byte array into this object
-  virtual unsigned char *Deserialize(unsigned char *);
+  virtual unsigned char *deserialize(unsigned char *);
 
   //! load a Lighting object from a given Galaxy JSON Value object into this object
   void LoadStateFromValue(rapidjson::Value&);

@@ -40,7 +40,7 @@ namespace gxy
 
 // Interpolate a point set in a volume 
 
-InterpolatorClientServer::InterpolatorClientServer(SocketHandler *sh) : MultiServerHandler(sh)
+InterpolatorClientServer::InterpolatorClientServer()
 {
   volume = NULL;
   src = NULL;
@@ -81,13 +81,13 @@ static float interpolate(InterpolatorClientServer::Args *a, VolumeP v, float x, 
 
   if (v->get_type() == Volume::FLOAT)
   {
-    float *p = (float *)v->get_samples().get();
+    float *p = (float *)v->get_samples();
     return p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
            p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
   }
   else
   {
-    unsigned char *p = (unsigned char *)v->get_samples().get();
+    unsigned char *p = (unsigned char *)v->get_samples();
     return p[v000]*b000 + p[v001]*b001 + p[v010]*b010 + p[v011]*b011 +
            p[v100]*b100 + p[v101]*b101 + p[v110]*b110 + p[v111]*b111;
   }
@@ -106,11 +106,11 @@ Interpolate(InterpolatorClientServer::Args *a)
 
   d->CopyPartitioning(s);
 
-  v->get_ghosted_local_origin(a->ox, a->oy, a->oz);
+  v->get_local_origin(a->ox, a->oy, a->oz);
   v->get_deltas(a->dx, a->dy, a->dz);
 
   int ik, jk, kk;
-  v->get_ghosted_local_counts(ik, jk, kk);
+  v->get_local_counts(ik, jk, kk);
 
   a->istride = 1;
   a->jstride = ik;
@@ -158,7 +158,9 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  return new InterpolatorClientServer(sh);
+  MultiServerHandler *msh = new InterpolatorClientServer;
+  msh->SetSocketHandler(sh);
+  return msh;
 }
 
 bool

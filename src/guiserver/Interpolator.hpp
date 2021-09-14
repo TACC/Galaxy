@@ -82,7 +82,7 @@ public:
   }
 
   void SetVolume(VolumeP v) { volume = v; }
-  void SetPointSet(GeometryP p) { result = p->Copy(); }
+  void SetPointSet(GeometryP p) { result = p; }
 
   void Interpolate();
 

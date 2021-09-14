@@ -34,6 +34,7 @@
 #include <vtkPointSet.h>
 
 #include "KeyedDataObject.h"
+#include "Partitioning.h"
 
 namespace gxy
 {
@@ -57,16 +58,13 @@ class Geometry : public KeyedDataObject
   void allocate(int nv, int nc) { allocate_vertices(nv); allocate_connectivity(nc); }
 
   /*! This action is performed in response to a ImportMsg */
-  virtual bool local_import(char *, MPI_Comm);
+  virtual bool local_import(PartitioningP, char *, MPI_Comm);
 
   //! learn global and local minmax of data
   virtual bool local_commit(MPI_Comm);
 
-  //! copy local part
-  virtual bool local_copy(KeyedDataObjectP);
-
   //! load geometry from a Galaxy JSON specification
-  virtual bool LoadFromJSON(rapidjson::Value&);
+  virtual bool LoadFromJSON(rapidjson::Value&, PartitioningP);
 
   //! set the default color to use when rendering these Particles
   void SetDefaultColor(vec4f dc) { default_color = dc; }
@@ -88,21 +86,18 @@ class Geometry : public KeyedDataObject
     a = default_color.w;
   }
 
-  int GetNumberOfVertices() { return vertices->size(); }
-  int GetConnectivitySize() { return connectivity->size(); }
+  int GetNumberOfVertices() { return vertices.size(); }
+  int GetConnectivitySize() { return connectivity.size(); }
 
-  vec3f* GetVertices() { return (vec3f *)vertices->data(); }
-  float* GetData() { return (float *)data->data(); }
-  int*   GetConnectivity() { return (int *)connectivity->data(); }
-
-  void SetData(std::shared_ptr<std::vector<float>> d) { data = d; };
-  void SetData(std::vector<float>* d) { SetData(std::shared_ptr<std::vector<float>>(d)); }
+  vec3f* GetVertices() { return (vec3f *)vertices.data(); }
+  float* GetData() { return (float *)data.data(); }
+  int*   GetConnectivity() { return (int *)connectivity.data(); }
 
   void clear()
   {
-    vertices->clear();
-    data->clear();
-    connectivity->clear();
+    vertices.clear();
+    data.clear();
+    connectivity.clear();
   }
 
   void Lock() { pthread_mutex_lock(&lock); }
@@ -133,9 +128,9 @@ protected:
   bool get_partitioning_from_file(char *);
 
   //! vertex, data and connectivity storage
-  std::shared_ptr<std::vector<vec3f>> vertices;
-  std::shared_ptr<std::vector<float>> data;
-  std::shared_ptr<std::vector<int>>   connectivity;
+  std::vector<vec3f> vertices;
+  std::vector<float> data;
+  std::vector<int>   connectivity;
 
   int global_vertex_count;
   int global_element_count;

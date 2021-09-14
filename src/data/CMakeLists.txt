@@ -38,12 +38,12 @@ include_directories(${GALAXY_INCLUDES}
                     ${Galaxy_SOURCE_DIR}/src/framework
                     ${Galaxy_SOURCE_DIR}/src/ospray
                     ${Galaxy_SOURCE_DIR}/src/data
+                    ${Galaxy_BINARY_DIR}/src/renderer
                     ${Galaxy_BINARY_DIR}/src
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS})
 
 set (CPP_SOURCES     
-  Box.cpp
   data.cpp 
   DataObjects.cpp
   Datasets.cpp
@@ -61,8 +61,6 @@ set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${
 install(TARGETS gxy_data DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
-  dtypes.h
-  Box.h
   data.h
   DataObjects.h
   Datasets.h

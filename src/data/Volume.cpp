@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include "Application.h"
+#include "Partitioning.h"
 #include "Volume.h"
 #include "OsprayVolume.h"
 
@@ -62,27 +63,20 @@ Volume::~Volume()
 }
 
 bool
-Volume::LoadFromJSON(Value& v)
+Volume::LoadFromJSON(Value& v, PartitioningP p)
 {
   int r = GetTheApplication()->GetRank();
 
-   if (v.HasMember("filename"))
+  if (v.HasMember("filename"))
   {
     set_attached(false);
-    return Import(string(v["filename"].GetString()), NULL, 0);
+    return Import(p, string(v["filename"].GetString()), NULL, 0);
   }
-#if 0
-   else if (v.HasMember("layout"))
+  else
   {
-    set_attached(true);
-     return Attach(string(v["layout"].GetString()));
+    if (r == 0) cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
+    return false;
   }
-#endif
-   else
-   {
-     if (r == 0) cerr << "ERROR: json Volume has neither filename or layout spec" << endl;
-     return false;
-   }
 }
 
 static void
@@ -121,65 +115,21 @@ factor(int ijk, vec3i &factors)
   }
 }
 
-struct part
-{
-  vec3i ijk;
-  vec3i counts;
-  vec3i gcounts;
-  vec3i offsets;
-  vec3i goffsets;
-};
-
-part *
-partition(int ijk, vec3i factors, vec3i grid)
-{
-  int ni = grid.x - 2;
-  int nj = grid.y - 2;
-  int nk = grid.z - 2;
-
-  int di = ni / factors.x;
-  int dj = nj / factors.y;
-  int dk = nk / factors.z;
-
-  part *parts = new part[ijk];
-  part *p = parts;
-  for (int k = 0; k < factors.z; k++)
-    for (int j = 0; j < factors.y; j++)
-      for (int i = 0; i < factors.x; i++, p++)
-      {
-        p->ijk.x = i;
-        p->ijk.y = j;
-        p->ijk.z = k;
-
-        p->offsets.x = 1 + i*di;
-        p->offsets.y = 1 + j*dj;
-        p->offsets.z = 1 + k*dk;
-
-        p->goffsets.x = p->offsets.x - 1;
-        p->goffsets.y = p->offsets.y - 1;
-        p->goffsets.z = p->offsets.z - 1;
-
-        p->counts.x = 1 + ((i == (factors.x-1)) ? ni - p->offsets.x : di);
-        p->counts.y = 1 + ((j == (factors.y-1)) ? nj - p->offsets.y : dj);
-        p->counts.z = 1 + ((k == (factors.z-1)) ? nk - p->offsets.z : dk);
-
-        p->gcounts.x = p->counts.x + 2;
-        p->gcounts.y = p->counts.y + 2;
-        p->gcounts.z = p->counts.z + 2;
-      }
-
-  return parts;
-}
-
 bool
-Volume::local_import(char *fname, MPI_Comm c)
+Volume::local_import(PartitioningP partitioning, char *fname, MPI_Comm c)
 {
+  if (super::local_import(partitioning, fname, c))
+    return true;
+
   string type_string, data_fname;
 
   filename = fname;
 
   int rank = GetTheApplication()->GetRank();
   int size = GetTheApplication()->GetSize();
+
+  Box local_box;
+  partitioning->get_local_box(local_box);
 
   string dir((filename.find_last_of("/") == string::npos) ? "" : filename.substr(0, filename.find_last_of("/")+1));
   string ext((filename.find_last_of(".") == string::npos) ? "vol" : filename.substr(filename.find_last_of(".")+1));
@@ -301,52 +251,78 @@ Volume::local_import(char *fname, MPI_Comm c)
     return false;
   }
 
-  if (getenv("PARTITIONING"))
-  {
-    if (3 != sscanf(getenv("PARTITIONING"), "%d,%d,%d", &global_partitions.x, &global_partitions.y, &global_partitions.z))
-    {
-      if (rank == 0) cerr << "ERROR: Illegal PARTITIONING environment variable" << endl;
-      return false;
-    }
-    if ((global_partitions.x*global_partitions.y*global_partitions.z) != size)
-    {
-      if (rank == 0) cerr << "ERROR: json PARTITIONING does not multiply to current MPI size" << endl;
-      return false;
-    }
-  }
-  else
-    factor(size, global_partitions);
+  // X range in index space that we'll need to load
+  // lower index is floor
 
-  part *partitions = partition(size, global_partitions, global_counts);
-  part *my_partition = partitions + rank;
+  int lx = int((local_box.xyz_min.x - global_origin.x) / deltas.x);
+  if (lx >= global_counts.x)
+      return true;
 
-  ijk = my_partition->ijk;
-  //std::cerr << "XXXX size " << size << " ijk " << ijk.x << " " << ijk.y << " " << ijk.z << "\n";
+  if (lx > 0) lx = lx - 1; // Add a ghost zone
 
-  local_offset = my_partition->offsets;
-  local_counts  = my_partition->counts;
-  ghosted_local_offset = my_partition->goffsets;
-  ghosted_local_counts = my_partition->gcounts;
+  // upper index is ceiling
+
+  int ux = ceil((local_box.xyz_max.x - global_origin.x) / deltas.x);
+  if (ux <= 0)
+      return true;
+
+  if (ux >= (global_counts.x)-1) ux = global_counts.x-1;
+  if (ux < (global_counts.x - 1)) ux = ux + 1; // Add a ghost zone
+
+  // Y range in index space that we'll need to load
+  // lower index is floor
+
+  int ly = int((local_box.xyz_min.y - global_origin.y) / deltas.y);
+  if (ly >= global_counts.y)
+      return true;
+  if (ly > 0) ly = ly - 1; // Add a ghost zone
+
+  // upper index is ceiling
+
+  int uy = ceil((local_box.xyz_max.y - global_origin.y) / deltas.y);
+  if (uy >= (global_counts.y)-1) uy = global_counts.y-1;
+  if (uy <= 0)
+      return true;
+  if (uy < (global_counts.y - 1)) uy = uy + 1; // Add a ghost zone
+
+  // Z range in index space that we'll need to load
+  // lower index is floor
+
+  int lz = int((local_box.xyz_min.z - global_origin.z) / deltas.z);
+  if (lz >= global_counts.z)
+      return true;
+  if (lz > 0) lz = lz - 1; // Add a ghost zone
+
+  // upper index is ceiling
+
+  int uz = ceil((local_box.xyz_max.z - global_origin.z) / deltas.z);
+  if (uz >= (global_counts.z)-1) uz = global_counts.z-1;
+  if (uz <= 0)
+      return true;
+  if (uz < (global_counts.z - 1)) uz = uz + 1; // Add a ghost zone
+
+  local_offset = vec3i(lx, ly, lz);
+  local_counts = vec3i((ux - lx) + 1, (uy - ly) + 1, (uz - lz) + 1);
 
   in.open(data_fname[0] == '/' ? data_fname.c_str() : (dir + data_fname).c_str(), ios::binary | ios::in);
   size_t sample_sz = number_of_components * ((type == FLOAT) ? 4 : 1);
 
-  size_t row_sz = ghosted_local_counts.x * sample_sz;
-  size_t tot_sz = row_sz * ghosted_local_counts.y * ghosted_local_counts.z;
+  size_t row_sz = local_counts.x * sample_sz;
+  size_t tot_sz = row_sz * local_counts.y * local_counts.z;
 
-  set_samples(malloc(tot_sz));
+  samples = (unsigned char *)malloc(tot_sz);
 
   string rawname = data_fname[0] == '/' ? data_fname : (dir + data_fname);
   ifstream raw;
   raw.open(rawname.c_str(), ios::in | ios::binary);
 
-  char *dst = (char *)samples.get();
-  for (int z = 0; z < ghosted_local_counts.z; z++)
-    for (int y = 0; y < ghosted_local_counts.y; y++)
+  char *dst = (char *)samples;
+  for (int z = 0; z < local_counts.z; z++)
+    for (int y = 0; y < local_counts.y; y++)
     {
-      streampos src = (((ghosted_local_offset.z + z) * (global_counts.y * global_counts.x)) + 
-                       ((ghosted_local_offset.y + y) * global_counts.x) + 
-                         ghosted_local_offset.x) * sample_sz;
+      streampos src = (((local_offset.z + z) * (global_counts.y * global_counts.x)) + 
+                       ((local_offset.y + y) * global_counts.x) + 
+                         local_offset.x) * sample_sz;
 
       raw.seekg(src, ios_base::beg);
       raw.read(dst, row_sz);
@@ -355,39 +331,6 @@ Volume::local_import(char *fname, MPI_Comm c)
 
   raw.close();
 
-#define ijk2rank(i, j, k) ((i) + ((j) * global_partitions.x) + ((k) * global_partitions.x * global_partitions.y))
-
-  if (getenv("MPI_TEST_RANK"))
-  {
-    neighbors[0] = -1;
-    neighbors[1] = -1;
-    neighbors[2] = -1;
-    neighbors[3] = -1;
-    neighbors[4] = -1;
-    neighbors[5] = -1;
-  }
-  else
-  {
-    neighbors[0] = (ijk.x > 0) ? ijk2rank(ijk.x - 1, ijk.y, ijk.z) : -1;
-    neighbors[1] = (ijk.x < (global_partitions.x-1)) ? ijk2rank(ijk.x + 1, ijk.y, ijk.z) : -1;
-    neighbors[2] = (ijk.y > 0) ? ijk2rank(ijk.x, ijk.y - 1, ijk.z) : -1;
-    neighbors[3] = (ijk.y < (global_partitions.y-1)) ? ijk2rank(ijk.x, ijk.y + 1, ijk.z) : -1;
-    neighbors[4] = (ijk.z > 0) ? ijk2rank(ijk.x, ijk.y, ijk.z - 1) : -1;
-    neighbors[5] = (ijk.z < (global_partitions.z-1)) ? ijk2rank(ijk.x, ijk.y, ijk.z + 1) : -1;
-  }
-
-  float go[] = {global_origin.x + deltas.x, global_origin.y + deltas.y, global_origin.z + deltas.z};
-  int   gc[] = {global_counts.x - 2, global_counts.y - 2, global_counts.z - 2};
-  global_box = Box(go, gc, (float *)&deltas);
-
-  float lo[3] =
-  {
-    global_origin.x + (local_offset.x * deltas.x),
-    global_origin.y + (local_offset.y * deltas.y),
-    global_origin.z + (local_offset.z * deltas.z)
-  };
-
-  local_box = Box(lo, (int *)&local_counts, (float *)&deltas);
   return true;
 }
 
@@ -405,11 +348,11 @@ Volume::local_commit(MPI_Comm c)
 
   if (type == FLOAT)
   {
-    float *ptr = (float *)samples.get();
+    float *ptr = (float *)samples;
     if (number_of_components == 1)
     {
       local_min = local_max = *ptr++;
-      for (int i = 1; i < ghosted_local_counts.x * ghosted_local_counts.y * ghosted_local_counts.z; i++, ptr++)
+      for (int i = 1; i < local_counts.x * local_counts.y * local_counts.z; i++, ptr++)
       {  
         if (*ptr < local_min) local_min = *ptr;
         if (*ptr > local_max) local_max = *ptr;
@@ -417,7 +360,7 @@ Volume::local_commit(MPI_Comm c)
     }
     else
     {
-      for (int i = 0; i < ghosted_local_counts.x * ghosted_local_counts.y * ghosted_local_counts.z; i++)
+      for (int i = 0; i < local_counts.x * local_counts.y * local_counts.z; i++)
       {  
         double d = 0;
         for (int j = 0; j < number_of_components; j++, ptr++)
@@ -436,11 +379,11 @@ Volume::local_commit(MPI_Comm c)
   }
   else
   {
-    unsigned char *ptr = (unsigned char *)samples.get();
+    unsigned char *ptr = (unsigned char *)samples;
     if (number_of_components == 1)
     {
       local_min = local_max = *ptr++;
-      for (int i = 1; i < ghosted_local_counts.x * ghosted_local_counts.y * ghosted_local_counts.z; i++, ptr++)
+      for (int i = 1; i < local_counts.x * local_counts.y * local_counts.z; i++, ptr++)
       {  
         if (*ptr < local_min) local_min = *ptr;
         if (*ptr > local_max) local_max = *ptr;
@@ -448,7 +391,7 @@ Volume::local_commit(MPI_Comm c)
     }
     else
     {
-      for (int i = 0; i < ghosted_local_counts.x * ghosted_local_counts.y * ghosted_local_counts.z; i++)
+      for (int i = 0; i < local_counts.x * local_counts.y * local_counts.z; i++)
       {  
         double d = 0;
         for (int j = 0; j < number_of_components; j++, ptr++)
@@ -489,9 +432,9 @@ Volume::local_commit(MPI_Comm c)
   return false;
 }
 
-#define get_sample_ptr(ijk)                                                     \
-  (samples.get() + ((ijk.z * ghosted_local_counts.y * ghosted_local_counts.x)   \
-                 +  (ijk.y * ghosted_local_counts.x)                            \
+#define get_sample_ptr(ijk)                                               \
+  (samples + ((ijk.z * local_counts.y * local_counts.x)                   \
+                 +  (ijk.y * local_counts.x)                              \
                  +  ijk.x) * number_of_components * (isFloat() ? 4 : 1))
 
 #define interp1(T, t, a, b, d)                      \
@@ -555,15 +498,15 @@ Volume::Sample(vec3f& p, float* result)
   // Lower corner of containing hex
   vec3i ll(floor(grid_xyz.x), floor(grid_xyz.y), floor(grid_xyz.z));
 
-  if (ll.x < ghosted_local_offset.x || ll.x >= (ghosted_local_offset.x + (ghosted_local_counts.x-1))) return false;
-  if (ll.y < ghosted_local_offset.y || ll.y >= (ghosted_local_offset.y + (ghosted_local_counts.y-1))) return false;
-  if (ll.z < ghosted_local_offset.z || ll.z >= (ghosted_local_offset.z + (ghosted_local_counts.z-1))) return false;
+  if (ll.x < local_offset.x || ll.x >= (local_offset.x + (local_counts.x-1))) return false;
+  if (ll.y < local_offset.y || ll.y >= (local_offset.y + (local_counts.y-1))) return false;
+  if (ll.z < local_offset.z || ll.z >= (local_offset.z + (local_counts.z-1))) return false;
 
   float dx = grid_xyz.x - ll.x;
   float dy = grid_xyz.y - ll.y;
   float dz = grid_xyz.z - ll.z;
 
-  ll = ll - ghosted_local_offset;
+  ll = ll - local_offset;
 
   if (isFloat())
   {
@@ -589,65 +532,13 @@ Volume::Sample(vec3f& p, float* result)
   return true;
 }
 
-int 
-Volume::PointOwner(vec3f& p)
-{
-  // Transform p to real grid space
-
-  vec3f gp = p - global_origin;
-  gp.x = gp.x / deltas.x;
-  gp.y = gp.y / deltas.y;
-  gp.z = gp.z / deltas.z;
-
-  // lower corner of containing cell in global grid
-
-  vec3i ll(floor(gp.x), floor(gp.y), floor(gp.z));
-
-  // Is that in non-ghosted region?
-  if ((ll.x < 1) || (ll.x >= (global_counts.x - 2)) ||(ll.y < 1) || (ll.y >= (global_counts.y - 2)) ||(ll.z < 1) || (ll.z >= (global_counts.z - 2))) return -1;
-
-  int nx = (global_counts.x - 2) / global_partitions.x;
-  int ny = (global_counts.y - 2) / global_partitions.y;
-  int nz = (global_counts.z - 2) / global_partitions.z;
-
-  int I = (ll.x - 1) / nx; if (I >= global_partitions.x) I = global_partitions.x - 1;
-  int J = (ll.y - 1) / ny; if (J >= global_partitions.y) J = global_partitions.y - 1;
-  int K = (ll.z - 1) / nz; if (K >= global_partitions.z) K = global_partitions.z - 1;
-
-  return K*(global_partitions.x * global_partitions.y) + (J * global_partitions.x) + I;
-}
-
 OsprayObjectP 
 Volume::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
-  return OsprayObject::Cast(OsprayVolume::NewP(Volume::Cast(kdop)));
+  OsprayVolumeP op = OsprayVolume::NewL();
+  op->SetVolume(Volume::Cast(kdop));
+  ospData = OsprayObject::Cast(op);
+  return ospData;
 }
 
-bool
-Volume::local_copy(KeyedDataObjectP src)
-{
-  if (! super::local_copy(src))
-    return false;
-
-  VolumeP v = Cast(src);
-
-  vtkobj               = NULL;
-  filename             = "";
-  type                 = v->type;
-  deltas               = v->deltas;
-  number_of_components = v->number_of_components;
-  ijk                  = v->ijk;
-  global_partitions    = v->global_partitions;
-  global_origin        = v->global_origin;
-  global_counts        = v->global_counts;
-  local_offset         = v->local_offset;
-  local_counts         = v->local_counts;
-  ghosted_local_offset = v->ghosted_local_offset;
-  ghosted_local_counts = v->ghosted_local_counts;
-
-  samples              = v->samples;
-
-  return true;
-}
- 
 } // namespace gxy

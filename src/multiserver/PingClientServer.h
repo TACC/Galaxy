@@ -53,7 +53,6 @@ public:
 class PingClientServer : public MultiServerHandler
 {
 public:
-  PingClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}
   static void init();
   bool handle(std::string line, std::string& reply);
 };

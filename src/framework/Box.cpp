@@ -24,6 +24,18 @@ using namespace std;
 
 namespace gxy
 {
+
+Box::Box()
+{
+  initialized = false;
+  xyz_min.x = 0;
+  xyz_min.y = 0;
+  xyz_min.z = 0;
+  xyz_max.x = 0;
+  xyz_max.y = 0;
+  xyz_max.z = 0;
+}
+
 Box::Box(float *o, int *n, float *d)
 {
 	set(o, n, d);
@@ -55,6 +67,16 @@ Box::Box(float *p)
 	xyz_max.y = *p++;
 	xyz_max.z = *p++;
 }
+
+void
+Box::set(float xl, float yl, float zl, float xu, float yu, float zu)
+{
+  initialized = true;
+
+  xyz_min = vec3f(xl, yl, zl);
+  xyz_max = vec3f(xu, yu, zu);
+}
+
 
 void
 Box::set(vec3f m, vec3f M)
@@ -147,6 +169,29 @@ Box::intersect(vec3f& org, vec3f& dir, float& tmin, float& tmax)
 		tmin = 0;
 
 	return true;
+}
+
+void
+Box::expand(Box& b)
+{
+  if (b.xyz_min.x < xyz_min.x) xyz_min.x = b.xyz_min.x;
+  if (b.xyz_max.x > xyz_max.x) xyz_max.x = b.xyz_max.x;
+  if (b.xyz_min.y < xyz_min.y) xyz_min.y = b.xyz_min.y;
+  if (b.xyz_max.y > xyz_max.y) xyz_max.y = b.xyz_max.y;
+  if (b.xyz_min.z < xyz_min.z) xyz_min.z = b.xyz_min.z;
+  if (b.xyz_max.z > xyz_max.z) xyz_max.z = b.xyz_max.z;
+}
+
+bool
+Box::LoadFromJSON(rapidjson::Value& v)
+{
+  xyz_min.x = v[0].GetDouble();
+  xyz_max.x = v[1].GetDouble();
+  xyz_min.y = v[2].GetDouble();
+  xyz_max.y = v[3].GetDouble();
+  xyz_min.z = v[4].GetDouble();
+  xyz_max.z = v[5].GetDouble();
+  return true;
 }
 
 } // namespace gxy
