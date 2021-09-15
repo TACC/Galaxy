@@ -53,9 +53,6 @@
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 
-static gxy::Renderer *theRenderer = NULL;
-gxy::Renderer *GetTheRenderer() { return theRenderer; }
-
 #ifdef GXY_TIMING
 #include "Timer.h"
 static gxy::Timer timer("ray_processing");
@@ -66,6 +63,9 @@ using namespace std;
 
 namespace gxy
 {
+static gxy::Renderer *theRenderer = NULL;
+gxy::Renderer *GetTheRenderer() { return theRenderer; }
+
 WORK_CLASS_TYPE(Renderer::RenderMsg);
 WORK_CLASS_TYPE(Renderer::StatisticsMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);
