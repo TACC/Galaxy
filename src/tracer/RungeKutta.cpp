@@ -28,7 +28,7 @@ RungeKutta::initialize()
 }
 
 int 
-RungeKutta::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int) + 3*sizeof(float); }
+RungeKutta::serialSize() { return super::serialSize() + 2*sizeof(Key) + sizeof(int) + 3*sizeof(float); }
 
 bool
 RungeKutta::SetVectorField(VolumeP v)
@@ -47,6 +47,7 @@ RungeKutta::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
   *(Key *)ptr = vectorField->getkey(); ptr += sizeof(Key);
+  *(Key *)ptr = partitioning->getkey(); ptr += sizeof(Key);
   *(int *)ptr = max_steps; ptr += sizeof(int);
   *(float *)ptr = stepsize; ptr += sizeof(float);
   *(float *)ptr = min_velocity; ptr += sizeof(float);
@@ -60,6 +61,7 @@ RungeKutta::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
   vectorField = Volume::GetByKey(*(Key *)ptr); ptr += sizeof(Key);
+  partitioning = Partitioning::GetByKey(*(Key *)ptr); ptr += sizeof(Key);
   max_steps = *(int *)ptr; ptr += sizeof(int);
   stepsize = *(float *)ptr; ptr += sizeof(float);
   min_velocity = *(float *)ptr; ptr += sizeof(float);
@@ -77,7 +79,7 @@ RungeKutta::Trace(vec3f& p, int id)
   max_integration_time = 0;
   
   vec3f u(0.0, 1.0, 0.0);
-  _Trace(GetVectorField()->PointOwner(p), id, 0, p, u, 0.0);
+  _Trace(GetPartitioning()->PointOwner(p), id, 0, p, u, 0.0);
 
   while (in_flight) 
     Wait();
@@ -95,7 +97,7 @@ RungeKutta::Trace(int n, vec3f* p)
   vec3f u(0.0, 1.0, 0.0);
   
   for (int i = 0; i < n; i++)
-    _Trace(GetVectorField()->PointOwner(p[i]), i, 0, p[i], u, 0.0);
+    _Trace(GetPartitioning()->PointOwner(p[i]), i, 0, p[i], u, 0.0);
 
   while (in_flight) 
     Wait();
@@ -151,6 +153,7 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
   int me = GetTheApplication()->GetRank();
 
   VolumeP v = GetVectorField();
+  PartitioningP partitioning = GetPartitioning();
 
   // h will be the step size
 
@@ -352,7 +355,7 @@ RungeKutta::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     cross(r, normalized_velocity, u);
     normalize(u);
 
-    next = v->PointOwner(p);
+    next = partitioning->PointOwner(p);
     if (next !=  me)
       break;
 

@@ -4,6 +4,7 @@
 #include "memory"
 #include "KeyedDataObject.h"
 #include "Threading.h"
+#include "Partitioning.h"
 #include "Volume.h"
 #include "Particles.h"
 
@@ -69,6 +70,9 @@ public:
 
   trajectory get_trajectory(int id) { return trajectories[id]; }
 
+  void SetPartitioning(PartitioningP p) { partitioning = p; }
+  PartitioningP GetPartitioning() { return partitioning; }
+
   bool SetVectorField(VolumeP v);
   VolumeP GetVectorField() { return vectorField; }
 
@@ -106,6 +110,7 @@ public:
 
 protected:
   VolumeP vectorField;
+  PartitioningP partitioning;
 
   pthread_mutex_t lock;
   pthread_cond_t signal;

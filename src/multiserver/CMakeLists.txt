@@ -39,7 +39,7 @@ include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_D
 include_directories(${GLUT_INCLUDE_DIR})
 
 add_library(gxy_multiserver SHARED MultiServer.cpp JsonInterface.cpp MultiServerHandler.cpp ServerClientConnection.hpp SocketHandler.cpp DynamicLibraryManager.cpp)
-target_link_libraries(gxy_multiserver gxy_data gxy_framework)
+target_link_libraries(gxy_multiserver gxy_data gxy_renderer gxy_framework)
 set(LIBS gxy_multiserver ${LIBS})
 
 add_library(gxy_multiserver_client SHARED ClientWindow.cpp JsonInterface.cpp SocketHandler.cpp)
@@ -47,7 +47,7 @@ add_library(gxy_multiserver_client SHARED ClientWindow.cpp JsonInterface.cpp Soc
 set(LIBS gxy_multiserver_client ${LIBS})
 
 add_executable(msserver msserver.cpp CommandLine.cpp)
-target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework)
+target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework gxy_renderer)
 set(BINS msserver ${BINS})
 
 add_executable(msviewer msviewer.cpp ClientWindow.cpp JsonInterface.cpp CommandLine.cpp)
