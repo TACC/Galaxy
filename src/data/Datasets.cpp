@@ -101,7 +101,6 @@ Datasets::loadTyped(PartitioningP p, Value& v)
     return false;
   }
 
-  string name(v["filename"].GetString());
   string type(v["type"].GetString());
 
   KeyedDataObjectP kop;
@@ -125,7 +124,7 @@ Datasets::loadTyped(PartitioningP p, Value& v)
 
   kop->Commit();
     
-  name = v["name"].GetString();
+  string name = v["name"].GetString();
   Insert(name.c_str(), kop);
 
   return true;

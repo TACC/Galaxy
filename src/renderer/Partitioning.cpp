@@ -98,6 +98,8 @@ Partitioning::SetBox(float x, float y, float z, float X, float Y, float Z)
 {
   gbox.xyz_min = vec3f(x, y, z);
   gbox.xyz_max = vec3f(X, Y, Z);
+  number_of_partitions = GetTheApplication()->GetSize();
+  setup();
 }
 
 bool
@@ -106,14 +108,20 @@ Partitioning::local_commit(MPI_Comm c)
   if (super::local_commit(c))
     return true;
 
-  if (GetTheApplication()->GetRank() >= number_of_partitions)
-    for (int i = 0; i < 6; i++)
-      neighbors[i] = -1;
-  else
-    for (int i = 0; i < 6; i++)
-      neighbors[i] = rectilinear_partitions[GetTheApplication()->GetRank()].neighbors[i];
+  if (number_of_partitions > 0)
+  {
+    if (GetTheApplication()->GetRank() >= number_of_partitions)
+      for (int i = 0; i < 6; i++)
+        neighbors[i] = -1;
+    else
+      for (int i = 0; i < 6; i++)
+        neighbors[i] = rectilinear_partitions[GetTheApplication()->GetRank()].neighbors[i];
 
-  initialize_ispc();
+    initialize_ispc();
+  }
+  else
+    ispc = NULL;
+    
 
   return false;
 }
@@ -188,7 +196,10 @@ Partitioning::PointOwner(vec3f& p)
 int
 Partitioning::serialSize()
 {
-  return super::serialSize() + gbox.serialSize() + sizeof(int) + number_of_partitions*sizeof(rectilinear_partition);
+  if (number_of_partitions > 0)
+    return super::serialSize() + gbox.serialSize() + sizeof(int) + number_of_partitions*sizeof(rectilinear_partition);
+  else
+    return super::serialSize() + gbox.serialSize() + sizeof(int);
 }
 
 unsigned char*
@@ -200,8 +211,11 @@ Partitioning::serialize(unsigned char *ptr)
   *(int *)ptr = number_of_partitions;
   ptr += sizeof(int);
 
-  memcpy(ptr, rectilinear_partitions, number_of_partitions*sizeof(rectilinear_partition));
-  ptr += number_of_partitions*sizeof(rectilinear_partition);
+  if (number_of_partitions > 0)
+  {
+    memcpy(ptr, rectilinear_partitions, number_of_partitions*sizeof(rectilinear_partition));
+    ptr += number_of_partitions*sizeof(rectilinear_partition);
+  }
 
   return ptr;
 }
@@ -215,9 +229,14 @@ Partitioning::deserialize(unsigned char *ptr)
   number_of_partitions = *(int *)ptr;
   ptr += sizeof(int);
 
-  rectilinear_partitions = new rectilinear_partition[number_of_partitions];
-  memcpy(rectilinear_partitions, ptr, number_of_partitions*sizeof(rectilinear_partition));
-  ptr += number_of_partitions*sizeof(rectilinear_partition);
+  if (number_of_partitions > 0)
+  {
+    rectilinear_partitions = new rectilinear_partition[number_of_partitions];
+    memcpy(rectilinear_partitions, ptr, number_of_partitions*sizeof(rectilinear_partition));
+    ptr += number_of_partitions*sizeof(rectilinear_partition);
+  }
+  else
+    rectilinear_partitions = 0;
 
   return ptr;
 }
