@@ -1,4 +1,5 @@
 ## ========================================================================== ##
+##                                                                            ##
 ## Copyright (c) 2014-2020 The University of Texas at Austin.                 ##
 ## All rights reserved.                                                       ##
 ##                                                                            ##
@@ -18,30 +19,30 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
+cmake_minimum_required (VERSION 3.9)
+project (gxy_krishna VERSION ${GALAXY_VERSION})
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
+include_directories(${gxy_framework_SOURCE_DIR}
+                    ${gxy_renderer_SOURCE_DIR}
+                    ${OSPRAY_INCLUDE_DIRS}
+                    ${gxy_data_SOURCE_DIR}
+                    ${gxy_ospray_SOURCE_DIR}
+                    ${gxy_multiserver_SOURCE_DIR}
+                    ${Galaxy_BINARY_DIR}/src)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galaxy.h.in ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/galaxy.h DESTINATION include/gxy)
+set(GALAXY_LIBRARIES
+    gxy_framework
+    gxy_renderer
+    gxy_data
+    gxy_ospray
+    ${OSPRAY_LIBRARIES}
+    ${MPI_C_LIBRARIES})
 
-add_subdirectory(framework)
-add_subdirectory(ospray)
-add_subdirectory(data)
-add_subdirectory(renderer)
-add_subdirectory(multiserver)
-add_subdirectory(sampler)
-add_subdirectory(schlieren)
-add_subdirectory(apps)
-add_subdirectory(cinema)
-add_subdirectory(tracer)
-add_subdirectory(krishna)
-# add_subdirectory(insitu)
+add_executable(ksndr ksndr.cpp)
+target_link_libraries(ksndr ${VTK_LIBRARIES} ${MPI_LIBRARIES})
 
-if (GXY_GUI)
-  add_subdirectory(gui)
-  add_subdirectory(guiserver)
-endif(GXY_GUI)
+add_executable(kwrtr kwrtr.cpp Receiver.cpp)
+target_link_libraries(kwrtr ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 
-
-
-
-
+install(TARGETS kwrtr ksndr DESTINATION bin)
