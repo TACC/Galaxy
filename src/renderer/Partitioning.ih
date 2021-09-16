@@ -22,11 +22,15 @@
 #include "ospray/SDK/common/Ray.ih"
 
 typedef void (*Partitioning_ZRangeFct)(void *uniform _self, const Ray& ray, float& near, float& far);
+typedef void (*Partitioning_ZNearFct)(void *uniform _self, const Ray& ray, float& near);
+typedef void (*Partitioning_ZFarFct)(void *uniform _self, const Ray& ray, float& far);
 
 struct Partitioning_ispc
 {
   uniform box3f box;
 
   Partitioning_ZRangeFct ZRange;
+  Partitioning_ZNearFct ZNear;
+  Partitioning_ZFarFct ZFar;
 };
 

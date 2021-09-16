@@ -235,7 +235,7 @@ Schlieren::Trace(RayList *raylist)
   // RayQ) so we don't send a message upstream saying we are idle
   // until we actually are.
 
-  SchlierenTraceRays tracer;
+  SchlierenTraceRays tracer(GetPartitioning());
 
   RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
   if (out)

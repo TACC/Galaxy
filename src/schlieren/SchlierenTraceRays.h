@@ -35,6 +35,7 @@
 #include "Lighting.h"
 #include "Rays.h"
 #include "Visualization.h"
+#include "Partitioning.h"
 
 namespace gxy
 {
@@ -47,7 +48,7 @@ OBJECT_POINTER_TYPES(SchlierenTraceRays)
 class SchlierenTraceRays : public IspcObject
 {
 public:
-  SchlierenTraceRays(); //!< default constructor
+  SchlierenTraceRays(PartitioningP); //!< default constructor
   ~SchlierenTraceRays(); //!< default destructor
 
   //! trace a given RayList against the given Visualization using the given Lighting
@@ -59,6 +60,7 @@ public:
   RayList *Trace(Lighting* lights, VisualizationP visualization, RayList * raysIn);
 
 protected:
+  PartitioningP partitioning;
 
 };
 

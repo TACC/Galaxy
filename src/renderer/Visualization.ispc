@@ -48,9 +48,7 @@ export void Visualization_destroy(void *uniform _self)
 export void Visualization_commit(void *uniform _self, 
                 void *uniform _model,
                 int uniform nv, void *uniform _v, 
-                int uniform nm, void *uniform _m,
-                float *uniform gmin, float *uniform gmax,
-                float *uniform lmin, float *uniform lmax)
+                int uniform nm, void *uniform _m)
 {
     Visualization_ispc *uniform self = (uniform Visualization_ispc *)_self;
 
@@ -84,11 +82,5 @@ export void Visualization_commit(void *uniform _self,
         for (uniform int i = 0; i < nm; i++)
             self->mappedVis[i] = m[i];
     }
-
-    self->global_bb.lower = make_vec3f(gmin[0], gmin[1], gmin[2]);
-    self->global_bb.upper = make_vec3f(gmax[0], gmax[1], gmax[2]);
-
-    self->local_bb.lower = make_vec3f(lmin[0], lmin[1], lmin[2]);
-    self->local_bb.upper = make_vec3f(lmax[0], lmax[1], lmax[2]);
 }
 

@@ -430,7 +430,6 @@ void
 Renderer::AssignDestinations(RayList *raylist)
 {
   VisualizationP visualization = raylist->GetTheRendering()->GetTheVisualization();
-  Box *box = visualization->get_local_box();
 
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {

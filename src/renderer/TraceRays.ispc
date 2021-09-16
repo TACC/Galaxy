@@ -288,7 +288,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform Visualization_ispc *uniform vis = (uniform Visualization_ispc *)_vis;
   uniform RayList_ispc *uniform raysIn = (uniform RayList_ispc *)_raysIn;
   Model *uniform model = (Model *uniform) vis->model;
-  uniform box3f box = vis->local_bb;
   uniform bool integrate = false;
   uniform float step, epsilon;
   uniform Camera *uniform c;

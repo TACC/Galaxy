@@ -24,6 +24,7 @@
 #include "Schlieren2.h"
 #include "RayQManager.h"
 #include "Particles.h"
+#include "Partitioning.h"
 #include "Rays.h"
 #include "Schlieren2TraceRays.h"
 
@@ -271,7 +272,7 @@ Schlieren2::Trace(RayList *raylist)
   // RayQ) so we don't send a message upstream saying we are idle
   // until we actually are.
 
-  Schlieren2TraceRays tracer;
+  Schlieren2TraceRays tracer(GetPartitioning());;
 
   RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
   if (out)
@@ -404,18 +405,10 @@ Schlieren2::local_render(RendererP renderer, RenderingSetP renderingSet)
       CameraP camera = rendering->GetTheCamera();
       VisualizationP visualization = rendering->GetTheVisualization();
 
-      Box *gBox = visualization->get_global_box();
-      Box *lBox = visualization->get_local_box();
+      Box gBox = GetPartitioning()->get_global_box();
+      Box lBox = GetPartitioning()->get_local_box();
 
-#if 0
-      if (GetRaysPerPixel() == -1)
-        camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
-      else
-        for (int i = 0; i < GetRaysPerPixel(); i++)
-          camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum, i);
-#else
-      camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
-#endif
+      camera->generate_initial_rays(renderer, renderingSet, rendering, &lBox, &gBox, rvec, fnum);
     }
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES

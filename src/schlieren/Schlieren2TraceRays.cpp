@@ -36,8 +36,9 @@ using namespace rapidjson;
 namespace gxy
 {
 
-Schlieren2TraceRays::Schlieren2TraceRays()
+Schlieren2TraceRays::Schlieren2TraceRays(PartitioningP p)
 {
+  partitioning = p;
   allocate_ispc();
   initialize_ispc();
 }
@@ -49,7 +50,7 @@ Schlieren2TraceRays::~Schlieren2TraceRays()
 RayList *
 Schlieren2TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
 {
-  ispc::Schlieren2TraceRays_Schlieren2TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
+  ispc::Schlieren2TraceRays_Schlieren2TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), partitioning->GetIspc());
 	return NULL;
 
 }

@@ -52,6 +52,7 @@
 #include "RayFlags.h"
 #include "Visualization.ih"
 #include "VolumeVis.ih"
+#include "Partitioning.ih"
 
 export void SchlierenTraceRays_initialize(void *uniform _self)
 {
@@ -61,56 +62,21 @@ export void SchlierenTraceRays_destroy(void *uniform ispc)
 {
 }
 
-inline float
-EntryT(const Ray& ray, const uniform box3f& box)
-{
-  const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
-  const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
-
-  return max(min(mins.x,maxs.x),
-           max(min(mins.y,maxs.y),
-               min(mins.z,maxs.z)));
-}
-
-inline float
-ExitT(const Ray& ray, const uniform box3f& box)
-{
-  const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
-  const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
-
-  PRINT_BEND print("mins.x %\nmins.y %\nmins.z %\n", mins.x, mins.y, mins.z);
-  PRINT_BEND print("maxs.x %\nmaxs.y %\nmaxs.z %\n", maxs.x, maxs.y, maxs.z);
-
-  return min(max(mins.x,maxs.x),
-           min(max(mins.y,maxs.y),
-               max(mins.z,maxs.z)));
-}
-
 // the ray origin should be inside the box.   Does the step also end
 // inside the box?  If so, bump the origin by the step size and keep
 // the containing loop going.   If not, figure out the exit point and
 // cause the loop to break
 
 inline bool
-Step(Ray& ray, const uniform float step, const uniform box3f& box)
+Step(Ray& ray, const uniform float step, uniform Partitioning_ispc *uniform partitioning)
 {
   vec3f coord = ray.org + step*ray.dir;
 
-#if 0
-  print("box\nl % % %\nu % % %\nOX %\nOY %\nOZ %\n", 
-    box.lower.x,
-    box.lower.y,
-    box.lower.z,
-    box.upper.x,
-    box.upper.y,
-    box.upper.z,
-    coord.x, coord.y, coord.z);
-#endif
-
-  if (box.lower.x > coord.x || box.lower.y > coord.y || box.lower.z > coord.z ||
-      box.upper.x < coord.x || box.upper.y < coord.y || box.upper.z < coord.z) 
+  if (partitioning->box.lower.x > coord.x || partitioning->box.lower.y > coord.y || partitioning->box.lower.z > coord.z ||
+      partitioning->box.upper.x < coord.x || partitioning->box.upper.y < coord.y || partitioning->box.upper.z < coord.z) 
   {
-    float tExit = ExitT(ray, box);
+    float tExit;
+    partitioning->ZFar(partitioning, ray, tExit);
     PRINT_BEND print("step outside tExit %\n", tExit);
 
     if (tExit < 0 || tExit > step)
@@ -131,23 +97,14 @@ Step(Ray& ray, const uniform float step, const uniform box3f& box)
 export void* uniform SchlierenTraceRays_SchlierenTraceRays(void *uniform _self,
                                void *uniform _vis,
                                const uniform int nRaysIn,
-                               void *uniform _raysIn)
+                               void *uniform _raysIn,
+                               void *uniform _partitioning)
 { 
   uniform SchlierenTraceRays_ispc *uniform self = (uniform SchlierenTraceRays_ispc *)_self;
   uniform Visualization_ispc *uniform vis = (uniform Visualization_ispc *)_vis;
   uniform RayList_ispc *uniform raysIn = (uniform RayList_ispc *)_raysIn;
-  uniform box3f box = vis->local_bb;
+  uniform Partitioning_ispc *uniform partitioning = (uniform Partitioning_ispc *)_partitioning;
   uniform float step;
-
-  // print("AT TOP: mask %\n", __mask);
-
-  PRINT_BEND print("box\nl % % %\nu % % %\n",
-    box.lower.x,
-    box.lower.y,
-    box.lower.z,
-    box.upper.x,
-    box.upper.y,
-    box.upper.z);
 
   if (vis->nVolumeVis == 1)
   {
@@ -179,7 +136,8 @@ export void* uniform SchlierenTraceRays_SchlierenTraceRays(void *uniform _self,
       // tExitVolume is the distance to the exit boundary.  CANNOT be used for much
       // since the ray bends.
 
-      float tEntry = EntryT(ray, box);
+      float tEntry;
+      partitioning->ZNear(partitioning, ray, tEntry);
       PRINT_BEND print("tE: %\n", tEntry);
 
       // move the ray origin to the entry point (if its not already inside the volume)
@@ -192,7 +150,7 @@ export void* uniform SchlierenTraceRays_SchlierenTraceRays(void *uniform _self,
       bool done = false;
       do
       {
-        done = Step(ray, step, box);
+        done = Step(ray, step, partitioning);
 
         float sThis = vol->sample(vol, ray.org);
         PRINT_BEND print("sT %\n", sThis);

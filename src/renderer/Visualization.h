@@ -87,26 +87,6 @@ public:
   //! get the Ospray OSPModel for this Visualization
   OSPModel GetTheModel() { return ospModel; }
 
-  //! get the Box that represents the global data extent for this Visualization
-  Box *get_global_box() { return &global_box; }
-  //! get the Box that represents the local data extent at this process for this Visualization
-  Box *get_local_box() { return &local_box; }
-
-  //! return the data key that is the `i^th` neighbor of this proces
-  /*! This method uses the Box face orientation indices for neighbor indexing
-   *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
-   *          - xz-face neighbors - `2` for the lower (left) `y`, `3` for the higher (right) `y`
-   *          - xy-face neighbors - `4` for the lower (left) `z`, `5` for the higher (right) `z`
-   */
-  int get_neighbor(int i) { return neighbors[i]; }
-  //! return true if the requested neighbor exists
-  /*! This method uses the Box face orientation indices for neighbor indexing
-   *          - yz-face neighbors - `0` for the lower (left) `x`, `1` for the higher (right) `x`
-   *          - xz-face neighbors - `2` for the lower (left) `y`, `3` for the higher (right) `y`
-   *          - xy-face neighbors - `4` for the lower (left) `z`, `5` for the higher (right) `z`
-   */
-  bool has_neighbor(unsigned int face) { return neighbors[face] >= 0; }
-
   //! get a pointer to the Lighting object for this Visualization
 	Lighting *get_the_lights() { return &lighting; }
 
@@ -132,10 +112,6 @@ protected:
   std::string annotation;
 
   vis_t vis;
-
-  Box global_box;
-  Box local_box;
-  int neighbors[6];
 };
 
 } // namespace gxy

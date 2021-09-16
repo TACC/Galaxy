@@ -47,7 +47,7 @@ OBJECT_POINTER_TYPES(Schlieren2TraceRays)
 class Schlieren2TraceRays : public IspcObject
 {
 public:
-  Schlieren2TraceRays(); //!< default constructor
+  Schlieren2TraceRays(PartitioningP); //!< default constructor
   ~Schlieren2TraceRays(); //!< default destructor
 
   //! trace a given RayList against the given Visualization using the given Lighting
@@ -59,6 +59,7 @@ public:
   RayList *Trace(Lighting* lights, VisualizationP visualization, RayList * raysIn);
 
 protected:
+  PartitioningP partitioning;
 
 };
 

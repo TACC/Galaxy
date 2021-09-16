@@ -23,18 +23,36 @@ void Partitioning_ZRange(void *uniform _self, const Ray& ray, float &near, float
 {
   uniform Partitioning_ispc *uniform self = (uniform Partitioning_ispc *)_self;
 
-  //print("BOX\nLX %\nLY %\nLZ %\n", self->box.lower.x, self->box.lower.y, self->box.lower.z);
-  //print("UX %\nUY %\nUZ %\n", self->box.upper.x, self->box.upper.y, self->box.upper.z);
-  
   const vec3f mins = (self->box.lower - ray.org) * rcp(ray.dir);
   const vec3f maxs = (self->box.upper - ray.org) * rcp(ray.dir);
-
-  //print("MINS\nX %\nY %\nZ %\n", mins.x, mins.y, mins.z);
-  //print("MAXS\nX %\nY %\nZ %\n", maxs.x, maxs.y, maxs.z);
 
   near = max(min(mins.x,maxs.x),
            max(min(mins.y,maxs.y),
                min(mins.z,maxs.z)));
+
+  far = min(max(mins.x,maxs.x),
+           min(max(mins.y,maxs.y),
+               max(mins.z,maxs.z)));
+}
+
+void Partitioning_ZNear(void *uniform _self, const Ray& ray, float &near)
+{
+  uniform Partitioning_ispc *uniform self = (uniform Partitioning_ispc *)_self;
+
+  const vec3f mins = (self->box.lower - ray.org) * rcp(ray.dir);
+  const vec3f maxs = (self->box.upper - ray.org) * rcp(ray.dir);
+
+  near = max(min(mins.x,maxs.x),
+           max(min(mins.y,maxs.y),
+               min(mins.z,maxs.z)));
+}
+
+void Partitioning_ZFar(void *uniform _self, const Ray& ray, float &far)
+{
+  uniform Partitioning_ispc *uniform self = (uniform Partitioning_ispc *)_self;
+
+  const vec3f mins = (self->box.lower - ray.org) * rcp(ray.dir);
+  const vec3f maxs = (self->box.upper - ray.org) * rcp(ray.dir);
 
   far = min(max(mins.x,maxs.x),
            min(max(mins.y,maxs.y),
@@ -53,6 +71,8 @@ export void Partitioning_initialize(void *uniform _self, uniform box3f& b)
   Partitioning_ispc *uniform self = (uniform Partitioning_ispc *)_self;
   self->box = b;
   self->ZRange = Partitioning_ZRange;
+  self->ZNear  = Partitioning_ZNear;
+  self->ZFar   = Partitioning_ZFar;
 } 
   
 export void Partitioning_destroy(void *uniform _self)

@@ -34,6 +34,7 @@
 #include "IspcObject.h"
 #include "Rays.h"
 #include "Visualization.h"
+#include "Partitioning.h"
 
 namespace gxy
 {
@@ -46,7 +47,7 @@ OBJECT_POINTER_TYPES(SamplerTraceRays)
 class SamplerTraceRays : public IspcObject
 {
 public:
-  SamplerTraceRays(); //!< default constructor
+  SamplerTraceRays(PartitioningP p); //!< default constructor
   ~SamplerTraceRays(); //!< default destructor
 
   //! trace a given RayList against the given Visualization 
@@ -59,8 +60,7 @@ public:
 
 
 protected:
-
-
+  PartitioningP partitioning;
 };
 
 } // namespace gxy

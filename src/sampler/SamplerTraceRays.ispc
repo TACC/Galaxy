@@ -50,6 +50,7 @@
 #include "Visualization.ih"
 #include "SamplerVis.ih"
 #include "SamplerTraceRays.ih"
+#include "Partitioning.ih"
 
 export void SamplerTraceRays_initialize(void *uniform _self)
 {
@@ -128,12 +129,14 @@ typedef uniform SamplerVis_ispc *uniform SVIS_PTR;
 export void* uniform SamplerTraceRays_SamplerTraceRays(void *uniform _self,
                                void *uniform _vis,
                                const uniform int nRaysIn,
-                               void *uniform _raysIn)
+                               void *uniform _raysIn,
+                               void *uniform _partitioning)
 { 
   uniform SamplerTraceRays_ispc *uniform self = (uniform SamplerTraceRays_ispc *)_self;
   uniform Visualization_ispc *uniform vis = (uniform Visualization_ispc *)_vis;
   uniform RayList_ispc *uniform raysIn = (uniform RayList_ispc *)_raysIn;
-  uniform box3f box = vis->local_bb;
+  uniform Partitioning_ispc *uniform partitioning = (uniform Partitioning_ispc *)_partitioning;
+  uniform box3f box = partitioning->box;
   uniform float step;
 
   if (vis->nVolumeVis >= 1)
