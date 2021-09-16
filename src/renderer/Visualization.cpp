@@ -154,7 +154,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   // Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
   // volumevis - NULL unless there's some model data
 
-  OSPModel ospModel = ospNewModel();
+  ospModel = ospNewModel();
 
   void *mispc[vis.size()]; int nmispc = 0;
   void *vispc[vis.size()]; int nvispc = 0;
