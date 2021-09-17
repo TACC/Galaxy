@@ -114,8 +114,6 @@ public:
     name = ss.str();
 
     result = KeyedDataObject::Cast(Particles::NewP());
-    result->CopyPartitioning(source);
-
   }
 
   ~MHSampler() { std::cerr << "MHSampler dtor\n"; }
@@ -262,8 +260,6 @@ public:
     p->setModified(true);
     p->clear();
 
-    p->CopyPartitioning(v);
-  
     p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);
 
     Box box = v->get_partitioning()->get_local_box();

@@ -129,7 +129,6 @@ public:
     power = a->power;
   
     p->clear();
-    p->CopyPartitioning(v);
     p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);
 
     v->get_local_counts(ni, nj, nk);
@@ -253,7 +252,6 @@ public:
     name = ss.str();
 
     result = KeyedDataObject::Cast(Particles::NewP());
-    result->CopyPartitioning(source);
   }
 
   ~DensitySampler() {}

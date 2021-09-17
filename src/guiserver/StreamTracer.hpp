@@ -372,8 +372,6 @@ protected:
       StreamTracerP stp = StreamTracer::GetByKey(*(Key *)g); g += sizeof(Key);
       PathLinesP plp = PathLines::GetByKey(*(Key *)g); g += sizeof(Key);
 
-      plp->CopyPartitioning(stp->GetVectorField());
-
       float t = stp->GetTStart();
       float dt = stp->GetDeltaT();
 

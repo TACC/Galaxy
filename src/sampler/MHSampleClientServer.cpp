@@ -183,8 +183,6 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
 
   p->clear();
 
-  p->CopyPartitioning(v);
-
   p->SetDefaultColor(a->r, a->g, a->b, a->a);
 
   float deltaX, deltaY, deltaZ;

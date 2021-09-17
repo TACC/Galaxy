@@ -62,12 +62,6 @@ KeyedDataObject::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 }
 
 void 
-KeyedDataObject::CopyPartitioning(KeyedDataObjectP o)
-{
-  partitioning = o->get_partitioning();
-}
-
-void 
 KeyedDataObject::initialize()
 {
 	super::initialize();

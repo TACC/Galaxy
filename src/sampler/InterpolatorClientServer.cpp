@@ -104,8 +104,6 @@ Interpolate(InterpolatorClientServer::Args *a)
   ParticlesP s = Particles::Cast(KeyedDataObject::GetByKey(a->sk));
   ParticlesP d = Particles::Cast(KeyedDataObject::GetByKey(a->dk));
 
-  d->CopyPartitioning(s);
-
   v->get_local_origin(a->ox, a->oy, a->oz);
   v->get_deltas(a->dx, a->dy, a->dz);
 

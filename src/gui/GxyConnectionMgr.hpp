@@ -190,7 +190,6 @@ private:
 
   std::vector<std::string> modules;
 
-  // bool is_connected = false;
   QDialog *dlg = NULL;
   bool pset = false, sset = false, just_enabled = false;
   QLineEdit *port_le, *server_le;

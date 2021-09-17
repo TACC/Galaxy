@@ -159,7 +159,6 @@ bool
 StreamTracer::local_commit(MPI_Comm c)
 {
   super::local_commit(c);
-  CopyPartitioning(vectorField);
   return false;
 }
 

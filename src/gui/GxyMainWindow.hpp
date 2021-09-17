@@ -109,6 +109,10 @@ public:
     disconnectAction->setEnabled(false);
     connect(disconnectAction, SIGNAL(triggered()), this, SLOT(disconnect()));
 
+    partitioningAction = servermenu->addAction("Load Partitioning");
+    partitioningAction->setEnabled(false);
+    connect(partitioningAction, SIGNAL(triggered()), this, SLOT(loadPartitioning()));
+
     connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(enableConnectAction(bool)));
 
     flowScene = new FlowScene(registry, mainWidget);
@@ -167,6 +171,7 @@ public Q_SLOTS:
 
   void disconnect()
   {
+    std::cerr << "DISCONNECT\n";
     getTheGxyConnectionMgr()->disconnectFromServer();
   }
 
@@ -175,17 +180,25 @@ public Q_SLOTS:
     connectAction->setEnabled(!b);
     connectAsAction->setEnabled(!b);
     disconnectAction->setEnabled(b);
+    partitioningAction->setEnabled(b);
   }
 
   void connectToServer()
   {
+    std::cerr << "CONNECT TO SERVER\n";
     getTheGxyConnectionMgr()->connectToServer();
+  }
+
+  void loadPartitioning()
+  {
+    std::cerr << "load partitioning\n";
   }
 
 private:
 
   QAction *connectAction;
   QAction *connectAsAction;
+  QAction *partitioningAction;
   QAction *disconnectAction;
   FlowScene *flowScene;
   GxyFlowView *flowView;

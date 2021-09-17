@@ -63,7 +63,6 @@ public:
     sampler = Sampler::NewP();
 
     ParticlesP samples = Particles::NewP();
-    samples->CopyPartitioning(source);
     sampler->SetSamples(samples);
     std::cerr << "SAMPLES KEY " << samples->getkey() << "\n";
 

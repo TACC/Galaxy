@@ -109,9 +109,6 @@ public:
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file using the given arguments
 	virtual bool Import(PartitioningP, std::string, void *args, int argsSize);
 
-  //! copy the data partitioning of the given KeyedDataObject
-	void CopyPartitioning(KeyedDataObjectP o);
-
   float local_min, local_max;
   float global_min, global_max;
 

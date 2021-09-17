@@ -282,7 +282,6 @@ main(int argc, char * argv[])
     VolumeP volume = Volume::Cast(theDatasets->Find(datasets[0]));
 
     ParticlesP samples = Particles::NewP();
-    samples->CopyPartitioning(volume);
     samples->SetDefaultColor(0.5, 0.5, 0.5, 1.0);
     theSampler->SetSamples(samples);
 

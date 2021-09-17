@@ -94,7 +94,6 @@ DensitySample(MPI_Comm c, DensitySampleClientServer::Args *a)
   ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
 
   p->clear();
-  p->CopyPartitioning(v);
   p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);
 
   v->get_local_counts(a->ni, a->nj, a->nk);
