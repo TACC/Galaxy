@@ -586,6 +586,7 @@ GuiClientServer::handle(string line, string& reply)
       streamtracer = dynamic_cast<StreamTracerFilter*>(filter);
 
       streamtracer->SetVectorField(vectorField);
+      streamtracer->SetPartitioning(partitioning);
 
       addFilter(id, filter);
       temporaries->Insert(filter->GetName(), filter->getResult());

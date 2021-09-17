@@ -187,11 +187,6 @@ public:
   bool Sample(vec3f& p, vec3f& v);
   bool Sample(vec3f& p, float& v);
 
-  //! Which process owns an arbitrary point in this global volume? -1 for outside
-  int PointOwner(vec3f& p);
-
-	void set_global_partitions(int i, int j, int k) { global_partitions.x = i; global_partitions.y = j; global_partitions.z = k; }
-
   virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);
 
   void set_ijk(int i, int j, int k) { ijk.x = i; ijk.y = j; ijk.z = k; }

@@ -125,6 +125,8 @@ print_ospray_error_messages(const char *m)
 void
 Renderer::initialize()
 {
+  partitioning = Partitioning::NewP();
+
   ospray = GetOspray();
   epsilon = 0.001;
 

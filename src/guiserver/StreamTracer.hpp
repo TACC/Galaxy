@@ -26,6 +26,7 @@
 #include "vector"
 #include "memory"
 #include "KeyedDataObject.h"
+#include "Partitioning.h"
 #include "Volume.h"
 #include "Particles.h"
 #include "PathLines.h"
@@ -109,6 +110,9 @@ public:
   void SetVectorField(VolumeP v) { vectorField = v; }
   VolumeP GetVectorField() { return vectorField; }
 
+  void SetPartitioning(PartitioningP p) { partitioning = p; }
+  PartitioningP GetPartitioning() { return partitioning; }
+
   int  get_max_steps() { return max_steps; }
   void set_max_steps(int n) { max_steps = n; }
 
@@ -129,6 +133,7 @@ public:
 
 protected:
   VolumeP vectorField;
+  PartitioningP partitioning;
 
   pthread_mutex_t lock;
   pthread_cond_t signal;
@@ -456,6 +461,9 @@ public:
   bool SetVectorField(VolumeP v);
   VolumeP GetVectorField() { return vectorField; }
 
+  void SetPartitioning(PartitioningP p) { partitioning = p; }
+  PartitioningP GetPartitioning() { return partitioning; }
+
   int  get_max_steps() { return max_steps; }
   void set_max_steps(int n) { max_steps = n; }
 
@@ -501,6 +509,7 @@ private:
   StreamTracerP streamTracer;
 
   VolumeP vectorField;
+  PartitioningP partitioning;
 
   int   max_steps            = 1000;
   float stepsize             = 0.2;

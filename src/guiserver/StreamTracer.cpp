@@ -40,7 +40,7 @@ StreamTracer::initialize()
 }
 
 int 
-StreamTracer::serialSize() { return super::serialSize() + sizeof(Key) + sizeof(int) + 5*sizeof(float); }
+StreamTracer::serialSize() { return super::serialSize() + 2*sizeof(Key) + sizeof(int) + 5*sizeof(float); }
 
 bool
 StreamTracerFilter::SetVectorField(VolumeP v)
@@ -61,6 +61,7 @@ StreamTracer::serialize(unsigned char *ptr)
 {
   ptr = super::serialize(ptr);
   *(Key *)ptr = vectorField->getkey(); ptr += sizeof(Key);
+  *(Key *)ptr = partitioning->getkey(); ptr += sizeof(Key);
   *(int *)ptr = max_steps; ptr += sizeof(int);
   *(float *)ptr = stepsize; ptr += sizeof(float);
   *(float *)ptr = min_velocity; ptr += sizeof(float);
@@ -76,6 +77,7 @@ StreamTracer::deserialize(unsigned char *ptr)
 {
   ptr = super::deserialize(ptr);
   vectorField = Volume::GetByKey(*(Key *)ptr); ptr += sizeof(Key);
+  partitioning = Partitioning::GetByKey(*(Key *)ptr); ptr += sizeof(Key);
   max_steps = *(int *)ptr; ptr += sizeof(int);
   stepsize = *(float *)ptr; ptr += sizeof(float);
   min_velocity = *(float *)ptr; ptr += sizeof(float);
@@ -95,7 +97,7 @@ StreamTracer::Trace(vec3f& p, int id)
   max_integration_time = 0;
   
   vec3f u(0.0, 1.0, 0.0);
-  _Trace(GetVectorField()->PointOwner(p), id, 0, p, u, 0.0);
+  _Trace(GetPartitioning()->PointOwner(p), id, 0, p, u, 0.0);
 
   while (in_flight) 
     Wait();
@@ -114,7 +116,7 @@ StreamTracer::Trace(int n, vec3f* p)
   vec3f u(0.0, 1.0, 0.0);
   
   for (int i = 0; i < n; i++)
-    _Trace(GetVectorField()->PointOwner(p[i]), i, 0, p[i], u, 0.0);
+    _Trace(GetPartitioning()->PointOwner(p[i]), i, 0, p[i], u, 0.0);
 
   while (in_flight) 
     Wait();
@@ -227,7 +229,6 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     if (min_velocity > 0 && vlen < min_velocity)
     {
       terminated = true;
-      // std::cerr << "terminated on velocity\n";
       zero(velocity);
       zero(normalized_velocity);
     }
@@ -385,7 +386,7 @@ StreamTracer::local_trace(int id, int n, vec3f& p, vec3f& u, float t)
     cross(r, normalized_velocity, u);
     normalize(u);
 
-    next = v->PointOwner(p);
+    next = partitioning->PointOwner(p);
     if (next !=  me)
       break;
 
