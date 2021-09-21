@@ -94,7 +94,8 @@ VisModel::VisModel()
   connect(cmap_range_min, SIGNAL(editingFinished()), this, SLOT(enableIfValid()));
   connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
 
-#if __APPLE__
+#if 0
+//#if __APPLE__
   char buf[1024];
   getcwd(buf, 1024);
   std::string cmap_string = std::string(buf) + "/../colormaps/default.png";

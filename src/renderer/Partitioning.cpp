@@ -37,6 +37,14 @@ namespace gxy
 KEYED_OBJECT_CLASS_TYPE(Partitioning)
 
 void
+Partitioning::SetNumberOfPartitions(int n)
+{
+  number_of_partitions = n;
+  if (rectilinear_partitions) delete[] rectilinear_partitions;
+  rectilinear_partitions = new rectilinear_partition[number_of_partitions];
+}
+
+void
 Partitioning::allocate_ispc()
 { 
   ispc = ispc::Partitioning_allocate();
@@ -70,7 +78,9 @@ Partitioning::destroy_ispc()
 void
 Partitioning::initialize()
 {
+  SetNumberOfPartitions(GetTheApplication()->GetSize());
   allocate_ispc();
+  initialize_ispc();
 }
 
 void
@@ -89,7 +99,6 @@ void
 Partitioning::SetBox(Box& global_box)
 {
   gbox = global_box;
-  number_of_partitions = GetTheApplication()->GetSize();
   setup();
 }
 
@@ -98,7 +107,6 @@ Partitioning::SetBox(float x, float y, float z, float X, float Y, float Z)
 {
   gbox.xyz_min = vec3f(x, y, z);
   gbox.xyz_max = vec3f(X, Y, Z);
-  number_of_partitions = GetTheApplication()->GetSize();
   setup();
 }
 
@@ -108,6 +116,8 @@ Partitioning::local_commit(MPI_Comm c)
   if (super::local_commit(c))
     return true;
 
+  setup();
+
   if (number_of_partitions > 0)
   {
     if (GetTheApplication()->GetRank() >= number_of_partitions)
@@ -116,12 +126,7 @@ Partitioning::local_commit(MPI_Comm c)
     else
       for (int i = 0; i < 6; i++)
         neighbors[i] = rectilinear_partitions[GetTheApplication()->GetRank()].neighbors[i];
-
-    initialize_ispc();
   }
-  else
-    ispc = NULL;
-    
 
   return false;
 }
@@ -137,7 +142,6 @@ Partitioning::setup()
   vec3f gsize = gbox.xyz_max - gbox.xyz_min;
   psize = vec3f(gsize.x / gpart.x, gsize.y / gpart.y, gsize.z / gpart.z);
 
-  rectilinear_partitions = new rectilinear_partition[number_of_partitions];
   rectilinear_partition *p = rectilinear_partitions;
 
   float oz = gbox.xyz_min.z;
@@ -162,6 +166,8 @@ Partitioning::setup()
       }
     }
   }
+
+  initialize_ispc();
 }
 
 bool
@@ -226,12 +232,11 @@ Partitioning::deserialize(unsigned char *ptr)
   ptr = super::deserialize(ptr);
   ptr = gbox.deserialize(ptr);
 
-  number_of_partitions = *(int *)ptr;
+  SetNumberOfPartitions(*(int *)ptr);
   ptr += sizeof(int);
 
   if (number_of_partitions > 0)
   {
-    rectilinear_partitions = new rectilinear_partition[number_of_partitions];
     memcpy(rectilinear_partitions, ptr, number_of_partitions*sizeof(rectilinear_partition));
     ptr += number_of_partitions*sizeof(rectilinear_partition);
   }
@@ -302,15 +307,16 @@ Partitioning::LoadFromJSON(Value& v)
   {
     gbox.LoadFromJSON(vp["default rectilinear box"]["global box"]);
     if (vp["default rectilinear box"].HasMember("number of partitions"))
-      number_of_partitions = vp["default rectilinear box"]["number of partitions"].GetInt();
+      SetNumberOfPartitions(vp["default rectilinear box"]["number of partitions"].GetInt());
     else
-      number_of_partitions = GetTheApplication()->GetSize();
+      SetNumberOfPartitions(GetTheApplication()->GetSize());
+    SetBox(-1, -1, -1, 1, 1, 1);
     setup();
   }
   else if (vp.HasMember("rectilinear partitions"))
   {
     Value& partitions_json = vp["rectilinear partitions"];
-    rectilinear_partitions = new rectilinear_partition[partitions_json.Size()];
+    SetNumberOfPartitions(partitions_json.Size());
 
     for (int i = 0; i < partitions_json.Size(); i++)
     {

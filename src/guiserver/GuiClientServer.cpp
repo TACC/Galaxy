@@ -1,4 +1,5 @@
 // ========================================================================== //
+
 //                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
@@ -22,6 +23,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -198,7 +200,7 @@ GuiClientServer::Sample(Document& params, std::string& reply)
   return true;                                                                                  \
 }
 
-static void brk() { std::cerr << "brk\n"; };
+static void brk() { }
 
 bool
 GuiClientServer::handle(string line, string& reply)
@@ -216,6 +218,29 @@ GuiClientServer::handle(string line, string& reply)
 
   string cmd = doc["cmd"].GetString();
 
+  if (cmd == "gui::partitioning")
+  {
+    std::string pfile = doc["pfile"].GetString();
+
+    std::ifstream ifs(pfile);
+    if (! ifs)
+      HANDLED_BUT_ERROR_RETURN("unable to open partition file")
+    else
+    {
+      stringstream ss;
+      ss << ifs.rdbuf();
+
+      Document pdoc;
+      if (pdoc.Parse<0>(ss.str().c_str()).HasParseError())
+        HANDLED_BUT_ERROR_RETURN("error parsing partition json file")
+      else if (! partitioning->LoadFromJSON(pdoc))
+        HANDLED_BUT_ERROR_RETURN("invalid partitioning document")
+    }
+
+    partitioning->Commit();
+
+    HANDLED_OK;
+  }
   if (cmd == "gui::import")
   {
     if (! globals->LoadFromJSON(doc, partitioning))
@@ -333,9 +358,6 @@ GuiClientServer::handle(string line, string& reply)
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("initWindow: window has not been initialized");
 
-    clientWindow->visualization  = Visualization::NewP();
-    clientWindow->datasets       = Datasets::NewP();
-
     if (! clientWindow->visualization->LoadFromJSON(doc["Visualization"]))
       HANDLED_BUT_ERROR_RETURN("visualization: error in LoadFromJson");
 
@@ -388,17 +410,17 @@ GuiClientServer::handle(string line, string& reply)
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("render: window has not been initialized");
     
-    GuiRenderingP rendering = GuiRendering::NewP();
-    clientWindow->renderingSet = RenderingSet::NewP();
-    clientWindow->renderingSet->SetRenderFrame(clientWindow->frame++);
-
     CameraP camera = clientWindow->camera;
+    RenderingSetP renderingSet = clientWindow->renderingSet;
+    GuiRenderingP rendering = clientWindow->rendering;
+
     rendering->SetTheSize(camera->get_width(), camera->get_height());
 
     float px, py, pz, dx, dy, dz;
     camera->get_viewpoint(px, py, pz);
     camera->get_viewdirection(dx, dy, dz);
-    std::cerr << px << " " << py << " " << pz << " :: " << dx << " " << dy << " " << dz << "\n";
+
+    renderingSet->SetRenderFrame(clientWindow->frame++);
 
     rendering->SetTheCamera(camera);
 
@@ -408,7 +430,7 @@ GuiClientServer::handle(string line, string& reply)
     rendering->SetId(id);
     rendering->Commit();
 
-    clientWindow->renderingSet->AddRendering(rendering);
+    // clientWindow->renderingSet->AddRendering(rendering);
     clientWindow->renderingSet->SetRenderFrame(clientWindow->frame++);
     clientWindow->renderingSet->Commit();
 

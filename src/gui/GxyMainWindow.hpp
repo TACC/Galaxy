@@ -18,9 +18,20 @@
 //                                                                            //
 // ========================================================================== //
 
+#include <string>
+#include <sstream>
+
+#include "rapidjson/document.h"
+
+#include <QJsonDocument>
+#include <QJsonObject>
+
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMenuBar>
 
 #include <nodes/Node>
@@ -87,8 +98,9 @@ public:
     std::shared_ptr<QtNodes::DataModelRegistry> registry = registerDataModels();
 
     auto fileMenu   = menuBar()->addMenu("&File");
-    auto loadAction = fileMenu->addAction("Load");
-    auto saveAction = fileMenu->addAction("Save");
+    partitioningAction = fileMenu->addAction("Load Partitioning");
+    auto loadAction = fileMenu->addAction("Load Flow");
+    auto saveAction = fileMenu->addAction("Save Flow");
     auto debugAction = fileMenu->addAction("Debug");
 
     auto editMenu       = menuBar()->addMenu("&Edit");
@@ -109,10 +121,6 @@ public:
     disconnectAction->setEnabled(false);
     connect(disconnectAction, SIGNAL(triggered()), this, SLOT(disconnect()));
 
-    partitioningAction = servermenu->addAction("Load Partitioning");
-    partitioningAction->setEnabled(false);
-    connect(partitioningAction, SIGNAL(triggered()), this, SLOT(loadPartitioning()));
-
     connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(enableConnectAction(bool)));
 
     flowScene = new FlowScene(registry, mainWidget);
@@ -123,6 +131,8 @@ public:
     l->setSpacing(0);
 
     l->addWidget(flowView);
+
+    connect(partitioningAction, SIGNAL(triggered()), this, SLOT(loadPartitioning()));
 
     QObject::connect(saveAction, &QAction::triggered, flowScene, &FlowScene::save);
     QObject::connect(loadAction, &QAction::triggered, flowScene, &FlowScene::load);
@@ -171,7 +181,6 @@ public Q_SLOTS:
 
   void disconnect()
   {
-    std::cerr << "DISCONNECT\n";
     getTheGxyConnectionMgr()->disconnectFromServer();
   }
 
@@ -185,13 +194,64 @@ public Q_SLOTS:
 
   void connectToServer()
   {
-    std::cerr << "CONNECT TO SERVER\n";
     getTheGxyConnectionMgr()->connectToServer();
+  }
+
+  void partitioningFileSelector()
+  {
+    QString f = QFileDialog::getOpenFileName(this, tr("Open Partitioning File"), getenv("HOME"), tr("data files (*.json)"));
+    partitioningLineEdit->insert(f);
+    _loadPartitioning();
   }
 
   void loadPartitioning()
   {
-    std::cerr << "load partitioning\n";
+    if (! partitioningDialog)
+    {
+      partitioningDialog = new QDialog;
+      partitioningDialog->setModal(true);
+
+      QGridLayout *l = new QGridLayout();
+      partitioningDialog->setLayout(l);
+
+      l->addWidget(new QLabel("partition file:"), 0, 0);
+
+      partitioningLineEdit = new QLineEdit;
+      l->addWidget(partitioningLineEdit, 0, 1);
+
+      QPushButton *g = new QPushButton("...");
+      l->addWidget(g, 0, 2);
+
+      connect(g, SIGNAL(released()), this, SLOT(partitioningFileSelector()));
+    }
+
+    partitioningDialog->show();
+    partitioningDialog->exec();
+  }
+
+  void _loadPartitioning()
+  {
+    QString filename = partitioningLineEdit->text();
+
+    QJsonObject p;
+    p["cmd"] = "gui::partitioning";
+    p["pfile"] = filename.toStdString().c_str();
+
+    QJsonDocument doc(p);
+    QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+    QString s = QLatin1String(bytes);
+  
+    std::string msg = s.toStdString();
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+
+    rapidjson::Document rply;
+    rply.Parse(msg.c_str());
+
+    QString status = rply["status"].GetString();
+    if (status.toStdString() != "ok")
+      std::cerr << "load partition failed: " << rply["error message"].GetString() << "\n";
+    else
+      partitioningDialog->hide();
   }
 
 private:
@@ -202,4 +262,6 @@ private:
   QAction *disconnectAction;
   FlowScene *flowScene;
   GxyFlowView *flowView;
+  QDialog *partitioningDialog;
+  QLineEdit *partitioningLineEdit;
 };

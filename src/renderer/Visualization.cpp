@@ -162,11 +162,13 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   for (auto v : vis)
   {
     KeyedDataObjectP kdop = v->GetTheData();
-    OsprayObjectP op = kdop->GetTheOSPRayEquivalent();
 
-    if (! op || kdop->hasBeenModified())
-    {
+    OsprayObjectP op = kdop->CreateTheOSPRayEquivalent(kdop);
+    if (! op)
       op = kdop->CreateTheOSPRayEquivalent(kdop);
+
+    if (kdop->hasBeenModified() || !v->GetTheOsprayDataObject())
+    {
       v->SetTheOsprayDataObject(op);
       kdop->setModified(false);
     }

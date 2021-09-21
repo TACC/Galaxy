@@ -1,3 +1,4 @@
+// ======================================================================== //
 // Copyright (c) 2016-2018 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -128,10 +129,8 @@ LookForSliceHit(varying bool shadeFlag,
   bool h = false;
   int vid = -1, sid = -1;
 
-
   if (vis->nVolumeVis > 0)
   {
-
     for (uniform  int major = 0; major < vis->nVolumeVis; major++)      // which volume?
     {
       uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
@@ -145,14 +144,20 @@ LookForSliceHit(varying bool shadeFlag,
 
         float d = plane.w;
 
+        print("PLANE % % % %\n", plane.x, plane.y, plane.z, plane.w);
+
         float denom = dot(ray.dir, pnorm);
+
+        print("DENOM %\n", denom);
 
         if (abs(denom) > 0.0001)
         {
 
           float t = (d - dot(ray.org, pnorm)) / denom;
+          print("T %\n %\n %\n", ray.t0, ray.t, t);
           if (t >= ray.t0 && t <= ray.t)
           {
+            print("HIT\n");
 
             if (denom > 0)
               hit.normal   = neg(pnorm);
@@ -167,10 +172,14 @@ LookForSliceHit(varying bool shadeFlag,
             h            = true;
 
           }
+          else
+            print("NO HIT\n");
         }
       }
     }
   }
+  else
+    print("NO SLICES\n");
 
 
   if (h)
@@ -293,6 +302,12 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform Camera *uniform c;
   uniform Partitioning_ispc *uniform partitioning = (uniform Partitioning_ispc *)_partitioning;
 
+  // print("AAA\n");
+  // print("self %\n", self);
+  // print("vis %\n", vis);
+  // print("raysIn %\n", raysIn);
+  // print("model %\n", model);
+  // print("partitioning %\n", partitioning);
 
   step = -1;
   for (uniform int major = 0; major < vis->nVolumeVis; major++)
@@ -314,7 +329,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       epsilon = global_epsilon * s;
     }
   }
-
 
   uniform int II = 0;
   foreach (i = 0 ... nRaysIn)
@@ -352,9 +366,11 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // may cause it to be traced into the next partition of a partitioned dataset.
     // The entry can potentially be negative if the ray origin is inside the volume 
 
-
     float tEntry, tExitVolume;
     partitioning->ZRange(partitioning, ray, tEntry, tExitVolume);
+
+    // print("tIn: %\n", tEntry);
+    // print("tOut: %\n", tExitVolume);
 
     // If the volume entrypoint is beyong the current ray point, move the ray point up to
     // the entry point
@@ -389,7 +405,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     if (integrate)
     {
-
       // Now iterate up the interval from tEntry to tTermination, accruing volume contributions and looking for
       // isosurfaces
 
@@ -406,13 +421,6 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       int iterations = 0;
 
       bool opaque = (min(min(color.x, color.y), color.z) >= 1.0f || color.w > 0.999f);
-
-
-      // print("AAA tEntry %\n", tEntry);
-      // print("AAA tTermination %\n", tTermination);
-      // print("AAA opaque %\n", opaque);
-      // print("AAA hit-iso %\n", hit_isosurface);
-
 
       for (tThis = tEntry;
            tThis <= tTermination && !opaque && !hit_isosurface; 

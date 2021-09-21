@@ -51,7 +51,8 @@ public:
 
     row = 0;
 
-#if __APPLE__
+#if 0
+// #if __APPLE__
     char buf[1024];
     getcwd(buf, 1024);
     QString dirname((std::string(buf) + "/../colormaps").c_str());

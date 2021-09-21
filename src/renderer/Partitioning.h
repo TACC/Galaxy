@@ -71,6 +71,9 @@ public:
   bool isIn(vec3f, float fuzz = 0);          // Is the point inside this rank's partition (with fuzz)
   bool isIn(int i, vec3f p, float fuzz = 0); // Is the point inside rank i's partition (with fuzz)
 
+  void SetNumberOfPartitions(int n);
+  int GetNumberOfPartititions() { return number_of_partitions; }
+
   // What rank will a ray with origin p and direction hit next?
 
   int neighbor(vec3f p, vec3f v) { return neighbor(p.x, p.y, p.z, v.x, v.y, v.z); }
@@ -113,9 +116,9 @@ private:
   static void factor(int, vec3i &);   // given a number of ranks, come up with a spatial partitioning
 
   vec3i gpart;
+  vec3f psize;
   Box gbox = Box(-1, -1, -1, 1, 1, 1);
   int neighbors[6];
-  vec3f psize;
 
   rectilinear_partition *rectilinear_partitions = NULL;
   int number_of_partitions = -1;

@@ -45,13 +45,13 @@ class GuiClientServer : public MultiServerHandler
   {
     ClientWindow(string id)
     {
+      datasets = Datasets::NewP();
       visualization = Visualization::NewP();
       camera = Camera::NewP();
+      renderingSet = RenderingSet::NewP();
 
       rendering = GuiRendering::NewP();
       rendering->SetId(id);
-
-      renderingSet = RenderingSet::NewP();
       renderingSet->AddRendering(rendering);
 
       frame = 0;
@@ -87,11 +87,12 @@ public:
 
     temporaries = Datasets::NewP();
 
-    renderer = Renderer::NewP();
-    renderer->Commit();
-
     partitioning = Partitioning::NewP();
+    partitioning->Commit();
+
+    renderer = Renderer::NewP();
     renderer->SetPartitioning(partitioning);
+    renderer->Commit();
   }
 
   bool Sample(rapidjson::Document& params, string& reply);

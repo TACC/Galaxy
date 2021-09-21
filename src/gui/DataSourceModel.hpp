@@ -265,16 +265,12 @@ private Q_SLOTS:
     QString f = QFileDialog::getOpenFileName(this, tr("Open Dataset"), getenv("HOME"), tr("data files (*.json *.vol *.part)"));
     fileName->insert(f);
 
-#if 0
-
-    QFileDialog *fileDialog = new QFileDialog();
-    if (fileDialog->exec())
-    {
-      fileName->insert(fileDialog->selectedFiles().at(0));
-    }
-
-    delete fileDialog;
-#endif
+    std::string s = f.toStdString();
+    int n = s.find_last_of("/");
+    std::string tail = (n != s.npos) ? s.substr(n+1) : s;
+    n = tail.find_last_of(".");
+    std::string name = (n != tail.npos) ? tail.substr(0, n) : tail;
+    dataName->insert(QString::fromStdString(name));
 
     validateOpen();
   }
@@ -440,10 +436,14 @@ private Q_SLOTS:
       std::string status;
       ss >> status;
 
-      if (status != "ok")
+      rapidjson::Document rply;
+      std::getline(ss, line);
+      rply.Parse(line.c_str());
+
+      if (std::string(rply["status"].GetString()) != "ok")
       {
         QMessageBox msgBox;
-        msgBox.setText(line.c_str());
+        msgBox.setText(rply["status"].GetString());
         msgBox.exec();
       }
       else

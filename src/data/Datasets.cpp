@@ -133,23 +133,21 @@ Datasets::loadTyped(PartitioningP p, Value& v)
 bool
 Datasets::LoadFromJSON(Value& v, PartitioningP p)
 {
-  if (! v.HasMember("Datasets"))
+  if (v.HasMember("Datasets"))
   {
-    std::cerr << "JSON has no Datasets clause\n";
-    set_error(1);
-    return false;
-  }
+    Value& ds = v["Datasets"];
 
-  Value& ds = v["Datasets"];
-
-  if (ds.IsArray())
-  {
-    for (int i = 0; i < ds.Size(); i++)
-      if (! loadTyped(p, ds[i])) return false;
-    return true;
+    if (ds.IsArray())
+    {
+      for (int i = 0; i < ds.Size(); i++)
+        if (! loadTyped(p, ds[i])) return false;
+      return true;
+    }
+    else
+      return loadTyped(p, ds);
   }
   else
-    return loadTyped(p, ds);
+    return loadTyped(p, v);
 }
 
 bool
