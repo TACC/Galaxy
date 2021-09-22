@@ -96,6 +96,10 @@ public:
   //! Set Ospray-side data for each attached Vis
   void SetOsprayObjects(std::map<Key, OsprayObjectP>&);
 
+  //! Clear the list of vis's
+  void clear() { vis.clear(); }
+
+
 protected:
 	Lighting lighting;
 

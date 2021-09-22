@@ -1,5 +1,4 @@
 // ========================================================================== //
-
 //                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
@@ -377,6 +376,8 @@ GuiClientServer::handle(string line, string& reply)
     ClientWindow *clientWindow = getClientWindow(id);
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("initWindow: window has not been initialized");
+
+    clientWindow->visualization->clear();
 
     if (! clientWindow->visualization->LoadFromJSON(doc["Visualization"]))
       HANDLED_BUT_ERROR_RETURN("visualization: error in LoadFromJson");
