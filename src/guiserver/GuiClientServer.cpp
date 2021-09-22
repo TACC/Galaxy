@@ -218,7 +218,30 @@ GuiClientServer::handle(string line, string& reply)
 
   string cmd = doc["cmd"].GetString();
 
-  if (cmd == "gui::partitioning")
+  if (cmd == "gui::load_datasets")
+  {
+    std::string pfile = doc["dfile"].GetString();
+
+    std::ifstream ifs(pfile);
+    if (! ifs)
+      HANDLED_BUT_ERROR_RETURN("unable to open partition file")
+    else
+    {
+      stringstream ss;
+      ss << ifs.rdbuf();
+
+      Document pdoc;
+      if (pdoc.Parse<0>(ss.str().c_str()).HasParseError())
+        HANDLED_BUT_ERROR_RETURN("error parsing datasets json file")
+      else if (! globals->LoadFromJSON(pdoc, partitioning))
+        HANDLED_BUT_ERROR_RETURN("invalid datasets document")
+    }
+
+    globals->Commit();
+
+    HANDLED_OK;
+  }
+  else if (cmd == "gui::partitioning")
   {
     std::string pfile = doc["pfile"].GetString();
 

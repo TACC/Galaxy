@@ -106,6 +106,7 @@ public:
 
     auto fileMenu   = menuBar()->addMenu("&File");
     partitioningAction = fileMenu->addAction("Load Partitioning");
+    auto loadDatasetsAction = fileMenu->addAction("Load Datasets");
     auto loadAction = fileMenu->addAction("Load Flow");
     auto saveAction = fileMenu->addAction("Save Flow");
     auto debugAction = fileMenu->addAction("Debug");
@@ -140,6 +141,7 @@ public:
     l->addWidget(flowView);
 
     connect(partitioningAction, SIGNAL(triggered()), this, SLOT(loadPartitioning()));
+    connect(loadDatasetsAction, SIGNAL(triggered()), this, SLOT(loadDatasets()));
 
     QObject::connect(saveAction, &QAction::triggered, flowScene, &FlowScene::save);
     QObject::connect(loadAction, &QAction::triggered, flowScene, &FlowScene::load);
@@ -206,6 +208,30 @@ public Q_SLOTS:
     getTheGxyConnectionMgr()->connectToServer();
   }
 
+  void loadDatasets()
+  {
+    QString f = QFileDialog::getOpenFileName(this, tr("Open Datasets File"), getenv("HOME"), tr("data files (*.json)"));
+    std::string datasets = f.toStdString();
+
+    QJsonObject p;
+    p["cmd"] = "gui::load_datasets";
+    p["dfile"] = datasets.c_str();
+
+    QJsonDocument doc(p);
+    QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+    QString s = QLatin1String(bytes);
+  
+    std::string msg = s.toStdString();
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+
+    rapidjson::Document rply;
+    rply.Parse(msg.c_str());
+
+    QString status = rply["status"].GetString();
+    if (status.toStdString() != "ok")
+      std::cerr << "load datasets failed: " << rply["error message"].GetString() << "\n";
+  }
+
   void loadPartitioning()
   {
     QString f = QFileDialog::getOpenFileName(this, tr("Open Partitioning File"), getenv("HOME"), tr("data files (*.json)"));
@@ -242,6 +268,7 @@ private:
   QAction *connectAsAction = nullptr;
   QAction *partitioningAction = nullptr;
   QAction *disconnectAction = nullptr;
+  QAction *loadDatasetsAction = nullptr;
   FlowScene *flowScene = nullptr;
   GxyFlowView *flowView = nullptr;
 
