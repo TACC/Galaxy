@@ -82,8 +82,6 @@ InterpolatorFilter::onApply()
   output->dataInfo.isVector = (rply["ncomp"].GetInt() == 3);
   output->dataInfo.data_min = rply["min"].GetDouble();
   output->dataInfo.data_max = rply["max"].GetDouble();
-  for (auto i = 0; i < 6; i++)
-    output->dataInfo.box[i] = rply["box"][i].GetDouble();
 
   output->setValid(true);
 

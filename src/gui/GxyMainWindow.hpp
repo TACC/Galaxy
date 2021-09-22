@@ -68,6 +68,11 @@ using QtNodes::NodeGraphicsObject;
 
 extern GxyConnectionMgr *getTheGxyConnectionMgr();
 
+class GxyMainWindow;
+
+extern void SetTheGxyMainWindow(GxyMainWindow*);
+extern GxyMainWindow *GetTheGxyMainWindow();
+
 static std::shared_ptr<QtNodes::DataModelRegistry>
 registerDataModels()
 {
@@ -92,6 +97,8 @@ class GxyMainWindow : public QMainWindow
 public:
   GxyMainWindow() : QMainWindow()
   {
+    SetTheGxyMainWindow(this);
+
     QWidget *mainWidget = new QWidget;
     setCentralWidget(mainWidget);
 
@@ -161,6 +168,8 @@ public:
     resize(1200, 900);
   }
 
+  float *get_box() { return box; }
+
   void 
   closeEvent(QCloseEvent *event)
   {
@@ -219,6 +228,12 @@ public Q_SLOTS:
     QString status = rply["status"].GetString();
     if (status.toStdString() != "ok")
       std::cerr << "load partition failed: " << rply["error message"].GetString() << "\n";
+    else
+    {
+      for (auto i = 0; i < 6; i++)
+        box[i] = rply["box"][i].GetDouble();
+      std::cerr << "BOX: " << box[0] << " " << box[1] << " " << box[2] << " " << box[3] << " " << box[4] << " " << box[5] << "\n";
+    }
   }
 
 private:
@@ -231,4 +246,6 @@ private:
   GxyFlowView *flowView = nullptr;
 
   std::string partitioningFile;
+  float box[6]  = {-1, 1, -1, 1, -1, 1};
 };
+

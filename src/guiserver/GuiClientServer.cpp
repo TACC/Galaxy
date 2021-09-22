@@ -239,6 +239,16 @@ GuiClientServer::handle(string line, string& reply)
 
     partitioning->Commit();
 
+    Box box = partitioning->get_global_box();
+    rapidjson::Value boxv(rapidjson::kArrayType);
+    boxv.PushBack(rapidjson::Value().SetDouble(box.get_min()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box.get_max()[0]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box.get_min()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box.get_max()[1]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box.get_min()[2]), alloc);
+    boxv.PushBack(rapidjson::Value().SetDouble(box.get_max()[2]), alloc);
+    replyDoc.AddMember("box", boxv, alloc);
+
     HANDLED_OK;
   }
   if (cmd == "gui::import")
@@ -316,17 +326,6 @@ GuiClientServer::handle(string line, string& reply)
       dset.AddMember("min", m, alloc);
       dset.AddMember("max", M, alloc);
 
-      Box *box = kdop->get_global_box();
-
-      rapidjson::Value boxv(rapidjson::kArrayType);
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
-      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
-      dset.AddMember("box", boxv, alloc);
-
       array.PushBack(dset, alloc);
     }
 
@@ -336,9 +335,7 @@ GuiClientServer::handle(string line, string& reply)
     replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);        
     reply = DocumentToString(replyDoc);                                                         
     // std::cerr << "REPLY: " << reply << "\n";
-    return true; 
-
-    // HANDLED_OK;
+    HANDLED_OK;
   }
   else if (cmd == "gui::initWindow")
   {

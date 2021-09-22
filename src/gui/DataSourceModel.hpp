@@ -91,18 +91,6 @@ public:
     gl->addWidget(new QLabel(QString::number(di.data_min, 'g', 4)), row, 1);
     gl->addWidget(new QLabel(QString::number(di.data_max, 'g', 4)), row++, 2);
 
-    gl->addWidget(new QLabel("X span"), row, 0);
-    gl->addWidget(new QLabel(QString::number(di.box[0], 'g', 4)), row, 1);
-    gl->addWidget(new QLabel(QString::number(di.box[1], 'g', 4)), row++, 2);
-
-    gl->addWidget(new QLabel("Y span"), row, 0);
-    gl->addWidget(new QLabel(QString::number(di.box[2], 'g', 4)), row, 1);
-    gl->addWidget(new QLabel(QString::number(di.box[3], 'g', 4)), row++, 2);
-
-    gl->addWidget(new QLabel("Z span"), row, 0);
-    gl->addWidget(new QLabel(QString::number(di.box[4], 'g', 4)), row, 1);
-    gl->addWidget(new QLabel(QString::number(di.box[5], 'g', 4)), row++, 2);
-
     QPushButton *done = new QPushButton("done");
     dlg->connect(done, SIGNAL(released()), dlg, SLOT(accept()));
     gl->addWidget(done, row++, 0);
@@ -501,15 +489,10 @@ private Q_SLOTS:
           rapidjson::Value& dset = array[i];
           GxyDataInfo datainfo;
           datainfo.name = dset["name"].GetString();
-          // datainfo.key = dset["key"].GetInt();
           datainfo.type = dset["type"].GetInt();
           datainfo.isVector = (dset["ncomp"].GetInt() == 3);
           datainfo.data_min = dset["min"].GetDouble();
           datainfo.data_max = dset["max"].GetDouble();
-          for (auto i = 0; i < 6; i++)
-          {
-            datainfo.box[i] = dset["box"][i].GetDouble();
-          }
 
           MyQListWidgetItem *mlwi = new MyQListWidgetItem(datainfo);
           objectList->addItem(mlwi);

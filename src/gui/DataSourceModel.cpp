@@ -93,7 +93,6 @@ DataSourceModel::Notify(Observer *sender, Observer::ObserverEvent event, void* c
 
       if (!has)
       {
-        std::cerr << "REFRESH\n";
         onRefresh();
       }
       else
