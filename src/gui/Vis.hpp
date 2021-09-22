@@ -53,12 +53,15 @@ public:
     p["dataset"] = source.c_str();
     
     std::string gxy_root = std::string(getenv("GALAXY_ROOT"));
-    if (colormap_file.substr(gxy_root.size()) == gxy_root)
+
+    if (colormap_file.substr(0, gxy_root.size()) == gxy_root)
+    {
       p["colormap"] = (std::string("GALAXY_ROOT") + colormap_file.substr(gxy_root.size())).c_str();
+    }
     else
     {
       std::string home = std::string(getenv("HOME"));
-      if (colormap_file.substr(home.size()) == home)
+      if (colormap_file.substr(0, home.size()) == home)
         p["colormap"] = (std::string("HOME") + colormap_file.substr(home.size())).c_str();
       else
         p["colormap"] = colormap_file.c_str();
@@ -81,8 +84,6 @@ public:
     else if (colormap_file.substr(0, strlen("HOME")) == "HOME")
       colormap_file = std::string(getenv("HOME")) + colormap_file.substr(strlen("HOME"));
 
-    std::cerr << "XXXX colormap_file = " << colormap_file << "\n";
-  
     cmap_range_min = p["data range"].toArray()[0].toDouble();
     cmap_range_max = p["data range"].toArray()[1].toDouble();
   }

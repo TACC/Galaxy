@@ -106,6 +106,11 @@ MappedVis::LoadFromJSON(Value& v)
     if (m.IsString())
     {
       string fname = m.GetString();
+
+      if (fname.substr(0, strlen("GALAXY_ROOT")) == "GALAXY_ROOT")
+        fname = std::string(getenv("GALAXY_ROOT")) + fname.substr(strlen("GALAXY_ROOT"));
+      else if (fname.substr(0, strlen("HOME")) == "HOME")
+        fname = std::string(getenv("HOME")) + fname.substr(strlen("HOME"));
       
       if (fname.length() != 0 && m != "default")
       {
