@@ -144,21 +144,14 @@ LookForSliceHit(varying bool shadeFlag,
 
         float d = plane.w;
 
-        print("PLANE % % % %\n", plane.x, plane.y, plane.z, plane.w);
-
         float denom = dot(ray.dir, pnorm);
-
-        print("DENOM %\n", denom);
 
         if (abs(denom) > 0.0001)
         {
 
           float t = (d - dot(ray.org, pnorm)) / denom;
-          print("T %\n %\n %\n", ray.t0, ray.t, t);
           if (t >= ray.t0 && t <= ray.t)
           {
-            print("HIT\n");
-
             if (denom > 0)
               hit.normal   = neg(pnorm);
             else
@@ -172,15 +165,10 @@ LookForSliceHit(varying bool shadeFlag,
             h            = true;
 
           }
-          else
-            print("NO HIT\n");
         }
       }
     }
   }
-  else
-    print("NO SLICES\n");
-
 
   if (h)
   {

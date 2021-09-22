@@ -197,45 +197,14 @@ public Q_SLOTS:
     getTheGxyConnectionMgr()->connectToServer();
   }
 
-  void partitioningFileSelector()
-  {
-    QString f = QFileDialog::getOpenFileName(this, tr("Open Partitioning File"), getenv("HOME"), tr("data files (*.json)"));
-    partitioningLineEdit->insert(f);
-    _loadPartitioning();
-  }
-
   void loadPartitioning()
   {
-    if (! partitioningDialog)
-    {
-      partitioningDialog = new QDialog;
-      partitioningDialog->setModal(true);
-
-      QGridLayout *l = new QGridLayout();
-      partitioningDialog->setLayout(l);
-
-      l->addWidget(new QLabel("partition file:"), 0, 0);
-
-      partitioningLineEdit = new QLineEdit;
-      l->addWidget(partitioningLineEdit, 0, 1);
-
-      QPushButton *g = new QPushButton("...");
-      l->addWidget(g, 0, 2);
-
-      connect(g, SIGNAL(released()), this, SLOT(partitioningFileSelector()));
-    }
-
-    partitioningDialog->show();
-    partitioningDialog->exec();
-  }
-
-  void _loadPartitioning()
-  {
-    QString filename = partitioningLineEdit->text();
+    QString f = QFileDialog::getOpenFileName(this, tr("Open Partitioning File"), getenv("HOME"), tr("data files (*.json)"));
+    partitioningFile = f.toStdString();
 
     QJsonObject p;
     p["cmd"] = "gui::partitioning";
-    p["pfile"] = filename.toStdString().c_str();
+    p["pfile"] = partitioningFile.c_str();
 
     QJsonDocument doc(p);
     QByteArray bytes = doc.toJson(QJsonDocument::Compact);
@@ -250,18 +219,16 @@ public Q_SLOTS:
     QString status = rply["status"].GetString();
     if (status.toStdString() != "ok")
       std::cerr << "load partition failed: " << rply["error message"].GetString() << "\n";
-    else
-      partitioningDialog->hide();
   }
 
 private:
 
-  QAction *connectAction;
-  QAction *connectAsAction;
-  QAction *partitioningAction;
-  QAction *disconnectAction;
-  FlowScene *flowScene;
-  GxyFlowView *flowView;
-  QDialog *partitioningDialog;
-  QLineEdit *partitioningLineEdit;
+  QAction *connectAction = nullptr;
+  QAction *connectAsAction = nullptr;
+  QAction *partitioningAction = nullptr;
+  QAction *disconnectAction = nullptr;
+  FlowScene *flowScene = nullptr;
+  GxyFlowView *flowView = nullptr;
+
+  std::string partitioningFile;
 };
