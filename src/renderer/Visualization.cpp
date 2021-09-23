@@ -163,7 +163,7 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   {
     KeyedDataObjectP kdop = v->GetTheData();
 
-    OsprayObjectP op = kdop->CreateTheOSPRayEquivalent(kdop);
+    OsprayObjectP op = kdop->GetTheOSPRayEquivalent();
     if (! op)
       op = kdop->CreateTheOSPRayEquivalent(kdop);
 

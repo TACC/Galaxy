@@ -192,7 +192,7 @@ GxyRenderWindow::mouseMoveEvent(QMouseEvent *event)
   
   if (button == 0)
   { 
-    trackball.spin(x0, y0, x1, y1);
+    trackball.spin(x1, y0, x0, y1);
     y0 = y1;
     x0 = x1;
     
@@ -295,7 +295,7 @@ GxyRenderWindow::initializeGL()
   glMatrixMode(GL_PROJECTION);
   glOrtho(-1, 1, -1, 1, -1, 1);
   glMatrixMode(GL_MODELVIEW);
-  glRasterPos2i(-1, -1);
+  // glRasterPos2i(-1, -1);
 }
 
 void
@@ -377,7 +377,7 @@ GxyRenderWindow::addPixels(gxy::Pixel *p, int n, int frame)
     {
       if (p->x >= 0 && p->x < width && p->y > 0 && p->y < height)
       {
-        size_t offset = p->y*width + p->x;
+        size_t offset = p->y*width + ((width - 1) - p->x);
         float *pix = pixels + (offset<<2);
         float *npix = negative_pixels + (offset<<2);
 

@@ -340,8 +340,16 @@ private Q_SLOTS:
         std::string status;
         ss >> status;
 
-        if (status != "ok")
-          std::cerr << "return from gui::observe: " << status << "\n";
+        rapidjson::Document rply;
+        std::getline(ss, line);
+        rply.Parse(line.c_str());
+
+        if (rply["status"] != "ok")
+        {
+          QMessageBox msgBox;
+          msgBox.setText((std::string("Error: ") + line).c_str());
+          msgBox.exec();
+        }
       }
 
       output->setValid(true);

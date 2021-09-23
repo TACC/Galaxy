@@ -149,9 +149,6 @@ PathlinesVisModel::restore(QJsonObject const &p)
 bool
 PathlinesVisModel::isValid()
 {
-  // if (! input) std::cerr << "PLVM input null\n";
-  // if (input && ! input->isValid())  std::cerr << "PLVM input not valid\n";
-  // if (! VisModel::isValid()) std::cerr << "PLVM VisModel not valid\n";
   return (input && input->isValid() && VisModel::isValid());
 }
 
@@ -185,18 +182,14 @@ PathlinesVisModel::loadParameterWidgets()
 void
 PathlinesVisModel::onApply()
 {
-  std::cerr << "PLVM onApply\n";
   if (isValid())
   {
-    std::cerr << "PLVM isValid is true\n";
     output = std::shared_ptr<PathlinesVis>(new PathlinesVis(model_identifier));
     loadOutput(std::dynamic_pointer_cast<GxyData>(output));
     output->setValid(true);
 
     VisModel::onApply();
   }
-  else
-    std::cerr << "PLVM isValid is false\n";
 }
 
 

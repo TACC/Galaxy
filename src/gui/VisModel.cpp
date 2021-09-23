@@ -102,7 +102,6 @@ VisModel::VisModel()
   load_cmap(cmap_string);
 #else
   std::string cmap_string = std::string(getenv("GALAXY_ROOT")) + "/colormaps/default.png";
-  std::cerr << "CMAP CMAP CMAP cmap_string: " << cmap_string << "\n";
   load_cmap(cmap_string);
 #endif
 
