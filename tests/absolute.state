@@ -43,6 +43,84 @@
                     "type": "Volume"
                 }
             ]
+        },
+        {
+            "Lighting": {
+                "Ka": 0.5, 
+                "Kd": 0.5, 
+                "Sources": [ [ 2, 0, 0, 2 ] ], 
+                "ao count": 0, 
+                "ao radius": 1.0, 
+                "shadows": false
+            }, 
+            "operators": [
+                {
+                    "colormap": [
+                        [ 0.0, 1.0, 0.5, 0.5 ], 
+                        [ 0.25, 0.5, 1.0, 0.5 ], 
+                        [ 0.5, 0.5, 0.5, 1.0 ], 
+                        [ 0.75, 1.0, 1.0, 0.5 ], 
+                        [ 1.0, 1.0, 0.5, 1.0 ]
+                    ], 
+                    "dataset": "eightBalls", 
+                    "isovalues": [
+                        0.3
+                    ],
+                    "type": "Volume"
+                }
+            ]
+        },
+        {
+            "Lighting": {
+                "Ka": 0.5, 
+                "Kd": 0.5, 
+                "Sources": [ [ 0, 2, 0, 2 ] ], 
+                "ao count": 0, 
+                "ao radius": 1.0, 
+                "shadows": false
+            }, 
+            "operators": [
+                {
+                    "colormap": [
+                        [ 0.0, 1.0, 0.5, 0.5 ], 
+                        [ 0.25, 0.5, 1.0, 0.5 ], 
+                        [ 0.5, 0.5, 0.5, 1.0 ], 
+                        [ 0.75, 1.0, 1.0, 0.5 ], 
+                        [ 1.0, 1.0, 0.5, 1.0 ]
+                    ], 
+                    "dataset": "eightBalls", 
+                    "isovalues": [
+                        0.3
+                    ],
+                    "type": "Volume"
+                }
+            ]
+        },
+        {
+            "Lighting": {
+                "Ka": 0.5, 
+                "Kd": 0.5, 
+                "Sources": [ [ 0, 0, 2, 2 ] ], 
+                "ao count": 0, 
+                "ao radius": 1.0, 
+                "shadows": false
+            }, 
+            "operators": [
+                {
+                    "colormap": [
+                        [ 0.0, 1.0, 0.5, 0.5 ], 
+                        [ 0.25, 0.5, 1.0, 0.5 ], 
+                        [ 0.5, 0.5, 0.5, 1.0 ], 
+                        [ 0.75, 1.0, 1.0, 0.5 ], 
+                        [ 1.0, 1.0, 0.5, 1.0 ]
+                    ], 
+                    "dataset": "eightBalls", 
+                    "isovalues": [
+                        0.3
+                    ],
+                    "type": "Volume"
+                }
+            ]
         }
     ]
 }
