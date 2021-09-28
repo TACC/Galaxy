@@ -19,12 +19,20 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
+source ~/vtk/vtk.env
 
-if [ $1 ]; then
+if [ X$1 == 'X-help' ]; then
   echo "usage: image-gold-tests.sh"
   echo "This script will generate a radial dataset, render it with Galaxy, and compare the results against the golden images in this directory."
   exit 1
 fi
+
+if [ "${TRAVIS_OS_NAME}" == "linux" -o X$1 == 'X-with_mpi' ]; then
+  do_mpi=1
+else
+  do_mpi=0
+fi
+
 
 function report
 {
@@ -34,7 +42,7 @@ function report
 function fail
 {
   echo "GALAXY: ERROR - $1"
-  eGXY_CREATE_PARTITION_DOCxit 1
+  exit 1
 }
 
 function run_tests()
@@ -88,23 +96,21 @@ fi
 
 GXY_BIN=${GXY_ROOT}/install/bin
 GXY_RADIAL=${GXY_BIN}/radial
-GXY_VTI2VOL=${GXY_BIN}/vti2vol
 GXY_IMAGE_WRITER=${GXY_BIN}/gxywriter
-GXY_CREATE_PARTITION_DOC=${GXY_BIN}/createPartitionDoc.py
-GXY_PARTITION_VTUS=${GXY_BIN}/partitionVTUs.vpy
 GXY_ENV=${GXY_ROOT}/install/galaxy.env
+GXY_VTI2VOL="${GXY_BIN}/vti2vol"
+GXY_CREATE_PARTITION_DOC="${GXY_BIN}/createPartitionDoc.py"
+GXY_PARTITION_VTUS="${GXY_BIN}/partition_vtu"
 PERCEPTUAL_DIFF=`which perceptualdiff`
-
-if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-  GXY_VTI2VOL="python3 ${GXY_BIN}/vti2vol"
-fi
 
 if [ ! -x ${GXY_RADIAL} ]; then
   fail "Could not find or execute the Galaxy radial generator '${GXY_RADIAL}'"
 fi
+
 if [ ! -x ${GXY_VTI2VOL} ]; then
   fail "Could not find or execute the Galaxy vti2vol '${GXY_VTI2VOL}'"
 fi
+
 if [ ! -x ${GXY_IMAGE_WRITER} ]; then
   fail "Could not find or execute the Galaxy image writer '${GXY_IMAGE_WRITER}'. Ensure Galaxy was configured with -D GXY_WRITE_IMAGES=ON"
 fi
@@ -118,8 +124,15 @@ if [ ! -f ${GXY_ENV} ]; then
   fail "Could not find Galaxy environment file at '${GXY_ENV}'"
 fi
 
+if [ 1 == 1 -o "${TRAVIS_OS_NAME}" == "osx" ]; then
+  GXY_VTI2VOL="python3 ${GXY_VTI2VOL}"
+  GXY_CREATE_PARTITION_DOC="python3 ${GXY_CREATE_PARTITION_DOC}"
+fi
+
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
+
+if [ 1 == 0 ] ; then
 
 report "Generating radial.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256
@@ -137,5 +150,41 @@ if [ $? != 0 ]; then
   fail "$GXY_VTI2VOL exited with code $?"
 fi
 
+fi
+
+# reasonable settings for Travis-CI VM environment
+export GXY_APP_NTHREADS=1
+export GXY_NTHREADS=4
+RESOLUTION="-s 512 512"
+PDIFF_OPTIONS="-fov 85"
+TESTS=0
+FAILS=0
+
+MPI_COMMAND=""
+report "Running single process tests..."
 ${GXY_CREATE_PARTITION_DOC} -v radial-eightBalls.vol 1 > partition.json
 ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
+run_tests
+
+if [ $do_mpi == 1 ] ; then
+  MPI_COMMAND="mpirun -np 2"
+  report "Running MPI tests with command '${MPI_COMMAND}'..."
+  echo ${GXY_CREATE_PARTITION_DOC} -v radial-eightBalls.vol 2 > partition.json
+  ${GXY_CREATE_PARTITION_DOC} -v radial-eightBalls.vol 2 > partition.json
+  echo "PDOC done"
+  echo ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
+  ${GXY_PARTITION_VTUS} partition.json streamlines.vtu eightBalls-points.vtu oneBall-mesh.vtu
+  echo PARTITION done
+  run_tests
+fi
+
+if [ ${FAILS} == 0 ]; then
+  report "${TESTS}/${TESTS} image comparison tests passed"
+else
+  fail "${FAILS}/${TESTS} image comparisons FAILED"
+fi
+
+report "done!"
+cd ${GXY_ROOT}
+exit 0
+
