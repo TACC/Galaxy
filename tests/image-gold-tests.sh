@@ -132,8 +132,6 @@ fi
 report "Sourcing Galaxy environment"
 . ${GXY_ENV}
 
-if [ 1 == 0 ] ; then
-
 report "Generating radial.vti with ${GXY_RADIAL}"
 ${GXY_RADIAL} -r 256 256 256
 if [ $? != 0 ]; then
@@ -148,8 +146,6 @@ report "Converting vti to vol with ${GXY_VTI2VOL}"
 ${GXY_VTI2VOL} radial.vti ${GXY_VOLS} > /dev/null 2>&1
 if [ $? != 0 ]; then
   fail "$GXY_VTI2VOL exited with code $?"
-fi
-
 fi
 
 # reasonable settings for Travis-CI VM environment
