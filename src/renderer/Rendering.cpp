@@ -188,18 +188,20 @@ Rendering::resolve_lights(RendererP renderer)
     int t = *it++;
     if (t == 0)
     {
-      *ol++ = vec3f(-il->x, -il->y, -il->z);
+      *ol++ = vec3f(il->x, il->y, il->z);
       *ot++ = 0;
+      *il++;
     }
     else if (t == 1)
 		{
-			*ol++ = viewpoint + scale1(-il->x, right) + scale1(-il->y, up) + scale1(il->z, viewdir);
+			*ol++ = viewpoint + scale1(il->x, right) + scale1(-il->y, up) + scale1(il->z, viewdir);
 			il++;
 			*ot++ = 2;
 		}
 		else
 		{
-			*ol++ = *il++;
+      *ol++ = vec3f(il->x, il->y, il->z);
+      il++;
 			*ot++ = t;
 		}
 	}
