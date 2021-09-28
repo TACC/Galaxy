@@ -190,7 +190,7 @@ Rendering::resolve_lights(RendererP renderer)
     {
       *ol++ = vec3f(il->x, il->y, il->z);
       *ot++ = 0;
-      *il++;
+      il++;
     }
     else if (t == 1)
 		{
