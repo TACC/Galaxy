@@ -93,6 +93,17 @@ public:
 
 	};
 
+  //! Add a boundary region
+  void grow(float g)
+  {
+    xyz_min.x -= g;
+    xyz_min.y -= g;
+    xyz_min.z -= g;
+    xyz_max.x += g;
+    xyz_max.y += g;
+    xyz_max.z += g;
+  }
+
 	//! add a Box's extent to this Box
 	/*! If this Box is not yet initialized, copies the Box to this Box.
 	 * Otherwise, this Box extent is increased if necessary to include the Box's extent
