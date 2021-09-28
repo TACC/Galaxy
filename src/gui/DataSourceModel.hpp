@@ -78,9 +78,6 @@ public:
     gl->addWidget(new QLabel("name"), row, 0);
     gl->addWidget(new QLabel(di.name.c_str()), row++, 1);
 
-    // gl->addWidget(new QLabel("key"), row, 0);
-    // gl->addWidget(new QLabel(QString::number(di.key)), row++, 1);
-
     gl->addWidget(new QLabel("type"), row, 0);
     gl->addWidget(new QLabel(di.type == 0 ? "Volume" : di.type == 1 ? "Mesh" : "Particles"), row++, 1);
 
@@ -295,6 +292,9 @@ public:
   QString caption() const override { return QStringLiteral("DataSource"); }
 
   QString name() const override { return QStringLiteral("DataSource"); }
+
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
 
   bool isValid() override { return current_selection != NULL; }
 
