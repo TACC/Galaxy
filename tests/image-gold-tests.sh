@@ -19,8 +19,6 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-source ~/vtk/vtk.env
-
 if [ X$1 == 'X-help' ]; then
   echo "usage: image-gold-tests.sh"
   echo "This script will generate a radial dataset, render it with Galaxy, and compare the results against the golden images in this directory."
