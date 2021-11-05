@@ -22,6 +22,7 @@
 
 #include "DeviceVolume.h"
 
+
 namespace gxy
 {
 
@@ -38,6 +39,9 @@ void
 DeviceVolume::initialize()
 {
     super::initialize();
+
+    allocate_device_equivalent();
+    initialize_device_equivalent();
 }
 
 }

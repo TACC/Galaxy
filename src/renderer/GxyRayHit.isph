@@ -47,6 +47,9 @@ struct GxySample
 {
   varying float t;
   varying float data;
+  varying vec3f point;
   varying vec3f normal;
+  varying vec3f color;
+  varying float opacity;
 };
 

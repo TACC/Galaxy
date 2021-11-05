@@ -33,14 +33,14 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
-find_package(embree 3.0.0 REQUIRED)
-find_package(openvkl 0.11.0)
+find_package(embree 3.13.1)
+find_package(openvkl)
 
-# get_cmake_property(_variableNames VARIABLES)
-# list (SORT _variableNames)
-# foreach (_variableName ${_variableNames})
-    # message(STATUS "${_variableName}=${${_variableName}}")
-# endforeach()
+### get_cmake_property(_variableNames VARIABLES)
+### list (SORT _variableNames)
+### foreach (_variableName ${_variableNames})
+###     message(STATUS "${_variableName}=${${_variableName}}")
+### endforeach()
 
 ispc_include_directories(
     ${gxy_data_SOURCE_DIR}
@@ -50,7 +50,7 @@ ispc_include_directories(
     ${Galaxy_BINARY_DIR}/src/renderer
     ${Galaxy_SOURCE_DIR}/src/renderer
     ${openvkl_DIR}/../../../include
-    ${embree_DIR}/include
+    ${EMBREE_INCLUDE_DIRS}
 )
 
 include_directories( 
@@ -99,9 +99,9 @@ set_target_properties(gxy_intel PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION $
 install(TARGETS gxy_intel DESTINATION lib)
 
 add_executable(em_test em_test.cpp)
-target_link_libraries(em_test gxy_renderer gxy_framework gxy_data gxy_intel embree openvkl::openvkl_module_ispc_driver ${MPI_C_LIBRARIES})
+target_link_libraries(em_test gxy_renderer gxy_framework gxy_data gxy_intel embree openvkl::openvkl_module_cpu_device ${MPI_C_LIBRARIES})
 install(TARGETS em_test DESTINATION tests)
 
 add_executable(vkl_test vkl_test.cpp)
-target_link_libraries(vkl_test gxy_renderer gxy_framework gxy_data gxy_intel embree openvkl::openvkl_module_ispc_driver ${MPI_C_LIBRARIES})
+target_link_libraries(vkl_test gxy_renderer gxy_framework gxy_data gxy_intel embree openvkl::openvkl_module_cpu_device ${MPI_C_LIBRARIES})
 install(TARGETS vkl_test DESTINATION tests)

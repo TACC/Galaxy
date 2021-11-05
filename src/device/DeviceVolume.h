@@ -41,12 +41,16 @@ class DeviceVolume : public GalaxyObject
 public:
     virtual void initialize();
     virtual ~DeviceVolume();
-    
+
     void SetBoxes(Box g, Box l) { gbox = g; lbox = l; }
 
     void *GetDeviceEquivalent() { return device_equivalent; }
 
 protected:
+    virtual void allocate_device_equivalent();
+    virtual void initialize_device_equivalent();
+    virtual void delete_device_equivalent();
+
     void *device_equivalent = NULL;
 
     Box gbox;

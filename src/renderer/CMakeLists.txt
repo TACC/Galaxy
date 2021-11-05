@@ -18,7 +18,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-cmake_minimum_required (VERSION 3.9)
+cmake_minimum_required (VERSION 3.19)
 cmake_policy(SET CMP0048 NEW)
 project (gxy_renderer VERSION ${GALAXY_VERSION})
 
@@ -33,10 +33,10 @@ if (COMMAND cmake_policy)
   cmake_policy(SET CMP0068 NEW)
 endif(COMMAND cmake_policy)
 
-
-
 find_library(PNG_LIBRARY_RELEASE png)
 find_library(Z_LIBRARY_RELEASE z)
+
+get_property(inc_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
 
 include_directories(${gxy_framework_SOURCE_DIR}
                     ${gxy_device_SOURCE_DIR}
@@ -46,14 +46,17 @@ include_directories(${gxy_framework_SOURCE_DIR}
                     ${Galaxy_BINARY_DIR}/src/data
                     ${gxy_data_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src
+                    ${TBB_INCLUDE_DIRS}
 )
+
+# find_package(TBB REQUIRED)
+# include_directories(${TBB_INCLUDE_DIRS})
 
 link_directories(${Galaxy_BINARY_DIR}/src/data 
                  ${Galaxy_BINARY_DIR}/src/framework
 )
 
-# ispc_include_directories(${Galaxy_BINARY_DIR}/src ${gxy_render_SOURCE_DIR} ${gxy_render_BINARY_DIR})
-ispc_include_directories(${Galaxy_BINARY_DIR}/src)
+ispc_include_directories(${gxy_device_SOURCE_DIR} ${Galaxy_BINARY_DIR}/src)
 
 set (ISPC_SOURCES
   IspcObject.ispc

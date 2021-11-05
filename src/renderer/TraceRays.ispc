@@ -51,8 +51,8 @@
 #include "Visualization.ih"
 #include "TransferFunction.ih"
 #include "VolumeVis.ih"
-#include "VklVolume.ih"
-#include "Model.ih"
+#include "DeviceVolume.ih"
+#include "DeviceModel.ih"
 
 #include "UV.ih"
 
@@ -108,8 +108,8 @@ MyIntersectBox(const GxyRayHit& ray, const uniform box3f& box, float& t0, float&
 }
 
 inline bool
-LookForGeometryHit(varying bool shadeFlag,
-                   uniform Model_ispc *uniform model,
+LookForGeometryHit(uniform bool shadeFlag,
+                   uniform DeviceModel_ispc *uniform model,
                    uniform Visualization_ispc *uniform vis,
                    GxyRayHit *uniform ray,
                    GxySample *uniform sample)
@@ -149,14 +149,14 @@ LookForSliceHit(uniform int *uniform debug,
                 varying bool shadeFlag,
                 uniform Visualization_ispc *uniform vis,
                 GxyRayHit *uniform ray,
-                GxySample *uniform sample)
+                GxySample *uniform hit)
 {
   bool h = false;
   int vid = -1, sid = -1;
 
   debug[6] = 0;
-  vec3f rdir = make_vec3f(ray->dir_x, ray->dir_y, ray->dir_z);
-  vec3f rorg = make_vec3f(ray->org_x, ray->org_y, ray->org_z);
+  vec3f rdir = make_vec3f(ray->ray.dir_x, ray->ray.dir_y, ray->ray.dir_z);
+  vec3f rorg = make_vec3f(ray->ray.org_x, ray->ray.org_y, ray->ray.org_z);
 
   if (vis->nVolumeVis > 0)
   {
@@ -189,20 +189,21 @@ LookForSliceHit(uniform int *uniform debug,
           debug[12] = 1;
 
           float t = (d - dot(rorg, pnorm)) / denom;
-          if (t >= ray->t0 && t <= ray->t)
+          if (t >= ray->ray.tnear && t <= ray->ray.tfar)
           {
             debug[13] = 1;
 
             if (denom > 0)
-              sample->normal   = neg(pnorm);
+              hit->normal   = neg(pnorm);
             else
-              sample->normal   = pnorm;
+              hit->normal   = pnorm;
 
-            sample->opacity  = 1.0;       // FIXME
-            sample->t        = t;
+            //hit->opacity  = 1.0;       // FIXME
+
+            hit->t        = t;
+            ray->ray.tfar    = hit->t;
             vid              = major;
             sid              = minor;
-            ray->t           = sample->t;
             h                = true;
 
             debug[13] = 2;
@@ -223,21 +224,21 @@ LookForSliceHit(uniform int *uniform debug,
       debug[15] = 1;
 
       float s[100];
-      sample->point = rorg + sample->t * rdir;
+      hit->point = rorg + hit->t * rdir;
  
       for (uniform int major = 0; major <= vid; major++)
         if (major == vid)
         {
           uniform VolumeVis_ispc *uniform vvis = (VolumeVis_ispc *)vis->volumeVis[major];
-          uniform TransferFunction_ispc *uniform tf = (uniform TransferFunction_ispc *uniform )((MappedVis_ispc *)vvis)->transferFunction;
-          uniform VklVolume_ispc *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
+          uniform TransferFunction_ispc *uniform tf = (uniform TransferFunction_ispc *uniform )((MappedVis_ispc *)vvis)->colorMap;
+          uniform DeviceVolume_ispc *uniform vol = (uniform DeviceVolume_ispc *uniform)(((Vis_ispc *)vvis)->data);
           if (! vol)
             print("VOL IS ZERO!\n");
-          sample->sample = vol->sample(vol, sample.point);
+          vol->Sample(vol, &hit->point, &hit->data);
           if (! tf) 
             print("TF is ZERO!\n");
-          sample->color = tf->TransferFunction_SampleRGB(tf, sample.sample);
-          sample->opacity = 1.0;
+          hit->color = tf->SampleRGB(tf, hit->data);
+          hit->opacity = 1.0;
         }
 
         debug[15] = 2;
@@ -251,11 +252,11 @@ LookForSliceHit(uniform int *uniform debug,
 
 inline bool
 LookForIsoHit(varying bool shadeFlag,
-              varying Ray &ray, 
+              GxyRayHit *uniform ray,
               varying float* sLast, varying float* sThis, // Last and current samples
               varying float tLast, varying float tThis,    // Last and current T
               uniform Visualization_ispc *uniform vis,
-              varying GxySample *hit)
+              GxySample *uniform hit)
 {
   bool h = false;
   int vid;
@@ -263,7 +264,7 @@ LookForIsoHit(varying bool shadeFlag,
   for (uniform int major = 0; major < vis->nVolumeVis; major++)      // which volume?
   {
     uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
-    uniform Volume *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
+    uniform DeviceVolume_ispc *uniform vol = (uniform DeviceVolume_ispc *uniform)(((Vis_ispc *)vvis)->data);
 
     float sl = sLast[major];
     float st = sThis[major];
@@ -273,17 +274,20 @@ LookForIsoHit(varying bool shadeFlag,
       uniform float isoval = vvis->isovalues[minor];
       if (((isoval >= sl) && (isoval < st)) || ((isoval <= sl) && (isoval > st)))
       {
-        h          = true;
-        vid        = major;
-        hit.t      = tLast + ((isoval - sl) / (st - sl)) * (tThis - tLast);
-        hit.sample = isoval;
+        h         = true;
+        vid       = major;
+        hit->t    = tLast + ((isoval - sl) / (st - sl)) * (tThis - tLast);
+        hit->data = isoval;
       }
     }
   }
   
   if (h)
   {
-    hit.point = ray.org + hit.t * ray.dir;
+    vec3f rdir = make_vec3f(ray->ray.dir_x, ray->ray.dir_y, ray->ray.dir_z);
+    vec3f rorg = make_vec3f(ray->ray.org_x, ray->ray.org_y, ray->ray.org_z);
+
+    hit->point = rorg + hit->t * rdir;
 
     // print("hit\nT %\nX %\nY %\nZ %\n", hit.t, hit.point.x, hit.point.y, hit.point.z);
 
@@ -293,15 +297,16 @@ LookForIsoHit(varying bool shadeFlag,
         if (major == vid)
         {
           uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
-          uniform Volume *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
-          uniform TransferFunction *uniform tf = (uniform TransferFunction *uniform )((MappedVis_ispc *)vvis)->transferFunction;
+          uniform DeviceVolume_ispc *uniform vol = (uniform DeviceVolume_ispc *uniform)(((Vis_ispc *)vvis)->data);
+          uniform TransferFunction_ispc *uniform tf = (uniform TransferFunction_ispc *uniform )((MappedVis_ispc *)vvis)->colorMap;
 
-          hit.normal = safe_normalize(vol->computeGradient(vol, hit.point));
-          if (dot(ray.dir, hit.normal) > 0) 
-            hit.normal = neg(hit.normal);
+          vol->Gradient(vol, &hit->point, &hit->normal);
+          hit->normal = safe_normalize(hit->normal);
+          if (dot(rdir, hit->normal) > 0) 
+            hit->normal = neg(hit->normal);
 
-          hit.color = tf->getColorForValue(tf, hit.sample);
-          hit.opacity = 1.0;
+          hit->color = tf->SampleRGB(tf, hit->data);
+          hit->opacity = 1.0;  // tf->SampleO(tf, hit->data);
         }
     }
   }
@@ -318,8 +323,11 @@ SampleVolumes(const varying vec3f& coord,
   for (uniform int major = 0; major < vis->nVolumeVis; major++)     // which volume?
   {
     uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
-    uniform Volume *uniform vol = (uniform Volume *uniform)(((Vis_ispc *)vvis)->data);
-    s[major] = vol->sample(vol, coord);
+    uniform DeviceVolume_ispc *uniform vol = (uniform DeviceVolume_ispc *uniform)(((Vis_ispc *)vvis)->data);
+    vec3f c = coord;
+    float f;
+    vol->Sample(vol, &c, &f);
+    s[major] = f;
   }
 }
 
@@ -331,11 +339,11 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
   uniform Visualization_ispc *uniform vis = (uniform Visualization_ispc *)_vis;
   uniform RayList_ispc *uniform raysIn = (uniform RayList_ispc *)_raysIn;
-  Model_ispc *uniform model = (Model_ispc *uniform) vis->model;
+  DeviceModel_ispc *uniform model = (DeviceModel_ispc *uniform) vis->model;
   uniform box3f box = vis->local_bb;
   uniform bool integrate = false;
   uniform float step, epsilon;
-  uniform Camera *uniform c;
+  // uniform Camera *uniform c;
 
   self->debug[0] = 1;
 
@@ -343,7 +351,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   for (uniform int major = 0; major < vis->nVolumeVis; major++)
   {
     uniform VolumeVis_ispc *uniform vvis = vis->volumeVis[major];
-    uniform Volume *uniform vol = (uniform Volume *uniform)((uniform Vis_ispc *uniform)vvis)->data;
+    uniform DeviceVolume_ispc *uniform vol = (uniform DeviceVolume_ispc *uniform)(((Vis_ispc *)vvis)->data);
  
 		if (vvis->volume_render)
 			integrate = true;

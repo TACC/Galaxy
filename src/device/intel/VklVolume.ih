@@ -34,6 +34,7 @@ typedef void (*VklVolume_IsoCrossingFct)(uniform DeviceVolume_ispc *uniform, voi
 
 struct VklVolume_ispc
 {
+  DeviceVolume_ispc super;
   VKLVolume volume;
   VKLSampler sampler;
 };

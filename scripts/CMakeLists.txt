@@ -18,7 +18,7 @@
 ##                                                                            ##
 ## ========================================================================== ##
 
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 3.9)
 cmake_policy(SET CMP0048 NEW)
 project(Util VERSION ${GALAXY_VERSION})
 install(PROGRAMS partitionVTUs.vpy createPartitionDoc.py msdata mssample vtp2tri.py async-wrapper cm2gxy.py csv2xyz vti2vol vti2json pv-cam-to-json.py xml2json.py mk_simsim_layout DESTINATION bin)

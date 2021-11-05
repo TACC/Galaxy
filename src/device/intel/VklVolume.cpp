@@ -40,6 +40,9 @@ VklVolume::initialize()
 {
   super::initialize();
   if (IspcSize()) ispc = malloc(IspcSize()); else ispc = NULL;
+  ::ispc::VklVolume_ispc *vispc = (::ispc::VklVolume_ispc *)GetIspc();
+  vispc->super.Sample   = ::ispc::VklVolume_Sample;
+  vispc->super.Gradient = ::ispc::VklVolume_Gradient;
 }
 
 void

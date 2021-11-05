@@ -28,23 +28,12 @@ namespace gxy
 
 TransferFunction::TransferFunction(int w, int l)
 {
-  _ispc = malloc(sizeof(::ispc::TransferFunction_ispc));
-  ::ispc::TransferFunction_ispc *ispc = (::ispc::TransferFunction_ispc *)GetIspc();
-
-  ispc->width  = w;
-  ispc->length = l;
-  ispc->minV   = 0;
-  ispc->maxV   = 0;
-  ispc->data   = new float[w * l];
+  _ispc = ispc::TransferFunction_create(w, l);
 }
 
 TransferFunction::~TransferFunction()
 {
-  if (_ispc)
-  {
-    free(((::ispc::TransferFunction_ispc *)GetIspc())->data);
-    free(_ispc);
-  }
+  ispc::TransferFunction_destroy(_ispc);
 }
 
 void 

@@ -22,10 +22,12 @@
 
 #include "vec.ih"
 
-typedef float (*DeviceVolume_SampleFct)(void *uniform, vec3f);
+typedef void (*DeviceVolume_SampleFct)(void *uniform, void *uniform, void *uniform);
+typedef void (*DeviceVolume_GradientFct)(void *uniform, void *uniform, void *uniform);
 
 struct DeviceVolume_ispc
 {
-  DeviceVolume_SampleFct Sample;
+  DeviceVolume_SampleFct   Sample;
+  DeviceVolume_GradientFct Gradient;
 };  
 

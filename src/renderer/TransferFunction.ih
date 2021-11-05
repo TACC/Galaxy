@@ -20,12 +20,13 @@
 
 #pragma once
 
-// typedef unsigned int64 uint64;
-// typedef unsigned int32 uint32;
-// typedef unsigned int16 uint16;
-// typedef unsigned int8  uint8;
-
 #include "vec.ih"
+
+struct TransferFunction_ispc;
+
+typedef varying float (*TransferFunction_SampleOFct)(uniform TransferFunction_ispc*, varying float);
+typedef varying vec3f (*TransferFunction_SampleRGBFct)(uniform TransferFunction_ispc*, varying float);
+typedef varying vec4f (*TransferFunction_SampleRGBOFct)(uniform TransferFunction_ispc*, varying float);
 
 struct TransferFunction_ispc
 {
@@ -35,6 +36,8 @@ struct TransferFunction_ispc
     uniform float maxV;
     uniform float denom;
     uniform float *data;
-};
 
-typedef uniform TransferFunction_ispc *uniform pTransferFunction_ispc;
+    TransferFunction_SampleOFct SampleO;
+    TransferFunction_SampleRGBFct SampleRGB;
+    TransferFunction_SampleRGBOFct SampleRGBO;
+};

@@ -19,91 +19,107 @@
 // ========================================================================== //
 
 #include "vec.ih"
+#include "TransferFunction.ih"
 
-struct TransferFunction_ispc
+
+varying float
+TransferFunction_SampleO(uniform TransferFunction_ispc* self, varying float v)
 {
-    uniform int   length;
-    uniform int   width;
-    uniform float minV;
-    uniform float maxV;
-    uniform float denom;
-    uniform float *data;
-};
+  if (v < self->minV) v = self->minV;
+  else if (v > self->maxV) v = self->maxV;
 
-varying float TransferFunction_SampleO(uniform TransferFunction_ispc* self, varying float v)
-{
-    if (v < self->minV) v = self->minV;
-    else if (v > self->maxV) v = self->maxV;
+  float d = ((v - self->minV) * self->denom) * (self->length - 1);
+  int   i = (int)d;
 
-    varying float d = ((v - self->minV) * self->denom) * (self->length - 1);
-    varying int   i = (int)d;
-
-    d = d - i;
-    return self->data[i];
-
-    return self->data[i] + ((d == 0.0) ? 0 : d*(self->data[i+1] - self->data[i]));
+  return self->data[i] + ((d == 0.0) ? 0 : d*(self->data[i+1] - self->data[i]));
 }
 
-varying vec3f TransferFunction_SampleRGB(uniform TransferFunction_ispc* self, varying float v)
+varying vec3f
+TransferFunction_SampleRGB(uniform TransferFunction_ispc* self, varying float v)
 {
-    uniform vec3f *data = (vec3f *)self->data;
+  uniform vec3f *data = (vec3f *)self->data;
 
-    if (v < self->minV) v = self->minV;
-    else if (v > self->maxV) v = self->maxV;
+  if (v < self->minV) v = self->minV;
+  else if (v > self->maxV) v = self->maxV;
 
-    varying float d = (v - self->minV) * self->denom;
-    varying int   i = (int)d;
-    d = d - i;
+  varying float d = (v - self->minV) * self->denom;
+  varying int   i = (int)d;
+  d = d - i;
 
-    if (i < 0)
-        return data[0];
-    else if (i >= self->length)
-        return data[self->length-1];
-    else
-        return data[i] + d * (data[i+1] - data[i]);
+  if (i < 0)
+      return data[0];
+  else if (i >= self->length)
+      return data[self->length-1];
+  else
+      return data[i] + d * (data[i+1] - data[i]);
 }
 
-varying vec4f TransferFunction_SampleRGBO(uniform TransferFunction_ispc* self, varying float v)
+varying vec4f
+TransferFunction_SampleRGBO(uniform TransferFunction_ispc* self, varying float v)
 {
-    uniform vec4f *data = (vec4f *)self->data;
+  uniform vec4f *data = (vec4f *)self->data;
 
-    if (v < self->minV) v = self->minV;
-    else if (v > self->maxV) v = self->maxV;
+  if (v < self->minV) v = self->minV;
+  else if (v > self->maxV) v = self->maxV;
 
-    varying float d = (v - self->minV) * self->denom;
-    varying int   i = (int)d;
-    d = d - i;
+  varying float d = (v - self->minV) * self->denom;
+  varying int   i = (int)d;
+  d = d - i;
 
-    if (i < 0)
-        return data[0];
-    else if (i >= self->length)
-        return data[self->length-1];
-    else
-        return data[i] + d * (data[i+1] - data[i]);
+  if (i < 0)
+      return data[0];
+  else if (i >= self->length)
+      return data[self->length-1];
+  else
+      return data[i] + d * (data[i+1] - data[i]);
 }
 
 export void *uniform TransferFunction_Test(uniform TransferFunction_ispc *uniform self, const uniform int n, float *uniform values, float *uniform results)
 {
-    if (self->width == 1)
-    {
-        foreach (i = 0 ... n)
-            results[i] = TransferFunction_SampleO(self, values[i]);
-    }
-    else if (self->width == 3)
-    {
-        vec3f *r = (vec3f *)results;
-        foreach (i = 0 ... n)
-            r[i] = TransferFunction_SampleRGB(self, values[i]);
-    }
-    else
-    {
-        vec4f *r = (vec4f *)results;
-        foreach (i = 0 ... n)
-            r[i] = TransferFunction_SampleRGBO(self, values[i]);
-    }
+  if (self->width == 1)
+  {
+    foreach (i = 0 ... n)
+      results[i] = self->SampleO(self, values[i]);
+  }
+  else if (self->width == 3)
+  {
+    vec3f *r = (vec3f *)results;
+    foreach (i = 0 ... n)
+      r[i] = self->SampleRGB(self, values[i]);
+  }
+  else
+  {
+    vec4f *r = (vec4f *)results;
+    foreach (i = 0 ... n)
+      r[i] = self->SampleRGBO(self, values[i]);
+  }
 }
-        
 
+export void *uniform
+TransferFunction_create(uniform int w, uniform int l)
+{
+  uniform TransferFunction_ispc *uniform self = uniform new uniform TransferFunction_ispc;
+  self->data = uniform new uniform float[l*w];
 
+  self->SampleO    = TransferFunction_SampleO;
+  self->SampleRGB  = TransferFunction_SampleRGB;
+  self->SampleRGBO = TransferFunction_SampleRGBO;
 
+  self->length = l;
+  self->width = w;
+  self->minV  = 0;
+  self->maxV  = 0;
 
+  return (void *)self;
+}
+
+export void
+TransferFunction_destroy(void *uniform _self)
+{
+  uniform TransferFunction_ispc *uniform self = (uniform TransferFunction_ispc *uniform) _self;
+  if (self)
+  {
+    if (self->data) delete[] self->data;
+    delete self;
+  }
+}

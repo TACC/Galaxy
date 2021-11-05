@@ -37,12 +37,14 @@ VklVolume_IsoCrossingS(uniform VklVolume_ispc *uniform vkl, GxyRayHit& rayhit, V
   uniform VKLVolume volume   = vkl->volume;
   uniform VKLSampler sampler = vkl->sampler;
 
-  uniform unsigned int8 bufferHit[VKL_MAX_HIT_ITERATOR_SIZE];
-  
   vkl_vec3f o = {rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z};
   vkl_vec3f d = {rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z};
   vkl_range1f t = {rayhit.ray.tnear, rayhit.ray.tfar};
 
+  uniform unsigned int8 bufferIter[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+
+  uniform unsigned int8 bufferHit[VKL_MAX_HIT_ITERATOR_SIZE];
+  
   VKLHitIterator hitIterator = vklInitHitIteratorV(sampler, &o, &d, &t, selector, bufferHit);
   VKLHit hit;
   hit.t = 0;
@@ -101,12 +103,29 @@ VklVolume_TestIsoCrossing(uniform VklVolume_ispc *uniform vkl, const uniform int
   }
 }
 
-float 
-VklVolume_Sample(uniform VklVolume_ispc *uniform vkl, vkl_vec3f p)
+export void
+VklVolume_Sample(void *uniform _vkl, void *uniform _p, void *uniform _s)
 {
-  uniform VKLVolume volume   = vkl->volume;
+  uniform VklVolume_ispc *uniform vkl = (uniform VklVolume_ispc *uniform)_vkl;
+  varying vkl_vec3f *uniform p = (varying vkl_vec3f *uniform)_p;
+  varying float *s = (varying float *varying)_s;
+
   uniform VKLSampler sampler = vkl->sampler;
-  return vklComputeSampleV((VKLSampler)sampler, &p);
+
+  *s = vklComputeSampleV((VKLSampler)sampler, p);
+}
+
+export void 
+VklVolume_Gradient(void *uniform _vkl, void *uniform _p, void *uniform _v)
+{
+  uniform VklVolume_ispc *uniform vkl = (uniform VklVolume_ispc *uniform)_vkl;
+  varying vkl_vec3f *uniform p = (varying vkl_vec3f *uniform)_p;
+  varying vkl_vec3f *v = (varying vkl_vec3f *varying)_v;
+
+  uniform VKLSampler sampler = vkl->sampler;
+
+  vkl_vec3f vv;
+  *v = vklComputeGradientV((VKLSampler)sampler, p);
 }
 
 export void
@@ -115,7 +134,9 @@ VklVolume_TestSample(uniform VklVolume_ispc *uniform vkl, const uniform int n, f
   foreach (i = 0 ... n)
   {
     vkl_vec3f vklp = {x[i], y[i], z[i]};
-    v[i] = VklVolume_Sample(vkl, vklp);
+    float s;
+    VklVolume_Sample((void *uniform)vkl, (void *uniform)&vklp, (void *uniform)&s);
+    v[i] = s;
   }
 }
 

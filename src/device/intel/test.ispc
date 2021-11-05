@@ -16,9 +16,6 @@ Test_Intersect(void *uniform _model, const uniform int nRays, void *uniform _ray
 
   foreach (i = 0 ... nRays)
   { 
-    uniform RTCIntersectContext context;
-    rtcInitIntersectContext(&context);
-    
     rayhit.ray.org_x     = rays->ox[i];
     rayhit.ray.org_y     = rays->oy[i];
     rayhit.ray.org_z     = rays->oz[i];
