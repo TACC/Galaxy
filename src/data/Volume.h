@@ -1,4 +1,5 @@
 // ========================================================================== //
+        
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -62,13 +63,12 @@ public:
 
 	//! get the samples (i.e. data value) array for this Volume
 	unsigned char *get_samples() { return samples; }
-
 	//! set the samples (i.e. data value) array for this Volume
 	void set_samples(void * s) 
 	{ 
 		if (samples != NULL) 
 	  { std::cerr << "WARNING: overwriting (and leaking) Galaxy samples array!" << std::endl;} 
-	  samples = (unsigned char*) s; 
+	  samples = (unsigned char*)s; 
 	}
 
 	//! get the deltas (grid step size) for this Volume
@@ -121,6 +121,7 @@ public:
 		ny = global_counts.y;
 		nz = global_counts.z;
 	}
+
 	//! set the global number of sample points (i.e. data values) per axis
 	void set_global_counts(int nx, int ny, int nz) 
 	{
@@ -143,7 +144,7 @@ public:
 	 	local_counts.y = ny;
     local_counts.z = nz;
 	}
-
+	
 	//! get the type of data used in this Volume
 	DataType get_type() { return type; }
 	//! set the type of data used in this Volume
@@ -154,8 +155,7 @@ public:
 
   //! import the given data file into local memory
   /*! This action is performed in response to a ImportMsg */
-  /*! returns true if fails; terminates messaging loop */
-	virtual bool local_import(PartitioningP, char *, MPI_Comm);
+	virtual bool local_import(PartitioningP, char *fname, MPI_Comm c);
 
   //! complete the global properties of the distributed volume object
   /*! This action is performed in response to a CommitMsg */
@@ -174,7 +174,7 @@ public:
 	void set_global_minmax(float min, float max) { global_min = min; global_max = max; }
 
   //! construct a Volume from a Galaxy JSON specification
-  virtual bool LoadFromJSON(rapidjson::Value&, PartitioningP);
+  virtual bool LoadFromJSON(PartitioningP, rapidjson::Value&);
 
   //! Get the number of components
   int get_number_of_components() { return number_of_components; }
@@ -187,17 +187,28 @@ public:
   bool Sample(vec3f& p, vec3f& v);
   bool Sample(vec3f& p, float& v);
 
+  //! Which process owns an arbitrary point in this global volume? -1 for outside
+  int PointOwner(vec3f& p);
+
+	void set_global_partitions(int i, int j, int k) { global_partitions.x = i; global_partitions.y = j; global_partitions.z = k; }
+
   virtual OsprayObjectP CreateTheOSPRayEquivalent(KeyedDataObjectP);
 
   void set_ijk(int i, int j, int k) { ijk.x = i; ijk.y = j; ijk.z = k; }
 
   void Allocate()
   {
-    size_t sz = global_counts.x * global_counts.y * global_counts.z * number_of_components * ((type == FLOAT) ? sizeof(float) : sizeof(unsigned char));
-    set_samples(malloc(sz));
+    if (samples) free(samples);
+    size_t sz = global_counts.x * global_counts.y * global_counts.z * number_of_components 
+      * ((type == FLOAT) ? sizeof(float) : sizeof(unsigned char));
+    samples = (unsigned char *)malloc(sz);
   }
 
+  //! If the volume does not intersect the local box on any particular Galaxy process, its said to empty
+  bool is_empty() { return empty; }
+
 protected:
+  bool empty;
 	bool initialize_grid; 	// If time step data, need to grab grid info from first timestep
 
   vtkImageData *vtkobj;
@@ -216,8 +227,7 @@ protected:
 	vec3i global_counts;
 	vec3i local_offset;
 	vec3i local_counts;
-
-  unsigned char *samples;
+	unsigned char *samples;
 };
 
 } // namespace gxy

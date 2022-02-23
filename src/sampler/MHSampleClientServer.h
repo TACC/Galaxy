@@ -51,8 +51,7 @@ namespace gxy
 class MHSampleClientServer : public MultiServerHandler
 {
 public:
-  MHSampleClientServer();
-
+  MHSampleClientServer(SocketHandler *);
   static void init();
   bool handle(std::string line, std::string&);
 

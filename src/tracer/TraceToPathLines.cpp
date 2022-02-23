@@ -44,6 +44,8 @@ public:
     float dt = *(float *)g;
     g += sizeof(float);
 
+    plp->CopyPartitioning(rkp);
+
     std::vector<int> keys;
     rkp->get_keys(keys);
 

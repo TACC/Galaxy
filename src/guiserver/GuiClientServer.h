@@ -45,13 +45,13 @@ class GuiClientServer : public MultiServerHandler
   {
     ClientWindow(string id)
     {
-      datasets = Datasets::NewP();
       visualization = Visualization::NewP();
       camera = Camera::NewP();
-      renderingSet = RenderingSet::NewP();
 
       rendering = GuiRendering::NewP();
       rendering->SetId(id);
+
+      renderingSet = RenderingSet::NewP();
       renderingSet->AddRendering(rendering);
 
       frame = 0;
@@ -72,7 +72,7 @@ public:
   bool handle(std::string line, std::string& reply) override;
   virtual ~GuiClientServer();
 
-  GuiClientServer()
+  GuiClientServer(SocketHandler *sh) : MultiServerHandler(sh)
   {
     first = true;
 
@@ -87,11 +87,7 @@ public:
 
     temporaries = Datasets::NewP();
 
-    partitioning = Partitioning::NewP();
-    partitioning->Commit();
-
     renderer = Renderer::NewP();
-    renderer->SetPartitioning(partitioning);
     renderer->Commit();
   }
 
@@ -132,9 +128,8 @@ public:
   virtual void Notify(GalaxyObject* o, ObserverEvent id, void *cargo) override;
 
 private:
-  bool          first;
-  RendererP     renderer;
-  PartitioningP partitioning;
+  bool        first;
+  RendererP   renderer;
 
   std::vector<std::string> watched_datasets;
 

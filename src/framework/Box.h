@@ -26,13 +26,13 @@
  */
 
 #include <iostream>
+#include <limits>
 #include <math.h>
 #include "string.h"
 #include "dtypes.h"
 #include "float.h"
 
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
+typedef std::numeric_limits< double > dbl;
 
 namespace gxy
 {
@@ -43,6 +43,7 @@ class Box
 {
 	friend std::ostream& operator<<(std::ostream& o, const Box& b)
 	{
+    o.precision(dbl::max_digits10);
 		o << "X " << b.xyz_min.x << " -- " << b.xyz_max.x << std::endl;
 		o << "Y " << b.xyz_min.y << " -- " << b.xyz_max.y << std::endl;
 		o << "Z " << b.xyz_min.z << " -- " << b.xyz_max.z << std::endl;
@@ -126,15 +127,15 @@ public:
 	 */
 	void set(vec3f m, vec3f M);
 
-  //! set the extent of this Box
-  /*! \param xl box min point x component
-   * \param xu box max point x component
-   * \param yl box min point y component
-   * \param yu box max point y component
-   * \param zl box min point z component
-   * \param zu box max point z component
-   */
-  void set(float xl, float xu, float yl, float yu, float zl, float zu);
+	//! set the extent of this Box
+	/*! \param xl box min point x component
+	 * \param xu box max point x component
+	 * \param yl box min point y component
+	 * \param yu box max point y component
+	 * \param zl box min point z component
+	 * \param zu box max point z component
+	 */
+	void set(float xl, float xu, float yl, float yu, float zl, float zu);
 
 	//! computes the exit face for a given vector
 	/*! for a vector origin at `x,y,z` and direction of `dx,dy,dz`
@@ -241,6 +242,7 @@ public:
 		return c;
 	}
 
+	//! is the given point inside this Box?
   bool isIn(vec3f p, float fuzz = 0.0)
   {
     return (p.x >= (xyz_min.x - fuzz)) && (p.x <= (xyz_max.x + fuzz)) &&
@@ -251,7 +253,6 @@ public:
 	vec3f xyz_min = {0.0, 0.0, 0.0}; //!< the min point for this Box
 	vec3f xyz_max = {0.0, 0.0, 0.0}; //!< the max point for this Box
 
-  
   int serialSize()
   {
     return 2*sizeof(vec3f);
@@ -263,6 +264,7 @@ public:
     vec3f *v = (vec3f *)p;
     v[0] = xyz_min;
     v[1] = xyz_max;
+
     return p + 2*sizeof(vec3f);
   }
 
@@ -274,10 +276,6 @@ public:
     xyz_max = v[1];
     return p + 2*sizeof(vec3f);
   }
-
-  bool LoadFromJSON(rapidjson::Value&);
-
-  void expand(Box& b);
 
 private:
 	bool initialized;

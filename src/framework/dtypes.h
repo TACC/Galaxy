@@ -229,6 +229,5 @@ DOT(vec4f, vec4f)
 
 //! calculate A * B element-wise
 inline vec3f prod(vec3f a, vec3f b) { return vec3f(a.x*b.x, a.y*b.y, a.z*b.z); }
-inline vec4f prod(vec4f a, vec4f b) { return vec4f(a.x*b.x, a.y*b.y, a.z*b.z, a.w*b.w); }
 
 } // namespace gxy

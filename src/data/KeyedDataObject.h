@@ -34,9 +34,9 @@
 #include <vtkImageData.h>
 
 #include "Box.h"
+#include "Partitioning.h"
 #include "KeyedObject.h"
 #include "OsprayObject.h"
-#include "Partitioning.h"
 
 namespace gxy
 {
@@ -109,12 +109,11 @@ public:
   //! broadcast an ImportMsg to all Galaxy processes to import the given data file using the given arguments
 	virtual bool Import(PartitioningP, std::string, void *args, int argsSize);
 
+  //! copy the data partitioning of the given KeyedDataObject
+	void CopyPartitioning(KeyedDataObjectP o);
+
   float local_min, local_max;
   float global_min, global_max;
-
-  //! load data from a JSON file.   If the paritioning object is given and is uninitialized, it gets initialized; otherwise, it determines the partitioning to apply/check
-
-  virtual bool LoadFromJSON(rapidjson::Value& v, PartitioningP p = nullptr);
 
   void set_global_minmax(float min, float max)   { global_min = min; global_max = max; }
   void set_local_minmax(float min, float max)   { local_min = min; local_max = max; }
@@ -131,15 +130,11 @@ public:
   void setModified(bool m) { modified = m; }
   bool hasBeenModified() { return modified; }
 
-  PartitioningP get_partitioning() { return partitioning; }
-
 protected:
-
   bool modified;
   OsprayObjectP ospData;
 	vtkClientSocket *skt;
 	std::string filename;
-  PartitioningP partitioning;
 
 	bool time_varying, attached;
 
@@ -152,14 +147,14 @@ protected:
   class ImportMsg : public Work
   {
   public:
-    ImportMsg(Key k, PartitioningP part, std::string vname, void *args, int argsSize) : ImportMsg(2*sizeof(Key) + vname.length() + 1 + argsSize)
+    ImportMsg(PartitioningP part, Key k, std::string vname, void *args, int argsSize) : ImportMsg(2*sizeof(Key) + vname.length() + 1 + argsSize)
     {
       unsigned char *p = contents->get();
 
-      *(Key *)p = k;
+      *(Key *)p = part ? part->getkey() : NullKey;
       p += sizeof(Key);
 
-      *(Key *)p = part ? part->getkey() : NullKey;
+      *(Key *)p = k;
       p += sizeof(Key);
 
       memcpy(p, vname.c_str(), vname.length()+1);
@@ -176,11 +171,11 @@ protected:
 		{
 			char *p = (char *)contents->get();
 
-			Key k = *(Key *)p;
+      PartitioningP part = Partitioning::GetByKey(*(Key *)p);
 			p += sizeof(Key);
 
-      PartitioningP part = Partitioning::GetByKey(*(Key *)p);
-      p += sizeof(Key);
+			Key k = *(Key *)p;
+			p += sizeof(Key);
 
 			KeyedDataObjectP o = KeyedDataObject::GetByKey(k);
 

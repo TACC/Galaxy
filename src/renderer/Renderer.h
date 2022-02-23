@@ -29,6 +29,9 @@
 
 #include "OsprayHandle.h"
 
+#include "Box.h"
+#include "Partitioning.h"
+
 #include "dtypes.h"
 #include "KeyedObject.h"
 #include "Datasets.h"
@@ -38,7 +41,6 @@
 #include "Rendering.h"
 #include "RenderingEvents.h"
 #include "RenderingSet.h"
-#include "Partitioning.h"
 
 namespace gxy
 {
@@ -49,6 +51,7 @@ class Pixel;
 class RayList;
 
 OBJECT_POINTER_TYPES(Renderer)
+
 
 //! the primary class controlling rendering within Galaxy
 /*! \sa KeyedObject
@@ -98,9 +101,6 @@ public:
 	virtual void Start(RenderingSetP);
   //! return the frame number for the current render
 	int GetFrame() { return frame; }
-
-  void SetPartitioning(PartitioningP p) { partitioning = p; }
-  PartitioningP GetPartitioning() { return partitioning; }
 
 	void DumpStatistics(); //!< broadcast a StatisticsMsg to all processes to write rendering stats to local file via _dumpStats()
 	void _dumpStats(); //!< write local rendering statistics to file via APP_LOG()
@@ -179,11 +179,18 @@ public:
 
   virtual void HandleTerminatedRays(RayList *raylist);
 
+  void SetPartitioning(PartitioningP p) { partitioning = p; }
+  PartitioningP GetPartitioning() { return partitioning; }
+
 private:
+
+  Box   global_box;
+
+  PartitioningP partitioning;
+
   OsprayHandleP ospray;
 	std::vector<std::future<void>> rvec;
 
-  PartitioningP partitioning;
 	int frame;
 
 	int max_rays_per_packet;
@@ -304,10 +311,20 @@ public:
 
       p->x = rl->get_x(i);
       p->y = rl->get_y(i);
+
+#if 1
+// GDA
+      float o = rl->get_so(i);
+      p->r = rl->get_r(i) + (1.0 - o) * 0.75;
+      p->g = rl->get_g(i) + (1.0 - o) * 0.75;
+      p->b = rl->get_b(i) + (1.0 - o) * 0.75;
+      p->o = o;
+#else
       p->r = rl->get_r(i);
       p->g = rl->get_g(i);
       p->b = rl->get_b(i);
       p->o = rl->get_o(i);
+#endif
     }
 
     WORK_CLASS(SendPixelsMsg, false);
@@ -361,6 +378,5 @@ public:
 };
 
 Renderer *GetTheRenderer();
-
 
 } // namespace gxy

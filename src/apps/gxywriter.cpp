@@ -26,7 +26,6 @@
 #include "Application.h"
 #include "Renderer.h"
 #include "ClientServer.h"
-#include "Partitioning.h"
 
 using namespace gxy;
 using namespace std;
@@ -132,12 +131,6 @@ int main(int argc,  char *argv[])
     }
 
     theRenderer->LoadStateFromDocument(*doc);
-
-    PartitioningP thePartitioning = Partitioning::NewP();
-    thePartitioning->LoadFromJSON(*doc);
-    thePartitioning->Commit();
-
-    theRenderer->SetPartitioning(thePartitioning);
     theRenderer->Commit();
 
     vector<CameraP> theCameras;
@@ -160,7 +153,7 @@ int main(int argc,  char *argv[])
 
 
     DatasetsP theDatasets = Datasets::NewP();
-    if (! theDatasets->LoadFromJSON(*doc, thePartitioning))
+    if (! theDatasets->LoadFromJSON(*doc))
     {
       std::cerr << "error loading theDatasets\n";
       theApplication.QuitApplication();
@@ -225,12 +218,6 @@ int main(int argc,  char *argv[])
 
         k ++;
       }
-
-    if (! thePartitioning->isInitialized())
-    {
-      std::cerr << "thePartitioning is not initialized!\n";
-      exit(1);
-    }
 
     cout << "index = " << index << endl;
 

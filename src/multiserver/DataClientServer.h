@@ -35,6 +35,7 @@ namespace gxy
 class DataClientServer : public MultiServerHandler
 {
 public:
+  DataClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}
   static void init();
   bool handle(std::string line, std::string& reply);
 };

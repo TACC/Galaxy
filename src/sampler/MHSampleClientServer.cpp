@@ -54,7 +54,7 @@ namespace gxy
 #define TF_LINEAR   1
 #define TF_GAUSSIAN 2
 
-MHSampleClientServer::MHSampleClientServer()
+MHSampleClientServer::MHSampleClientServer(SocketHandler *sh) : MultiServerHandler(sh)
 {
   args.radius       = 0.02;
   args.tf_type      = TF_NONE;
@@ -183,6 +183,9 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
 
   p->clear();
 
+  if (v->is_empty())
+    return;
+
   p->SetDefaultColor(a->r, a->g, a->b, a->a);
 
   float deltaX, deltaY, deltaZ;
@@ -194,6 +197,16 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
   int nli, nlj, nlk;
   v->get_local_counts(nli, nlj, nlk);
 
+  int local_count = nli*nlj*nlk;
+
+  float max_x = ox + (nli-1) * deltaX,
+        max_y = oy + (nlj-1) * deltaY,
+        max_z = oz + (nlk-1) * deltaZ;
+
+  int ngx, ngy, ngz;
+  v->get_local_counts(ngx, ngy, ngz);
+  int global_count = ngx*ngy*ngz;
+
   a->istep = 1;
   a->jstep = nli;
   a->kstep = nli * nlj;
@@ -204,7 +217,7 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
 
   float tq = Q(v, tp.u.value, a);
 
-  Box partition_box = v->get_partitioning()->get_local_box();
+  Box *partition_box = v->get_local_box();
 
   int miss_count = 0;
   for (int iteration = 0; iteration < (a->n_startup + a->n_iterations); )
@@ -213,7 +226,7 @@ Metropolis_Hastings(MHSampleClientServer::Args *a)
     normally_distributed_vector(rv);
 
     Particle cp(tp.xyz.x + rv[0], tp.xyz.y + rv[1], tp.xyz.z + rv[2], float(0.0));
-    if (! partition_box.isIn(cp.xyz)) continue;
+    if (! partition_box->isIn(cp.xyz)) continue;
 
     iteration ++;
 
@@ -270,9 +283,7 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  MultiServerHandler *msh = new MHSampleClientServer;
-  msh->SetSocketHandler(sh);
-  return msh;
+  return new MHSampleClientServer(sh);
 }
 
 bool

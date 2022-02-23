@@ -45,4 +45,7 @@ target_link_libraries(ksndr ${VTK_LIBRARIES} ${MPI_LIBRARIES})
 add_executable(kwrtr kwrtr.cpp Receiver.cpp)
 target_link_libraries(kwrtr ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
 
-install(TARGETS kwrtr ksndr DESTINATION bin)
+add_executable(ktest ktest.cpp Receiver.cpp)
+target_link_libraries(ktest ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+
+install(TARGETS kwrtr ksndr ktest DESTINATION bin)

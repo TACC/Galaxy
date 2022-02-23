@@ -18,7 +18,7 @@
 //                                                                            //
 // ========================================================================== //
 
-#define FUZZ 0.000001
+#define FUZZ 0.00000001
 static float fuzz = FUZZ;
 
 #include "Camera.h"
@@ -732,6 +732,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
       }
 
       float gmin, gmax;
+      // std::cerr << GetTheApplication()->GetRank() << "\ngbox: " << *gbox << "\nlbox: " << *lbox << "\n";
       bool hit = gbox->intersect(vorigin, vray, gmin, gmax);
 
       float lmin, lmax;
@@ -739,7 +740,7 @@ Camera::generate_initial_rays(RendererP renderer, RenderingSetP renderingSet, Re
         hit = lbox->intersect(vorigin, vray, lmin, lmax);
 
       float d = fabs(lmin) - fabs(gmin);
-      if (hit && (lmax >= 0) && (d < fuzz) && (d > -fuzz))
+      if (hit && (lmax >= 0) && (d < FUZZ) && (d > -FUZZ))
       {
         rayList->set_x(kk, rayList->get_x(k));
         rayList->set_y(kk, rayList->get_y(k));

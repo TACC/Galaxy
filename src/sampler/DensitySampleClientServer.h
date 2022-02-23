@@ -41,6 +41,7 @@ namespace gxy
 class DensitySampleClientServer : public MultiServerHandler
 {
 public:
+  DensitySampleClientServer(SocketHandler *);
   static void init();
   bool handle(std::string line, std::string&);
 

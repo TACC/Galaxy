@@ -100,6 +100,7 @@ public:
 class TestClientServer : public MultiServerHandler
 {
 public:
+  TestClientServer(SocketHandler *sh) : MultiServerHandler(sh) {}
   static void init();
   bool handle(std::string line, std::string& reply);
 };

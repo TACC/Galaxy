@@ -1,5 +1,4 @@
 // ========================================================================== //
-
 //                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
@@ -23,7 +22,6 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <fstream>
 
 using namespace std;
 
@@ -40,7 +38,6 @@ using namespace rapidjson;
 #include "DensitySampler.hpp"
 #include "RaycastSampler.hpp"
 #include "StreamTracer.hpp"
-#include "Interpolator.hpp"
 
 using namespace gxy;
 
@@ -54,15 +51,12 @@ init()
   MHSampler::init();
   DensitySampler::init();
   RaycastSampler::init();
-  Interpolator::init();
 }
 
 extern "C" GuiClientServer *
 new_handler(SocketHandler *sh)
 {
-  GuiClientServer *gcs = new GuiClientServer;
-  gcs->SetSocketHandler(sh);
-  return gcs;
+  return new GuiClientServer(sh);
 }
 
 void
@@ -200,8 +194,6 @@ GuiClientServer::Sample(Document& params, std::string& reply)
   return true;                                                                                  \
 }
 
-static void brk() { }
-
 bool
 GuiClientServer::handle(string line, string& reply)
 {
@@ -218,42 +210,9 @@ GuiClientServer::handle(string line, string& reply)
 
   string cmd = doc["cmd"].GetString();
 
-  if (cmd == "gui::partitioning")
-  {
-    std::string pfile = doc["pfile"].GetString();
-
-    std::ifstream ifs(pfile);
-    if (! ifs)
-      HANDLED_BUT_ERROR_RETURN("unable to open partition file")
-    else
-    {
-      stringstream ss;
-      ss << ifs.rdbuf();
-
-      Document pdoc;
-      if (pdoc.Parse<0>(ss.str().c_str()).HasParseError())
-        HANDLED_BUT_ERROR_RETURN("error parsing partition json file")
-      else if (! partitioning->LoadFromJSON(pdoc))
-        HANDLED_BUT_ERROR_RETURN("invalid partitioning document")
-    }
-
-    partitioning->Commit();
-
-    Box box = partitioning->get_global_box();
-    rapidjson::Value boxv(rapidjson::kArrayType);
-    boxv.PushBack(rapidjson::Value().SetDouble(box.get_min()[0]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box.get_max()[0]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box.get_min()[1]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box.get_max()[1]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box.get_min()[2]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box.get_max()[2]), alloc);
-    replyDoc.AddMember("box", boxv, alloc);
-
-    HANDLED_OK;
-  }
   if (cmd == "gui::import")
   {
-    if (! globals->LoadFromJSON(doc, partitioning))
+    if (! globals->LoadFromJSON(doc))
       HANDLED_BUT_ERROR_RETURN("import datasets: error in LoadFromJson");
 
     globals->Commit();
@@ -313,7 +272,6 @@ GuiClientServer::handle(string line, string& reply)
 
       float m, M;
       kdop->get_global_minmax(m, M);
-      std::cerr << "got minmax from server: " << m << " " << M << "\n";
 
       int key = kdop->getkey();
 
@@ -326,6 +284,17 @@ GuiClientServer::handle(string line, string& reply)
       dset.AddMember("min", m, alloc);
       dset.AddMember("max", M, alloc);
 
+      Box *box = kdop->get_global_box();
+
+      rapidjson::Value boxv(rapidjson::kArrayType);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
+      boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
+      dset.AddMember("box", boxv, alloc);
+
       array.PushBack(dset, alloc);
     }
 
@@ -335,7 +304,9 @@ GuiClientServer::handle(string line, string& reply)
     replyDoc.AddMember("status", Value().SetString(s.c_str(), s.length(), alloc), alloc);        
     reply = DocumentToString(replyDoc);                                                         
     // std::cerr << "REPLY: " << reply << "\n";
-    HANDLED_OK;
+    return true; 
+
+    // HANDLED_OK;
   }
   else if (cmd == "gui::initWindow")
   {
@@ -354,6 +325,9 @@ GuiClientServer::handle(string line, string& reply)
     ClientWindow *clientWindow = getClientWindow(id);
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("initWindow: window has not been initialized");
+
+    clientWindow->visualization  = Visualization::NewP();
+    clientWindow->datasets       = Datasets::NewP();
 
     if (! clientWindow->visualization->LoadFromJSON(doc["Visualization"]))
       HANDLED_BUT_ERROR_RETURN("visualization: error in LoadFromJson");
@@ -400,24 +374,23 @@ GuiClientServer::handle(string line, string& reply)
   }
   else if (cmd == "gui::render")
   {
-    brk();
     string id  = doc["id"].GetString();
 
     ClientWindow *clientWindow = getClientWindow(id);
     if (! clientWindow)
       HANDLED_BUT_ERROR_RETURN("render: window has not been initialized");
     
-    CameraP camera = clientWindow->camera;
-    RenderingSetP renderingSet = clientWindow->renderingSet;
-    GuiRenderingP rendering = clientWindow->rendering;
+    GuiRenderingP rendering = GuiRendering::NewP();
+    clientWindow->renderingSet = RenderingSet::NewP();
+    clientWindow->renderingSet->SetRenderFrame(clientWindow->frame++);
 
+    CameraP camera = clientWindow->camera;
     rendering->SetTheSize(camera->get_width(), camera->get_height());
 
     float px, py, pz, dx, dy, dz;
     camera->get_viewpoint(px, py, pz);
     camera->get_viewdirection(dx, dy, dz);
-
-    renderingSet->SetRenderFrame(clientWindow->frame++);
+    std::cerr << px << " " << py << " " << pz << " :: " << dx << " " << dy << " " << dz << "\n";
 
     rendering->SetTheCamera(camera);
 
@@ -427,7 +400,7 @@ GuiClientServer::handle(string line, string& reply)
     rendering->SetId(id);
     rendering->Commit();
 
-    // clientWindow->renderingSet->AddRendering(rendering);
+    clientWindow->renderingSet->AddRendering(rendering);
     clientWindow->renderingSet->SetRenderFrame(clientWindow->frame++);
     clientWindow->renderingSet->Commit();
 
@@ -605,7 +578,6 @@ GuiClientServer::handle(string line, string& reply)
       streamtracer = dynamic_cast<StreamTracerFilter*>(filter);
 
       streamtracer->SetVectorField(vectorField);
-      streamtracer->SetPartitioning(partitioning);
 
       addFilter(id, filter);
       temporaries->Insert(filter->GetName(), filter->getResult());
@@ -703,83 +675,6 @@ GuiClientServer::handle(string line, string& reply)
   {
     string id  = doc["id"].GetString();
     removeClientWindow(id);
-    HANDLED_OK;
-  }
-  else if (cmd == "gui::interpolate")
-  {
-    string id  = doc["id"].GetString();
-
-    if (! doc.HasMember("volume"))
-      HANDLED_BUT_ERROR_RETURN("there's no volume name");
-
-    std::string name = doc["volume"].GetString();
-
-    VolumeP vfield = Volume::Cast(globals->Find(name));
-    if (! vfield)
-      vfield = Volume::Cast(temporaries->Find(name));
-
-    if (! vfield)
-      HANDLED_BUT_ERROR_RETURN("unable to find Interpolator volume dataset");
-
-    if (! doc.HasMember("pointset"))
-      HANDLED_BUT_ERROR_RETURN("there's no pointset name");
-
-    name = doc["pointset"].GetString();
-
-    GeometryP pset = Geometry::Cast(globals->Find(name));
-    if (! pset)
-      pset = Geometry::Cast(temporaries->Find(name));
-
-    if (! pset)
-      HANDLED_BUT_ERROR_RETURN("unable to find Interpolator pointset");
-
-    Interpolator *interpolator;
-
-    Filter *filter = getFilter(id);
-    if (! filter)
-    {
-      filter = new Interpolator();
-      interpolator = dynamic_cast<Interpolator*>(filter);
-      addFilter(id, filter);
-    }
-    else 
-      interpolator = dynamic_cast<Interpolator*>(filter);
-
-    interpolator->SetVolume(vfield);
-    interpolator->SetPointSet(pset);
-
-    temporaries->Insert(filter->GetName(), filter->getResult());
-
-    interpolator->Interpolate();
-
-    KeyedDataObjectP res = interpolator->getResult();
-    
-    float m, M;
-    res->get_global_minmax(m, M);
-
-    name  = interpolator->GetName();
-    replyDoc.AddMember("name", rapidjson::Value().SetString(name.data(), name.size()+1), alloc);
-    replyDoc.AddMember("key", rapidjson::Value().SetInt(res->getkey()), alloc);
-    replyDoc.AddMember("type", rapidjson::Value().SetInt(2), alloc);
-    replyDoc.AddMember("ncomp", rapidjson::Value().SetInt(1), alloc);
-    replyDoc.AddMember("min", rapidjson::Value().SetDouble(m), alloc);
-    replyDoc.AddMember("max", rapidjson::Value().SetDouble(M), alloc);
-
-    Box *box = res->get_global_box();
-    rapidjson::Value boxv(rapidjson::kArrayType);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[0]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[0]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[1]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[1]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_min()[2]), alloc);
-    boxv.PushBack(rapidjson::Value().SetDouble(box->get_max()[2]), alloc);
-    replyDoc.AddMember("box", boxv, alloc);
-
-    replyDoc.AddMember("status",  rapidjson::Value().SetString("ok", 3), alloc);
-
-    std::string x = DocumentToString(replyDoc);                                                           \
-    std::cerr << "Reply: " << x << "\n";
-
     HANDLED_OK;
   }
 

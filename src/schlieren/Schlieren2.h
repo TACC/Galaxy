@@ -57,9 +57,9 @@ public:
 
   virtual void HandleTerminatedRays(RayList *raylist);
 
-  virtual int serialSize();
-  virtual unsigned char *serialize(unsigned char *);
-  virtual unsigned char *deserialize(unsigned char *);
+  virtual int SerialSize();
+  virtual unsigned char *Serialize(unsigned char *);
+  virtual unsigned char *Deserialize(unsigned char *);
 
   virtual void Trace(RayList *);
 

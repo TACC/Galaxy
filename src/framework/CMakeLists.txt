@@ -43,14 +43,15 @@ include_directories(
 set (CPP_SOURCES 
 			Application.cpp
       Box.cpp
-			Threading.cpp
 			ClientServer.cpp
 			Events.cpp
 			KeyedObject.cpp
 			Message.cpp
 			MessageManager.cpp 
 			MessageQ.cpp 
+      Partitioning.cpp
 			smem.cpp
+			Threading.cpp
 			Work.cpp)
 
 add_library(gxy_framework SHARED ${CPP_SOURCES})
@@ -59,12 +60,11 @@ set_target_properties(gxy_framework PROPERTIES VERSION ${GALAXY_VERSION} SOVERSI
 install(TARGETS gxy_framework DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES 
-  dtypes.h
 	Application.h 
-  Box.h
+	Box.h 
 	ClientServer.h  
-	Threading.h
 	Debug.h 
+  dtypes.h
 	Events.h
 	framework.h
   GalaxyObject.h
@@ -72,7 +72,9 @@ install(FILES
 	Message.h 
 	MessageManager.h 
 	MessageQ.h 
+  Partitioning.h
 	smem.h 
+	Threading.h
 	Timer.h 
 	Work.h 
 	DESTINATION include/gxy)

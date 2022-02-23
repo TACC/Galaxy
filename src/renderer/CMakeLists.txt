@@ -53,7 +53,6 @@ link_directories(${Galaxy_BINARY_DIR}/src/ospray
 set (ISPC_SOURCES 
   IspcObject.ispc
  	MappedVis.ispc
-  Partitioning.ispc
 	Rays.ispc
 	TrianglesVis.ispc
   Visualization.ispc
@@ -75,7 +74,6 @@ set (CPP_SOURCES
   MappedVis.cpp
   GeometryVis.cpp
   ParticlesVis.cpp
-  Partitioning.cpp
   PathLinesVis.cpp
   RayQManager.cpp
   Rays.cpp 
@@ -112,7 +110,6 @@ install(FILES
   MappedVis.h
   GeometryVis.h
   ParticlesVis.h
-  Partitioning.h
   PathLinesVis.h
   TrianglesVis.h
   Vis.h

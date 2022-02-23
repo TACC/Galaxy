@@ -74,11 +74,6 @@ public:
   QWidget *embeddedWidget() override { return frame; }
   std::string getModelIdentifier() { return model_identifier; }
 
-  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex) override
-  {
-    return std::static_pointer_cast<QtNodes::NodeData>(output);
-  }
-
   QJsonObject
   save() const override
   {
@@ -123,7 +118,7 @@ public:
   // This is used to set widgets from internal state.   Only necessary if the
   // internal state is not held in the widgets in the first place.
 
-  virtual void loadParameterWidgets() 
+  virtual void loadParameterWidgets() const
   {
   }
 
@@ -176,5 +171,4 @@ protected:
   QFrame *frame;
   std::string model_identifier;
   std::shared_ptr<GxyData> input;
-  std::shared_ptr<GxyData> output;
 };

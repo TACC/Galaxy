@@ -166,10 +166,19 @@ MHSamplerFilter::onApply()
   output->dataInfo.isVector = (dset["ncomp"].GetInt() == 3);
   output->dataInfo.data_min = dset["min"].GetDouble();
   output->dataInfo.data_max = dset["max"].GetDouble();
+  for (auto i = 0; i < 6; i++)
+    output->dataInfo.box[i] = dset["box"][i].GetDouble();
 
   output->setValid(true);
 
   GxyFilter::onApply();
+}
+
+std::shared_ptr<QtNodes::NodeData>
+MHSamplerFilter::outData(QtNodes::PortIndex)
+{
+  std::cerr << "MHSamplerFilter::outData ===============\n"; output->print();
+  return std::static_pointer_cast<QtNodes::NodeData>(output);
 }
 
 QtNodes::NodeValidationState

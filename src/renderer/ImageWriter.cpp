@@ -37,9 +37,24 @@ ColorImageWriter::Write(int w, int h, float *rgba, const char *name)
     unsigned char *b = buf + ((h-1)-y)*w*4;
     for (int x = 0; x < w; x++)
     { 
+// GDA
+#if 0
+      if (p[3] < 1)
+      {
+        *b++ = (unsigned char)(255*0.75);
+        *b++ = (unsigned char)(255*0.75);
+        *b++ = (unsigned char)(255*0.75);
+        p += 3;
+      } else {
+        *b++ = (unsigned char)(255*(*p++));
+        *b++ = (unsigned char)(255*(*p++));
+        *b++ = (unsigned char)(255*(*p++));
+      }
+#else
       *b++ = (unsigned char)(255*(*p++));
       *b++ = (unsigned char)(255*(*p++));
       *b++ = (unsigned char)(255*(*p++));
+#endif
       *b++ = 0xff ; p ++;
     }
   }

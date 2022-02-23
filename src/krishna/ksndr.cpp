@@ -45,6 +45,9 @@ using namespace std;
 #include <stdlib.h>
 #include <time.h> 
 #include <pthread.h> 
+#include <limits>
+
+#define MAXFLOAT std::numeric_limits<float>::max()
 
 #include "Skt.hpp"
 #include "bufhdr.h"
@@ -59,6 +62,8 @@ int n_senders = 1;
 int running_count;
 bool testdata = false;
 string varname = "data";
+bool radial = false;
+bool normalize = false;
 
 int mpi_rank = 0, mpi_size = 1;
 
@@ -73,6 +78,8 @@ syntax(char *a)
   std::cerr << " -F pfile                     a file containing a list of constituent files (none)\n";
   std::cerr << " -V varname                   name of point-dependendent data to be used in the case of CTK file input (data)\n";
   std::cerr << " Relevant when generating random data:\n";
+  std::cerr << " -N                           normalize CSV data\n";
+  std::cerr << " -R                           data is radial dist to center\n";
   std::cerr << " -n nproc                     number of senders to run (1)\n";
   std::cerr << " -p npart                     number of particles to send to each receiver (100)\n";
   std::cerr << " -f fuzz                      max radius of points - creates empty border region (0)\n";
@@ -335,11 +342,26 @@ private:
         float *pptr = (float *)(data + sizeof(int) + sizeof(bufhdr));
         float *dptr = pptr + 3*nPts;
 
+        float dmin = MAXFLOAT;
+        float dmax = -MAXFLOAT;
         for (int i = 0; i < nPts; i++)
         {
           fscanf(f, "%f,%f,%f,%f", pptr, pptr+1, pptr+2, dptr);
+          if (*dptr < dmin) dmin = *dptr;
+          if (*dptr > dmax) dmax = *dptr;
           pptr += 3;
           dptr += 1;
+        }
+
+        if (normalize)
+        {
+          pptr = (float *)(data + sizeof(int) + sizeof(bufhdr));
+          dptr = pptr + 3*nPts;
+          for (int i = 0; i < nPts; i++)
+          {
+            *dptr = (*dptr - dmin) / (dmax - dmin);
+            dptr++;
+          }
         }
       }
       else if (ext == "raw")
@@ -401,10 +423,40 @@ private:
         *ptr++ = fxmin + frand()*(fxmax - fxmin);
         *ptr++ = fymin + frand()*(fymax - fymin);
         *ptr++ = fzmin + frand()*(fzmax - fzmin);
+#if 0
+        if (radial)
+          std::cerr << ptr[-3] << " " << ptr[-2] << " " << ptr[-1] << "\n";
+#endif
       }
 
-      for (int i = 0; i < nPts; i++)
-        *ptr++ = n_senders > 1 ? float(sender_id) / (n_senders - 1) : 0.0;
+      if (radial)
+      {
+        float *pbase = ptr;
+
+        float cx = (xmin + xmax) / 2;
+        float cy = (ymin + ymax) / 2;
+        float cz = (zmin + zmax) / 2;
+        
+        float rmax = 0;
+        float *pp = (float *)(data + sizeof(int) + sizeof(bufhdr));
+        for (int i = 0; i < nPts; i++)
+        { 
+          float dx = *pp++ - cx;
+          float dy = *pp++ - cy;
+          float dz = *pp++ - cz;
+          float r = sqrt(dx*dx + dy*dy + dz*dz);
+          if (r > rmax) rmax = r;
+          *ptr++ = r;
+        }
+
+        for (int i = 0; i < nPts; i++)
+          *pbase++ /= rmax;
+      }
+      else
+      {
+        for (int i = 0; i < nPts; i++)
+          *ptr++ = n_senders > 1 ? float(sender_id) / (n_senders - 1) : 0.0;
+      }
     }
 
     hdr->type          = bufhdr::Particles;
@@ -686,6 +738,14 @@ main(int argc, char *argv[])
     else if (! strcmp(argv[i], "-n"))
     {
       n_senders = atoi(argv[++i]);
+    }
+    else if (! strcmp(argv[i], "-N"))
+    {
+      normalize = true;
+    }
+    else if (! strcmp(argv[i], "-R"))
+    {
+      radial = true;
     }
     else if (! strcmp(argv[i], "-f"))
     {

@@ -58,12 +58,11 @@ void Delete(typ ## P& p) { p = NULL; }
 #define GALAXY_OBJECT_SUBCLASS(typ, parent)                                                 \
 public:                                                                                     \
   typedef parent super;                                                                     \
-  static typ ## P NewL() { return std::shared_ptr<typ>(new typ()); }                        \
+  static typ ## P NewL() { return std::shared_ptr<typ>(new typ()); }                      \
   static typ ## P Cast(GalaxyObjectP kop) { return std::dynamic_pointer_cast<typ>(kop); }   \
   static bool IsA(GalaxyObjectP a) { return dynamic_cast<typ *>(a.get()) != NULL; }         \
   static bool IsA(GalaxyObject* a) { return dynamic_cast<typ *>(a) != NULL; }               \
   std::string GetClassName() { return std::string(#typ); }                                  \
-  int         GetClassType() { return ClassType; }                                          \
   static int  ClassType;
 
 enum ObserverEvent
@@ -80,6 +79,7 @@ public:
   std::string GetClassName() { return std::string("GalaxyObject"); }
 
   GalaxyObject() {}
+  GalaxyObject(int k) {}
   ~GalaxyObject()
   {
     NotifyObservers(Deleted, NULL);

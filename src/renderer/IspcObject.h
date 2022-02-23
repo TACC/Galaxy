@@ -55,7 +55,7 @@ protected:
   virtual void initialize_ispc();
   virtual void destroy_ispc();
 
-  void *ispc = NULL;
+  void *ispc;
 };
 
 } // namespace gxy

@@ -38,7 +38,6 @@ include_directories(${GALAXY_INCLUDES}
                     ${Galaxy_SOURCE_DIR}/src/framework
                     ${Galaxy_SOURCE_DIR}/src/ospray
                     ${Galaxy_SOURCE_DIR}/src/data
-                    ${Galaxy_BINARY_DIR}/src/renderer
                     ${Galaxy_BINARY_DIR}/src
                     ${OSPRAY_INCLUDE_DIRS}
                     ${EMBREE_INCLUDE_DIRS})
@@ -53,9 +52,8 @@ set (CPP_SOURCES
   PathLines.cpp 
   Triangles.cpp 
   Volume.cpp 
-)
+  AmrVolume.cpp)
 
-  # AmrVolume.cpp
 add_library(gxy_data SHARED ${CPP_SOURCES})
 target_link_libraries(gxy_data ${VTK_LIBRARIES} gxy_framework gxy_ospray)
 set_target_properties(gxy_data PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
@@ -71,7 +69,7 @@ install(FILES
   PathLines.h
   Triangles.h
   Volume.h
+  AmrVolume.h
   DESTINATION include/gxy)
 
-  # AmrVolume.h
 

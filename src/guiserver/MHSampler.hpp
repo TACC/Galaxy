@@ -114,6 +114,8 @@ public:
     name = ss.str();
 
     result = KeyedDataObject::Cast(Particles::NewP());
+    result->CopyPartitioning(source);
+
   }
 
   ~MHSampler() { std::cerr << "MHSampler dtor\n"; }
@@ -192,8 +194,6 @@ public:
 
   static float sample(mhArgs *args, VolumeP v, float x, float y, float z)
   {
-    PartitioningP partitioning = v->get_partitioning();
-
     float dx, dy, dz;
     v->get_deltas(dx, dy, dz);
 
@@ -255,14 +255,11 @@ public:
     VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(a->sourceKey));
     ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->destinationKey));
 
-    PartitioningP partitioning = v->get_partitioning();
-
     p->setModified(true);
     p->clear();
-
+    p->CopyPartitioning(v);
+  
     p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);
-
-    Box box = v->get_partitioning()->get_local_box();
   
     float deltaX, deltaY, deltaZ;
     v->get_deltas(deltaX, deltaY, deltaZ);
@@ -270,12 +267,22 @@ public:
     float ox, oy, oz;
     v->get_local_origin(ox, oy, oz);
   
-    int ni, nj, nk;
-    v->get_local_counts(ni, nj, nk);
+    int nli, nlj, nlk;
+    v->get_local_counts(nli, nlj, nlk);
+  
+    int local_count = nli*nlj*nlk;
+  
+    float max_x = ox + (nli-1) * deltaX,
+          max_y = oy + (nlj-1) * deltaY,
+          max_z = oz + (nlk-1) * deltaZ;
+  
+    int ngx, ngy, ngz;
+    v->get_local_counts(ngx, ngy, ngz);
+    int global_count = ngx*ngy*ngz;
   
     a->istep = 1;
-    a->jstep = ni;
-    a->kstep = ni * nj;
+    a->jstep = nli;
+    a->kstep = nli * nlj;
   
     Particle tp;
     tp.xyz = get_starting_point(v);

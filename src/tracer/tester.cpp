@@ -138,11 +138,8 @@ int main(int argc,  char *argv[])
       exit(1);
     }
 
-    PartitioningP thePartitioning = Partitioning::NewP();
-    thePartitioning->LoadFromJSON(*doc);
-
     DatasetsP theDatasets = Datasets::NewP();
-    if (! theDatasets->LoadFromJSON(*doc, thePartitioning))
+    if (! theDatasets->LoadFromJSON(*doc))
     {
       std::cerr << "error loading theDatasets\n";
       theApplication.QuitApplication();

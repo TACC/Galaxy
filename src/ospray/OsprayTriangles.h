@@ -42,6 +42,7 @@ class OsprayTriangles : public OsprayObject
 {
   GALAXY_OBJECT(OsprayTriangles)
 
+public:
   void SetTriangles(TrianglesP p);
 };
 

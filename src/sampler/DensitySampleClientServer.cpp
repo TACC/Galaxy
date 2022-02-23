@@ -39,6 +39,10 @@ using namespace std;
 namespace gxy
 {
 
+DensitySampleClientServer::DensitySampleClientServer(SocketHandler *sh) : MultiServerHandler(sh)
+{
+};
+
 #define RNDM ((float)rand() / RAND_MAX) 
 
 static float *
@@ -94,6 +98,7 @@ DensitySample(MPI_Comm c, DensitySampleClientServer::Args *a)
   ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(a->pk));
 
   p->clear();
+  p->CopyPartitioning(v);
   p->SetDefaultColor(1.0, 1.0, 1.0, 1.0);
 
   v->get_local_counts(a->ni, a->nj, a->nk);
@@ -180,9 +185,7 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  MultiServerHandler *msh = new DensitySampleClientServer;
-  msh->SetSocketHandler(sh);
-  return msh;
+  return new DensitySampleClientServer(sh);
 }
 
 bool

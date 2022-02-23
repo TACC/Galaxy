@@ -32,20 +32,16 @@ VisModel::VisModel()
   frame->setLayout(layout);
 
   QFrame *cmap_box = new QFrame;
-  QGridLayout *cmap_grid = new QGridLayout;
-  cmap_box->setLayout(cmap_grid);
+  QHBoxLayout *cmap_box_layout = new QHBoxLayout;
+  cmap_box->setLayout(cmap_box_layout);
 
-  cmap_grid->addWidget(new QLabel("color map"), 0, 0);
+  cmap_box_layout->addWidget(new QLabel("color map"));
 
-  cmap_text_widget = new QLineEdit("default");
-  cmap_grid->addWidget(cmap_text_widget, 0, 1);
-
-  cmap_label_widget = new QLabel();
-  cmap_grid->addWidget(cmap_label_widget, 1, 1);
-
+  cmap_widget = new QLineEdit();
+  cmap_box_layout->addWidget(cmap_widget);
+  
   QPushButton *cmap_browse_button = new QPushButton("...");
-  cmap_grid->addWidget(cmap_browse_button, 1, 0);
-
+  cmap_box_layout->addWidget(cmap_browse_button);
   connect(cmap_browse_button, SIGNAL(released()), this, SLOT(openCmapSelectorDialog()));
 
   layout->addWidget(cmap_box);
@@ -93,18 +89,6 @@ VisModel::VisModel()
   connect(cmap_range_max, SIGNAL(editingFinished()), this, SLOT(enableIfValid()));
   connect(cmap_range_min, SIGNAL(editingFinished()), this, SLOT(enableIfValid()));
   connect(_properties->getApplyButton(), SIGNAL(released()), this, SLOT(onApply()));
-
-#if 0
-//#if __APPLE__
-  char buf[1024];
-  getcwd(buf, 1024);
-  std::string cmap_string = std::string(buf) + "/../colormaps/default.png";
-  load_cmap(cmap_string);
-#else
-  std::string cmap_string = std::string(getenv("GALAXY_ROOT")) + "/colormaps/default.png";
-  std::cerr << "CMAP CMAP CMAP cmap_string: " << cmap_string << "\n";
-  load_cmap(cmap_string);
-#endif
 
   enableIfValid();
 }
@@ -181,7 +165,7 @@ VisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> p)
 }
 
 void
-VisModel::loadParameterWidgets() 
+VisModel::loadParameterWidgets() const
 {
   if (output)
   {
@@ -189,8 +173,7 @@ VisModel::loadParameterWidgets()
 
     std::shared_ptr<Vis> v = std::dynamic_pointer_cast<Vis>(output);
 
-    load_cmap(v->colormap_file.c_str());
-
+    cmap_widget->setText(v->colormap_file.c_str());
     cmap_range_min->setText(QString::number(v->cmap_range_min));
     cmap_range_max->setText(QString::number(v->cmap_range_max));
   }
@@ -204,8 +187,7 @@ VisModel::loadOutput(std::shared_ptr<GxyData> p) const
   std::shared_ptr<Vis> v = std::dynamic_pointer_cast<Vis>(p);
 
   v->source = input->dataInfo.name.c_str();
-  v->colormap_file = current_colormap;
-
+  v->colormap_file = cmap_widget->text().toStdString();
   v->cmap_range_min = cmap_range_min->text().toDouble();
   v->cmap_range_max = cmap_range_max->text().toDouble();
 

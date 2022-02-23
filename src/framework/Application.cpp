@@ -34,7 +34,7 @@
 #include "Threading.h"
 #include "Events.h"
 
-// #include "tbb/tbb.h"
+#include "tbb/tbb.h"
 #include "tbb/task_scheduler_init.h"
 
 #include "rapidjson/document.h"
@@ -81,7 +81,7 @@ Application::Application()
 	theMessageManager = new MessageManager; 
 	theKeyedObjectFactory = new KeyedObjectFactory; 
 
-#if 1
+#if 0
 	if (getenv("GXY_APP_NTHREADS"))
 	{
 		int nthreads = atoi(getenv("GXY_APP_NTHREADS"));
@@ -248,8 +248,8 @@ pthread_mutex_t print_lock = PTHREAD_MUTEX_INITIALIZER;
 bool 
 Application::PrintMsg::Action(int sender)
 {
-  unsigned char *ptr = (unsigned char *)get();
   pthread_mutex_lock(&print_lock);
+  unsigned char *ptr = (unsigned char *)get();
   std::cerr << sender << ": " << (char *)ptr << "\n";
   pthread_mutex_unlock(&print_lock);
   return false;

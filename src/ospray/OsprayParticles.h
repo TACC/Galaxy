@@ -43,7 +43,10 @@ class OsprayParticles : public OsprayObject
 {
   GALAXY_OBJECT(OsprayParticles) 
 
+public:
+
   void SetParticles(ParticlesP p);
+
 };
 
 }

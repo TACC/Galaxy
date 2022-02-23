@@ -33,6 +33,7 @@ struct GxyDataInfo
     type = -1;
     isVector = true;
     data_min = data_max = 0;
+    box[0] = box[1] = box[2] = box[3] = box[4] = box[5] = 0;
   }
 
   virtual void toJson(QJsonObject& p) 
@@ -42,6 +43,9 @@ struct GxyDataInfo
     p["isVector"] = isVector;
     QJsonArray rangeJson = { data_min, data_max };
     p["data range"] = rangeJson;
+
+    for (auto i = 0; i < 6; i++)
+      p["box"].toArray().push_back(box[i]);
   }
 
   virtual void fromJson(QJsonObject p)
@@ -51,6 +55,8 @@ struct GxyDataInfo
     isVector = p["isVector"].toBool();
     data_min = p["data range"].toArray()[0].toDouble();
     data_max = p["data range"].toArray()[1].toDouble();
+    for (auto i = 0; i < 6; i++)
+      box[i] = p["box"].toArray()[i].toDouble();
   }
 
   void print()
@@ -59,12 +65,14 @@ struct GxyDataInfo
     std::cerr << "type: " << type << "\n";
     std::cerr << "isVector: " << isVector << "\n";
     std::cerr << "range: " << data_min << " " << data_max << "\n";
+    std::cerr << "box: " << box[0] << " " << box[1] << " " << box[2] << " " << box[3] << " " << box[4] << " " << box[5] << "\n";
   }
 
   std::string name;
   int type;
   bool isVector;
   float data_min, data_max;
+  float box[6];
 };
 
 class GxyData : public GxyPacket

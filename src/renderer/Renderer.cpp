@@ -30,7 +30,7 @@
 #include <ospray/ospray.h>
 
 #include "galaxy.h"
-#include "dtypes.h"
+
 #include "Application.h"
 #include "Camera.h"
 #include "DataObjects.h"
@@ -50,6 +50,8 @@
 #include "OsprayTriangles.h"
 #include "OsprayParticles.h"
 
+#include "dtypes.h"
+
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 
@@ -63,9 +65,6 @@ using namespace std;
 
 namespace gxy
 {
-static gxy::Renderer *theRenderer = NULL;
-gxy::Renderer *GetTheRenderer() { return theRenderer; }
-
 WORK_CLASS_TYPE(Renderer::RenderMsg);
 WORK_CLASS_TYPE(Renderer::StatisticsMsg);
 WORK_CLASS_TYPE(Renderer::SendRaysMsg);
@@ -83,6 +82,9 @@ int Renderer::DROP_ON_FLOOR = -2;
 int Renderer::KEEP_HERE     = -3;
 int Renderer::UNDETERMINED  = -4;
 int Renderer::NO_NEIGHBOR   = -1;
+
+static Renderer *theRenderer = NULL;
+Renderer *GetTheRenderer() { return theRenderer; }
 
 void
 Renderer::Initialize()
@@ -104,7 +106,6 @@ Renderer::Initialize()
   StatisticsMsg::Register();
 
   Datasets::Register();
-  Partitioning::Register();
 
   Vis::Register();
   Visualization::Register();
@@ -112,7 +113,6 @@ Renderer::Initialize()
 #ifdef GXY_WRITE_IMAGES
   AckRaysMsg::Register();
 #endif // GXY_WRITE_IMAGES
-
 }
 
 static  void
@@ -179,6 +179,7 @@ bool
 Renderer::local_commit(MPI_Comm c)
 {
   if (super::local_commit(c)) return true;
+
   return false;
 }
 
@@ -298,6 +299,14 @@ Renderer::LoadStateFromValue(Value& v)
   if (v.HasMember("epsilon"))
     SetEpsilon(v["epsilon"].GetDouble());
 
+  if (v.HasMember("box"))
+  {
+    Value& b = v["box"];
+    vec3f min_box(b[0].GetDouble(), b[2].GetDouble(), b[4].GetDouble());
+    vec3f max_box(b[1].GetDouble(), b[3].GetDouble(), b[5].GetDouble());
+    global_box.set(min_box, max_box);
+  }
+
   return true;
 }
 
@@ -305,6 +314,18 @@ void
 Renderer::SaveStateToValue(Value& v, Document& doc)
 {
   v.AddMember("epsilon", Value().SetDouble(GetEpsilon()), doc.GetAllocator());
+
+  if (global_box.is_initialized())
+  {
+    Value box(kArrayType);
+    box.PushBack(Value().SetDouble(global_box.xyz_min.x), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_max.x), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_min.y), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_max.y), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_min.z), doc.GetAllocator());
+    box.PushBack(Value().SetDouble(global_box.xyz_max.z), doc.GetAllocator());
+    v.AddMember("box", box, doc.GetAllocator());
+  }
 }
 
 void
@@ -325,6 +346,8 @@ Renderer::Classify(RayList *raylist)
   {
     int typ  = raylist->get_type(i);
     int term = raylist->get_term(i);
+
+    // GDA std::cerr << raylist->get_o(i) << " ";
 
     if (typ == RAY_PRIMARY)
     {
@@ -430,13 +453,14 @@ void
 Renderer::AssignDestinations(RayList *raylist)
 {
   VisualizationP visualization = raylist->GetTheRendering()->GetTheVisualization();
+  Box *box = visualization->get_local_box();
 
   for (int i = 0; i < raylist->GetRayCount(); i++)
   {
     if (raylist->get_classification(i) == RAY_BOUNDARY)
     {
       int nbr = partitioning->neighbor(raylist->get_ox(i), raylist->get_oy(i), raylist->get_oz(i),
-                                   raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
+                                 raylist->get_dx(i), raylist->get_dy(i), raylist->get_dz(i));
 
       if (nbr != -1)
         raylist->set_classification(i, nbr);
@@ -468,6 +492,9 @@ Renderer::HandleTerminatedRays(RayList *raylist)
 
   RenderingSetP  renderingSet  = raylist->GetTheRenderingSet();
   RenderingP rendering = raylist->GetTheRendering();
+  VisualizationP visualization = rendering->GetTheVisualization();
+
+  vec3f bkgnd = visualization->get_background_color();
 
   if (terminated_count == 0) return;
 
@@ -481,10 +508,20 @@ Renderer::HandleTerminatedRays(RayList *raylist)
     {
       p->x = raylist->get_x(i);
       p->y = raylist->get_y(i);
+
+#if 1
+      // std::cerr << raylist->get_r(i) << " " << raylist->get_g(i) << " " << raylist->get_b(i) << " " << raylist->get_o(i) << "\n";
+      float o = raylist->get_so(i);
+      p->r = raylist->get_r(i) + (1.0 - o) * bkgnd.x;
+      p->g = raylist->get_g(i) + (1.0 - o) * bkgnd.y;
+      p->b = raylist->get_b(i) + (1.0 - o) * bkgnd.z;
+      p->o = o;
+#else
       p->r = raylist->get_r(i);
       p->g = raylist->get_g(i);
       p->b = raylist->get_b(i);
       p->o = raylist->get_o(i);
+#endif
       p++;
     }
 
@@ -674,7 +711,7 @@ Renderer::Trace(RayList *raylist)
   // RayQ) so we don't send a message upstream saying we are idle
   // until we actually are.
 
-  TraceRays tracer(GetEpsilon(), GetPartitioning());
+  TraceRays tracer(GetEpsilon());
 
   RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
   if (out)
@@ -741,6 +778,8 @@ Renderer::SendRays(RayList *rays, int destination)
   rays->GetTheRenderingSet()->IncrementInFlightCount();
 #endif
 
+  // std::cerr << GetTheApplication()->GetRank() << " sending " << rays->GetRayCount() << " to " << destination << "\n";
+  
   int nReceived = rays->GetRayCount();
   _sent_to(destination, nReceived);
 
@@ -800,21 +839,27 @@ Renderer::SendRaysMsg::Action(int sender)
 int
 Renderer::serialSize()
 {
-  return super::serialSize() + sizeof(Key) + sizeof(bool) + sizeof(int) + sizeof(float);
+  return super::serialSize() + sizeof(Key) + sizeof(bool) + sizeof(int) + global_box.serialSize() + sizeof(float);
 }
 
 unsigned char *
 Renderer::serialize(unsigned char *p)
 {
   p = super::serialize(p);
+
   *(Key *)p = partitioning->getkey();
   p += sizeof(Key);
+
   *(bool*)p = permute_pixels;
   p += sizeof(bool);
+
   *(int*)p = max_rays_per_packet;
   p += sizeof(int);
+
   *(float*)p = epsilon;
   p += sizeof(float);
+
+  p = global_box.serialize(p);
 
   return p;
 }
@@ -823,14 +868,20 @@ unsigned char *
 Renderer::deserialize(unsigned char *p)
 {
   p = super::deserialize(p);
+
   partitioning = Partitioning::GetByKey(*(Key *)p);
   p = p + sizeof(Key);
+
   permute_pixels = *(bool*)p;
   p += sizeof(bool);
+
   max_rays_per_packet = *(int*)p;
   p += sizeof(int);
+
   epsilon = *(float *)p;
   p += sizeof(float);
+
+  p = global_box.deserialize(p);
 
   return p;
 }
@@ -903,10 +954,10 @@ bool
 Renderer::RenderMsg::Action(int sender)
 {
   unsigned char *p = (unsigned char *)get();
-
-  RendererP renderer = Renderer::GetByKey(*(Key *)p);
+  Key renderer_key = *(Key *)p;
   p += sizeof(Key);
 
+  RendererP renderer = Renderer::GetByKey(renderer_key);
   RenderingSetP rs = RenderingSet::GetByKey(*(Key *)p);
 
   renderer->local_render(renderer, rs);

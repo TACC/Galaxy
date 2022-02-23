@@ -58,13 +58,14 @@ class Geometry : public KeyedDataObject
   void allocate(int nv, int nc) { allocate_vertices(nv); allocate_connectivity(nc); }
 
   /*! This action is performed in response to a ImportMsg */
-  virtual bool local_import(PartitioningP, char *, MPI_Comm);
+  virtual bool local_import(char *, MPI_Comm);
 
   //! learn global and local minmax of data
   virtual bool local_commit(MPI_Comm);
 
+
   //! load geometry from a Galaxy JSON specification
-  virtual bool LoadFromJSON(rapidjson::Value&, PartitioningP);
+  virtual bool LoadFromJSON(rapidjson::Value&);
 
   //! set the default color to use when rendering these Particles
   void SetDefaultColor(vec4f dc) { default_color = dc; }
@@ -119,7 +120,6 @@ protected:
   virtual bool load_from_vtkPointSet(vtkPointSet *) { return false; }
 
   void initialize(); //!< initialize this Geometry objec
-
 
   //! Get partitioning info from JSON object
   bool get_partitioning(rapidjson::Value&);

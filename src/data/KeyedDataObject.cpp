@@ -23,7 +23,7 @@
 #include "Datasets.h"
 #include "Geometry.h"
 #include "Volume.h"
-//#include "AmrVolume.h"
+#include "AmrVolume.h"
 
 using namespace std;
 
@@ -38,16 +38,18 @@ KeyedDataObject::Register()
   RegisterClass();
 
   ImportMsg::Register();
+
   Datasets::Register();
   Geometry::Register();
   Volume::Register();
-  //AmrVolume::Register();
+  AmrVolume::Register();
 }
 
 KEYED_OBJECT_CLASS_TYPE(KeyedDataObject)
 
 KeyedDataObject::~KeyedDataObject()
 {
+  //std::cerr << "~KeyedDataObject: " << this << " skt " << skt << std::endl;
   if (skt)          
   {
     skt->CloseSocket();
@@ -59,6 +61,15 @@ OsprayObjectP
 KeyedDataObject::CreateTheOSPRayEquivalent(KeyedDataObjectP kdop)
 {
   return NULL;
+}
+
+void 
+KeyedDataObject::CopyPartitioning(KeyedDataObjectP o)
+{
+	local_box = *o->get_local_box();
+	global_box = *o->get_global_box();
+	for (int i = 0; i < 6; i++)
+			neighbors[i] = o->get_neighbor(i);
 }
 
 void 
@@ -86,7 +97,7 @@ KeyedDataObject::Import(PartitioningP p, string filename) { return Import(p, fil
 bool
 KeyedDataObject::Import(PartitioningP p, string filename, void *args, int argsSize)
 {
-  ImportMsg msg(getkey(), p, filename, args, argsSize);
+  ImportMsg msg(p, getkey(), filename, args, argsSize);
   msg.Broadcast(true, true);
   return get_error() == 0;
 }
@@ -94,7 +105,7 @@ KeyedDataObject::Import(PartitioningP p, string filename, void *args, int argsSi
 bool
 KeyedDataObject::local_import(PartitioningP p, char *s, MPI_Comm c)
 {
-  partitioning = p;
+  std::cerr << "ERROR: generic KeyedDataObject::local_import called?" << std::endl;
   return false;
 }
 
@@ -103,13 +114,5 @@ KeyedDataObject::set_neighbors(int *n)
 {
   memcpy(neighbors, n, 6*sizeof(int));
 }
-
-bool 
-KeyedDataObject::LoadFromJSON(rapidjson::Value& v, PartitioningP p)
-{
-  std::cerr << "generic KeyedDataObject load from JSON\n";
-  return false;
-}
-
 
 } // namespace gxy

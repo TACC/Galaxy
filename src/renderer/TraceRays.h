@@ -1,3 +1,5 @@
+// ========================================================================== //
+// Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
@@ -33,7 +35,6 @@
 #include "Lighting.h"
 #include "Rays.h"
 #include "Visualization.h"
-#include "Partitioning.h"
 
 namespace gxy
 {
@@ -46,7 +47,7 @@ OBJECT_POINTER_TYPES(TraceRays)
 class TraceRays : public IspcObject
 {
 public:
-  TraceRays(float epsilon, PartitioningP p);
+  TraceRays(float epsilon = 0.001);
   ~TraceRays(); //!< default destructor
 
   //! trace a given RayList against the given Visualization using the given Lighting
@@ -63,7 +64,6 @@ protected:
   virtual void destroy_ispc();
 
   float epsilon;
-  PartitioningP partitioning;
 };
 
 } // namespace gxy

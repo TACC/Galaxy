@@ -126,7 +126,7 @@ Sampler::Trace(RayList *raylist)
   // RayQ) so we don't send a message upstream saying we are idle
   // until we actually are.
 
-  SamplerTraceRays tracer(GetPartitioning());
+  SamplerTraceRays tracer;
   RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
 }
 

@@ -198,24 +198,24 @@ Schlieren::HandleTerminatedRays(RayList *raylist)
 }
 
 int
-Schlieren::serialSize()
+Schlieren::SerialSize()
 {
-  return super::serialSize() + sizeof(float);
+  return super::SerialSize() + sizeof(float);
 }
 
 unsigned char *
-Schlieren::serialize(unsigned char *p)
+Schlieren::Serialize(unsigned char *p)
 {
-  p = super::serialize(p);
+  p = super::Serialize(p);
   *(float *)p = GetFar();
   p += sizeof(float);
   return p;
 }
 
 unsigned char *
-Schlieren::deserialize(unsigned char *p)
+Schlieren::Deserialize(unsigned char *p)
 {
-  p = super::deserialize(p);
+  p = super::Deserialize(p);
   SetFar(*(float *)p);
   p += sizeof(float);
   return p;
@@ -235,7 +235,7 @@ Schlieren::Trace(RayList *raylist)
   // RayQ) so we don't send a message upstream saying we are idle
   // until we actually are.
 
-  SchlierenTraceRays tracer(GetPartitioning());
+  SchlierenTraceRays tracer;
 
   RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
   if (out)

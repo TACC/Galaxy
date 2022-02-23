@@ -57,6 +57,8 @@ public:
 
   QtNodes::NodeDataType dataType(QtNodes::PortType portType, QtNodes::PortIndex portIndex) const override;
 
+  std::shared_ptr<QtNodes::NodeData> outData(QtNodes::PortIndex port) override;
+
   void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
 
   QtNodes::NodeValidationState validationState() const override;

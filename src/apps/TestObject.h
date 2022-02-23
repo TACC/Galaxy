@@ -51,9 +51,9 @@ private:
     bool CollectiveAction(MPI_Comm c, bool isRoot)
     {
 			Key k = *(Key *)contents->get();
+      TestObjectP to = TestObject::GetByKey(k);
 			char *foo = ((char *)contents->get()) + sizeof(k);
-			APP_PRINT(<< ((int)k) << " " << foo);
-      return false;
+      return to->_doit(foo);
     }
   };
 
@@ -67,6 +67,14 @@ public:
 		DoitMsg m(getkey(), std::string("I am a TestObject"));
 		m.Broadcast(true);
 	}
+
+private:
+  bool _doit(char *s)
+  {
+    APP_PRINT(<< GetTheApplication()->GetRank() << " " << s);
+    return false;
+  }
+    
 };
 
 } // namespace gxy

@@ -72,7 +72,7 @@ VolumeVisModel::loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o)
 }
 
 void
-VolumeVisModel::loadParameterWidgets()
+VolumeVisModel::loadParameterWidgets() const
 {
   VisModel::loadParameterWidgets();
 

@@ -19,6 +19,7 @@
 // ========================================================================== //
 
 #include "ospray/SDK/math/vec.ih"
+#include "ospray/SDK/math/box.ih"
 
 struct Model;
 
@@ -40,6 +41,9 @@ struct Visualization_ispc
    
   uniform int32 nMappedVis;
   uniform pMappedVis_ispc *uniform mappedVis;
+  
+  box3f global_bb;
+  box3f local_bb;
 };
 
 typedef uniform Visualization_ispc *uniform pVisualization_ispc;

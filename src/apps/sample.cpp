@@ -66,6 +66,8 @@ public:
     VolumeP v = Volume::Cast(KeyedDataObject::GetByKey(keys[0]));
     ParticlesP p = Particles::Cast(KeyedDataObject::GetByKey(keys[1]));
 
+    p->CopyPartitioning(v);
+
     float deltaX, deltaY, deltaZ;
     v->get_deltas(deltaX, deltaY, deltaZ);
 

@@ -1,5 +1,4 @@
-// ========================================================================== //
-//                                                                            //
+
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -113,8 +112,8 @@ namespace gxy
 {
 
 #define KEYED_OBJECT_CLASS_TYPE(typ)                       \
-  int typ::ClassType;                                      \
-  void Delete(typ ## P& p) { p = NULL; }
+int typ::ClassType;                                        \
+void Delete(typ ## P& p) { p = NULL; }
 
 OBJECT_POINTER_TYPES(KeyedObject)
 
@@ -183,12 +182,10 @@ public:
   /*! \warning derived classes should overload this method to calculate object byte size
    */
   virtual int serialSize();
-
   //! serialize this object to a byte stream 
   /*! \warning derived classes should overload this method to serialize the object
    */
   virtual unsigned char *serialize(unsigned char *);
-
   //! deserialize this object from a byte stream 
   /*! \warning derived classes should overload this method to deserialize the object
    */

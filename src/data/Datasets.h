@@ -32,7 +32,6 @@
 
 #include "KeyedObject.h"
 #include "KeyedDataObject.h"
-#include "Partitioning.h"
 #include "Box.h"
 
 #include "rapidjson/document.h"
@@ -155,10 +154,10 @@ public:
   }
 
   //! load from a Galaxy JSON specification
-  virtual bool LoadFromJSON(rapidjson::Value&, PartitioningP);
+  virtual bool LoadFromJSON(rapidjson::Value&);
 
   //! load from a file containing a JSON spec
-  virtual bool LoadFromJSONFile(std::string, PartitioningP);
+  virtual bool LoadFromJSONFile(std::string);
 
 	using iterator = datasets_t::iterator;
 	//! return an iterator positioned at the beginning of the data list for this Datasets
@@ -180,7 +179,7 @@ public:
 
 protected:
 
-	bool loadTyped(PartitioningP, rapidjson::Value& v);
+	bool loadTyped(rapidjson::Value& v);
 
   datasets_t datasets;
 

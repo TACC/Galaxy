@@ -37,7 +37,6 @@
 #include "RungeKutta.h"
 #include "TraceToPathLines.h"
 #include "Interpolator.h"
-#include "Partitioning.h"
 
 #include <ospray/ospray.h>
 
@@ -192,12 +191,10 @@ main(int argc, char * argv[])
   Sampler::Initialize();
   Renderer::Initialize();
   RungeKutta::RegisterRK();
-  Partitioning::RegisterClass();
   RegisterTraceToPathLines();
 
   SamplerP  theSampler  = Sampler::NewP();
   RendererP theRenderer = Renderer::NewP();
-  PartitioningP thePartitioning = Partitioning::NewP();
 
   InitializeInterpolateVolumeOntoGeometry();
 
@@ -211,7 +208,6 @@ main(int argc, char * argv[])
       std::cerr << "error loading data state file\n";
       exit(1);
     }
-
 
     // BEGIN SAMPLING
     Document *sdoc = theApplication.OpenJSONFile(sampling_state);
@@ -230,11 +226,9 @@ main(int argc, char * argv[])
 
     theSampler->LoadStateFromDocument(*sdoc);
 
-    thePartitioning->LoadFromJSON(*ddoc);
-
     // load datasets 
     DatasetsP theDatasets = Datasets::NewP();
-    theDatasets->LoadFromJSON(*ddoc, thePartitioning);
+    theDatasets->LoadFromJSON(*ddoc);
     theDatasets->Commit();
     
     // Create a list of sampling Visualizations that specifies how the volume is to be sampled...
@@ -282,6 +276,7 @@ main(int argc, char * argv[])
     VolumeP volume = Volume::Cast(theDatasets->Find(datasets[0]));
 
     ParticlesP samples = Particles::NewP();
+    samples->CopyPartitioning(volume);
     samples->SetDefaultColor(0.5, 0.5, 0.5, 1.0);
     theSampler->SetSamples(samples);
 
@@ -338,7 +333,7 @@ main(int argc, char * argv[])
 
     // Now make sure datasets are available for the rendering...
 
-    theDatasets->LoadFromJSON(*rdoc, thePartitioning);
+    theDatasets->LoadFromJSON(*rdoc);
     theDatasets->Commit();
 
     // Create a list of sampling Visualizations that specifies how the volume is to be sampled...

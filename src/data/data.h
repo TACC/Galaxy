@@ -28,7 +28,7 @@
  * \brief all classes for Galaxy's supported data types and data operations (filters)
  */
 
-//#include "AmrVolume.h"
+#include "AmrVolume.h"
 #include "Box.h"
 #include "DataObjects.h"
 #include "Datasets.h"

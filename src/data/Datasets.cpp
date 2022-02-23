@@ -39,7 +39,7 @@ using namespace std;
 
 namespace gxy
 {
-  
+	
 KEYED_OBJECT_CLASS_TYPE(Datasets)
 
 void
@@ -51,28 +51,30 @@ Datasets::Register()
 void
 Datasets::initialize()
 {
+  //std::cerr << "Datasets init " << std::hex << ((long)this) << "\n";
   keys = NULL;
   super::initialize();
 }
 
 Datasets::~Datasets()
 {
-  if (keys) delete[] keys;
+  //std::cerr << "Datasets dtor " << std::hex << ((long)this) << "\n";
+	if (keys) delete[] keys;
 }
 
 bool
 Datasets::Commit()
 {
 #if 0
-  for (auto it : datasets)
-    if (! it.second->Commit())
+	for (auto it : datasets)
+		if (! it.second->Commit())
     {
       set_error(1);
       return false;
     }
 #endif
 
-  return KeyedObject::Commit();
+	return KeyedObject::Commit();
 }
 
 void
@@ -92,66 +94,66 @@ Datasets::Insert(std::string name, KeyedDataObjectP val)
 
 
 bool
-Datasets::loadTyped(PartitioningP p, Value& v)
+Datasets::loadTyped(Value& v)
 {
-  if (! v.HasMember("name") || ! v.HasMember("type"))
-  {
-    std::cerr << "Dataset must have name and type\n";
+	if (! v.HasMember("name") || ! v.HasMember("type"))
+	{
+		std::cerr << "Dataset must have name and type\n";
     set_error(1);
     return false;
-  }
+	}
 
-  string type(v["type"].GetString());
+	string type(v["type"].GetString());
 
-  KeyedDataObjectP kop;
-  if (type == "Particles")
-    kop = Particles::NewP();
-  else if (type == "Volume")
+	KeyedDataObjectP kop;
+	if (type == "Particles")
+		kop = Particles::NewP();
+	else if (type == "Volume")
     kop = Volume::NewP();
-  else if (type == "Triangles")
+	else if (type == "Triangles")
     kop = Triangles::NewP();
-  else if (type == "PathLines")
+	else if (type == "PathLines")
     kop = PathLines::NewP();
-  else
-  {
-    std::cerr << "invalid Dataset type: " << type << "\n";
-    set_error(1);
+	else
+	{
+		std::cerr << "invalid Dataset type: " << type << "\n";
+		set_error(1);
     return false;
-  }
+	}
 
-  if (! kop->LoadFromJSON(v, p))
+	if (! kop->LoadFromJSON(v))
     return false;
-
-  kop->Commit();
-    
+		
   string name = v["name"].GetString();
-  Insert(name.c_str(), kop);
 
+	Insert(name.c_str(), kop);
   return true;
 }
 
 bool
-Datasets::LoadFromJSON(Value& v, PartitioningP p)
+Datasets::LoadFromJSON(Value& v)
 {
-  if (v.HasMember("Datasets"))
-  {
-    Value& ds = v["Datasets"];
+	if (! v.HasMember("Datasets"))
+	{
+		std::cerr << "JSON has no Datasets clause\n";
+    set_error(1);
+		return false;
+	}
 
-    if (ds.IsArray())
-    {
-      for (int i = 0; i < ds.Size(); i++)
-        if (! loadTyped(p, ds[i])) return false;
-      return true;
-    }
-    else
-      return loadTyped(p, ds);
-  }
-  else
-    return loadTyped(p, v);
+	Value& ds = v["Datasets"];
+
+	if (ds.IsArray())
+	{
+		for (int i = 0; i < ds.Size(); i++)
+			if (! loadTyped(ds[i])) return false;
+    return true;
+	}
+	else
+		return loadTyped(ds);
 }
 
 bool
-Datasets::LoadFromJSONFile(std::string fname, PartitioningP p)
+Datasets::LoadFromJSONFile(std::string fname)
 {
   ifstream ifs(fname);
   if (! ifs)
@@ -173,42 +175,42 @@ Datasets::LoadFromJSONFile(std::string fname, PartitioningP p)
       return false;
     }
 
-    return LoadFromJSON(doc, p);
+    return LoadFromJSON(doc);
   }
 }
 
 int
 Datasets::serialSize()
 {
-  return KeyedObject::serialSize() + sizeof(int) + size()*sizeof(Key);
+	return KeyedObject::serialSize() + sizeof(int) + size()*sizeof(Key);
 }
 
 unsigned char * 
 Datasets::serialize(unsigned char *p)
 {
-  *(int *)p = size();
-  p += sizeof(int);
+	*(int *)p = size();
+	p += sizeof(int);
 
-  for (auto i : datasets)
-  {
-    *(Key *)p = i.second->getkey();
-    p += sizeof(Key);
-  }
+	for (auto i : datasets)
+	{
+		*(Key *)p = i.second->getkey();
+		p += sizeof(Key);
+	}
 
-  return p;
+	return p;
 }
 
 unsigned char * 
 Datasets::deserialize(unsigned char *p)
 {
-  nkeys = *(int *)p;
-  p += sizeof(int);
-  
-  keys = new Key[nkeys];
-  memcpy((void *)keys, (void *)p, nkeys*sizeof(Key));
-  p += nkeys*sizeof(Key);
+	nkeys = *(int *)p;
+	p += sizeof(int);
+	
+	keys = new Key[nkeys];
+	memcpy((void *)keys, (void *)p, nkeys*sizeof(Key));
+	p += nkeys*sizeof(Key);
 
-  return p;
+	return p;
 }
 
 }  // namespace gxy

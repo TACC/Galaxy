@@ -84,6 +84,12 @@ ParticlesVisModel::dataType(QtNodes::PortType pt, QtNodes::PortIndex) const
 void
 ParticlesVisModel::apply() { std::cerr << "Apply\n"; }
 
+std::shared_ptr<QtNodes::NodeData>
+ParticlesVisModel::outData(QtNodes::PortIndex)
+{
+  return std::static_pointer_cast<QtNodes::NodeData>(output);
+}
+
 void
 ParticlesVisModel::
 setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex)
@@ -173,7 +179,7 @@ ParticlesVisModel::loadOutput(std::shared_ptr<GxyData> o) const
 }
 
 void
-ParticlesVisModel::loadParameterWidgets() 
+ParticlesVisModel::loadParameterWidgets() const
 {
   VisModel::loadParameterWidgets();
 

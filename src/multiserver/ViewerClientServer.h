@@ -38,7 +38,7 @@ public:
   bool handle(std::string line, std::string& reply);
   virtual ~ViewerClientServer(){}
 
-  ViewerClientServer()
+  ViewerClientServer(SocketHandler *sh) : MultiServerHandler(sh)
   {
     first = true;
 

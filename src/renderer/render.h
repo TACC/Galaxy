@@ -35,7 +35,6 @@
 #include "Lighting.h"
 #include "MappedVis.h"
 #include "mypng.h"
-#include "OsprayDatasets.h"
 #include "OsprayParticles.h"
 #include "OsprayObject.h"
 #include "OsprayTriangles.h"

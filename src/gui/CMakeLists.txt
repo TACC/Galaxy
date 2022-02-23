@@ -27,21 +27,23 @@ find_package(NodeEditor PATHS
 
 find_package(Qt5 5.3 COMPONENTS Core Widgets Gui OpenGL)
 
-include_directories(${gxy_framework_SOURCE_DIR} ${gxy_multiserver_SOURCE_DIR} ${gxy_data_SOURCE_DIR} ${gxy_renderer_SOURCE_DIR})
-
 SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH} ${NodeEditor_DIR}/../..)
 
 file(GLOB_RECURSE CPPS  ./*.cpp )
 file(GLOB_RECURSE HEADERS_TO_MOC ./*.hpp)
 
+include_directories(/opt/x11/include
+                    ${gxy_data_SOURCE_DIR}
+                    ${gxy_multiserver_SOURCE_DIR}
+                    ${gxy_renderer_SOURCE_DIR}
+                    ${gxy_framework_SOURCE_DIR}
+                    ${gxy_ospray_SOURCE_DIR}
+                    ${Galaxy_BINARY_DIR}/src
+                    ${OSPRAY_INCLUDE_DIRS}
+                    ${EMBREE_INCLUDE_DIRS})
+
 qt5_wrap_cpp(mocs ${HEADERS_TO_MOC} TARGET galaxygui OPTIONS --no-notes)
 
-if(APPLE)
-  add_executable(galaxygui MACOSX_BUNDLE ${CPPS} ${mocs})
-  target_link_libraries(galaxygui NodeEditor::nodes gxy_multiserver_client ${OPENGL_LIBRARIES} pthread)
-  install(TARGETS galaxygui DESTINATION bin)
-else()
-  add_executable(galaxygui ${CPPS} ${mocs})
-  target_link_libraries(galaxygui NodeEditor::nodes gxy_multiserver_client ${OPENGL_LIBRARIES} pthread)
-  install(TARGETS galaxygui DESTINATION bin)
-endif()
+add_executable(galaxygui ${CPPS} ${mocs})
+target_link_libraries(galaxygui NodeEditor::nodes gxy_multiserver_client ${OPENGL_LIBRARIES})
+install(TARGETS galaxygui DESTINATION bin)

@@ -24,7 +24,6 @@
 #include "Schlieren2.h"
 #include "RayQManager.h"
 #include "Particles.h"
-#include "Partitioning.h"
 #include "Rays.h"
 #include "Schlieren2TraceRays.h"
 
@@ -223,15 +222,15 @@ Schlieren2::HandleTerminatedRays(RayList *raylist)
 }
 
 int
-Schlieren2::serialSize()
+Schlieren2::SerialSize()
 {
-  return super::serialSize() + 2*sizeof(float) + 2*sizeof(int);
+  return super::SerialSize() + 2*sizeof(float) + 2*sizeof(int);
 }
 
 unsigned char *
-Schlieren2::serialize(unsigned char *p)
+Schlieren2::Serialize(unsigned char *p)
 {
-  p = super::serialize(p);
+  p = super::Serialize(p);
   *(int *)p = GetRaysPerPixel();
   p += sizeof(int);
   *(float *)p = GetFar();
@@ -244,9 +243,9 @@ Schlieren2::serialize(unsigned char *p)
 }
 
 unsigned char *
-Schlieren2::deserialize(unsigned char *p)
+Schlieren2::Deserialize(unsigned char *p)
 {
-  p = super::deserialize(p);
+  p = super::Deserialize(p);
   SetRaysPerPixel(*(int *)p);
   p += sizeof(int);
   SetFar(*(float *)p);
@@ -272,7 +271,7 @@ Schlieren2::Trace(RayList *raylist)
   // RayQ) so we don't send a message upstream saying we are idle
   // until we actually are.
 
-  Schlieren2TraceRays tracer(GetPartitioning());;
+  Schlieren2TraceRays tracer;
 
   RayList *out = tracer.Trace(rendering->GetLighting(), visualization, raylist);
   if (out)
@@ -405,10 +404,18 @@ Schlieren2::local_render(RendererP renderer, RenderingSetP renderingSet)
       CameraP camera = rendering->GetTheCamera();
       VisualizationP visualization = rendering->GetTheVisualization();
 
-      Box gBox = GetPartitioning()->get_global_box();
-      Box lBox = GetPartitioning()->get_local_box();
+      Box *gBox = visualization->get_global_box();
+      Box *lBox = visualization->get_local_box();
 
-      camera->generate_initial_rays(renderer, renderingSet, rendering, &lBox, &gBox, rvec, fnum);
+#if 0
+      if (GetRaysPerPixel() == -1)
+        camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
+      else
+        for (int i = 0; i < GetRaysPerPixel(); i++)
+          camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum, i);
+#else
+      camera->generate_initial_rays(renderer, renderingSet, rendering, lBox, gBox, rvec, fnum);
+#endif
     }
 
 #ifdef GXY_PRODUCE_STATUS_MESSAGES

@@ -30,13 +30,14 @@ typedef std::numeric_limits< double > dbl;
 #include "Application.h"
 #include "Renderer.h"
 #include "ClientServer.h"
-#include "Partitioning.h"
+
 #include "Receiver.hpp"
 
 using namespace gxy;
 using namespace std;
 
 int mpiRank = 0, mpiSize = 1;
+int maxLoopCount = 99999999;
 
 // These are going to be needed in the master socket handler
 
@@ -68,7 +69,7 @@ syntax(char *a)
   cerr << "  -D[which]                    run debugger in selected processes.  If which is given, it is a number or a hyphenated range, defaults to all" << endl;
   cerr << "  -A                           wait for attachment" << endl;
   cerr << "  -s w h                       window width, height (1920 1080)" << endl;
-  cerr << "  -N                           max number of simultaneous renderings (VERY large)" << endl;
+  cerr << "  -N n                         max loop count (VERY large)" << endl;
   cerr << "  -P                           base port; master here, workers start here + 1 (1900)" << endl;
   exit(1);
 }
@@ -97,8 +98,12 @@ master_handler(ServerSkt *skt, void *p, char *buf)
 
     if (cmd == "go")
     {
+      long tstart = my_time();
+
       receiver->Accept(receiver->GetNSenders());
       receiver->Wait();
+
+      long trcv = my_time();
 
       theDatasets->Commit();
       for (auto v : theVisualizations)
@@ -107,16 +112,21 @@ master_handler(ServerSkt *skt, void *p, char *buf)
       theRenderingSet->Reset();
       theRenderingSet->Commit();
 
-      GetTheApplication()->SyncApplication();
+      long tcom = my_time();
 
-      long t_rendering_start = my_time();
-      cout << "render start" << endl;
+#if 1
+      GetTheApplication()->SyncApplication();
 
       theRenderer->Start(theRenderingSet);
       theRenderingSet->WaitForDone();
 
-      long t_done = my_time();
-      cout << "TIMING total " << (t_done - t_rendering_start) / 1000000000.0 << " seconds" << endl;
+      long tdone = my_time();
+
+      double time_receive = (trcv - tstart) / 1000000000.0;
+      double time_commit = (tcom - trcv) / 1000000000.0;
+      double time_render = (tdone - tcom) / 1000000000.0;
+
+      cout << "TIMING total " << time_receive << " :: " << time_render << " :: " << time_commit << "\n";
 
       char namebuf[1024];
 
@@ -126,10 +136,20 @@ master_handler(ServerSkt *skt, void *p, char *buf)
         sprintf(namebuf, "image-%04d", tstep);
 
       theRenderingSet->SaveImages(namebuf);
+#endif
 
       tstep ++;
 
       free(buf);
+
+      if (--maxLoopCount <= 0)
+      {
+        pthread_mutex_lock(&main_lock);
+        done = true;
+        pthread_cond_signal(&main_cond);
+        pthread_mutex_unlock(&main_lock);
+      }
+
       return false;
     }
     else if (cmd == "box")
@@ -188,7 +208,6 @@ int main(int argc,  char *argv[])
   bool dbg = false;
   bool atch = false;
   int width = 1920, height = 1080;
-  int maxConcurrentRenderings = 99999999;
   bool override_windowsize = false;
   int base_port = 1900;
 
@@ -205,7 +224,7 @@ int main(int argc,  char *argv[])
         height = atoi(argv[++i]);
         override_windowsize = true;
     }
-    else if (!strcmp(argv[i], "-N")) maxConcurrentRenderings = atoi(argv[++i]);
+    else if (!strcmp(argv[i], "-N")) maxLoopCount = atoi(argv[++i]);
     else if (statefile == "")   statefile = argv[i];
     else syntax(argv[0]);
   }
@@ -269,7 +288,7 @@ int main(int argc,  char *argv[])
       }
 
     theDatasets = Datasets::NewP();
-    if (! theDatasets->LoadFromJSON(*doc, thePartitioning))
+    if (! theDatasets->LoadFromJSON(*doc))
     {
       std::cerr << "error loading theDatasets\n";
       theApplication.QuitApplication();

@@ -31,28 +31,46 @@
 
 using namespace gxy;
 
+int mpiRank, mpiSize;
+
+using namespace std;
+
+#include "Debug.h"
+
+
 int
 main(int argc, char * argv[])
 {
-	Application theApplication(&argc, &argv);
-	theApplication.Start();
+  Application theApplication(&argc, &argv);
+  theApplication.Start();
 
-	theApplication.Run();
+  theApplication.Run();
 
-	TestObject::Register();
+  TestObject::Register();
 
-	std::cerr << "XX " << theApplication.GetRank() << std::endl;
+  mpiRank = theApplication.GetRank();
+  mpiSize = theApplication.GetSize();
 
-	if (theApplication.GetRank() == 0)
-	{
-		{
-			TestObjectP top = TestObject::NewP();
-			top->doit();
-		}
+  Debug(argv[0], false, "");
 
-		sleep(4);
-		theApplication.QuitApplication();
-	}
+  if (theApplication.GetRank() == 0)
+  {
+    {
+      TestObjectP top = TestObject::NewP();
+      top->doit();
+      std::cerr << "doit done\n";
 
-	theApplication.Wait();
+      std::cerr << "? ";
+      char c;
+      std::cin >> c;
+
+      Delete(top);
+      std::cerr << "top deleted\n";
+    }
+
+    sleep(4);
+    theApplication.QuitApplication();
+  }
+
+  theApplication.Wait();
 }

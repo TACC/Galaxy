@@ -1,5 +1,4 @@
 // ========================================================================== //
-//                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //

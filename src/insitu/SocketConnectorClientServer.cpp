@@ -56,9 +56,7 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  MultiServerHandler *msh = new SocketConnectorClientServer;
-  msh->SetSocketHandler(sh);
-  return msh;
+  return new SocketConnectorClientServer(sh);
 }
 
 void
@@ -286,13 +284,9 @@ SocketConnectorClientServer::InitializeVolumesMsg::CollectiveAction(MPI_Comm com
     volume->set_global_counts(gcounts[0], gcounts[1], gcounts[2]);
     volume->set_global_origin(gorigin[0], gorigin[1], gorigin[2]);
     volume->set_deltas(spacing[0], spacing[1], spacing[2]);
-    volume->set_ghosted_local_offset(partition_extent[0], partition_extent[2], partition_extent[4]);
     volume->set_local_offset(partition_extent[0] + partition_ghosts[0], 
                              partition_extent[2] + partition_ghosts[2], 
                              partition_extent[4] + partition_ghosts[4]);
-    volume->set_ghosted_local_counts(lcounts[0] + partition_ghosts[0] + partition_ghosts[1],
-                                     lcounts[1] + partition_ghosts[2] + partition_ghosts[3],
-                                     lcounts[2] + partition_ghosts[4] + partition_ghosts[5]);
     volume->set_local_counts(lcounts[0], lcounts[1], lcounts[2]);
     volume->set_neighbors(partition_neighbors);
 

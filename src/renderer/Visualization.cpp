@@ -52,6 +52,9 @@ Visualization::initialize()
 {
   //std::cerr << "Visualization init " << std::hex << ((long)this) << "\n";
   ospModel = NULL;
+  background.x = 0.0;
+  background.y = 0.0;
+  background.z = 0.0;
   super::initialize();
 }
 
@@ -106,7 +109,9 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
 
   if (v.HasMember("Visualization") || v.HasMember("Visualizations"))
   {
+    
     Value& c = v.HasMember("Visualization") ? v["Visualization"] : v["Visualizations"];
+    
     if (c.IsArray())
     {
       for (int i = 0; i < c.Size(); i++)
@@ -131,13 +136,113 @@ Visualization::LoadVisualizationsFromJSON(Value& v)
   return visualizations;
 }
 
+#define CHECKBOX(XX)                                                            \
+  for (vector<VisP>::iterator it = XX.begin(); it != XX.end(); it++)            \
+  {                                                                             \
+    VisP v = *it;                                                               \
+                                                                                \
+    KeyedDataObjectP kdop = v->GetTheData();                                    \
+    if (! kdop) std::cerr << "WARNING: NULL KeyedDataObjectP" << endl;          \
+                                                                                \
+    Box *l = kdop->get_local_box();                                             \
+    Box *g = kdop->get_global_box();                                            \
+                                                                                \
+    if (first)                                                                  \
+    {                                                                           \
+      first = false;                                                            \
+                                                                                \
+      local_box = *l;                                                           \
+      global_box = *g;                                                          \
+                                                                                \
+      for (int i = 0; i < 6; i++)                                               \
+        neighbors[i] = kdop->get_neighbor(i);                                   \
+    }                                                                           \
+    else                                                                        \
+    {                                                                           \
+      if (local_box != *l || global_box != *g)                                  \
+      {                                                                         \
+        APP_PRINT(<< "ERROR: Datasets partitioning mismatch\n"                  \
+            << "\n" << "local xyz_min: "                                        \
+              << local_box.xyz_min.x << " "                                     \
+              << local_box.xyz_min.y << " "                                     \
+              << local_box.xyz_min.z                                            \
+            << "\n" << "local xyz_max: "                                        \
+              << local_box.xyz_max.x << " "                                     \
+              << local_box.xyz_max.y << " "                                     \
+              << local_box.xyz_max.z                                            \
+            << "\n" << "*l xyz_min: "                                           \
+              << l->xyz_min.x << " "                                            \
+              << l->xyz_min.y << " "                                            \
+              << l->xyz_min.z                                                   \
+            << "\n" << "*l xyz_max: "                                           \
+              << l->xyz_max.x << " "                                            \
+              << l->xyz_max.y << " "                                            \
+              << l->xyz_max.z                                                   \
+            << "\n" << "global xyz_min: "                                       \
+              << global_box.xyz_min.x << " "                                    \
+              << global_box.xyz_min.y << " "                                    \
+              << global_box.xyz_min.z                                           \
+            << "\n" << "global xyz_max: "                                       \
+              << global_box.xyz_max.x << " "                                    \
+              << global_box.xyz_max.y << " "                                    \
+              << global_box.xyz_max.z                                           \
+            << "\n" << "*g xyz_min: "                                           \
+              << g->xyz_min.x << " "                                            \
+              << g->xyz_min.y << " "                                            \
+              << g->xyz_min.z                                                   \
+            << "\n" << "*g xyz_max: "                                           \
+              << g->xyz_max.x << " "                                            \
+              << g->xyz_max.y << " "                                            \
+              << g->xyz_max.z);                                                 \
+        exit(1);                                                                \
+      }                                                                         \
+      for (int i = 0; i < 6; i++)                                               \
+      {                                                                         \
+        if (neighbors[i] != kdop->get_neighbor(i))                              \
+         {                                                                      \
+          APP_PRINT(<< "ERROR: Datasets partitioning mismatch\n"                \
+                    << "N: " << neighbors[0] << " "                             \
+                             << neighbors[1] << " "                             \
+                             << neighbors[2] << " "                             \
+                             << neighbors[3] << " "                             \
+                             << neighbors[4] << " "                             \
+                             << neighbors[5] << "\n"                            \
+                    << "K: " << kdop->get_neighbor(0) << " "                    \
+                             << kdop->get_neighbor(1) << " "                    \
+                             << kdop->get_neighbor(2) << " "                    \
+                             << kdop->get_neighbor(3) << " "                    \
+                             << kdop->get_neighbor(4) << " "                    \
+                             << kdop->get_neighbor(5) << "\n");                 \
+          exit(1);                                                              \
+        }                                                                       \
+      }                                                                         \
+    }                                                                           \
+  }
+
+// #include "unistd.h"
+
 bool 
 Visualization::local_commit(MPI_Comm c)
 {
   bool first = true;
 
+  int nl;
+  float *l;
+  int *t;
+
+#if 0
+  sleep(GetTheApplication()->GetRank());
+  lighting.GetLights(nl, l, t);
+  std::cerr << "On " << GetTheApplication()->GetRank() << " " << ((long)this) << t[0] << " " << l[0] << " " << l[1] << " " << l[2] << "\n";
+#endif
+
   for (auto v : vis)
     v->local_commit(c);
+
+  local_box = GetTheRenderer()->GetPartitioning()->get_local_box();
+  global_box = GetTheRenderer()->GetPartitioning()->get_global_box();
+
+  // CHECKBOX(vis);
 
   return false;
 }
@@ -154,6 +259,9 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   // Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
   // volumevis - NULL unless there's some model data
 
+  if (ospModel) 
+    ospRelease(ospModel);
+    
   ospModel = ospNewModel();
 
   void *mispc[vis.size()]; int nmispc = 0;
@@ -162,16 +270,15 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
   for (auto v : vis)
   {
     KeyedDataObjectP kdop = v->GetTheData();
+    OsprayObjectP op = kdop->GetTheOSPRayEquivalent();
 
-    OsprayObjectP op = kdop->CreateTheOSPRayEquivalent(kdop);
-    if (! op)
-      op = kdop->CreateTheOSPRayEquivalent(kdop);
-
-    if (kdop->hasBeenModified() || !v->GetTheOsprayDataObject())
+    if (! op || kdop->hasBeenModified())
     {
-      v->SetTheOsprayDataObject(op);
+      op = kdop->CreateTheOSPRayEquivalent(kdop);
       kdop->setModified(false);
     }
+
+    v->SetTheOsprayDataObject(op);
 
     if (GeometryVis::IsA(v))
       ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
@@ -184,7 +291,10 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
    
   ispc::Visualization_commit(ispc, 
           ospModel ? ospray_util::GetIE(ospModel) : NULL,
-          nvispc, vispc, nmispc, mispc);
+          nvispc, vispc,
+          nmispc, mispc,
+          global_box.get_min(), global_box.get_max(),
+          local_box.get_min(), local_box.get_max());
 }
 
 void
@@ -200,6 +310,14 @@ Visualization::LoadFromJSON(Value& v)
 
   if (v.HasMember("annotation"))
     SetAnnotation(string(v["annotation"].GetString()));
+
+  if (v.HasMember("background color"))
+  {
+    Value& bkgnd = v["background color"];
+    background.x = bkgnd[0].GetDouble();
+    background.y = bkgnd[1].GetDouble();
+    background.z = bkgnd[2].GetDouble();
+  }
 
   if (v.HasMember("Lighting"))
     lighting.LoadStateFromValue(v["Lighting"]);
@@ -245,15 +363,15 @@ Visualization::LoadFromJSON(Value& v)
 int 
 Visualization::serialSize()
 {
-  return KeyedObject::serialSize() + (sizeof(int) + annotation.length() + 1) 
+  return KeyedObject::serialSize() + (sizeof(vec3f) + sizeof(int) + annotation.length() + 1) 
     + sizeof(int) + vis.size()*sizeof(Key)
-    + lighting.serialSize();
+    + lighting.SerialSize();
 }
 
 unsigned char *
 Visualization::serialize(unsigned char *p)
 {
-  p = lighting.serialize(p);
+  p = lighting.Serialize(p);
 
   int l = annotation.length() + 1;
   *(int *)p = l;
@@ -262,6 +380,10 @@ Visualization::serialize(unsigned char *p)
   memcpy(p, annotation.c_str(), l-1);
   p[l-1] = 0;
   p += l;
+
+  vec3f *vp = (vec3f *)p;
+  *vp = background;
+  p = p + sizeof(vec3f);
 
   *(int *)p = vis.size();
   p += sizeof(int);
@@ -278,12 +400,16 @@ Visualization::serialize(unsigned char *p)
 unsigned char *
 Visualization::deserialize(unsigned char *p)
 {
-  p = lighting.deserialize(p);
+  p = lighting.Deserialize(p);
 
   int l = *(int *)p;
   p += sizeof(l);
   annotation = (char *)p;
   p += l;
+
+  vec3f *vp = (vec3f *)p;
+  background = *vp;
+  p = p + sizeof(vec3f);
 
   int n = *(int *)p;
   p += sizeof(int);

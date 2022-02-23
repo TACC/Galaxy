@@ -147,6 +147,7 @@ Rendering::AddLocalPixels(Pixel *p, int n, int f, int s)
 	#else
 			ACCUMULATE_PIXEL(f, p->x, p->y, p->r, p->g, p->b, p->o);
 	#endif
+
 			p++;
 		}
 	}
@@ -224,6 +225,7 @@ Rendering::local_commit(MPI_Comm c)
       delete[] framebuffer;
 
     framebuffer = new float[width*height*4];
+
     memset(framebuffer, 0, width*height*4*sizeof(float));
 
 #ifndef GXY_WRITE_IMAGES
@@ -248,6 +250,7 @@ Rendering::local_reset()
       cerr << "ERROR: Rendering::local_reset IsLocal but no framebuffer present" << endl;
       exit(1);
     }
+
     for (float *p = framebuffer; p < framebuffer + width*height*4; *p++ = 0.0);
 
 #ifndef GXY_WRITE_IMAGES
@@ -279,6 +282,17 @@ void Rendering::SaveImage(string filename, int indx, bool asFloat)
     sprintf(istr, "%05d", indx);
     filename = filename + '_' + istr + GetTheVisualization()->GetAnnotation() + GetTheCamera()->GetAnnotation();
   }
+
+  vec3f bkgnd = visualization->get_background_color();
+
+  float *p = framebuffer;
+  for (int i = 0; i < width*height; i++, p += 4)
+    if (p[3] < 1)
+    {
+      p[0] = bkgnd.x;
+      p[1] = bkgnd.y;
+      p[2] = bkgnd.z;
+    }
 
   if (asFloat)
   {

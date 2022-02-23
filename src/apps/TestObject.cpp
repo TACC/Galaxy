@@ -23,6 +23,9 @@
 
 using namespace gxy;
 
+namespace gxy
+{
+
 KEYED_OBJECT_CLASS_TYPE(TestObject)
 WORK_CLASS_TYPE(TestObject::DoitMsg);
 
@@ -35,3 +38,5 @@ TestObject::Register()
 	RegisterClass();
 	DoitMsg::Register();
 };
+
+}

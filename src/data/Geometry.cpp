@@ -174,11 +174,8 @@ Geometry::local_commit(MPI_Comm c)
 }
 
 bool
-Geometry::local_import(PartitioningP part, char *p, MPI_Comm c)
+Geometry::local_import(char *p, MPI_Comm c)
 {
-  if (super::local_import(part, p, c))
-      return true;
-
   vtkSmartPointer<vtkPointSet> pset;
 
   int rank = GetTheApplication()->GetRank();
@@ -220,6 +217,8 @@ Geometry::local_import(PartitioningP part, char *p, MPI_Comm c)
     }
 
     pset = (vtkPointSet *)(rdr->GetOutputAsDataSet());
+    return load_from_vtkPointSet(pset);
+
   }
   else if (v.HasMember("port") && v.HasMember("host"))
   {
@@ -251,9 +250,10 @@ Geometry::local_import(PartitioningP part, char *p, MPI_Comm c)
     rdr->Update();
 
     pset = (vtkPointSet *)(rdr->GetOutput());
+    return load_from_vtkPointSet(pset);
   }
 
-  return load_from_vtkPointSet(pset);
+  return true;
 }
 
 int
@@ -350,7 +350,7 @@ Geometry::get_partitioning(Value& doc)
 }
 
 bool
-Geometry::LoadFromJSON(Value& v, PartitioningP p)
+Geometry::LoadFromJSON(Value& v)
 {
   if (v.HasMember("color")  || v.HasMember("default color"))
   {
@@ -378,6 +378,8 @@ Geometry::LoadFromJSON(Value& v, PartitioningP p)
 
   return true;
 }
+
+
 
 
 } // namespace gxy

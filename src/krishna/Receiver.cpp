@@ -412,7 +412,7 @@ Receiver::Reshuffle()
     }
   }
 
-#if 1
+#if 0
   char namebuf[256];
   sprintf(namebuf, "RS-%d-%d.csv", GetTheApplication()->GetRank(), frame);
   ofstream ofs(namebuf);

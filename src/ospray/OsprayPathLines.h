@@ -43,8 +43,8 @@ class OsprayPathLines : public OsprayObject
 {
   GALAXY_OBJECT(OsprayPathLines) 
 
-  void SetPathLines(PathLinesP);
-
+public:
+  void SetPathLines(PathLinesP p);
 };
 
 }

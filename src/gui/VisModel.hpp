@@ -25,7 +25,6 @@
 #include <string>
 
 #include <QtCore/QObject>
-#include <QPixmap>
 
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
@@ -39,7 +38,6 @@
 #include <QtGui/QDoubleValidator>
 
 #include "GxyModel.hpp"
-#include "CMapDialog.hpp"
 
 using QtNodes::NodeData;
 using QtNodes::NodeDataType;
@@ -79,7 +77,7 @@ public:
   void setInData(std::shared_ptr<QtNodes::NodeData> data, QtNodes::PortIndex portIndex) override;
 
   virtual void loadInputDrivenWidgets(std::shared_ptr<GxyPacket> o) override;
-  virtual void loadParameterWidgets() override;
+  virtual void loadParameterWidgets() const override;
 
   virtual void loadOutput(std::shared_ptr<GxyData> o) const override;
 
@@ -99,48 +97,24 @@ public Q_SLOTS:
 
   void openCmapSelectorDialog()
   {
-    CMapDialog d(current_colormap);
-    connect(&d, SIGNAL(cmap_selected(std::string)), this, SLOT(cmap_selected(std::string)));
-    d.exec();
+    QFileDialog *fileDialog = new QFileDialog();
+    fileDialog->setNameFilter(tr("Colormaps (*.cmap *.json)"));
+    fileDialog->exec();
+    cmap_widget->clear();
+    cmap_widget->insert(fileDialog->selectedFiles().at(0));
+    delete fileDialog;
     enableIfValid();
   }
 
-  void cmap_selected(std::string s)
-  {
-    load_cmap(s);
-  }
-
 protected:
-  // std::shared_ptr<Vis> output;
-
-  void load_cmap(std::string s)
-  {
-    int n = s.find_last_of(".");
-    std::string root = (n != s.npos) ? s.substr(0, n) : s;
-
-    n = root.find_last_of("/");
-    std::string name = (n != root.npos) ? root.substr(n+1) : root;
-
-    current_colormap.assign(root + ".json");
-
-    cmap_text_widget->clear();
-    cmap_text_widget->insert(name.c_str());
-
-    QPixmap *pm = new QPixmap(s.c_str());
-    cmap_label_widget->setPixmap(pm->scaled(cmap_label_widget->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-  }
-  
-  
+  std::shared_ptr<Vis> output;
 
 private:
   bool      data_range_set = false;
   float     data_minimum, data_maximum;
   QSlider   *cmap_range_min_slider = NULL;
   QSlider   *cmap_range_max_slider = NULL;
-  QLineEdit *cmap_text_widget = NULL;
-  QLabel    *cmap_label_widget = NULL;
+  QLineEdit *cmap_widget = NULL;
   QLineEdit *cmap_range_min = NULL;
   QLineEdit *cmap_range_max = NULL;
-
-  std::string current_colormap;
 };

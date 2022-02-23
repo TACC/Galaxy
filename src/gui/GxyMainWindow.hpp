@@ -1,4 +1,3 @@
-// ========================================================================== //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -18,20 +17,9 @@
 //                                                                            //
 // ========================================================================== //
 
-#include <string>
-#include <sstream>
-
-#include "rapidjson/document.h"
-
-#include <QJsonDocument>
-#include <QJsonObject>
-
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QGridLayout>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMenuBar>
 
 #include <nodes/Node>
@@ -68,11 +56,6 @@ using QtNodes::NodeGraphicsObject;
 
 extern GxyConnectionMgr *getTheGxyConnectionMgr();
 
-class GxyMainWindow;
-
-extern void SetTheGxyMainWindow(GxyMainWindow*);
-extern GxyMainWindow *GetTheGxyMainWindow();
-
 static std::shared_ptr<QtNodes::DataModelRegistry>
 registerDataModels()
 {
@@ -90,24 +73,24 @@ registerDataModels()
   return ret;
 }
 
-class GxyMainWindow : public QMainWindow
+class GxyMainWindow : QMainWindow
 {
   Q_OBJECT
 
 public:
   GxyMainWindow() : QMainWindow()
   {
-    SetTheGxyMainWindow(this);
-
     QWidget *mainWidget = new QWidget;
     setCentralWidget(mainWidget);
 
     std::shared_ptr<QtNodes::DataModelRegistry> registry = registerDataModels();
 
+    flowScene = new FlowScene(registry, mainWidget);
+    flowView = new GxyFlowView(flowScene);
+
     auto fileMenu   = menuBar()->addMenu("&File");
-    partitioningAction = fileMenu->addAction("Load Partitioning");
-    auto loadAction = fileMenu->addAction("Load Flow");
-    auto saveAction = fileMenu->addAction("Save Flow");
+    auto loadAction = fileMenu->addAction("Load");
+    auto saveAction = fileMenu->addAction("Save");
     auto debugAction = fileMenu->addAction("Debug");
 
     auto editMenu       = menuBar()->addMenu("&Edit");
@@ -130,16 +113,11 @@ public:
 
     connect(getTheGxyConnectionMgr(), SIGNAL(connectionStateChanged(bool)), this, SLOT(enableConnectAction(bool)));
 
-    flowScene = new FlowScene(registry, mainWidget);
-    flowView = new GxyFlowView(flowScene);
-
     QVBoxLayout *l = new QVBoxLayout(mainWidget);
     l->setContentsMargins(0, 0, 0, 0);
     l->setSpacing(0);
 
     l->addWidget(flowView);
-
-    connect(partitioningAction, SIGNAL(triggered()), this, SLOT(loadPartitioning()));
 
     QObject::connect(saveAction, &QAction::triggered, flowScene, &FlowScene::save);
     QObject::connect(loadAction, &QAction::triggered, flowScene, &FlowScene::load);
@@ -166,9 +144,8 @@ public:
 
     setWindowTitle("Galaxy");
     resize(1200, 900);
+    showNormal();
   }
-
-  float *get_box() { return box; }
 
   void 
   closeEvent(QCloseEvent *event)
@@ -198,7 +175,6 @@ public Q_SLOTS:
     connectAction->setEnabled(!b);
     connectAsAction->setEnabled(!b);
     disconnectAction->setEnabled(b);
-    partitioningAction->setEnabled(b);
   }
 
   void connectToServer()
@@ -206,46 +182,11 @@ public Q_SLOTS:
     getTheGxyConnectionMgr()->connectToServer();
   }
 
-  void loadPartitioning()
-  {
-    QString f = QFileDialog::getOpenFileName(this, tr("Open Partitioning File"), getenv("HOME"), tr("data files (*.json)"));
-    partitioningFile = f.toStdString();
-
-    QJsonObject p;
-    p["cmd"] = "gui::partitioning";
-    p["pfile"] = partitioningFile.c_str();
-
-    QJsonDocument doc(p);
-    QByteArray bytes = doc.toJson(QJsonDocument::Compact);
-    QString s = QLatin1String(bytes);
-  
-    std::string msg = s.toStdString();
-    getTheGxyConnectionMgr()->CSendRecv(msg);
-
-    rapidjson::Document rply;
-    rply.Parse(msg.c_str());
-
-    QString status = rply["status"].GetString();
-    if (status.toStdString() != "ok")
-      std::cerr << "load partition failed: " << rply["error message"].GetString() << "\n";
-    else
-    {
-      for (auto i = 0; i < 6; i++)
-        box[i] = rply["box"][i].GetDouble();
-      std::cerr << "BOX: " << box[0] << " " << box[1] << " " << box[2] << " " << box[3] << " " << box[4] << " " << box[5] << "\n";
-    }
-  }
-
 private:
 
-  QAction *connectAction = nullptr;
-  QAction *connectAsAction = nullptr;
-  QAction *partitioningAction = nullptr;
-  QAction *disconnectAction = nullptr;
-  FlowScene *flowScene = nullptr;
-  GxyFlowView *flowView = nullptr;
-
-  std::string partitioningFile;
-  float box[6]  = {-1, 1, -1, 1, -1, 1};
+  QAction *connectAction;
+  QAction *connectAsAction;
+  QAction *disconnectAction;
+  FlowScene *flowScene;
+  GxyFlowView *flowView;
 };
-

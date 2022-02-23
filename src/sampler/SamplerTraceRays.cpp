@@ -35,11 +35,10 @@ using namespace rapidjson;
 namespace gxy
 {
 
-SamplerTraceRays::SamplerTraceRays(PartitioningP p)
+SamplerTraceRays::SamplerTraceRays()
 {
   allocate_ispc();
   initialize_ispc();
-  partitioning = p;
 }
 
 SamplerTraceRays::~SamplerTraceRays()
@@ -49,7 +48,7 @@ SamplerTraceRays::~SamplerTraceRays()
 RayList *
 SamplerTraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
 {
-  ispc::SamplerTraceRays_SamplerTraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), partitioning->GetIspc());
+  ispc::SamplerTraceRays_SamplerTraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc());
 	return NULL;
 }
 

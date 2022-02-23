@@ -151,6 +151,9 @@ KeyedObjectFactory::DropMsg::CollectiveAction(MPI_Comm comm, bool isRoot)
 KeyedObjectP
 KeyedObjectFactory::get(Key k)
 {
+  if (k == NullKey)
+      return nullptr;
+
 	KeyedObjectP kop = k >= smap.size() ? nullptr : smap[k];
   if (kop == nullptr)
 		return k >= wmap.size() ? nullptr : wmap[k].lock();
@@ -191,7 +194,6 @@ KeyedObject::Drop()
 KeyedObject::KeyedObject(KeyedObjectClass c, Key k) : keyedObjectClass(c), key(k)
 {  
 	ko_count++;
-  // std::cerr << " + " << ko_count;
   error = 0;
 	initialize();
 }
@@ -203,7 +205,6 @@ KeyedObject::~KeyedObject()
     Drop();
 
 	ko_count--;
-  // std::cerr << " - " << ko_count;
 }
 
 bool

@@ -26,7 +26,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 include_directories(${gxy_framework_SOURCE_DIR} 
 									  ${gxy_data_SOURCE_DIR}
 									  ${gxy_ospray_SOURCE_DIR}
-									  ${Galaxy_BINARY_DIR}/src/renderer
 									  ${Galaxy_BINARY_DIR}/src)
 
 set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${MPI_C_LIBRARIES})
@@ -39,15 +38,15 @@ include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_D
 include_directories(${GLUT_INCLUDE_DIR})
 
 add_library(gxy_multiserver SHARED MultiServer.cpp JsonInterface.cpp MultiServerHandler.cpp ServerClientConnection.hpp SocketHandler.cpp DynamicLibraryManager.cpp)
-target_link_libraries(gxy_multiserver gxy_data gxy_renderer gxy_framework)
+target_link_libraries(gxy_multiserver gxy_data gxy_framework)
 set(LIBS gxy_multiserver ${LIBS})
 
 add_library(gxy_multiserver_client SHARED ClientWindow.cpp JsonInterface.cpp SocketHandler.cpp)
-# target_link_libraries(gxy_multiserver_client gxy_data gxy_framework)
+target_link_libraries(gxy_multiserver_client gxy_data gxy_framework)
 set(LIBS gxy_multiserver_client ${LIBS})
 
 add_executable(msserver msserver.cpp CommandLine.cpp)
-target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework gxy_renderer)
+target_link_libraries(msserver gxy_multiserver gxy_data gxy_framework)
 set(BINS msserver ${BINS})
 
 add_executable(msviewer msviewer.cpp ClientWindow.cpp JsonInterface.cpp CommandLine.cpp)

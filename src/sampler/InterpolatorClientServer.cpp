@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
+// #include <cstdlib>
 
 #include <dtypes.h>
 
@@ -40,7 +41,7 @@ namespace gxy
 
 // Interpolate a point set in a volume 
 
-InterpolatorClientServer::InterpolatorClientServer()
+InterpolatorClientServer::InterpolatorClientServer(SocketHandler *sh) : MultiServerHandler(sh)
 {
   volume = NULL;
   src = NULL;
@@ -104,6 +105,8 @@ Interpolate(InterpolatorClientServer::Args *a)
   ParticlesP s = Particles::Cast(KeyedDataObject::GetByKey(a->sk));
   ParticlesP d = Particles::Cast(KeyedDataObject::GetByKey(a->dk));
 
+  d->CopyPartitioning(s);
+
   v->get_local_origin(a->ox, a->oy, a->oz);
   v->get_deltas(a->dx, a->dy, a->dz);
 
@@ -156,9 +159,7 @@ init()
 extern "C" MultiServerHandler *
 new_handler(SocketHandler *sh)
 {
-  MultiServerHandler *msh = new InterpolatorClientServer;
-  msh->SetSocketHandler(sh);
-  return msh;
+  return new InterpolatorClientServer(sh);
 }
 
 bool

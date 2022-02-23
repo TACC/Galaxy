@@ -41,6 +41,8 @@ OBJECT_POINTER_TYPES(OsprayVolume)
 class OsprayVolume : public OsprayObject
 {
   GALAXY_OBJECT(OsprayVolume)
+
+public:
   void SetVolume(VolumeP p);
 };
 

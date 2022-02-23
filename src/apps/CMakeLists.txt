@@ -24,16 +24,17 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMake)
 
 include_directories(${gxy_framework_SOURCE_DIR} 
                     ${gxy_renderer_SOURCE_DIR}
+					          ${gxy_sampler_SOURCE_DIR}
                     ${OSPRAY_INCLUDE_DIRS}
 					          ${gxy_data_SOURCE_DIR}
 					          ${gxy_ospray_SOURCE_DIR}
-					          ${gxy_renderer_BINARY_DIR}
 					          ${gxy_multiserver_SOURCE_DIR}
 					          ${Galaxy_BINARY_DIR}/src)
 
 set(GALAXY_LIBRARIES 
     gxy_framework 
     gxy_renderer 
+    gxy_sampler
     gxy_data 
     gxy_ospray 
     ${OSPRAY_LIBRARIES}
@@ -49,8 +50,8 @@ find_package(VTK)
 add_executable(simsim simsim.cpp)
 target_link_libraries(simsim gxy_multiserver_client ${VTK_LIBRARIES} ${MPI_C_LIBRARIES})
 
-add_executable(partition_vti partition_vti.cpp)
-target_link_libraries(partition_vti ${VTK_LIBRARIES})
+# add_executable(partition_vti partition_vti.cpp)
+# target_link_libraries(partition_vti ${VTK_LIBRARIES})
 
 if (GXY_WRITE_IMAGES)
 
@@ -61,6 +62,14 @@ if (GXY_WRITE_IMAGES)
   add_executable(sample sample.cpp)
   target_link_libraries(sample ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
   set(BINS sample ${BINS})
+
+  add_executable(particleproc particleproc.cpp)
+  target_link_libraries(particleproc ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+  set(BINS particleproc ${BINS})
+
+  add_executable(mhwriter mhwriter.cpp)
+	target_link_libraries(mhwriter ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+	set(BINS mhwriter ${BINS})
 
 else(GXY_WRITE_IMAGES)
 
@@ -75,6 +84,10 @@ else(GXY_WRITE_IMAGES)
 	if (X11_FOUND AND OpenGL_FOUND AND GLUT_FOUND)
 		include_directories(${X11_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${OpenGL_INCLUDE_DIR})
 		link_libraries(${X11_LIBRARIES})
+
+		add_executable(mhviewer mhviewer.cpp AsyncRendering.cpp)
+    target_link_libraries(mhviewer ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
+		set(BINS mhviewer ${BINS})
 
 		add_executable(gxyviewer gxyviewer.cpp AsyncRendering.cpp)
     target_link_libraries(gxyviewer ${VTK_LIBRARIES} ${GALAXY_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
@@ -101,6 +114,13 @@ if (WITH_CINEMA)
 	set(BINS ${BINS} cinema)
 endif (WITH_CINEMA)
 
+option(GXY_APP_PISO "Build the Galaxy piso app (requires VTK 8.x)" OFF)
+if(GXY_APP_PISO)
+	add_executable(piso piso.cpp)
+	target_link_libraries(piso ${VTK_LIBRARIES} ${MPI_C_LIBRARIES})
+	set(BINS piso ${BINS})
+endif(GXY_APP_PISO)
+
 add_executable(client client.cpp)
 target_link_libraries(client gxy_framework ${TBB_LIBRARY})
 set(BINS client ${BINS})
@@ -117,6 +137,10 @@ add_executable(drop drop.cpp TestObject.cpp)
 target_link_libraries(drop gxy_framework ${TBB_LIBRARY})
 set(BINS drop ${BINS})
 
+add_executable(gvt gvt.cpp)
+target_link_libraries(gvt ${VTK_LIBRARIES} ${GALAXY_LIBRARIES})
+set(BINS gvt ${BINS})
+
 add_executable(radial radial.cpp)
 target_link_libraries(radial ${VTK_LIBRARIES} ${MPI_LIBRARIES})
 set(BINS radial ${BINS})
@@ -128,7 +152,7 @@ add_executable(particles particles.cpp)
 set(BINS particles ${BINS})
 
 add_executable(partition partition.cpp)
-target_link_libraries(partition gxy_renderer gxy_framework ${MPI_LIBRARIES})
+target_link_libraries(partition ${MPI_LIBRARIES})
 set(BINS partition ${BINS})
 
 install(TARGETS ${BINS} DESTINATION bin)

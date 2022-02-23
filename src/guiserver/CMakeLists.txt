@@ -28,16 +28,7 @@ include_directories(${gxy_framework_SOURCE_DIR}
 									  ${gxy_ospray_SOURCE_DIR}
 									  ${gxy_multiserver_SOURCE_DIR}
 									  ${gxy_sampler_SOURCE_DIR}
-									  ${gxy_renderer_BINARY_DIR}
 									  ${Galaxy_BINARY_DIR}/src)
-
-set(FILTERS
-          DensitySampler.cpp 
-          MHSampler.cpp 
-          RaycastSampler.cpp 
-          StreamTracer.cpp 
-          Interpolator.cpp
-   )
 
 set(GALAXY_LIBRARIES gxy_framework gxy_renderer gxy_data gxy_ospray ${MPI_C_LIBRARIES})
 
@@ -47,7 +38,7 @@ set(LIBS "")
 
 include_directories(${GALAXY_INCLUDES} ${OSPRAY_INCLUDE_DIRS} ${EMBREE_INCLUDE_DIRS})
 
-add_library(gxy_module_gui MODULE GuiClientServer.cpp GuiRendering.cpp ${FILTERS})
+add_library(gxy_module_gui MODULE GuiClientServer.cpp DensitySampler.cpp MHSampler.cpp RaycastSampler.cpp StreamTracer.cpp GuiRendering.cpp)
 target_link_libraries(gxy_module_gui gxy_sampler gxy_multiserver gxy_renderer ${GALAXY_LIBRARIES})
 set(SERVERS gxy_module_gui ${SERVERS})
 

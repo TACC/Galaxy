@@ -22,6 +22,7 @@
 
 struct TraceRays_ispc
 {
+  int debug[100];
 };
 
 

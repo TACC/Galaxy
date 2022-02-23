@@ -91,6 +91,18 @@ public:
     gl->addWidget(new QLabel(QString::number(di.data_min, 'g', 4)), row, 1);
     gl->addWidget(new QLabel(QString::number(di.data_max, 'g', 4)), row++, 2);
 
+    gl->addWidget(new QLabel("X span"), row, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[0], 'g', 4)), row, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[1], 'g', 4)), row++, 2);
+
+    gl->addWidget(new QLabel("Y span"), row, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[2], 'g', 4)), row, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[3], 'g', 4)), row++, 2);
+
+    gl->addWidget(new QLabel("Z span"), row, 0);
+    gl->addWidget(new QLabel(QString::number(di.box[4], 'g', 4)), row, 1);
+    gl->addWidget(new QLabel(QString::number(di.box[5], 'g', 4)), row++, 2);
+
     QPushButton *done = new QPushButton("done");
     dlg->connect(done, SIGNAL(released()), dlg, SLOT(accept()));
     gl->addWidget(done, row++, 0);
@@ -250,16 +262,12 @@ private Q_SLOTS:
 
   void onFileSelectorOpen()
   {
-    QString f = QFileDialog::getOpenFileName(this, tr("Open Dataset"), getenv("HOME"), tr("data files (*.json *.vol *.part)"));
-    fileName->insert(f);
-
-    std::string s = f.toStdString();
-    int n = s.find_last_of("/");
-    std::string tail = (n != s.npos) ? s.substr(n+1) : s;
-    n = tail.find_last_of(".");
-    std::string name = (n != tail.npos) ? tail.substr(0, n) : tail;
-    dataName->insert(QString::fromStdString(name));
-
+    QFileDialog *fileDialog = new QFileDialog();
+    if (fileDialog->exec())
+    {
+      fileName->insert(fileDialog->selectedFiles().at(0));
+    }
+    delete fileDialog;
     validateOpen();
   }
 
@@ -287,6 +295,8 @@ public:
   unsigned int nPorts(PortType portType) const override;
 
   NodeDataType dataType(PortType portType, PortIndex portIndex) const override;
+
+  std::shared_ptr<NodeData> outData(PortIndex port) override;
 
   NodeValidationState validationState() const override;
 
@@ -370,25 +380,6 @@ private Q_SLOTS:
       rapidjson::Document doc;
       doc.SetObject();
 
-#if 1
-      std::string cmd("gui::import");
-      doc.AddMember("cmd", rapidjson::Value().SetString(cmd.c_str(), cmd.length()+1), doc.GetAllocator());
-
-      std::string dataName = dlg->getDataName().c_str();
-      std::string fileName = dlg->getFileName().c_str();
-
-      doc.AddMember("name", rapidjson::Value().SetString(dataName.c_str(), dataName.length()+1), doc.GetAllocator());
-      doc.AddMember("filename", rapidjson::Value().SetString(fileName.c_str(), fileName.length()+1), doc.GetAllocator());
-
-      switch (dlg->getDataType())
-      {
-        case 0: doc.AddMember("type", "Volume", doc.GetAllocator()); break;
-        case 1: doc.AddMember("type", "Triangles", doc.GetAllocator()); break;
-        case 2: doc.AddMember("type", "Particles", doc.GetAllocator()); break;
-        case 3: doc.AddMember("type", "PathLines", doc.GetAllocator()); break;
-        default: doc.AddMember("type", "??????????", doc.GetAllocator()); break;
-      }
-#else
       rapidjson::Value dsets(rapidjson::kObjectType);
       std::string cmd("gui::import");
       dsets.AddMember("cmd", rapidjson::Value().SetString(cmd.c_str(), cmd.length()+1), doc.GetAllocator());
@@ -404,12 +395,11 @@ private Q_SLOTS:
         case 0: dsets.AddMember("type", "Volume", doc.GetAllocator()); break;
         case 1: dsets.AddMember("type", "Triangles", doc.GetAllocator()); break;
         case 2: dsets.AddMember("type", "Particles", doc.GetAllocator()); break;
-        case 3: dsets.AddMember("type", "PathLines", doc.GetAllocator()); break;
+        case 3: dsets.AddMember("type", "Pathlines", doc.GetAllocator()); break;
         default: dsets.AddMember("type", "??????????", doc.GetAllocator()); break;
       }
 
       doc.AddMember("Datasets", dsets, doc.GetAllocator());
-#endif
 
       rapidjson::StringBuffer strbuf;
       rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
@@ -424,14 +414,10 @@ private Q_SLOTS:
       std::string status;
       ss >> status;
 
-      rapidjson::Document rply;
-      std::getline(ss, line);
-      rply.Parse(line.c_str());
-
-      if (std::string(rply["status"].GetString()) != "ok")
+      if (status != "ok")
       {
         QMessageBox msgBox;
-        msgBox.setText(rply["status"].GetString());
+        msgBox.setText(line.c_str());
         msgBox.exec();
       }
       else
@@ -489,10 +475,15 @@ private Q_SLOTS:
           rapidjson::Value& dset = array[i];
           GxyDataInfo datainfo;
           datainfo.name = dset["name"].GetString();
+          // datainfo.key = dset["key"].GetInt();
           datainfo.type = dset["type"].GetInt();
           datainfo.isVector = (dset["ncomp"].GetInt() == 3);
           datainfo.data_min = dset["min"].GetDouble();
           datainfo.data_max = dset["max"].GetDouble();
+          for (auto i = 0; i < 6; i++)
+          {
+            datainfo.box[i] = dset["box"][i].GetDouble();
+          }
 
           MyQListWidgetItem *mlwi = new MyQListWidgetItem(datainfo);
           objectList->addItem(mlwi);
@@ -506,4 +497,5 @@ private:
   MyQListWidget *objectList;
   MyQListWidgetItem *current_selection = NULL;
   QPushButton *info;
+  std::shared_ptr<GxyData> output;
 };

@@ -35,7 +35,6 @@ include_directories(${gxy_framework_SOURCE_DIR}
                     ${gxy_ospray_SOURCE_DIR}
 										${gxy_data_SOURCE_DIR}
 										${gxy_data_BINARY_DIR}
-										${gxy_renderer_BINARY_DIR}
                     ${Galaxy_BINARY_DIR}/src
                     ${GALAXY_INCLUDES}
                     ${OSPRAY_INCLUDE_DIRS}
@@ -65,7 +64,7 @@ if (ospray_DIR)
   ispc_target_add_sources(gxy_schlieren ${ISPC_SOURCES})
   target_link_libraries(gxy_schlieren ${OSPRAY_LIBRARIES} ${VTK_LIBRARIES} gxy_data gxy_renderer gxy_framework)
   set_target_properties(gxy_schlieren PROPERTIES VERSION ${GALAXY_VERSION} SOVERSION ${GALAXY_SOVERSION})
-  install(TARGETS gxy_schlieren DESTINATION lib64)
+  install(TARGETS gxy_schlieren DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 install(FILES Schlieren.h Schlieren2.h Schlieren2Rendering.h DESTINATION include)
