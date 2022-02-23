@@ -68,7 +68,6 @@ export void Lighting_SetLights(void *uniform _self, uniform int n, uniform float
 		if (t)
 		{
 			self->types = uniform new int[n];
-			// print("Lighting_SetLights: % %\n", t, self->types);
 		}
 
 		self->nLights = n;
@@ -132,5 +131,3 @@ export void Lighting_GetShadowFlag(void *uniform _self, uniform int *uniform b)
   Lighting_ispc *uniform self = (uniform Lighting_ispc *)_self;
 	*b = self->do_shadows;
 }
-	
-

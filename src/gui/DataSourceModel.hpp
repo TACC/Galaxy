@@ -78,9 +78,6 @@ public:
     gl->addWidget(new QLabel("name"), row, 0);
     gl->addWidget(new QLabel(di.name.c_str()), row++, 1);
 
-    // gl->addWidget(new QLabel("key"), row, 0);
-    // gl->addWidget(new QLabel(QString::number(di.key)), row++, 1);
-
     gl->addWidget(new QLabel("type"), row, 0);
     gl->addWidget(new QLabel(di.type == 0 ? "Volume" : di.type == 1 ? "Mesh" : "Particles"), row++, 1);
 
@@ -306,6 +303,9 @@ public:
 
   QString name() const override { return QStringLiteral("DataSource"); }
 
+  QJsonObject save() const override;
+  void restore(QJsonObject const &p) override;
+
   bool isValid() override { return current_selection != NULL; }
 
 private Q_SLOTS:
@@ -350,8 +350,16 @@ private Q_SLOTS:
         std::string status;
         ss >> status;
 
-        if (status != "ok")
-          std::cerr << "return from gui::observe: " << status << "\n";
+        rapidjson::Document rply;
+        std::getline(ss, line);
+        rply.Parse(line.c_str());
+
+        if (rply["status"] != "ok")
+        {
+          QMessageBox msgBox;
+          msgBox.setText((std::string("Error: ") + line).c_str());
+          msgBox.exec();
+        }
       }
 
       output->setValid(true);

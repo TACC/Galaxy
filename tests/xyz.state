@@ -3,7 +3,7 @@
         {
             "aov": 45, 
             "viewcenter": [ 0, 0, 0 ], 
-            "viewpoint": [  0.3, 0.3, 4.0 ], 
+            "viewpoint": [  3.0, 2.0, 3.0 ], 
             "viewup": [ 0.0, 1.0, 0.0 ]
         }
     ], 
@@ -31,7 +31,7 @@
             "Lighting": {
                 "Ka": 0.5, 
                 "Kd": 0.5, 
-                "Sources": [ [ 1, 1, 0, 0 ] ], 
+                "Sources": [ [ -1, -1, -1, 0 ] ], 
                 "ao count": 0, 
                 "ao radius": 1.0, 
                 "shadows": false

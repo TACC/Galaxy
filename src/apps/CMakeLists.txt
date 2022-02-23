@@ -50,8 +50,18 @@ find_package(VTK)
 add_executable(simsim simsim.cpp)
 target_link_libraries(simsim gxy_multiserver_client ${VTK_LIBRARIES} ${MPI_C_LIBRARIES})
 
+<<<<<<< HEAD
 # add_executable(partition_vti partition_vti.cpp)
 # target_link_libraries(partition_vti ${VTK_LIBRARIES})
+=======
+add_executable(partition_vti partition_vti.cpp)
+target_link_libraries(partition_vti ${VTK_LIBRARIES})
+set(BINS partition_vti ${BINS})
+
+add_executable(partition_vtu partition_vtu.cpp)
+target_link_libraries(partition_vtu ${VTK_LIBRARIES} gxy_framework)
+set(BINS partition_vtu ${BINS})
+>>>>>>> 2b493ff40112bc0fbe46cfc0ab10267c35966f9a
 
 if (GXY_WRITE_IMAGES)
 

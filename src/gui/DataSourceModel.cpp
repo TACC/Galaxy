@@ -135,3 +135,35 @@ DataSourceModel::validationMessage() const
   return QString("copacetic");
 }
 
+QJsonObject
+DataSourceModel::save() const
+{
+  QJsonObject modelJson = GxyModel::save();
+  modelJson["dataset"] = current_selection->getDataInfo().name.c_str();
+
+  return modelJson;
+}
+
+void
+DataSourceModel::restore(QJsonObject const &p)
+{
+  if (p.contains("dataset"))
+  {
+    std::string name = p["dataset"].toString().toStdString();
+
+    bool has = false;
+    for (int i = 0; !has && i < objectList->count(); i++)
+    {
+      MyQListWidgetItem *item = (MyQListWidgetItem *)objectList->item(i);
+      if (item->getDataInfo().name == name)
+      {
+        current_selection = (MyQListWidgetItem *)item;
+        info->setEnabled(true);
+        enableIfValid();
+        return;
+      }
+    }
+
+    std::cerr << "could not file name in current data list\n";
+  }
+}

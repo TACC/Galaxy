@@ -1,3 +1,5 @@
+// ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -107,7 +109,28 @@ public Q_SLOTS:
   }
 
 protected:
-  std::shared_ptr<Vis> output;
+
+  void load_cmap(std::string s)
+  {
+    if (s.substr(0, strlen("GALAXY_ROOT")) == "GALAXY_ROOT")
+      s = std::string(getenv("GALAXY_ROOT")) + s.substr(strlen("GALAXY_ROOT"));
+    else if (s.substr(0, strlen("HOME")) == "HOME")
+      s = std::string(getenv("HOME")) + s.substr(strlen("HOME"));
+
+    int n = s.find_last_of(".");
+    std::string root = (n != s.npos) ? s.substr(0, n) : s;
+
+    n = root.find_last_of("/");
+    std::string name = (n != root.npos) ? root.substr(n+1) : root;
+
+    current_colormap.assign((root + ".json").c_str());
+
+    cmap_text_widget->clear();
+    cmap_text_widget->insert(name.c_str());
+
+    QPixmap *pm = new QPixmap((root + ".png").c_str());
+    cmap_label_widget->setPixmap(pm->scaled(cmap_label_widget->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  }
 
 private:
   bool      data_range_set = false;

@@ -18,7 +18,7 @@
     [
       {
           "Lighting": {
-            "Sources": [[0, 0, 4, 0]],
+            "Sources": [[1, 0, 1, 2]],
             "shadows": true,
             "Ka": 0.2,
             "Kd": 0.8,
@@ -72,19 +72,19 @@
     "Cameras":
     [
       {
-        "viewpoint": [3, 0, -4],
+        "viewpoint": [3, 0, 4],
         "viewcenter": [0, 0, 0],
         "viewup": [0, 1, 0],
         "aov": 30
       },
       {
-        "viewpoint": [2, 3, -4],
+        "viewpoint": [0, 3, 4],
         "viewcenter": [0, 0, 0],
         "viewup": [0, 1, 0],
         "aov": 30
       },
       {
-        "viewpoint": [4, 3, -2],
+        "viewpoint": [2, 3, 4],
         "viewcenter": [0, 0, 0],
         "viewup": [0, 1, 0],
         "aov": 30

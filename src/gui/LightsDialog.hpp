@@ -85,8 +85,8 @@ public:
     layout->addWidget(_z);
 
     _t = new QComboBox();
-    _t->addItem("camera relative");
     _t->addItem("infinite");
+    _t->addItem("camera relative");
     _t->addItem("absolute");
     _t->setCurrentIndex(light.get_type());
     layout->addWidget(_t);
