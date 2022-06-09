@@ -1,3 +1,5 @@
+// ========================================================================== //
+//                                                                            //
 // Copyright (c) 2014-2020 The University of Texas at Austin.                 //
 // All rights reserved.                                                       //
 //                                                                            //
@@ -89,8 +91,15 @@ public:
     flowView = new GxyFlowView(flowScene);
 
     auto fileMenu   = menuBar()->addMenu("&File");
+<<<<<<< HEAD
     auto loadAction = fileMenu->addAction("Load");
     auto saveAction = fileMenu->addAction("Save");
+=======
+    partitioningAction = fileMenu->addAction("Load Partitioning");
+    auto loadDatasetsAction = fileMenu->addAction("Load Datasets");
+    auto loadAction = fileMenu->addAction("Load Flow");
+    auto saveAction = fileMenu->addAction("Save Flow");
+>>>>>>> 2b493ff40112bc0fbe46cfc0ab10267c35966f9a
     auto debugAction = fileMenu->addAction("Debug");
 
     auto editMenu       = menuBar()->addMenu("&Edit");
@@ -119,6 +128,12 @@ public:
 
     l->addWidget(flowView);
 
+<<<<<<< HEAD
+=======
+    connect(partitioningAction, SIGNAL(triggered()), this, SLOT(loadPartitioning()));
+    connect(loadDatasetsAction, SIGNAL(triggered()), this, SLOT(loadDatasets()));
+
+>>>>>>> 2b493ff40112bc0fbe46cfc0ab10267c35966f9a
     QObject::connect(saveAction, &QAction::triggered, flowScene, &FlowScene::save);
     QObject::connect(loadAction, &QAction::triggered, flowScene, &FlowScene::load);
     QObject::connect(deleteAction, &QAction::triggered, flowView, &FlowView::deleteSelectedNodes);
@@ -182,11 +197,70 @@ public Q_SLOTS:
     getTheGxyConnectionMgr()->connectToServer();
   }
 
+
+  void loadDatasets()
+  {
+    QString f = QFileDialog::getOpenFileName(this, tr("Open Datasets File"), getenv("HOME"), tr("data files (*.json)"));
+    std::string datasets = f.toStdString();
+
+    QJsonObject p;
+    p["cmd"] = "gui::load_datasets";
+    p["dfile"] = datasets.c_str();
+
+    QJsonDocument doc(p);
+    QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+    QString s = QLatin1String(bytes);
+  
+    std::string msg = s.toStdString();
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+
+    rapidjson::Document rply;
+    rply.Parse(msg.c_str());
+
+    QString status = rply["status"].GetString();
+    if (status.toStdString() != "ok")
+      std::cerr << "load datasets failed: " << rply["error message"].GetString() << "\n";
+  }
+
+  void loadPartitioning()
+  {
+    QString f = QFileDialog::getOpenFileName(this, tr("Open Partitioning File"), getenv("HOME"), tr("data files (*.json)"));
+    partitioningFile = f.toStdString();
+
+    QJsonObject p;
+    p["cmd"] = "gui::partitioning";
+    p["pfile"] = partitioningFile.c_str();
+
+    QJsonDocument doc(p);
+    QByteArray bytes = doc.toJson(QJsonDocument::Compact);
+    QString s = QLatin1String(bytes);
+  
+    std::string msg = s.toStdString();
+    getTheGxyConnectionMgr()->CSendRecv(msg);
+
+    rapidjson::Document rply;
+    rply.Parse(msg.c_str());
+
+    QString status = rply["status"].GetString();
+    if (status.toStdString() != "ok")
+      std::cerr << "load partition failed: " << rply["error message"].GetString() << "\n";
+    else
+    {
+      for (auto i = 0; i < 6; i++)
+        box[i] = rply["box"][i].GetDouble();
+    }
+  }
+
 private:
 
-  QAction *connectAction;
-  QAction *connectAsAction;
-  QAction *disconnectAction;
-  FlowScene *flowScene;
-  GxyFlowView *flowView;
+  QAction *connectAction = nullptr;
+  QAction *connectAsAction = nullptr;
+  QAction *partitioningAction = nullptr;
+  QAction *disconnectAction = nullptr;
+  QAction *loadDatasetsAction = nullptr;
+  FlowScene *flowScene = nullptr;
+  GxyFlowView *flowView = nullptr;
+
+  std::string partitioningFile;
+  float box[6]  = {-1, 1, -1, 1, -1, 1};
 };
