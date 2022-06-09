@@ -329,6 +329,8 @@ GuiClientServer::handle(string line, string& reply)
     clientWindow->visualization  = Visualization::NewP();
     clientWindow->datasets       = Datasets::NewP();
 
+    clientWindow->visualization->clear();
+
     if (! clientWindow->visualization->LoadFromJSON(doc["Visualization"]))
       HANDLED_BUT_ERROR_RETURN("visualization: error in LoadFromJson");
 
