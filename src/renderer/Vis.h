@@ -70,6 +70,9 @@ public:
     //! set the KeyedDataObject data that this Vis should target.
     void SetTheData( KeyedDataObjectP d ) { data = d; }
 
+    //! create the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.   This is the opportunity to set any Vis options on the OSPRay object itself.
+    virtual OsprayObjectP CreateTheOsprayDataObject(KeyedDataObjectP d);
+
     //! set the OSPRayObject for this Vis' data   This is called when we start rendering a RenderingSet.   This is the opportunity to set any Vis options on the OSPRay object itself.
     //! 
     virtual void SetTheOsprayDataObject(OsprayObjectP o);

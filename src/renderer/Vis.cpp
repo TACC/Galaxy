@@ -24,6 +24,7 @@
 #include "KeyedDataObject.h"
 #include "MappedVis.h"
 #include "OsprayUtil.h"
+#include "PointSurfaceVis.h"
 #include "ParticlesVis.h"
 #include "PathLinesVis.h"
 #include "TrianglesVis.h"
@@ -46,6 +47,7 @@ Vis::Register()
 	RegisterClass();
 	MappedVis::Register();
 	VolumeVis::Register();
+	PointSurfaceVis::Register();
 	ParticlesVis::Register();
 	PathLinesVis::Register();
 	TrianglesVis::Register();
@@ -201,6 +203,12 @@ Vis::local_commit(MPI_Comm c)
   }
 
 	return false;
+}
+
+OsprayObjectP
+Vis::CreateTheOsprayDataObject(KeyedDataObjectP kdop)
+{
+  return kdop->CreateTheOSPRayEquivalent(kdop);
 }
 
 } // namespace gxy
