@@ -46,6 +46,7 @@ include_directories(${Galaxy_BINARY_DIR}/src
                     ${EMBREE_INCLUDE_DIRS})
 
 set (ISPC_SOURCES 
+  PointSurface.ispc 
   DataDrivenPathLines.ispc 
   DataDrivenSpheres.ispc 
   DataDrivenTriangleMesh.ispc
@@ -53,11 +54,13 @@ set (ISPC_SOURCES
 
 set (CPP_SOURCES 
   force_ospray_library_load.cpp
+  PointSurface.cpp
   DataDrivenPathLines.cpp
   DataDrivenSpheres.cpp
   DataDrivenTriangleMesh.cpp
   OsprayHandle.cpp
   OsprayObject.cpp
+  OsprayPointSurface.cpp
   OsprayTriangles.cpp
   OsprayParticles.cpp
   OsprayPathLines.cpp
