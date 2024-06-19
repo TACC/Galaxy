@@ -57,6 +57,7 @@ set (ISPC_SOURCES
 	TrianglesVis.ispc
   Visualization.ispc
   Lighting.ispc
+	PointSurfaceVis.ispc
 	ParticlesVis.ispc
 	PathLinesVis.ispc
   TraceRays.ispc
@@ -73,6 +74,7 @@ set (CPP_SOURCES
   Lighting.cpp
   MappedVis.cpp
   GeometryVis.cpp
+  PointSurfaceVis.cpp
   ParticlesVis.cpp
   PathLinesVis.cpp
   RayQManager.cpp
@@ -109,6 +111,7 @@ install(FILES
   TraceRays.h 
   MappedVis.h
   GeometryVis.h
+  PointSurfaceVis.h
   ParticlesVis.h
   PathLinesVis.h
   TrianglesVis.h
