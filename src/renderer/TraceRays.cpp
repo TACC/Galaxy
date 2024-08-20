@@ -38,7 +38,6 @@ namespace gxy
 
 TraceRays::TraceRays(float e)
 {
-  std::cerr << "XXXXXXXXXXXXXX\n";
   epsilon = e;
   allocate_ispc();
   initialize_ispc();
