@@ -355,7 +355,9 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
+#if 0
   print("AAAAAAAAAAAAAA TraceRays ISPC AAAAAAAAAAAAA\n");
+#endif
 
   step = -1;
   for (uniform int major = 0; major < vis->nVolumeVis; major++)
@@ -382,7 +384,9 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   foreach (i = 0 ... nRaysIn)
   {
     bool shadeFlag = raysIn->type[i] == RAY_PRIMARY;
+#if 0
     print("SHADEFLAG %\n", shadeFlag);
+#endif
 
     GxyRay ray;
 
@@ -419,8 +423,10 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     float tEntry, tExitVolume;
     MyIntersectBox(ray.r, box, tEntry, tExitVolume);
+#if 0
     print("tEntry %\n", tEntry);
     print("tExitVolume %\n", tExitVolume);
+#endif
 
     // If the volume entrypoint is beyong the current ray point, move the ray point up to
     // the entry point
@@ -445,11 +451,15 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     bool surface_hit = LookForSliceHit(self->debug, shadeFlag, ray.r, vis, hit);
 
+#if 0
     print("AA %\n", ray.r.t);
+#endif
 
     if (nGeometryVis  > 0)
     {
+#if 0
       print("B4: %\n", ray.r.dir.x);
+#endif
       surface_hit |= LookForGeometryHit(shadeFlag, nGeometryVis, geometryVis, ray.r, vis, hit);
     }
 
