@@ -56,8 +56,6 @@ public:
   /*! This action is performed in response to a CommitMsg */
   virtual bool local_commit(MPI_Comm);
 
-  virtual void SetTheOsprayDataObject(OsprayObjectP o);
-
   //! Set a constant radius
   void SetRadius(float r0) { SetRadiusTransform(0.0, r0, 0.0, 0.0); }
 
@@ -83,6 +81,8 @@ protected:
   virtual unsigned char* deserialize(unsigned char *ptr);
 
   float v0, r0, v1, r1; // Map radius linearly between (v0,r0) and (v1,r1)
+  virtual void initTheOsprayDataObject(OsprayObjectP);
+
 };
 
 } // namespace gxy

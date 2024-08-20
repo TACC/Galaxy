@@ -47,7 +47,10 @@ class GeometryVis : public MappedVis
 
 public:
 	~GeometryVis(); //!< default destructor
-  
+
+  OSPModel GetTheModel() { return model; }
+  virtual OsprayObjectP CreateTheOsprayDataObject(KeyedDataObjectP d);
+
 protected:
 
   //! initialize this GeometryVis object
@@ -66,6 +69,10 @@ protected:
   virtual int serialSize();
   virtual unsigned char* serialize(unsigned char *ptr);
   virtual unsigned char* deserialize(unsigned char *ptr);
+
+  virtual void initTheOsprayDataObject(OsprayObjectP);
+
+  OSPModel model;
 };
 
 } // namespace gxy

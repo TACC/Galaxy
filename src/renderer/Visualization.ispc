@@ -20,10 +20,12 @@
 
 #include "Visualization.ih"
 
+export void vvv(uniform Visualization_ispc *uniform v){}
+
 export void *uniform Visualization_allocate()
 {
     Visualization_ispc *uniform v = uniform new uniform Visualization_ispc;
-    return (void *)v;
+    return (void *)v; 
 }
 
 export void Visualization_initialize(void *uniform _self)
@@ -32,8 +34,8 @@ export void Visualization_initialize(void *uniform _self)
     
     self->nVolumeVis = 0;
     self->volumeVis = NULL;
-    self->nMappedVis = 0;
-    self->mappedVis = NULL;
+    self->nGeometryVis = 0;
+    self->geometryVis = NULL;
 }
 
 
@@ -42,19 +44,17 @@ export void Visualization_destroy(void *uniform _self)
     Visualization_ispc *uniform self = (uniform Visualization_ispc *)_self;
 
     delete[] self->volumeVis;
-    delete[] self->mappedVis;
+    delete[] self->geometryVis;
 }
 
 export void Visualization_commit(void *uniform _self, 
-                void *uniform _model,
                 int uniform nv, void *uniform _v, 
-                int uniform nm, void *uniform _m,
+                int uniform ng, void *uniform _g,
                 float *uniform gmin, float *uniform gmax,
                 float *uniform lmin, float *uniform lmax)
 {
-    Visualization_ispc *uniform self = (uniform Visualization_ispc *)_self;
-
-    self->model = (uniform Model *)_model;
+    Visualization_ispc *uniform self = (uniform Visualization_ispc *)_self; 
+    // print("Vcommit %\n", _self);
 
     if (self->nVolumeVis != nv)
     {
@@ -70,20 +70,24 @@ export void Visualization_commit(void *uniform _self,
             self->volumeVis[i] = v[i];
     }
 
-    if (self->nMappedVis != nm)
+    if (self->nGeometryVis != ng)
     {
-        if (self->mappedVis) delete[] self->mappedVis;
-        if (nm) self->mappedVis = uniform new uniform pMappedVis_ispc[nm];
-        else self->mappedVis = NULL;
-        self->nMappedVis = nm;
+        if (self->geometryVis) delete[] self->geometryVis;
+        if (ng) self->geometryVis = uniform new uniform pGeometryVis_ispc[ng];
+        else self->geometryVis = NULL;
+        self->nGeometryVis = ng;
     }
 
-    if (nm)
+    if (ng)
     {
-        uniform pMappedVis_ispc *uniform m = ( uniform pMappedVis_ispc *uniform)_m;
-        for (uniform int i = 0; i < nm; i++)
-            self->mappedVis[i] = m[i];
+        uniform pGeometryVis_ispc *uniform m = ( uniform pGeometryVis_ispc *uniform)_g;
+        for (uniform int i = 0; i < ng; i++)
+        {
+            self->geometryVis[i] = m[i];
+            //print("Added %\n", m[i]);
+        }
     }
+
 
     self->global_bb.lower = make_vec3f(gmin[0], gmin[1], gmin[2]);
     self->global_bb.upper = make_vec3f(gmax[0], gmax[1], gmax[2]);

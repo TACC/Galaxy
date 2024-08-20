@@ -369,5 +369,13 @@ MappedVis::ScaleMaps(float xmin, float xmax)
     opacitymap[i].x = xmin + ((opacitymap[i].x - x0)/(x1 - x0)) * (xmax - xmin);
 }
 
+void 
+MappedVis::initTheOsprayDataObject(OsprayObjectP op)
+{
+  super::initTheOsprayDataObject(op);
+  ospSetObject(op->GetOSP(), "transferFunction", transferFunction);
+}
+
+
 
 } // namespace gxy

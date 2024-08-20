@@ -110,6 +110,7 @@ Particles::load_from_vtkPointSet(vtkPointSet *pset)
 
     vtkDataArray *array = pset->GetPointData()->GetScalars();
     if (! array) array = pset->GetPointData()->GetArray("data");
+    if (! array) array = pset->GetPointData()->GetArray(0);
 
     vtkFloatArray *farray = vtkFloatArray::SafeDownCast(array);
     float *fdata = (farray) ? (float *)farray->GetVoidPointer(0) : NULL;

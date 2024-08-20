@@ -93,7 +93,8 @@ public:
   virtual unsigned char *deserialize(unsigned char *);
 
   OSPTransferFunction transferFunction;
-  
+  virtual void initTheOsprayDataObject(OsprayObjectP);
+
 };
 
 } // namespace gxy

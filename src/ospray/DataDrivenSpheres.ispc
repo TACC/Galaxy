@@ -49,8 +49,9 @@ static void DataDrivenSpheres_postIntersect(uniform Geometry *uniform geometry,
                                   const varying Ray &ray,
                                   uniform int64 flags)
 {
+  //print("P");
   uniform DataDrivenSpheres *uniform self = (uniform DataDrivenSpheres *uniform)geometry;
-
+  
   dg.Ng = dg.Ns = ray.Ng;
 
   float dataval = self->data[ray.primID];
@@ -85,11 +86,16 @@ unmasked void DataDrivenSpheres_bounds(const RTCBoundsFunctionArguments *uniform
 
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(center - radius, center + radius);
+
+  //print("B % % % R %\n", center.x, center.y, center.z, radius);
+
 }
 
 void DataDrivenSpheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
                               const uniform bool isOcclusionTest)
 {
+  // print("I");
+
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
 
@@ -218,7 +224,6 @@ export void DataDrivenSpheresGeometry_set(void  *uniform _self
   if (self->epsilon > self->radius0 / 100.0) {
     self->epsilon = self->radius0 / 100.0;
   }
-
   uniform int   numDataDrivenSpheres = self->super.numPrimitives;
   vec3f minb, maxb;
   uniform int isFirst = 1;

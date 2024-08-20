@@ -19,6 +19,7 @@
 // ========================================================================== //
 
 #include "GeometryVis.h"
+#include "GeometryVis_ispc.h"
 
 #include <fstream>
 #include <iostream>
@@ -103,4 +104,27 @@ GeometryVis::local_commit(MPI_Comm c)
 	return super::local_commit(c);
 }
 
+void 
+GeometryVis::initTheOsprayDataObject(OsprayObjectP op)
+{
+  super::initTheOsprayDataObject(op);
+}
+
+OsprayObjectP 
+GeometryVis::CreateTheOsprayDataObject(KeyedDataObjectP kdop)
+{
+  OsprayObjectP op = kdop->CreateTheOSPRayEquivalent(kdop);
+  initTheOsprayDataObject(op);
+
+  model = ospNewModel();
+  OSPGeometry geom = (OSPGeometry)op->GetOSP();
+  ospAddGeometry(model, geom);
+  ospCommit(model);
+
+  ispc::GeometryVis_ispc *iptr = (ispc::GeometryVis_ispc *)GetIspc();
+  iptr->model = (ispc::Model *)ospray_util::GetIE(model);
+
+  return op;
+
+}
 } // namespace gxy

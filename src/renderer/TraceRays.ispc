@@ -45,6 +45,10 @@
 #include "ospray/SDK/transferFunction/LinearTransferFunction.ih"
 #include "ospray/SDK/volume/Volume.ih"
 
+#include "embree3/rtcore.isph"
+#include "embree3/rtcore_scene.isph"
+#include "embree3/rtcore_common.isph"
+
 #include "hits.h"
 #include "Lighting.ih"
 #include "RayFlags.h"
@@ -114,16 +118,27 @@ MyIntersectBox(const Ray& ray,
 
 inline bool
 LookForGeometryHit(varying bool shadeFlag,
-                   uniform Model *uniform model,
+                   uniform int32 nGeomVis,
+                   uniform GeometryVis_ispc **uniform geomVis,
                    varying Ray &ray,
                    uniform Visualization_ispc *uniform vis,
                    varying Hit &hit)
 {
-  //print("LFGH %\n", model);
+//print("LFGH %\n", nGeomVis);
 
-  traceRay(model, ray);
+  int modelID = -1;
+  for (uniform int i = 0; i < nGeomVis; i++)
+  {
+    uniform Model *uniform model = geomVis[i]->model;
+  
+    traceRay(model, ray);
+    // print("Ray % GeomID = %\n", &ray, ray.geomID);
 
-  if(ray.geomID < 0)
+    if (ray.geomID >= 0)
+      modelID = i;
+  }
+
+  if(modelID < 0)
   {
     return false;
   }
@@ -133,8 +148,13 @@ LookForGeometryHit(varying bool shadeFlag,
     {
       DifferentialGeometry dg;
 
-      postIntersect(model, dg, ray, DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID|DG_TEXCOORD);
-
+      for (uniform int i = 0; i < nGeomVis; i++)
+        if (i == modelID)
+        {
+          uniform Model *uniform model = geomVis[i]->model;
+          postIntersect(model, dg, ray, DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID|DG_TEXCOORD);
+        }
+     
       hit.color   = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
 
       hit.opacity = dg.color.w;
@@ -318,6 +338,8 @@ SampleVolumes(const varying vec3f& coord,
   }
 }
 
+extern bool testPointQuery(uniform Model *uniform model);
+
 export void *uniform TraceRays_TraceRays(void *uniform _self,
                                void *uniform _vis,
                                const uniform int nRaysIn,
@@ -326,13 +348,14 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
   uniform TraceRays_ispc *uniform self = (uniform TraceRays_ispc *)_self;
   uniform Visualization_ispc *uniform vis = (uniform Visualization_ispc *)_vis;
   uniform RayList_ispc *uniform raysIn = (uniform RayList_ispc *)_raysIn;
-  Model *uniform model = (Model *uniform) vis->model;
+  uniform int32 nGeometryVis = vis->nGeometryVis; 
+  uniform GeometryVis_ispc **uniform geometryVis = (uniform GeometryVis_ispc **uniform) vis->geometryVis;
   uniform box3f box = vis->local_bb;
   uniform bool integrate = false;
   uniform float step, epsilon;
   uniform Camera *uniform c;
 
-  self->debug[0] = 1;
+  print("AAAAAAAAAAAAAA TraceRays ISPC AAAAAAAAAAAAA\n");
 
   step = -1;
   for (uniform int major = 0; major < vis->nVolumeVis; major++)
@@ -355,15 +378,11 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     }
   }
 
-  self->debug[1] = nRaysIn;
-
   uniform int II = 0;
   foreach (i = 0 ... nRaysIn)
   {
-    self->debug[0] = 2;
-    self->debug[2] = II++;
-
     bool shadeFlag = raysIn->type[i] == RAY_PRIMARY;
+    print("SHADEFLAG %\n", shadeFlag);
 
     GxyRay ray;
 
@@ -400,6 +419,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     float tEntry, tExitVolume;
     MyIntersectBox(ray.r, box, tEntry, tExitVolume);
+    print("tEntry %\n", tEntry);
+    print("tExitVolume %\n", tExitVolume);
 
     // If the volume entrypoint is beyong the current ray point, move the ray point up to
     // the entry point
@@ -422,21 +443,19 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
     // cast the secondary rays  These two routines update the ray's t if something is
     // found.
 
-    self->debug[0] = 4;
-    self->debug[5] = 0;
-
     bool surface_hit = LookForSliceHit(self->debug, shadeFlag, ray.r, vis, hit);
 
-    self->debug[5] = 1;
+    print("AA %\n", ray.r.t);
 
-    if (model)
-      surface_hit |= LookForGeometryHit(shadeFlag, model, ray.r, vis, hit);
+    if (nGeometryVis  > 0)
+    {
+      print("B4: %\n", ray.r.dir.x);
+      surface_hit |= LookForGeometryHit(shadeFlag, nGeometryVis, geometryVis, ray.r, vis, hit);
+    }
 
-    self->debug[5] = 2;
+    //print("SH % T= %\n", surface_hit, ray.r.t);
 
     float tTermination = ray.r.t;   // May be partition exit point or point at which slice/geometry is encountered
-
-    self->debug[0] = 5;
 
     if (integrate)
     {
@@ -582,6 +601,8 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
 
     if (surface_hit)
     {
+      //print("SURFACE WAS HIT\n");
+
       raysIn->term[i] |= RAY_SURFACE;
       if (hit.opacity > 0.999)
         raysIn->term[i] |= RAY_OPAQUE;
@@ -596,6 +617,7 @@ export void *uniform TraceRays_TraceRays(void *uniform _self,
       raysIn->nx[i] = hit.normal.x;
       raysIn->ny[i] = hit.normal.y;
       raysIn->nz[i] = hit.normal.z;
+      //print("HZ %\n", hit.normal.z);
     }
     else if (tTermination == tExitVolume)
     {
@@ -867,6 +889,7 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
     if ((raysIn->type[i] == RAY_PRIMARY) && (raysIn->term[i] & RAY_SURFACE))
     {
       vec3f surface_normal = make_vec3f(raysIn->nx[i], raysIn->ny[i], raysIn->nz[i]);
+      //print("SN\nX %\nY %\nZ %\n", surface_normal.x, surface_normal.y, surface_normal.z);
 
       float tot_dff_r = 0;
       float tot_dff_g = 0;
@@ -892,9 +915,10 @@ export void TraceRays_diffuseLighting(void *uniform pointer,
 				{
           lvec = neg(lights->lights[k]);
 				}
+        //print("LV\nX %\nY %\nZ %\n", lvec.x, lvec.y, lvec.z);
 
         d = dot(surface_normal, lvec);
-
+        //print("dot %\n", d);
         if (d > 0)
         {
           float dff = (1.0 - raysIn->o[i]) * d;

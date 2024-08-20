@@ -65,6 +65,7 @@ namespace ospray {
     auto transferFunction = (TransferFunction *)getParamData("transferFunction", nullptr);
 
     float box[6];
+
     ispc::DataDrivenSpheresGeometry_set(getIE(),
                               model->getIE(),
                               centers->data,

@@ -60,6 +60,9 @@ namespace ospray {
 
     size_t numPoints;
     Ref<Data> points;
+
+    float r0, r1, dr;
+    
     float epsilon;
   };
   /*! @} */

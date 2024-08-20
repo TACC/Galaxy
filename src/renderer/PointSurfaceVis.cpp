@@ -20,6 +20,7 @@
 
 #include "PointSurfaceVis.h"
 #include "PointSurfaceVis_ispc.h"
+#include "GeometryVis_ispc.h"
 #include "OsprayPointSurface.h"
 
 #include "Application.h"
@@ -130,13 +131,30 @@ PointSurfaceVis::SetTheOsprayDataObject(OsprayObjectP o)
   ospSet1f(o->GetOSP(), "r0", r0);
   ospSet1f(o->GetOSP(), "r1", r1);
   ospSet1f(o->GetOSP(), "dr", dr);
+
+  model = ospNewModel();
+  ospAddGeometry(model, (OSPGeometry)o->GetOSP());
+  ospCommit(model);
+
+  ispc::GeometryVis_ispc *iptr = (ispc::GeometryVis_ispc *)GetIspc();
+  iptr->model = (ispc::Model *)ospray_util::GetIE(model);
+
+  ospCommit(model);
 }
 
 OsprayObjectP
 PointSurfaceVis::CreateTheOsprayDataObject(KeyedDataObjectP kdop)
 {
-  OsprayObjectP ospData = OsprayObject::Cast(OsprayPointSurface::NewP(Particles::Cast(kdop)));
-  return ospData;
+  OsprayObjectP op = OsprayObject::Cast(OsprayPointSurface::NewP(Particles::Cast(kdop)));
+#if 0
+  model = ospNewModel();
+  ospAddGeometry(model, (OSPGeometry)op->GetOSP());
+  ospCommit(model);
+
+  ispc::GeometryVis_ispc *iptr = (ispc::GeometryVis_ispc *)GetIspc();
+  iptr->model = (ispc::Model *)ospray_util::GetIE(model);
+#endif
+  return op;
 }
  
 } // namespace gxy

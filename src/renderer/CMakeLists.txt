@@ -53,6 +53,7 @@ link_directories(${Galaxy_BINARY_DIR}/src/ospray
 set (ISPC_SOURCES 
   IspcObject.ispc
  	MappedVis.ispc
+ 	GeometryVis.ispc
 	Rays.ispc
 	TrianglesVis.ispc
   Visualization.ispc
@@ -109,6 +110,7 @@ install(FILES
   Rendering.h 
   RenderingSet.h 
   TraceRays.h 
+  GeometryVis.h
   MappedVis.h
   GeometryVis.h
   PointSurfaceVis.h

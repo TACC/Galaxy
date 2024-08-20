@@ -133,17 +133,6 @@ ParticlesVis::local_commit(MPI_Comm c)
 }
 
 void
-ParticlesVis::SetTheOsprayDataObject(OsprayObjectP o)
-{
-  super::SetTheOsprayDataObject(o);
-
-  ospSet1f(o->GetOSP(), "value0", v0);
-  ospSet1f(o->GetOSP(), "radius0", r0);
-  ospSet1f(o->GetOSP(), "value1", v1);
-  ospSet1f(o->GetOSP(), "radius1", r1);
-}
-
-void
 ParticlesVis::ScaleMaps(float xmin, float xmax)
 {
   super::ScaleMaps(xmin, xmax);
@@ -151,6 +140,14 @@ ParticlesVis::ScaleMaps(float xmin, float xmax)
   v1 = xmax;
 }
 
+void 
+ParticlesVis::initTheOsprayDataObject(OsprayObjectP op)
+{
+  super::initTheOsprayDataObject(op);
+  ospSet1f(op->GetOSP(), "value0", v0);
+  ospSet1f(op->GetOSP(), "radius0", r0);
+  ospSet1f(op->GetOSP(), "value1", v1);
+  ospSet1f(op->GetOSP(), "radius1", r1);}
  
 } // namespace gxy
 

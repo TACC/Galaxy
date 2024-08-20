@@ -20,7 +20,7 @@
 
 #include "TraceRays.h"
 #include "TraceRays_ispc.h"
-
+#include "Visualization_ispc.h"
 #include <fstream>
 #include <iostream>
 #include <math.h>
@@ -38,6 +38,7 @@ namespace gxy
 
 TraceRays::TraceRays(float e)
 {
+  std::cerr << "XXXXXXXXXXXXXX\n";
   epsilon = e;
   allocate_ispc();
   initialize_ispc();
@@ -68,7 +69,8 @@ TraceRays::destroy_ispc()
 RayList *
 TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn)
 {
-  ispc::TraceRays_TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), epsilon);
+	std::cerr << "Tracing " << raysIn->GetRayCount() << "\n";
+	ispc::TraceRays_TraceRays(GetIspc(), visualization->GetIspc(), raysIn->GetRayCount(), raysIn->GetIspc(), epsilon);
 	RayList *raysOut = NULL;
 
 	int nl, *t; float *l;
@@ -77,14 +79,14 @@ TraceRays::Trace(Lighting* lights, VisualizationP visualization, RayList *raysIn
 	int *ao_offsets = new int[raysIn->GetRayCount()];
 	int *shadow_offsets = new int[raysIn->GetRayCount()];
 
-  int nAO; float aoRadius;
-  lights->GetAO(nAO, aoRadius);
-          
-  bool do_shadows;
-  lights->GetShadowFlag(do_shadows);
-  
-  int nLights; float *lightVectors; int *types;
-  lights->GetLights(nLights, lightVectors, types);
+	int nAO; float aoRadius;
+	lights->GetAO(nAO, aoRadius);
+			
+	bool do_shadows;
+	lights->GetShadowFlag(do_shadows);
+
+	int nLights; float *lightVectors; int *types;
+	lights->GetLights(nLights, lightVectors, types);
 
 	int nOutputRays = 0; 
 	for (int i = 0; i < raysIn->GetRayCount(); i++)

@@ -51,7 +51,6 @@ void
 Visualization::initialize()
 {
   //std::cerr << "Visualization init " << std::hex << ((long)this) << "\n";
-  ospModel = NULL;
   super::initialize();
 }
 
@@ -212,13 +211,8 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
     initialize_ispc();
   }
 
-  // Model for stuff that we'll be rtcIntersecting; lists of mappedvis and 
-  // volumevis - NULL unless there's some model data
-
-  OSPModel ospModel = ospNewModel();
-
-  void *mispc[vis.size()]; int nmispc = 0;
-  void *vispc[vis.size()]; int nvispc = 0;
+  void *mispc[vis.size()]; int nmispc = 0;    // geometry models
+  void *vispc[vis.size()]; int nvispc = 0;    // volumes
 
   for (auto v : vis)
   {
@@ -233,50 +227,13 @@ Visualization::SetOsprayObjects(std::map<Key, OsprayObjectP>& ospray_object_map)
 
     v->SetTheOsprayDataObject(op);
 
-#if 0
-#if 0
-    op = v->GetTheOsprayDataObject();
-    if (! op)
-    {
-      op = kdop->CreateTheOSPRayEquivalent(kdop);
-      if (! op)
-      {
-        cerr << "no OSPRay equivalent for this data object\n";
-        exit(1);
-      }
-    }
-
-    v->SetTheOsprayDataObject(op);
-#else
-    op = v->GetTheOsprayDataObject();
-    if (!op || kdop->hasBeenModified())
-    {
-      op = kdop->CreateTheOSPRayEquivalent(kdop);
-      v->SetTheOsprayDataObject(op);
-      kdop->setModified(false);
-    }
-    else
-      op = v->GetTheOsprayDataObject();
-#endif
-#endif
-
-#if 0
-   std::cerr << "vis: " << v.get() << "\n";
-   std::cerr << "vol: " << kdop.get();
-   std::cerr << " op: " << op.get() << " vis isp: " << v->GetIspc() << " osp: " << op->GetOSP() << " IE: " << op->GetOSP_IE() << "\n";
-#endif
-    
     if (GeometryVis::IsA(v))
-      ospAddGeometry(ospModel, (OSPGeometry)op->GetOSP());
+      mispc[nmispc++] = v->GetIspc();
     else
       vispc[nvispc++] = v->GetIspc();
   }
-
-  if (ospModel)
-    ospCommit(ospModel);
    
   ispc::Visualization_commit(ispc, 
-          ospModel ? ospray_util::GetIE(ospModel) : NULL,
           nvispc, vispc,
           nmispc, mispc,
           global_box.get_min(), global_box.get_max(),

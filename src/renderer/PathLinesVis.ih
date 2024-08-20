@@ -20,13 +20,13 @@
 
 #pragma once
 
-#include "MappedVis.ih"
+#include "GeometryVis.ih"
 
 #include "ospray/SDK/math/vec.ih"
 
 struct PathLinesVis_ispc
 {
-  struct MappedVis_ispc vis;
+  struct GeometryVis_ispc vis;
 };  
 
 typedef uniform PathLinesVis_ispc *uniform pPathLinesVis_ispc;

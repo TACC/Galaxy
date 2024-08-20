@@ -24,7 +24,7 @@
 struct Model;
 
 #include "Vis.ih"
-#include "MappedVis.ih"
+#include "GeometryVis.ih"
 #include "VolumeVis.ih"
 
 struct Visualization_ispc
@@ -34,13 +34,14 @@ struct Visualization_ispc
 	// and list of mapped geometries and volumes which will be colored via
 	// a transfer function
 
-  Model *uniform model;
+  //uniform int32 nModels;
+  //uniform Model **uniform models;
       
   uniform int32 nVolumeVis;
   uniform pVolumeVis_ispc *uniform volumeVis;
    
-  uniform int32 nMappedVis;
-  uniform pMappedVis_ispc *uniform mappedVis;
+  uniform int32 nGeometryVis;
+  uniform pGeometryVis_ispc *uniform geometryVis;
   
   box3f global_bb;
   box3f local_bb;

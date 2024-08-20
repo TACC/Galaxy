@@ -54,11 +54,19 @@ namespace ospray {
     postStatusMsg(2) << "#galaxy: creating 'psurface' geometry, #points = "
                      << numPoints << "\n";
 
+
+    r0 = getParam1f("r0", 0.0);
+    r1 = getParam1f("r1", 0.0);
+    dr = getParam1f("dr", 0.0);
+
     float box[6];
     ispc::PointSurfaceGeometry_set(getIE(),
                               model->getIE(),
                               points->data,
                               numPoints,
+                              r0,
+                              r1, 
+                              dr,
                               box);
 
     bounds.lower.x = box[0];

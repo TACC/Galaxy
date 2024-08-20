@@ -102,6 +102,8 @@ protected:
     virtual unsigned char *serialize(unsigned char *);
     virtual unsigned char *deserialize(unsigned char *);
 
+    virtual void initTheOsprayDataObject(OsprayObjectP);
+
     std::string name;
     Key datakey;
     KeyedDataObjectP data;

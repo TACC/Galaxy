@@ -208,7 +208,13 @@ Vis::local_commit(MPI_Comm c)
 OsprayObjectP
 Vis::CreateTheOsprayDataObject(KeyedDataObjectP kdop)
 {
-  return kdop->CreateTheOSPRayEquivalent(kdop);
+  OsprayObjectP op = kdop->CreateTheOSPRayEquivalent(kdop);
+  initTheOsprayDataObject(op);
+  return(op);
 }
+
+void 
+Vis::initTheOsprayDataObject(OsprayObjectP op)
+{}
 
 } // namespace gxy

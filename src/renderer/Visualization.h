@@ -84,9 +84,6 @@ public:
   //! get the current annotation string for this Visualization
   const char *GetAnnotation() { return annotation.c_str(); }
 
-  //! get the Ospray OSPModel for this Visualization
-  OSPModel GetTheModel() { return ospModel; }
-
   //! get the Box that represents the global data extent for this Visualization
   Box *get_global_box() { return &global_box; }
   //! get the Box that represents the local data extent at this process for this Visualization
@@ -123,7 +120,6 @@ protected:
   virtual void initialize_ispc();
   virtual void destroy_ispc();
 
-  OSPModel ospModel;
 
   virtual int serialSize();
   virtual unsigned char *serialize(unsigned char *);
