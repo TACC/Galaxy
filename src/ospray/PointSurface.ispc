@@ -68,7 +68,7 @@ struct PointSurface {
 
 uniform struct queryUserData sort(uniform struct queryUserData qud)
 {
-#if 1
+#if 0
   print("PRESORT:\n");
 	for (int i = 0; i < qud.nPoints; i++)
 		print("%\n", qud.sort[i].d);
@@ -197,9 +197,11 @@ void PointSurface_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
   vec3f v = point - ray->org;
   vec3f p = ray->org + sqrt(dot(v,v))*ray->dir;
 
+#if 0
 	print("RAY ORIGIN % % %\n", ray->org.x, ray->org.y, ray->org.z);
 	print("RAY DIR % % %\n", ray->dir.x, ray->dir.y, ray->dir.z);
 	print("TEST POINT % % %\n", p.x, p.y, p.z);
+#endif
 
   q.x = p.x;
   q.y = p.y;
@@ -220,9 +222,11 @@ void PointSurface_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
 
 	qud = sort(qud);
 
+#if 0
 	print("SORTS\n");
 	for (int i = 0; i < qud.nPoints; i++)
 		print("% %\n", qud.sort[i].indx, qud.sort[i].d);
+#endif
 
   bool hit = true;
   int nHits = 0;
@@ -318,14 +322,12 @@ void PointSurface_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
     }
 	}
 
+#if 0
 	print("TRIANGLES % % %\n", JJ, KK, LL);
+#endif
 
 	if (nh > max_hits)
-	{
-		//print("inserting % at %\n", nh, i);
-//		print("H %\n", nh);
 		max_hits = reduce_max(nh);
-	}
 
 	if (nh > 0)
 	{
@@ -334,20 +336,14 @@ void PointSurface_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
 
 		vec3f v = hitPoint - org;
 
-		//print("PS % % %\n", point_sum.x, point_sum.y, point_sum.z);
-		//print("ORG % % %\n", org.x, org.y, org.z);
-		//print("% % %\n", normal_sum.x, normal_sum.y, normal_sum.z);
-
 		T = sqrt(dot(v, v));
   }
 
   if (nh)
   {
-    // print("nHits %\n", nh);
     vec3f v = hitPoint - ray->org;
     ray->t = T;
     ray->Ng = hitNormal;
-//		print("RX %\nRY %\nRZ %\n", hitNormal.x, hitNormal.y, hitNormal.z);
     ray->geomID = 0;
   }
 }
